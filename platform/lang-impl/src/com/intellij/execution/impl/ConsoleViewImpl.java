@@ -269,20 +269,31 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                          boolean viewer,
                          @Nullable FileType fileType)
   {
+    this(project, searchScope, viewer, fileType, true);
+  }
+
+  public ConsoleViewImpl(@NotNull final Project project,
+                         @NotNull GlobalSearchScope searchScope,
+                         boolean viewer,
+                         @Nullable FileType fileType,
+                         boolean usePredefinedMessageFilter)
+  {
     this(project, searchScope, viewer, fileType,
          new ConsoleState.NotStartedStated() {
            @Override
            public ConsoleState attachTo(ConsoleViewImpl console, ProcessHandler processHandler) {
              return new ConsoleViewRunningState(console, processHandler, this, true, true);
            }
-         });
+         },
+         usePredefinedMessageFilter);
   }
 
   protected ConsoleViewImpl(@NotNull final Project project,
                             @NotNull GlobalSearchScope searchScope,
                             boolean viewer,
                             @Nullable FileType fileType,
-                            @NotNull final ConsoleState initialState)
+                            @NotNull final ConsoleState initialState,
+                            boolean usePredefinedMessageFilter)
   {
     super(new BorderLayout());
     isViewer = viewer;
@@ -293,12 +304,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     myCustomFilter = new CompositeFilter(project);
     myPredefinedMessageFilter = new CompositeFilter(project);
-    for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-      Filter[] filters = eachProvider instanceof ConsoleFilterProviderEx
-                         ? ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope)
-                         : eachProvider.getDefaultFilters(project);
-      for (Filter filter : filters) {
-        myPredefinedMessageFilter.addFilter(filter);
+    if (usePredefinedMessageFilter) {
+      for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
+        Filter[] filters = eachProvider instanceof ConsoleFilterProviderEx
+                           ? ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope)
+                           : eachProvider.getDefaultFilters(project);
+        for (Filter filter : filters) {
+          myPredefinedMessageFilter.addFilter(filter);
+        }
       }
     }
     myHeavyUpdateTicket = 0;

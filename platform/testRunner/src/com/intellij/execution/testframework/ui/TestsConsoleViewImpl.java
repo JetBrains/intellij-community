@@ -31,13 +31,15 @@ public class TestsConsoleViewImpl extends ConsoleViewImpl {
   public TestsConsoleViewImpl(final Project project,
                               final GlobalSearchScope searchScope,
                               final boolean viewer,
-                              final FileType fileType) {
+                              final FileType fileType,
+                              boolean usePredefinedMessageFilter) {
     super(project, searchScope, viewer, fileType,
           new ConsoleState.NotStartedStated() {
             @Override
             public ConsoleState attachTo(ConsoleViewImpl console, ProcessHandler processHandler) {
               return new ConsoleViewRunningState(console, processHandler, this, false, !viewer);
             }
-          });
+          },
+          usePredefinedMessageFilter);
   }
 }

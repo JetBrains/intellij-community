@@ -16,18 +16,15 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +35,10 @@ import java.util.List;
 /**
  * @author max
  */
-public class DeprecationInspection extends BaseJavaLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = HighlightInfoType.DEPRECATION_SHORT_NAME;
-  @NonNls public static final String ID = HighlightInfoType.DEPRECATION_ID;
-  public static final String DISPLAY_NAME = HighlightInfoType.DEPRECATION_DISPLAY_NAME;
+public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
+  @NonNls public static final String SHORT_NAME = DeprecationUtil.DEPRECATION_SHORT_NAME;
+  @NonNls public static final String ID = DeprecationUtil.DEPRECATION_ID;
+  public static final String DISPLAY_NAME = DeprecationUtil.DEPRECATION_DISPLAY_NAME;
 
   public boolean IGNORE_INSIDE_DEPRECATED = false;
   public boolean IGNORE_ABSTRACT_DEPRECATED_OVERRIDES = true;
@@ -178,7 +175,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         final PsiCodeBlock body = method.getBody();
         if (body != null) {
           final PsiStatement[] statements = body.getStatements();
-          if (statements.length == 0 || !RefactoringUtil.isSuperOrThisCall(statements[0], true, true)) {
+          if (statements.length == 0 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true)) {
             registerDefaultConstructorProblem(superClass, method.getNameIdentifier(), false);
           }
         }

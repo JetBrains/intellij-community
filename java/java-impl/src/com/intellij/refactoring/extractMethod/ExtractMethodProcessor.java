@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -446,7 +447,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean shouldBeStatic() {
     for(PsiElement element: myElements) {
       final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class);
-      if (statement != null && RefactoringUtil.isSuperOrThisCall(statement, true, true)) {
+      if (statement != null && JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
         return true;
       }
     }

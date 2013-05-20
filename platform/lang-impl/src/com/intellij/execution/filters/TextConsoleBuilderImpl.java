@@ -32,6 +32,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private final GlobalSearchScope myScope;
   private final ArrayList<Filter> myFilters = new ArrayList<Filter>();
   private boolean myViewer;
+  private boolean myUsePredefinedMessageFilter = true;
 
   public TextConsoleBuilderImpl(final Project project) {
     this(project, GlobalSearchScope.allScope(project));
@@ -52,7 +53,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   }
 
   protected ConsoleView createConsole() {
-    return new ConsoleViewImpl(myProject, myScope, myViewer, null);
+    return new ConsoleViewImpl(myProject, myScope, myViewer, null, myUsePredefinedMessageFilter);
   }
 
   @Override
@@ -79,5 +80,13 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
 
   protected boolean isViewer() {
     return myViewer;
+  }
+
+  public void setUsePredefinedMessageFilter(boolean usePredefinedMessageFilter) {
+    myUsePredefinedMessageFilter = usePredefinedMessageFilter;
+  }
+
+  public boolean isUsePredefinedMessageFilter() {
+    return myUsePredefinedMessageFilter;
   }
 }

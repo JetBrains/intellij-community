@@ -27,9 +27,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * @author Sergey Evdokimov
@@ -39,11 +37,25 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
 
-    MavenExecuteGoalDialog dialog = new MavenExecuteGoalDialog(project, Collections.<String>emptyList());
+    ExecuteMavenGoalHistoryService historyService = ExecuteMavenGoalHistoryService.getInstance(project);
+
+    MavenExecuteGoalDialog dialog = new MavenExecuteGoalDialog(project, historyService.getHistory());
+    dialog.setWorkDirectory(historyService.getWorkDirectory());
+
     dialog.show();
     if (!dialog.isOK()) {
       return;
     }
+
+    String goals = dialog.getGoals();
+    goals = goals.trim();
+    if (goals.startsWith("mvn ")) {
+      goals = goals.substring("mvn ".length()).trim();
+    }
+
+    String workDirectory = dialog.getWorkDirectory();
+
+    historyService.addCommand(goals, workDirectory);
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
@@ -53,9 +65,7 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
       throw new RuntimeException();
     }
 
-    List<String> params = Arrays.asList(ParametersList.parse(dialog.getGoals()));
-
-    MavenRunnerParameters parameters = new MavenRunnerParameters(true, dialog.getWorkDirectory(), params, null);
+    MavenRunnerParameters parameters = new MavenRunnerParameters(true, workDirectory, Arrays.asList(ParametersList.parse(goals)), null);
 
     MavenGeneralSettings generalSettings = new MavenGeneralSettings();
     generalSettings.setMavenHome(mavenHome.getPath());

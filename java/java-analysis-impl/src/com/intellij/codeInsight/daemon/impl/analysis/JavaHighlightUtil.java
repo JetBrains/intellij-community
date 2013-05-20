@@ -109,4 +109,19 @@ public class JavaHighlightUtil {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                       PsiFormatUtilBase.SHOW_TYPE);
   }
+
+  public static boolean isSuperOrThisCall(PsiStatement statement, boolean testForSuper, boolean testForThis) {
+    if (!(statement instanceof PsiExpressionStatement)) return false;
+    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
+    if (!(expression instanceof PsiMethodCallExpression)) return false;
+    final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+    if (testForSuper) {
+      if ("super".equals(methodExpression.getText())) return true;
+    }
+    if (testForThis) {
+      if ("this".equals(methodExpression.getText())) return true;
+    }
+
+    return false;
+  }
 }

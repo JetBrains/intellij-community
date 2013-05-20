@@ -16,6 +16,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -245,7 +246,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     if (toCatchExceptions) {
       if (!(ref instanceof PsiReferenceExpression &&
-            RefactoringUtil.isSuperOrThisCall(PsiTreeUtil.getParentOfType(ref, PsiStatement.class), true, false))) {
+            JavaHighlightUtil.isSuperOrThisCall(PsiTreeUtil.getParentOfType(ref, PsiStatement.class), true, false))) {
         if (needToCatchExceptions(changeInfo, caller)) {
           PsiClassType[] newExceptions =
             callee != null ? getCalleeChangedExceptionInfo(callee) : getPrimaryChangedExceptionInfo(changeInfo);

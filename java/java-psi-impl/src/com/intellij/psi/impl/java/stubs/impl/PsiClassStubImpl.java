@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST; // TODO!!!
+    return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST;
   }
 
   @Override
@@ -185,8 +185,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.
-        append("PsiClassStub[");
+    builder.append("PsiClassStub[");
 
     if (isInterface()) {
       builder.append("interface ");
@@ -216,14 +215,11 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
       builder.append("deprecatedA ");
     }
 
-    builder.
-        append("name=").append(getName()).
-        append(" fqn=").append(getQualifiedName());
+    builder.append("name=").append(getName()).append(" fqn=").append(getQualifiedName());
 
     if (getBaseClassReferenceText() != null) {
       builder.append(" baseref=").append(getBaseClassReferenceText());
     }
-
 
     if (isAnonymousInQualifiedNew()) {
       builder.append(" inqualifnew");

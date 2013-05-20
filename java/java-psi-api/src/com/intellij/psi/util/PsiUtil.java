@@ -839,21 +839,29 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
-    if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);
-    final PsiFile file = element.getContainingFile();
-    if (file == null) {
-      LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(element.getProject());
-      return instance == null ? LanguageLevel.HIGHEST : instance.getLanguageLevel();
+    if (element instanceof PsiDirectory) {
+      return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);
     }
 
-    if (!(file instanceof PsiJavaFile)) {
-      final PsiElement context = file.getContext();
-      if (context != null) return getLanguageLevel(context);
-      LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(file.getProject());
-      return instance == null ? LanguageLevel.HIGHEST : instance.getLanguageLevel();
+    PsiFile file = element.getContainingFile();
+    if (file instanceof PsiJavaFile) {
+      return ((PsiJavaFile)file).getLanguageLevel();
     }
 
-    return ((PsiJavaFile)file).getLanguageLevel();
+    if (file != null) {
+      PsiElement context = file.getContext();
+      if (context != null) {
+        return getLanguageLevel(context);
+      }
+    }
+
+    return getLanguageLevel(element.getProject());
+  }
+
+  @NotNull
+  public static LanguageLevel getLanguageLevel(@NotNull Project project) {
+    LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
+    return instance != null ? instance.getLanguageLevel() : LanguageLevel.HIGHEST;
   }
 
   public static boolean isInstantiatable(@NotNull PsiClass clazz) {

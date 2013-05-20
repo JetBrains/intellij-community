@@ -16,9 +16,9 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
  */
-public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaLocalInspectionTool {
-  private final static int MIN_PERCENT_RATIO = 5;
-  public final static int MAX_QUICK_FIX_COUNTS = 4;
+public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBatchLocalInspectionTool {
+  private static final int MIN_PERCENT_RATIO = 5;
+  public static final int MAX_QUICK_FIX_COUNTS = 4;
 
   @Nls
   @NotNull
@@ -78,13 +78,13 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaLoc
       }
     }
     return new ProblemDescriptor[]{manager
-      .createProblemDescriptor(aClass, "Class may extend a commonly used base class instead of implementing interface or extending abstract class", false,
+      .createProblemDescriptor(aClass, getDisplayName(), false,
                                topInheritorsQuickFix.toArray(new LocalQuickFix[topInheritorsQuickFix.size()]),
                                ProblemHighlightType.INFORMATION)};
   }
 
   @Nullable
-  private static PsiClass getSuperIfUnique(final @NotNull PsiClass aClass) {
+  private static PsiClass getSuperIfUnique(@NotNull final PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
       return (PsiClass)((PsiAnonymousClass)aClass).getBaseClassReference().resolve();
     }

@@ -196,7 +196,7 @@ public class XsltStackFrame extends XStackFrame {
     }
 
     @Override
-    public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+    public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
       try {
         final Value eval = myFrame.eval(expression);
         callback.evaluated(new MyValue(new ExpressionResult(eval)));

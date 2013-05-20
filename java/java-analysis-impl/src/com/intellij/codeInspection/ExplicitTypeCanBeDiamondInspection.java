@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 1/28/11
  */
-public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionTool {
+public class ExplicitTypeCanBeDiamondInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance("#" + ExplicitTypeCanBeDiamondInspection.class.getName());
 
   @Nls

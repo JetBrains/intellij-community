@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -40,10 +41,6 @@ public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
   @NonNls String UNUSED_SYMBOL_ID = "UnusedDeclaration";
 
-  @NonNls String DEPRECATION_SHORT_NAME = "Deprecation";
-  @NonNls String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
-  @NonNls String DEPRECATION_ID = "deprecation";
-
   HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
   /** @deprecated use {@link #WEAK_WARNING} instead */
@@ -62,7 +59,8 @@ public interface HighlightInfoType {
     CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(
-    HighlightDisplayKey.findOrRegister(DEPRECATION_SHORT_NAME, DEPRECATION_DISPLAY_NAME, DEPRECATION_ID),
+    HighlightDisplayKey.findOrRegister(
+      DeprecationUtil.DEPRECATION_SHORT_NAME, DeprecationUtil.DEPRECATION_DISPLAY_NAME, DeprecationUtil.DEPRECATION_ID),
     CodeInsightColors.DEPRECATED_ATTRIBUTES);
 
   HighlightSeverity SYMBOL_TYPE_SEVERITY = new HighlightSeverity("SYMBOL_TYPE_SEVERITY", HighlightSeverity.INFORMATION.myVal-2);

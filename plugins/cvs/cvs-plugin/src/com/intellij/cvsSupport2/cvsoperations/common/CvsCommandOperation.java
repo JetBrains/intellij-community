@@ -40,7 +40,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.ClientEnvironment;
@@ -65,7 +64,6 @@ import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -191,9 +189,9 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   private static String getMessageFrom(String initialMessage, Throwable e) {
     if (e == null) return initialMessage;
     String result = initialMessage;
-    if (result != null && result.length() > 0) return result;
+    if (result != null && !result.isEmpty()) return result;
     result = e.getLocalizedMessage();
-    if (result == null || result.length() == 0) result = e.getMessage();
+    if (result == null || result.isEmpty()) result = e.getMessage();
     return getMessageFrom(result, e.getCause());
   }
 
@@ -262,25 +260,6 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
         command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, progressViewer);
       }
       catch (AuthenticationException e) {
-        if (! root.isOffline()) {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              final LoginPerformer performer =
-                new LoginPerformer(executionEnvironment.getProject(), Collections.<CvsEnvironment>singletonList(root), new Consumer<VcsException>() {
-                  @Override
-                  public void consume(VcsException e) {
-                    executionEnvironment.getErrorProcessor().addError(e);
-                    LOG.info(e);
-                  }
-                });
-              // for pserver to check password matches connection
-              performer.setForceCheck(true);                       
-              performer.loginAll();
-            }
-          });
-          return;
-        }
         throw root.processException(new CommandException(e, "Authentication problem"));
       }
       cvsMessagesTranslator.operationCompleted();
