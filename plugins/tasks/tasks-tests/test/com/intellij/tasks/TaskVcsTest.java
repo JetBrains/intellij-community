@@ -251,7 +251,10 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myChangeListManager.waitUntilRefreshed();
     LocalTask localTask = myTaskManager.getActiveTask();
     assertNotNull(localTask);
-    assertEquals("TEST-001 Summary 001 TEST", localTask.getChangeLists().get(0).comment);
+    assertEquals("TEST-001", localTask.getId());
+    List<ChangeListInfo> lists = localTask.getChangeLists();
+    assertEquals(1, lists.size());
+    assertEquals("TEST-001 Summary 001 TEST", lists.get(0).comment);
   }
 
   public void testSaveContextOnCommitForExistingTask() throws Exception {
@@ -261,11 +264,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
+    assertEquals(1, myChangeListManager.getChangeListsCopy().size());  // default change list should be here
     myTaskManager.activateTask(task, false, true);
     myChangeListManager.waitUntilRefreshed();
 
     assertEquals(2, myTaskManager.getLocalTasks().size());
-    assertEquals(2, myChangeListManager.getChangeListsCopy().size());
+    List<LocalChangeList> copy = myChangeListManager.getChangeListsCopy();
+    assertEquals(copy.toString(), 2, copy.size());
     LocalTask localTask = myTaskManager.getActiveTask();
     List<ChangeListInfo> changelists = localTask.getChangeLists();
     ChangeListInfo info = changelists.get(0);
