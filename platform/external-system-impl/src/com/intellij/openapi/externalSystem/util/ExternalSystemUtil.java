@@ -104,8 +104,10 @@ public class ExternalSystemUtil {
   public static <T> T getToolWindowElement(@NotNull Class<T> clazz,
                                            @NotNull Project project,
                                            @NotNull DataKey<T> key,
-                                           @NotNull ProjectSystemId externalSystemId)
-  {
+                                           @NotNull ProjectSystemId externalSystemId) {
+    if (project.isDisposed() || !project.isOpen()) {
+      return null;
+    }
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager == null) {
       return null;
