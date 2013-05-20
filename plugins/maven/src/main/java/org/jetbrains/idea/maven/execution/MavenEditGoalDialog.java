@@ -141,6 +141,10 @@ public class MavenEditGoalDialog extends DialogWrapper {
     return workDirectoryField.getText();
   }
 
+  public void setWorkDirectory(@NotNull String path) {
+    workDirectoryField.setText(path);
+  }
+
   public void setSelectedMavenProject(@Nullable MavenProject mavenProject) {
     workDirectoryField.setText(mavenProject == null ? "" : mavenProject.getDirectory());
   }
