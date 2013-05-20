@@ -47,7 +47,7 @@ public class URLUtil {
    * mapped into memory.
    */
   @NotNull
-  public static InputStream openStream(final URL url) throws IOException {
+  public static InputStream openStream(@NotNull URL url) throws IOException {
     @NonNls final String protocol = url.getProtocol();
     if (protocol.equals("jar")) {
       return openJarStream(url);
@@ -82,7 +82,7 @@ public class URLUtil {
   }
 
   @NotNull
-  private static InputStream openJarStream(final URL url) throws IOException {
+  private static InputStream openJarStream(@NotNull URL url) throws IOException {
     String file = url.getFile();
     assert file.startsWith("file:");
     file = file.substring("file:".length());

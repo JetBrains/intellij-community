@@ -59,7 +59,7 @@ public class ImageLoader implements Serializable {
   }
 
   @Nullable
-  public static Image loadFromUrl(URL url) {
+  public static Image loadFromUrl(@NotNull URL url) {
     for (Pair<String, Integer> each : getFileNames(url.toString())) {
       try {
         return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
