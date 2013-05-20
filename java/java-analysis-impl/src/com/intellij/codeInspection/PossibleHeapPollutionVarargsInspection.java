@@ -17,8 +17,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 1/28/11
  */
-public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspectionTool {
+public class PossibleHeapPollutionVarargsInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance("#" + PossibleHeapPollutionVarargsInspection.class.getName());
   @Nls
   @NotNull
@@ -110,7 +110,7 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
       if (psiElement instanceof PsiIdentifier) {
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
         if (psiMethod != null) {
-          new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
+          new AddAnnotationPsiFix("java.lang.SafeVarargs", psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
         }
       }
     }
@@ -135,13 +135,12 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
       if (psiElement instanceof PsiIdentifier) {
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
         psiMethod.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-        new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
+        new AddAnnotationPsiFix("java.lang.SafeVarargs", psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
       }
     }
   }
 
-  public static abstract class HeapPollutionVisitor extends JavaElementVisitor {
-
+  public abstract static class HeapPollutionVisitor extends JavaElementVisitor {
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
@@ -151,7 +150,7 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
 
       final PsiParameter psiParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
       final PsiType componentType = ((PsiEllipsisType)psiParameter.getType()).getComponentType();
-      if (GenericsHighlightUtil.isReifiableType(componentType)) {
+      if (JavaGenericsUtil.isReifiableType(componentType)) {
         return;
       }
       for (PsiReference reference : ReferencesSearch.search(psiParameter)) {

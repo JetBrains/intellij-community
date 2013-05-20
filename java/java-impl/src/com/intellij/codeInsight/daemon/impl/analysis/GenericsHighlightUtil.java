@@ -952,7 +952,7 @@ public class GenericsHighlightUtil {
   @Nullable
   public static HighlightInfo checkGenericArrayCreation(PsiElement element, PsiType type) {
     if (type instanceof PsiArrayType) {
-      if (!isReifiableType(((PsiArrayType)type).getComponentType())) {
+      if (!JavaGenericsUtil.isReifiableType(((PsiArrayType)type).getComponentType())) {
         String description = JavaErrorMessages.message("generic.array.creation");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       }
@@ -1180,7 +1180,7 @@ public class GenericsHighlightUtil {
       LOG.assertTrue(varParameter.isVarArgs());
       final PsiEllipsisType ellipsisType = (PsiEllipsisType)varParameter.getType();
       final PsiType componentType = ellipsisType.getComponentType();
-      if (isReifiableType(componentType)) {
+      if (JavaGenericsUtil.isReifiableType(componentType)) {
         PsiElement element = varParameter.getTypeElement();
         return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element).descriptionAndTooltip(
           "@SafeVarargs is not applicable for reifiable types").create();
@@ -1205,7 +1205,7 @@ public class GenericsHighlightUtil {
           final PsiParameter varargParameter =
             psiMethod.getParameterList().getParameters()[parametersCount - 1];
           final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
-          if (!isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
+          if (!JavaGenericsUtil.isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiCall) {
               final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
@@ -1228,7 +1228,7 @@ public class GenericsHighlightUtil {
                   }
                 }
                 for (int i = parametersCount - 1; i < args.length; i++) {
-                  if (!isReifiableType(resolveResult.getSubstitutor().substitute(args[i].getType()))) {
+                  if (!JavaGenericsUtil.isReifiableType(resolveResult.getSubstitutor().substitute(args[i].getType()))) {
                     return true;
                   }
                 }
@@ -1239,52 +1239,6 @@ public class GenericsHighlightUtil {
         }
       }
     }
-    return false;
-  }
-
-  public static boolean isReifiableType(PsiType type) {
-    if (type instanceof PsiArrayType) {
-      return isReifiableType(((PsiArrayType)type).getComponentType());
-    }
-
-    if (type instanceof PsiPrimitiveType) {
-      return true;
-    }
-
-    if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) {
-      return false;
-    }
-
-    if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)PsiUtil.convertAnonymousToBaseType(type);
-      if (classType.isRaw()) {
-        return true;
-      }
-      PsiType[] parameters = classType.getParameters();
-
-      for (PsiType parameter : parameters) {
-        if (parameter instanceof PsiWildcardType && ((PsiWildcardType)parameter).getBound() == null) {
-          return true;
-        }
-      }
-      final PsiClass resolved = ((PsiClassType)PsiUtil.convertAnonymousToBaseType(classType)).resolve();
-      if (resolved instanceof PsiTypeParameter) {
-        return false;
-      }
-      if (parameters.length == 0) {
-        if (resolved != null && !resolved.hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiClass containingClass = resolved.getContainingClass();
-          if (containingClass != null) {
-            final PsiTypeParameter[] containingClassTypeParameters = containingClass.getTypeParameters();
-            if (containingClassTypeParameters.length > 0) {
-              return false;
-            }
-          }
-        }
-        return true;
-      }
-    }
-
     return false;
   }
 
