@@ -126,7 +126,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         myTree.processTextEvent(e);
       }
     };
-    
+
     mySearch.getTextEditor().addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
@@ -134,13 +134,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         if (!myContext.isHoldingFilter() && hasText) {
           myFilter.reenable();
         }
-        
+
         if (!isSearchFieldFocused() && hasText) {
           mySearch.selectText();
         }
       }
     });
-    
+
     myTree = new OptionsTree(myProject, groups, getContext()) {
       @Override
       protected void onTreeKeyEvent(final KeyEvent e) {
@@ -237,7 +237,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this,
                                                     AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    
+
     ActionManager.getInstance().addAnActionListener(new AnActionListener() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
@@ -304,7 +304,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     clearFilter();
     return select(configurable, "");
   }
-  
+
   public ActionCallback select(Configurable configurable) {
     if (StringUtil.isEmpty(mySearch.getText())) {
       return select(configurable, "");
@@ -858,12 +858,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
     }
-    
+
     public void clearTemporary() {
       myContext.setHoldingFilter(false);
       updateSpotlight(false);
     }
-    
+
     public void reenable() {
       myContext.setHoldingFilter(true);
       updateSpotlight(false);
@@ -916,11 +916,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         toSelect = myLastSelected;
         myLastSelected = null;
       }
-      
+
       if (toSelect == null && current != null) {
         myLastSelected = current;
       }
-      
+
       final ActionCallback callback = fireUpdate(adjustSelection ? myTree.findNodeFor(toSelect) : null, adjustSelection, now);
 
       myFilterDocumentWasChanged = true;
@@ -1184,7 +1184,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         }
 
         myGP.clear();
-        
+
         final Runnable runnable = SearchUtil.lightOptions(searchable, myContentWrapper, text, myGP);
         if (runnable != null) {
           myVisible = true;//myContext.isHoldingFilter();
@@ -1198,7 +1198,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
               pushFilteringFurther = !myFilter.myHits.getNameHits().contains(current);
             }
           }
-          
+
           final Runnable ownSearch = searchable.enableSearch(text);
           if (pushFilteringFurther && ownSearch != null) {
             ownSearch.run();
@@ -1294,7 +1294,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private class Simple extends ConfigurableContent {
-
     JComponent myComponent;
     Configurable myConfigurable;
 
@@ -1305,9 +1304,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       if (myComponent != null) {
         final Object clientProperty = myComponent.getClientProperty(NOT_A_NEW_COMPONENT);
         if (clientProperty != null && ApplicationManager.getApplication().isInternal()) {
-          LOG.warn(String.format("Settings component for '%s' MUST be recreated, please dispose it in disposeUIResources() and create a new instance in createComponent()!",
-                                 configurable.getClass().getCanonicalName()));
-        } else {
+          LOG.warn("Settings component for " + configurable.getClass()+ " must be created anew, not reused, in createComponent() and destroyed in disposeUIResources()");
+        }
+        else {
           myComponent.putClientProperty(NOT_A_NEW_COMPONENT, Boolean.TRUE);
         }
       }
