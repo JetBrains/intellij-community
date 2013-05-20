@@ -632,4 +632,8 @@ public class PythonCompletionTest extends PyTestCase {
   public void testNoUnderscoredBuiltin() {
     doTest();
   }
+
+  public void testParameterFromUsages() {
+    doTest();
+  }
 }

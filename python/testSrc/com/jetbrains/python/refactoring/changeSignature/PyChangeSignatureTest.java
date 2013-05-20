@@ -129,6 +129,10 @@ public class PyChangeSignatureTest extends PyTestCase {
                                                               new PyParameterInfo(2, "opt2", "None", true),
                                                               new PyParameterInfo(3, "**extra_info", null, false)));
   }
+  public void testMoveParam() {
+    doChangeSignatureTest("f1", Arrays.asList(new PyParameterInfo(1, "b", "2", true),
+                                                new PyParameterInfo(0, "a", "1", true)));
+  }
 
   public void testMoveRenameParam() {
     final PyParameterInfo b = new PyParameterInfo(-1, "b", "1", false);

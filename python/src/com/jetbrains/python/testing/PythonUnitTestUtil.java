@@ -50,7 +50,7 @@ public class PythonUnitTestUtil {
   }
 
   private static boolean isUnitTestCaseClass(PyClass cls, HashSet<String> testQualifiedNames) {
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null && testQualifiedNames.contains(type.getClassQName())) {
         return true;
       }
@@ -121,7 +121,7 @@ public class PythonUnitTestUtil {
   }
 
   public static boolean isTestCaseClass(@NotNull PyClass cls, Set<String> testQualifiedNames) {
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null) {
         if (testQualifiedNames.contains(type.getClassQName())) {
           return true;

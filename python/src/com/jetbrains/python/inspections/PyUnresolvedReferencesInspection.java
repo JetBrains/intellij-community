@@ -640,13 +640,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (qtype instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)qtype).getPyClass();
-        if (overridesGetAttr(cls)) {
+        if (overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
         }
         if (cls.findProperty(refText) != null) {
           return true;
         }
-        if (PyUtil.hasUnresolvedAncestors(cls)) {
+        if (PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext)) {
           return true;
         }
         if (isDecoratedAsDynamic(cls, true)) {
@@ -713,8 +713,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
       if (containedClass != null && function != null) {
         final PyParameter[] parameters = function.getParameterList().getParameters();
-        final String qualifier = parameters[0].getText();
         if (parameters.length == 0) return;
+        final String qualifier = parameters[0].getText();
         final PyDecoratorList decoratorList = function.getDecoratorList();
         boolean isClassmethod = false;
         if (decoratorList != null) {
@@ -811,13 +811,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     @Nullable
-    private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name) {
-      final TypeEvalContext context = TypeEvalContext.fastStubOnly(null);
+    private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name, @NotNull TypeEvalContext context) {
       final PyType type = context.getType(cls);
       if (type != null) {
-        final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
-                                                                              PyResolveContext.noImplicits().withTypeEvalContext(context)
-        );
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
         if (results != null && !results.isEmpty()) {
           return results.get(0).getElement();
         }
@@ -825,12 +823,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return null;
     }
 
-    private static boolean overridesGetAttr(@NotNull PyClass cls) {
-      PsiElement method = resolveClassMember(cls, PyNames.GETATTR);
+    private static boolean overridesGetAttr(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+      PsiElement method = resolveClassMember(cls, PyNames.GETATTR, context);
       if (method != null) {
         return true;
       }
-      method = resolveClassMember(cls, PyNames.GETATTRIBUTE);
+      method = resolveClassMember(cls, PyNames.GETATTRIBUTE, context);
       if (method != null && !PyBuiltinCache.getInstance(cls).hasInBuiltins(method)) {
         return true;
       }

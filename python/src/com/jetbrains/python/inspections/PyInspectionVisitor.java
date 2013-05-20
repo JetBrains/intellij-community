@@ -30,7 +30,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
       if (context == null) {
-        context = TypeEvalContext.fastStubOnly(session.getFile());
+        context = TypeEvalContext.codeAnalysis(session.getFile());
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }

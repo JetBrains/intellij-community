@@ -617,8 +617,8 @@ public class PyUtil {
            : psiNamedElement.getName();
   }
 
-  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls) {
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    for (PyClassLikeType type : cls.getAncestorTypes(context)) {
       if (type == null) {
         return true;
       }
@@ -998,7 +998,7 @@ public class PyUtil {
     if (isBaseException(pyClass.getQualifiedName())) {
       return true;
     }
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null && isBaseException(type.getClassQName())) {
         return true;
       }

@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -113,7 +114,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
         for (PyImportElement element : elements) {
           final PyReferenceExpression referenceExpression = element.getImportReferenceExpression();
           if (referenceExpression == null) continue;
-          final PyType type = TypeEvalContext.fast().getType(referenceExpression);
+          final PyType type = TypeEvalContext.userInitiated(CompletionUtil.getOriginalOrSelf(file)).getType(referenceExpression);
           if (type instanceof PyClassType) {
             variants.add(((PyClassType)type).getPyClass());
           }

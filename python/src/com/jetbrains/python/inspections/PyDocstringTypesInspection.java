@@ -16,7 +16,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeParser;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,10 +97,10 @@ public class PyDocstringTypesInspection extends PyInspection {
       }
     }
 
-    private static boolean match(PsiElement anchor, String dynamicTypeName, String specifiedTypeName) {
+    private boolean match(PsiElement anchor, String dynamicTypeName, String specifiedTypeName) {
       final PyType dynamicType = PyTypeParser.getTypeByName(anchor, dynamicTypeName);
       final PyType specifiedType = PyTypeParser.getTypeByName(anchor, specifiedTypeName);
-      return PyTypeChecker.match(specifiedType, dynamicType, TypeEvalContext.slow());
+      return PyTypeChecker.match(specifiedType, dynamicType, myTypeEvalContext);
     }
   }
 
