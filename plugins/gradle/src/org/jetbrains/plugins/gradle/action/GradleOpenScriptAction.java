@@ -11,22 +11,23 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
  * Forces the IntelliJ IDEA to open {@link GradleSettings#getLinkedExternalProjectPath() linked gradle project} at the editor
  * <p/>
  * Not thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 1/31/12 5:16 PM
  */
 public class GradleOpenScriptAction extends AbstractGradleLinkedProjectAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance("#" + GradleOpenScriptAction.class.getName());
-  
+
   public GradleOpenScriptAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.open.script.text"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.open.script.description"));
+    getTemplatePresentation().setText(GradleBundle.message("gradle.action.open.script.text"));
+    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.open.script.description"));
   }
 
   @Override
@@ -41,6 +42,6 @@ public class GradleOpenScriptAction extends AbstractGradleLinkedProjectAction im
       return;
     }
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile);
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true); 
+    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 }
