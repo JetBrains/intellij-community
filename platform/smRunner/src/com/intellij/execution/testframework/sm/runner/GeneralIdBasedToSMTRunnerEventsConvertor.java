@@ -149,11 +149,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
       return;
     }
 
-    SMTestProxy childProxy = new SMTestProxy(startedNodeEvent.getName(), suite, startedNodeEvent.getLocationUrl(), true);
+    String nodeName = startedNodeEvent.getName();
+    SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), true);
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
     String nodeType = startedNodeEvent.getNodeType();
-    if (printerProvider != null && nodeType != null) {
-      Printer printer = printerProvider.getPrinterByType(nodeType, startedNodeEvent.getNodeArgs());
+    if (printerProvider != null && nodeType != null && nodeName != null) {
+      Printer printer = printerProvider.getPrinterByType(nodeType, nodeName, startedNodeEvent.getNodeArgs());
       if (printer != null) {
         childProxy.setPreferredPrinter(printer);
       }

@@ -25,6 +25,6 @@ import org.jetbrains.annotations.Nullable;
 public interface TestProxyPrinterProvider {
 
   @Nullable
-  Printer getPrinterByType(@NotNull String nodeType, @Nullable String arguments);
+  Printer getPrinterByType(@NotNull String nodeType, @NotNull String nodeName, @Nullable String arguments);
 
 }
