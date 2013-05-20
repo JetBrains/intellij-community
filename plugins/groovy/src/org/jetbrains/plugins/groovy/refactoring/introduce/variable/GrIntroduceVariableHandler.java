@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
 
@@ -58,10 +59,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
   @NotNull
   @Override
-  protected PsiElement findScope(GrExpression selectedExpr, GrVariable variable) {
-
+  protected PsiElement findScope(GrExpression selectedExpr, GrVariable variable, StringPartInfo stringPartInfo) {
     // Get container element
-    final PsiElement scope = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
+    final PsiElement scope = stringPartInfo != null
+                             ? GroovyRefactoringUtil.getEnclosingContainer(stringPartInfo.getLiteral())
+                             : GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
     if (scope == null || !(scope instanceof GroovyPsiElement)) {
       throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
@@ -96,6 +98,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
+  protected void checkStringLiteral(StringPartInfo info) throws GrRefactoringError {
+    //todo
+  }
+
+  @Override
   protected void checkOccurrences(PsiElement[] occurrences) {
     //nothing to do
   }
@@ -123,70 +130,19 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
     final String[] modifiers = settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null;
     final GrVariableDeclaration varDecl = factory.createVariableDeclaration(modifiers, "foo", settings.getSelectedType(), settings.getName());
-    varDecl.getVariables()[0].getInitializerGroovy().replaceWithExpression(context.getExpression(), true);
+    generateInitializer(context, varDecl.getVariables()[0]);
 
     // Marker for caret position
     try {
-      /* insert new variable */
-      GroovyRefactoringUtil.sortOccurrences(context.getOccurrences());
-      if (context.getOccurrences().length == 0 || !(context.getOccurrences()[0] instanceof GrExpression)) {
-        throw new IncorrectOperationException("Wrong expression occurrence");
-      }
-      GrExpression firstOccurrence;
-      if (settings.replaceAllOccurrences()) {
-        firstOccurrence = ((GrExpression)context.getOccurrences()[0]);
+      GrVariable insertedVar;
+      if (context.getStringPart() != null) {
+        insertedVar = processStringPart(context, settings, varDecl);
       }
       else {
-        firstOccurrence = context.getExpression();
+        insertedVar = processExpression(context, settings, factory, varDecl);
       }
 
-      assert varDecl.getVariables().length > 0;
 
-      resolveLocalConflicts(context.getScope(), varDecl.getVariables()[0].getName());
-      // Replace at the place of first occurrence
-
-      GrVariable insertedVar = replaceOnlyExpression(firstOccurrence, context, varDecl);
-      boolean alreadyDefined = insertedVar != null;
-      if (insertedVar == null) {
-        // Insert before first occurrence
-        insertedVar = insertVariableDefinition(context, settings, varDecl);
-      }
-
-      GrReferenceAdjuster.shortenReferences(insertedVar);
-
-      insertedVar.setType(settings.getSelectedType());
-
-      //Replace other occurrences
-      GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(settings.getName());
-      if (settings.replaceAllOccurrences()) {
-        ArrayList<PsiElement> replaced = new ArrayList<PsiElement>();
-        for (PsiElement occurrence : context.getOccurrences()) {
-          if (!(alreadyDefined && firstOccurrence.equals(occurrence))) {
-            if (occurrence instanceof GrExpression) {
-              GrExpression element = (GrExpression)occurrence;
-              replaced.add(element.replaceWithExpression(refExpr, true));
-              // For caret position
-              if (occurrence.equals(context.getExpression())) {
-                refreshPositionMarker(replaced.get(replaced.size() - 1));
-              }
-              refExpr = factory.createReferenceExpressionFromText(settings.getName());
-            }
-            else {
-              throw new IncorrectOperationException("Expression occurrence to be replaced is not instance of GroovyPsiElement");
-            }
-          }
-        }
-        if (context.getEditor() != null) {
-          // todo implement it...
-//              final PsiElement[] replacedOccurrences = replaced.toArray(new PsiElement[replaced.size()]);
-//              highlightReplacedOccurrences(myProject, editor, replacedOccurrences);
-        }
-      }
-      else {
-        if (!alreadyDefined) {
-          refreshPositionMarker(context.getExpression().replaceWithExpression(refExpr, true));
-        }
-      }
       // Setting caret to logical position
       if (context.getEditor() != null && getPositionMarker() != null) {
         context.getEditor().getCaretModel().moveToOffset(getPositionMarker().getTextRange().getEndOffset());
@@ -198,6 +154,96 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       LOG.error(e);
     }
     return null;
+  }
+
+  @NotNull
+  private GrVariable processStringPart(@NotNull GrIntroduceContext context,
+                                       @NotNull GroovyIntroduceVariableSettings settings,
+                                       @NotNull GrVariableDeclaration varDecl) {
+    final GrVariable variable = insertVariableDefinition(context, settings, varDecl);
+    variable.setType(settings.getSelectedType());
+    GrReferenceAdjuster.shortenReferences(variable);
+
+    final GrExpression ref = processLiteral(context, variable);
+    refreshPositionMarker(ref);
+    return variable;
+  }
+
+  @NotNull
+  private GrVariable processExpression(@NotNull GrIntroduceContext context,
+                                       @NotNull GroovyIntroduceVariableSettings settings,
+                                       @NotNull GroovyPsiElementFactory factory,
+                                       @NotNull GrVariableDeclaration varDecl) {
+  /* insert new variable */
+    GroovyRefactoringUtil.sortOccurrences(context.getOccurrences());
+    if (context.getOccurrences().length == 0 || !(context.getOccurrences()[0] instanceof GrExpression)) {
+      throw new IncorrectOperationException("Wrong expression occurrence");
+    }
+    GrExpression firstOccurrence;
+    if (settings.replaceAllOccurrences()) {
+      firstOccurrence = ((GrExpression)context.getOccurrences()[0]);
+    }
+    else {
+      firstOccurrence = context.getExpression();
+    }
+
+    assert varDecl.getVariables().length > 0;
+
+    resolveLocalConflicts(context.getScope(), varDecl.getVariables()[0].getName());
+    // Replace at the place of first occurrence
+
+    GrVariable insertedVar = replaceOnlyExpression(firstOccurrence, context, varDecl);
+    boolean alreadyDefined = insertedVar != null;
+    if (insertedVar == null) {
+      // Insert before first occurrence
+      insertedVar = insertVariableDefinition(context, settings, varDecl);
+    }
+
+    GrReferenceAdjuster.shortenReferences(insertedVar);
+
+    insertedVar.setType(settings.getSelectedType());
+
+    //Replace other occurrences
+    GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(settings.getName());
+    if (settings.replaceAllOccurrences()) {
+      ArrayList<PsiElement> replaced = new ArrayList<PsiElement>();
+      for (PsiElement occurrence : context.getOccurrences()) {
+        if (!(alreadyDefined && firstOccurrence.equals(occurrence))) {
+          if (occurrence instanceof GrExpression) {
+            GrExpression element = (GrExpression)occurrence;
+            replaced.add(element.replaceWithExpression(refExpr, true));
+            // For caret position
+            if (occurrence.equals(context.getExpression())) {
+              refreshPositionMarker(replaced.get(replaced.size() - 1));
+            }
+            refExpr = factory.createReferenceExpressionFromText(settings.getName());
+          }
+          else {
+            throw new IncorrectOperationException("Expression occurrence to be replaced is not instance of GroovyPsiElement");
+          }
+        }
+      }
+      if (context.getEditor() != null) {
+        // todo implement it...
+//              final PsiElement[] replacedOccurrences = replaced.toArray(new PsiElement[replaced.size()]);
+//              highlightReplacedOccurrences(myProject, editor, replacedOccurrences);
+      }
+    }
+    else {
+      if (!alreadyDefined) {
+        refreshPositionMarker(context.getExpression().replaceWithExpression(refExpr, true));
+      }
+    }
+    return insertedVar;
+  }
+
+  private static GrExpression generateInitializer(GrIntroduceContext context, GrVariable variable) {
+    final StringPartInfo part = context.getStringPart();
+    final GrExpression initializer;
+    initializer = part != null
+                  ? GrIntroduceHandlerBase.generateExpressionFromStringPart(context)
+                  : context.getExpression();
+    return variable.getInitializerGroovy().replaceWithExpression(initializer, true);
   }
 
   private static void resolveLocalConflicts(PsiElement tempContainer, String varName) {

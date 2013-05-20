@@ -15,37 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 /**
  * @author Max Medvedev
  */
-public interface GrIntroduceContext {
-  @NotNull
-  Project getProject();
+public class StringPartInfo {
+  private final GrLiteral myLiteral;
+  private final TextRange myRange;
 
-  Editor getEditor();
+  public StringPartInfo(@NotNull GrLiteral literal, @NotNull TextRange range) {
+    myLiteral = literal;
+    myRange = range.shiftRight(-literal.getTextRange().getStartOffset());
+  }
 
-  @Nullable
-  GrExpression getExpression();
+  public GrLiteral getLiteral() {
+    return myLiteral;
+  }
 
-  @Nullable
-  GrVariable getVar();
-
-  @Nullable
-  StringPartInfo getStringPart();
-
-  @NotNull
-  PsiElement[] getOccurrences();
-
-  PsiElement getScope();
-
-  @NotNull
-  PsiElement getPlace();
+  public TextRange getRange() {
+    return myRange;
+  }
 }

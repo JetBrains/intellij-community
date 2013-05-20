@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -71,7 +72,8 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
       }
     }
     else {
-      firstOccurence = myContext.getExpression();
+      final GrExpression expression = myContext.getExpression();
+      firstOccurence = expression != null ? expression : myContext.getStringPart().getLiteral();
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     assert varName != null;
