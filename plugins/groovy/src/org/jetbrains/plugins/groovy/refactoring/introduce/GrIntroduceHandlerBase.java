@@ -463,7 +463,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return candidate;
   }
 
-  protected static void deleteLocalVar(@NotNull GrIntroduceContext context) {
+  public static void deleteLocalVar(@NotNull GrIntroduceContext context) {
     final GrVariable resolved = resolveLocalVar(context);
 
     final PsiElement parent = resolved.getParent();
@@ -478,7 +478,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @NotNull
-  protected static GrVariable resolveLocalVar(@NotNull GrIntroduceContext context) {
+  public static GrVariable resolveLocalVar(@NotNull GrIntroduceContext context) {
     final GrVariable var = context.getVar();
     if (var != null) {
       return var;
@@ -541,7 +541,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     final GrExpression concatenation =
       GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText(prefix + "+" + ref + "+" + suffix);
 
-    return context.getStringPart().getLiteral().replaceWithExpression(concatenation, false);
+    final GrExpression concat = context.getStringPart().getLiteral().replaceWithExpression(concatenation, false);
+    return ((GrBinaryExpression)((GrBinaryExpression)concat).getLeftOperand()).getRightOperand();
   }
 
   public interface Validator extends NameValidator {

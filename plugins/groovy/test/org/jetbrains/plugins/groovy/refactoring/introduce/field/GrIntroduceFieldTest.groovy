@@ -209,6 +209,22 @@ class MyTest extends GroovyTestCase {
            false, false, false, SETUP_METHOD)
   }
 
+  void testStringPart() {
+    doTest('''\
+class A {
+    def foo() {
+        print 'a<selection>b</selection>c'
+    }
+}''', '''\
+class A {
+    def f = 'b'
+
+    def foo() {
+        print 'a' + f<caret> + 'c'
+    }
+}''', false, false, false, FIELD_DECLARATION, false, null)
+  }
+
 
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,

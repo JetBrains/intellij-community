@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 
@@ -64,7 +64,7 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
 
           @Override
           public String getVisibilityModifier() {
-            return GrModifier.PACKAGE_LOCAL;
+            return PsiModifier.PACKAGE_LOCAL;
           }
 
           @Override
