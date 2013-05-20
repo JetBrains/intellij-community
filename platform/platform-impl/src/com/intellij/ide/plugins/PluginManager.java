@@ -463,6 +463,7 @@ public class PluginManager {
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
     try {
       BuildNumber buildNumber = getBuildNumber();
+
       if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
         BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
         if (sinceBuild.compareTo(buildNumber) > 0) {
@@ -472,12 +473,13 @@ public class PluginManager {
 
       if (!StringUtil.isEmpty(descriptor.getUntilBuild()) && !buildNumber.isSnapshot()) {
         BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild(), descriptor.getName());
-        if (untilBuild.compareTo(buildNumber) < 0) return true;
+        if (untilBuild.compareTo(buildNumber) < 0) {
+          return true;
+        }
       }
     }
-    catch (RuntimeException e) {
-      return false;
-    }
+    catch (RuntimeException ignored) { }
+
     return false;
   }
 
@@ -852,7 +854,7 @@ public class PluginManager {
     return true;
   }
 
-  static BuildNumber getBuildNumber() {
+  private static BuildNumber getBuildNumber() {
     if (ourBuildNumber == null) {
       ourBuildNumber = BuildNumber.fromString(System.getProperty("idea.plugins.compatible.build"));
       if (ourBuildNumber == null) {

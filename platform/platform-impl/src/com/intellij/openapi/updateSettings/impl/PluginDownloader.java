@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +26,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,17 +87,18 @@ public class PluginDownloader {
   }
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
-    IdeaPluginDescriptor ideaPluginDescriptor = null;
+    IdeaPluginDescriptor descriptor = null;
     if (PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
-      ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
-      LOG.assertTrue(ideaPluginDescriptor != null);
-      if (myPluginVersion != null && StringUtil.compareVersionNumbers(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) {
+      descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
+      LOG.assertTrue(descriptor != null);
+      if (myPluginVersion != null && StringUtil.compareVersionNumbers(descriptor.getVersion(), myPluginVersion) >= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false;
       }
-      myOldFile = ideaPluginDescriptor.getPath();
+      myOldFile = descriptor.getPath();
     }
+
     // download plugin
     String errorMessage = IdeBundle.message("unknown.error");
     try {
@@ -110,39 +109,35 @@ public class PluginDownloader {
       errorMessage = ex.getMessage();
     }
     if (myFile == null) {
-      final String errorMessage1 = errorMessage;
+      final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
+      final String title = IdeBundle.message("title.failed.to.download");
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
-          Messages.showErrorDialog(IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage1),
-                                   IdeBundle.message("title.failed.to.download"));
+          Messages.showErrorDialog(text, title);
         }
       });
       return false;
     }
 
-    IdeaPluginDescriptorImpl descriptor = loadDescriptionFromJar(myFile);
-    if (descriptor != null) {
-      if (InstalledPluginsTableModel.wasUpdated(descriptor.getPluginId())) return false; //already updated
-      myPluginVersion = descriptor.getVersion();
-      if (ideaPluginDescriptor != null && StringUtil.compareVersionNumbers(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) {
+    IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile);
+    if (actualDescriptor != null) {
+      if (InstalledPluginsTableModel.wasUpdated(actualDescriptor.getPluginId())) {
+        return false; //already updated
+      }
+
+      myPluginVersion = actualDescriptor.getVersion();
+      if (descriptor != null && StringUtil.compareVersionNumbers(descriptor.getVersion(), actualDescriptor.getVersion()) >= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false; //was not updated
       }
-      final BuildNumber currentBuildNumber = ApplicationInfo.getInstance().getBuild();
-      String sinceBuildString = descriptor.getSinceBuild();
-      final BuildNumber sinceBuild = StringUtil.isEmptyOrSpaces(sinceBuildString)
-                                     ? null : BuildNumber.fromString(sinceBuildString, descriptor.getName());
-      if (sinceBuild != null && sinceBuild.compareTo(currentBuildNumber) > 0) {
-        return false;
+
+      if (PluginManager.isIncompatible(actualDescriptor)) {
+        return false; //shouldn't happen
       }
-      String untilBuildString = descriptor.getUntilBuild();
-      final BuildNumber untilBuild = StringUtil.isEmptyOrSpaces(untilBuildString)
-                                     ? null : BuildNumber.fromString(untilBuildString, descriptor.getName());
-      if (untilBuild != null && untilBuild.compareTo(currentBuildNumber) < 0) {
-        return false;
-      }
-      setDescriptor(descriptor);
-     }
+
+      setDescriptor(actualDescriptor);
+    }
     return true;
   }
 
@@ -364,10 +359,9 @@ public class PluginDownloader {
       url = ((PluginNode)descriptor).getDownloadUrl();
     }
     if (url == null) {
-      BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
       String uuid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
       url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
-            "&build=" + buildNumber.asString() + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
+            "&build=" + RepositoryHelper.getDownloadBuildNumber() + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
     }
 
     PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), url, null, null, descriptor.getName());

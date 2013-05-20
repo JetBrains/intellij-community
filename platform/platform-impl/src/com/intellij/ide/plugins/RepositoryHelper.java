@@ -44,8 +44,7 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator) throws Exception {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
-    BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
-    String url = appInfo.getPluginsListUrl() + "?build=" + buildNumber.asString();
+    String url = appInfo.getPluginsListUrl() + "?build=" + getDownloadBuildNumber();
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", appInfo.getPluginManagerUrl()));
@@ -135,5 +134,12 @@ public class RepositoryHelper {
 
   public static String getDownloadUrl() {
     return ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl() + "?action=download&id=";
+  }
+
+  // temp. hack to deal with plugin repository
+  public static String getDownloadBuildNumber() {
+    BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
+    String string = buildNumber.asString();
+    return buildNumber.isSnapshot() ? string.replace(".SNAPSHOT", ".998") : string;
   }
 }
