@@ -16,9 +16,9 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
@@ -40,19 +40,21 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
+  public static boolean STRICT = false;
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentHashMap<URL, Icon> ourIconsCache = new ConcurrentHashMap<URL, Icon>(100, 0.9f,2);
+  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = new ConcurrentHashMap<URL, CachedImageIcon>(100, 0.9f,2);
 
   /**
    * This cache contains mapping between icons and disabled icons.
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
-  private static final Map<String, String> ourDeprecatedIconsReplacements = new HashMap<String, String>();
+  @NonNls private static final Map<String, String> ourDeprecatedIconsReplacements = new HashMap<String, String>();
 
   static {
     ourDeprecatedIconsReplacements.put("/general/toolWindowDebugger.png", "AllIcons.Toolwindows.ToolWindowDebugger");
@@ -127,7 +129,7 @@ public final class IconLoader {
   @Nullable
   private static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
     try {
-      String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
+      @NonNls String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
       Class cur = Class.forName(pckg + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
       Field field = cur.getField(path.substring(path.lastIndexOf('.') + 1));
 
@@ -187,13 +189,12 @@ public final class IconLoader {
     path = undeprecate(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
-    final ByClass icon = new ByClass(aClass, path);
-
-    if (computeNow || !Registry.is("ide.lazyIconLoading", true)) {
-      return icon.getOrComputeIcon();
+    URL myURL = aClass.getResource(path);
+    if (myURL == null) {
+      if (STRICT) throw new RuntimeException("Can't find icon in '" + path + "' near "+aClass);
+      return null;
     }
-
-    return icon;
+    return findIcon(myURL);
   }
 
   @NotNull
@@ -212,16 +213,16 @@ public final class IconLoader {
     if (url == null) {
       return null;
     }
-    Icon icon = ourIconsCache.get(url);
+    CachedImageIcon icon = ourIconsCache.get(url);
     if (icon == null) {
       icon = new CachedImageIcon(url);
-      icon = ourIconsCache.cacheOrGet(url, icon);
+      icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
     }
     return icon;
   }
 
   @Nullable
-  public static Icon findIcon(@NotNull String path, final ClassLoader classLoader) {
+  public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
     path = undeprecate(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!StringUtil.startsWithChar(path, '/')) return null;
@@ -231,7 +232,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static Icon checkIcon(final Image image, URL url) {
+  private static Icon checkIcon(final Image image, @NotNull URL url) {
     if (image == null || image.getHeight(LabelHolder.ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
     }
@@ -252,7 +253,6 @@ public final class IconLoader {
    * Gets (creates if necessary) disabled icon based on the passed one.
    *
    * @return <code>ImageIcon</code> constructed from disabled image of passed icon.
-   * @param icon
    */
   @Nullable
   public static Icon getDisabledIcon(Icon icon) {
@@ -321,20 +321,23 @@ public final class IconLoader {
 
   private static final class CachedImageIcon implements Icon {
     private Object myRealIcon;
+    @NotNull
     private final URL myUrl;
 
-    public CachedImageIcon(URL url) {
+    public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
     }
 
+    @NotNull
     private synchronized Icon getRealIcon() {
       if (isLoaderDisabled()) return EMPTY_ICON;
 
-      if (myRealIcon instanceof Icon) return (Icon)myRealIcon;
+      Object realIcon = myRealIcon;
+      if (realIcon instanceof Icon) return (Icon)realIcon;
 
       Icon icon;
-      if (myRealIcon instanceof Reference) {
-        icon = ((Reference<Icon>)myRealIcon).get();
+      if (realIcon instanceof Reference) {
+        icon = ((Reference<Icon>)realIcon).get();
         if (icon != null) return icon;
       }
 
@@ -343,13 +346,15 @@ public final class IconLoader {
 
       if (icon != null) {
         if (icon.getIconWidth() < 50 && icon.getIconHeight() < 50) {
-          myRealIcon = icon;
-        } else {
-          myRealIcon= new SoftReference<Icon>(icon);
+          realIcon = icon;
         }
+        else {
+          realIcon = new SoftReference<Icon>(icon);
+        }
+        myRealIcon = realIcon;
       }
 
-      return icon != null ? icon : EMPTY_ICON;
+      return icon == null ? EMPTY_ICON : icon;
     }
 
     @Override
@@ -424,28 +429,6 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
-  }
-
-  private static class ByClass extends LazyIcon {
-    private final Class myCallerClass;
-    private final String myPath;
-
-    public ByClass(@NotNull Class aClass, @NotNull String path) {
-      myCallerClass = aClass;
-      myPath = path;
-    }
-
-    @Override
-    protected Icon compute() {
-      URL url = myCallerClass.getResource(myPath);
-      return findIcon(url);
-    }
-
-    @NonNls
-    @Override
-    public String toString() {
-      return "icon path=" + myPath + " class=" + myCallerClass;
-    }
   }
 
   private static class LabelHolder {
