@@ -445,19 +445,22 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private LanguageLevel getLanguageLevelInner() {
-    if (myOriginalFile instanceof PsiJavaFile) return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
-    final LanguageLevel forcedLanguageLevel = getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY);
-    if (forcedLanguageLevel != null) return forcedLanguageLevel;
-    VirtualFile virtualFile = getVirtualFile();
-
-    if (virtualFile == null) {
-      virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    if (myOriginalFile instanceof PsiJavaFile) {
+      return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
     }
+
+    LanguageLevel forcedLanguageLevel = getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY);
+    if (forcedLanguageLevel != null) return forcedLanguageLevel;
+
+    VirtualFile virtualFile = getVirtualFile();
+    if (virtualFile == null) virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
 
     final Project project = getProject();
     if (virtualFile == null) {
       final PsiFile originalFile = getOriginalFile();
-      if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
+      if (originalFile instanceof PsiJavaFile && originalFile != this) {
+        return ((PsiJavaFile)originalFile).getLanguageLevel();
+      }
       return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
     }
 
@@ -471,7 +474,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (classesLanguageLevel != null) {
       return classesLanguageLevel;
     }
-    return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+
+    return PsiUtil.getLanguageLevel(project);
   }
 
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext>> {
