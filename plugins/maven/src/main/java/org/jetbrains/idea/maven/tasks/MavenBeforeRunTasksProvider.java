@@ -43,7 +43,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -107,7 +106,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
   }
 
   public boolean configureTask(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
-    MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject, Arrays.asList("aaa", "adasdas"));
+    MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject);
 
     dialog.setTitle(TasksBundle.message("maven.tasks.select.goal.title"));
 
