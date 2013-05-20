@@ -134,7 +134,7 @@ public class MavenSelectProjectPopup {
 
         final Ref<JBPopup> popupRef = new Ref<JBPopup>();
 
-        Runnable clickCallBack = new Runnable() {
+        final Runnable clickCallBack = new Runnable() {
           @Override
           public void run() {
             TreePath path = projectTree.getSelectionPath();
@@ -151,6 +151,16 @@ public class MavenSelectProjectPopup {
             popupRef.get().closeOk(null);
           }
         };
+
+        projectTree.addKeyListener(new KeyAdapter() {
+          @Override
+          public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+              clickCallBack.run();
+              e.consume();
+            }
+          }
+        });
 
         JBPopup popup = new PopupChooserBuilder(projectTree)
           .setTitle("Select maven project")
