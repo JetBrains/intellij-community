@@ -187,7 +187,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       lineAnchor.append("</a>");
       //noinspection HardCodedStringLiteral
       final String location = "#loc";
-      if (!containsReference && !res.contains(location)) {
+      if (!res.contains(location)) {
         res += " (" + location + ")";
       }
       res = res.replaceAll(location, lineAnchor.toString());
