@@ -18,13 +18,17 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.impl.FileStatusManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
+
+import java.nio.charset.Charset;
 
 import static com.intellij.util.CompressionUtil.compressCharSequence;
 import static com.intellij.util.CompressionUtil.uncompressCharSequence;
@@ -35,6 +39,7 @@ public class EditorChangeAction extends BasicUndoableAction {
   private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
+  private final Charset myCharset;
 
   public EditorChangeAction(DocumentEvent e) {
     this((DocumentEx)e.getDocument(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
@@ -47,9 +52,12 @@ public class EditorChangeAction extends BasicUndoableAction {
                             long oldTimeStamp) {
     super(document);
 
+    Charset charset = EncodingManager.getInstance().getEncoding(FileDocumentManager.getInstance().getFile(document), false);
+    myCharset = charset == null ? Charset.defaultCharset() : charset;
+
     myOffset = offset;
-    myOldString = oldString == null ? "" : compressCharSequence(oldString);
-    myNewString = newString == null ? "" : compressCharSequence(newString);
+    myOldString = oldString == null ? "" : compressCharSequence(oldString, myCharset);
+    myNewString = newString == null ? "" : compressCharSequence(newString, myCharset);
     myOldTimeStamp = oldTimeStamp;
     myNewTimeStamp = document.getModificationStamp();
   }
@@ -68,13 +76,13 @@ public class EditorChangeAction extends BasicUndoableAction {
   }
 
   public void performUndo() {
-    exchangeStrings(uncompressCharSequence(myNewString), uncompressCharSequence(myOldString));
+    exchangeStrings(uncompressCharSequence(myNewString, myCharset), uncompressCharSequence(myOldString, myCharset));
   }
 
   public void redo() {
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
-      exchangeStrings(uncompressCharSequence(myOldString), uncompressCharSequence(myNewString));
+      exchangeStrings(uncompressCharSequence(myOldString, myCharset), uncompressCharSequence(myNewString, myCharset));
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(getDocument());
