@@ -77,7 +77,7 @@ public class GrIntroduceConstantProcessor {
     }
 
     if (context.getStringPart() != null) {
-      final GrExpression ref = processLiteral(context, field);
+      final GrExpression ref = processLiteral(field.getName(), context.getStringPart(), context.getProject());
 
       context.getEditor().getCaretModel().moveToOffset(ref.getTextRange().getEndOffset());
       context.getEditor().getSelectionModel().removeSelection();
@@ -196,7 +196,7 @@ public class GrIntroduceConstantProcessor {
       return expression;
     }
     else {
-      return GrIntroduceHandlerBase.generateExpressionFromStringPart(context);
+      return GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject());
     }
   }
 

@@ -514,34 +514,32 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @NotNull
-  public static GrExpression generateExpressionFromStringPart(GrIntroduceContext context) {
-    Data data = new Data(context);
+  public static GrExpression generateExpressionFromStringPart(final StringPartInfo stringPart, final Project project) {
+    Data data = new Data(stringPart);
     String startQuote = data.getStartQuote();
     TextRange range = data.getRange();
     String literalText = data.getText();
     String endQuote = data.getEndQuote();
 
     final String substringLiteral = startQuote + range.substring(literalText) + endQuote;
-    return GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText(substringLiteral);
+    return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(substringLiteral);
   }
 
   @NotNull
-  public static GrExpression processLiteral(@NotNull GrIntroduceContext context, @NotNull GrVariable var) {
-    Data data = new Data(context);
+  public static GrExpression processLiteral(final String varName, final StringPartInfo stringPart, final Project project) {
+    Data data = new Data(stringPart);
     String startQuote = data.getStartQuote();
     TextRange range = data.getRange();
     String literalText = data.getText();
     String endQuote = data.getEndQuote();
 
     String prefix = literalText.substring(0, range.getStartOffset()) + endQuote;
-    String ref = var.getName();
     String suffix = startQuote + literalText.substring(range.getEndOffset());
 
-
     final GrExpression concatenation =
-      GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText(prefix + "+" + ref + "+" + suffix);
+      GroovyPsiElementFactory.getInstance(project).createExpressionFromText(prefix + "+" + varName + "+" + suffix);
 
-    final GrExpression concat = context.getStringPart().getLiteral().replaceWithExpression(concatenation, false);
+    final GrExpression concat = stringPart.getLiteral().replaceWithExpression(concatenation, false);
     return ((GrBinaryExpression)((GrBinaryExpression)concat).getLeftOperand()).getRightOperand();
   }
 
@@ -555,11 +553,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     private String myEndQuote;
     private TextRange myRange;
 
-    public Data(GrIntroduceContext context) {
-      final StringPartInfo part = context.getStringPart();
-      assert part != null;
+    public Data(final StringPartInfo stringPartInfo) {
+      assert stringPartInfo != null;
 
-      final GrLiteral literal = part.getLiteral();
+      final GrLiteral literal = stringPartInfo.getLiteral();
 
       myText = literal.getText();
 
@@ -567,7 +564,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       myEndQuote = GrStringUtil.getEndQuote(myText);
       final TextRange dataRange = new TextRange(myStartQuote.length(), myText.length() - myEndQuote.length());
 
-      myRange = part.getRange().intersection(dataRange);
+      myRange = stringPartInfo.getRange().intersection(dataRange);
     }
 
     public String getText() {

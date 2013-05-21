@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
+package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.io.File;
-
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.refactoring.IntroduceParameterRefactoring
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import gnu.trove.TIntArrayList
+import gnu.trove.TObjectIntHashMap
+import junit.framework.Assert
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
@@ -93,6 +92,22 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     return true;
   }
 
+  private void doTest(final int replaceFieldsWithGetters,
+                         final boolean removeUnusedParameters,
+                         final boolean declareFinal,
+                         @Nullable final String conflicts,
+                         final boolean generateDelegate, String before, String after) {
+    myFixture.configureByText('before.groovy', before);
+
+    execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate, getProject(),
+            myFixture.getEditor(), myFixture.getFile());
+
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.getEditor().getSelectionModel().removeSelection();
+
+    myFixture.checkResult(after);
+  }
+
 
   private boolean exists(String sourceFilePath) {
     File file = new File(getTestDataPath() + "/" + sourceFilePath);
@@ -117,7 +132,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
               final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
                 @Override
                 protected void showDialog(IntroduceParameterInfo info) {
-                  final GrIntroduceParameterSettings hackedSettings = getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
+                  final GrIntroduceParameterSettings hackedSettings = GrIntroduceParameterTest.getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
                   if (info.getToReplaceIn() instanceof GrMethod) {
                     new GrIntroduceParameterProcessor(hackedSettings).run();
                   }
@@ -134,7 +149,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                 e.printStackTrace();
                 fail("Conflicts were not expected");
               }
-              assertEquals(conflicts, e.getMessage());
+              Assert.assertEquals(conflicts, e.getMessage());
             }
           }
         });
@@ -155,10 +170,14 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
         toRemove.add(i);
       }
     }
-    GrExpression expr = GrIntroduceHandlerBase.findExpression(context.getStatements()[0]);
-    GrVariable var = GrIntroduceHandlerBase.findVariable(context.getStatements()[0]);
-    final PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(var == null ? expr.getType() : var.getType());
-    return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters, expr, var, type, true);
+
+    final GrStatement[] statements = context.getStatements()
+    GrExpression expr = statements.length == 1 ? GrIntroduceHandlerBase.findExpression(statements[0]) : null;
+    GrVariable var = statements.length == 1 ? GrIntroduceHandlerBase.findVariable(context.getStatements()[0]) : null;
+    final PsiType type = TypesUtil.
+      unboxPrimitiveTypeWrapper(var != null ? var.getType() : expr != null ? expr.getType() : context.stringPartInfo.literal.type);
+    return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters,
+                                                 expr, var, type, true);
   }
   
   
@@ -300,4 +319,20 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
 
   public void testScriptMethod() {doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false);}
   public void testAppStatement() {doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);}
+
+  void testStringPart0() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, '''\
+def foo() {
+    print 'a<selection>b</selection>c'
+}
+
+foo()
+''', '''\
+def foo(String anObject) {
+    print 'a' + anObject<caret> + 'c'
+}
+
+foo('b')
+''')
+  }
 }

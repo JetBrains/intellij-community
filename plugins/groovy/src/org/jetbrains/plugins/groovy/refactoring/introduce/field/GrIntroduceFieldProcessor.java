@@ -100,7 +100,8 @@ public class GrIntroduceFieldProcessor {
 
   private void processOccurrences(@NotNull PsiClass targetClass, @NotNull GrVariable field) {
     if (context.getStringPart() != null) {
-      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(context, field);
+      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(field.getName(), context.getStringPart(),
+                                                                      context.getProject());
 
       context.getEditor().getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
       context.getEditor().getSelectionModel().removeSelection();
@@ -336,6 +337,6 @@ public class GrIntroduceFieldProcessor {
     }
 
 
-    return GrIntroduceHandlerBase.generateExpressionFromStringPart(context);
+    return GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject());
   }
 }

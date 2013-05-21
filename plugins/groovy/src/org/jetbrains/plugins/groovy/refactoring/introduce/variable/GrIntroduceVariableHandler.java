@@ -164,7 +164,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     variable.setType(settings.getSelectedType());
     GrReferenceAdjuster.shortenReferences(variable);
 
-    final GrExpression ref = processLiteral(context, variable);
+    final GrExpression ref = processLiteral(variable.getName(), context.getStringPart(), context.getProject());
     refreshPositionMarker(ref);
     return variable;
   }
@@ -241,7 +241,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     final StringPartInfo part = context.getStringPart();
     final GrExpression initializer;
     initializer = part != null
-                  ? GrIntroduceHandlerBase.generateExpressionFromStringPart(context)
+                  ? GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject())
                   : context.getExpression();
     return variable.getInitializerGroovy().replaceWithExpression(initializer, true);
   }
