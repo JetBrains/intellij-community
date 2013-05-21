@@ -98,7 +98,14 @@ public class RngParser {
     } catch (BuildException e) {
       LOG.info(e);
     } catch (IllegalSchemaException e) {
-      LOG.info("invalid schema: " + file.getVirtualFile().getPresentableUrl());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("invalid schema: " + virtualFile.getPresentableUrl(), e);
+        } else {
+          LOG.info("invalid schema: " + virtualFile.getPresentableUrl() + ". [" + e.getMessage() + "]");
+        }
+      }
     }
     return null;
   }
@@ -151,6 +158,9 @@ public class RngParser {
       //    "file://tmp/foo.bar"  (produced by com.intellij.openapi.vfs.VfsUtil.fixIDEAUrl) doesn't work: "java.net.UnknownHostException: tmp"
       //    "file:/tmp/foo.bar"   (produced by File.toURL()) works fine
       s = s.replaceFirst("file:/+", "file:/");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Fixed URL: " + url + " -> " + s);
+      }
     }
     return s;
   }
