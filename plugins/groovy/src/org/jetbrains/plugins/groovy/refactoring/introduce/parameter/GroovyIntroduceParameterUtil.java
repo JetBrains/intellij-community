@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -61,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -295,14 +297,12 @@ public class GroovyIntroduceParameterUtil {
   public static TObjectIntHashMap<GrParameter> findParametersToRemove(IntroduceParameterInfo helper) {
     final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<GrParameter>();
 
-    final GrStatement[] statements = helper.getStatements();
-    final int start = statements[0].getTextRange().getStartOffset();
-    final int end = statements[statements.length - 1].getTextRange().getEndOffset();
+    final TextRange range = ExtractUtil.getRangeOfRefactoring(helper);
 
     GrParameter[] parameters = helper.getToReplaceIn().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       GrParameter parameter = parameters[i];
-      if (shouldRemove(parameter, start, end)) {
+      if (shouldRemove(parameter, range.getStartOffset(), range.getEndOffset())) {
         result.put(parameter, i);
       }
     }

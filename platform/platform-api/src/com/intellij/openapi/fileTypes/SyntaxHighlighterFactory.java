@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,45 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public abstract class SyntaxHighlighterFactory {
   public static final SyntaxHighlighterLanguageFactory LANGUAGE_FACTORY = new SyntaxHighlighterLanguageFactory();
 
   /**
    * Returns syntax highlighter for the given language.
-   * @param lang a {@code Language} to get highlighter for
-   * @param project might be necessary to gather various project settings from
-   * @param virtualFile might be necessary to collect file specific settings
+   *
+   * @param language a {@code Language} to get highlighter for
+   * @param project  might be necessary to gather various project settings from
+   * @param file     might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
-  public static SyntaxHighlighter getSyntaxHighlighter(@NotNull Language lang, @Nullable Project project, @Nullable final VirtualFile virtualFile) {
-    return LANGUAGE_FACTORY.forLanguage(lang).getSyntaxHighlighter(project, virtualFile);
+  public static SyntaxHighlighter getSyntaxHighlighter(@NotNull Language language, @Nullable Project project, @Nullable VirtualFile file) {
+    return LANGUAGE_FACTORY.forLanguage(language).getSyntaxHighlighter(project, file);
   }
 
   /**
    * Returns syntax highlighter for the given file type.
    * Note: it is recommended to use {@link #getSyntaxHighlighter(Language, Project, VirtualFile)} in most cases,
    * and use this method only when you are do not know the language you use.
+   *
    * @param fileType a file type to use to select appropriate highlighter
-   * @param project might be necessary to gather various project settings from
-   * @param virtualFile might be necessary to collect file specific settings
+   * @param project  might be necessary to gather various project settings from
+   * @param file     might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
   @Nullable
-  public static SyntaxHighlighter getSyntaxHighlighter(final FileType fileType, final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
-    return SyntaxHighlighter.PROVIDER.create(fileType, project, virtualFile);
+  public static SyntaxHighlighter getSyntaxHighlighter(FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
+    return SyntaxHighlighter.PROVIDER.create(fileType, project, file);
   }
 
   /**
@@ -61,7 +61,7 @@ public abstract class SyntaxHighlighterFactory {
    * <p/>
    * Default implementation doesn't highlight anything.
    *
-   * @param project might be necessary to gather various project settings from.
+   * @param project     might be necessary to gather various project settings from.
    * @param virtualFile might be necessary to collect file specific settings
    * @return <code>SyntaxHighlighter</code> interface implementation for this particular language.
    */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,15 +47,19 @@ public class InitialInfo implements ExtractInfoHelper {
   private final GrStatement[] myStatements;
   private final boolean myHasReturnValue;
   private final String[] myArgumentNames;
+  private final StringPartInfo myStringPartInfo;
 
   public InitialInfo(VariableInfo[] inputInfos,
                      VariableInfo[] outputInfos,
                      PsiElement[] innerElements,
                      GrStatement[] statements,
-                     ArrayList<GrStatement> returnStatements) {
+                     ArrayList<GrStatement> returnStatements,
+                     StringPartInfo stringPartInfo,
+                     Project project) {
     myInnerElements = innerElements;
     myStatements = statements;
     myOutputNames = outputInfos;
+    myStringPartInfo = stringPartInfo;
 
     myHasReturnValue = ContainerUtil.find(returnStatements, new Condition<GrStatement>() {
       @Override
@@ -63,8 +68,8 @@ public class InitialInfo implements ExtractInfoHelper {
       }
     }) != null;
 
-    assert myStatements.length > 0;
-    myProject = myStatements[0].getProject();
+    assert myStringPartInfo != null || myStatements.length > 0;
+    myProject = project;
 
     myParameterInfos = new ParameterInfo[inputInfos.length];
     myArgumentNames = new String[inputInfos.length];
@@ -75,7 +80,7 @@ public class InitialInfo implements ExtractInfoHelper {
       myArgumentNames[i] = info.getName();
     }
 
-    PsiType outputType = inferOutputType(outputInfos, statements, returnStatements, myHasReturnValue);
+    PsiType outputType = inferOutputType(outputInfos, statements, returnStatements, myHasReturnValue, stringPartInfo);
     myOutputType = outputType != null ? outputType : PsiType.VOID;
   }
 
@@ -83,7 +88,11 @@ public class InitialInfo implements ExtractInfoHelper {
   private PsiType inferOutputType(VariableInfo[] outputInfos,
                                   GrStatement[] statements,
                                   ArrayList<GrStatement> returnStatements,
-                                  boolean hasReturnValue) {
+                                  boolean hasReturnValue,
+                                  StringPartInfo stringPartInfo) {
+    if (stringPartInfo != null) {
+      return stringPartInfo.getLiteral().getType();
+    }
     PsiType outputType = PsiType.VOID;
     if (outputInfos.length > 0) {
       if (outputInfos.length == 1) {
@@ -177,11 +186,16 @@ public class InitialInfo implements ExtractInfoHelper {
 
   @Override
   public PsiElement getContext() {
-    return myStatements[0];
+    return myStatements.length > 0 ? myStatements[0] : myStringPartInfo.getLiteral();
   }
 
   @Override
   public boolean isForceReturn() {
     return false;
+  }
+
+  @Nullable
+  public StringPartInfo getStringPartInfo() {
+    return myStringPartInfo;
   }
 }

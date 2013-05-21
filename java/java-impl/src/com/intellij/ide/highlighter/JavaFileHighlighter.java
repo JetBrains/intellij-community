@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide.highlighter;
 import com.intellij.lexer.JavaHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.pom.java.LanguageLevel;
@@ -39,21 +38,11 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> ourMap1;
   private static final Map<IElementType, TextAttributesKey> ourMap2;
 
-  private final LanguageLevel myLanguageLevel;
-
-  public JavaFileHighlighter() {
-    this(LanguageLevel.HIGHEST);
-  }
-
-  public JavaFileHighlighter(LanguageLevel languageLevel) {
-    myLanguageLevel = languageLevel;
-  }
-
   static {
     ourMap1 = new HashMap<IElementType, TextAttributesKey>();
     ourMap2 = new HashMap<IElementType, TextAttributesKey>();
 
-    fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, JavaHighlightingColors .KEYWORD);
+    fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
     fillMap(ourMap1, ElementType.LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);
     fillMap(ourMap1, ElementType.OPERATION_BIT_SET, JavaHighlightingColors.OPERATION_SIGN);
 
@@ -96,23 +85,26 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1.put(JavaDocTokenType.DOC_TAG_NAME, JavaHighlightingColors.DOC_COMMENT);
     ourMap2.put(JavaDocTokenType.DOC_TAG_NAME, JavaHighlightingColors.DOC_COMMENT_TAG);
 
-    IElementType[] javaDocMarkup = new IElementType[]{XmlTokenType.XML_START_TAG_START,
-                                        XmlTokenType.XML_END_TAG_START,
-                                        XmlTokenType.XML_TAG_END,
-                                        XmlTokenType.XML_EMPTY_ELEMENT_END,
-                                        XmlTokenType.TAG_WHITE_SPACE,
-                                        XmlTokenType.XML_TAG_NAME,
-                                        XmlTokenType.XML_NAME,
-                                        XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
-                                        XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER,
-                                        XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,
-                                        XmlTokenType.XML_CHAR_ENTITY_REF,
-                                        XmlTokenType.XML_EQ};
-
+    IElementType[] javaDocMarkup = {
+      XmlTokenType.XML_START_TAG_START, XmlTokenType.XML_END_TAG_START, XmlTokenType.XML_TAG_END, XmlTokenType.XML_EMPTY_ELEMENT_END,
+      XmlTokenType.TAG_WHITE_SPACE, XmlTokenType.XML_TAG_NAME, XmlTokenType.XML_NAME, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
+      XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, XmlTokenType.XML_CHAR_ENTITY_REF,
+      XmlTokenType.XML_EQ
+    };
     for (IElementType idx : javaDocMarkup) {
       ourMap1.put(idx, JavaHighlightingColors.DOC_COMMENT);
       ourMap2.put(idx, JavaHighlightingColors.DOC_COMMENT_MARKUP);
     }
+  }
+
+  private final LanguageLevel myLanguageLevel;
+
+  public JavaFileHighlighter() {
+    this(LanguageLevel.HIGHEST);
+  }
+
+  public JavaFileHighlighter(@NotNull LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
   }
 
   @NotNull

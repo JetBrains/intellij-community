@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -89,6 +90,24 @@ public class Foo {
     doTest()
   }
 
+  void testStringPart1() {
+    doTest('''\
+print 'a<begin>b<end>c'
+''', '''\
+def preved = 'b'
+print 'a' + preved<caret> + 'c'
+''')
+  }
+
+  void testStringPart2() {
+    doTest('''\
+print "a<begin>b<end>c"
+''', '''\
+def preved = "b"
+print "a" + preved<caret> + "c"
+''')
+  }
+
   protected static final String ALL_MARKER = "<all>";
 
   protected boolean replaceAllOccurences = false;
@@ -116,13 +135,17 @@ public class Foo {
     final GrIntroduceVariableHandler introduceVariableHandler = new GrIntroduceVariableHandler();
 
     GrExpression selectedExpr = GrIntroduceHandlerBase.findExpression(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
+    StringPartInfo stringPartInfo = GrIntroduceHandlerBase.findStringPart(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
 
-    assertNotNull("Selected expression reference points to null", selectedExpr);
+    assertTrue("Selected expression reference points to null", selectedExpr != null || stringPartInfo != null);
 
-    final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
+    final PsiElement tempContainer = GroovyRefactoringUtil.
+      getEnclosingContainer(GrIntroduceHandlerBase.getCurrentPlace(selectedExpr, null, stringPartInfo));
     assertTrue(tempContainer instanceof GroovyPsiElement);
 
-    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
+    PsiElement[] occurrences = selectedExpr != null ?
+                               GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer) :
+                               [stringPartInfo.literal] as PsiElement[];
     final String varName = "preved";
     final PsiType varType;
     if (explicitType) {
@@ -132,7 +155,7 @@ public class Foo {
       varType = null;
     }
 
-    final GrIntroduceContext context = new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, occurences, tempContainer);
+    final GrIntroduceContext context = new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, stringPartInfo, occurrences, tempContainer);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -172,7 +195,11 @@ public class Foo {
 
   public void doTest(boolean explicitType) {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-    assertEquals(data.get(1).trim(), processFile(data.get(0), explicitType).trim());
+    doTest(data[0], data[1], explicitType);
+  }
+
+  public void doTest(String before, String after, boolean explicitType = false) {
+    assertEquals(after.trim(), processFile(before, explicitType).trim())
   }
 
   public void doTest() {

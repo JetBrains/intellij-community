@@ -45,6 +45,7 @@ import java.util.Set;
  * @author anna
  * @since 28-Nov-2005
  */
+@SuppressWarnings("JavadocReference")
 public abstract class InspectionProfileEntry {
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
 

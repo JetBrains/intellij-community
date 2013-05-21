@@ -202,11 +202,27 @@ class MyTest extends GroovyTestCase {
     }
 
     void foo() {
-        print f
+        print <selection>f</selection>
     }
 }
 ''',
            false, false, false, SETUP_METHOD)
+  }
+
+  void testStringPart() {
+    doTest('''\
+class A {
+    def foo() {
+        print 'a<selection>b</selection>c'
+    }
+}''', '''\
+class A {
+    def f = 'b'
+
+    def foo() {
+        print 'a' + f<caret> + 'c'
+    }
+}''', false, false, false, FIELD_DECLARATION, false, null)
   }
 
 

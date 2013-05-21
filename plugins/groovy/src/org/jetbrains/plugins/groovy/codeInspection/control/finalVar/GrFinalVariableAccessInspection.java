@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -126,7 +128,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         if (clazz == null) return;
 
         final GrClassInitializer[] initializers = clazz.getInitializers();
-        final GrField[] fields = clazz.getCodeFields();
+        final List<GrField> fields = getFinalFields(clazz);
 
         Set<GrVariable> initializedFields = ContainerUtil.newHashSet();
         appendFieldInitializedInDeclaration(false, fields, initializedFields);
@@ -147,7 +149,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         final boolean isStatic = initializer.isStatic();
 
         final GrClassInitializer[] initializers = clazz.getInitializers();
-        final GrField[] fields = clazz.getCodeFields();
+        final List<GrField> fields = getFinalFields(clazz);
 
         Set<GrVariable> initializedFields = ContainerUtil.newHashSet();
         appendFieldInitializedInDeclaration(isStatic, fields, initializedFields);
@@ -197,8 +199,20 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     };
   }
 
+  @NotNull
+  private static List<GrField> getFinalFields(@NotNull GrTypeDefinition clazz) {
+    final GrField[] fields = clazz.getCodeFields();
+    return ContainerUtil.filter(fields, new Condition<GrField>() {
+      @Override
+      public boolean value(GrField field) {
+        final GrModifierList list = field.getModifierList();
+        return list != null && list.hasModifierProperty(FINAL);
+      }
+    });
+  }
+
   private static void appendFieldInitializedInDeclaration(boolean isStatic,
-                                                          @NotNull GrField[] fields,
+                                                          @NotNull List<GrField> fields,
                                                           @NotNull Set<GrVariable> initializedFields) {
     for (GrField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC) == isStatic && field.getInitializerGroovy() != null) {
@@ -210,7 +224,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   private static void appendFieldsInitializedInClassInitializer(@NotNull GrClassInitializer[] initializers,
                                                                 @Nullable GrClassInitializer initializerToStop,
                                                                 boolean isStatic,
-                                                                @NotNull GrField[] fields,
+                                                                @NotNull List<GrField> fields,
                                                                 @NotNull Set<GrVariable> initializedFields) {
     for (GrClassInitializer curInit : initializers) {
       if (curInit.isStatic() != isStatic) continue;
@@ -230,7 +244,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   private static void appendInitializationFromChainedConstructors(@NotNull GrMethod constructor,
-                                                                  @NotNull GrField[] fields,
+                                                                  @NotNull List<GrField> fields,
                                                                   @NotNull Set<GrVariable> initializedFields) {
     final List<GrMethod> chained = getChainedConstructors(constructor);
     chained.remove(0);
@@ -252,7 +266,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   @NotNull
-  private static Map<String, GrVariable> buildVarMap(@NotNull GrField[] fields, boolean isStatic) {
+  private static Map<String, GrVariable> buildVarMap(@NotNull List<GrField> fields, boolean isStatic) {
     Map<String, GrVariable> result = ContainerUtil.newHashMap();
     for (GrField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC) == isStatic) {

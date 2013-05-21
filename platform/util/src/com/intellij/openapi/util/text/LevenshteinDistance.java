@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.engine;
+package com.intellij.openapi.util.text;
 
-public class LevenshteinDistance implements Metrics {
+public class LevenshteinDistance {
 
   private static int minimum(int a, int b, int c) {
     return Math.min(Math.min(a, b), c);

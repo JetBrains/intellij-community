@@ -460,4 +460,29 @@ def a = new Money('USA', 100)
 <warning>a.amount</warning> = 1000
 ''')
   }
+
+  void testNonFinalField1() {
+    testHighlighting('''
+class A {
+  int foo
+
+  def A() {
+    foo = 5
+    foo = 5 //correct
+  }
+}''')
+  }
+
+  void testNonFinalField2() {
+    testHighlighting('''
+class A {
+  int foo = 5
+
+  def A() {
+    foo = 5 //correct
+    foo = 5 //correct
+  }
+}''')
+  }
+
 }

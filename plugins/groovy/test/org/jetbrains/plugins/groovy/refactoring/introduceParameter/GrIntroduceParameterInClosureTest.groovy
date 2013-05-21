@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
+package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.refactoring.IntroduceParameterRefactoring
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
@@ -43,6 +42,24 @@ public class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTe
     myFixture.getEditor().getSelectionModel().removeSelection();
 
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
+  private void doTest(final int replaceFieldsWithGetters,
+                          final boolean removeUnusedParameters,
+                          final boolean declareFinal,
+                          @Nullable final String conflicts,
+                          final boolean generateDelegate,
+                          String before,
+                          String after) {
+    myFixture.configureByText('before.groovy', before);
+
+    GrIntroduceParameterTest.execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate,
+                                     getProject(), myFixture.getEditor(), myFixture.getFile());
+
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.getEditor().getSelectionModel().removeSelection();
+
+    myFixture.checkResult(after);
   }
 
   public void testSimpleClosure() {
@@ -96,4 +113,18 @@ public class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTe
   public void testDelegateRemoveUnusedParam() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, null, true);
   }*/
+
+  void testStringPart0() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, '''\
+def cl = {
+    print 'a<selection>b</selection>c'
+}
+cl()
+''', '''\
+def cl = {String anObject ->
+    print 'a' + anObject<caret> + 'c'
+}
+cl('b')
+''')
+  }
 }

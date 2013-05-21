@@ -310,6 +310,18 @@ public class PsiScopesUtil {
 
         if (referenceName instanceof PsiIdentifier && qualifier instanceof PsiExpression) {
           PsiType type = ((PsiExpression)qualifier).getType();
+          if (type != null && qualifier instanceof PsiReferenceExpression) {
+            final PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
+            if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+              final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
+              if (initializer instanceof PsiNewExpression) {
+                final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();
+                if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
+                  type = initializer.getType();
+                }
+              }
+            }
+          }
           if (type == null) {
             if (qualifier instanceof PsiJavaCodeReferenceElement) {
               final JavaResolveResult result = ((PsiJavaCodeReferenceElement)qualifier).advancedResolve(false);

@@ -155,7 +155,7 @@ public class JarHandler extends JarHandlerBase {
           os.write(buffer, 0, read);
         }
       } catch (IOException ex) {
-        reportIOErrorWithJars(originalFile, mirrorFile, ex);
+        reportIOErrorWithJars(originalFile, mirrorFile  != null ? mirrorFile:tempJarFile, ex);
         return originalFile;
       } catch (NoSuchAlgorithmException ex) {
         assert false;

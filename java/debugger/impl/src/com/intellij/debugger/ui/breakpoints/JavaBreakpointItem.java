@@ -139,6 +139,8 @@ class JavaBreakpointItem extends BreakpointItem {
   @Override
   public void setEnabled(boolean state) {
     myBreakpoint.ENABLED = state;
+    myBreakpoint.updateUI();
+    DebuggerManagerEx.getInstanceEx(myBreakpoint.getProject()).getBreakpointManager().fireBreakpointChanged(myBreakpoint);
   }
 
   @Override

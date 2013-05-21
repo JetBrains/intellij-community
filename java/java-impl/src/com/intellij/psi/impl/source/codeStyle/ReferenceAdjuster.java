@@ -207,15 +207,15 @@ public class ReferenceAdjuster {
 
   private static ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
     @NotNull final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
-    final PsiQualifiedReference reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
+    final PsiQualifiedReferenceElement reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
     if (reference1 != null) replaceReferenceWithShort(reference1);
     return reference;
   }
 
   @Nullable
-  public static PsiQualifiedReference getClassReferenceToShorten(@NotNull final PsiClass refClass,
+  public static PsiQualifiedReferenceElement getClassReferenceToShorten(@NotNull final PsiClass refClass,
                                                                  final boolean addImports,
-                                                                 @NotNull final PsiQualifiedReference reference) {
+                                                                 @NotNull final PsiQualifiedReferenceElement reference) {
     PsiClass parentClass = refClass.getContainingClass();
     if (parentClass != null) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(parentClass.getProject());
@@ -227,7 +227,7 @@ public class ReferenceAdjuster {
       if (!CodeStyleSettingsManager.getSettings(reference.getProject()).INSERT_INNER_CLASS_IMPORTS) {
         final PsiElement qualifier = reference.getQualifier();
         if (qualifier instanceof PsiQualifiedReference) {
-          return getClassReferenceToShorten(parentClass, addImports, (PsiQualifiedReference)qualifier);
+          return getClassReferenceToShorten(parentClass, addImports, (PsiQualifiedReferenceElement)qualifier);
         }
         return null;
       }
@@ -255,7 +255,7 @@ public class ReferenceAdjuster {
   }
 
   @NotNull
-  private static ASTNode replaceReferenceWithShort(PsiQualifiedReference reference) {
+  private static ASTNode replaceReferenceWithShort(PsiQualifiedReferenceElement reference) {
     ASTNode node = reference.getNode();
     assert node != null;
     deQualifyImpl((CompositeElement)node);
