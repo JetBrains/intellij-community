@@ -533,6 +533,14 @@ public abstract class BreakpointPropertiesPanel {
     myTemporaryCheckBox.setSelected(breakpoint.REMOVE_AFTER_HIT);
     myEnabledCheckbox.setSelected(breakpoint.ENABLED);
     myEnabledCheckbox.setText(breakpoint.getShortName() + " enabled");
+
+    DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addBreakpointManagerListener(new BreakpointManagerListener() {
+      @Override
+      public void breakpointsChanged() {
+        myEnabledCheckbox.setSelected(myBreakpoint.ENABLED);
+      }
+    });
+
     myEnabledCheckbox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
