@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="python-helpers" />
     <orderEntry type="module" module-name="vagrant" />
     <orderEntry type="module" module-name="pycharm-maya" />
+    <orderEntry type="module" module-name="terminal" />
   </component>
 </module>
 
