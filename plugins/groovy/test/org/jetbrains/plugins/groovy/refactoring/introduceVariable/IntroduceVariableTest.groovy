@@ -92,19 +92,19 @@ public class Foo {
 
   void testStringPart1() {
     doTest('''\
-print 'a<selection>b</selection>c'
+print 'a<begin>b<end>c'
 ''', '''\
-def foo = 'b'
-print <selection>'a' + foo + 'c'</selection>
+def preved = 'b'
+print 'a' + preved<caret> + 'c'
 ''')
   }
 
   void testStringPart2() {
     doTest('''\
-print "a<selection>b</selection>c"
+print "a<begin>b<end>c"
 ''', '''\
-def foo = "b"
-print <selection>"a" + foo + "c"</selection>
+def preved = "b"
+print "a" + preved<caret> + "c"
 ''')
   }
 
@@ -137,12 +137,15 @@ print <selection>"a" + foo + "c"</selection>
     GrExpression selectedExpr = GrIntroduceHandlerBase.findExpression(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
     StringPartInfo stringPartInfo = GrIntroduceHandlerBase.findStringPart(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
 
-    assertNotNull("Selected expression reference points to null", selectedExpr);
+    assertTrue("Selected expression reference points to null", selectedExpr != null || stringPartInfo != null);
 
-    final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
+    final PsiElement tempContainer = GroovyRefactoringUtil.
+      getEnclosingContainer(GrIntroduceHandlerBase.getCurrentPlace(selectedExpr, null, stringPartInfo));
     assertTrue(tempContainer instanceof GroovyPsiElement);
 
-    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
+    PsiElement[] occurrences = selectedExpr != null ?
+                               GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer) :
+                               [stringPartInfo.literal] as PsiElement[];
     final String varName = "preved";
     final PsiType varType;
     if (explicitType) {
@@ -152,7 +155,7 @@ print <selection>"a" + foo + "c"</selection>
       varType = null;
     }
 
-    final GrIntroduceContext context = new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, stringPartInfo, occurences, tempContainer);
+    final GrIntroduceContext context = new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, stringPartInfo, occurrences, tempContainer);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
