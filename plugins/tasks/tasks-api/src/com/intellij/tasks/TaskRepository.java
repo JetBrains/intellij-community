@@ -24,6 +24,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -65,6 +66,10 @@ public abstract class TaskRepository  {
 
   public String getPresentableName() {
     return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
+  }
+
+  public Icon getIcon() {
+    return getRepositoryType().getIcon();
   }
 
   /**

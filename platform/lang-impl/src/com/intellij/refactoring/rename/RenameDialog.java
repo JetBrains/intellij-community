@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -64,6 +65,7 @@ public class RenameDialog extends RefactoringDialog {
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private final Map<AutomaticRenamerFactory, JCheckBox> myAutomaticRenamers = new HashMap<AutomaticRenamerFactory, JCheckBox>();
+  private String myOldName;
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
                       Editor editor) {
@@ -123,6 +125,7 @@ public class RenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
+    myOldName = suggestedNames.length > 0 ? suggestedNames[0] : null;
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
       protected boolean shouldSelectAll() {
@@ -304,6 +307,7 @@ public class RenameDialog extends RefactoringDialog {
 
   @Override
   protected void canRun() throws ConfigurationException {
+    if (Comparing.strEqual(getNewName(), myOldName)) throw new ConfigurationException(null);
     if (!areButtonsValid()) {
       throw new ConfigurationException("\'" + getNewName() + "\' is not a valid identifier");
     }
