@@ -51,6 +51,7 @@ public class HgPushDialog extends DialogWrapper {
   private JCheckBox branchCheckBox;
   private JComboBox branchComboBox;
   private EditorComboBox myRepositoryURL;
+  private JCheckBox newBranchCheckBox;
   private String myCurrentRepositoryUrl;
 
   public HgPushDialog(Project project, Collection<VirtualFile> repos, List<HgTagBranch> branches, @Nullable VirtualFile selectedRepo) {
@@ -114,6 +115,10 @@ public class HgPushDialog extends DialogWrapper {
     return forceCheckBox.isSelected();
   }
 
+  public boolean isNewBranch() {
+      return newBranchCheckBox.isSelected();
+    }
+
   protected JComponent createCenterPanel() {
     return contentPanel;
   }
@@ -159,6 +164,7 @@ public class HgPushDialog extends DialogWrapper {
     setOKActionEnabled(validateOptions());
     revisionTxt.setEnabled(revisionCbx.isSelected());
     branchComboBox.setEnabled(branchCheckBox.isSelected());
+    newBranchCheckBox.setEnabled(branchCheckBox.isSelected());
   }
 
   private boolean validateOptions() {

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -31,22 +32,25 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.action.HgBranchPopup;
+import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.util.HgUtil;
 
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
  * Widget to display basic hg status in the IJ status bar.
  */
-public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, StatusBarWidget.Multiframe, HgUpdater {
+public class HgStatusWidget extends EditorBasedWidget
+  implements StatusBarWidget.MultipleTextValuesPresentation,
+             StatusBarWidget.Multiframe, HgUpdater {
 
   private static final String MAX_STRING = "hg: default branch (128)";
 
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;
   @NotNull private final HgCurrentBranchStatus myCurrentBranchStatus;
-  private MessageBusConnection myBusConnection;
 
   private volatile String myText = "";
   private volatile String myTooltip = "";
@@ -91,13 +95,20 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   }
 
   @Override
-  public String getTooltipText() {
-    return myTooltip;
+  public ListPopup getPopupStep() {
+    Project project = getProject();
+    if (project == null) {
+      return null;
+    }
+    VirtualFile root = HgUtil.getRootForSelectedFile(project);
+    if (root != null) {
+      return HgBranchPopup.getInstance(project, HgRepositoryImpl.getFullInstance(root, project, project)).asListPopup();
+    }
+    return null;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public String getSelectedValue() {
     final String text = myText;
     return StringUtil.isEmpty(text) ? "" : "hg: " + text;
   }
@@ -105,14 +116,16 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   @NotNull
   @Override
   @Deprecated
-  public String getMaxPossibleText() {
+  public String getMaxValue() {
     return MAX_STRING;
   }
 
+
   @Override
-  public float getAlignment() {
-    return Component.LEFT_ALIGNMENT;
+  public String getTooltipText() {
+    return myTooltip;
   }
+
 
   @Override
   // Updates branch information on click
@@ -161,8 +174,8 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
       return;
     }
 
-    myBusConnection = project.getMessageBus().connect();
-    myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
+    MessageBusConnection busConnection = project.getMessageBus().connect();
+    busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
 
     DvcsUtil.installStatusBarWidget(myProject, this);
   }

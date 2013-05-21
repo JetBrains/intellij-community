@@ -137,6 +137,7 @@ public class HgPusher {
     command.setRevision(dialog.getRevision());
     command.setForce(dialog.isForce());
     command.setBranch(dialog.getBranch());
+    command.setIsNewBranch(dialog.isNewBranch());
     return command;
   }
 
