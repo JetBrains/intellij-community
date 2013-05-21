@@ -26,6 +26,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.*;
+import com.intellij.execution.testframework.sm.runner.TestProxyFilterProvider;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerNotificationsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
@@ -100,7 +101,7 @@ public class SMTestRunnerConnectionUtil {
                                                                     final ConfigurationPerRunnerSettings configurationSettings,
                                                                     @Nullable final TestLocationProvider locator,
                                                                     final boolean idBasedTreeConstruction,
-                                                                    @Nullable final TestProxyPrinterProvider printerProvider) {
+                                                                    @Nullable final TestProxyFilterProvider filterProvider) {
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
     final SMTRunnerConsoleView console =
@@ -109,6 +110,10 @@ public class SMTestRunnerConnectionUtil {
         public void attachToProcess(final ProcessHandler processHandler) {
           // attach listeners
           super.attachToProcess(processHandler);
+          TestProxyPrinterProvider printerProvider = null;
+          if (filterProvider != null) {
+            printerProvider = new TestProxyPrinterProvider(this, filterProvider);
+          }
           attachEventsProcessors(consoleProperties, getResultsViewer(),
                                  getResultsViewer().getStatisticsPane(),
                                  processHandler, testFrameworkName, locator, idBasedTreeConstruction,
