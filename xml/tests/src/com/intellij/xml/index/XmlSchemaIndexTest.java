@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.Function;
@@ -106,6 +107,19 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
     assertEquals(Arrays.asList("web-app"), builder.getTags());
+  }
+
+  public void testGuessDTD() throws Exception {
+    myFixture.copyDirectoryToProject("", "");
+    final List<IndexedRelevantResource<String, XsdNamespaceBuilder>> files =
+      XmlNamespaceIndex.getResourcesByNamespace("foo.dtd",
+                                                getProject(),
+                                                myModule);
+    assertEquals(2, files.size());
+
+    PsiFile file = myFixture.configureByFile("foo.xml");
+    assertTrue(XmlNamespaceIndex.guessDtd("foo://bar/1/foo.dtd", file).getVirtualFile().getPath().endsWith("/1/foo.dtd"));
+    assertTrue(XmlNamespaceIndex.guessDtd("foo://bar/2/foo.dtd", file).getVirtualFile().getPath().endsWith("/2/foo.dtd"));
   }
 
   @Override

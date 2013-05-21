@@ -194,6 +194,36 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     String dtdFileName = new File(dtdUri).getName();
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       list = getResourcesByNamespace(dtdFileName, baseFile.getProject(), ModuleUtilCore.findModuleForPsiElement(baseFile));
-    return list.isEmpty() ? null : findSchemaFile(list.get(0).getFile(), baseFile);
+    if (list.isEmpty()) {
+      return null;
+    }
+    IndexedRelevantResource<String, XsdNamespaceBuilder> resource;
+    if (list.size() > 1) {
+      final String[] split = dtdUri.split("/");
+      resource = Collections.max(list, new Comparator<IndexedRelevantResource<String, XsdNamespaceBuilder>>() {
+        @Override
+        public int compare(IndexedRelevantResource<String, XsdNamespaceBuilder> o1,
+                           IndexedRelevantResource<String, XsdNamespaceBuilder> o2) {
+
+          return weight(o1) - weight(o2);
+        }
+
+        int weight(IndexedRelevantResource<String, XsdNamespaceBuilder> o1) {
+          VirtualFile file = o1.getFile();
+          for (int i = split.length - 1; i >= 0 && file != null; i--) {
+            String s = split[i];
+            if (!s.equals(file.getName())) {
+              return split.length - i;
+            }
+            file = file.getParent();
+          }
+          return 0;
+        }
+      });
+    }
+    else {
+      resource = list.get(0);
+    }
+    return findSchemaFile(resource.getFile(), baseFile);
   }
 }
