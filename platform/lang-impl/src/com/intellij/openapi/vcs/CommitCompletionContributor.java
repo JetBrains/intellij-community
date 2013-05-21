@@ -20,13 +20,12 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.ui.CommitMessage;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
@@ -51,10 +50,11 @@ public class CommitCompletionContributor extends CompletionContributor {
             CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
             for (ChangeList list : lists) {
               for (Change change : list.getChanges()) {
-                VirtualFile virtualFile = change.getVirtualFile();
-                if (virtualFile != null) {
-                  LookupElementBuilder element = LookupElementBuilder.create(virtualFile.getName()).
-                    withIcon(VirtualFilePresentation.getIcon(virtualFile));
+                ContentRevision revision = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
+                if (revision != null) {
+                  FilePath filePath = revision.getFile();
+                  LookupElementBuilder element = LookupElementBuilder.create(filePath.getName()).
+                      withIcon(filePath.getFileType().getIcon());
                   insensitive.addElement(element);
                 }
               }
