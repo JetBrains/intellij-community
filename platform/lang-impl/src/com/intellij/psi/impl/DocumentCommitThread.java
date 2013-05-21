@@ -30,27 +30,12 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.pom.PomManager;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.text.DiffLog;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.text.BlockSupport;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
@@ -64,7 +49,7 @@ import javax.swing.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class DocumentCommitThread implements Runnable, Disposable {
+public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
 
   private final Queue<CommitTask> documentsToCommit = new Queue<CommitTask>(10);
@@ -126,6 +111,11 @@ public class DocumentCommitThread implements Runnable, Disposable {
     startNewTask(null, reason);
   }
 
+  @Override
+  public void commitAsynchronously(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
+    queueCommit(project, document, reason);
+  }
+
   public void queueCommit(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
     assert !isDisposed : "already disposed";
 
@@ -153,7 +143,9 @@ public class DocumentCommitThread implements Runnable, Disposable {
   }
 
   private final StringBuilder log = new StringBuilder();
-  void log(@NonNls String msg, CommitTask task, boolean synchronously, @NonNls Object... args) {
+
+  @Override
+  public void log(@NonNls String msg, CommitTask task, boolean synchronously, @NonNls Object... args) {
     if (true) return;
 
     String indent = new SimpleDateFormat("mm:ss:SSSS").format(new Date()) +
@@ -203,53 +195,6 @@ public class DocumentCommitThread implements Runnable, Disposable {
     log.setLength(0);
     disable("end of test");
     wakeUpQueue();
-  }
-
-  private static class CommitTask {
-    private final Document document;
-    private final Project project;
-
-    // when queued it's not started 
-    // when dequeued it's started 
-    // when failed it's canceled 
-    private final ProgressIndicatorEx indicator; // progress to commit this doc under.
-    private final Object reason;
-    private boolean removed; // task marked as removed, should be ignored.
-
-    private CommitTask(@NotNull Document document,
-                       @NotNull Project project,
-                       @NotNull ProgressIndicatorEx indicator,
-                       @NotNull Object reason) {
-      this.document = document;
-      this.project = project;
-      this.indicator = indicator;
-      this.reason = reason;
-    }
-
-    @NonNls
-    @Override
-    public String toString() {
-      return "Project: " + project.getName()
-             + ", Doc: "+ document +" ("+  StringUtil.first(document.getText(), 12, true).replaceAll("\n"," ")+")"
-             +(indicator.isCanceled() ? " (Canceled)" : "") + (removed ? "Removed" : "");
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof CommitTask)) return false;
-
-      CommitTask task = (CommitTask)o;
-
-      return document.equals(task.document) && project.equals(task.project);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = document.hashCode();
-      result = 31 * result + project.hashCode();
-      return result;
-    }
   }
 
   private void markRemovedCurrentTask(@Nullable CommitTask newTask) {
@@ -386,6 +331,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
   }
 
+  @Override
   public void commitSynchronously(@NotNull Document document, @NotNull Project project, PsiFile excludeFile) {
     assert !isDisposed;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -408,7 +354,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       throw new RuntimeException(s);
     }
 
-    ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+    ProgressIndicator indicator = createProgressIndicator();
     CommitTask task = new CommitTask(document, project, indicator, "Sync commit");
     synchronized (documentsToCommit) {
       markRemovedFromDocsToCommit(task);
@@ -426,6 +372,12 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
     // let our thread know that queue must be polled again
     wakeUpQueue();
+  }
+
+  @NotNull
+  @Override
+  protected ProgressIndicator createProgressIndicator() {
+    return new ProgressIndicatorBase();
   }
 
   private void startNewTask(CommitTask task, Object reason) {
@@ -535,189 +487,6 @@ public class DocumentCommitThread implements Runnable, Disposable {
       }
     };
     return finishRunnable;
-  }
-
-  @Nullable("returns runnable to execute under write action in AWT to finish the commit")
-  private Processor<Document> doCommit(@NotNull final CommitTask task,
-                                       @NotNull final PsiFile file,
-                                       final boolean synchronously,
-                                       @NotNull PsiDocumentManager documentManager) {
-    Document document = task.document;
-    ((PsiDocumentManagerImpl)documentManager).clearTreeHardRef(document);
-    final TextBlock textBlock = TextBlock.get(file);
-    if (textBlock.isEmpty()) return null;
-    final long startDocModificationTimeStamp = document.getModificationStamp();
-    final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
-    if (textBlock.isEmpty()) return null; // if tree was just loaded above textBlock will be cleared by contentsLoaded
-    final CharSequence chars = document.getCharsSequence();
-    final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
-    if (data != null) {
-      document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
-      file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
-    }
-    final String oldPsiText =
-      ApplicationManagerEx.getApplicationEx().isInternal() && ApplicationManagerEx.getApplicationEx().isUnitTestMode()
-      ? myTreeElementBeingReparsedSoItWontBeCollected.getText()
-      : null;
-    int startOffset;
-    int endOffset;
-    int lengthShift;
-    if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-      startOffset = textBlock.getStartOffset();
-      int psiEndOffset = textBlock.getPsiEndOffset();
-      endOffset = psiEndOffset;
-      lengthShift = textBlock.getTextEndOffset() - psiEndOffset;
-    }
-    else {
-      startOffset = 0;
-      endOffset = document.getTextLength();
-      lengthShift = document.getTextLength() - myTreeElementBeingReparsedSoItWontBeCollected.getTextLength();
-    }
-    assertBeforeCommit(document, file, textBlock, chars, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
-    BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-    final DiffLog diffLog = blockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars, task.indicator);
-
-    return new Processor<Document>() {
-      @Override
-      public boolean process(Document document) {
-        ApplicationManager.getApplication().assertWriteAccessAllowed();
-        log("Finishing", task, synchronously, document.getModificationStamp(), startDocModificationTimeStamp);
-        if (document.getModificationStamp() != startDocModificationTimeStamp) {
-          return false; // optimistic locking failed
-        }
-
-        try {
-          textBlock.performAtomically(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
-                @Override
-                public void run() {
-                  synchronized (PsiLock.LOCK) {
-                    doActualPsiChange(file, diffLog);
-                  }
-                }
-              });
-            }
-          });
-
-          assertAfterCommit(document, file, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
-        }
-        finally {
-          textBlock.clear();
-          SmartPointerManagerImpl.synchronizePointers(file);
-        }
-
-        return true;
-      }
-    };
-  }
-
-
-  private static void assertBeforeCommit(@NotNull Document document,
-                                         @NotNull PsiFile file,
-                                         @NotNull TextBlock textBlock,
-                                         @NotNull CharSequence chars,
-                                         String oldPsiText,
-                                         @NotNull FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
-    int startOffset = textBlock.getStartOffset();
-    int psiEndOffset = textBlock.getPsiEndOffset();
-    if (oldPsiText != null) {
-      @NonNls String msg = "PSI/document inconsistency before reparse: ";
-      if (startOffset >= oldPsiText.length()) {
-        msg += "startOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
-        startOffset = oldPsiText.length();
-      }
-
-      String psiPrefix = oldPsiText.substring(0, startOffset);
-      String docPrefix = chars.subSequence(0, startOffset).toString();
-      String psiSuffix = oldPsiText.substring(psiEndOffset);
-      String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
-      if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
-        if (!psiPrefix.equals(docPrefix)) {
-          msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
-        }
-        if (!psiSuffix.equals(docSuffix)) {
-          msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
-        }
-        throw new AssertionError(msg);
-      }
-    }
-    else if (document.getTextLength() - textBlock.getTextEndOffset() !=
-             myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() - psiEndOffset) {
-      throw new AssertionError("PSI/document inconsistency before reparse: file=" + file);
-    }
-  }
-
-  private static void assertAfterCommit(Document document,
-                                        final PsiFile file,
-                                        String oldPsiText,
-                                        FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
-    if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
-      final String documentText = document.getText();
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        String fileText = file.getText();
-        LOG.error("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
-                  "; doc len=" + document.getTextLength() +
-                  "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
-                  ";\n file psi text=" + fileText +
-                  ";\n doc text=" + documentText +
-                  ";\n old psi file text=" + oldPsiText);
-      }
-      else {
-        LOG.error("commitDocument left PSI inconsistent: " + file);
-      }
-
-      file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
-      try {
-        BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-        final DiffLog diffLog = blockSupport.reparseRange(file, 0, documentText.length(), 0, documentText, new ProgressIndicatorBase());
-        CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (PsiLock.LOCK) {
-              doActualPsiChange(file, diffLog);
-            }
-          }
-        });
-
-        if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
-          LOG.error("PSI is broken beyond repair in: " + file);
-        }
-      }
-      finally {
-        file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
-      }
-    }
-  }
-
-  public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog){
-    file.getViewProvider().beforeContentsSynchronized();
-
-    try {
-      final Document document = file.getViewProvider().getDocument();
-      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject());
-      PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
-
-      final PsiFileImpl fileImpl = (PsiFileImpl)file;
-
-      if (transaction == null) {
-        final PomModel model = PomManager.getModel(fileImpl.getProject());
-
-        model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
-          @Override
-          public PomModelEvent runInner() {
-            return new TreeAspectEvent(model, diffLog.performActualPsiChange(file));
-          }
-        });
-      }
-      else {
-        diffLog.performActualPsiChange(file);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
   }
 
   private boolean processAll(final Processor<CommitTask> processor) {

@@ -31,7 +31,7 @@ import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -211,7 +211,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   private void commitTransaction(final PomTransaction transaction) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
     Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
@@ -229,7 +229,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private void startTransaction(final PomTransaction transaction) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if(progressIndicator != null) progressIndicator.startNonCancelableSection();
-    final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
     BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), transaction.getChangeScope(), true);

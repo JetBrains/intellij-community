@@ -120,6 +120,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   public void dispose() {
   }
 
+  @Override
   public void startRunInjectors(@NotNull final Document hostDocument, final boolean synchronously) {
     if (myProject.isDisposed()) return;
     if (!synchronously && ApplicationManager.getApplication().isWriteAccessAllowed()) return;
