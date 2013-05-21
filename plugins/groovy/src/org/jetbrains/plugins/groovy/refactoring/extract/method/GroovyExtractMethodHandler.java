@@ -132,7 +132,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     //new ConflictsDialog()
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
-    final PsiElement declarationOwner = info.getStatements()[0].getParent();
+    final PsiElement declarationOwner = info.getContext().getParent();
 
     GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
       @Override
@@ -185,7 +185,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   private void performRefactoring(@NotNull final InitialInfo initialInfo, @Nullable final Editor editor) {
-    final PsiClass owner = PsiUtil.getContextClass(initialInfo.getStatements()[0]);
+    final PsiClass owner = PsiUtil.getContextClass(initialInfo.getContext());
     LOG.assertTrue(owner!=null);
 
     final ExtractMethodInfoHelper helper = getSettings(initialInfo, owner);
@@ -196,7 +196,8 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GroovyExtractMethodHandler.class);
         try {
           createMethod(helper, owner);
-          GrStatementOwner declarationOwner = GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]);
+          GrStatementOwner declarationOwner =
+            helper.getStringPartInfo() == null ? GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]) : null;
           GrStatement realStatement = ExtractUtil.replaceStatement(declarationOwner, helper);
 
           // move to offset
@@ -215,7 +216,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
   private static void createMethod(ExtractMethodInfoHelper helper, PsiClass owner) {
     final GrMethod method = ExtractUtil.createMethod(helper);
-    PsiElement anchor = calculateAnchorToInsertBefore(owner, helper.getStatements()[0]);
+    PsiElement anchor = calculateAnchorToInsertBefore(owner, helper.getContext());
     GrMethod newMethod = (GrMethod)owner.addBefore(method, anchor);
     renameParameterOccurrences(newMethod, helper);
     GrReferenceAdjuster.shortenReferences(newMethod);

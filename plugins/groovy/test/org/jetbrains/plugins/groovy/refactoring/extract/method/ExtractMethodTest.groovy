@@ -53,22 +53,26 @@ public class ExtractMethodTest extends LightGroovyTestCase {
 
   private void doTest(String name = 'testMethod') {
     final List<String> data = readInput();
-    GroovyExtractMethodHandler handler = configureFromText(data[0], name);
+    final String before = data[0]
+    def after = StringUtil.trimEnd(data[1], '\n')
 
-    def expected = StringUtil.trimEnd(data[1], '\n')
+    doTest(name, before, after)
+  }
 
+  private void doTest(String name = 'testMethod', String before, String after) {
+    GroovyExtractMethodHandler handler = configureFromText(before, name);
     try {
       handler.invoke(project, myFixture.editor, myFixture.file, null);
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-      myFixture.checkResult(expected);
+      myFixture.checkResult(after);
     }
     catch (ConflictsInTestsException e) {
       ApplicationManager.application.runWriteAction {
-         myFixture.getDocument(myFixture.file).text = e.message
-         PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+        myFixture.getDocument(myFixture.file).text = e.message
+        PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
       }
 
-      myFixture.checkResult(expected)
+      myFixture.checkResult(after)
     }
   }
 
@@ -162,4 +166,20 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testAutoSelectExpression() { doTest() }
 
   public void testUnassignedVar() { doTest() }
+
+  public void testStringPart0() {
+    doTest('''\
+def foo() {
+    print 'a<begin>b<end>c'
+}
+''', '''\
+def foo() {
+    print 'a' +<caret> testMethod() + 'c'
+}
+
+private String testMethod() {
+    return 'b'
+}
+''')
+  }
 }

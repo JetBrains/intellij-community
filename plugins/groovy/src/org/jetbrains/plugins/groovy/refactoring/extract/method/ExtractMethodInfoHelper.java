@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
@@ -46,7 +45,7 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
     myVisibility = PsiModifier.PRIVATE;
     myName = name;
 
-    myIsStatic = canBeStatic(initialInfo.getStatements()[0]);
+    myIsStatic = canBeStatic(initialInfo.getContext());
   }
 
   public boolean isStatic() {
@@ -86,7 +85,7 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
     myForceReturn = isForceReturn;
   }
 
-  private static boolean canBeStatic(GrStatement statement) {
+  private static boolean canBeStatic(PsiElement statement) {
     PsiElement parent = statement.getParent();
     while (parent != null && !(parent instanceof PsiFile)) {
       if (parent instanceof GrMethod) {

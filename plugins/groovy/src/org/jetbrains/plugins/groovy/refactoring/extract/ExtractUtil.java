@@ -68,7 +68,7 @@ public class ExtractUtil {
   private ExtractUtil() {
   }
 
-  public static GrStatement replaceStatement(GrStatementOwner declarationOwner, ExtractInfoHelper helper) {
+  public static GrStatement replaceStatement(@Nullable GrStatementOwner declarationOwner, @NotNull ExtractInfoHelper helper) {
     GrStatement realStatement;
     if (declarationOwner != null && !isSingleExpression(helper.getStatements()) && helper.getStringPartInfo() == null) {
       // Replace set of statements
@@ -384,7 +384,8 @@ public class ExtractUtil {
       buffer.append(statement.getText()).append('\n');
     }
 
-    if (!isSingleExpression(helper.getStatements()) || statements.size() > 0) {
+    final StringPartInfo stringPartInfo = helper.getStringPartInfo();
+    if (!isSingleExpression(helper.getStatements()) && stringPartInfo == null) {
       for (PsiElement element : helper.getInnerElements()) {
         buffer.append(element.getText());
       }
@@ -403,7 +404,9 @@ public class ExtractUtil {
       }
     }
     else {
-      GrExpression expr = (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
+      GrExpression expr = stringPartInfo != null
+                          ? GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPartInfo, helper.getProject())
+                          : (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
       boolean addReturn = !isVoid && forceReturn;
       if (addReturn) {
         buffer.append("return ");
