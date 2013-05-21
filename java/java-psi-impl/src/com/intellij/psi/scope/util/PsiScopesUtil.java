@@ -316,11 +316,8 @@ public class PsiScopesUtil {
               final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
               if (initializer instanceof PsiNewExpression) {
                 final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();
-                if (anonymousClass != null) {
-                  final PsiType initializerType = initializer.getType();
-                  if (initializerType != null && TypeConversionUtil.isAssignable(type, initializerType, false)) {
-                    type = initializerType;
-                  }
+                if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
+                  type = initializer.getType();
                 }
               }
             }
