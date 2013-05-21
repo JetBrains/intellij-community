@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.jediterm.emulator.TtyConnector;
 import com.jediterm.pty.PtyProcess;
 import com.jediterm.pty.PtyProcessTtyConnector;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 
@@ -32,8 +33,29 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected ProcessHandler createProcessHandler(PtyProcess process) {
-    return new OSProcessHandler(process);
+  protected ProcessHandler createProcessHandler(final PtyProcess process) {
+    return new ProcessHandler() {
+      @Override
+      protected void destroyProcessImpl() {
+        process.destroy();
+      }
+
+      @Override
+      protected void detachProcessImpl() {
+        destroyProcessImpl();
+      }
+
+      @Override
+      public boolean detachIsDefault() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public OutputStream getProcessInput() {
+        return process.getOutputStream();
+      }
+    };
   }
 
   @Override
