@@ -503,9 +503,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @NotNull
-  protected static PsiElement getCurrentPlace(@Nullable GrExpression expr,
-                                              @Nullable GrVariable var,
-                                              @Nullable StringPartInfo stringPartInfo) {
+  public static PsiElement getCurrentPlace(@Nullable GrExpression expr,
+                                           @Nullable GrVariable var,
+                                           @Nullable StringPartInfo stringPartInfo) {
     if (var != null) return var;
     if (expr != null) return expr;
     if (stringPartInfo != null) return stringPartInfo.getLiteral();
