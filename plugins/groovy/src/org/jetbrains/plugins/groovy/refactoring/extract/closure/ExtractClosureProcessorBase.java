@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
 
 /**
@@ -72,7 +74,12 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
       }
       buffer.append("->");
     }
-    if (helper.getStatements().length > 1) {
+    if (helper.getStringPartInfo() != null) {
+      final GrExpression expression =
+        GrIntroduceHandlerBase.generateExpressionFromStringPart(helper.getStringPartInfo(), helper.getProject());
+      buffer.append(expression.getText());
+    }
+    else if (helper.getStatements().length > 1) {
       buffer.append('\n');
     }
 

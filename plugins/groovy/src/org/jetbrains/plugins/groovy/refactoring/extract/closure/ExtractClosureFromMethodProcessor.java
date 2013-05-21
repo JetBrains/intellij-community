@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -23,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.ChangedMethodCallInfo;
@@ -210,11 +212,14 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     }
 
     final GrStatement newStatement = ExtractUtil.replaceStatement(myDeclarationOwner, myHelper);
-    /*
-    if (myEditor != null) {
-      PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-      myEditor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(newStatement));
-    }*/
+
+    final Editor editor = PsiUtilBase.findEditor(newStatement);
+    if (editor != null) {
+      PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
+      editor.getSelectionModel().removeSelection();
+      editor.getCaretModel().moveToOffset(newStatement.getTextRange().getEndOffset());
+
+    }
 
     fieldConflictsResolver.fix();
   }

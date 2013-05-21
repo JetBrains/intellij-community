@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
@@ -69,7 +70,7 @@ public class ExtractUtil {
 
   public static GrStatement replaceStatement(GrStatementOwner declarationOwner, ExtractInfoHelper helper) {
     GrStatement realStatement;
-    if (declarationOwner != null && !isSingleExpression(helper.getStatements())) {
+    if (declarationOwner != null && !isSingleExpression(helper.getStatements()) && helper.getStringPartInfo() == null) {
       // Replace set of statements
       final GrStatement[] newStatement = createResultStatement(helper);
       // add call statement
@@ -86,9 +87,16 @@ public class ExtractUtil {
       PsiImplUtil.removeNewLineAfter(realStatement);
     }
     else {
+      GrExpression oldExpr;
+      if (helper.getStringPartInfo() != null) {
+        oldExpr = GrIntroduceHandlerBase.processLiteral(helper.getName(), helper.getStringPartInfo(), helper.getProject());
+      }
+      else {
+        oldExpr = (GrExpression)helper.getStatements()[0];
+      }
+
       // Expression call replace
       GrExpression methodCall = createMethodCall(helper);
-      GrExpression oldExpr = (GrExpression)helper.getStatements()[0];
       realStatement = oldExpr.replaceWithExpression(methodCall, true);
       GrReferenceAdjuster.shortenReferences(realStatement);
     }
