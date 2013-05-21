@@ -1,0 +1,3 @@
+This software includes code from IntelliJ IDEA Community Edition
+Copyright (C) JetBrains s.r.o.
+http://www.jetbrains.com/idea/
