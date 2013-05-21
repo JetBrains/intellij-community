@@ -9,12 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remotesdk.RemoteInterpreterException;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.remote.PyRemoteInterpreterManagerImpl;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,11 +92,11 @@ public class PyTestRemoteSdkProvider {
   }
 
   private static boolean isPasswordSpecified() {
-    return !StringUtils.isEmpty(System.getenv(LOCAL_SSH_WITHOUT_PASSWORD)) || !StringUtils.isEmpty(getPassword());
+    return !StringUtil.isEmpty(System.getenv(LOCAL_SSH_WITHOUT_PASSWORD)) || !StringUtil.isEmpty(getPassword());
   }
 
   public static boolean shouldFailWhenCantRunRemote() {
-    return !StringUtils.isEmpty(System.getenv("FAIL_WHEN_CANT_RUN_REMOTE")) || PyEnvSufficiencyTest.IS_UNDER_TEAMCITY;
+    return !StringUtil.isEmpty(System.getenv("FAIL_WHEN_CANT_RUN_REMOTE")) || PyEnvSufficiencyTest.IS_UNDER_TEAMCITY;
   }
 
   private static String getHelpersPath(PyRemoteSdkAdditionalData data) throws IOException {
@@ -109,7 +109,7 @@ public class PyTestRemoteSdkProvider {
 
   public static String getUserName() {
     String userName = System.getenv(SSH_USER_NAME);
-    return StringUtils.isEmpty(userName) ? System.getProperty("user.name") : userName;
+    return StringUtil.isEmpty(userName) ? System.getProperty("user.name") : userName;
   }
 
   public static String getPassword() {
