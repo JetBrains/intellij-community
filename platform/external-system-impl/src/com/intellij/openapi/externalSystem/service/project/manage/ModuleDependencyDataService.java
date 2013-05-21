@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -81,16 +80,15 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         ));
         continue;
       }
-      importData(entry.getValue(), entry.getKey().getData().getOwner(), ideModule, synchronous);
+      importData(entry.getValue(), ideModule, synchronous);
     }
   }
 
   public void importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
-                         @NotNull ProjectSystemId externalSystemId,
                          @NotNull final Module module,
                          final boolean synchronous)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(module.getProject(), externalSystemId, toImport, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

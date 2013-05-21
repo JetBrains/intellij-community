@@ -31,6 +31,18 @@ public class FileComparisonFailure extends ComparisonFailure implements KnownExc
     myFilePath = filePath;
   }
 
+  public String getFilePath() {
+    return myFilePath;
+  }
+
+  public String getExpected() {
+    return myExpected;
+  }
+
+  public String getActual() {
+    return myActual;
+  }
+
   public PacketFactory getPacketFactory() {
     return new MyPacketFactory(this, myExpected, myActual, myFilePath);
   }

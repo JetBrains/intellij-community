@@ -143,8 +143,14 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
 
   @Override
   public GridCellImpl getCellFor(final Content content) {
-    final GridCellImpl cell = myPlaceInGrid2Cell.get(getStateFor(content).getPlaceInGrid());
-    assert cell != null : "Unknown place in grid: " + getStateFor(content).getPlaceInGrid().name();
+    // check if the content is already in some cell
+    GridCellImpl current = myContent2Cell.get(content);
+    if (current != null) return current;
+    // view may be shared between several contents with the same ID in different cells
+    // (temporary contents like "Dump Stack" or "Console Result")
+    View view = getStateFor(content);
+    final GridCellImpl cell = myPlaceInGrid2Cell.get(view.getPlaceInGrid());
+    assert cell != null : "Unknown place in grid: " + view.getPlaceInGrid().name();
     return cell;
   }
 

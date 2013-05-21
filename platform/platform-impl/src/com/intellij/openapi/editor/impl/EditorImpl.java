@@ -1444,7 +1444,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for(int i = 0; i < myLastStartOffsets.length; ++i) {
       if (startOffset == myLastStartOffsets[i] && targetColumn == myLastTargetColumns[i] && xOffset == myLastXOffsets[i]) {
         ++myLastCacheHits;
-        if ((myLastCacheHits & 0xFF) == 0) {    // todo remove
+        if ((myLastCacheHits & 0xFFF) == 0) {    // todo remove
           PsiFile file = myProject != null ? PsiDocumentManager.getInstance(myProject).getCachedPsiFile(myDocument):null;
           LOG.info("Cache hits:" + myLastCacheHits + ", total requests:" +
                              myTotalRequests + "," + (file != null ? file.getViewProvider().getVirtualFile():null));

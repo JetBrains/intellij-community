@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class NewCodeStyleSettingsPanel extends JPanel {
 
   private final Configurable myTab;
 
-  public NewCodeStyleSettingsPanel(Configurable tab) {
+  public NewCodeStyleSettingsPanel(@NotNull Configurable tab) {
     super(new BorderLayout());
     myTab = tab;
     JComponent component = myTab.createComponent();
@@ -92,7 +93,7 @@ public class NewCodeStyleSettingsPanel extends JPanel {
 
   public void setLanguageSelector(final LanguageSelector langSelector) {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;      
+      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
       configurable.getPanel().setLanguageSelector(langSelector);
     }
   }
@@ -116,7 +117,7 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
     return Collections.emptySet();
   }
-  
+
 
   @Nullable
   public CodeStyleAbstractPanel getSelectedPanel() {

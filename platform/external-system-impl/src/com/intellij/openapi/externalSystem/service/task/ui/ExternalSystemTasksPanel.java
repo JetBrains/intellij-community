@@ -23,19 +23,16 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -48,8 +45,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
   @NotNull private final ProjectSystemId              myExternalSystemId;
   @NotNull private final NotificationGroup            myNotificationGroup;
 
-  public ExternalSystemTasksPanel(@NotNull Map<String, List<ExternalSystemTaskDescriptor>> tasks,
-                                  @NotNull Project project,
+  public ExternalSystemTasksPanel(@NotNull Project project,
                                   @NotNull ProjectSystemId externalSystemId,
                                   @NotNull NotificationGroup notificationGroup)
   {
@@ -71,8 +67,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
 
     setContent(new JBScrollPane(myAllTasksTree));
 
-    // TODO den implement
-//    myAllTasksModel.updateTasks(tasks);
+    ExternalSystemUiUtil.apply(settings, myAllTasksModel);
   }
 
   @Nullable

@@ -22,6 +22,7 @@ public class JavaUnwrapDescriptor extends UnwrapDescriptorBase {
   @Override
   protected Unwrapper[] createUnwrappers() {
     return new Unwrapper[]{
+      new JavaArrayInitializerUnwrapper(),
       new JavaMethodParameterUnwrapper(),
       new JavaElseUnwrapper(),
       new JavaElseRemover(),

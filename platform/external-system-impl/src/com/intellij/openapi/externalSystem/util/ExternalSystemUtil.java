@@ -104,8 +104,10 @@ public class ExternalSystemUtil {
   public static <T> T getToolWindowElement(@NotNull Class<T> clazz,
                                            @NotNull Project project,
                                            @NotNull DataKey<T> key,
-                                           @NotNull ProjectSystemId externalSystemId)
-  {
+                                           @NotNull ProjectSystemId externalSystemId) {
+    if (project.isDisposed() || !project.isOpen()) {
+      return null;
+    }
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager == null) {
       return null;
@@ -200,9 +202,7 @@ public class ExternalSystemUtil {
 
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        if (--myCounter <= 0 && !project.isDisposed() && project.isOpen()) {
-          processOrphanModules();
-        }
+        myCounter = Integer.MAX_VALUE; // Don't process orphan modules if there was an error on refresh.
       }
 
       private void processOrphanModules() {

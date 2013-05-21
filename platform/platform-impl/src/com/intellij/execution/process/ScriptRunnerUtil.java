@@ -204,16 +204,18 @@ public final class ScriptRunnerUtil {
   }
 
   /**
-   * Gracefully terminates a process.
+   * Gracefully terminates a process handler.
    * Initially, 'soft kill' is performed (on UNIX it's equivalent to SIGINT signal sending).
-   * If the process didn't terminate within a given timeout, 'force quite' is performed (on UNIX it's equivalent to SIGKILL
+   * If the process isn't terminated within a given timeout, 'force quite' is performed (on UNIX it's equivalent to SIGKILL
    * signal sending).
    *
    * @param processHandler {@link ProcessHandler} instance
+   * @param millisTimeout timeout in milliseconds between 'soft kill' and 'force quite'
+   * @param commandLine command line
    */
-  public static void terminateProcess(@NotNull ProcessHandler processHandler,
-                                      long millisTimeout,
-                                      @Nullable String commandLine) {
+  public static void terminateProcessHandler(@NotNull ProcessHandler processHandler,
+                                             long millisTimeout,
+                                             @Nullable String commandLine) {
     if (processHandler.isProcessTerminated()) {
       LOG.warn("Process '" + commandLine + "' is already terminated!");
       return;

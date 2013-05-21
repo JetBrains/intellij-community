@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -53,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
 
@@ -252,11 +254,25 @@ public class ExtractUtil {
     return result;
   }
 
-  private static Collection<GrVariable> collectUsedLocalVarsOrParamsDeclaredOutside(GrStatement[] statements) {
+  public static TextRange getRangeOfRefactoring(ExtractInfoHelper helper) {
+    final StringPartInfo stringPartInfo = helper.getStringPartInfo();
+    if (stringPartInfo != null) {
+      return stringPartInfo.getRange();
+    }
+    else {
+      final GrStatement[] statements = helper.getStatements();
+      int start = statements[0].getTextRange().getStartOffset();
+      int end = statements[statements.length - 1].getTextRange().getEndOffset();
+      return new TextRange(start, end);
+    }
+  }
+
+  private static Collection<GrVariable> collectUsedLocalVarsOrParamsDeclaredOutside(ExtractInfoHelper helper) {
     final Collection<GrVariable> result = new HashSet<GrVariable>();
 
-    final int start = statements[0].getTextRange().getStartOffset();
-    final int end = statements[statements.length - 1].getTextRange().getEndOffset();
+    final TextRange range = getRangeOfRefactoring(helper);
+    final int start = range.getStartOffset();
+    final int end = range.getEndOffset();
 
     final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
       @Override
@@ -272,6 +288,7 @@ public class ExtractUtil {
       }
     };
 
+    final GrStatement[] statements = helper.getStatements();
     for (GrStatement statement : statements) {
       statement.accept(visitor);
     }
@@ -336,7 +353,7 @@ public class ExtractUtil {
     }
 
     List<VariableInfo> genDecl = new ArrayList<VariableInfo>();
-    final Collection<GrVariable> outside = collectUsedLocalVarsOrParamsDeclaredOutside(helper.getStatements());
+    final Collection<GrVariable> outside = collectUsedLocalVarsOrParamsDeclaredOutside(helper);
 
     for (final GrVariable variable : outside) {
       if (!declaredVars.contains(variable.getName())) {

@@ -19,13 +19,14 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.awt.*;
 
 /**
  * @author nik
@@ -61,22 +62,20 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private void restoreNode(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo) {
     if (treeNode instanceof XValueNodeImpl) {
       XValueNodeImpl node = (XValueNodeImpl)treeNode;
-      String nodeName = node.getName();
-      String nodeValue = node.getValue();
-      if (nodeName == null || nodeValue == null) {
-        myNode2ParentState.put(node, parentInfo);
+      if (node.isComputed()) {
+        doRestoreNode(node, parentInfo, node.getName(), node.getValue());
       }
       else {
-        doRestoreNode(node, parentInfo, nodeName, nodeValue);
+        myNode2ParentState.put(node, parentInfo);
       }
     }
   }
 
   private void doRestoreNode(final XValueNodeImpl treeNode, final XDebuggerTreeState.NodeInfo parentInfo, final String nodeName,
-                             final String nodeValue) {
+                             final @Nullable String nodeValue) {
     XDebuggerTreeState.NodeInfo childInfo = parentInfo.removeChild(nodeName);
     if (childInfo != null) {
-      if (!childInfo.getValue().equals(nodeValue)) {
+      if (!(childInfo.getValue() == null ? nodeValue == null : childInfo.getValue().equals(nodeValue))) {
         treeNode.markChanged();
       }
       if (!myStopRestoringSelection && childInfo.isSelected()) {
@@ -93,7 +92,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     }
   }
 
-  public void nodeLoaded(@NotNull final XValueNodeImpl node, final String name, final String value) {
+  public void nodeLoaded(@NotNull final XValueNodeImpl node, final String name, final @Nullable String value) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     if (parentInfo != null) {
       doRestoreNode(node, parentInfo, name, value);

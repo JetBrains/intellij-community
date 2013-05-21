@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,23 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Controls the syntax highlighting of a file.
  *
- * @see com.intellij.openapi.fileTypes.SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
- * @see com.intellij.openapi.fileTypes.SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+ * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+ * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
  */
 public interface SyntaxHighlighter {
   /**
    * @deprecated
-   * @see com.intellij.openapi.fileTypes.SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
-   * @see com.intellij.openapi.fileTypes.SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+   * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+   * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
    */
-  @Deprecated SyntaxHighlighterProvider PROVIDER = new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
+  SyntaxHighlighterProvider PROVIDER =
+    new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
 
   /**
    * Returns the lexer used for highlighting the file. The lexer is invoked incrementally when the file is changed, so it must be

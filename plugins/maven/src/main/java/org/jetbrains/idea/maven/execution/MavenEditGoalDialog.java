@@ -99,7 +99,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
 
     new MavenArgumentsCompletionProvider(myProject).apply(goalsEditor);
 
-    // Configure Module ComboBox
+
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
 
     showProjectTreeButton.setIcon(AllIcons.Actions.Module);
@@ -139,6 +139,10 @@ public class MavenEditGoalDialog extends DialogWrapper {
   @NotNull
   public String getWorkDirectory() {
     return workDirectoryField.getText();
+  }
+
+  public void setWorkDirectory(@NotNull String path) {
+    workDirectoryField.setText(path);
   }
 
   public void setSelectedMavenProject(@Nullable MavenProject mavenProject) {

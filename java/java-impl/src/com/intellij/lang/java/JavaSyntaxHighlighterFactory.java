@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,44 @@
 package com.intellij.lang.java;
 
 import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterProvider;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+public class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory implements SyntaxHighlighterProvider {
+  /**
+   * SyntaxHighlighterFactory implementation (for Java source files).
+   */
   @Override
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
-    return new JavaFileHighlighter(
-      virtualFile != null ? LanguageLevelUtil.getLanguageLevelForFile(virtualFile) : LanguageLevel.HIGHEST);
+  public SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile file) {
+    return new JavaFileHighlighter(LanguageLevelUtil.getLanguageLevelForFile(file));
+  }
+
+  /**
+   * SyntaxHighlighterProvider implementation (for class files).
+   */
+  @Nullable
+  @Override
+  public SyntaxHighlighter create(FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
+    if (project != null && file != null) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile instanceof ClsFileImpl) {
+        LanguageLevel sourceLevel = ((ClsFileImpl)psiFile).getSourceLanguageLevel();
+        return new JavaFileHighlighter(sourceLevel);
+      }
+    }
+
+    return new JavaFileHighlighter();
   }
 }

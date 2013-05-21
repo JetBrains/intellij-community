@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="java.nio.ByteBuffer byte[] array()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer compact()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer order(java.nio.ByteOrder)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer order(java.nio.ByteOrder) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putChar(char)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putChar(int, char)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putDouble(double)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putDouble(int, double)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putFloat(float)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putFloat(int, float)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putInt(int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putInt(int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putLong(int, long)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putLong(long)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putShort(int, short)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteBuffer putShort(short)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ByteOrder order()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.CharBuffer asCharBuffer()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.DoubleBuffer asDoubleBuffer()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.FloatBuffer asFloatBuffer()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.IntBuffer asIntBuffer()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.LongBuffer asLongBuffer()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.ByteBuffer java.nio.ShortBuffer asShortBuffer()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.nio.CharBuffer int read(java.nio.CharBuffer) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+</root>
+

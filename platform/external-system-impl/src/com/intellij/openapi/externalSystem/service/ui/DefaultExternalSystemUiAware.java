@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,5 +37,11 @@ public class DefaultExternalSystemUiAware implements ExternalSystemUiAware {
   @Override
   public Icon getProjectIcon() {
     return AllIcons.Nodes.IdeaProject;
+  }
+
+  @Nullable
+  @Override
+  public Icon getTaskIcon() {
+    return IconLoader.getIcon("/icons/task.png", getClass());
   }
 }

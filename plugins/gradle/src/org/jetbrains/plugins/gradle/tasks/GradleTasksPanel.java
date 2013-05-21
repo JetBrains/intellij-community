@@ -22,7 +22,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,6 +54,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 3/14/13 4:36 PM
  */
+// TODO den remove
 public class GradleTasksPanel extends GradleToolWindowPanel {
 
   @NotNull private final GradleTasksModel myRecentTasksModel = new GradleTasksModel();
@@ -98,10 +98,9 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     myRecentTasksModel.clear();
     // TODO den implement
     //myRecentTasksModel.setTasks(myLocalSettings.getRecentTasks());
-    int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
-    myRecentTasksModel.ensureSize(recentTasksNumber);
-    myRecentTasksList.setVisibleRowCount(recentTasksNumber);
-    // TODO den implement
+//    int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
+//    myRecentTasksModel.ensureSize(recentTasksNumber);
+//    myRecentTasksList.setVisibleRowCount(recentTasksNumber);
 //    addListPanel(myRecentTasksList, result, ExternalSystemBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
@@ -162,11 +161,14 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
         }
 
         Object element = model.getElementAt(row);
-        if (!(element instanceof ExternalSystemTaskDescriptor)) {
-          return;
-        }
+        // TODO den implement
+//        if (!(element instanceof ExternalSystemTaskDescriptor)) {
+//          return;
+//        }
 
-        String executorId = ((ExternalSystemTaskDescriptor)element).getExecutorId();
+        // TODO den implement
+        String executorId = null;
+//        String executorId = ((ExternalSystemTaskDescriptor)element).getExecutorId();
         if (StringUtil.isEmpty(executorId)) {
           executorId = DefaultRunExecutor.EXECUTOR_ID;
         }
@@ -262,9 +264,10 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     final List<String> tasks = ContainerUtilRt.newArrayList();
     for (int index : selectedIndices) {
       Object data = list.getModel().getElementAt(index);
-      if (data instanceof ExternalSystemTaskDescriptor) {
-        tasks.add(((ExternalSystemTaskDescriptor)data).getName());
-      }
+      // TODO den implement
+//      if (data instanceof ExternalSystemTaskDescriptor) {
+//        tasks.add(((ExternalSystemTaskDescriptor)data).getName());
+//      }
     }
     return tasks.isEmpty() ? null : tasks;
   }

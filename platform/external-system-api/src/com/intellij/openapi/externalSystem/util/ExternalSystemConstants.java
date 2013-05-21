@@ -31,6 +31,8 @@ public class ExternalSystemConstants {
 
   @NonNls @NotNull public static final String TOOL_WINDOW_PLACE = "ExternalSystem.ToolWindow";
 
+  public static final char PATH_SEPARATOR = '/';
+
   // Order.
   public static final int BUILTIN_SERVICE_ORDER             = 42;
   public static final int BUILTIN_TOOL_WINDOW_SERVICE_ORDER = 62;

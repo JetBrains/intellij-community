@@ -16,7 +16,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -58,7 +58,7 @@ public class InlineUtil {
     PsiType exprType = expr.getType();
     if (exprType != null && (!varType.equals(exprType) && (varType instanceof PsiPrimitiveType || exprType instanceof PsiPrimitiveType)
                              || !TypeConversionUtil.isAssignable(varType, exprType)
-                             || insertCastWhenUnchecked && GenericsHighlightUtil.isRawToGeneric(varType, exprType))) {
+                             || insertCastWhenUnchecked && JavaGenericsUtil.isRawToGeneric(varType, exprType))) {
       boolean matchedTypes = false;
       //try explicit type arguments
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

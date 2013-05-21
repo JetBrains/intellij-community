@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -27,6 +28,12 @@ public class BuildNumberTest {
   @Test
   public void historicBuild() {
     assertEquals(new BuildNumber("", 75, 7512), BuildNumber.fromString("7512"));
+  }
+
+  @Test
+  public void isSnapshot() {
+    assertTrue(BuildNumber.fromString("90.SNAPSHOT").isSnapshot());
+    assertFalse(BuildNumber.fromString("90.9999999").isSnapshot());
   }
 
   @Test

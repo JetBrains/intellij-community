@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.psi.impl.source.tree.MarkersHolderFileViewProvider;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,8 @@ import java.util.List;
 /**
  * @author cdr
 */
-public class InjectedFileViewProvider extends SingleRootFileViewProvider implements FreeThreadedFileViewProvider {
+public class InjectedFileViewProvider extends SingleRootFileViewProvider implements FreeThreadedFileViewProvider,
+                                                                                    MarkersHolderFileViewProvider {
   private Project myProject;
   private final Object myLock = new Object();
   private final DocumentWindowImpl myDocumentWindow;
@@ -203,6 +205,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     myPatchingLeaves = patchingLeaves;
   }
 
+  @Override
   @NotNull
   public RangeMarker[] getCachedMarkers() {
     List<RangeMarker> markers = new SmartList<RangeMarker>();

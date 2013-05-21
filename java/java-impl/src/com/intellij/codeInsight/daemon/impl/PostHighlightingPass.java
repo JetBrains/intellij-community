@@ -22,10 +22,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -497,7 +494,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
            myUnusedSymbolInspection.REPORT_PARAMETER_FOR_PUBLIC_METHODS &&
            !isOverriddenOrOverrides(method)) &&
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
-          !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
+          !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !PsiClassImplUtil.isMainOrPremainMethod(method)) {
         if (UnusedSymbolLocalInspection.isInjected(method)) return null;
         HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, progress);
@@ -581,7 +578,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     boolean aPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     PsiClass containingClass = method.getContainingClass();
-    if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass)) return true;
+    if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return true;
     if (aPrivate) {
       if (isIntentionalPrivateConstructor(method, containingClass)) {
         return true;

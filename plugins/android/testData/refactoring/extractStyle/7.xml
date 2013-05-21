@@ -1,6 +1,0 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
-    <Button
-            android:textColor="@android:col<caret>or/black"
-            android:background="@android:color/white"
-            android:text="Hello"/>
-</LinearLayout>

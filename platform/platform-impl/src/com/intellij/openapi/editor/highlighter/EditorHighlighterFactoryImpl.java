@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,13 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
   }
 
   @Override
-  public EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile vFile, @NotNull final EditorColorsScheme settings, @Nullable final Project project) {
-    final FileType fileType = vFile.getFileType();
+  public EditorHighlighter createEditorHighlighter(@NotNull VirtualFile vFile, @NotNull EditorColorsScheme settings, @Nullable Project project) {
+    FileType fileType = vFile.getFileType();
     if (fileType instanceof LanguageFileType) {
       LanguageFileType substFileType = substituteFileType(((LanguageFileType)fileType).getLanguage(), vFile, project);
       if (substFileType != null) {
-        final EditorHighlighter editorHighlighter = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType).getEditorHighlighter(project,
-                                                                                                                                                fileType,
-                                                                                                                                                vFile, settings);
+        EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType);
+        EditorHighlighter editorHighlighter = provider.getEditorHighlighter(project, fileType, vFile, settings);
         boolean isPlain = editorHighlighter.getClass() == LexerEditorHighlighter.class &&
                           ((LexerEditorHighlighter) editorHighlighter).isPlain();
         if (!isPlain) {
@@ -74,9 +73,8 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
       return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, vFile, settings);
     }
 
-    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
     SyntaxHighlighter highlighter = null;
-    for (ContentBasedFileSubstitutor processor : processors) {
+    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
       boolean applicable;
       try {
         applicable = processor.isApplicable(project, vFile);
@@ -97,16 +95,14 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
 
   @Nullable
   private static LanguageFileType substituteFileType(Language language, VirtualFile vFile, Project project) {
+    LanguageFileType fileType = null;
     if (vFile != null && project != null) {
-      final Language substLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, vFile, project);
+      Language substLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, vFile, project);
       if (substLanguage != language) {
-        final FileType fileType = substLanguage.getAssociatedFileType();
-        if (fileType instanceof LanguageFileType) {
-          return (LanguageFileType) fileType;
-        }
+        fileType = substLanguage.getAssociatedFileType();
       }
     }
-    return null;
+    return fileType;
   }
 
   @Override

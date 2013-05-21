@@ -11,9 +11,9 @@
     <orderEntry type="module" module-name="java-psi-impl" exported="" />
     <orderEntry type="module" module-name="indexing-api" exported="" />
     <orderEntry type="module" module-name="indexing-impl" exported="" />
-    <orderEntry type="module" module-name="projectModel-api" />
+    <orderEntry type="module" module-name="projectModel-api" exported="" />
     <orderEntry type="module" module-name="projectModel-impl" />
-    <orderEntry type="module" module-name="java-indexing-api" />
+    <orderEntry type="module" module-name="java-indexing-api" exported="" />
   </component>
 </module>
 

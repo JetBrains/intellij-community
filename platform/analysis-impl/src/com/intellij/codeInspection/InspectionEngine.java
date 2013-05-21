@@ -68,12 +68,13 @@ public class InspectionEngine {
     }
   }
 
-  public List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
-                                         @NotNull final PsiFile file,
-                                         @NotNull final InspectionManager iManager,
-                                         final boolean isOnTheFly,
-                                         boolean failFastOnAcquireReadAction,
-                                         @NotNull final ProgressIndicator indicator) {
+  @NotNull
+  public static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
+                                                @NotNull final PsiFile file,
+                                                @NotNull final InspectionManager iManager,
+                                                final boolean isOnTheFly,
+                                                boolean failFastOnAcquireReadAction,
+                                                @NotNull final ProgressIndicator indicator) {
     if (tools.isEmpty()) return Collections.emptyList();
     final List<ProblemDescriptor> resultDescriptors = Collections.synchronizedList(new ArrayList<ProblemDescriptor>());
     final List<PsiElement> elements = new ArrayList<PsiElement>();

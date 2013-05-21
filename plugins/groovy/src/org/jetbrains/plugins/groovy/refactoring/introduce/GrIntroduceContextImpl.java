@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,17 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
   private final PsiElement scope;
   @Nullable private final GrVariable var;
   @NotNull private final PsiElement place;
+  private final StringPartInfo myStringPart;
 
   public GrIntroduceContextImpl(@NotNull Project project,
                                 Editor editor,
                                 @Nullable GrExpression expression,
                                 @Nullable GrVariable var,
+                                @Nullable StringPartInfo stringPart,
                                 @NotNull PsiElement[] occurrences,
                                 PsiElement scope) {
-    LOG.assertTrue(expression != null || var != null);
+    myStringPart = stringPart;
+    LOG.assertTrue(expression != null || var != null || stringPart != null);
 
     this.project = project;
     this.editor = editor;
@@ -52,7 +55,7 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
     this.occurrences = occurrences;
     this.scope = scope;
     this.var = var;
-    this.place = expression == null ? var : expression;
+    this.place = GrIntroduceHandlerBase.getCurrentPlace(expression, var, stringPart);
   }
 
   @NotNull
@@ -69,6 +72,7 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
     return expression;
   }
 
+  @NotNull
   public PsiElement[] getOccurrences() {
     return occurrences;
   }
@@ -80,6 +84,12 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
   @Nullable
   public GrVariable getVar() {
     return var;
+  }
+
+  @Nullable
+  @Override
+  public StringPartInfo getStringPart() {
+    return myStringPart;
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// "Change 'i' type to 'double'" "true"
+// "Change variable 'i' type to 'double'" "true"
 import java.io.*;
 
 class a {

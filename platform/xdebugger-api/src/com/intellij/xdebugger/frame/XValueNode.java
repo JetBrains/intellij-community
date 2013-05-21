@@ -46,18 +46,18 @@ public interface XValueNode extends Obsolescent {
    * @param value string representation of value. It is also used in 'Copy Value' action
    * @param hasChildren {@code false} if the node is a leaf
    */
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but also allows to
    * customize {@code separator} between name and value
    */
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
 
   /**
    * Setup presentation of the grouping value (value as container)
    */
-  void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand);
+  void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean expand);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but allows to change default processing of
@@ -72,7 +72,7 @@ public interface XValueNode extends Obsolescent {
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
 
-  void setPresentation(@Nullable Icon icon, @NonNls @NotNull String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, com.intellij.util.NotNullFunction, boolean)} but also allows to

@@ -41,7 +41,7 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * refactored from {@link com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection.MyQuickFix}
+ * refactored from {@link com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection}
  *
  * @author Danila Ponomarenko
  */
@@ -57,8 +57,8 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final V variable = getVariable(descriptor);
-    final PsiFile myFile = variable.getContainingFile();
     if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid
+    final PsiFile myFile = variable.getContainingFile();
 
     try {
       final PsiElement newDeclaration = moveDeclaration(project, variable);
@@ -142,12 +142,12 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     );
   }
 
-  protected PsiElement applyChanges(final @NotNull Project project,
-                                    final @NotNull String localName,
-                                    final @Nullable PsiExpression initializer,
-                                    final @NotNull V variable,
-                                    final @NotNull Collection<PsiReference> references,
-                                    final @NotNull NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+  protected PsiElement applyChanges(@NotNull final Project project,
+                                    @NotNull final String localName,
+                                    @Nullable final PsiExpression initializer,
+                                    @NotNull final V variable,
+                                    @NotNull final Collection<PsiReference> references,
+                                    @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     return ApplicationManager.getApplication().runWriteAction(
@@ -202,11 +202,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
     final PsiReferenceExpression leftExpression = (PsiReferenceExpression)expression.getLExpression();
 
-    if (!leftExpression.isReferenceTo(variable)) {
-      return false;
-    }
-
-    return true;
+    return leftExpression.isReferenceTo(variable);
   }
 
   @NotNull
@@ -272,10 +268,5 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       }
     }
     return result;
-  }
-
-
-  public boolean runForWholeFile() {
-    return true;
   }
 }

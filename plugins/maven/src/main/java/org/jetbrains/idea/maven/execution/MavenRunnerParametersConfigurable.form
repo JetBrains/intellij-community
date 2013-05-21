@@ -86,7 +86,7 @@
           <component id="b7a16" class="com.intellij.openapi.ui.FixedSizeButton" binding="showProjectTreeButton">
             <constraints border-constraint="East"/>
             <properties>
-              <toolTipText value="Select module"/>
+              <toolTipText value="Select maven project"/>
             </properties>
           </component>
         </children>

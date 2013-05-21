@@ -52,8 +52,7 @@ public abstract class XFetchValueActionBase extends AnAction {
       for (TreePath path : paths) {
         Object node = path.getLastPathComponent();
         if (node instanceof XValueNodeImpl) {
-          XValueNodeImpl valueNode = (XValueNodeImpl)node;
-          if (valueNode.getName() != null && valueNode.getValue() != null) {
+          if (((XValueNodeImpl)node).isComputed()) {
             e.getPresentation().setEnabled(true);
             return;
           }

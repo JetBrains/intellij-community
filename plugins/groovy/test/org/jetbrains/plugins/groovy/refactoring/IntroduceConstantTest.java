@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,11 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -68,6 +67,10 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     doTest("Test", false, false, PsiModifier.PUBLIC);
   }
 
+  public void testStringPart() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(null, true, true, PsiModifier.PUBLIC);
   }
@@ -82,7 +85,8 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
 
     final GrExpression expression = findExpression();
     final GrVariable variable = findVariable();
-    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable);
+    final StringPartInfo stringPart = findStringPart();
+    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable, stringPart);
 
     PsiClass targetClass;
     if (targetClassName == null) {
@@ -94,9 +98,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     assertNotNull("target class is null", targetClass);
 
     final GrIntroduceConstantSettings settings =
-      new MockIntroduceConstantSettings(targetClass, replaceAllOccurences,
-                                        useExplicitType ? (expression != null ? expression.getType() : variable.getType()) : null,
-                                        modifier);
+      new MockIntroduceConstantSettings(targetClass, replaceAllOccurences, getType(useExplicitType, expression, variable, stringPart), modifier);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -108,12 +110,21 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 
+  private static PsiType getType(boolean useExplicitType, GrExpression expression, GrVariable variable, StringPartInfo stringPart) {
+    if (!useExplicitType) {
+      return null;
+    }
+    return expression != null ? expression.getType() :
+           variable != null ? variable.getType() :
+           stringPart.getLiteral().getType();
+  }
+
   @Nullable
   private GrVariable findVariable() {
     final Editor editor = myFixture.getEditor();
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
-    return GrIntroduceHandlerBase.findVariable((GroovyFile)myFixture.getFile(), start, end);
+    return GrIntroduceHandlerBase.findVariable(myFixture.getFile(), start, end);
   }
 
   @Nullable
@@ -121,7 +132,15 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     final Editor editor = myFixture.getEditor();
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
-    return GrIntroduceHandlerBase.findExpression((GroovyFileBase)myFixture.getFile(), start, end);
+    return GrIntroduceHandlerBase.findExpression(myFixture.getFile(), start, end);
+  }
+
+  @Nullable
+  private StringPartInfo findStringPart() {
+    final Editor editor = myFixture.getEditor();
+    final int start = editor.getSelectionModel().getSelectionStart();
+    final int end = editor.getSelectionModel().getSelectionEnd();
+    return GrIntroduceHandlerBase.findStringPart(myFixture.getFile(), start, end);
   }
 
   private static class MockIntroduceConstantSettings implements GrIntroduceConstantSettings {

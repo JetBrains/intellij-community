@@ -16,6 +16,10 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.model.serialization.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -24,6 +28,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,5 +121,27 @@ public class ExternalSystemUiUtil {
         model.nodeChanged(child);
       }
     }
+  }
+
+  /**
+   * Applies data from the given settings object to the given model.
+   * 
+   * @param settings  target settings to use
+   * @param model     UI model to be synced with the given settings
+   */
+  public static void apply(@NotNull final AbstractExternalSystemLocalSettings settings, @NotNull final ExternalSystemTasksTreeModel model) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        Map<ExternalProjectPojo,Collection<ExternalProjectPojo>> projects = settings.getAvailableProjects();
+        for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : projects.entrySet()) {
+          model.ensureSubProjectsStructure(entry.getKey(), entry.getValue());
+        }
+        Map<String, Collection<ExternalTaskPojo>> tasks = settings.getAvailableTasks();
+        for (Map.Entry<String, Collection<ExternalTaskPojo>> entry : tasks.entrySet()) {
+          model.ensureTasks(entry.getKey(), entry.getValue());
+        } 
+      }
+    });
   }
 }

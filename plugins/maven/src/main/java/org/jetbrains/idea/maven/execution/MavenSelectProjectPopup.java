@@ -90,7 +90,7 @@ public class MavenSelectProjectPopup {
       public void actionPerformed(ActionEvent e) {
         List<MavenProject> projectList = projectsManager.getProjects();
         if (projectList.isEmpty()) {
-          JBPopupFactory.getInstance().createMessage("Maven modules not found").showUnderneathOf(button);
+          JBPopupFactory.getInstance().createMessage("Maven projects not found").showUnderneathOf(button);
           return;
         }
 
@@ -134,7 +134,7 @@ public class MavenSelectProjectPopup {
 
         final Ref<JBPopup> popupRef = new Ref<JBPopup>();
 
-        Runnable clickCallBack = new Runnable() {
+        final Runnable clickCallBack = new Runnable() {
           @Override
           public void run() {
             TreePath path = projectTree.getSelectionPath();
@@ -152,8 +152,18 @@ public class MavenSelectProjectPopup {
           }
         };
 
+        projectTree.addKeyListener(new KeyAdapter() {
+          @Override
+          public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+              clickCallBack.run();
+              e.consume();
+            }
+          }
+        });
+
         JBPopup popup = new PopupChooserBuilder(projectTree)
-          .setTitle("Select maven module")
+          .setTitle("Select maven project")
           .setResizable(true)
           .setItemChoosenCallback(clickCallBack).setAutoselectOnMouseMove(true)
           .setCloseOnEnter(false)

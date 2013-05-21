@@ -133,12 +133,12 @@ public class AnnotationsHighlightUtil {
       }
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                     formatReference(nameRef), HighlightUtil.formatType(expectedType));
+                                                     formatReference(nameRef), JavaHighlightUtil.formatType(expectedType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
     if (value instanceof PsiArrayInitializerMemberValue) {
       if (expectedType instanceof PsiArrayType) return null;
-      String description = JavaErrorMessages.message("annotation.illegal.array.initializer", HighlightUtil.formatType(expectedType));
+      String description = JavaErrorMessages.message("annotation.illegal.array.initializer", JavaHighlightUtil.formatType(expectedType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
     if (value instanceof PsiExpression) {
@@ -151,7 +151,7 @@ public class AnnotationsHighlightUtil {
       }
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                     HighlightUtil.formatType(type), HighlightUtil.formatType(expectedType));
+                                                     JavaHighlightUtil.formatType(type), JavaHighlightUtil.formatType(expectedType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
 
@@ -483,7 +483,7 @@ public class AnnotationsHighlightUtil {
           final String qualifiedName = containingClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) || CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(qualifiedName)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier).descriptionAndTooltip(
-              "@interface member clashes with '" + HighlightUtil.formatMethod(method) + "' in " + HighlightUtil.formatClass(containingClass)).create();
+              "@interface member clashes with '" + JavaHighlightUtil.formatMethod(method) + "' in " + HighlightUtil.formatClass(containingClass)).create();
           }
         }
       }
@@ -599,7 +599,8 @@ public class AnnotationsHighlightUtil {
     if (methods.length == 1) {
       PsiType expected = new PsiImmediateClassType((PsiClass)target, PsiSubstitutor.EMPTY).createArrayType();
       if (!expected.equals(methods[0].getReturnType())) {
-        return JavaErrorMessages.message("annotation.container.bad.type", container.getQualifiedName(), HighlightUtil.formatType(expected));
+        return JavaErrorMessages.message("annotation.container.bad.type", container.getQualifiedName(), JavaHighlightUtil
+          .formatType(expected));
       }
     }
 

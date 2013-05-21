@@ -21,7 +21,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -212,7 +212,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
          method.hasModifierProperty(PsiModifier.STATIC) ||
          !method.hasModifierProperty(PsiModifier.ABSTRACT) && !isOverriddenOrOverrides(method)) &&
         !method.hasModifierProperty(PsiModifier.NATIVE) &&
-        !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
+        !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
         !PsiClassImplUtil.isMainOrPremainMethod(method);
   }
 

@@ -507,18 +507,23 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
+          ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException> process =
+            new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
+              @Override
+              public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
+                return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+              }
+            };
+          if (!index.doesNeedCompaction()) {
+            return process.compute();
+          }
           // this factory method may be called either on index creation from dispatch thread, or on index rebuild
           // from arbitrary thread and under some existing progress indicator
           final ProgressManager progressManager = ProgressManager.getInstance();
           final ProgressIndicator currentProgress = progressManager.getProgressIndicator();
           if (currentProgress == null && ApplicationManager.getApplication().isDispatchThread()) {
             return progressManager.runProcessWithProgressSynchronously(
-              new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
-                @Override
-                public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
-                  return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
-                }
-              }, LangBundle.message("compacting.indices.title"), false, null);
+              process, LangBundle.message("compacting.indices.title"), false, null);
           }
           if (currentProgress != null)  {
             // reuse existing progress indicator if available

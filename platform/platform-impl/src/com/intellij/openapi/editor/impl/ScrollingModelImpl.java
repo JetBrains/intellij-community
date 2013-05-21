@@ -202,7 +202,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       hOffset = targetLocation.x - 4 * spaceWidth;
       hOffset = hOffset > 0 ? hOffset : 0;
     }
-    else if (targetLocation.x >= viewRect.x + viewRect.width) {
+    else if (targetLocation.x >= hOffset + viewRect.width) {
       hOffset = targetLocation.x - viewRect.width + xInsets;
     }
 

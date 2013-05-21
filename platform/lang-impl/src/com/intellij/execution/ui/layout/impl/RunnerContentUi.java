@@ -25,6 +25,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Disposer;
@@ -32,7 +33,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
@@ -137,6 +140,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
+  private MyDropAreaPainter myCurrentPainter;
+  
   private RunnerContentUi myOriginal;
   private final CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<Listener>();
   private final Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>(new Comparator<RunnerContentUi>() {
@@ -484,8 +489,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         myManager.removeContent(content, false);
         if (hadGrid && !wasRestoring) {
           view.assignTab(getTabFor(getSelectedGrid()));
-          view.setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
-        } else if (contents.size() == 1 && !wasRestoring) {
+          view.setPlaceInGrid(calcPlaceInGrid(point, myComponent.getSize()));
+        }
+        else if (contents.size() == 1 && !wasRestoring) {
           view.assignTab(null);
           view.setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
         }
@@ -536,25 +542,43 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public Image processDropOver(@NotNull DockableContent content, RelativePoint point) {
-    JBTabs current = getTabsAt(content, point);
+  public Image processDropOver(@NotNull DockableContent dockable, RelativePoint dropTarget) {
+    JBTabs current = getTabsAt(dockable, dropTarget);
 
     if (myCurrentOver != null && myCurrentOver != current) {
-      resetDropOver(content);
+      resetDropOver(dockable);
     }
 
     if (myCurrentOver == null && current != null) {
       myCurrentOver = current;
-      Presentation presentation = content.getPresentation();
+      Presentation presentation = dockable.getPresentation();
       myCurrentOverInfo = new TabInfo(new JLabel("")).setText(presentation.getText()).setIcon(presentation.getIcon());
-      myCurrentOverImg = myCurrentOver.startDropOver(myCurrentOverInfo, point);
+      myCurrentOverImg = myCurrentOver.startDropOver(myCurrentOverInfo, dropTarget);
     }
 
     if (myCurrentOver != null) {
-      myCurrentOver.processDropOver(myCurrentOverInfo, point);
+      myCurrentOver.processDropOver(myCurrentOverInfo, dropTarget);
     }
 
+    if (myCurrentPainter == null) {
+      myCurrentPainter = new MyDropAreaPainter();
+      IdeGlassPaneUtil.find(myComponent).addPainter(myComponent, myCurrentPainter, this);
+    }
+    myCurrentPainter.processDropOver(this, dockable, dropTarget);
+
     return myCurrentOverImg;
+  }
+
+  @NotNull
+  private static PlaceInGrid calcPlaceInGrid(Point point, Dimension size) {
+    // 1/3 (left) |   (center/bottom) | 1/3 (right)
+    if (point.x < size.width / 3) return PlaceInGrid.left;
+    if (point.x > size.width * 2 / 3) return PlaceInGrid.right;
+    
+    // 3/4 (center with tab titles) | 1/4 (bottom)
+    if (point.y > size.height * 3 / 4) return PlaceInGrid.bottom;
+    
+    return PlaceInGrid.center;
   }
 
   @Nullable
@@ -579,6 +603,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       myCurrentOver = null;
       myCurrentOverInfo = null;
       myCurrentOverImg = null;
+
+      IdeGlassPaneUtil.find(myComponent).removePainter(myCurrentPainter);
+      myCurrentPainter = null;
     }
   }
 
@@ -1241,6 +1268,75 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public boolean isToDisposeRemovedContent() {
     return myToDisposeRemovedContent;
+  }
+
+  private static class MyDropAreaPainter extends AbstractPainter {
+    private Rectangle myBoundingBox;
+
+    @Override
+    public void executePaint(Component component, Graphics2D g) {
+      if (myBoundingBox == null) return;
+      g.setColor(JBColor.BLACK);
+      g.setStroke(new BasicStroke(3));
+      g.draw(myBoundingBox);
+    }
+
+    private void processDropOver(RunnerContentUi ui, DockableContent dockable, RelativePoint dropTarget) {
+      myBoundingBox = null;
+      setNeedsRepaint(true);
+
+      if (!(dockable instanceof DockableGrid)) return;
+
+      JComponent component = ui.myComponent;
+      Point point = dropTarget != null ? dropTarget.getPoint(component) : null;
+
+      // do not paint anything if adding to the top
+      if (ui.myTabs.shouldAddToGlobal(point)) return;
+
+      // calc target place-in-grid
+      PlaceInGrid targetPlaceInGrid = null;
+      for (Content c : ((DockableGrid)dockable).getContents()) {
+        View view = ui.getStateFor(c);
+        if (view.isMinimizedInGrid()) continue;
+        PlaceInGrid defaultGridPlace = ui.getLayoutSettings().getDefaultGridPlace(c);
+        targetPlaceInGrid = point == null ? defaultGridPlace : calcPlaceInGrid(point, component.getSize());
+        break;
+      }
+      if (targetPlaceInGrid == null) return;
+
+      // calc the default rectangle for the targetPlaceInGrid "area"
+      Dimension size = component.getSize();
+      Rectangle r = new Rectangle(size);
+      switch (targetPlaceInGrid) {
+        case left:
+          r.width /= 3;
+          break;
+        case center:
+          r.width /= 3;
+          r.x += r.width;
+          break;
+        case right:
+          r.width /= 3;
+          r.x += 2 * r.width;
+          break;
+        case bottom:
+          r.height /= 4;
+          r.y += 3 * r.height;
+          break;
+      }
+      // adjust the rectangle if the target grid cell is already present and showing
+      for (Content c : ui.getContentManager().getContents()) {
+        GridCell cellFor = ui.findCellFor(c);
+        PlaceInGrid placeInGrid = cellFor == null? null : ((GridCellImpl)cellFor).getPlaceInGrid();
+        if (placeInGrid != targetPlaceInGrid) continue;
+        Wrapper wrapper = UIUtil.getParentOfType(Wrapper.class, c.getComponent());
+        JComponent cellWrapper = wrapper == null ? null : (JComponent)wrapper.getParent();
+        if (cellWrapper == null || !cellWrapper.isShowing()) continue;
+        r = new RelativeRectangle(cellWrapper).getRectangleOn(component);
+        break;
+      }
+      myBoundingBox = r;
+    }
   }
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider, QuickActionProvider {

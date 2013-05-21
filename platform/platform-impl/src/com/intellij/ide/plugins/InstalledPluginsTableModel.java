@@ -180,7 +180,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return myDependentToRequiredListMap;
   }
 
-  private void updatePluginDependencies() {
+  protected void updatePluginDependencies() {
     myDependentToRequiredListMap.clear();
 
     final int rowCount = getRowCount();
@@ -199,7 +199,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
                                       }, new Condition<PluginId>() {
           public boolean value(final PluginId dependantPluginId) {
             final Boolean enabled = myEnabled.get(dependantPluginId);
-            if (enabled == null || !enabled.booleanValue()) {
+            if ((enabled == null && !updatedPlugins.contains(dependantPluginId)) ||
+                (enabled != null && !enabled.booleanValue())) {
               Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
               if (required == null) {
                 required = new HashSet<PluginId>();
@@ -469,6 +470,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }
 
           if (!newVal) {
+            if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isDeleted()) return true;
             final PluginId pluginDescriptorId = ideaPluginDescriptor.getPluginId();
             for (IdeaPluginDescriptor descriptor : ideaPluginDescriptors) {
               if (pluginId.equals(descriptor.getPluginId())) {

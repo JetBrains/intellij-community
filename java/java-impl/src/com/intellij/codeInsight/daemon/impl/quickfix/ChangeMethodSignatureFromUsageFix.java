@@ -19,7 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -90,7 +90,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     final String shortText = getShortText();
     if (shortText != null) return shortText;
     return QuickFixBundle.message("change.method.signature.from.usage.text",
-                                  HighlightUtil.formatMethod(myTargetMethod),
+                                  JavaHighlightUtil.formatMethod(myTargetMethod),
                                   myTargetMethod.getName(),
                                   formatTypesList(myNewParametersInfo, myContext));
   }

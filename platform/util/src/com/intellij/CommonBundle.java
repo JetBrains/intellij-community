@@ -31,8 +31,6 @@ import java.util.ResourceBundle;
  */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class CommonBundle extends BundleBase {
-  public static boolean assertKeyIsFound = false;
-
   @NonNls private static final String BUNDLE = "messages.CommonBundle";
   private static Reference<ResourceBundle> ourBundle;
 
@@ -43,6 +41,7 @@ public class CommonBundle extends BundleBase {
     return message(getCommonBundle(), key, params);
   }
 
+  @NotNull
   private static ResourceBundle getCommonBundle() {
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();

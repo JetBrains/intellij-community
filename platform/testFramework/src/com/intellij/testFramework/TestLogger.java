@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
@@ -48,7 +49,7 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, String... details) {
+  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
   }
 

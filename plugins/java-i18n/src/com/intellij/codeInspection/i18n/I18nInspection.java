@@ -681,6 +681,15 @@ public class I18nInspection extends BaseLocalInspectionTool {
       PsiElement parent = toplevel.getParent();
       if (parent instanceof PsiVariable && toplevel.equals(((PsiVariable)parent).getInitializer())) {
         var = (PsiVariable)parent;
+      } else if (parent instanceof PsiSwitchLabelStatement) {
+        final PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatement)parent).getEnclosingSwitchStatement();
+        if (switchStatement != null) {
+          final PsiExpression switchStatementExpression = switchStatement.getExpression();
+          if (switchStatementExpression instanceof PsiReferenceExpression) {
+            final PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
+            if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+          }
+        }
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,7 +216,7 @@ public final class UpdateChecker {
     updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {
-        final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(indicator);
+        final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator);
         final List<String> disabledPlugins = PluginManager.getDisabledPlugins();
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();
@@ -306,7 +306,7 @@ public final class UpdateChecker {
 
     inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
-    final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
+    final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
       downloaded.add(PluginDownloader.createDownloader(descriptor));

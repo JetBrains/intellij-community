@@ -1,5 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name="java.io.BufferedInputStream BufferedInputStream(java.io.InputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedInputStream BufferedInputStream(java.io.InputStream, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedInputStream int read(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedOutputStream BufferedOutputStream(java.io.OutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedOutputStream BufferedOutputStream(java.io.OutputStream, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedOutputStream void write(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedReader BufferedReader(java.io.Reader) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedReader BufferedReader(java.io.Reader, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedReader int read(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedWriter BufferedWriter(java.io.Writer) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedWriter BufferedWriter(java.io.Writer, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedWriter void write(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedWriter void write(java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.io.DataInput java.lang.String readUTF()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -83,14 +122,131 @@
   <item name="java.io.File java.nio.file.Path toPath()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.io.FileOutputStream FileOutputStream(java.io.File) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream FileOutputStream(java.io.File, boolean) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream FileOutputStream(java.io.FileDescriptor) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream FileOutputStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream FileOutputStream(java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream java.io.FileDescriptor getFD()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream java.nio.channels.FileChannel getChannel()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream void write(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FileOutputStream void write(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.io.FilterInputStream FilterInputStream(java.io.InputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FilterInputStream int read(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FilterInputStream int read(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FilterOutputStream FilterOutputStream(java.io.OutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FilterOutputStream void write(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FilterOutputStream void write(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FilterReader FilterReader(java.io.Reader) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.InputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.InputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.io.OutputStreamWriter OutputStreamWriter(java.io.OutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter OutputStreamWriter(java.io.OutputStream, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter OutputStreamWriter(java.io.OutputStream, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter OutputStreamWriter(java.io.OutputStream, java.nio.charset.Charset) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter OutputStreamWriter(java.io.OutputStream, java.nio.charset.Charset) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter OutputStreamWriter(java.io.OutputStream, java.nio.charset.CharsetEncoder) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter OutputStreamWriter(java.io.OutputStream, java.nio.charset.CharsetEncoder) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter void write(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.OutputStreamWriter void write(java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.io.RandomAccessFile RandomAccessFile(java.io.File, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.io.Reader Reader(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Reader int read(char[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Reader int read(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Reader int read(java.nio.CharBuffer) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.StringReader StringReader(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.StringReader int read(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.StringWriter void write(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.StringWriter void write(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.StringWriter void write(java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Writer Writer(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Writer void write(char[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Writer void write(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Writer void write(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Writer void write(java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
 </root>
 

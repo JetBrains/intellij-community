@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.LevenshteinDistance;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -49,7 +50,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Metrics metrics = new LevenshteinDistance();
+  private final LevenshteinDistance metrics = new LevenshteinDistance();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
   private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();

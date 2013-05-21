@@ -34,6 +34,7 @@ import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usages.UsageView;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,9 +74,28 @@ public class PsiElementListNavigator {
                                                final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,
                                                final @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, new Consumer<Object[]>() {
+      @Override
+      public void consume(Object[] selectedElements) {
+        for (Object element : selectedElements) {
+          PsiElement selected = (PsiElement)element;
+          LOG.assertTrue(selected.isValid());
+          ((NavigatablePsiElement)selected).navigate(true);
+        }
+      }
+    });
+  }
+
+  @Nullable
+  public static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
+                                              final String title,
+                                              final String findUsagesTitle,
+                                              final ListCellRenderer listRenderer,
+                                              final @Nullable ListBackgroundUpdaterTask listUpdaterTask, 
+                                              final Consumer<Object[]> consumer) {
     if (targets.length == 0) return null;
     if (targets.length == 1) {
-      targets[0].navigate(true);
+      consumer.consume(targets);
       return null;
     }
     final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<NavigatablePsiElement>(targets);
@@ -121,11 +141,7 @@ public class PsiElementListNavigator {
           int[] ids = list.getSelectedIndices();
           if (ids == null || ids.length == 0) return;
           Object[] selectedElements = list.getSelectedValues();
-          for (Object element : selectedElements) {
-            PsiElement selected = (PsiElement)element;
-            LOG.assertTrue(selected.isValid());
-            ((NavigatablePsiElement)selected).navigate(true);
-          }
+          consumer.consume(selectedElements);
         }
       }).
       setCancelCallback(new Computable<Boolean>() {

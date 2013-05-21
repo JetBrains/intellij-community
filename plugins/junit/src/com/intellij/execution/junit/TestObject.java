@@ -35,6 +35,11 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -53,6 +58,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -62,6 +68,7 @@ import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -76,6 +83,7 @@ public abstract class TestObject implements JavaCommandLine {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
+  private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   protected JavaParameters myJavaParameters;
   private final Project myProject;
@@ -198,6 +206,9 @@ public abstract class TestObject implements JavaCommandLine {
 
     myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
     myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+    if (Registry.is("junit_sm_runner", false)) {
+      myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+    }
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.updateJavaParameters(myConfiguration, myJavaParameters, getRunnerSettings());
@@ -248,9 +259,16 @@ public abstract class TestObject implements JavaCommandLine {
 
   @Override
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+    final boolean smRunner = Registry.is("junit_sm_runner", false);
+    if (smRunner) {
+      myJavaParameters.getVMParametersList().add("-Didea.junit.sm_runner");
+    }
     final JUnitProcessHandler handler = createHandler(executor);
     final RunnerSettings runnerSettings = getRunnerSettings();
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
+    if (smRunner) {
+      return useSmRunner(executor, handler);
+    }
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, runnerSettings, getConfigurationSettings(), unboundOutputRoot);
@@ -341,6 +359,42 @@ public abstract class TestObject implements JavaCommandLine {
       @Override
       public TestFrameworkRunningModel get() {
         return packetsReceiver.getModel();
+      }
+    });
+
+    final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
+    result.setRestartActions(rerunFailedTestsAction);
+    return result;
+  }
+
+  private ExecutionResult useSmRunner(Executor executor, JUnitProcessHandler handler) {
+    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(
+      new RuntimeConfigurationProducer.DelegatingRuntimeConfiguration<JUnitConfiguration>(
+        (JUnitConfiguration)myEnvironment.getRunProfile()),
+      JUNIT_TEST_FRAMEWORK_NAME,
+      executor
+    );
+
+    testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
+
+    BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
+      JUNIT_TEST_FRAMEWORK_NAME,
+      testConsoleProperties,
+      myEnvironment.getRunnerSettings(),
+      myEnvironment.getConfigurationSettings(), null);
+
+
+    Disposer.register(myProject, smtConsoleView);
+
+    final ConsoleView consoleView = smtConsoleView;
+    consoleView.attachToProcess(handler);
+
+    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView);
+    rerunFailedTestsAction.init(testConsoleProperties, myEnvironment);
+    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      @Override
+      public TestFrameworkRunningModel get() {
+        return ((SMTRunnerConsoleView)consoleView).getResultsViewer();
       }
     });
 

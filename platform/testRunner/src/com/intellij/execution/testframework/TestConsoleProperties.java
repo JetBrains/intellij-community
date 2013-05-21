@@ -54,6 +54,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   private final Project myProject;
   private final Executor myExecutor;
   private ConsoleView myConsole;
+  private boolean myUsePredefinedMessageFilter = true;
 
   protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners =
     new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();
@@ -154,5 +155,13 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   protected ExecutionConsole getConsole() {
     return myConsole;
+  }
+
+  public boolean isUsePredefinedMessageFilter() {
+    return myUsePredefinedMessageFilter;
+  }
+
+  public void setUsePredefinedMessageFilter(boolean usePredefinedMessageFilter) {
+    myUsePredefinedMessageFilter = usePredefinedMessageFilter;
   }
 }

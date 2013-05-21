@@ -11,6 +11,9 @@
   <item name="java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name="java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String, boolean, java.lang.ClassLoader) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
   <item name="java.lang.Class java.lang.reflect.Field getDeclaredField(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -42,6 +45,9 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.Iterable Iterator&lt;T&gt; iterator()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.Runtime Process exec(java.lang.String[]) 0">

@@ -119,6 +119,27 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           list.add(pluginNode);
           ourInstallingNodes.add(pluginNode);
         }
+        final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
+        final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
+        final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
+        for (PluginNode node : list) {
+          final PluginId pluginId = node.getPluginId();
+          if (pluginsModel.isDisabled(pluginId)) {
+            disabled.add(node);
+          }
+          final List<PluginId> depends = node.getDepends();
+          if (depends != null) {
+            for (PluginId dependantId : depends) {
+              final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
+              if (pluginDescriptor != null && pluginsModel.isDisabled(dependantId)) {
+                disabledDependants.add(pluginDescriptor);
+              }
+            }
+          }
+        }
+        if (suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list)) {
+          installed.setRequireShutdown(true);
+        }
       }
       try {
         final Runnable onInstallRunnable = new Runnable() {
@@ -127,27 +148,6 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
             installedPluginsToModel(list);
             if (!installed.isDisposed()) {
               getPluginTable().updateUI();
-              final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
-              final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
-              final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
-              for (PluginNode node : list) {
-                final PluginId pluginId = node.getPluginId();
-                if (pluginsModel.isDisabled(pluginId)) {
-                  disabled.add(node);
-                }
-                final List<PluginId> depends = node.getDepends();
-                if (depends != null) {
-                  for (PluginId dependantId : depends) {
-                    final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
-                    if (pluginDescriptor != null && pluginsModel.isDisabled(dependantId)) {
-                      disabledDependants.add(pluginDescriptor);
-                    }
-                  }
-                }
-              }
-              if (suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list)) {
-                installed.setRequireShutdown(true);
-              }
             }
             else {
               boolean needToRestart = false;
@@ -239,8 +239,9 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       } else if (result == DialogWrapper.CANCEL_EXIT_CODE && !disabled.isEmpty()) {
         pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
       }
+      return true;
     }
-    return true;
+    return false;
   }
 
   private void installedPluginsToModel(ArrayList<PluginNode> list) {

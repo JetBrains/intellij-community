@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -106,7 +107,7 @@ public class GrDelegatesToUtil {
     else if (value == null ||
              value instanceof PsiLiteralExpression && ((PsiLiteralExpression)value).getType() == PsiType.NULL ||
              value instanceof GrLiteral && ((GrLiteral)value).getType() == PsiType.NULL) {
-      String target = inferStringAttribute(delegatesTo, "target");
+      String target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target");
       if (target == null) return null;
 
       final int parameter = findTargetParameter(delegatesTo, target);
@@ -132,24 +133,13 @@ public class GrDelegatesToUtil {
       final PsiAnnotation targetAnnotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET);
       if (targetAnnotation == null) continue;
 
-      final String value = inferStringAttribute(targetAnnotation, "value");
+      final String value = GrAnnotationUtil.inferStringAttribute(targetAnnotation, "value");
       if (value == null) continue;
 
       if (value.equals(target)) return i;
     }
 
     return -1;
-  }
-
-  @Nullable
-  private static String inferStringAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
-    final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
-    if (targetValue instanceof PsiLiteral) {
-      final Object value = ((PsiLiteral)targetValue).getValue();
-      if (value instanceof String) return (String)value;
-    }
-
-    return null;
   }
 
   @Nullable

@@ -200,7 +200,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     return myMainPanel;
   }
 
-  public void startEvaluation(XDebuggerEvaluator.XEvaluationCallback evaluationCallback) {
+  public void startEvaluation(@NotNull XDebuggerEvaluator.XEvaluationCallback evaluationCallback) {
     final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
     inputEditor.saveTextInHistory();
     String expression = inputEditor.getText();

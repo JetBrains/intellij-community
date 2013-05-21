@@ -15,7 +15,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,8 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class AssertEqualsBetweenInconvertibleTypesTestNGInspection extends BaseJavaLocalInspectionTool {
-
+public class AssertEqualsBetweenInconvertibleTypesTestNGInspection extends BaseJavaBatchLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

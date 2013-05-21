@@ -22,6 +22,7 @@
  */
 package com.intellij.lang.injection;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -85,4 +86,7 @@ public abstract class InjectedLanguageManager {
   public abstract void dropFileCaches(@NotNull PsiFile file);
 
   public abstract PsiFile getTopLevelFile(@NotNull PsiElement element);
+
+  @NotNull
+  public abstract List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile);
 }

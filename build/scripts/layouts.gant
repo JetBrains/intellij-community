@@ -231,9 +231,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   //reorder(targetDirectory)
 }
 
-public def layoutCommunityPlugins(String home, String androidHome=null) {
-  if (androidHome == null) {
-    androidHome = "$home/plugins/android"
+public def layoutCommunityPlugins(String home) {
+  if (isDefined("androidPluginHome")) {
+    layoutAndroid(p("androidPluginHome"))
   }
 
   dir("plugins") {
@@ -463,32 +463,6 @@ public def layoutCommunityPlugins(String home, String androidHome=null) {
         module("common-eclipse-util")
       }
     }
-
-    layoutPlugin("android") {
-      fileset(dir: "${androidHome}/lib") {
-        include(name: "**/*.jar")
-        exclude(name: "**/ddmlib_1.jar")
-        exclude(name: "src/*.jar")
-      }
-
-      jar("android-common.jar") {
-        module("android-common")
-      }
-
-      jar("android-rt.jar") {
-        module("android-rt")
-      }
-
-      dir("jps") {
-        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
-      }
-    }
-
-    layoutPlugin("android-designer") {
-      jar("android-designer.jar") {
-        module("android-designer")
-      }
-    }
   }
 }
 
@@ -597,6 +571,67 @@ def reorder(String home, String targetDirectory) {
   }
 }
 
+def layoutAndroid(String androidHome) {
+  dir("plugins") {
+    layoutPlugin("android") {
+      fileset(dir: "${androidHome}/android/lib") {
+        include(name: "**/*.jar")
+        exclude(name: "**/ddmlib_1.jar")
+        exclude(name: "src/*.jar")
+      }
+
+      jar("android-common.jar") {
+        module("android-common")
+      }
+
+      jar("android-rt.jar") {
+        module("android-rt")
+      }
+
+      jar("common.jar") {
+        module("common")
+      }
+      jar("sdklib.jar") {
+        module("sdklib")
+      }
+      jar("layoutlib-api.jar") {
+        module("layoutlib-api")
+      }
+      jar("sdk-tools.jar") {
+        module("assetstudio")
+        module("ddmlib")
+        module("dvlib")
+        module("draw9patch")
+        module("lint-cli")
+        module("lint-api")
+        module("lint-checks")
+        module("manifest-merger")
+        module("ninepatch")
+        module("sdk-common")
+      }
+      jar("androidAnnotations.jar") {
+        fileset(dir: "$androidHome/android/annotations")
+      }
+      dir("jps") {
+        jar("android-gradle-jps.jar") { module("android-gradle-jps") }
+      }
+      dir("device-art-resources") {
+        fileset(dir: "$androidHome/android/device-art-resources")
+      }
+
+      dir("jps") {
+        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
+      }
+    }
+
+    layoutPlugin("android-designer") {
+      jar("android-designer.jar") {
+        module("android-designer")
+      }
+    }
+  }
+}
+
 def layoutCommunityJps(String home, String target) {
   layout(target) {
     jar("util.jar") {
@@ -626,15 +661,6 @@ def layoutCommunityJps(String home, String target) {
     }
     jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
 
-    jar("android-jps-plugin.jar") {
-      module("android-jps-plugin")
-      module("android-common")
-      module("android-rt")
-    }
-    fileset(dir: "${home}/plugins/android/lib") {
-      include(name: "**/*.jar")
-      exclude(name: "**/ddmlib_1.jar")
-    }
 
     jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
     fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
@@ -679,6 +705,10 @@ def layout_core(String home, String target) {
       module("extensions")
       module("java-psi-api")
       module("java-psi-impl")
+      module("analysis-api")
+      module("analysis-impl")
+      module("external-system-api")
+      module("external-system-impl")
     }
 
     jar("annotations.jar") {
@@ -723,6 +753,8 @@ def layout_core_upsource(String home, String target) {
       module("analysis-impl")
       module("java-analysis-api")
       module("java-analysis-impl")
+      module("external-system-api")
+      module("external-system-impl")
     }
 
     jar("annotations.jar") {

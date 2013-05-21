@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -24,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
@@ -68,6 +70,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver;
 import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
@@ -95,7 +99,12 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     toReplaceIn = (GrClosableBlock)mySettings.getToReplaceIn();
     toSearchFor = mySettings.getToSearchFor();
-    myParameterInitializer = new GrExpressionWrapper(mySettings.getExpression());
+
+    final StringPartInfo info = settings.getStringPartInfo();
+    final GrExpression expression = info != null ?
+                                    GrIntroduceHandlerBase.generateExpressionFromStringPart(info, settings.getProject()) :
+                                    mySettings.getExpression();
+    myParameterInitializer = new GrExpressionWrapper(expression);
   }
 
   @NotNull
@@ -301,6 +310,16 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         else {
           element.replace(newExpr);
         }
+      }
+    }
+
+    final StringPartInfo info = settings.getStringPartInfo();
+    if (info != null) {
+      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(settings.getName(), info, settings.getProject());
+      final Editor editor = PsiUtilBase.findEditor(expr);
+      if (editor != null) {
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
       }
     }
   }

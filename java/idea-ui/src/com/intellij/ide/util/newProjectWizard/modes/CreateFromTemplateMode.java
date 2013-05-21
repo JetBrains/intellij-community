@@ -22,12 +22,9 @@ import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Condition;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,12 +41,6 @@ import java.util.Map;
  */
 public class CreateFromTemplateMode extends WizardMode {
 
-  private static final Condition<ProjectTemplate> TEMPLATE_CONDITION = new Condition<ProjectTemplate>() {
-    @Override
-    public boolean value(ProjectTemplate template) {
-      return !(template instanceof DirectoryProjectGenerator);
-    }
-  };
   private SelectTemplateStep mySelectTemplateStep;
 
   public static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
@@ -58,8 +49,7 @@ public class CreateFromTemplateMode extends WizardMode {
     for (ProjectTemplatesFactory factory : factories) {
       for (String group : factory.getGroups()) {
         ProjectTemplate[] templates = factory.createTemplates(group, context);
-        List<ProjectTemplate> values = context.isCreatingNewProject() ? Arrays.asList(templates) : ContainerUtil.filter(templates,
-                                                                                                                        TEMPLATE_CONDITION);
+        List<ProjectTemplate> values = Arrays.asList(templates);
         if (!values.isEmpty()) {
           Icon icon = factory.getGroupIcon(group);
           TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group));

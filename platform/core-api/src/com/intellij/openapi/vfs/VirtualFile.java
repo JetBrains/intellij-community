@@ -79,6 +79,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the path
    */
+  @SuppressWarnings("JavadocReference")
   public abstract String getPath();
 
   /**
@@ -319,6 +320,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeRegistry}),
    *         it returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}
    */
+  @SuppressWarnings("JavadocReference")
   @NotNull
   public FileType getFileType() {
     return FileTypeRegistry.getInstance().getFileTypeByFile(this);
@@ -361,9 +363,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     if (index < relPath.length()) {
       return child.findFileByRelativePath(relPath.substring(index + 1));
     }
-    else {
-      return child;
-    }
+    return child;
   }
 
   /**
@@ -670,7 +670,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @param name
    * @return whether file name equals to this name
    *         result depends on the filesystem specifics
    */

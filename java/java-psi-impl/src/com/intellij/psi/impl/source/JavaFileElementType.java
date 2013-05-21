@@ -38,7 +38,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 16;
+  public static final int STUB_VERSION = 17;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
@@ -92,8 +92,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public void serialize(@NotNull final PsiJavaFileStub stub, @NotNull final StubOutputStream dataStream)
-      throws IOException {
+  public void serialize(@NotNull final PsiJavaFileStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeBoolean(stub.isCompiled());
     dataStream.writeName(stub.getPackageName());
   }
@@ -107,6 +106,5 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
-  }
+  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) { }
 }

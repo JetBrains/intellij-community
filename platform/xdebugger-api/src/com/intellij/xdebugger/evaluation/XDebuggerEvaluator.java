@@ -67,7 +67,7 @@ public abstract class XDebuggerEvaluator {
    * @param expression expression to evaluate
    * @param callback   used to notify that the expression has been evaluated or an error occurs
    */
-  public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+  public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
     evaluate(expression, callback);
   }
 
@@ -79,7 +79,7 @@ public abstract class XDebuggerEvaluator {
      * @param callback   used to notify that the expression has been evaluated or an error occurs
      * @param mode       code fragment or expression
      */
-  public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @Nullable EvaluationMode mode) {
+  public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @NotNull EvaluationMode mode) {
     evaluate(expression, callback, expressionPosition);
   }
 

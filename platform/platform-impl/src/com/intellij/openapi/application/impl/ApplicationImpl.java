@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PluginException;
@@ -222,7 +223,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     getPicoContainer().registerComponentInstance(Application.class, this);
 
-    CommonBundle.assertKeyIsFound = isUnitTestMode;
+    BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
+
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
     if ((isInternal || isUnitTestMode) && !Comparing.equal("off", System.getProperty("idea.disposer.debug"))) {
       Disposer.setDebugMode(true);
@@ -911,7 +913,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                  ApplicationNamesInfo.getInstance().getFullProductName());
 
       if (DialogWrapper.OK_EXIT_CODE != Messages.showYesNoDialog(message, ApplicationBundle.message("exit.confirm.title"),
-                                        ApplicationBundle.message("command.exit"), "Cancel",
+                                        ApplicationBundle.message("command.exit"), CommonBundle.message("button.cancel"),
                                         Messages.getQuestionIcon(), option)) {
         return false;
       }

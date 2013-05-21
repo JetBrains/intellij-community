@@ -330,8 +330,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           return moduleStructureExtension.getNodeComparator();
         }
       });
-    comparators.add(NODE_COMPARATOR);
-    return new MergingComparator<MyNode>(comparators);
+    return new MergingComparator<MyNode>(ContainerUtil.concat(comparators, Collections.singletonList(NODE_COMPARATOR)));
   }
 
   @Override
@@ -678,7 +677,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       extension.copy(configurable, TREE_UPDATER);
     }
   }
-  
+
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
     public MyDataProviderWrapper(final JComponent component) {
       super(new BorderLayout());

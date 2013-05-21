@@ -97,12 +97,12 @@ public class XValueHint extends AbstractValueHint {
           }
 
           @Override
-          public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand) {
-            setPresentation(icon, type, "", "", null, true);
+          public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean expand) {
+            setPresentation(icon, value, valuePresenter, true);
           }
 
           @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @NotNull String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
+          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
             doSetPresentation(icon, null, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren);
           }
 
@@ -113,7 +113,7 @@ public class XValueHint extends AbstractValueHint {
           }
 
           private void doSetPresentation(@Nullable Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                                      @NonNls @NotNull final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren) {
+                                      @NonNls @Nullable final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren) {
             DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
               public void run() {
                 doShowHint(result, separator, value, type, valuePresenter == null ? XValueNodeImpl.DEFAULT_VALUE_PRESENTER : valuePresenter, hasChildren);

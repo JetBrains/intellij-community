@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,10 +80,8 @@ public class XDebuggerTreeState {
   private static NodeInfo createNode(final XDebuggerTreeNode node, boolean selected) {
     if (node instanceof XValueNodeImpl) {
       XValueNodeImpl valueNode = (XValueNodeImpl)node;
-      String name = valueNode.getName();
-      String value = valueNode.getValue();
-      if (name != null && value != null) {
-        return new NodeInfo(name, value, selected);
+      if (valueNode.isComputed()) {
+        return new NodeInfo(valueNode.getName(), valueNode.getValue(), selected);
       }
     }
     return null;
@@ -94,7 +92,7 @@ public class XDebuggerTreeState {
     private final String myValue;
     private boolean myExpanded;
     private final boolean mySelected;
-    private Map<String, NodeInfo> myChidlren;
+    private Map<String, NodeInfo> myChildren;
 
     public NodeInfo(final String name, final String value, boolean selected) {
       myName = name;
@@ -103,10 +101,10 @@ public class XDebuggerTreeState {
     }
 
     public void addChild(@NotNull NodeInfo child) {
-      if (myChidlren == null) {
-        myChidlren = new HashMap<String, NodeInfo>();
+      if (myChildren == null) {
+        myChildren = new THashMap<String, NodeInfo>();
       }
-      myChidlren.put(child.myName, child);
+      myChildren.put(child.myName, child);
     }
 
     public boolean isExpanded() {
@@ -123,7 +121,7 @@ public class XDebuggerTreeState {
 
     @Nullable
     public NodeInfo removeChild(@NotNull String name) {
-      return myChidlren != null ? myChidlren.remove(name) : null;
+      return myChildren != null ? myChildren.remove(name) : null;
     }
   }
 }

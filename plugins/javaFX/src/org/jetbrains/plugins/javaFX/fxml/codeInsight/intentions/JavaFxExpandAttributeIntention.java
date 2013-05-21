@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +53,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
     final PsiElement declaration = descriptor.getDeclaration();
     if (declaration instanceof PsiField) {
       final PsiType fieldType = ((PsiField)declaration).getType();
-      final PsiType itemType = GenericsHighlightUtil.getCollectionItemType(fieldType, declaration.getResolveScope());
+      final PsiType itemType = JavaGenericsUtil.getCollectionItemType(fieldType, declaration.getResolveScope());
       if (itemType != null) {
         final String typeNode = itemType.getPresentableText();
         JavaFxPsiUtil.insertImportWhenNeeded((XmlFile)attr.getContainingFile(), typeNode, itemType.getCanonicalText());

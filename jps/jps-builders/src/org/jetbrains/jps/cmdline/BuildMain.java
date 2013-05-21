@@ -30,6 +30,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
@@ -249,7 +250,7 @@ public class BuildMain {
           }
 
           @Override
-          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+          public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
             logger.error(message, t);
           }
 

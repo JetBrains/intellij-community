@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/1/11 1:30 PM
  */
-public class ProjectData extends AbstractNamedData {
+public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware {
 
   private static final long serialVersionUID = 1L;
 

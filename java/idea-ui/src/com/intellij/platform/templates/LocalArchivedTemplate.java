@@ -51,8 +51,9 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   private List<WizardInputField> myInputFields = Collections.emptyList();
   private Icon myIcon;
 
-  public LocalArchivedTemplate(String displayName,
-                               URL archivePath, ClassLoader classLoader) {
+  public LocalArchivedTemplate(@NotNull String displayName,
+                               @NotNull URL archivePath,
+                               @NotNull ClassLoader classLoader) {
     super(displayName);
 
     myArchivePath = archivePath;

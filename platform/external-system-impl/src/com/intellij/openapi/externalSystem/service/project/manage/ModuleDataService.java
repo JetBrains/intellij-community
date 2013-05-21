@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
@@ -79,7 +78,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
         if (toCreate.isEmpty()) {
           return;
         }
-        removeExistingModulesConfigs(toCreate, project);
+        removeExistingModulesConfigs(toCreate);
         Application application = ApplicationManager.getApplication();
         final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
         application.runWriteAction(new Runnable() {
@@ -160,11 +159,11 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     return result;
   }
 
-  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull Project project) {
+  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes) {
     if (nodes.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(project, nodes.iterator().next().getData().getOwner(), nodes, true, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
       @Override
       public void run() {
         LocalFileSystem fileSystem = LocalFileSystem.getInstance();
@@ -190,7 +189,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     if (modules.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, modules, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         for (Module module : modules) {

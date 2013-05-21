@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -72,9 +72,9 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
   public static void collectDescriptorsByCollection(PsiType psiType,
                                                     GlobalSearchScope resolveScope,
-                                                    final List<XmlElementDescriptor> descriptors, 
+                                                    final List<XmlElementDescriptor> descriptors,
                                                     final Project project) {
-    final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(psiType, resolveScope);
+    final PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(psiType, resolveScope);
     if (collectionItemType != null) {
       final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
       if (aClass != null) {

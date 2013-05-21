@@ -16,10 +16,13 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,10 +35,12 @@ import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -81,6 +86,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myUsagePreviewPanel = new UsagePreviewPanel(myProject);
     myUsageFileLabel = new JLabel();
     populateData();
+    myTableModel = new MyTableModel();
     setTitle(myRenamer.getDialogTitle());
     init();
   }
@@ -122,8 +128,13 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel(myRenamer.getDialogDescription()), BorderLayout.CENTER);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+    actionGroup.addAction(createRenameSelectedAction()).setAsSecondary(true);
+    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.EAST);
     final Box box = Box.createHorizontalBox();
-    box.add(new JLabel(myRenamer.getDialogDescription()));
+    box.add(panel);
     box.add(Box.createHorizontalGlue());
     return box;
   }
@@ -145,13 +156,21 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    myTableModel = new MyTableModel();
     myTable.setModel(myTableModel);
     myTableModel.getSpaceAction().register();
     myTableModel.addTableModelListener(new TableModelListener() {
       @Override
       public void tableChanged(TableModelEvent e) {
         handleChanges();
+      }
+    });
+    myTable.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        final int[] selectionRows = myTable.getSelectedRows();
+        if (selectionRows != null) {
+          compoundPopup().show(comp, x, y);
+        }
       }
     });
 
@@ -216,6 +235,22 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       myTable.getSelectionModel().addSelectionInterval(0,0);
     }
     return myPanel;
+  }
+
+  private JPopupMenu compoundPopup() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(createRenameSelectedAction());
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    return menu.getComponent();
+  }
+
+  private RenameSelectedAction createRenameSelectedAction() {
+    return new RenameSelectedAction(myTable, myTableModel) {
+      @Override
+      protected boolean isValidName(String inputString, int selectedRow) {
+        return RenameUtil.isValidName(myProject, myRenames[selectedRow], inputString);
+      }
+    };
   }
 
   private void fireDataChanged() {
@@ -357,4 +392,60 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     }
   }
 
+  public abstract static class RenameSelectedAction extends AnAction {
+  
+    private JTable myTable;
+    private AbstractTableModel myModel;
+
+    public RenameSelectedAction(JTable table, final AbstractTableModel model) {
+      super("Rename Selected");
+      myTable = table;
+      myModel = model;
+    }
+  
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final int[] selectedRows = myTable.getSelectedRows();
+  
+      final String newName = Messages.showInputDialog(myTable, "New name", "Rename Selected", null,
+                                                      (String)myModel.getValueAt(selectedRows[0], NEW_NAME_COLUMN),
+                                                      new InputValidatorEx() {
+                                                        @Override
+                                                        public boolean checkInput(String inputString) {
+                                                          return getErrorText(inputString) == null;
+                                                        }
+
+                                                        @Override
+                                                        public boolean canClose(String inputString) {
+                                                          return checkInput(inputString);
+                                                        }
+
+                                                        @Nullable
+                                                        @Override
+                                                        public String getErrorText(String inputString) {
+                                                          final int selectedRow = myTable.getSelectedRow();
+                                                          if (!isValidName(inputString, selectedRow)) {
+                                                            return "Identifier \'" + inputString + "\' is invalid";
+                                                          }
+                                                          return null;
+                                                        }
+                                                      });
+      if (newName == null) return;
+  
+      for (int i : selectedRows) {
+        myModel.setValueAt(newName, i, NEW_NAME_COLUMN);
+      }
+      myModel.fireTableDataChanged();
+      for (int row : selectedRows) {
+        myTable.getSelectionModel().addSelectionInterval(row, row);
+      }
+    }
+  
+    protected abstract boolean isValidName(String inputString, int selectedRow);
+  
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myTable.getSelectedRows().length > 0);
+    }
+  }
 }

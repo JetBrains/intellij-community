@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -52,7 +52,7 @@ public class SuperMethodReturnFix implements IntentionAction {
     );
     return QuickFixBundle.message("fix.super.method.return.type.text",
                                   name,
-                                  HighlightUtil.formatType(mySuperMethodType));
+                                  JavaHighlightUtil.formatType(mySuperMethodType));
   }
 
   @Override

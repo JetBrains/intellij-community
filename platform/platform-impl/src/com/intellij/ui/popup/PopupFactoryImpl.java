@@ -49,6 +49,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.EmptyIcon;
@@ -859,6 +860,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
 
         Icon icon = action.getTemplatePresentation().getIcon();
+        if (icon == null && action instanceof Toggleable) icon = PlatformIcons.CHECK_ICON;
         if (icon != null) {
           final int width = icon.getIconWidth();
           final int height = icon.getIconHeight();
@@ -931,7 +933,16 @@ public class PopupFactoryImpl extends JBPopupFactory {
         Icon icon = presentation.getIcon();
         if (icon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
-          icon = actionId != null && actionId.startsWith("QuickList.") ? AllIcons.Actions.QuickList : myEmptyIcon;
+          if (actionId != null && actionId.startsWith("QuickList.")) {
+            icon = AllIcons.Actions.QuickList;
+          }
+          else if (action instanceof Toggleable) {
+            boolean toggled = Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY));
+            icon = toggled? new IconWrapper(PlatformIcons.CHECK_ICON) : myEmptyIcon;
+          }
+          else {
+            icon = myEmptyIcon;
+          }
         }
         else {
           icon = new IconWrapper(icon);

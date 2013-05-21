@@ -232,13 +232,13 @@ public class DfaUtil {
   }
 
   @NotNull
-  public static Collection<PsiExpression> getVariableAssignmentsInFile(final PsiVariable psiVariable,
+  public static Collection<PsiExpression> getVariableAssignmentsInFile(@NotNull PsiVariable psiVariable,
                                                                        final boolean literalsOnly,
                                                                        final PsiElement place) {
     final Ref<Boolean> modificationRef = Ref.create(Boolean.FALSE);
     final PsiCodeBlock codeBlock = place == null? null : getTopmostBlockInSameClass(place);
     final int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
-    final List<PsiExpression> list = ContainerUtil.mapNotNull(
+    List<PsiExpression> list = ContainerUtil.mapNotNull(
       ReferencesSearch.search(psiVariable, new LocalSearchScope(new PsiElement[] {psiVariable.getContainingFile()}, null, true)).findAll(),
       new NullableFunction<PsiReference, PsiExpression>() {
         @Override
@@ -272,8 +272,9 @@ public class DfaUtil {
         }
       });
     if (modificationRef.get()) return Collections.emptyList();
-    if (!literalsOnly || allOperandsAreLiterals(psiVariable.getInitializer())) {
-      ContainerUtil.addIfNotNull(psiVariable.getInitializer(), list);
+    PsiExpression initializer = psiVariable.getInitializer();
+    if (initializer != null && (!literalsOnly || allOperandsAreLiterals(initializer))) {
+      list = ContainerUtil.concat(list, Collections.singletonList(initializer));
     }
     return list;
   }

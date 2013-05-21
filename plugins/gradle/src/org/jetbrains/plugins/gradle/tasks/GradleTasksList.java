@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.tasks;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -33,14 +32,15 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 3/15/13 7:38 PM
  */
+// TODO den remove
 public class GradleTasksList extends JBList {
-
-  @NotNull private static final MyRenderer RENDERER       = new MyRenderer();
+  
+//  @NotNull private static final MyRenderer RENDERER       = new MyRenderer();
   @NotNull private static final JLabel     EMPTY_RENDERER = new JLabel(" ");
 
   public GradleTasksList(@NotNull GradleTasksModel model) {
     super(model);
-    setCellRenderer(RENDERER);
+//    setCellRenderer(RENDERER);
   }
 
   @Override
@@ -48,71 +48,72 @@ public class GradleTasksList extends JBList {
     return (GradleTasksModel)super.getModel();
   }
 
-  public void setFirst(@NotNull ExternalSystemTaskDescriptor descriptor) {
-    Set<ExternalSystemTaskDescriptor> selected = getSelectedDescriptors();
-    GradleTasksModel model = getModel();
-    model.setFirst(descriptor);
-    clearSelection();
-    for (int i = 0; i < model.size(); i++) {
-      //noinspection SuspiciousMethodCalls
-      if (selected.contains(model.getElementAt(i))) {
-        addSelectionInterval(i, i);
-      }
-    }
-  }
-
-  @NotNull
-  public Set<ExternalSystemTaskDescriptor> getSelectedDescriptors() {
-    int[] indices = getSelectedIndices();
-    if (indices == null || indices.length <= 0) {
-      return Collections.emptySet();
-    }
-    Set<ExternalSystemTaskDescriptor> result = ContainerUtilRt.newHashSet();
-    GradleTasksModel model = getModel();
-    for (int i : indices) {
-      Object e = model.getElementAt(i);
-      if (e instanceof ExternalSystemTaskDescriptor) {
-        result.add((ExternalSystemTaskDescriptor)e);
-      }
-    }
-    return result;
-  }
-
-  private static class MyRenderer extends DefaultListCellRenderer {
-
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (value instanceof GradleTasksModel.MyEmptyDescriptor) {
-        return EMPTY_RENDERER;
-      }
-      else if (value instanceof ExternalSystemTaskDescriptor) {
-        ExternalSystemTaskDescriptor descriptor = (ExternalSystemTaskDescriptor)value;
-        setText(descriptor.getName());
-        Icon icon = null;
-        String executorId = descriptor.getExecutorId();
-        if (!StringUtil.isEmpty(executorId)) {
-          Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
-          if (executor != null) {
-            icon = executor.getIcon();
-          }
-        }
-
-        if (icon == null) {
-          icon = GradleIcons.Task;
-        }
-        setIcon(icon);
-      }
-      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
-
-    @Override
-    public void setIcon(Icon icon) {
-      if (icon != null) {
-        // Don't allow to reset icon.
-        super.setIcon(icon);
-      }
-    }
-  }
+//  public void setFirst(@NotNull ExternalSystemTaskDescriptor descriptor) {
+//    Set<ExternalSystemTaskDescriptor> selected = getSelectedDescriptors();
+//    GradleTasksModel model = getModel();
+//    model.setFirst(descriptor);
+//    clearSelection();
+//    for (int i = 0; i < model.size(); i++) {
+//      //noinspection SuspiciousMethodCalls
+//      if (selected.contains(model.getElementAt(i))) {
+//        addSelectionInterval(i, i);
+//      }
+//    }
+//  }
+//
+//  @NotNull
+//  public Set<ExternalSystemTaskDescriptor> getSelectedDescriptors() {
+//    int[] indices = getSelectedIndices();
+//    if (indices == null || indices.length <= 0) {
+//      return Collections.emptySet();
+//    }
+//    Set<ExternalSystemTaskDescriptor> result = ContainerUtilRt.newHashSet();
+//    GradleTasksModel model = getModel();
+//    for (int i : indices) {
+//      Object e = model.getElementAt(i);
+//      if (e instanceof ExternalSystemTaskDescriptor) {
+//        result.add((ExternalSystemTaskDescriptor)e);
+//      }
+//    }
+//    return result;
+//  }
+//
+//  private static class MyRenderer extends DefaultListCellRenderer {
+//
+//    @Override
+//    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+//      if (value instanceof GradleTasksModel.MyEmptyDescriptor) {
+//        return EMPTY_RENDERER;
+//      }
+//      else if (value instanceof ExternalSystemTaskDescriptor) {
+//        ExternalSystemTaskDescriptor descriptor = (ExternalSystemTaskDescriptor)value;
+//        setText(descriptor.getName());
+//        Icon icon = null;
+//        String executorId = descriptor.getExecutorId();
+//        if (!StringUtil.isEmpty(executorId)) {
+//          Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+//          if (executor != null) {
+//            icon = executor.getIcon();
+//          }
+//        }
+//
+//        // TODO den implement
+//        //if (icon == null) {
+//        //  icon = GradleIcons.Task;
+//        //}
+//        setIcon(icon);
+//      }
+//      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+//    }
+//
+//    @Override
+//    public void setIcon(Icon icon) {
+//      if (icon != null) {
+//        // Don't allow to reset icon.
+//        super.setIcon(icon);
+//      }
+//    }
+//  }
 
   
 }

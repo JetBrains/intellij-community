@@ -27,4 +27,7 @@ public interface ExternalSystemUiAware {
   
   @Nullable
   Icon getProjectIcon();
+
+  @Nullable
+  Icon getTaskIcon();
 }

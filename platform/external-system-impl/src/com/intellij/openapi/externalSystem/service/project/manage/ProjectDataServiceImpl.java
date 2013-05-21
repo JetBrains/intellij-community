@@ -18,7 +18,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -65,7 +64,7 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
     if (!(project instanceof ProjectEx) || newName.equals(project.getName())) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, project, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         ((ProjectEx)project).setProjectName(newName);

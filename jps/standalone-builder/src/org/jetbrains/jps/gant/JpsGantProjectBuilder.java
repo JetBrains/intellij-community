@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.build.Standalone;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
@@ -245,7 +246,7 @@ public class JpsGantProjectBuilder {
     public Logger getLoggerInstance(String category) {
       return new DefaultLogger(category) {
         @Override
-        public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+        public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
           if (t != null) {
             myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t));
           }

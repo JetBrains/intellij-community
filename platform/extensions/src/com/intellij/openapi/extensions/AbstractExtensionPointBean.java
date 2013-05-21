@@ -53,6 +53,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     }
   }
 
+  @NotNull
   public ClassLoader getLoaderForClass() {
     return myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
   }

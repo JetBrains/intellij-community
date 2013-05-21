@@ -42,11 +42,14 @@ public abstract class AbstractToolWindowService<T extends ExternalEntityData> im
                                                                                  ExternalSystemDataKeys.ALL_TASKS_MODEL,
                                                                                  toImport.iterator().next().getData().getOwner());
     if (model != null) {
-      processData(toImport, model);
+      processData(toImport, project, model);
     }
+    
   }
 
-  protected abstract void processData(@NotNull Collection<DataNode<T>> nodes, @NotNull ExternalSystemTasksTreeModel model);
+  protected abstract void processData(@NotNull Collection<DataNode<T>> nodes,
+                                      @NotNull Project project,
+                                      @NotNull ExternalSystemTasksTreeModel model);
 
   @Override
   public void removeData(@NotNull Collection<? extends Void> toRemove, @NotNull Project project, boolean synchronous) {

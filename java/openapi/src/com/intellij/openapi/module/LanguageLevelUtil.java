@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,26 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class LanguageLevelUtil extends EffectiveLanguageLevelUtil {
-  private LanguageLevelUtil() {
-  }
+  private LanguageLevelUtil() { }
 
   @NotNull
-  public static LanguageLevel getLanguageLevelForFile(final VirtualFile file) {
+  public static LanguageLevel getLanguageLevelForFile(@Nullable VirtualFile file) {
     if (file == null) return LanguageLevel.HIGHEST;
 
     if (file.isDirectory()) {
-      final LanguageLevel ll = file.getUserData(LanguageLevel.KEY);
-      return ll != null ? ll : LanguageLevel.HIGHEST;
+      LanguageLevel languageLevel = file.getUserData(LanguageLevel.KEY);
+      return languageLevel != null ? languageLevel : LanguageLevel.HIGHEST;
     }
 
     return getLanguageLevelForFile(file.getParent());
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.openapi.projectRoots.JavaSdkVersion#getMaxLanguageLevel()} instead
-   */
-  public static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
-    JavaSdkVersion version = JavaSdk.getInstance().getVersion(versionString);
-    return version != null ? version.getMaxLanguageLevel() : LanguageLevel.JDK_1_3;
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.openapi.projectRoots.JavaSdkVersion#isAtLeast(com.intellij.openapi.projectRoots.JavaSdkVersion)} instead
-   */
-  public static boolean isOfVersionOrHigher(@NotNull String versionString, String checkedVersion) {
-    return JavaSdk.getInstance().compareTo(versionString, checkedVersion) >= 0;
   }
 }

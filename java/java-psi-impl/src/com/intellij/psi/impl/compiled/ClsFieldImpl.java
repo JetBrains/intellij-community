@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -33,17 +33,36 @@ import com.intellij.util.PlatformIcons;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
 
 public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
-  private PsiTypeElement myType = null;
-  private PsiExpression myInitializer = null;
-  private boolean myInitializerInitialized = false;
+  private final NotNullLazyValue<PsiTypeElement> myType;
+  private final NullableLazyValue<PsiExpression> myInitializer;
 
   public ClsFieldImpl(@NotNull PsiFieldStub stub) {
     super(stub);
+    myType = new AtomicNotNullLazyValue<PsiTypeElement>() {
+      @NotNull
+      @Override
+      protected PsiTypeElement compute() {
+        PsiFieldStub stub = getStub();
+        String typeText = TypeInfo.createTypeText(stub.getType(false));
+        assert typeText != null : stub;
+        return new ClsTypeElementImpl(ClsFieldImpl.this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+      }
+    };
+    myInitializer = new VolatileNullableLazyValue<PsiExpression>() {
+      @Nullable
+      @Override
+      protected PsiExpression compute() {
+        String initializerText = getStub().getInitializerText();
+        return initializerText != null && !Comparing.equal(PsiFieldStub.INITIALIZER_TOO_LONG, initializerText) ?
+               ClsParsingUtil.createExpressionFromText(initializerText, getManager(), ClsFieldImpl.this) : null;
+      }
+    };
   }
 
   @Override
@@ -66,15 +85,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   @Override
   @NotNull
   public PsiTypeElement getTypeElement() {
-    synchronized (LAZY_BUILT_LOCK) {
-      if (myType == null) {
-        PsiFieldStub stub = getStub();
-        String typeText = TypeInfo.createTypeText(stub.getType(false));
-        assert typeText != null : stub;
-        myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-      }
-      return myType;
-    }
+    return myType.getValue();
   }
 
   @Override
@@ -89,17 +100,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public PsiExpression getInitializer() {
-    synchronized (LAZY_BUILT_LOCK) {
-      if (!myInitializerInitialized) {
-        myInitializerInitialized = true;
-        String initializerText = getStub().getInitializerText();
-        if (initializerText != null && !Comparing.equal(PsiFieldStub.INITIALIZER_TOO_LONG, initializerText)) {
-          myInitializer = ClsParsingUtil.createExpressionFromText(initializerText, getManager(), this);
-        }
-      }
-
-      return myInitializer;
-    }
+    return myInitializer.getValue();
   }
 
   @Override

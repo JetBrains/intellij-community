@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
@@ -160,7 +161,7 @@ public abstract class AbstractImportFromExternalSystemControl<
     if (StringUtil.isEmpty(linkedProjectPath)) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
     }
-    myProjectSettings.setExternalProjectPath(linkedProjectPath);
+    myProjectSettings.setExternalProjectPath(ExternalSystemApiUtil.normalizePath(linkedProjectPath));
 
     String errorMessage = myProjectSettingsControl.apply(myProjectSettings);
     if (errorMessage != null) {

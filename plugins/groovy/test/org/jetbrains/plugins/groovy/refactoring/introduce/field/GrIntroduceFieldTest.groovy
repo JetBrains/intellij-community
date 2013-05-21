@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,6 +151,80 @@ def foo() {
 }
 ''', false, false, false, CUR_METHOD)
   }
+
+  public void testSetUp1() throws Exception {
+    addTestCase()
+    doTest('''\
+class MyTest extends GroovyTestCase {
+    void foo() {
+        print <selection>'ac'</selection>
+    }
+}
+''', '''\
+class MyTest extends GroovyTestCase {
+    def f
+
+    void foo() {
+        print <selection>f</selection>
+    }
+
+    void setUp() {
+        super.setUp()
+        f = 'ac'
+    }
+}
+''',
+false, false, false, SETUP_METHOD)
+  }
+
+  public void testSetUp2() throws Exception {
+    addTestCase()
+
+    doTest('''\
+class MyTest extends GroovyTestCase {
+    void setUp() {
+        super.setUp()
+        def x = 'abc'
+    }
+
+    void foo() {
+        print <selection>'ac'</selection>
+    }
+}
+''', '''\
+class MyTest extends GroovyTestCase {
+    def f
+
+    void setUp() {
+        super.setUp()
+        def x = 'abc'
+    f = 'ac'
+    }
+
+    void foo() {
+        print <selection>f</selection>
+    }
+}
+''',
+           false, false, false, SETUP_METHOD)
+  }
+
+  void testStringPart() {
+    doTest('''\
+class A {
+    def foo() {
+        print 'a<selection>b</selection>c'
+    }
+}''', '''\
+class A {
+    def f = 'b'
+
+    def foo() {
+        print 'a' + f<caret> + 'c'
+    }
+}''', false, false, false, FIELD_DECLARATION, false, null)
+  }
+
 
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,

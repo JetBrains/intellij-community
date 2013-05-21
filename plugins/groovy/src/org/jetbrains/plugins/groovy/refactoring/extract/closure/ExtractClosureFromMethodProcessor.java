@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
   public ExtractClosureFromMethodProcessor(@NotNull GrIntroduceParameterSettings helper) {
     super(helper);
-    myDeclarationOwner = GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]);
+    final GrStatement[] statements = helper.getStatements();
+    myDeclarationOwner = statements.length > 0 ? GroovyRefactoringUtil.getDeclarationOwner(statements[0]) : null;
     myMethod = (GrMethod)myHelper.getToReplaceIn();
   }
 

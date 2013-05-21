@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="java-psi-impl" exported="" />
     <orderEntry type="module" module-name="projectModel-impl" exported="" />
     <orderEntry type="module" module-name="java-analysis-api" exported="" />
+    <orderEntry type="module" module-name="resources-en" />
   </component>
 </module>
 
