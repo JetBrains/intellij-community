@@ -303,7 +303,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   public static StringPartInfo findStringPart(@NotNull PsiFile file, int startOffset, int endOffset) {
     final PsiElement start = file.findElementAt(startOffset);
-    final PsiElement fin = file.findElementAt(endOffset);
+    final PsiElement fin = file.findElementAt(endOffset - 1);
     if (start == null || fin == null) return null;
 
     final PsiElement parent = PsiTreeUtil.findCommonParent(start, fin);
@@ -533,14 +533,37 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     String literalText = data.getText();
     String endQuote = data.getEndQuote();
 
-    String prefix = literalText.substring(0, range.getStartOffset()) + endQuote;
-    String suffix = startQuote + literalText.substring(range.getEndOffset());
+    String prefix = literalText.substring(0, range.getStartOffset()) ;
+    String suffix =  literalText.substring(range.getEndOffset());
 
-    final GrExpression concatenation =
-      GroovyPsiElementFactory.getInstance(project).createExpressionFromText(prefix + "+" + varName + "+" + suffix);
+    StringBuilder buffer = new StringBuilder();
+    if (!prefix.equals(startQuote)) {
+      buffer.append(prefix).append(endQuote).append('+');
+    }
+    buffer.append(varName);
+    if (!suffix.equals(endQuote)) {
+      buffer.append('+').append(startQuote).append(suffix);
+    }
+
+    final GrExpression concatenation = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer);
 
     final GrExpression concat = stringPart.getLiteral().replaceWithExpression(concatenation, false);
-    return ((GrBinaryExpression)((GrBinaryExpression)concat).getLeftOperand()).getRightOperand();
+    if (concat instanceof GrReferenceExpression) {
+      return concat;
+    }
+    else {
+      assert concat instanceof GrBinaryExpression;
+      final GrExpression left = ((GrBinaryExpression)concat).getLeftOperand();
+      if (left instanceof GrReferenceExpression) {
+        return left;
+      }
+      else {
+        assert left instanceof GrBinaryExpression;
+        final GrExpression right = ((GrBinaryExpression)left).getRightOperand();
+        assert right != null;
+        return right;
+      }
+    }
   }
 
   public interface Validator extends NameValidator {
