@@ -71,7 +71,6 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
 %state PENDING_DOCSTRING
 %state IN_DOCSTRING_OWNER
-%state USUAL
 %{
 private int getSpaceLength(CharSequence string) {
 int i = Math.max(StringUtil.lastIndexOf(string, '"', 0, string.length()), StringUtil.lastIndexOf(string, '\'', 0, string.length()));
@@ -89,18 +88,15 @@ return yylength()-i-1;
 {END_OF_LINE_COMMENT}       { return PyTokenTypes.END_OF_LINE_COMMENT; }
 "\\"                        { return PyTokenTypes.BACKSLASH; }
 
-<YYINITIAL> {
-.                     { yypushback(1); yybegin(PENDING_DOCSTRING);}
-}
 
-<USUAL, IN_DOCSTRING_OWNER> {
+<YYINITIAL, IN_DOCSTRING_OWNER> {
 {LONGINTEGER}         { return PyTokenTypes.INTEGER_LITERAL; }
 {INTEGER}             { return PyTokenTypes.INTEGER_LITERAL; }
 {FLOATNUMBER}         { return PyTokenTypes.FLOAT_LITERAL; }
 {IMAGNUMBER}          { return PyTokenTypes.IMAGINARY_LITERAL; }
 
-{SINGLE_QUOTED_STRING} { return PyTokenTypes.SINGLE_QUOTED_STRING; }
-{TRIPLE_QUOTED_STRING} { return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+{SINGLE_QUOTED_STRING} { if (zzCurrentPos == 0) return PyTokenTypes.DOCSTRING; return PyTokenTypes.SINGLE_QUOTED_STRING; }
+{TRIPLE_QUOTED_STRING} { if (zzCurrentPos == 0) return PyTokenTypes.DOCSTRING; return PyTokenTypes.TRIPLE_QUOTED_STRING; }
 
 "and"                 { return PyTokenTypes.AND_KEYWORD; }
 "assert"              { return PyTokenTypes.ASSERT_KEYWORD; }
@@ -188,13 +184,13 @@ return yylength()-i-1;
 
 <PENDING_DOCSTRING> {
 {SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
-                                 else yybegin(USUAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
+                                 else yybegin(YYINITIAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
 {TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
-                                 else yybegin(USUAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
-{DOCSTRING_LITERAL}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); yybegin(USUAL); return PyTokenTypes.DOCSTRING; }
+                                 else yybegin(YYINITIAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+{DOCSTRING_LITERAL}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }
 {DOCSTRING_LITERAL}[\ \t]*"\\"  {
  yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }
 
-.                               { yypushback(1); yybegin(USUAL); }
+.                               { yypushback(1); yybegin(YYINITIAL); }
 }
 
