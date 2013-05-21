@@ -153,7 +153,6 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
       boolean deleted = FileUtil.delete(fileToDelete);
       assert deleted : "Can't delete "+fileToDelete;
     }
-    super.tearDown();
   }
 
   protected File getTempHome() {

@@ -1135,8 +1135,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     });
-
-    super.tearDown();
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -126,6 +127,16 @@ public abstract class UsefulTestCase extends TestCase {
     try {
       Disposer.dispose(myTestRootDisposable);
       cleanupSwingDataStructures();
+      ProjectManagerEx instance = ProjectManagerEx.getInstanceEx();
+      if (instance != null) {
+        Project[] projects = instance.getOpenProjects();
+        if (projects.length > 0) {
+          for (Project project : projects) {
+            instance.closeAndDispose(project);
+          }
+          fail("project leak? " + Arrays.asList(projects));
+        }
+      }
     }
     finally {
       if (shouldContainTempFiles()) {
@@ -828,7 +839,7 @@ public abstract class UsefulTestCase extends TestCase {
     return GraphicsEnvironment.isHeadless();
   }
 
-  protected static void refreshRecursively(@NotNull VirtualFile file) {
+  public static void refreshRecursively(@NotNull VirtualFile file) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
