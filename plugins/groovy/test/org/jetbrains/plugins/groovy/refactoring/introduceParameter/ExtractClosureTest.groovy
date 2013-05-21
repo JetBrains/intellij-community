@@ -288,7 +288,7 @@ def cl(Closure<String> closure) {
     print 'a' + closure()<caret> + 'c'
 }
 
-cl { 'b' }
+cl { return 'b' }
 ''')
     }
 
