@@ -313,7 +313,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   @NotNull
-  private LanguageLevel getSourceLanguageLevel() {
+  public LanguageLevel getSourceLanguageLevel() {
     final List stubs = getStub().getChildrenStubs();
     return stubs.size() > 0 ? ((PsiClassStub<?>)stubs.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
   }
