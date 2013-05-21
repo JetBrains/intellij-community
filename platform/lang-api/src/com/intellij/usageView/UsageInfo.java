@@ -107,7 +107,7 @@ public class UsageInfo {
     myDynamicUsage = reference.resolve() == null;
   }
 
-  public UsageInfo(@NotNull PsiQualifiedReference reference) {
+  public UsageInfo(@NotNull PsiQualifiedReferenceElement reference) {
     this((PsiElement)reference);
   }
 
