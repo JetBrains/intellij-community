@@ -50,7 +50,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   
   private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
-  private boolean myNeedsCompaction;
+  private boolean myNeedsCompaction = true;
 
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, @NotNull IndexStorage<Key, Value> storage) {
     myIndexId = indexId;
@@ -299,7 +299,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  public boolean doesNeedCompaction() {
+  public boolean needsCompaction() {
     return myNeedsCompaction;
   }
 }

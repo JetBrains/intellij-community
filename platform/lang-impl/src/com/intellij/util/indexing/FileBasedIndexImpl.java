@@ -514,7 +514,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
               }
             };
-          if (!index.doesNeedCompaction()) {
+          if (!index.needsCompaction()) {
             return process.compute();
           }
           // this factory method may be called either on index creation from dispatch thread, or on index rebuild
