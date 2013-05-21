@@ -56,5 +56,6 @@ public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
   @Override
   public void tearDown() throws Exception {
     myModule = null;
+    super.tearDown();
   }
 }

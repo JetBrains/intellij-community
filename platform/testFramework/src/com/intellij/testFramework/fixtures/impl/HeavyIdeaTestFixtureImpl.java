@@ -135,6 +135,8 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       assert deleted : "Can't delete " + fileToDelete;
     }
 
+    super.tearDown();
+
     myEditorListenerTracker.checkListenersLeak();
     myThreadTracker.checkLeak();
     LightPlatformTestCase.checkEditorsReleased();
