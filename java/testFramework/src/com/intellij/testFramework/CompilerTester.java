@@ -124,7 +124,7 @@ public class CompilerTester {
     path.getChildren();
     assert path != null;
     path.refresh(false, true);
-    return path.findChild(className + ".class");
+    return path.findChild(className.replace('.', '/') + ".class");
   }
 
   public void touch(VirtualFile file) throws IOException {
