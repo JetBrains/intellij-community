@@ -93,7 +93,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidFacet");
 
   public static final FacetTypeId<AndroidFacet> ID = new FacetTypeId<AndroidFacet>("android");
-  private AndroidResourceFilesListener myListener;
 
   private AvdManager myAvdManager = null;
 
@@ -402,8 +401,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public void initFacet() {
     StartupManager.getInstance(getModule().getProject()).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
-        myListener = new AndroidResourceFilesListener(AndroidFacet.this);
-        LocalFileSystem.getInstance().addVirtualFileListener(myListener);
+        AndroidResourceFilesListener.notifyFacetInitialized(AndroidFacet.this);
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           return;
         }
@@ -513,9 +511,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   @Override
   public void disposeFacet() {
-    if (myListener != null) {
-      LocalFileSystem.getInstance().removeVirtualFileListener(myListener);
-    }
   }
 
   @Nullable

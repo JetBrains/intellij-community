@@ -28,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -35,6 +36,7 @@ import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidPrecompileTask;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidResourceFilesListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -67,7 +69,7 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
         !ApplicationManager.getApplication().isHeadlessEnvironment()) {
 
       if (ProjectFacetManager.getInstance(myProject).hasFacets(AndroidFacet.ID)) {
-        createAlarmForAutogeneration();
+        createAndroidSpecificComponents();
       }
       else {
         final MessageBusConnection connection = myProject.getMessageBus().connect(myDisposable);
@@ -76,7 +78,7 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
           @Override
           public void facetAdded(@NotNull Facet facet) {
             if (facet instanceof AndroidFacet) {
-              createAlarmForAutogeneration();
+              createAndroidSpecificComponents();
               connection.disconnect();
             }
           }
@@ -90,34 +92,42 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
     Disposer.dispose(myDisposable);
   }
 
+  private void createAndroidSpecificComponents() {
+    final AndroidResourceFilesListener listener = new AndroidResourceFilesListener(myProject);
+    LocalFileSystem.getInstance().addVirtualFileListener(listener);
+    Disposer.register(myDisposable, listener);
+
+    createAlarmForAutogeneration();
+  }
+
   private void createAlarmForAutogeneration() {
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     alarm.addRequest(new Runnable() {
       @Override
       public void run() {
-          final Map<AndroidFacet, Collection<AndroidAutogeneratorMode>> facetsToProcess =
-            new HashMap<AndroidFacet, Collection<AndroidAutogeneratorMode>>();
+        final Map<AndroidFacet, Collection<AndroidAutogeneratorMode>> facetsToProcess =
+          new HashMap<AndroidFacet, Collection<AndroidAutogeneratorMode>>();
 
-          for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-            final AndroidFacet facet = AndroidFacet.getInstance(module);
+        for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+          final AndroidFacet facet = AndroidFacet.getInstance(module);
 
-            if (facet != null && facet.isAutogenerationEnabled()) {
-              final Set<AndroidAutogeneratorMode> modes = EnumSet.noneOf(AndroidAutogeneratorMode.class);
+          if (facet != null && facet.isAutogenerationEnabled()) {
+            final Set<AndroidAutogeneratorMode> modes = EnumSet.noneOf(AndroidAutogeneratorMode.class);
 
-              for (AndroidAutogeneratorMode mode : AndroidAutogeneratorMode.values()) {
-                if (facet.cleanRegeneratingState(mode) || facet.isGeneratedFileRemoved(mode)) {
-                  modes.add(mode);
-                }
-              }
-
-              if (modes.size() > 0) {
-                facetsToProcess.put(facet, modes);
+            for (AndroidAutogeneratorMode mode : AndroidAutogeneratorMode.values()) {
+              if (facet.cleanRegeneratingState(mode) || facet.isGeneratedFileRemoved(mode)) {
+                modes.add(mode);
               }
             }
-          }
 
-          if (facetsToProcess.size() > 0) {
-            generate(facetsToProcess);
+            if (modes.size() > 0) {
+              facetsToProcess.put(facet, modes);
+            }
+          }
+        }
+
+        if (facetsToProcess.size() > 0) {
+          generate(facetsToProcess);
         }
         if (!alarm.isDisposed()) {
           alarm.addRequest(this, 2000);

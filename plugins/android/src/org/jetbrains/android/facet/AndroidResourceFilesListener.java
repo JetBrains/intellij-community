@@ -17,12 +17,15 @@
 package org.jetbrains.android.facet;
 
 import com.android.resources.ResourceFolderType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -38,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.android.util.AndroidUtils.findSourceRoot;
@@ -50,28 +52,15 @@ import static org.jetbrains.android.util.AndroidUtils.findSourceRoot;
  * Time: 4:49:30 PM
  * To change this template use File | Settings | File Templates.
  */
-class AndroidResourceFilesListener extends VirtualFileAdapter {
+public class AndroidResourceFilesListener extends VirtualFileAdapter implements Disposable {
+  private static final Key<String> CACHED_PACKAGE_KEY = Key.create("ANDROID_RESOURCE_LISTENER_CACHED_PACKAGE");
 
   private final MergingUpdateQueue myQueue;
-  private final AndroidFacet myFacet;
-  private String myCachedPackage = null;
+  private final Project myProject;
 
-  public AndroidResourceFilesListener(final AndroidFacet facet) {
-    myFacet = facet;
-    myQueue = new MergingUpdateQueue("AndroidResourcesCompilationQueue", 300, true, null, myFacet, null, false);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (facet.getModule().getProject().isDisposed()) {
-          return;
-        }
-
-        Manifest manifest = facet.getManifest();
-        if (manifest != null) {
-          myCachedPackage = manifest.getPackage().getValue();
-        }
-      }
-    });
+  public AndroidResourceFilesListener(@NotNull Project project) {
+    myProject = project;
+    myQueue = new MergingUpdateQueue("AndroidResourcesCompilationQueue", 300, true, null, this, null, false);
   }
 
   @Override
@@ -99,27 +88,25 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
     fileChanged(event);
   }
 
-  private String getResDirName() {
-    return AndroidUtils.getSimpleNameByRelativePath(myFacet.getProperties().RES_FOLDER_RELATIVE_PATH);
-  }
-
-  private String getManifestFileName() {
-    return AndroidUtils.getSimpleNameByRelativePath(myFacet.getProperties().MANIFEST_FILE_RELATIVE_PATH);
-  }
-
   private void fileChanged(@NotNull final VirtualFileEvent e) {
-    VirtualFile file = e.getFile();
+    myQueue.queue(new MyUpdate(e));
+  }
 
-    VirtualFile parent = e.getParent();
-    VirtualFile gp = parent != null ? parent.getParent() : null;
+  @Override
+  public void dispose() {
+  }
 
-    if (file.getFileType() == AndroidIdlFileType.ourFileType ||
-        file.getFileType() == AndroidRenderscriptFileType.INSTANCE ||
-        getManifestFileName().equals(file.getName()) ||
-        (gp != null && gp.isDirectory() && getResDirName().equals(gp.getName()))) {
+  public static void notifyFacetInitialized(@NotNull final AndroidFacet facet) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        final Manifest manifest = facet.getManifest();
 
-      myQueue.queue(new MyUpdate(e));
-    }
+        if (manifest != null) {
+          facet.putUserData(CACHED_PACKAGE_KEY, manifest.getPackage().getValue());
+        }
+      }
+    });
   }
 
   private class MyUpdate extends Update {
@@ -136,89 +123,84 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         return;
       }
 
-      final List<AndroidAutogeneratorMode> autogenerationModes =
-        ApplicationManager.getApplication().runReadAction(new Computable<List<AndroidAutogeneratorMode>>() {
+      final Pair<Module, List<AndroidAutogeneratorMode>> pair =
+        ApplicationManager.getApplication().runReadAction(new Computable<Pair<Module, List<AndroidAutogeneratorMode>>>() {
           @Override
           @Nullable
-          public List<AndroidAutogeneratorMode> compute() {
+          public Pair<Module, List<AndroidAutogeneratorMode>> compute() {
             return computeCompilersToRunAndInvalidateLocalAttributesMap();
           }
         });
 
-      if (autogenerationModes.isEmpty()) {
+      if (pair == null) {
         return;
       }
+      final Module module = pair.getFirst();
 
-      for (AndroidAutogeneratorMode autogenerationMode : autogenerationModes) {
-        AndroidCompileUtil.generate(myFacet.getModule(), autogenerationMode);
+      for (AndroidAutogeneratorMode autogenerationMode : pair.getSecond()) {
+        AndroidCompileUtil.generate(module, autogenerationMode);
       }
     }
 
-    @NotNull
-    private List<AndroidAutogeneratorMode> computeCompilersToRunAndInvalidateLocalAttributesMap() {
-      if (myFacet.isDisposed()) {
-        return Collections.emptyList();
-      }
-      final Module myModule = myFacet.getModule();
-      final Project project = myModule.getProject();
-
-      if (project.isDisposed()) {
-        return Collections.emptyList();
+    @Nullable
+    private Pair<Module, List<AndroidAutogeneratorMode>> computeCompilersToRunAndInvalidateLocalAttributesMap() {
+      if (myProject.isDisposed()) {
+        return null;
       }
       final VirtualFile file = myEvent.getFile();
-      final Module module = ModuleUtil.findModuleForFile(file, project);
+      final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
 
-      if (module != myModule) {
-        return Collections.emptyList();
+      if (module == null || module.isDisposed()) {
+        return null;
       }
+      final AndroidFacet facet = AndroidFacet.getInstance(module);
 
-      VirtualFile parent = myEvent.getParent();
+      if (facet == null) {
+        return null;
+      }
+      final VirtualFile parent = myEvent.getParent();
+
       if (parent == null) {
-        return Collections.emptyList();
+        return null;
       }
-
       final VirtualFile gp = parent.getParent();
-
-      final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(myFacet);
+      final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(facet);
 
       if (Comparing.equal(gp, resourceDir) &&
           ResourceFolderType.VALUES.getName().equals(AndroidCommonUtils.getResourceTypeByDirName(parent.getName()))) {
-        myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
+        facet.getLocalResourceManager().invalidateAttributeDefinitions();
       }
-      final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(myFacet);
-
+      final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet);
       final List<AndroidAutogeneratorMode> modes = new ArrayList<AndroidAutogeneratorMode>();
 
-      if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) && Comparing.equal(manifestFile, file)) {
-        final Manifest manifest = myFacet.getManifest();
-        final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+      if (Comparing.equal(manifestFile, file)) {
+        if (AndroidAptCompiler.isToCompileModule(module, facet.getConfiguration())) {
+          final Manifest manifest = facet.getManifest();
+          final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+          final String cachedPackage = facet.getUserData(CACHED_PACKAGE_KEY);
 
-        if (myCachedPackage != null && !myCachedPackage.equals(aPackage)) {
-          String aptGenDirPath = AndroidRootUtil.getAptGenSourceRootPath(myFacet);
-          AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
+          if (cachedPackage != null && !cachedPackage.equals(aPackage)) {
+            String aptGenDirPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
+            AndroidCompileUtil.removeDuplicatingClasses(module, cachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
+          }
+          facet.putUserData(CACHED_PACKAGE_KEY, aPackage);
+          modes.add(AndroidAutogeneratorMode.AAPT);
         }
-        myCachedPackage = aPackage;
-        modes.add(AndroidAutogeneratorMode.AAPT);
+        modes.add(AndroidAutogeneratorMode.BUILDCONFIG);
       }
-
-      if (file.getFileType() == AndroidIdlFileType.ourFileType) {
-        VirtualFile sourceRoot = findSourceRoot(myModule, file);
-        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getAidlGenDir(myFacet), sourceRoot)) {
+      else if (file.getFileType() == AndroidIdlFileType.ourFileType) {
+        VirtualFile sourceRoot = findSourceRoot(module, file);
+        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getAidlGenDir(facet), sourceRoot)) {
           modes.add(AndroidAutogeneratorMode.AIDL);
         }
       }
-
-      if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
-        final VirtualFile sourceRoot = findSourceRoot(myModule, file);
-        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getRenderscriptGenDir(myFacet), sourceRoot)) {
+      else if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
+        final VirtualFile sourceRoot = findSourceRoot(module, file);
+        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getRenderscriptGenDir(facet), sourceRoot)) {
           modes.add(AndroidAutogeneratorMode.RENDERSCRIPT);
         }
       }
-
-      if (Comparing.equal(manifestFile, file)) {
-        modes.add(AndroidAutogeneratorMode.BUILDCONFIG);
-      }
-      return modes;
+      return Pair.create(module, modes);
     }
 
     @Override
@@ -230,15 +212,15 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         if (Comparing.equal(hisFile, file)) {
           return true;
         }
-        
+
         if (hisFile.getFileType() == AndroidIdlFileType.ourFileType || file.getFileType() == AndroidIdlFileType.ourFileType) {
           return hisFile.getFileType() == file.getFileType();
         }
-        
+
         if (hisFile.getFileType() == AndroidRenderscriptFileType.INSTANCE || file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
           return hisFile.getFileType() == file.getFileType();
         }
-        
+
         return true;
       }
       return false;
