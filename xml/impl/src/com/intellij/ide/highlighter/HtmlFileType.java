@@ -22,8 +22,8 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.xml.util.HtmlUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +65,7 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   public String getCharset(@NotNull final VirtualFile file, final byte[] content) {
-    String charset = XmlUtil.extractXmlEncodingFromProlog(content);
+    String charset = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     if (charset != null) return charset;
     @NonNls String strContent;
     try {
@@ -79,7 +79,7 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   public Charset extractCharsetFromFileContent(@Nullable final Project project, @Nullable final VirtualFile file, @NotNull final String content) {
-    String name = XmlUtil.extractXmlEncodingFromProlog(content);
+    String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
 
     if (charset != null) {
