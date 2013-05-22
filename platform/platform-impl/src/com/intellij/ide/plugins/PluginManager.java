@@ -186,8 +186,8 @@ public class PluginManager {
           try {
             ClassloaderUtil.clearJarURLCache();
 
-            Class aClass = Class.forName(mainClass);
-            final Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
+            Class<?> aClass = Class.forName(mainClass);
+            Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
             method.setAccessible(true);
 
             //noinspection RedundantArrayCreation
