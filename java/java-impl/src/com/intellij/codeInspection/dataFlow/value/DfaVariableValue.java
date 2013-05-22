@@ -26,8 +26,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
@@ -169,6 +168,16 @@ public class DfaVariableValue extends DfaValue {
     myInherentNullability = nullability;
 
     return nullability;
+  }
+  
+  public boolean isLocalVariable() {
+    return myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter;
+  }
+
+  public boolean isFlushableByCalls() {
+    if (isLocalVariable()) return false;
+    if (!myVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
+    return myQualifier != null && myQualifier.isFlushableByCalls();
   }
 
 }

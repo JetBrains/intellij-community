@@ -12,7 +12,7 @@ public class Bar {
       if (field != null) {
         return;
       }
-      if (<warning descr="Condition 'field == null' is always 'true'">field == null</warning>) {
+      if (field == null) {
         System.out.println();
       }
     }

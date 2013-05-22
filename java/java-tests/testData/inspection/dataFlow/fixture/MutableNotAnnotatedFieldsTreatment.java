@@ -54,12 +54,12 @@ class Foo {
     System.out.println(data.hashCode());
   }
 
-  void warnWhenDoubleChecked_This_WithMethodCall() {
+  void doNotWarnWhenDoubleChecked_This_WithMethodCall() {
     if (data == null) {
       return;
     }
     System.out.println(data.hashCode());
-    if (<warning descr="Condition 'data == null' is always 'false'">data == null</warning>) {
+    if (data == null) {
       return;
     }
     System.out.println(data.hashCode());
