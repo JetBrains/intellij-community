@@ -66,6 +66,12 @@ public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesE
     myProperties.setPreloaderClass(myPreloaderTf.getText());
   }
 
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "Project_Structure_Artifacts_Java_FX_tab";
+  }
+
   @Override
   public void reset() {
     myPreloaderTf.setText(myProperties.getPreloaderClass());
