@@ -617,6 +617,9 @@ def layoutCommunityJps(String home, String target) {
       include(name: "**/*.jar")
       exclude(name: "**/ddmlib_1.jar")
     }
+    fileset(dir: "$home/lib") {
+      include(name: "guava*.jar")
+    }
 
     jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
     fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
@@ -646,6 +649,7 @@ def layoutCommunityJps(String home, String target) {
         moduleTests("jps-model-serialization")
       }
     }
+    jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
   }
 }
 
