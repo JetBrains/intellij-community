@@ -18,7 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 
 import java.awt.event.InputEvent;
 
@@ -37,6 +37,8 @@ public class DropAnErrorWithAttachmentsAction extends AnAction {
     else {
       attachments = new Attachment[]{new Attachment("attachment.txt", "content")};
     }
-    Logger.getInstance("test (with attachments)").error(LogMessageEx.createEvent("test", "test details", attachments));
+    IdeaLoggingEvent test = LogMessageEx.createEvent("test", "test details", attachments);
+    throw new LogEventException(test);
+    //Logger.getInstance("test (with attachments)").error(test);
   }
 }

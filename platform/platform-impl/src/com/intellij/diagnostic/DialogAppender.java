@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Priority;
@@ -89,11 +90,15 @@ public class DialogAppender extends AppenderSkeleton {
       ideaEvent = (IdeaLoggingEvent)message;
     }
     else {
-      ThrowableInformation throwable = event.getThrowableInformation();
-      if (throwable == null) {
+      ThrowableInformation info = event.getThrowableInformation();
+      if (info == null) {
         return;
       }
-      ideaEvent = new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable.getThrowable());
+      Throwable throwable = info.getThrowable();
+      //noinspection ThrowableResultOfMethodCallIgnored
+      Throwable rootCause = ExceptionUtil.getRootCause(throwable);
+      ideaEvent = rootCause instanceof LogEventException ? ((LogEventException)rootCause).getLogMessage() : 
+                  new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable);
     }
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
       final ErrorLogger logger = errorLoggers[i];
