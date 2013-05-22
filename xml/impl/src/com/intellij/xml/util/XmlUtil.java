@@ -149,7 +149,6 @@ public class XmlUtil {
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
   @NonNls public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
-  public static final Key<PsiAnchor> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
 
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
