@@ -39,6 +39,8 @@ public class ProjectResources extends ResourceRepository {
 
   private final List<ProjectResources> myLibResources;
 
+  private final IntArrayWrapper myWrapper = new IntArrayWrapper(null);
+
   public ProjectResources(@NotNull IAbstractFolder resFolder, @NotNull List<ProjectResources> libResources) {
     super(resFolder, false);
     myLibResources = libResources;
@@ -64,8 +66,8 @@ public class ProjectResources extends ResourceRepository {
   @Nullable
   public String resolveStyleable(int[] id) {
     if (myStyleableValueToNameMap != null) {
-      mWrapper.set(id);
-      return myStyleableValueToNameMap.get(mWrapper);
+      myWrapper.set(id);
+      return myStyleableValueToNameMap.get(myWrapper);
     }
 
     return null;

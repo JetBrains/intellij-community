@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.compiler.tools;
 
+import com.android.sdklib.BuildToolInfo;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineBuilder;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.AndroidCommonBundle;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
@@ -63,8 +65,13 @@ public class AndroidDxWrapper {
     messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
     messages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
 
-    @SuppressWarnings("deprecation")
-    String dxJarPath = target.getPath(IAndroidTarget.DX_JAR);
+    final BuildToolInfo buildToolInfo = target.getBuildToolInfo();
+
+    if (buildToolInfo == null) {
+      messages.get(AndroidCompilerMessageKind.ERROR).add(AndroidCommonBundle.message("android.no.build.tools.error"));
+      return messages;
+    }
+    String dxJarPath = buildToolInfo.getPath(BuildToolInfo.PathId.DX_JAR);
 
     File dxJar = new File(dxJarPath);
     if (!dxJar.isFile()) {

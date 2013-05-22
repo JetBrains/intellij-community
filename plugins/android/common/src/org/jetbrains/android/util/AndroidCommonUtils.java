@@ -780,4 +780,13 @@ public class AndroidCommonUtils {
       }
     }
   }
+
+  @NotNull
+  public static Map<AndroidCompilerMessageKind, List<String>> singleError(@NotNull String message) {
+    final Map<AndroidCompilerMessageKind, List<String>> result = new HashMap<AndroidCompilerMessageKind, List<String>>();
+    result.put(AndroidCompilerMessageKind.ERROR, Collections.singletonList(message));
+    result.put(AndroidCompilerMessageKind.INFORMATION, Collections.<String>emptyList());
+    result.put(AndroidCompilerMessageKind.WARNING, Collections.<String>emptyList());
+    return result;
+  }
 }

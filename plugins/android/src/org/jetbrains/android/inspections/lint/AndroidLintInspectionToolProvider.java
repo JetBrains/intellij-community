@@ -178,7 +178,7 @@ public class AndroidLintInspectionToolProvider {
 
   public static class AndroidLintBackButtonInspection extends AndroidLintInspectionBase {
     public AndroidLintBackButtonInspection() {
-      super(AndroidBundle.message("android.lint.inspections.back.button"), ButtonDetector.BACKBUTTON);
+      super(AndroidBundle.message("android.lint.inspections.back.button"), ButtonDetector.BACK_BUTTON);
     }
   }
 
@@ -214,19 +214,19 @@ public class AndroidLintInspectionToolProvider {
 
   public static class AndroidLintSparseArrayInspection extends AndroidLintInspectionBase {
     public AndroidLintSparseArrayInspection() {
-      super(AndroidBundle.message("android.lint.inspections.use.sparsearray"), JavaPerformanceDetector.USE_SPARSEARRAY);
+      super(AndroidBundle.message("android.lint.inspections.use.sparsearray"), JavaPerformanceDetector.USE_SPARSE_ARRAY);
     }
   }
 
   public static class AndroidLintUseValueOfInspection extends AndroidLintInspectionBase {
     public AndroidLintUseValueOfInspection() {
-      super(AndroidBundle.message("android.lint.inspections.value.of"), JavaPerformanceDetector.USE_VALUEOF);
+      super(AndroidBundle.message("android.lint.inspections.value.of"), JavaPerformanceDetector.USE_VALUE_OF);
     }
   }
 
   public static class AndroidLintLibraryCustomViewInspection extends AndroidLintInspectionBase {
     public AndroidLintLibraryCustomViewInspection() {
-      super(AndroidBundle.message("android.lint.inspections.custom.view"), NamespaceDetector.CUSTOMVIEW);
+      super(AndroidBundle.message("android.lint.inspections.custom.view"), NamespaceDetector.CUSTOM_VIEW);
     }
   }
 
@@ -274,7 +274,7 @@ public class AndroidLintInspectionToolProvider {
 
   public static class AndroidLintAdapterViewChildrenInspection extends AndroidLintInspectionBase {
     public AndroidLintAdapterViewChildrenInspection() {
-      super(AndroidBundle.message("android.lint.inspections.adapter.view.children"), ChildCountDetector.ADAPTERVIEW_ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.adapter.view.children"), ChildCountDetector.ADAPTER_VIEW_ISSUE);
     }
   }
 
@@ -406,13 +406,13 @@ public class AndroidLintInspectionToolProvider {
 
   public static class AndroidLintProguardInspection extends AndroidLintInspectionBase {
     public AndroidLintProguardInspection() {
-      super(AndroidBundle.message("android.lint.inspections.proguard"), ProguardDetector.WRONGKEEP);
+      super(AndroidBundle.message("android.lint.inspections.proguard"), ProguardDetector.WRONG_KEEP);
     }
   }
 
   public static class AndroidLintProguardSplitConfigInspection extends AndroidLintInspectionBase {
     public AndroidLintProguardSplitConfigInspection() {
-      super(AndroidBundle.message("android.lint.inspections.proguard.split.config"), ProguardDetector.SPLITCONFIG);
+      super(AndroidBundle.message("android.lint.inspections.proguard.split.config"), ProguardDetector.SPLIT_CONFIG);
     }
   }
 

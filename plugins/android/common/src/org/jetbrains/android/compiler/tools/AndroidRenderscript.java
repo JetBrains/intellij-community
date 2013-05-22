@@ -15,11 +15,12 @@
  */
 package org.jetbrains.android.compiler.tools;
 
+import com.android.sdklib.BuildToolInfo;
 import com.android.sdklib.IAndroidTarget;
-import com.android.SdkConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.android.AndroidCommonBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.AndroidExecutionUtil;
@@ -44,13 +45,17 @@ public class AndroidRenderscript {
                                                                       @Nullable String depFolderPath,
                                                                       @NotNull final String rawDirPath)
     throws IOException {
+    final BuildToolInfo buildToolInfo = target.getBuildToolInfo();
+
+    if (buildToolInfo == null) {
+      return AndroidCommonUtils.singleError(AndroidCommonBundle.message("android.no.build.tools.error"));
+    }
     final List<String> command = new ArrayList<String>();
-    command.add(
-      FileUtil.toSystemDependentName(sdkLocation + '/' + SdkConstants.OS_SDK_PLATFORM_TOOLS_FOLDER + SdkConstants.FN_RENDERSCRIPT));
+    command.add(FileUtil.toSystemDependentName(buildToolInfo.getPath(BuildToolInfo.PathId.LLVM_RS_CC)));
     command.add("-I");
-    command.add(target.getPath(IAndroidTarget.ANDROID_RS_CLANG));
+    command.add(buildToolInfo.getPath(BuildToolInfo.PathId.ANDROID_RS_CLANG));
     command.add("-I");
-    command.add(target.getPath(IAndroidTarget.ANDROID_RS));
+    command.add(buildToolInfo.getPath(BuildToolInfo.PathId.ANDROID_RS));
     command.add("-p");
     command.add(FileUtil.toSystemDependentName(genFolderPath));
     command.add("-o");

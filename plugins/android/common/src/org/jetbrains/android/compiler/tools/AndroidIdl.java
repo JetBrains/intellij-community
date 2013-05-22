@@ -15,9 +15,11 @@
  */
 package org.jetbrains.android.compiler.tools;
 
+import com.android.sdklib.BuildToolInfo;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.android.AndroidCommonBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.AndroidExecutionUtil;
@@ -47,7 +49,12 @@ public final class AndroidIdl {
     final List<String> commands = new ArrayList<String>();
     final String frameworkAidlPath = target.getPath(IAndroidTarget.ANDROID_AIDL);
 
-    commands.add(target.getPath(IAndroidTarget.AIDL));
+    final BuildToolInfo buildToolInfo = target.getBuildToolInfo();
+
+    if (buildToolInfo == null) {
+      throw new IOException(AndroidCommonBundle.message("android.no.build.tools.error"));
+    }
+    commands.add(buildToolInfo.getPath(BuildToolInfo.PathId.AIDL));
     commands.add("-p" + frameworkAidlPath);
 
     for (String path : sourceRootPaths) {

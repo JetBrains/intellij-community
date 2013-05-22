@@ -269,8 +269,8 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
   @SuppressWarnings("deprecation")
   @Override
   public String getStaticDescription() {
-    String description = myIssue.getDescription();
-    String explanation = myIssue.getExplanation();
+    String description = myIssue.getDescription(Issue.OutputFormat.TEXT);
+    String explanation = myIssue.getExplanation(Issue.OutputFormat.TEXT);
 
     description = description != null ? StringUtil.escapeXml(description) : null;
     explanation = explanation != null ? StringUtil.escapeXml(explanation) : null;
@@ -331,7 +331,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
   }
 
   public boolean worksInBatchModeOnly() {
-    final EnumSet<Scope> scopeSet = myIssue.getScope();
+    final EnumSet<Scope> scopeSet = myIssue.getImplementation().getScope();
     if (scopeSet.size() != 1) {
       return true;
     }

@@ -20,10 +20,9 @@ import com.android.SdkConstants;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.Log;
-import com.android.sdklib.AndroidVersion;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.ISystemImage;
 import com.android.sdklib.SdkManager;
+import com.android.sdklib.devices.DeviceManager;
 import com.android.utils.ILogger;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +35,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
 import org.jetbrains.android.logcat.AdbErrors;
 import org.jetbrains.android.util.AndroidCommonUtils;
@@ -65,7 +63,7 @@ public class AndroidSdkData {
     new HashMap<IAndroidTarget, SoftReference<AndroidTargetData>>();
 
   private final SdkManager mySdkManager;
-  private IAndroidTarget[] myTargets = null;
+  private final DeviceManager myDeviceManager;
 
   private final int myPlatformToolsRevision;
   private final int mySdkToolsRevision;
@@ -74,6 +72,7 @@ public class AndroidSdkData {
     mySdkManager = sdkManager;
     myPlatformToolsRevision = AndroidCommonUtils.parsePackageRevision(sdkDirOsPath, SdkConstants.FD_PLATFORM_TOOLS);
     mySdkToolsRevision = AndroidCommonUtils.parsePackageRevision(sdkDirOsPath, SdkConstants.FD_TOOLS);
+    myDeviceManager = DeviceManager.createInstance(sdkDirOsPath, new MessageBuildingSdkLog());
   }
 
   @NotNull
@@ -90,16 +89,7 @@ public class AndroidSdkData {
 
   @NotNull
   public IAndroidTarget[] getTargets() {
-    if (myTargets == null) {
-      IAndroidTarget[] targets = mySdkManager.getTargets();
-      if (targets != null) {
-        myTargets = new IAndroidTarget[targets.length];
-        for (int i = 0; i < targets.length; i++) {
-          myTargets[i] = new MyTargetWrapper(targets[i]);
-        }
-      }
-    }
-    return myTargets;
+    return mySdkManager.getTargets();
   }
 
   // be careful! target name is NOT unique
@@ -132,8 +122,7 @@ public class AndroidSdkData {
 
   @Nullable
   public IAndroidTarget findTargetByHashString(@NotNull String hashString) {
-    final IAndroidTarget target = mySdkManager.getTargetFromHashString(hashString);
-    return target != null ? new MyTargetWrapper(target) : null;
+    return mySdkManager.getTargetFromHashString(hashString);
   }
 
   public int getPlatformToolsRevision() {
@@ -356,6 +345,11 @@ public class AndroidSdkData {
   }
 
   @NotNull
+  public DeviceManager getDeviceManager() {
+    return myDeviceManager;
+  }
+
+  @NotNull
   public AndroidTargetData getTargetData(@NotNull IAndroidTarget target) {
     final SoftReference<AndroidTargetData> targetDataRef = myTargetDatas.get(target);
     AndroidTargetData targetData = targetDataRef != null ? targetDataRef.get() : null;
@@ -423,208 +417,6 @@ public class AndroidSdkData {
           }
         }
       }
-    }
-  }
-
-  private static class MyTargetWrapper implements IAndroidTarget {
-    private final TIntObjectHashMap<String> myAlternativePaths;
-    private final IAndroidTarget myWrapee;
-
-    private MyTargetWrapper(@NotNull IAndroidTarget wrapee) {
-      myWrapee = wrapee;
-      myAlternativePaths = new TIntObjectHashMap<String>();
-      String oldPlatformToolsFolderPath = getOldPlatformToolsFolderPath();
-      if (!canFindTool(AAPT)) {
-        myAlternativePaths.put(AAPT, oldPlatformToolsFolderPath + SdkConstants.FN_AAPT);
-      }
-      if (!canFindTool(AIDL)) {
-        myAlternativePaths.put(AIDL, oldPlatformToolsFolderPath + SdkConstants.FN_AIDL);
-      }
-      if (!canFindTool(DX)) {
-        myAlternativePaths.put(DX, oldPlatformToolsFolderPath + SdkConstants.FN_DX);
-      }
-      if (!canFindTool(DX_JAR)) {
-        myAlternativePaths.put(DX_JAR, oldPlatformToolsFolderPath + SdkConstants.FD_LIB + File.separator + SdkConstants.FN_DX_JAR);
-      }
-    }
-
-    @Nullable
-    private String getOldPlatformToolsFolderPath() {
-      String platformLocation;
-      if (myWrapee.isPlatform()) {
-        platformLocation = myWrapee.getLocation();
-      }
-      else {
-        IAndroidTarget parent = myWrapee.getParent();
-        platformLocation = parent != null ? parent.getLocation() : null;
-      }
-      if (platformLocation == null) {
-        return null;
-      }
-      return platformLocation + SdkConstants.FD_TOOLS + File.separator;
-    }
-
-    private boolean canFindTool(int pathId) {
-      String path = myWrapee.getPath(pathId);
-      return path != null && new File(path).exists();
-    }
-
-    @Override
-    public String getLocation() {
-      return myWrapee.getLocation();
-    }
-
-    @Override
-    public String getVendor() {
-      return myWrapee.getVendor();
-    }
-
-    @Override
-    public String getName() {
-      return myWrapee.getName();
-    }
-
-    @Override
-    public String getFullName() {
-      return myWrapee.getFullName();
-    }
-
-    @Override
-    public String getClasspathName() {
-      return myWrapee.getClasspathName();
-    }
-
-    @Override
-    public String getShortClasspathName() {
-      return myWrapee.getShortClasspathName();
-    }
-
-    @Override
-    public String getDescription() {
-      return myWrapee.getDescription();
-    }
-
-    @Override
-    public AndroidVersion getVersion() {
-      return myWrapee.getVersion();
-    }
-
-    @Override
-    public String getVersionName() {
-      return myWrapee.getVersionName();
-    }
-
-    @Override
-    public int getRevision() {
-      return myWrapee.getRevision();
-    }
-
-    @Override
-    public boolean isPlatform() {
-      return myWrapee.isPlatform();
-    }
-
-    @Override
-    public IAndroidTarget getParent() {
-      return myWrapee.getParent();
-    }
-
-    @Override
-    public String getPath(int pathId) {
-      String path = myAlternativePaths.get(pathId);
-      if (path != null) {
-        return path;
-      }
-      return myWrapee.getPath(pathId);
-    }
-
-    @Override
-    public boolean hasRenderingLibrary() {
-      return myWrapee.hasRenderingLibrary();
-    }
-
-    @Override
-    public String[] getSkins() {
-      return myWrapee.getSkins();
-    }
-
-    @Override
-    public String getDefaultSkin() {
-      return myWrapee.getDefaultSkin();
-    }
-
-    @Override
-    public IOptionalLibrary[] getOptionalLibraries() {
-      return myWrapee.getOptionalLibraries();
-    }
-
-    @Override
-    public String[] getPlatformLibraries() {
-      return myWrapee.getPlatformLibraries();
-    }
-
-    @Override
-    public String getProperty(String name) {
-      return myWrapee.getProperty(name);
-    }
-
-    @Override
-    public Integer getProperty(String name, Integer defaultValue) {
-      return myWrapee.getProperty(name, defaultValue);
-    }
-
-    @Override
-    public Boolean getProperty(String name, Boolean defaultValue) {
-      return myWrapee.getProperty(name, defaultValue);
-    }
-
-    @Override
-    public Map<String, String> getProperties() {
-      return myWrapee.getProperties();
-    }
-
-    @Override
-    public int getUsbVendorId() {
-      return myWrapee.getUsbVendorId();
-    }
-
-    @Override
-    public ISystemImage[] getSystemImages() {
-      return myWrapee.getSystemImages();
-    }
-
-    @Override
-    public ISystemImage getSystemImage(String abiType) {
-      return myWrapee.getSystemImage(abiType);
-    }
-
-    @Override
-    public boolean canRunOn(IAndroidTarget target) {
-      return myWrapee.canRunOn(target);
-    }
-
-    @Override
-    public String hashString() {
-      return myWrapee.hashString();
-    }
-
-    @Override
-    public int compareTo(IAndroidTarget o) {
-      return myWrapee.compareTo(o);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (!(obj instanceof MyTargetWrapper)) {
-        return false;
-      }
-      MyTargetWrapper other = (MyTargetWrapper)obj;
-      return myWrapee.equals(other.myWrapee);
-    }
-
-    @Override
-    public int hashCode() {
-      return myWrapee.hashCode();
     }
   }
 }

@@ -28,7 +28,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/ddmlib.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/sdklib.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/androidprefs.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/jarutils.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/common.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/sdk_common.jar!/" />
@@ -46,18 +45,23 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/src/ddmlib_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/sdk_common_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/common_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/jarutils.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/layoutlib_api_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/androidprefs_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/common_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/common_src.zip!/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/ddmlib_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/ddmlib_src.zip!/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/dvlib_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/dvlib_src.zip!/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/layoutlib_api_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/layoutlib_api_src.zip!/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/lint_api_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/lint_checks_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/lint_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/lint_src.zip!/src/test/java" />
           <root url="jar://$MODULE_DIR$/lib/src/ninepatch_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/lint_api_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/lint_checks_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/lint_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/dvlib_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/sdk_common_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/sdk_common_src.zip!/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src/test/java" />
         </SOURCES>
       </library>
     </orderEntry>

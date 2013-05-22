@@ -104,7 +104,6 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   private PsiFile myFile;
 
   private AndroidPlatform myPrevPlatform = null;
-  private final DeviceManager myLayoutDeviceManager = new DeviceManager(new MessageBuildingSdkLog());
 
   private final UserDeviceManager myUserDeviceManager = new UserDeviceManager() {
     @Override
@@ -649,8 +648,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     final List<Device> devices;
     if (sdkData != null) {
       devices = new ArrayList<Device>();
-      devices.addAll(myLayoutDeviceManager.getDefaultDevices());
-      devices.addAll(myLayoutDeviceManager.getVendorDevices(sdkData.getLocation()));
+      devices.addAll(sdkData.getDeviceManager().getDevices(DeviceManager.DEFAULT_DEVICES | DeviceManager.VENDOR_DEVICES));
       devices.addAll(myUserDeviceManager.parseUserDevices(new MessageBuildingSdkLog()));
     }
     else {

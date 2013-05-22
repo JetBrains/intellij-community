@@ -15,11 +15,13 @@
  */
 package org.jetbrains.android.compiler.tools;
 
+import com.android.sdklib.BuildToolInfo;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.AndroidCommonBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.AndroidExecutionUtil;
@@ -150,7 +152,12 @@ public final class AndroidApt {
     throws IOException {
     final List<String> args = new ArrayList<String>();
 
-    args.add(target.getPath(IAndroidTarget.AAPT));
+    final BuildToolInfo buildToolInfo = target.getBuildToolInfo();
+
+    if (buildToolInfo == null) {
+      return AndroidCommonUtils.singleError(AndroidCommonBundle.message("android.no.build.tools.error"));
+    }
+    args.add(buildToolInfo.getPath(BuildToolInfo.PathId.AAPT));
     args.add("package");
     args.add("-m");
 
@@ -211,7 +218,12 @@ public final class AndroidApt {
     final ArrayList<String> args = new ArrayList<String>();
 
     //noinspection deprecation
-    args.add(target.getPath(IAndroidTarget.AAPT));
+    final BuildToolInfo buildToolInfo = target.getBuildToolInfo();
+
+    if (buildToolInfo == null) {
+      return AndroidCommonUtils.singleError(AndroidCommonBundle.message("android.no.build.tools.error"));
+    }
+    args.add(buildToolInfo.getPath(BuildToolInfo.PathId.AAPT));
 
     args.add(COMMAND_CRUNCH);
 
@@ -259,7 +271,12 @@ public final class AndroidApt {
     final ArrayList<String> args = new ArrayList<String>();
 
     //noinspection deprecation
-    args.add(target.getPath(IAndroidTarget.AAPT));
+    final BuildToolInfo buildToolInfo = target.getBuildToolInfo();
+
+    if (buildToolInfo == null) {
+      return AndroidCommonUtils.singleError(AndroidCommonBundle.message("android.no.build.tools.error"));
+    }
+    args.add(buildToolInfo.getPath(BuildToolInfo.PathId.AAPT));
 
     args.add(COMMAND_PACKAGE);
 

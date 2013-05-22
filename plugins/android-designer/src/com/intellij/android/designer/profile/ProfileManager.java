@@ -36,7 +36,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.*;
-import org.jetbrains.android.uipreview.*;
+import org.jetbrains.android.uipreview.LocaleData;
+import org.jetbrains.android.uipreview.ThemeData;
+import org.jetbrains.android.uipreview.UserDeviceManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -62,7 +64,6 @@ public class ProfileManager implements Disposable {
   private final AbstractComboBoxAction<NightMode> myNightModeAction;
   private final AbstractComboBoxAction<ThemeData> myThemeAction;
 
-  private final DeviceManager myLayoutDeviceManager;
   private final UserDeviceManager myUserDeviceManager;
   private List<DeviceWrapper> myDevices;
   private ThemeManager myThemeManager;
@@ -74,7 +75,6 @@ public class ProfileManager implements Disposable {
     myRefreshAction = refreshAction;
     mySelectionRunnable = selectionRunnable;
 
-    myLayoutDeviceManager = ProfileList.getInstance(moduleProvider.getProject()).getLayoutDeviceManager();
     myUserDeviceManager = new UserDeviceManager() {
       @Override
       protected void userDevicesChanged() {
@@ -415,8 +415,7 @@ public class ProfileManager implements Disposable {
 
     if (sdkData != null) {
       myDevices = new ArrayList<DeviceWrapper>();
-      addWrappedDevices(myDevices, myLayoutDeviceManager.getDefaultDevices());
-      addWrappedDevices(myDevices, myLayoutDeviceManager.getVendorDevices(sdkData.getLocation()));
+      addWrappedDevices(myDevices, sdkData.getDeviceManager().getDevices(DeviceManager.DEFAULT_DEVICES | DeviceManager.VENDOR_DEVICES));
       addWrappedDevices(myDevices, myUserDeviceManager.parseUserDevices(new MessageBuildingSdkLog()));
 
       if (myDevices.isEmpty()) {

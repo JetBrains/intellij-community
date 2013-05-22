@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.android;
 
+import com.android.sdklib.BuildToolInfo;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -25,6 +26,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.android.AndroidCommonBundle;
 import org.jetbrains.android.compiler.tools.AndroidDxRunner;
 import org.jetbrains.android.util.AndroidBuildTestingManager;
 import org.jetbrains.android.util.AndroidCommonUtils;
@@ -226,8 +228,15 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
                                 @NotNull CompileContext context,
                                 @NotNull JpsModule module,
                                 @NotNull BuildOutputConsumer outputConsumer) throws IOException {
-    @SuppressWarnings("deprecation")
-    final String dxJarPath = FileUtil.toSystemDependentName(platform.getTarget().getPath(IAndroidTarget.DX_JAR));
+    final IAndroidTarget target = platform.getTarget();
+    final BuildToolInfo buildToolInfo = target.getBuildToolInfo();
+
+    if (buildToolInfo == null) {
+      context.processMessage(
+        new CompilerMessage(DEX_BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidCommonBundle.message("android.no.build.tools.error")));
+      return false;
+    }
+    final String dxJarPath = FileUtil.toSystemDependentName(buildToolInfo.getPath(BuildToolInfo.PathId.DX_JAR));
     final AndroidBuildTestingManager testingManager = AndroidBuildTestingManager.getTestingManager();
 
     final File dxJar = new File(dxJarPath);

@@ -15,7 +15,6 @@
  */
 package com.intellij.android.designer.profile;
 
-import com.android.sdklib.devices.DeviceManager;
 import com.intellij.ProjectTopics;
 import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
 import com.intellij.designer.DesignerToolWindowManager;
@@ -30,7 +29,6 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +41,6 @@ import java.util.Map;
  */
 @State(name = "AndroidDesignerProfile", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class ProfileList implements PersistentStateComponent<ProfileList.ProfileState> {
-  private final DeviceManager myLayoutDeviceManager;
   private final Map<Module, Sdk> myModule2Sdk = new HashMap<Module, Sdk>();
   private final Project myProject;
   private ProfileState myState = new ProfileState();
@@ -51,7 +48,6 @@ public class ProfileList implements PersistentStateComponent<ProfileList.Profile
 
   public ProfileList(Project project) {
     myProject = project;
-    myLayoutDeviceManager = new DeviceManager(new MessageBuildingSdkLog());
     updateModules();
     project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
@@ -99,10 +95,6 @@ public class ProfileList implements PersistentStateComponent<ProfileList.Profile
 
   public Profile getFullProfile() {
     return myState.getFullProfile();
-  }
-
-  public DeviceManager getLayoutDeviceManager() {
-    return myLayoutDeviceManager;
   }
 
   public Profile getProfile() {
