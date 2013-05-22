@@ -14,6 +14,9 @@ import java.util.Map;
  * Date: 5/22/13
  */
 public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener{
+
+  private String myCurrentClassName;
+
   public void onConfigurationSuccess(ITestResult itr) {
     //won't be called
   }
@@ -35,6 +38,14 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestStart(ITestResult result) {
+    final String className = result.getTestClass().getName();
+    if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
+      if (myCurrentClassName != null) {
+        System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
+      }
+      System.out.println("##teamcity[testSuiteStarted name =\'" + className + "\']");
+      myCurrentClassName = className;
+    }
     System.out.println("##teamcity[testStarted name=\'" + result.getMethod().getMethodName() + "\']");
   }
 
@@ -53,7 +64,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public void onTestFailure(ITestResult result) {
     final Throwable ex = result.getThrowable();
     final String trace = getTrace(ex);
-    final Map attrs = new HashMap();
+    final Map<String, String> attrs = new HashMap<String, String>();
     attrs.put("name", result.getMethod().getMethodName());
     final String failureMessage = ex.getMessage();
     attrs.put("message", failureMessage != null ? failureMessage : "");
@@ -72,10 +83,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onStart(ITestContext context) {
-
+    //System.out.println("##teamcity[testSuiteStarted name =\'" + context.getName() + "\']");
   }
 
   public void onFinish(ITestContext context) {
-
+    if (myCurrentClassName != null) {
+      System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
+    }
+    //System.out.println("##teamcity[testSuiteFinished name=\'" + context.getName() + "\']");
   }
 }
