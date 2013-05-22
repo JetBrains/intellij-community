@@ -130,6 +130,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       myEvent = event;
     }
 
+    @Override
     public void run() {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return;
@@ -137,6 +138,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       final List<AndroidAutogeneratorMode> autogenerationModes =
         ApplicationManager.getApplication().runReadAction(new Computable<List<AndroidAutogeneratorMode>>() {
+          @Override
           @Nullable
           public List<AndroidAutogeneratorMode> compute() {
             return computeCompilersToRunAndInvalidateLocalAttributesMap();
