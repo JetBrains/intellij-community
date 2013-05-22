@@ -76,6 +76,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="xml.psiPolicy"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.xml.XmlPsiPolicy"/>
+    </extensionPoint>
   </extensionPoints>
 
   <project-components>
@@ -473,6 +478,9 @@
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
     <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.structureView.HtmlStructureViewBuilderProvider"/>
     <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
+
+    <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
+    <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

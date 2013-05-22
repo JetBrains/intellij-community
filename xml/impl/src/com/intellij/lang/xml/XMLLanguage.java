@@ -17,9 +17,6 @@ package com.intellij.lang.xml;
 
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
-import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
-import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -28,9 +25,6 @@ import org.jetbrains.annotations.NonNls;
 public class XMLLanguage extends CompositeLanguage {
 
   public final static XMLLanguage INSTANCE = new XMLLanguage();
-
-  protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
-  protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
   private XMLLanguage() {
     super("XML", "text/xml");
@@ -43,10 +37,5 @@ public class XMLLanguage extends CompositeLanguage {
 
   protected XMLLanguage(Language baseLanguage, @NonNls String name, @NonNls String... mime) {
     super(baseLanguage, name, mime);
-  }
-
-
-  public XmlPsiPolicy getPsiPolicy() {
-    return CDATA_ON_ANY_ENCODED_POLICY;
   }
 }

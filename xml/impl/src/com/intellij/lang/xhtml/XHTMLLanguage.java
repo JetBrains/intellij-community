@@ -20,7 +20,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,9 +37,5 @@ public class XHTMLLanguage extends XMLLanguage {
         return new XmlFileHighlighter(false, true);
       }
     });
-  }
-
-  public XmlPsiPolicy getPsiPolicy() {
-    return ENCODE_EACH_SYMBOL_POLICY;
   }
 }
