@@ -708,7 +708,6 @@ def layout_core(String home, String target) {
       module("analysis-api")
       module("analysis-impl")
       module("external-system-api")
-      module("external-system-impl")
     }
 
     jar("annotations.jar") {
@@ -754,7 +753,6 @@ def layout_core_upsource(String home, String target) {
       module("java-analysis-api")
       module("java-analysis-impl")
       module("external-system-api")
-      module("external-system-impl")
     }
 
     jar("annotations.jar") {
