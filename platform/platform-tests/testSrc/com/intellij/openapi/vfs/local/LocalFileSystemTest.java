@@ -375,4 +375,31 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     attributes = lfs.getAttributes(new FakeVirtualFile(fakeRoot, "Users"));
     assertNull(attributes);
   }
+
+  public void testCopyToPointDir() throws Exception {
+    File top = createTempDirectory(false);
+    File sub = IoTestUtil.createTestDir(top, "sub");
+    File file = IoTestUtil.createTestFile(top, "file.txt", "hi there");
+
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile topDir = lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    VirtualFile sourceFile = lfs.refreshAndFindFileByIoFile(file);
+    assertNotNull(sourceFile);
+    VirtualFile parentDir = lfs.refreshAndFindFileByIoFile(sub);
+    assertNotNull(parentDir);
+    assertEquals(2, topDir.getChildren().length);
+
+    try {
+      sourceFile.copy(this, parentDir, ".");
+      fail("Copying a file into a '.' path should have failed");
+    }
+    catch (IOException e) {
+      System.out.println(e.getMessage());
+    }
+
+    topDir.refresh(false, true);
+    assertTrue(topDir.exists());
+    assertEquals(2, topDir.getChildren().length);
+  }
 }
