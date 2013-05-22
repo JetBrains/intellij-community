@@ -15,17 +15,12 @@
  */
 package com.intellij.lang.xml;
 
-import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -39,13 +34,6 @@ public class XMLLanguage extends CompositeLanguage {
 
   private XMLLanguage() {
     super("XML", "text/xml");
-
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
-      @NotNull
-      protected SyntaxHighlighter createHighlighter() {
-        return new XmlFileHighlighter();
-      }
-    });
   }
 
   @Deprecated
