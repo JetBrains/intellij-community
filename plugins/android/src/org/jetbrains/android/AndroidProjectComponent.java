@@ -28,7 +28,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -94,7 +93,6 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
 
   private void createAndroidSpecificComponents() {
     final AndroidResourceFilesListener listener = new AndroidResourceFilesListener(myProject);
-    LocalFileSystem.getInstance().addVirtualFileListener(listener);
     Disposer.register(myDisposable, listener);
 
     createAlarmForAutogeneration();
