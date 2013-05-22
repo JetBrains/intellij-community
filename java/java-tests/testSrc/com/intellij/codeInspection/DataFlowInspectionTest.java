@@ -69,6 +69,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
   public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
 
+  public void testNotNullPrimitive() throws Throwable { doTest(); }
   public void testBoxing128() throws Throwable { doTest(); }
   public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
   public void testMultiCatch() throws Throwable { doTest(); }

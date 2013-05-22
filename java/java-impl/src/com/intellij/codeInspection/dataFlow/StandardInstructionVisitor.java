@@ -229,17 +229,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     final PsiType type = instruction.getResultType();
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
-    if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
-      return factory.createTypeValueWithNullability(type, myReturnTypeNullability.get(instruction));
-    }
-
+    
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
       return factory.getBoxedFactory().createUnboxed(qualifierValue);
     }
 
     if (methodType == MethodCallInstruction.MethodType.BOXING) {
       DfaValue boxed = factory.getBoxedFactory().createBoxed(qualifierValue);
-      return boxed == null ? DfaUnknownValue.getInstance() : boxed;
+      return boxed == null ? factory.getNotNullFactory().create(type) : boxed;
     }
 
     if (methodType == MethodCallInstruction.MethodType.CAST) {
@@ -247,6 +244,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return factory.getConstFactory().createFromValue(castConstValue((DfaConstValue)qualifierValue), type);
       }
       return qualifierValue;
+    }
+
+    if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
+      return factory.createTypeValueWithNullability(type, myReturnTypeNullability.get(instruction));
     }
     return DfaUnknownValue.getInstance();
   }

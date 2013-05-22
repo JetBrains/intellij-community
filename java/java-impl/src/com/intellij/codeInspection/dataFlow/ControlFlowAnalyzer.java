@@ -1050,10 +1050,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiType exprType = expression.getType();
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(exprType)) {
-      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.UNBOXING));
+      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.UNBOXING, expectedType));
     }
     else if (TypeConversionUtil.isPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
-      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.BOXING));
+      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.BOXING, expectedType));
     }
     else if (exprType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(exprType) &&
