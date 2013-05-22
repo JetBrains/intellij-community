@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" exported="" />
+    <orderEntry type="module" module-name="external-system-api" />
   </component>
   <component name="copyright">
     <Base>
