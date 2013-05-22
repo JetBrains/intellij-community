@@ -59,7 +59,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return MavenDomUtil.findContainingProject(file) != null && looksLikeClassName(getReferenceText());
+    return myRef.isValid() && MavenDomUtil.findContainingProject(file) != null && looksLikeClassName(getReferenceText());
   }
 
   private static boolean looksLikeClassName(@Nullable String text) {
