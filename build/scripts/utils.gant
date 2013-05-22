@@ -274,6 +274,7 @@ binding.setVariable("platformImplementationModules", [
         "smRunner",
         "xdebugger-impl",
         "xml",
+        "xml-psi-impl",
         "relaxng",
         "lvcs-impl",
         "spellchecker",
