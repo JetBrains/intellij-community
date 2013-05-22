@@ -96,7 +96,7 @@ print <selection>'abc'</selection>
 import groovy.transform.Field
 
 @Field f = 'abc'
-print <selection>f</selection>
+print f<caret>
 ''', false, false, false, FIELD_DECLARATION)
   }
 
@@ -112,7 +112,7 @@ import groovy.transform.Field
 @Field final f = 'abc'
 
 def foo() {
-  print <selection>f</selection>
+  print f<caret>
 }
 ''', false, false, true, FIELD_DECLARATION)
   }
@@ -129,7 +129,7 @@ import groovy.transform.Field
 @Field static f = 'abc'
 
 static def foo() {
-  print <selection>f</selection>
+  print f<caret>
 }
 ''', true, false, false, FIELD_DECLARATION)
   }
@@ -147,7 +147,7 @@ import groovy.transform.Field
 
 def foo() {
     f = 'abc'
-    print <selection>f</selection>
+    print f<caret>
 }
 ''', false, false, false, CUR_METHOD)
   }
@@ -165,7 +165,7 @@ class MyTest extends GroovyTestCase {
     def f
 
     void foo() {
-        print <selection>f</selection>
+        print f<caret>
     }
 
     void setUp() {
@@ -202,14 +202,14 @@ class MyTest extends GroovyTestCase {
     }
 
     void foo() {
-        print <selection>f</selection>
+        print f<caret>
     }
 }
 ''',
            false, false, false, SETUP_METHOD)
   }
 
-  void testStringPart() {
+  void testStringPart0() {
     doTest('''\
 class A {
     def foo() {
@@ -224,6 +224,44 @@ class A {
     }
 }''', false, false, false, FIELD_DECLARATION, false, null)
   }
+
+  void testStringPart1() {
+    doTest('''\
+class A {
+    def foo() {
+        print 'a<selection>b</selection>c'
+    }
+}''', '''\
+class A {
+    def f
+
+    def foo() {
+        f = 'b'
+        print 'a' + f<caret> + 'c'
+    }
+}''', false, false, false, CUR_METHOD, false, null)
+  }
+
+  void testStringPart2() {
+    doTest('''\
+class A {
+    def foo() {
+        def f = 5
+        print 'a<selection>b</selection>c'
+    }
+}''', '''\
+class A {
+    def f
+
+    def foo() {
+        def f = 5
+        this.f = 'b'
+        print 'a' + this.f<caret> + 'c'
+    }
+}''', false, false, false, CUR_METHOD, false, null)
+  }
+
+
 
 
   private void doTest(final boolean isStatic,

@@ -11,6 +11,6 @@ def a = new A() {
 
     @Override
     void m1() {
-        println <selection>f</selection>
+        println f<caret>
     }
 }

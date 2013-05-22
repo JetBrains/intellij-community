@@ -8,6 +8,6 @@ def a = new A() {
     @Override
     void m1() {
         f = 123
-        println <selection>f</selection>
+        println f<caret>
     }
 }

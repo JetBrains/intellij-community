@@ -140,7 +140,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     final Editor editor = myFixture.getEditor();
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
-    return GrIntroduceHandlerBase.findStringPart(myFixture.getFile(), start, end);
+    return StringPartInfo.findStringPart(myFixture.getFile(), start, end);
   }
 
   private static class MockIntroduceConstantSettings implements GrIntroduceConstantSettings {

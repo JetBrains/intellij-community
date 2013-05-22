@@ -44,11 +44,13 @@ import java.util.List;
  */
 public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceFieldSettings> {
 
+  @NotNull
   @Override
   protected String getRefactoringName() {
     return IntroduceFieldHandler.REFACTORING_NAME;
   }
 
+  @NotNull
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_FIELD;
@@ -62,7 +64,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   @Override
-  protected void checkExpression(GrExpression selectedExpr) {
+  protected void checkExpression(@NotNull GrExpression selectedExpr) {
     checkContainingClass(selectedExpr);
   }
 
@@ -78,27 +80,28 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   @Override
-  protected void checkVariable(GrVariable variable) throws GrRefactoringError {
+  protected void checkVariable(@NotNull GrVariable variable) throws GrRefactoringError {
     checkContainingClass(variable);
   }
 
   @Override
-  protected void checkStringLiteral(StringPartInfo info) throws GrRefactoringError {
-    //todo
+  protected void checkStringLiteral(@NotNull StringPartInfo info) throws GrRefactoringError {
+    checkContainingClass(info.getLiteral());
   }
 
   @Override
-  protected void checkOccurrences(PsiElement[] occurrences) {
+  protected void checkOccurrences(@NotNull PsiElement[] occurrences) {
     //nothing to do
   }
 
+  @NotNull
   @Override
-  protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(GrIntroduceContext context) {
+  protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
     return new GrIntroduceFieldDialog(context);
   }
 
   @Override
-  public GrVariable runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings) {
+  public GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings) {
     return new GrIntroduceFieldProcessor(context, settings).run();
   }
 

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,12 +30,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -366,42 +367,74 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return null;
   }
 
-  private static boolean canBeInitializedOutsideBlock(@NotNull GrIntroduceContext context, final PsiClass clazz) {
+  private static boolean canBeInitializedOutsideBlock(@NotNull GrIntroduceContext context, @NotNull PsiClass clazz) {
     final StringPartInfo part = context.getStringPart();
-    if (part != null) return true;
-
     GrExpression expression = context.getExpression();
-    if (expression == null) return false;
-    expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
-    if (expression == null) return false;
 
-    if (expression instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
-        expression = ((GrVariable)resolved).getInitializerGroovy();
-        if (expression == null) return false;
+    if (expression != null) {
+      expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
+      if (expression == null) return false;
+
+      if (expression instanceof GrReferenceExpression) {
+        final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
+        if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+          expression = ((GrVariable)resolved).getInitializerGroovy();
+          if (expression == null) return false;
+        }
       }
+
+      ExpressionChecker visitor = new ExpressionChecker(clazz, expression);
+      expression.accept(visitor);
+      return visitor.isResult();
     }
 
-    final Ref<Boolean> ref = new Ref<Boolean>(Boolean.TRUE);
-    final GrExpression finalExpression = expression;
-    expression.accept(new GroovyRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceExpression(GrReferenceExpression refExpr) {
-        super.visitReferenceExpression(refExpr);
-        final PsiElement resolved = refExpr.resolve();
-        if (!(resolved instanceof GrVariable)) return;
-        if (resolved instanceof GrField && clazz.getManager().areElementsEquivalent(clazz, ((GrField)resolved).getContainingClass())) {
-          return;
+    if (part != null) {
+      for (GrStringInjection injection : part.getInjections()) {
+        GroovyPsiElement scope = injection.getExpression() != null ? injection.getExpression() : injection.getClosableBlock();
+        assert scope != null;
+        ExpressionChecker visitor = new ExpressionChecker(clazz, scope);
+        scope.accept(visitor);
+        if (!visitor.isResult()) {
+          return visitor.isResult();
         }
-        if (resolved instanceof PsiParameter &&
-            PsiTreeUtil.isAncestor(finalExpression, ((PsiParameter)resolved).getDeclarationScope(), false)) {
-          return;
-        }
-        ref.set(Boolean.FALSE);
       }
-    });
-    return ref.get();
+      return true;
+    }
+
+    else {
+      return false;
+    }
+  }
+
+  private static class ExpressionChecker extends GroovyRecursiveElementVisitor {
+    private final PsiClass myClass;
+    private final PsiElement myScope;
+
+    private boolean result = true;
+
+    private ExpressionChecker(@NotNull PsiClass aClass, @NotNull PsiElement scope) {
+      myClass = aClass;
+      myScope = scope;
+    }
+
+    @Override
+    public void visitReferenceExpression(GrReferenceExpression refExpr) {
+      super.visitReferenceExpression(refExpr);
+      final PsiElement resolved = refExpr.resolve();
+      if (!(resolved instanceof GrVariable)) return;
+      if (resolved instanceof GrField && myClass.getManager().areElementsEquivalent(myClass, ((GrField)resolved).getContainingClass())) {
+        return;
+      }
+      if (resolved instanceof PsiParameter &&
+          PsiTreeUtil.isAncestor(myScope, ((PsiParameter)resolved).getDeclarationScope(), false)) {
+        return;
+      }
+      result = false;
+    }
+
+    private boolean isResult() {
+      return result;
+    }
   }
 
   private void validateOKAction() {

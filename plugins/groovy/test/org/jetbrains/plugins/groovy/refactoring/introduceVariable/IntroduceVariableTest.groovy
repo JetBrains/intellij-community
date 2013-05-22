@@ -135,7 +135,7 @@ print "a" + preved<caret> + "c"
     final GrIntroduceVariableHandler introduceVariableHandler = new GrIntroduceVariableHandler();
 
     GrExpression selectedExpr = GrIntroduceHandlerBase.findExpression(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
-    StringPartInfo stringPartInfo = GrIntroduceHandlerBase.findStringPart(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
+    StringPartInfo stringPartInfo = StringPartInfo.findStringPart(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
 
     assertTrue("Selected expression reference points to null", selectedExpr != null || stringPartInfo != null);
 

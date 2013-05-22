@@ -79,7 +79,7 @@ public class GroovyExtractChooser {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final StringPartInfo stringPart =
-      GrIntroduceHandlerBase.findStringPart(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      StringPartInfo.findStringPart(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
 
     if (stringPart != null) {
       return new InitialInfo(new VariableInfo[0], new VariableInfo[0], PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<GrStatement>(), stringPart, project);

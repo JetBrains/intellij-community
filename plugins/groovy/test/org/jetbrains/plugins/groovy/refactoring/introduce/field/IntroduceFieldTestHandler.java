@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 
@@ -46,8 +47,9 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
     mySelectedType = selectedType;
   }
 
+  @NotNull
   @Override
-  protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(GrIntroduceContext context) {
+  protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
     return new GrIntroduceDialog<GrIntroduceFieldSettings>() {
       @Override
       public GrIntroduceFieldSettings getSettings() {

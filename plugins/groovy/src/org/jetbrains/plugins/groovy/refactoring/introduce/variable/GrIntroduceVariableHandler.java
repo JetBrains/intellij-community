@@ -75,7 +75,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return scope;
   }
 
-  protected void checkExpression(GrExpression selectedExpr) {
+  protected void checkExpression(@NotNull GrExpression selectedExpr) {
     // Cannot perform refactoring in parameter default values
 
     PsiElement parent = selectedExpr.getParent();
@@ -93,17 +93,17 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected void checkVariable(GrVariable variable) throws GrRefactoringError {
+  protected void checkVariable(@NotNull GrVariable variable) throws GrRefactoringError {
     throw new GrRefactoringError(null);
   }
 
   @Override
-  protected void checkStringLiteral(StringPartInfo info) throws GrRefactoringError {
+  protected void checkStringLiteral(@NotNull StringPartInfo info) throws GrRefactoringError {
     //todo
   }
 
   @Override
-  protected void checkOccurrences(PsiElement[] occurrences) {
+  protected void checkOccurrences(@NotNull PsiElement[] occurrences) {
     //nothing to do
   }
 
@@ -124,7 +124,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   /**
    * Inserts new variable declarations and replaces occurrences
    */
-  public GrVariable runRefactoring(final GrIntroduceContext context, final GroovyIntroduceVariableSettings settings) {
+  public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
@@ -390,17 +390,20 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return null;
   }
 
+  @NotNull
   @Override
   protected String getRefactoringName() {
     return REFACTORING_NAME;
   }
 
+  @NotNull
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_VARIABLE;
   }
 
-  protected GroovyIntroduceVariableDialog getDialog(GrIntroduceContext context) {
+  @NotNull
+  protected GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);
     return new GroovyIntroduceVariableDialog(context, validator);
   }
