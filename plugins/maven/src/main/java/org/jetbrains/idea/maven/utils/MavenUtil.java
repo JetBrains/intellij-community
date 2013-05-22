@@ -124,12 +124,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (p.isDisposed()) return;
-            r.run();
-          }
-        }, state);
+      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
     }
   }
 
@@ -146,12 +141,7 @@ public class MavenUtil {
         r.run();
       }
       else {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            public void run() {
-              if (p.isDisposed()) return;
-              r.run();
-            }
-          }, state);
+        ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
       }
     }
   }

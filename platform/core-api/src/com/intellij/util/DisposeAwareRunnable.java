@@ -30,7 +30,7 @@ public class DisposeAwareRunnable extends WeakReference<Object> implements Runna
     return create(delegate, (Object)disposable);
   }
 
-  public static Runnable create(@NotNull Runnable delegate, @Nullable Object disposable) {
+  private static Runnable create(@NotNull Runnable delegate, @Nullable Object disposable) {
     if (disposable == null) {
       return delegate;
     }

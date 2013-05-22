@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
@@ -128,13 +129,7 @@ public class MvcConsole implements Disposable {
   public void show(@Nullable final Runnable runnable, boolean focus) {
     Runnable r = null;
     if (runnable != null) {
-      r = new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-
-          runnable.run();
-        }
-      };
+      r = DisposeAwareRunnable.create(runnable, myProject);
     }
 
     myToolWindow.activate(r, focus);
