@@ -38,6 +38,28 @@ public class CopyReferenceTest extends LightCodeInsightFixtureTestCase {
   public void testIdentifierSeparator() throws Exception { doTest(); }
   public void testMethodFromAnonymousClass() throws Exception { doTest(); }
 
+  public void testAddImport() {
+    myFixture.addClass("package foo; public class Foo {}")
+    myFixture.configureByText "a.java", "import foo.F<caret>oo;"
+    performCopy();
+    myFixture.configureByText "b.java", "class Goo { <caret> }"
+    performPaste();
+    myFixture.checkResult """import foo.Foo;
+
+class Goo { Foo }"""
+
+  }
+  
+  public void testFqnInImport() {
+    myFixture.addClass("package foo; public class Foo {}")
+    myFixture.configureByText "a.java", "import foo.F<caret>oo;"
+    performCopy();
+    myFixture.configureByText "b.java", "import <caret>"
+    performPaste();
+    myFixture.checkResult """import foo.Foo<caret>"""
+
+  }
+
   public void testCopyFile() throws Exception {
     PsiFile psiFile = myFixture.addFileToProject("x/x.txt", "");
     assertTrue(CopyReferenceAction.doCopy(psiFile, getProject()));
