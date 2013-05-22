@@ -1253,11 +1253,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      MethodCallInstruction callInstruction = new MethodCallInstruction(expression, createChainedVariableValue(expression));
-      if (!DfaValueFactory.isEffectivelyUnqualified(methodExpression)) {
-        callInstruction.setShouldFlushFields(false);
-      }
-      addInstruction(callInstruction);
+      addInstruction(new MethodCallInstruction(expression, createChainedVariableValue(expression)));
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(expression.resolveMethod());
