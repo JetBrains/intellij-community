@@ -343,6 +343,7 @@
     <editorNotificationProvider implementation="org.jetbrains.android.projectView.ResourceQualifierSwitcher"/>
     <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.android.spellchecker.AndroidBundledDictionaryProvider"/>
     <projectStructureDetector implementation="org.jetbrains.android.newProject.AndroidProjectStructureDetector"/>
+    <compileServer.pathProvider implementation="org.jetbrains.android.compiler.AndroidCompileServerPathProvider"/>
   </extensions>
 
   <extensionPoints>

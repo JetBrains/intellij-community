@@ -78,6 +78,7 @@
     <orderEntry type="module" module-name="lang-impl" scope="TEST" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="eclipse" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 
