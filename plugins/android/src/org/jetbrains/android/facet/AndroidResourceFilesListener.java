@@ -16,9 +16,12 @@
 
 package org.jetbrains.android.facet;
 
+import com.android.SdkConstants;
 import com.android.resources.ResourceFolderType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -89,7 +92,29 @@ public class AndroidResourceFilesListener extends VirtualFileAdapter implements 
   }
 
   private void fileChanged(@NotNull final VirtualFileEvent e) {
-    myQueue.queue(new MyUpdate(e));
+    if (shouldScheduleUpdate(e)) {
+      myQueue.queue(new MyUpdate(e));
+    }
+  }
+
+  private static boolean shouldScheduleUpdate(@NotNull VirtualFileEvent e) {
+    final VirtualFile file = e.getFile();
+    final FileType fileType = file.getFileType();
+
+    if (fileType == AndroidIdlFileType.ourFileType ||
+        fileType == AndroidRenderscriptFileType.INSTANCE ||
+        SdkConstants.FN_ANDROID_MANIFEST_XML.equals(file.getName())) {
+      return true;
+    }
+    else if (fileType == StdFileTypes.XML) {
+      final VirtualFile parent = e.getParent();
+
+      if (parent != null && parent.isDirectory()) {
+        final String resType = AndroidCommonUtils.getResourceTypeByDirName(parent.getName());
+        return ResourceFolderType.VALUES.getName().equals(resType);
+      }
+    }
+    return false;
   }
 
   @Override
@@ -113,7 +138,7 @@ public class AndroidResourceFilesListener extends VirtualFileAdapter implements 
     private final VirtualFileEvent myEvent;
 
     public MyUpdate(VirtualFileEvent event) {
-      super(event.getParent());
+      super(event.getFile());
       myEvent = event;
     }
 
@@ -201,29 +226,6 @@ public class AndroidResourceFilesListener extends VirtualFileAdapter implements 
         }
       }
       return Pair.create(module, modes);
-    }
-
-    @Override
-    public boolean canEat(Update update) {
-      if (update instanceof MyUpdate) {
-        VirtualFile hisFile = ((MyUpdate)update).myEvent.getFile();
-        VirtualFile file = myEvent.getFile();
-
-        if (Comparing.equal(hisFile, file)) {
-          return true;
-        }
-
-        if (hisFile.getFileType() == AndroidIdlFileType.ourFileType || file.getFileType() == AndroidIdlFileType.ourFileType) {
-          return hisFile.getFileType() == file.getFileType();
-        }
-
-        if (hisFile.getFileType() == AndroidRenderscriptFileType.INSTANCE || file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
-          return hisFile.getFileType() == file.getFileType();
-        }
-
-        return true;
-      }
-      return false;
     }
   }
 }
