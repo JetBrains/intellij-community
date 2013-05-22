@@ -15,12 +15,7 @@
  */
 package com.intellij.lang.xhtml;
 
-import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -31,11 +26,5 @@ public class XHTMLLanguage extends XMLLanguage {
 
   private XHTMLLanguage() {
     super(XMLLanguage.INSTANCE, "XHTML", "text/xhtml", "application/xhtml+xml");
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
-      @NotNull
-      protected SyntaxHighlighter createHighlighter() {
-        return new XmlFileHighlighter(false, true);
-      }
-    });
   }
 }

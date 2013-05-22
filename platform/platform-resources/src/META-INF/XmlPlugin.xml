@@ -94,6 +94,9 @@
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 
     <lang.syntaxHighlighterFactory key="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory key="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory key="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory key="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
 
     <renameHandler id="xmlTagRenameHandler" implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
     <renameHandler implementation="com.intellij.xml.refactoring.SchemaPrefixRenameHandler" order="before xmlTagRenameHandler"/>
