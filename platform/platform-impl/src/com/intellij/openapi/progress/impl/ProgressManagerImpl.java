@@ -216,7 +216,10 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     ProgressIndicator oldIndicator = null;
 
     boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());
-    if (set) myThreadIndicator.set(progress);
+    if (set) {
+      progress.checkCanceled();
+      myThreadIndicator.set(progress);
+    }
 
     boolean modal = progress != null && progress.isModal();
     if (modal) myCurrentModalProgressCount.incrementAndGet();
@@ -485,7 +488,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     private TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator) {
       this(task, indicator, null);
     }
-    
+
     private TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
       super(task);
       myIndicator = indicator;
