@@ -18,13 +18,14 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiQualifiedReference;
+import com.intellij.psi.PsiQualifiedReferenceElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
-public interface GrDocMemberReference extends GroovyDocPsiElement, PsiPolyVariantReference, PsiQualifiedReference, GrDocTagValueToken {
+public interface GrDocMemberReference extends GroovyDocPsiElement, PsiPolyVariantReference, PsiQualifiedReferenceElement, GrDocTagValueToken {
 
   @Nullable
   GrDocReferenceElement getReferenceHolder();

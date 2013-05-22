@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ foo('a')
 ''', '''
 def foo(String s, Closure closure) {
     s+=2
-    <selection>closure(s)</selection>
+    closure(s)
 }
 
 foo('a') { String s -> print s }
@@ -96,7 +96,7 @@ new X().foo('a')
 ''', '''
 class X {
     def foo(Closure closure) {
-        <selection>closure()</selection>
+        closure()
     }
 }
 
@@ -139,7 +139,7 @@ new X().foo('a')
 ''', '''
 class X {
     def foo(Closure closure) {
-        <selection>closure()</selection>
+        closure()
     }
     def bar(){}
 }
@@ -161,7 +161,7 @@ foo(2, 3)
 ''', '''
 def foo(Closure closure) {
     int a = 5
-    <selection>closure(a)</selection>
+    closure(a)
 }
 
 foo { int a -> print 45 + 3 + a }
@@ -190,7 +190,7 @@ adventure {
 def adventure(Closure closure) {
 
     try {
-        <caret>closure()
+        closure()<caret>
     } catch (ArrowToKneeException) {
         becomeTownGuard()
     }
@@ -218,7 +218,7 @@ adventure { return killMonsters() + collectLoot() }
 
 def adventure(Closure<Integer> closure) {
     try {
-        def skill = <selection>closure()</selection>
+        def skill = closure()
     } catch (ArrowToKneeException e) {
         becomeTownGuard()
     }
@@ -250,7 +250,7 @@ class Some {
      private static void doSmth() {}
 
      void m1(Closure closure) {
-         <caret>closure()
+         closure()<caret>
      }
      void m2() {
          m1 {
@@ -270,11 +270,28 @@ void foo() {
 foo()
 ''', '''
 void foo(Closure<Character> closure) {
-    def s = <selection><caret>closure()</selection>
+    def s = closure()<caret>
 }
 foo { return "zxcvbn".substring(2).charAt(1) }
 ''')
     }
+
+    void testStringPart0() {
+      doTest('''\
+def cl() {
+    print 'a<selection>b</selection>c'
+}
+
+cl()
+''', '''\
+def cl(Closure<String> closure) {
+    print 'a' + closure()<caret> + 'c'
+}
+
+cl { return 'b' }
+''')
+    }
+
   }
 
   static class ClosureTest extends ExtractClosureTest {
@@ -492,4 +509,5 @@ foo { return "zxcvbn".substring(2).charAt(1) }
 ''')
     }
   }
+
 }

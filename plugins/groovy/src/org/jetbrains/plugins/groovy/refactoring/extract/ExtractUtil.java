@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
@@ -67,9 +68,9 @@ public class ExtractUtil {
   private ExtractUtil() {
   }
 
-  public static GrStatement replaceStatement(GrStatementOwner declarationOwner, ExtractInfoHelper helper) {
+  public static GrStatement replaceStatement(@Nullable GrStatementOwner declarationOwner, @NotNull ExtractInfoHelper helper) {
     GrStatement realStatement;
-    if (declarationOwner != null && !isSingleExpression(helper.getStatements())) {
+    if (declarationOwner != null && !isSingleExpression(helper.getStatements()) && helper.getStringPartInfo() == null) {
       // Replace set of statements
       final GrStatement[] newStatement = createResultStatement(helper);
       // add call statement
@@ -86,9 +87,16 @@ public class ExtractUtil {
       PsiImplUtil.removeNewLineAfter(realStatement);
     }
     else {
+      GrExpression oldExpr;
+      if (helper.getStringPartInfo() != null) {
+        oldExpr = GrIntroduceHandlerBase.processLiteral(helper.getName(), helper.getStringPartInfo(), helper.getProject());
+      }
+      else {
+        oldExpr = (GrExpression)helper.getStatements()[0];
+      }
+
       // Expression call replace
       GrExpression methodCall = createMethodCall(helper);
-      GrExpression oldExpr = (GrExpression)helper.getStatements()[0];
       realStatement = oldExpr.replaceWithExpression(methodCall, true);
       GrReferenceAdjuster.shortenReferences(realStatement);
     }
@@ -376,7 +384,8 @@ public class ExtractUtil {
       buffer.append(statement.getText()).append('\n');
     }
 
-    if (!isSingleExpression(helper.getStatements()) || statements.size() > 0) {
+    final StringPartInfo stringPartInfo = helper.getStringPartInfo();
+    if (!isSingleExpression(helper.getStatements()) && stringPartInfo == null) {
       for (PsiElement element : helper.getInnerElements()) {
         buffer.append(element.getText());
       }
@@ -395,7 +404,9 @@ public class ExtractUtil {
       }
     }
     else {
-      GrExpression expr = (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
+      GrExpression expr = stringPartInfo != null
+                          ? GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPartInfo, helper.getProject())
+                          : (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
       boolean addReturn = !isVoid && forceReturn;
       if (addReturn) {
         buffer.append("return ");

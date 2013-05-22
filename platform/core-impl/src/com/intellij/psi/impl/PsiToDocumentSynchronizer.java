@@ -37,13 +37,13 @@ import java.util.*;
 public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
 
-  private final PsiDocumentManagerImpl myPsiDocumentManager;
+  private final PsiDocumentManagerBase myPsiDocumentManager;
   private final MessageBus myBus;
   private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
 
   private volatile Document mySyncDocument = null;
 
-  public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager, MessageBus bus) {
+  public PsiToDocumentSynchronizer(PsiDocumentManagerBase psiDocumentManager, MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;
     myBus = bus;
   }
@@ -99,7 +99,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if (!insideTransaction) {
       document.setModificationStamp(psiFile.getViewProvider().getModificationStamp());
       if (LOG.isDebugEnabled()) {
-        PsiDocumentManagerImpl.checkConsistency(psiFile, document);
+        PsiDocumentManagerBase.checkConsistency(psiFile, document);
       }
     }
   }

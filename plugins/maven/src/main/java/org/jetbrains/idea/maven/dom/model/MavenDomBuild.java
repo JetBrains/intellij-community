@@ -25,6 +25,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.references.MavenDirectoryPathReferenceConverter;
+import org.jetbrains.idea.maven.dom.references.MavenSourceDirectoryConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Build interface.
@@ -46,7 +47,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = false)
+  @Convert(value = MavenSourceDirectoryConverter.class, soft = false)
   GenericDomValue<PathReference> getSourceDirectory();
 
   /**
@@ -60,7 +61,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = false)
+  @Convert(value = MavenSourceDirectoryConverter.class, soft = false)
   GenericDomValue<PathReference> getScriptSourceDirectory();
 
   /**
@@ -74,7 +75,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = false)
+  @Convert(value = MavenSourceDirectoryConverter.class, soft = false)
   GenericDomValue<PathReference> getTestSourceDirectory();
 
   /**

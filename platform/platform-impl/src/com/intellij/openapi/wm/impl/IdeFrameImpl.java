@@ -59,6 +59,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 
 /**
@@ -118,6 +120,48 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
+    addWindowStateListener(new WindowAdapter() {
+      @Override
+      public void windowStateChanged(WindowEvent e) {
+        updateBorder();
+      }
+    });
+    Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        updateBorder();
+      }
+    });
+  }
+
+  private void updateBorder() {
+    int state = getExtendedState();
+    if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS() || !SystemInfo.isWindows) {
+      return;
+    }
+
+    boolean isNotClassic = Boolean.parseBoolean(String.valueOf(Toolkit.getDefaultToolkit().getDesktopProperty("win.xpstyle.themeActive")));
+    if (isNotClassic && (state & MAXIMIZED_BOTH) != 0) {
+      IdeFrame[] projectFrames = WindowManager.getInstance().getAllProjectFrames();
+      GraphicsDevice device = ScreenUtil.getScreenDevice(getBounds());
+
+      for (IdeFrame frame : projectFrames) {
+        if (frame == this) continue;
+        if (((IdeFrameImpl)frame).isInFullScreen() && ScreenUtil.getScreenDevice(((IdeFrameImpl)frame).getBounds()) == device) {
+          Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(device.getDefaultConfiguration());
+          int mask = SideBorder.NONE;
+          if (insets.top != 0) mask |= SideBorder.TOP;
+          if (insets.left != 0) mask |= SideBorder.LEFT;
+          if (insets.bottom != 0) mask |= SideBorder.BOTTOM;
+          if (insets.right != 0) mask |= SideBorder.RIGHT;
+          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, false, 3));
+          break;
+        }
+      }
+    }
+    else {
+      myRootPane.setBorder(null);
+    }
   }
 
   protected IdeRootPane createRootPane(ActionManagerEx actionManager,

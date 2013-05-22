@@ -62,7 +62,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
 
   protected abstract void execute(Project project, Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo);
 
-  protected static void handleException(Project project, Exception e) {
+  public static void handleException(Project project, Exception e) {
     LOG.info(e);
     new HgCommandResultNotifier(project).notifyError(null, "Error", e.getMessage());
   }

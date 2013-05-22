@@ -80,7 +80,7 @@ public class InitialInfo implements ExtractInfoHelper {
       myArgumentNames[i] = info.getName();
     }
 
-    PsiType outputType = inferOutputType(outputInfos, statements, returnStatements, myHasReturnValue);
+    PsiType outputType = inferOutputType(outputInfos, statements, returnStatements, myHasReturnValue, stringPartInfo);
     myOutputType = outputType != null ? outputType : PsiType.VOID;
   }
 
@@ -88,7 +88,11 @@ public class InitialInfo implements ExtractInfoHelper {
   private PsiType inferOutputType(VariableInfo[] outputInfos,
                                   GrStatement[] statements,
                                   ArrayList<GrStatement> returnStatements,
-                                  boolean hasReturnValue) {
+                                  boolean hasReturnValue,
+                                  StringPartInfo stringPartInfo) {
+    if (stringPartInfo != null) {
+      return stringPartInfo.getLiteral().getType();
+    }
     PsiType outputType = PsiType.VOID;
     if (outputInfos.length > 0) {
       if (outputInfos.length == 1) {

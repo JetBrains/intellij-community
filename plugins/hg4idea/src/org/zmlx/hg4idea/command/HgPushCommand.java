@@ -34,6 +34,7 @@ public class HgPushCommand {
   private String myRevision;
   private boolean myForce;
   private HgTagBranch myBranch;
+  private boolean myIsNewBranch;
 
   public HgPushCommand(Project project, @NotNull VirtualFile repo, String destination) {
     myProject = project;
@@ -53,6 +54,10 @@ public class HgPushCommand {
     myBranch = branch;
   }
 
+  public void setIsNewBranch(boolean isNewBranch) {
+      myIsNewBranch = isNewBranch;
+    }
+
   public void execute(final HgCommandResultHandler resultHandler) {
     final List<String> arguments = new LinkedList<String>();
     if (!StringUtil.isEmptyOrSpaces(myRevision)) {
@@ -60,8 +65,13 @@ public class HgPushCommand {
       arguments.add(myRevision);
     }
     if (myBranch != null) {
-      arguments.add("-b");
-      arguments.add(myBranch.getName());
+      if (myIsNewBranch) {
+        arguments.add("--new-branch");
+      }
+      else {
+        arguments.add("-b");
+        arguments.add(myBranch.getName());
+      }
     }
     if (myForce) {
       arguments.add("-f");

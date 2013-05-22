@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.light.LightTypeElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -263,10 +262,10 @@ public class GenerateMembersUtil {
       copyDocComment(sourceMethod, resultMethod);
       copyModifiers(sourceMethod.getModifierList(), resultMethod.getModifierList());
       final PsiSubstitutor collisionResolvedSubstitutor =
-        substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor);
+        substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
-      substituteThrows(factory, sourceMethod.getThrowsList(), resultMethod.getThrowsList(), collisionResolvedSubstitutor);
+      substituteThrows(factory, sourceMethod.getThrowsList(), resultMethod.getThrowsList(), collisionResolvedSubstitutor, sourceMethod);
       return resultMethod;
     }
     catch (IncorrectOperationException e) {
@@ -285,14 +284,15 @@ public class GenerateMembersUtil {
                                                          @Nullable PsiElement target,
                                                          @Nullable PsiTypeParameterList sourceTypeParameterList,
                                                          @Nullable PsiTypeParameterList targetTypeParameterList,
-                                                         @NotNull PsiSubstitutor substitutor) {
+                                                         @NotNull PsiSubstitutor substitutor, 
+                                                         @NotNull PsiMethod sourceMethod) {
     if (sourceTypeParameterList == null || targetTypeParameterList == null) {
       return substitutor;
     }
 
     final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
     for (PsiTypeParameter typeParam : sourceTypeParameterList.getTypeParameters()) {
-      final PsiTypeParameter substitutedTypeParam = substituteTypeParameter(factory, typeParam, substitutor);
+      final PsiTypeParameter substitutedTypeParam = substituteTypeParameter(factory, typeParam, substitutor, sourceMethod);
 
       final PsiTypeParameter resolvedTypeParam = resolveTypeParametersCollision(factory, sourceTypeParameterList, target, substitutedTypeParam, substitutor);
       targetTypeParameterList.add(resolvedTypeParam);
@@ -347,7 +347,8 @@ public class GenerateMembersUtil {
   @NotNull
   private static PsiTypeParameter substituteTypeParameter(final @NotNull JVMElementFactory factory,
                                                           @NotNull PsiTypeParameter typeParameter,
-                                                          final @NotNull PsiSubstitutor substitutor) {
+                                                          final @NotNull PsiSubstitutor substitutor, 
+                                                          @NotNull final PsiMethod sourceMethod) {
     final PsiElement copy = typeParameter.copy();
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<PsiElement, PsiElement>();
     copy.accept(new JavaRecursiveElementVisitor() {
@@ -357,7 +358,7 @@ public class GenerateMembersUtil {
         final PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiTypeParameter) {
           final PsiType type = factory.createType((PsiTypeParameter)resolve);
-          replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, type)));
+          replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, type, sourceMethod)));
         }
       }
     });
@@ -374,7 +375,7 @@ public class GenerateMembersUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
-      final PsiType substituted = substituteType(substitutor, parameterType);
+      final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope());
       @NonNls String paramName = parameter.getName();
       boolean isBaseNameGenerated = true;
       final boolean isSubstituted = substituted.equals(parameterType);
@@ -400,9 +401,10 @@ public class GenerateMembersUtil {
   private static void substituteThrows(@NotNull JVMElementFactory factory,
                                        @NotNull PsiReferenceList sourceThrowsList,
                                        @NotNull PsiReferenceList targetThrowsList,
-                                       @NotNull PsiSubstitutor substitutor) {
+                                       @NotNull PsiSubstitutor substitutor, 
+                                       @NotNull PsiMethod sourceMethod) {
     for (PsiClassType thrownType : sourceThrowsList.getReferencedTypes()) {
-      targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType)));
+      targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod)));
     }
   }
 
@@ -433,7 +435,7 @@ public class GenerateMembersUtil {
     if (returnTypeElement == null || returnType == null) {
       return;
     }
-    final PsiType substitutedReturnType = substituteType(substitutor, returnType);
+    final PsiType substitutedReturnType = substituteType(substitutor, returnType, method);
 
     returnTypeElement.replace(new LightTypeElement(manager, substitutedReturnType instanceof PsiWildcardType ? TypeConversionUtil.erasure(substitutedReturnType) : substitutedReturnType));
   }
@@ -451,7 +453,10 @@ public class GenerateMembersUtil {
     return Arrays.asList(csManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names).contains(paramName);
   }
 
-  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type) {
+  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, @NotNull PsiTypeParameterListOwner owner) {
+    if (PsiUtil.isRawSubstitutor(owner, substitutor)) {
+      return TypeConversionUtil.erasure(type);
+    }
     final PsiType psiType = substitutor.substitute(type);
     if (psiType != null) {
       final PsiType deepComponentType = psiType.getDeepComponentType();
