@@ -182,6 +182,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           generateDefaultBinOp(lExpr, rExpr, type);
         }
       }
+      else if (op == JavaTokenType.PLUSEQ && type != null && type.equalsToText(JAVA_LANG_STRING)) {
+        lExpr.accept(this);
+        rExpr.accept(this);
+        addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, lExpr.getProject()));
+      }
       else {
         generateDefaultBinOp(lExpr, rExpr, type);
       }
@@ -1050,10 +1055,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiType exprType = expression.getType();
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(exprType)) {
-      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.UNBOXING));
+      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.UNBOXING, expectedType));
     }
     else if (TypeConversionUtil.isPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
-      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.BOXING));
+      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.BOXING, expectedType));
     }
     else if (exprType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(exprType) &&
@@ -1253,11 +1258,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      MethodCallInstruction callInstruction = new MethodCallInstruction(expression, createChainedVariableValue(expression));
-      if (!DfaValueFactory.isEffectivelyUnqualified(methodExpression)) {
-        callInstruction.setShouldFlushFields(false);
-      }
-      addInstruction(callInstruction);
+      addInstruction(new MethodCallInstruction(expression, createChainedVariableValue(expression)));
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(expression.resolveMethod());

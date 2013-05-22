@@ -36,44 +36,35 @@ import org.jetbrains.annotations.Nullable;
 
 public class MethodCallInstruction extends Instruction {
   @Nullable private final PsiCallExpression myCall;
-  @Nullable private PsiType myType;
+  @Nullable private final PsiType myType;
   @NotNull private final PsiExpression[] myArgs;
-  private boolean myShouldFlushFields;
+  private final boolean myShouldFlushFields;
   @NotNull private final PsiExpression myContext;
   private final MethodType myMethodType;
-  @Nullable private DfaValue myPrecalculatedReturnValue;
+  @Nullable private final DfaValue myPrecalculatedReturnValue;
   public enum MethodType {
     BOXING, UNBOXING, REGULAR_METHOD_CALL, CAST
   }
 
-  public MethodCallInstruction(@NotNull PsiCallExpression callExpression, @Nullable DfaValue precalculatedReturnValue) {
-    this(callExpression, MethodType.REGULAR_METHOD_CALL);
-    myPrecalculatedReturnValue = precalculatedReturnValue;
-  }
-
   public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType, @Nullable PsiType resultType) {
-    this(context, methodType);
-    myType = resultType;
-    myShouldFlushFields = false;
-  }
-
-  public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType) {
     myContext = context;
     myMethodType = methodType;
-    myCall = methodType == MethodType.REGULAR_METHOD_CALL && context instanceof PsiCallExpression ? (PsiCallExpression)context : null;
-    final PsiExpressionList argList = myCall == null ? null : myCall.getArgumentList();
-    myArgs = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
-
-    myType = myCall == null ? null : myCall.getType();
-
-    myShouldFlushFields = true;
-    if (myCall instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) {
-      myShouldFlushFields = false;
-    }
+    myCall = null;
+    myArgs = PsiExpression.EMPTY_ARRAY;
+    myType = resultType;
+    myShouldFlushFields = false;
+    myPrecalculatedReturnValue = null;
   }
 
-  public void setShouldFlushFields(boolean shouldFlushFields) {
-    myShouldFlushFields = shouldFlushFields;
+  public MethodCallInstruction(@NotNull PsiCallExpression context, @Nullable DfaValue precalculatedReturnValue) {
+    myContext = context;
+    myMethodType = MethodType.REGULAR_METHOD_CALL;
+    myCall = context;
+    final PsiExpressionList argList = context.getArgumentList();
+    myArgs = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
+    myType = myCall.getType();
+    myShouldFlushFields = !(myCall instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0);
+    myPrecalculatedReturnValue = precalculatedReturnValue;
   }
 
   @Nullable
