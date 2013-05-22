@@ -72,7 +72,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final ConstantSearch myConstantSearch = new ConstantSearch();
   private final BuildRunner myBuildRunner;
   private final boolean myForceModelLoading;
-  private BuildType myBuildType;
+  private final BuildType myBuildType;
+  private final List<TargetTypeBuildScope> myScopes;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -85,7 +86,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
-    List<TargetTypeBuildScope> scopes = params.getScopeList();
+    myScopes = params.getScopeList();
     List<String> filePaths = params.getFilePathList();
     Map<String, String> builderParams = new HashMap<String, String>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
@@ -94,7 +95,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     myInitialFSDelta = delta;
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null);
     myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildMain.FORCE_MODEL_LOADING_PARAMETER.toString()));
-    myBuildRunner = new BuildRunner(loader, scopes, filePaths, builderParams);
+    myBuildRunner = new BuildRunner(loader, filePaths, builderParams);
   }
 
   public void run() {
@@ -184,7 +185,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       // optimization: check whether we can skip the build
       final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
       if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
-          && scopeContainsModulesOnlyForIncrementalMake(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
+          && scopeContainsModulesOnlyForIncrementalMake(myScopes) && !containsChanges(myInitialFSDelta)) {
         updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
         return;
       }
@@ -216,7 +217,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       // ensure events from controller are processed after FSState initialization
       myEventsProcessor.startProcessing();
 
-      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, myBuildType);
+      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, myBuildType, myScopes, false);
     }
     finally {
       saveData(fsState, dataStorageRoot);
