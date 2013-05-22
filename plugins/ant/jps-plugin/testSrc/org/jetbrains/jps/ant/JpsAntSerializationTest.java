@@ -98,6 +98,9 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
     assertContainsElements(toFiles(options.getAdditionalClasspath()),
                            new File(getAbsolutePath("lib/jdom.jar")),
                            new File(getAbsolutePath("ant-lib/a.jar")));
+    BuildFileProperty property = assertOneElement(options.getProperties());
+    assertEquals("my.property", property.getPropertyName());
+    assertEquals("its value", property.getPropertyValue());
 
     String emptyFileUrl = getUrl("empty.xml");
     JpsAntBuildFileOptions options2 = JpsAntExtensionService.getOptions(myProject, emptyFileUrl);
