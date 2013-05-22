@@ -120,7 +120,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (!context.maySwitchToAST(this)) {
         final PsiElement value = getStub() != null ? findAssignedValueByStub(context) : findAssignedValue();
         if (value instanceof PyTypedElement) {
-          return context.getType((PyTypedElement)value);
+          final PyType type = context.getType((PyTypedElement)value);
+          if (type instanceof PyNoneType) {
+            return null;
+          }
+          return type;
         }
         return null;
       }
