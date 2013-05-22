@@ -182,6 +182,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           generateDefaultBinOp(lExpr, rExpr, type);
         }
       }
+      else if (op == JavaTokenType.PLUSEQ && type != null && type.equalsToText(JAVA_LANG_STRING)) {
+        lExpr.accept(this);
+        rExpr.accept(this);
+        addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, lExpr.getProject()));
+      }
       else {
         generateDefaultBinOp(lExpr, rExpr, type);
       }
