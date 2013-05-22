@@ -16,11 +16,14 @@
 package org.testng;
 
 
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.testng.collections.Lists;
 import org.testng.remote.strprotocol.GenericMessage;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class IDEARemoteTestNG extends TestNG {
@@ -42,15 +45,16 @@ public class IDEARemoteTestNG extends TestNG {
 
         int testCount= 0;
 
-        for(int i= 0; i < suites.size(); i++) {
-          testCount+= (suites.get(i)).getTests().size();
+        for (XmlSuite suite : suites) {
+          final List<XmlTest> tests = suite.getTests();
+          for (XmlTest test : tests) {
+            testCount += test.getClasses().size();
+          }
         }
 
-        GenericMessage gm= new GenericMessage(MessageHelper.GENERIC_SUITE_COUNT);
-        gm.setSuiteCount(suites.size());
-        gm.setTestCount(testCount);
-       // msh.sendMessage(gm);
-
+        final HashMap<String, String> map = new HashMap<String, String>();
+        map.put("count", String.valueOf(testCount));
+        System.out.println(ServiceMessage.asString("testCount", map));
         addListener((ISuiteListener) new IDEATestNGRemoteListener());
         addListener((ITestListener)  new IDEATestNGRemoteListener());
         super.run();
