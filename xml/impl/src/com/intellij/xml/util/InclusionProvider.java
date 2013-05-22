@@ -76,7 +76,7 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
     final XmlDocument document = included != null ? included.getDocument() : null;
     final XmlTag rootTag = document != null ? document.getRootTag() : null;
     if (rootTag != null) {
-      final String xpointer = xincludeTag.getAttributeValue("xpointer", XmlUtil.XINCLUDE_URI);
+      final String xpointer = xincludeTag.getAttributeValue("xpointer", XmlPsiUtil.XINCLUDE_URI);
       final XmlTag[] includeTag = extractXpointer(rootTag, xpointer);
       PsiElement[] result = new PsiElement[includeTag.length];
       for (int i = 0; i < includeTag.length; i++) {

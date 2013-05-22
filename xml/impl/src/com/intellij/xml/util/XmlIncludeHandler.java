@@ -34,7 +34,7 @@ public class XmlIncludeHandler {
       if (xmlTag.getParent() instanceof XmlDocument) return false;
 
       if (xmlTag.getLocalName().equals(INCLUDE_TAG_NAME) && xmlTag.getAttributeValue("href") != null) {
-        if (xmlTag.getNamespace().equals(XmlUtil.XINCLUDE_URI)) {
+        if (xmlTag.getNamespace().equals(XmlPsiUtil.XINCLUDE_URI)) {
           return true;
         }
       }

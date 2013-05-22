@@ -40,6 +40,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +51,11 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
   }
 
   public boolean processElements(PsiElementProcessor processor, PsiElement place){
-    return XmlUtil.processXmlElements(this, processor, false);
+    return XmlPsiUtil.processXmlElements(this, processor, false);
   }
 
   public boolean processChildren(PsiElementProcessor processor){
-    return XmlUtil.processXmlElementChildren(this, processor, false);
+    return XmlPsiUtil.processXmlElementChildren(this, processor, false);
   }
 
   public XmlElement findElementByTokenType(final IElementType type){
