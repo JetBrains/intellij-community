@@ -124,6 +124,9 @@ public class TextRange implements Segment, Serializable {
   }
 
   public boolean intersects(@NotNull TextRange textRange) {
+    return intersects((Segment)textRange);
+  }
+  public boolean intersects(@NotNull Segment textRange) {
     return intersects(textRange.getStartOffset(), textRange.getEndOffset());
   }
   public boolean intersects(int startOffset, int endOffset) {
