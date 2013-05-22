@@ -167,7 +167,12 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myTree.setModel(myTreeModel);
     myTree.setRootVisible(false);
 
-    restoreTree();
+
+    doSort();
+
+    defaultExpandTree();
+
+    //restoreTree();
 
     if (myOptionControls == null) {
       myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
