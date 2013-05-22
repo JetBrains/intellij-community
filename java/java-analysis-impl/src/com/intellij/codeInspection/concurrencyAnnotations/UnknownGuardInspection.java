@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * check locks according to http://www.javaconcurrencyinpractice.com/annotations/doc/net/jcip/annotations/GuardedBy.html
  */
-public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
+public class UnknownGuardInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull
