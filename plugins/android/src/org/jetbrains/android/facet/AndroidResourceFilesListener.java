@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
@@ -143,11 +143,11 @@ public class AndroidResourceFilesListener extends BulkFileListener.Adapter imple
         return;
       }
 
-      final Map<Module, List<AndroidAutogeneratorMode>> map =
-        ApplicationManager.getApplication().runReadAction(new Computable<Map<Module, List<AndroidAutogeneratorMode>>>() {
+      final MultiMap<Module, AndroidAutogeneratorMode> map =
+        ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Module, AndroidAutogeneratorMode>>() {
           @Override
           @Nullable
-          public Map<Module, List<AndroidAutogeneratorMode>> compute() {
+          public MultiMap<Module, AndroidAutogeneratorMode> compute() {
             return computeCompilersToRunAndInvalidateLocalAttributesMap();
           }
         });
@@ -156,7 +156,7 @@ public class AndroidResourceFilesListener extends BulkFileListener.Adapter imple
         return;
       }
 
-      for (Map.Entry<Module, List<AndroidAutogeneratorMode>> entry : map.entrySet()) {
+      for (Map.Entry<Module, Collection<AndroidAutogeneratorMode>> entry : map.entrySet()) {
         final Module module = entry.getKey();
 
         for (AndroidAutogeneratorMode mode : entry.getValue()) {
@@ -166,12 +166,11 @@ public class AndroidResourceFilesListener extends BulkFileListener.Adapter imple
     }
 
     @NotNull
-    private Map<Module, List<AndroidAutogeneratorMode>> computeCompilersToRunAndInvalidateLocalAttributesMap() {
+    private MultiMap<Module, AndroidAutogeneratorMode> computeCompilersToRunAndInvalidateLocalAttributesMap() {
       if (myProject.isDisposed()) {
-        return Collections.emptyMap();
+        return MultiMap.emptyInstance();
       }
-      final Map<Module, List<AndroidAutogeneratorMode>> result =
-        new HashMap<Module, List<AndroidAutogeneratorMode>>();
+      final MultiMap<Module, AndroidAutogeneratorMode> result = MultiMap.create();
 
       for (VirtualFile file : myFiles) {
         final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
@@ -184,61 +183,66 @@ public class AndroidResourceFilesListener extends BulkFileListener.Adapter imple
         if (facet == null) {
           continue;
         }
-        final VirtualFile parent = file.getParent();
-
-        if (parent == null) {
-          continue;
-        }
-        final VirtualFile gp = parent.getParent();
-        final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(facet);
-
-        if (Comparing.equal(gp, resourceDir) &&
-            ResourceFolderType.VALUES.getName().equals(AndroidCommonUtils.getResourceTypeByDirName(parent.getName()))) {
-          facet.getLocalResourceManager().invalidateAttributeDefinitions();
-        }
-        final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet);
-        final List<AndroidAutogeneratorMode> modes = new ArrayList<AndroidAutogeneratorMode>();
-
-        if (Comparing.equal(manifestFile, file)) {
-          if (AndroidAptCompiler.isToCompileModule(module, facet.getConfiguration())) {
-            final Manifest manifest = facet.getManifest();
-            final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
-            final String cachedPackage = facet.getUserData(CACHED_PACKAGE_KEY);
-
-            if (cachedPackage != null && !cachedPackage.equals(aPackage)) {
-              String aptGenDirPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
-              AndroidCompileUtil.removeDuplicatingClasses(module, cachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
-            }
-            facet.putUserData(CACHED_PACKAGE_KEY, aPackage);
-            modes.add(AndroidAutogeneratorMode.AAPT);
-          }
-          modes.add(AndroidAutogeneratorMode.BUILDCONFIG);
-        }
-        else if (file.getFileType() == AndroidIdlFileType.ourFileType) {
-          VirtualFile sourceRoot = findSourceRoot(module, file);
-          if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getAidlGenDir(facet), sourceRoot)) {
-            modes.add(AndroidAutogeneratorMode.AIDL);
-          }
-        }
-        else if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
-          final VirtualFile sourceRoot = findSourceRoot(module, file);
-          if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getRenderscriptGenDir(facet), sourceRoot)) {
-            modes.add(AndroidAutogeneratorMode.RENDERSCRIPT);
-          }
-        }
+        final List<AndroidAutogeneratorMode> modes = computeCompilersToRunAndInvalidateLocalAttributesMap(facet, file);
 
         if (modes.size() > 0) {
-          final List<AndroidAutogeneratorMode> modes1 = result.get(module);
-
-          if (modes1 != null) {
-            modes1.addAll(modes);
-          }
-          else {
-            result.put(module, modes);
-          }
+          result.putValues(module, modes);
         }
       }
       return result;
+    }
+
+    @NotNull
+    private List<AndroidAutogeneratorMode> computeCompilersToRunAndInvalidateLocalAttributesMap(AndroidFacet facet, VirtualFile file) {
+      final VirtualFile parent = file.getParent();
+
+      if (parent == null) {
+        return Collections.emptyList();
+      }
+      final VirtualFile gp = parent.getParent();
+      final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(facet);
+
+      if (Comparing.equal(gp, resourceDir) &&
+          ResourceFolderType.VALUES.getName().equals(AndroidCommonUtils.getResourceTypeByDirName(parent.getName()))) {
+        facet.getLocalResourceManager().invalidateAttributeDefinitions();
+      }
+      final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet);
+      final List<AndroidAutogeneratorMode> modes = new ArrayList<AndroidAutogeneratorMode>();
+      final Module module = facet.getModule();
+
+      if (Comparing.equal(manifestFile, file)) {
+        if (AndroidAptCompiler.isToCompileModule(module, facet.getConfiguration())) {
+          final Manifest manifest = facet.getManifest();
+          final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+          final String cachedPackage = facet.getUserData(CACHED_PACKAGE_KEY);
+
+          if (cachedPackage != null && !cachedPackage.equals(aPackage)) {
+            String aptGenDirPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
+            AndroidCompileUtil.removeDuplicatingClasses(module, cachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
+          }
+          facet.putUserData(CACHED_PACKAGE_KEY, aPackage);
+          modes.add(AndroidAutogeneratorMode.AAPT);
+        }
+        modes.add(AndroidAutogeneratorMode.BUILDCONFIG);
+      }
+      else if (file.getFileType() == AndroidIdlFileType.ourFileType) {
+        VirtualFile sourceRoot = findSourceRoot(module, file);
+        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getAidlGenDir(facet), sourceRoot)) {
+          modes.add(AndroidAutogeneratorMode.AIDL);
+        }
+      }
+      else if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
+        final VirtualFile sourceRoot = findSourceRoot(module, file);
+        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getRenderscriptGenDir(facet), sourceRoot)) {
+          modes.add(AndroidAutogeneratorMode.RENDERSCRIPT);
+        }
+      }
+      return modes;
+    }
+
+    @Override
+    public boolean canEat(Update update) {
+      return update instanceof MyUpdate && myFiles.containsAll(((MyUpdate)update).myFiles);
     }
   }
 }
