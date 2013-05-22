@@ -39,9 +39,6 @@ public class SideEffectWarningDialog extends DialogWrapper {
   private final boolean myCanCopeWithSideEffects;
   private AbstractAction myRemoveAllAction;
   private AbstractAction myCancelAllAction;
-  public static final int MAKE_STATEMENT = 1;
-  public static final int DELETE_ALL = 2;
-  public static final int CANCEL = 0;
 
   public SideEffectWarningDialog(Project project, boolean canBeParent, PsiVariable variable, String beforeText, String afterText, boolean canCopeWithSideEffects) {
     super(project, canBeParent);
@@ -66,7 +63,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        close(DELETE_ALL);
+        close(RemoveUnusedVariableUtil.DELETE_ALL);
       }
 
     };
@@ -79,7 +76,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          close(MAKE_STATEMENT);
+          close(RemoveUnusedVariableUtil.MAKE_STATEMENT);
         }
       };
       actions.add(makeStmtAction);
@@ -113,7 +110,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    close(CANCEL);
+    close(RemoveUnusedVariableUtil.CANCEL);
   }
 
   @Override

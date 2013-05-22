@@ -30,11 +30,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
@@ -111,7 +111,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         return unboxedType.getCanonicalText() + "Value()";
       }
 
-      final PsiMethod getter = PropertyUtils.findGetterForField(myDelegateField);
+      final PsiMethod getter = PropertyUtil.findGetterForField(myDelegateField);
       return getter != null ? getter.getName() : "";
     }
     return "";

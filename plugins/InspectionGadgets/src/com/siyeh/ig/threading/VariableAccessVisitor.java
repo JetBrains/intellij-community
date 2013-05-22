@@ -18,8 +18,8 @@ package com.siyeh.ig.threading;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,9 +97,9 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
       return;
     }
     final PsiMethod method = (PsiMethod)methodExpression.resolve();
-    PsiField field = PropertyUtils.getFieldOfGetter(method);
+    PsiField field = PropertyUtil.getFieldOfGetter(method);
     if (field == null) {
-      field = PropertyUtils.getFieldOfSetter(method);
+      field = PropertyUtil.getFieldOfSetter(method);
     }
     if (field == null) {
       return;

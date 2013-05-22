@@ -26,7 +26,7 @@ package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.SideEffectWarningDialog;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -67,8 +67,8 @@ public class DefUseInspection extends DefUseInspectionBase {
       final PsiVariable variable = (PsiVariable)psiInitializer.getParent();
       final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
       final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
-      boolean hasSideEffects = RemoveUnusedVariableFix.checkSideEffects(psiInitializer, variable, sideEffects);
-      int res = SideEffectWarningDialog.DELETE_ALL;
+      boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(psiInitializer, variable, sideEffects);
+      int res = RemoveUnusedVariableUtil.DELETE_ALL;
       if (hasSideEffects) {
         hasSideEffects = PsiUtil.isStatement(psiInitializer);
         res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable,
@@ -78,10 +78,10 @@ public class DefUseInspection extends DefUseInspectionBase {
                                                                .render((PsiExpression)psiInitializer));
       }
       try {
-        if (res == SideEffectWarningDialog.DELETE_ALL) {
+        if (res == RemoveUnusedVariableUtil.DELETE_ALL) {
           psiInitializer.delete();
         }
-        else if (res == SideEffectWarningDialog.MAKE_STATEMENT) {
+        else if (res == RemoveUnusedVariableUtil.MAKE_STATEMENT) {
           final PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
           final PsiStatement statementFromText = factory.createStatementFromText(psiInitializer.getText() + ";", null);
           declaration.getParent().addAfter(statementFromText, declaration);

@@ -38,7 +38,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,7 +100,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final String notNullSimpleName = StringUtil.getShortName(manager.getDefaultNotNull());
           final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
           if (nameIdentifier != null && nameIdentifier.isPhysical()) {
-            if (PropertyUtils.isSimpleGetter(getter)) {
+            if (PropertyUtil.isSimpleGetter(getter)) {
               if (REPORT_NOT_ANNOTATED_GETTER) {
                 if (!AnnotationUtil.isAnnotated(getter, manager.getAllAnnotations(), false, false) &&
                     !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
@@ -138,7 +137,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                      new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
             }
-            if (PropertyUtils.isSimpleSetter(setter)) {
+            if (PropertyUtil.isSimpleSetter(setter)) {
               if (annotated.isDeclaredNotNull && manager.isNullable(parameter, false)) {
                 final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
                 assertValidElement(setter, parameter, nameIdentifier1);
