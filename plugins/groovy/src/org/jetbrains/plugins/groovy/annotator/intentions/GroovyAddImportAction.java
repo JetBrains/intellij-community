@@ -80,7 +80,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected List<PsiClass> filterByContext(List<PsiClass> candidates, GrReferenceElement ref) {
+  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull GrReferenceElement ref) {
     PsiElement typeElement = ref.getParent();
     if (typeElement instanceof GrTypeElement) {
       PsiElement decl = typeElement.getParent();

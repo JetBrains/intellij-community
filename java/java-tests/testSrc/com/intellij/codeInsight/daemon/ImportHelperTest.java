@@ -228,7 +228,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
       backspace();
-      
+
       assertOneElement(highlightErrors());
 
       int offset = myEditor.getCaretModel().getOffset();
@@ -260,7 +260,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
       backspace();
-      
+
       assertEquals(2, highlightErrors().size());
       UIUtil.dispatchAllInvocationEvents();
 
@@ -423,6 +423,30 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
        doHighlighting();
        UIUtil.dispatchAllInvocationEvents();
        assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+     }
+     finally {
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+     }
+   }
+
+   public void testAutoImportSkipsClassReferenceInMethodPosition() throws Throwable {
+     @NonNls String text = "package x; import java.util.HashMap; class S { HashMap<String,String> f(){ return  Hash<caret>Map <String, String >();} }  ";
+     configureByText(StdFileTypes.JAVA, text);
+
+     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+     try {
+       List<HighlightInfo> errs = highlightErrors();
+       assertTrue(errs.size() > 1);
+
+       PsiJavaFile javaFile = (PsiJavaFile)getFile();
+       assertEquals(1, javaFile.getImportList().getAllImportStatements().length);
+
+       PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset());
+       ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
+       assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
      }
      finally {
         CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
