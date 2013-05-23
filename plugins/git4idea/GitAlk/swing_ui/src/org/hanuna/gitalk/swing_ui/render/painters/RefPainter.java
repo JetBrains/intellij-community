@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.RoundRectangle2D;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
 
@@ -50,7 +52,7 @@ public class RefPainter {
     }
   }
 
-  private void draw(@NotNull Graphics2D g2, @NotNull Ref ref, int padding) {
+  private int draw(@NotNull Graphics2D g2, @NotNull Ref ref, int padding) {
     FontMetrics metrics = g2.getFontMetrics();
     int x = padding + REF_PADDING / 2 - RECTANGLE_X_PADDING;
     int y = RECTANGLE_Y_PADDING;
@@ -65,6 +67,7 @@ public class RefPainter {
     g2.draw(rectangle2D);
 
     drawText(g2, ref.getName(), padding);
+    return x;
   }
 
   public int padding(@NotNull List<Ref> refs, @NotNull FontRenderContext renderContext) {
@@ -75,16 +78,19 @@ public class RefPainter {
     return Math.round(p);
   }
 
-  public void draw(@NotNull Graphics2D g2, @NotNull List<Ref> refs, int startPadding) {
+  public Map<Integer, Ref> draw(@NotNull Graphics2D g2, @NotNull List<Ref> refs, int startPadding) {
     float currentPadding = startPadding;
     g2.setFont(DEFAULT_FONT);
     g2.setStroke(new BasicStroke(1.5f));
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     FontRenderContext renderContext = g2.getFontRenderContext();
+    Map<Integer, Ref> positions = new HashMap<Integer, Ref>();
     for (Ref ref : refs) {
-      draw(g2, ref, (int)currentPadding);
+      int x = draw(g2, ref, (int)currentPadding);
+      positions.put(x, ref);
       currentPadding += paddingStr(ref.getName(), renderContext);
     }
+    return positions;
   }
 
 }
