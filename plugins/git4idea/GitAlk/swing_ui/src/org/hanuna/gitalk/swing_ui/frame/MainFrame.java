@@ -139,10 +139,6 @@ public class MainFrame {
   private void packElements() {
     packTables();
     packMainPanel();
-
-    Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-    int height = screenDimension.height * 4 / 5;
-    int width = screenDimension.width * 3 / 4;
   }
 
   public JPanel getMainComponent() {
