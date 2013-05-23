@@ -134,37 +134,18 @@ public class Swing_UI {
         List<Ref> refsAbove = getRefsAbove(commit);
         showHint(e, GitLogIcons.MOVE, "Move " + renderCommits(commitsBeingDragged) +
                                       (refsAbove.size() == 1 ? " in branch " + refsAbove.get(0).getName() : ""));
+
+        // TODO: highlight branch(es) under cursor
       }
 
       @Override
       public void perform(final Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
-        List<Ref> refs = getRefsAbove(commit);
-
-        if (refs.size() == 1) {
-          Ref ref = refs.get(0);
-          ui_controller.getInteractiveRebaseBuilder().moveCommits(ref, commit, myPosition, commitsBeingDragged);
-        }
-        else {
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Ref>("Select target branch", refs.toArray(new Ref[refs.size()])) {
-
-            @NotNull
-            @Override
-            public String getTextFor(Ref value) {
-              return value.getName();
-            }
-
-            @Override
-            public PopupStep onChosen(Ref selectedValue, boolean finalChoice) {
-              ui_controller.getInteractiveRebaseBuilder().moveCommits(selectedValue, commit, myPosition, commitsBeingDragged);
-              return FINAL_CHOICE;
-            }
-
-            @Override
-            public boolean isSpeedSearchEnabled() {
-              return true;
-            }
-          }).showInCenterOf(e.getComponent());
-        }
+        showRefPopup(getRefsAbove(commit), e.getComponent(), new RefAction() {
+          @Override
+          public void perform(Ref ref) {
+            ui_controller.getInteractiveRebaseBuilder().moveCommits(ref, commit, myPosition, commitsBeingDragged);
+          }
+        });
       }
     }
 
@@ -360,7 +341,7 @@ public class Swing_UI {
 
     @Override
     public void draggingStarted(List<Node> commitsBeingDragged) {
-      super.draggingStarted(commitsBeingDragged); // TODO
+
     }
 
     @Override
@@ -368,6 +349,33 @@ public class Swing_UI {
       dragDropHint.hide();
     }
 
+  }
+
+  private static void showRefPopup(final List<Ref> refs, Component popupParent, final RefAction refAction) {
+    if (refs.size() == 1) {
+      refAction.perform(refs.get(0));
+    }
+    else {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Ref>("Select target branch", refs.toArray(new Ref[refs.size()])) {
+
+        @NotNull
+        @Override
+        public String getTextFor(Ref value) {
+          return value.getName();
+        }
+
+        @Override
+        public PopupStep onChosen(Ref selectedValue, boolean finalChoice) {
+          refAction.perform(selectedValue);
+          return FINAL_CHOICE;
+        }
+
+        @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
+      }).showInCenterOf(popupParent);
+    }
   }
 
   private class SwingControllerListener implements ControllerListener {
