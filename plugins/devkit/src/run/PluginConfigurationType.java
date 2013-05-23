@@ -48,6 +48,11 @@ public class PluginConfigurationType implements ConfigurationType {
         return runConfiguration;
       }
 
+      @Override
+      public boolean isConfigurationSingletonByDefault() {
+        return true;
+      }
+
       public RunConfiguration createConfiguration(String name, RunConfiguration template) {
         final PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
         if (pluginRunConfiguration.getModule() == null) {
