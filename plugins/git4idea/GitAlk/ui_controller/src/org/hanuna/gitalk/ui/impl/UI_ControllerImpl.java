@@ -8,6 +8,7 @@ import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.graph.Graph;
@@ -44,6 +45,7 @@ public class UI_ControllerImpl implements UI_Controller {
   private final Project myProject;
 
   private DataPack dataPack;
+  private DataPackUtils dataPackUtils;
   private RefTreeTableModel refTableModel;
   private RefTreeModel refTreeModel;
 
@@ -66,6 +68,7 @@ public class UI_ControllerImpl implements UI_Controller {
     refTableModel = new RefTreeTableModel(refTreeModel);
     myRefs = dataPack.getRefsModel().getAllRefs();
     graphTableModel = new GraphTableModel(dataPack);
+    dataPackUtils = new DataPackUtils(dataPack);
 
     prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
   }
@@ -167,7 +170,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   public void click(int rowIndex) {
     dataPack.getPrintCellModel().getCommitSelectController().deselectAll();
-    Node node = dataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
+    Node node = dataPackUtils.getNode(rowIndex);
     if (node != null) {
       FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
       dataPack.getPrintCellModel().getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));

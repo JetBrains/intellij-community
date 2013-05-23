@@ -18,6 +18,8 @@ public interface FragmentManager {
   @NotNull
   public Set<Node> allCommitsCurrentBranch(@NotNull GraphElement graphElement);
 
+  public Set<Node> getUpNodes(@NotNull GraphElement graphElement);
+
   @Nullable
   public GraphFragment relateFragment(@NotNull GraphElement graphElement);
 

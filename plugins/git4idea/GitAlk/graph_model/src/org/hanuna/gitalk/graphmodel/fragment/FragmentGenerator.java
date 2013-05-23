@@ -72,6 +72,26 @@ public class FragmentGenerator {
     return nodes;
   }
 
+  @NotNull
+  public Set<Node> getUpNodes(@NotNull Node node) {
+    Set<Node> nodes = new HashSet<Node>();
+
+    Set<Node> upNodes = new HashSet<Node>();
+    upNodes.add(node);
+    while (!upNodes.isEmpty()) {
+      Iterator<Node> nodeIterator = upNodes.iterator();
+      Node nextNode = nodeIterator.next();
+      nodeIterator.remove();
+      if (nodes.add(nextNode)) {
+        for (Edge edge: nextNode.getUpEdges()) {
+          upNodes.add(edge.getUpNode());
+        }
+      }
+    }
+
+    return nodes;
+  }
+
   public GraphFragment getFragment(@NotNull Node node) {
     int countTry = SEARCH_LIMIT;
     GraphFragment downFragment = null;

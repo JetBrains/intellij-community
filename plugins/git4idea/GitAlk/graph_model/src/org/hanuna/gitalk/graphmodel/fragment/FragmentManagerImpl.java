@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -67,14 +66,26 @@ public class FragmentManagerImpl implements FragmentManager {
   }
 
   @NotNull
-  @Override
-  public Set<Node> allCommitsCurrentBranch(@NotNull GraphElement graphElement) {
+  private Node getUpNode(@NotNull GraphElement graphElement) {
     Node node = graphElement.getNode();
     if (node == null) {
       node = graphElement.getEdge().getUpNode();
     }
-    return fragmentGenerator.allCommitsCurrentBranch(node);
+    return node;
   }
+
+  @NotNull
+  @Override
+  public Set<Node> allCommitsCurrentBranch(@NotNull GraphElement graphElement) {
+    return fragmentGenerator.allCommitsCurrentBranch(getUpNode(graphElement));
+  }
+
+  @Override
+  public Set<Node> getUpNodes(@NotNull GraphElement graphElement) {
+    return fragmentGenerator.getUpNodes(getUpNode(graphElement));
+  }
+
+
 
   @Nullable
   @Override
