@@ -483,7 +483,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     private boolean isValidVariant(@NotNull XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes, final XmlExtension extension) {
       if (extension.isIndirectSyntax(descriptor)) return false;
-      String descriptorName = descriptor.getName();
+      String descriptorName = descriptor.getName(getParent());
       if (descriptorName == null) {
         LOG.error("Null descriptor name for " + descriptor + " " + descriptor.getClass() + " ");
         return false;

@@ -18,6 +18,8 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
 
+import java.util.List;
+
 /**
  * @by Maxim.Mossienko
  */
@@ -611,6 +613,28 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testCompleteQualifiedTopLevelTags() throws Exception {
     configureByFiles("foo.xsd", "bar.xsd");
     basicDoTest("");
+  }
+
+  public void testDoNotSuggestExistingAttributes() throws Exception {
+    myFixture.configureByFile("DoNotSuggestExistingAttributes.xml");
+    myFixture.completeBasic();
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertFalse(strings.contains("xsi:schemaLocation"));
+    assertSameElements(strings, "attributeFormDefault",
+                       "blockDefault",
+                       "elementFormDefault",
+                       "finalDefault",
+                       "id",
+                       "targetNamespace",
+                       "version",
+                       "xml:base",
+                       "xml:id",
+                       "xml:lang",
+                       "xml:space",
+                       "xsi:nill",
+                       "xsi:noNamespaceSchemaLocation",
+                       "xsi:type");
   }
 }
 
