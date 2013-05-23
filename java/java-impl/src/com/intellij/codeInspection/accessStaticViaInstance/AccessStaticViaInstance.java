@@ -19,8 +19,8 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
@@ -33,8 +33,7 @@ import java.util.ArrayList;
  * User: anna
  * Date: 15-Nov-2005
  */
-public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
-
+public class AccessStaticViaInstance extends BaseJavaBatchLocalInspectionTool {
   public static final String ACCESS_STATIC_VIA_INSTANCE = "AccessStaticViaInstance";
 
   @Override
@@ -96,7 +95,7 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
                                                    JavaHighlightUtil.formatType(qualifierExpression.getType()),
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
     if (!onTheFly) {
-      if (RemoveUnusedVariableFix.checkSideEffects(qualifierExpression, null, new ArrayList<PsiElement>())) {
+      if (RemoveUnusedVariableUtil.checkSideEffects(qualifierExpression, null, new ArrayList<PsiElement>())) {
         holder.registerProblem(expr, description);
         return;
       }

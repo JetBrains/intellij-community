@@ -20,7 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
@@ -435,7 +435,7 @@ public class DefUseUtil {
           }
         }
         new Inner ().traverse (elem);
-        return PsiUtilBase.toPsiElementArray(res);
+        return PsiUtilCore.toPsiElementArray(res);
       }
       return PsiElement.EMPTY_ARRAY;
     }

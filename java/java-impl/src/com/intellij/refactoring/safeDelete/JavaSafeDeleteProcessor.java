@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -88,7 +88,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         boolean hasSideEffects = false;
         if (PsiUtil.isOnAssignmentLeftHand(referencedElement)) {
           hasSideEffects =
-            RemoveUnusedVariableFix.checkSideEffects(((PsiAssignmentExpression)referencedElement.getParent()).getRExpression(), ((PsiLocalVariable)element), new ArrayList<PsiElement>());
+            RemoveUnusedVariableUtil
+              .checkSideEffects(((PsiAssignmentExpression)referencedElement.getParent()).getRExpression(), ((PsiLocalVariable)element),
+                                new ArrayList<PsiElement>());
         }
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(statement, element, isSafeToDelete && !hasSideEffects));
       }

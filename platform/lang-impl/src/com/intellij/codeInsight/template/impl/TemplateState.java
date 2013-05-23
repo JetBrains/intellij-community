@@ -220,7 +220,7 @@ public class TemplateState implements Disposable {
 
     return new TextRange(mySegments.getSegmentStart(segment), mySegments.getSegmentEnd(segment));
   }
-  
+
   public int getSegmentsCount() {
     return mySegments.getSegmentsCount();
   }
@@ -486,7 +486,7 @@ public class TemplateState implements Disposable {
       myEditor.getSelectionModel().removeSelection();
       myEditor.getSelectionModel().setSelection(start, end);
     }
-    
+
     Expression expressionNode = getCurrentExpression();
     final List<TemplateExpressionLookupElement> lookupItems = getCurrentExpressionLookupItems();
     final PsiFile psiFile = getPsiFile();
@@ -1051,7 +1051,7 @@ public class TemplateState implements Disposable {
               }
               reformatStartOffset = Math.min(reformatStartOffset, whiteSpaceRange.getStartOffset());
               reformatEndOffset = Math.max(reformatEndOffset, whiteSpaceRange.getEndOffset());
-            } 
+            }
           }
           style.reformatText(file, reformatStartOffset, reformatEndOffset);
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);

@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticGuardedByInstanceInspection extends BaseJavaLocalInspectionTool {
+public class StaticGuardedByInstanceInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull

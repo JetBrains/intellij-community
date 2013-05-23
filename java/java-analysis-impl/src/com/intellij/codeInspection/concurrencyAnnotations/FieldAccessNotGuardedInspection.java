@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool {
+public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull

@@ -55,11 +55,13 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
     public boolean excludeInnerClasses = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return "Class does not override 'toString()' method";
     }
 
+    @Override
     @NotNull
     public String getShortName() {
         return "ClassHasNoToStringMethod";
@@ -156,6 +158,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
      *
      * @return the options panel
      */
+    @Override
     public JComponent createOptionsPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -171,14 +174,17 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         excludeClassNamesField.setMinimumSize(new Dimension(140, 20));
         Document document = excludeClassNamesField.getDocument();
         document.addDocumentListener(new DocumentListener() {
+            @Override
             public void changedUpdate(DocumentEvent e) {
                 textChanged();
             }
 
+            @Override
             public void insertUpdate(DocumentEvent e) {
                 textChanged();
             }
 
+            @Override
             public void removeUpdate(DocumentEvent e) {
                 textChanged();
             }

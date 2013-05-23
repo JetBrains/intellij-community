@@ -25,11 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -1348,7 +1344,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         } else if (type == ConditionChecker.Type.IS_NULL_METHOD || type == ConditionChecker.Type.IS_NOT_NULL_METHOD) {
           addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
           addInstruction(new BinopInstruction(type == ConditionChecker.Type.IS_NULL_METHOD ? JavaTokenType.EQEQ : JavaTokenType.NE, null, expression.getProject()));
-          
+
           ConditionalGotoInstruction ifFails = new ConditionalGotoInstruction(-1, true, null);
           GotoInstruction gotoEnd = new GotoInstruction(exitPoint);
 
@@ -1631,8 +1627,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
-      if (PropertyUtils.isSimpleGetter(method)) {
-        return PropertyUtils.getSimplyReturnedField(method, PropertyUtils.getSingleReturnValue(method));
+      if (PropertyUtil.isSimpleGetter(method)) {
+        return PropertyUtil.getSimplyReturnedField(method, PropertyUtil.getSingleReturnValue(method));
       }
     }
     return null;

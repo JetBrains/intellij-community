@@ -113,7 +113,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
   private boolean checkSideEffects(final Project project, PsiClass containingClass, final PsiExpression qualifierExpression,
                                    PsiElementFactory factory, final PsiElement myExpression) {
     final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
-    boolean hasSideEffects = RemoveUnusedVariableFix.checkSideEffects(qualifierExpression, null, sideEffects);
+    boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(qualifierExpression, null, sideEffects);
     if (hasSideEffects && !myOnTheFly) return false;
     if (hasSideEffects && !ApplicationManager.getApplication().isUnitTestMode()) {
       final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -162,9 +162,9 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         };
       dialog.show();
       int res = dialog.getExitCode();
-      if (res == SideEffectWarningDialog.CANCEL) return false;
+      if (res == RemoveUnusedVariableUtil.CANCEL) return false;
       try {
-        if (res == SideEffectWarningDialog.MAKE_STATEMENT) {
+        if (res == RemoveUnusedVariableUtil.MAKE_STATEMENT) {
           final PsiStatement statementFromText = factory.createStatementFromText(qualifierExpression.getText() + ";", null);
           final PsiStatement statement = PsiTreeUtil.getParentOfType(myExpression, PsiStatement.class);
           statement.getParent().addBefore(statementFromText, statement);

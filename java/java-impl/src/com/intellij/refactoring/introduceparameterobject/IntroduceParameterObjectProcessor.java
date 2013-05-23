@@ -37,7 +37,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
-import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.refactoring.util.ParameterTablePanel;
@@ -411,12 +410,12 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
       parameterChunk.setField(field);
 
-      final PsiMethod getterForField = PropertyUtils.findGetterForField(field);
+      final PsiMethod getterForField = PropertyUtil.findGetterForField(field);
       if (getterForField != null) {
         parameterChunk.setGetter(getterForField.getName());
       }
 
-      final PsiMethod setterForField = PropertyUtils.findSetterForField(field);
+      final PsiMethod setterForField = PropertyUtil.findSetterForField(field);
       if (setterForField != null) {
         parameterChunk.setSetter(setterForField.getName());
       }

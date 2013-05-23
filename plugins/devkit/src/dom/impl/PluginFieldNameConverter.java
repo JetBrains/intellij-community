@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.psi.*;
-import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -82,8 +82,8 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
 
   public static String getAnnotationValue(PsiField psiField, Class annotationClass) {
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(psiField.getProject()).getConstantEvaluationHelper();
-    final PsiMethod getter = PropertyUtils.findGetterForField(psiField);
-    final PsiMethod setter = PropertyUtils.findSetterForField(psiField);
+    final PsiMethod getter = PropertyUtil.findGetterForField(psiField);
+    final PsiMethod setter = PropertyUtil.findSetterForField(psiField);
     final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(annotationClass, psiField, getter, setter);
     if (attrAnno != null) {
       return ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper);

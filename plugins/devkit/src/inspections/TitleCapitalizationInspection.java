@@ -27,7 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -129,7 +129,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     }
     if (arg instanceof PsiMethodCallExpression) {
       PsiMethod psiMethod = ((PsiMethodCallExpression)arg).resolveMethod();
-      PsiExpression returnValue = PropertyUtils.getGetterReturnExpression(psiMethod);
+      PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(psiMethod);
       if (returnValue != null) {
         return getTitleValue(returnValue);
       }
@@ -223,7 +223,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       }else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         final PsiMethod method = methodCallExpression.resolveMethod();
-        final PsiExpression returnValue = PropertyUtils.getGetterReturnExpression(method);
+        final PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(method);
         if (returnValue != null) {
           doFix(project, returnValue);
         }

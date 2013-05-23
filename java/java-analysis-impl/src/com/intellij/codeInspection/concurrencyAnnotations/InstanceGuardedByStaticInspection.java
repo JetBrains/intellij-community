@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class NonFinalGuardInspection extends BaseJavaLocalInspectionTool {
+public class InstanceGuardedByStaticInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull
@@ -36,15 +36,14 @@ public class NonFinalGuardInspection extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Non-final @GuardedBy field";
+    return "Instance member guarded by static field";
   }
 
   @Override
   @NotNull
   public String getShortName() {
-    return "NonFinalGuard";
+    return "InstanceGuardedByStatic";
   }
-
 
   @Override
   @NotNull
@@ -56,8 +55,37 @@ public class NonFinalGuardInspection extends BaseJavaLocalInspectionTool {
     private final ProblemsHolder myHolder;
 
     public Visitor(ProblemsHolder holder) {
-
       myHolder = holder;
+    }
+
+
+    @Override
+    public void visitDocTag(PsiDocTag psiDocTag) {
+      super.visitDocTag(psiDocTag);
+      if (!JCiPUtil.isGuardedByTag(psiDocTag)) {
+        return;
+      }
+      final PsiMember member = PsiTreeUtil.getParentOfType(psiDocTag, PsiMember.class);
+      if (member == null) {
+        return;
+      }
+      if (member.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final String guardValue = JCiPUtil.getGuardValue(psiDocTag);
+
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiDocTag, PsiClass.class);
+      if (containingClass == null) {
+        return;
+      }
+      final PsiField guardField = containingClass.findFieldByName(guardValue, true);
+      if (guardField == null) {
+        return;
+      }
+      if (!guardField.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      myHolder.registerProblem(psiDocTag, "Instance member guarded by static \"" + guardValue + "\" #loc");
     }
 
     @Override
@@ -66,8 +94,20 @@ public class NonFinalGuardInspection extends BaseJavaLocalInspectionTool {
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {
         return;
       }
+      final PsiMember member = PsiTreeUtil.getParentOfType(annotation, PsiMember.class);
+      if (member == null) {
+        return;
+      }
+      if (member.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
       final String guardValue = JCiPUtil.getGuardValue(annotation);
-      if (guardValue == null || "this".equals(guardValue)) {
+      if (guardValue == null) {
+        return;
+      }
+
+      final PsiAnnotationMemberValue guardRef = annotation.findAttributeValue("value");
+      if (guardRef == null) {
         return;
       }
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(annotation, PsiClass.class);
@@ -78,38 +118,10 @@ public class NonFinalGuardInspection extends BaseJavaLocalInspectionTool {
       if (guardField == null) {
         return;
       }
-      if (guardField.hasModifierProperty(PsiModifier.FINAL)) {
+      if (!guardField.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      final PsiAnnotationMemberValue member = annotation.findAttributeValue("value");
-      if (member == null) {
-        return;
-      }
-      myHolder.registerProblem(member, "Non-final @GuardedBy field #ref #loc");
-    }
-
-    @Override
-    public void visitDocTag(PsiDocTag psiDocTag) {
-      super.visitDocTag(psiDocTag);
-      if (!JCiPUtil.isGuardedByTag(psiDocTag)) {
-        return;
-      }
-      final String guardValue = JCiPUtil.getGuardValue(psiDocTag);
-      if ("this".equals(guardValue)) {
-        return;
-      }
-      final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiDocTag, PsiClass.class);
-      if (containingClass == null) {
-        return;
-      }
-      final PsiField guardField = containingClass.findFieldByName(guardValue, true);
-      if (guardField == null) {
-        return;
-      }
-      if (guardField.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      myHolder.registerProblem(psiDocTag, "Non-final @GuardedBy field \"" + guardValue + "\" #loc");
+      myHolder.registerProblem(guardRef, "Instance member guarded by static #ref #loc");
     }
   }
 }

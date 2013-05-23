@@ -114,7 +114,6 @@ public class PluginManager {
   }
 
   public static void initPlugins(@Nullable StartupProgress progress) {
-    PluginClassLoaderDetector.install();
     long start = System.currentTimeMillis();
     try {
       initializePlugins(progress);
