@@ -19,9 +19,4 @@ public interface GitActionHandler {
   void rebaseOnto(Node onto, Ref subjectRef, List<Node> nodesToRebase, Callback callback);
 
   void interactiveRebase(Ref subjectRef, List<RebaseCommand> commands, Callback callback);
-
-  enum InsertPosition {
-    ABOVE,
-    BELOW
-  }
 }
