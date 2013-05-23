@@ -103,9 +103,7 @@ public class GrIntroduceFieldProcessor {
     if (context.getStringPart() != null) {
       final GrExpression expr = GrIntroduceHandlerBase.processLiteral(field.getName(), context.getStringPart(), context.getProject());
       final PsiElement occurrence = replaceOccurrence(field, expr, targetClass);
-      context.getEditor().getCaretModel().moveToOffset(occurrence.getTextRange().getEndOffset());
-      context.getEditor().getSelectionModel().removeSelection();
-
+      updateCaretPosition(occurrence);
     }
     else {
       if (settings.replaceAllOccurrences()) {
@@ -125,6 +123,11 @@ public class GrIntroduceFieldProcessor {
         }
       }
     }
+  }
+
+  private void updateCaretPosition(PsiElement occurrence) {
+    context.getEditor().getCaretModel().moveToOffset(occurrence.getTextRange().getEndOffset());
+    context.getEditor().getSelectionModel().removeSelection();
   }
 
   @NotNull
@@ -285,7 +288,8 @@ public class GrIntroduceFieldProcessor {
     return GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 
-  private static PsiElement replaceOccurrence(GrVariable field, PsiElement occurrence, PsiClass containingClass) {
+  private PsiElement replaceOccurrence(GrVariable field, PsiElement occurrence, PsiClass containingClass) {
+    boolean isOriginal = occurrence == context.getExpression();
     final GrReferenceExpression newExpr = createRefExpression(field, occurrence, containingClass);
     final PsiElement replaced;
     if (occurrence instanceof GrExpression) {
@@ -297,6 +301,9 @@ public class GrIntroduceFieldProcessor {
 
     if (replaced instanceof GrQualifiedReference<?>) {
       GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)replaced);
+    }
+    if (isOriginal) {
+      updateCaretPosition(replaced);
     }
     return replaced;
   }
