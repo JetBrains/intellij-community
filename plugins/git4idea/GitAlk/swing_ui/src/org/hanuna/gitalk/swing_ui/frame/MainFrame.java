@@ -18,7 +18,7 @@ public class MainFrame {
   private final UI_GraphTable graphTable;
   private final UI_RefTable refTable;
 
-  private final JPanel topPanel = new JPanel();
+  private final JPanel myToolbar = new JPanel();
   private final JPanel tablePanel = new JPanel();
   private final JPanel mainPanel = new JPanel();
 
@@ -72,8 +72,8 @@ public class MainFrame {
   }
 
   private void packToolbar() {
-    topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
-    topPanel.setMaximumSize(new Dimension(10000, 10));
+    myToolbar.setLayout(new BoxLayout(myToolbar, BoxLayout.LINE_AXIS));
+    myToolbar.setMaximumSize(new Dimension(10000, 10));
 
     JButton hideButton = new JButton("Hide");
     hideButton.addMouseListener(new MouseAdapter() {
@@ -82,7 +82,7 @@ public class MainFrame {
         ui_controller.hideAll();
       }
     });
-    topPanel.add(hideButton);
+    myToolbar.add(hideButton);
 
     JButton showButton = new JButton("Show");
     showButton.addMouseListener(new MouseAdapter() {
@@ -91,7 +91,7 @@ public class MainFrame {
         ui_controller.showAll();
       }
     });
-    topPanel.add(showButton);
+    myToolbar.add(showButton);
 
 
     final JCheckBox visibleLongEdges = new JCheckBox("Show full patch", false);
@@ -104,9 +104,9 @@ public class MainFrame {
 
     });
 
-    topPanel.add(visibleLongEdges);
+    myToolbar.add(visibleLongEdges);
 
-    topPanel.add(Box.createHorizontalGlue());
+    myToolbar.add(Box.createHorizontalGlue());
 
     JButton expand = new JButton("Expand");
     expand.addMouseListener(new MouseAdapter() {
@@ -115,7 +115,7 @@ public class MainFrame {
         refTable.expandAll();
       }
     });
-    topPanel.add(expand);
+    myToolbar.add(expand);
 
     JButton collapse = new JButton("Collapse");
     collapse.addMouseListener(new MouseAdapter() {
@@ -124,7 +124,7 @@ public class MainFrame {
         refTable.collapseAll();
       }
     });
-    topPanel.add(collapse);
+    myToolbar.add(collapse);
 
   }
 
@@ -132,7 +132,7 @@ public class MainFrame {
     mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
     packToolbar();
-    mainPanel.add(topPanel);
+    mainPanel.add(myToolbar);
     mainPanel.add(tablePanel);
   }
 
