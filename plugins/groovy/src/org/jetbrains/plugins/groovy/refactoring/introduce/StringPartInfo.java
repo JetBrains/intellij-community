@@ -48,7 +48,7 @@ public class StringPartInfo {
 
     final PsiElement parent = PsiTreeUtil.findCommonParent(start, fin);
 
-    if (parent != null && isStringLiteral(parent.getParent())) {
+    if (parent != null && isStringLiteral(parent.getParent()) && !parent.getParent().getTextRange().equalsToRange(startOffset, endOffset)) {
       return new StringPartInfo((GrLiteral)parent.getParent(), new TextRange(startOffset, endOffset));
     }
     if (parent instanceof GrString && !parent.getTextRange().equalsToRange(startOffset, endOffset)) {

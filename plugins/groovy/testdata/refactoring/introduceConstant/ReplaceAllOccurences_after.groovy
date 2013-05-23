@@ -2,7 +2,7 @@ class A {
     public static final String CONST = "a"
 
     def foo() {
-    print <selection>CONST</selection>
+    print CONST<caret>
   }
 
   def bar() {

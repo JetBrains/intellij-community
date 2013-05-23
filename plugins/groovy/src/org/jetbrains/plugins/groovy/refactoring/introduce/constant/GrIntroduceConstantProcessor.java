@@ -78,14 +78,14 @@ public class GrIntroduceConstantProcessor {
 
     if (context.getStringPart() != null) {
       final GrExpression ref = processLiteral(field.getName(), context.getStringPart(), context.getProject());
-
-      context.getEditor().getCaretModel().moveToOffset(ref.getTextRange().getEndOffset());
-      context.getEditor().getSelectionModel().removeSelection();
+      final PsiElement element = replaceOccurrence(field, ref, isEscalateVisibility());
+      updateCaretPosition(element);
     }
     else {
       if (settings.replaceAllOccurrences()) {
-        GroovyRefactoringUtil.sortOccurrences(context.getOccurrences());
-        for (PsiElement occurrence : context.getOccurrences()) {
+        final PsiElement[] occurrences = context.getOccurrences();
+        GroovyRefactoringUtil.sortOccurrences(occurrences);
+        for (PsiElement occurrence : occurrences) {
           replaceOccurrence(field, occurrence, isEscalateVisibility());
         }
       }
@@ -94,6 +94,11 @@ public class GrIntroduceConstantProcessor {
       }
     }
     return field;
+  }
+
+  private void updateCaretPosition(PsiElement element) {
+    context.getEditor().getCaretModel().moveToOffset(element.getTextRange().getEndOffset());
+    context.getEditor().getSelectionModel().removeSelection();
   }
 
   private static GrVariableDeclaration addDeclaration(PsiClass targetClass, GrVariableDeclaration declaration) {
@@ -157,7 +162,8 @@ public class GrIntroduceConstantProcessor {
   }
 
 
-  private static void replaceOccurrence(@NotNull GrField field, @NotNull PsiElement occurrence, boolean escalateVisibility) {
+  private PsiElement replaceOccurrence(@NotNull GrField field, @NotNull PsiElement occurrence, boolean escalateVisibility) {
+    boolean isOriginal = occurrence == context.getExpression();
     final GrReferenceExpression newExpr = createRefExpression(field, occurrence);
     final PsiElement replaced = occurrence instanceof GrExpression
                                 ? ((GrExpression)occurrence).replaceWithExpression(newExpr, false)
@@ -168,6 +174,10 @@ public class GrIntroduceConstantProcessor {
     if (replaced instanceof GrReferenceExpression) {
       GrReferenceAdjuster.shortenReference((GrReferenceExpression)replaced);
     }
+    if (isOriginal) {
+      updateCaretPosition(replaced);
+    }
+    return replaced;
   }
 
   @NotNull
