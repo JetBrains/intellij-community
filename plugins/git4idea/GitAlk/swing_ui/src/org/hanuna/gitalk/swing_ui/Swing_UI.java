@@ -1,9 +1,8 @@
 package org.hanuna.gitalk.swing_ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
-import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
 import org.hanuna.gitalk.swing_ui.frame.ProgressFrame;
@@ -35,7 +34,6 @@ public class Swing_UI {
   public Swing_UI(UI_Controller ui_controller) {
     this.ui_controller = ui_controller;
   }
-
 
   public ControllerListener getControllerListener() {
     return swingControllerListener;
@@ -94,25 +92,38 @@ public class Swing_UI {
     public Handler drag() {
       return new Handler() {
         @Override
-        public void above(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
+        public void above(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+          // reorder - same branch
+          // nothing otherwise
           showHint(e, GitLogIcons.CHERRY_PICK, "Above " + commit);
         }
 
         @Override
-        public void below(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
+        public void below(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+          // reorder - same branch
+          // nothing otherwise
           showHint(e, GitLogIcons.REBASE, "Below " + commit);
         }
 
         @Override
-        public void over(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
+        public void over(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+          // cherry pick (different branches)
+          // rebase (different branches + label on top)
+          // nothing otherwise
           showHint(e, GitLogIcons.REBASE_INTERACTIVE, "Over " + commit);
         }
 
         @Override
-        public void overNode(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
-          showHint(e, AllIcons.Icon_CE, "Over Node " + commit);
+        public void overNode(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+          // fixup (same branch)
+          // nothing otherwise
+          showForbidden(e);
         }
       };
+    }
+
+    private void showForbidden(MouseEvent e) {
+      showHint(e, GitLogIcons.FORBIDDEN, "No action possible");
     }
 
     private void showHint(MouseEvent e, Icon icon, String text) {
@@ -126,34 +137,34 @@ public class Swing_UI {
     public Handler drop() {
       return new Handler() {
         @Override
-        public void above(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
+        public void above(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
           dragDropHint.hide();
         }
 
         @Override
-        public void below(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
+        public void below(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
           dragDropHint.hide();
         }
 
         @Override
-        public void over(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
+        public void over(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
           dragDropHint.hide();
         }
 
         @Override
-        public void overNode(int rowIndex, Hash commit, MouseEvent e, Hash commitBeingDragged) {
+        public void overNode(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
           dragDropHint.hide();
         }
       };
     }
 
     @Override
-    public void draggingStarted(Hash commitBeingDragged) {
+    public void draggingStarted(Node commitBeingDragged) {
       super.draggingStarted(commitBeingDragged); // TODO
     }
 
     @Override
-    public void draggingCanceled(Hash commitBeingDragged) {
+    public void draggingCanceled(Node commitBeingDragged) {
       dragDropHint.hide();
     }
   }

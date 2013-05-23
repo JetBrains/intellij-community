@@ -1,8 +1,5 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
@@ -34,7 +31,7 @@ public class UI_GraphTable extends JTable {
   private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
   private final MouseAdapter mouseAdapter = new MyMouseAdapter();
 
-  private Hash myCommitBeingDragged = null;
+  private Node myNodeBeingDragged = null;
 
   public UI_GraphTable(UI_Controller ui_controller) {
     super(ui_controller.getGraphTableModel());
@@ -79,8 +76,8 @@ public class UI_GraphTable extends JTable {
       return PositionUtil.getGraphPrintCell(e, getModel());
     }
 
-    private Hash getCommit(MouseEvent e) {
-      return PositionUtil.getCommit(e, getModel());
+    private Node getNode(MouseEvent e) {
+      return PositionUtil.getNode(e, getModel());
     }
 
     @Nullable
@@ -151,26 +148,26 @@ public class UI_GraphTable extends JTable {
 
     @Override
     public void mousePressed(MouseEvent e) {
-      myCommitBeingDragged = getCommit(e);
-      if (myCommitBeingDragged != null) {
-        ui_controller.getDragDropListener().draggingStarted(myCommitBeingDragged);
+      myNodeBeingDragged = getNode(e);
+      if (myNodeBeingDragged != null) {
+        ui_controller.getDragDropListener().draggingStarted(myNodeBeingDragged);
       }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-      if (myCommitBeingDragged == null) return;
+      if (myNodeBeingDragged == null) return;
       handleEvent(e, ui_controller.getDragDropListener().drop());
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-      if (myCommitBeingDragged == null) return;
+      if (myNodeBeingDragged == null) return;
       handleEvent(e, ui_controller.getDragDropListener().drag());
     }
 
     private void handleEvent(MouseEvent e, DragDropListener.Handler handler) {
-      Hash commit = getCommit(e);
+      Node commit = getNode(e);
       if (commit == null) {
         return;
       }
@@ -180,20 +177,20 @@ public class UI_GraphTable extends JTable {
       for (SpecialPrintElement element : getGraphPrintCell(e).getSpecialPrintElements()) {
         if (element.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
           if (PositionUtil.overNode(element.getPosition(), e.getX(), yOffset)) {
-            handler.overNode(rowIndex, commit, e, myCommitBeingDragged);
+            handler.overNode(rowIndex, commit, e, myNodeBeingDragged);
             return;
           }
         }
       }
 
       if (yOffset <= EDGE_FIELD) {
-        handler.above(rowIndex, commit, e, myCommitBeingDragged);
+        handler.above(rowIndex, commit, e, myNodeBeingDragged);
       }
       else if (yOffset >= HEIGHT_CELL - EDGE_FIELD) {
-        handler.below(rowIndex, commit, e, myCommitBeingDragged);
+        handler.below(rowIndex, commit, e, myNodeBeingDragged);
       }
       else {
-        handler.over(rowIndex, commit, e, myCommitBeingDragged);
+        handler.over(rowIndex, commit, e, myNodeBeingDragged);
       }
     }
   }
