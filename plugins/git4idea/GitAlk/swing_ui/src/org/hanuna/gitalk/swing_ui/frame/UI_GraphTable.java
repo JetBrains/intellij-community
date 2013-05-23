@@ -19,6 +19,8 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.*;
+import java.util.List;
 
 import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.EDGE_FIELD;
 import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
@@ -150,7 +152,7 @@ public class UI_GraphTable extends JTable {
     public void mousePressed(MouseEvent e) {
       myNodeBeingDragged = getNode(e);
       if (myNodeBeingDragged != null) {
-        ui_controller.getDragDropListener().draggingStarted(myNodeBeingDragged);
+        ui_controller.getDragDropListener().draggingStarted(getSelectedNodes());
       }
     }
 
@@ -177,22 +179,33 @@ public class UI_GraphTable extends JTable {
       for (SpecialPrintElement element : getGraphPrintCell(e).getSpecialPrintElements()) {
         if (element.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
           if (PositionUtil.overNode(element.getPosition(), e.getX(), yOffset)) {
-            handler.overNode(rowIndex, commit, e, myNodeBeingDragged);
+            handler.overNode(rowIndex, commit, e, getSelectedNodes());
             return;
           }
         }
       }
 
       if (yOffset <= EDGE_FIELD) {
-        handler.above(rowIndex, commit, e, myNodeBeingDragged);
+        handler.above(rowIndex, commit, e, getSelectedNodes());
       }
       else if (yOffset >= HEIGHT_CELL - EDGE_FIELD) {
-        handler.below(rowIndex, commit, e, myNodeBeingDragged);
+        handler.below(rowIndex, commit, e, getSelectedNodes());
       }
       else {
-        handler.over(rowIndex, commit, e, myNodeBeingDragged);
+        handler.over(rowIndex, commit, e, getSelectedNodes());
       }
     }
+  }
+
+  private List<Node> getSelectedNodes() {
+    List<Node> result = new ArrayList<Node>();
+    for (int rowIndex : getSelectedRows()) {
+      Node node = PositionUtil.getNode(PositionUtil.getGraphPrintCell(getModel(), rowIndex));
+      if (node != null) {
+        result.add(node);
+      }
+    }
+    return result;
   }
 
 }

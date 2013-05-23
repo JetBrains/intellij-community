@@ -56,6 +56,11 @@ public class PositionUtil {
   @NotNull
   public static GraphPrintCell getGraphPrintCell(MouseEvent e, TableModel model) {
     int rowIndex = getRowIndex(e);
+    return getGraphPrintCell(model, rowIndex);
+  }
+
+  @NotNull
+  public static GraphPrintCell getGraphPrintCell(TableModel model, int rowIndex) {
     GraphCommitCell commitCell = (GraphCommitCell)model.getValueAt(rowIndex, 0);
     return commitCell.getPrintCell();
   }
@@ -64,6 +69,11 @@ public class PositionUtil {
   @Nullable
   public static Node getNode(MouseEvent e, TableModel model) {
     GraphPrintCell cell = getGraphPrintCell(e, model);
+    return getNode(cell);
+  }
+
+  @Nullable
+  public static Node getNode(GraphPrintCell cell) {
     for (SpecialPrintElement element : cell.getSpecialPrintElements()) {
       Node node = element.getGraphElement().getNode();
       if (node != null) {

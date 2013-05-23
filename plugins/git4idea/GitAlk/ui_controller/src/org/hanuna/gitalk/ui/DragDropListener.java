@@ -3,6 +3,7 @@ package org.hanuna.gitalk.ui;
 import org.hanuna.gitalk.graph.elements.Node;
 
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class DragDropListener {
 
@@ -12,18 +13,18 @@ public class DragDropListener {
 
     private static final Handler EMPTY = new Handler();
 
-    public void above(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+    public void above(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
     }
 
-    public void below(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
-
-    }
-
-    public void over(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+    public void below(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
 
     }
 
-    public void overNode(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+    public void over(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+
+    }
+
+    public void overNode(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
 
     }
   }
@@ -36,11 +37,11 @@ public class DragDropListener {
     return Handler.EMPTY;
   }
 
-  public void draggingStarted(Node commitBeingDragged) {
+  public void draggingStarted(List<Node> commitsBeingDragged) {
 
   }
 
-  public void draggingCanceled(Node commitBeingDragged) {
+  public void draggingCanceled(List<Node> commitsBeingDragged) {
 
   }
 

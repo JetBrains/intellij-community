@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -24,6 +25,7 @@ public class Swing_UI {
   private final ControllerListener swingControllerListener = new SwingControllerListener();
   private final DragDropListener myDragDropListener = new SwingDragDropListener();
   private final UI_Controller ui_controller;
+  private final DragDropConditions myConditions = new DragDropConditions();
   private MainFrame mainFrame = null;
 
 
@@ -63,7 +65,18 @@ public class Swing_UI {
     return myDragDropListener;
   }
 
-  private static class SwingDragDropListener extends DragDropListener {
+  private class DragDropConditions {
+
+    public boolean sameBranch(Node commit, Node commitBeingDragged) {
+      return false; // TODO
+    }
+  }
+
+  private enum DragDropActions {
+
+  }
+
+  private class SwingDragDropListener extends DragDropListener {
     private final JLabel hintLabel = new JLabel("") {
       @Override
       protected void paintComponent(Graphics g) {
@@ -92,21 +105,26 @@ public class Swing_UI {
     public Handler drag() {
       return new Handler() {
         @Override
-        public void above(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void above(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+          if (myConditions.sameBranch(commit, commitsBeingDragged)) {
+            showHint(e, GitLogIcons.CHERRY_PICK, "Above " + commit);
+          }
+          else {
+
+          }
           // reorder - same branch
           // nothing otherwise
-          showHint(e, GitLogIcons.CHERRY_PICK, "Above " + commit);
         }
 
         @Override
-        public void below(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void below(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
           // reorder - same branch
           // nothing otherwise
           showHint(e, GitLogIcons.REBASE, "Below " + commit);
         }
 
         @Override
-        public void over(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void over(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
           // cherry pick (different branches)
           // rebase (different branches + label on top)
           // nothing otherwise
@@ -114,7 +132,7 @@ public class Swing_UI {
         }
 
         @Override
-        public void overNode(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void overNode(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
           // fixup (same branch)
           // nothing otherwise
           showForbidden(e);
@@ -137,34 +155,34 @@ public class Swing_UI {
     public Handler drop() {
       return new Handler() {
         @Override
-        public void above(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void above(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
           dragDropHint.hide();
         }
 
         @Override
-        public void below(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void below(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
           dragDropHint.hide();
         }
 
         @Override
-        public void over(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void over(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
           dragDropHint.hide();
         }
 
         @Override
-        public void overNode(int rowIndex, Node commit, MouseEvent e, Node commitBeingDragged) {
+        public void overNode(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
           dragDropHint.hide();
         }
       };
     }
 
     @Override
-    public void draggingStarted(Node commitBeingDragged) {
-      super.draggingStarted(commitBeingDragged); // TODO
+    public void draggingStarted(List<Node> commitsBeingDragged) {
+      super.draggingStarted(commitsBeingDragged); // TODO
     }
 
     @Override
-    public void draggingCanceled(Node commitBeingDragged) {
+    public void draggingCanceled(List<Node> commitsBeingDragged) {
       dragDropHint.hide();
     }
   }
