@@ -37,7 +37,7 @@ public class GitLogComponent extends AbstractProjectComponent {
     UI_ControllerImpl ui_controller = new UI_ControllerImpl();
     mySwingUi = new Swing_UI(ui_controller);
     ui_controller.addControllerListener(mySwingUi.getControllerListener());
-    ui_controller.init(true);
+    ui_controller.init(false);
   }
 
   public JPanel getMainGitAlkComponent() {
