@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testFramework" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-stepdefs" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-features" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/gitlog" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
