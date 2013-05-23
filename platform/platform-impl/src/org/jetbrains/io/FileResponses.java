@@ -16,7 +16,10 @@
 package org.jetbrains.io;
 
 import org.jboss.netty.channel.*;
-import org.jboss.netty.handler.codec.http.*;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.handler.stream.ChunkedFile;
 
@@ -28,7 +31,6 @@ import java.text.ParseException;
 import java.util.Date;
 
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.*;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -74,12 +76,9 @@ public class FileResponses {
     try {
       long fileLength = raf.length();
       HttpResponse response = createResponse(file.getPath());
-      addDate(response);
-      addAllowAnyOrigin(response);
+      addCommonHeaders(response);
       response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
-      if (isKeepAlive(request)) {
-        response.setHeader(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-      }
+      boolean keepAlive = addKeepAliveIfNeed(response, request);
       if (request.getMethod() != HttpMethod.HEAD) {
         setContentLength(response, fileLength);
       }
@@ -105,7 +104,7 @@ public class FileResponses {
         }
       }
 
-      if (!isKeepAlive(request)) {
+      if (!keepAlive) {
         future.addListener(ChannelFutureListener.CLOSE);
       }
 
