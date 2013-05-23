@@ -102,6 +102,7 @@ desc
 deserializable
 deserializer
 deserializers
+devkit
 dirs
 distinctrow
 django
