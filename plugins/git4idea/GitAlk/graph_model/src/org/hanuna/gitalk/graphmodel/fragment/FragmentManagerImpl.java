@@ -68,19 +68,12 @@ public class FragmentManagerImpl implements FragmentManager {
 
   @NotNull
   @Override
-  public Set<GraphElement> allCommitsCurrentBranch(@NotNull GraphElement graphElement) {
+  public Set<Node> allCommitsCurrentBranch(@NotNull GraphElement graphElement) {
     Node node = graphElement.getNode();
     if (node == null) {
       node = graphElement.getEdge().getUpNode();
     }
-    Set<Node> nodes = fragmentGenerator.allCommitsCurrentBranch(node);
-
-    Set<GraphElement> elements = new HashSet<GraphElement>();
-    for (Node node1 : nodes) {
-      elements.add(node1);
-      elements.addAll(node1.getDownEdges());
-    }
-    return elements;
+    return fragmentGenerator.allCommitsCurrentBranch(node);
   }
 
   @Nullable

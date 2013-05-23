@@ -16,7 +16,7 @@ import java.util.Set;
 public interface FragmentManager {
 
   @NotNull
-  public Set<GraphElement> allCommitsCurrentBranch(@NotNull GraphElement graphElement);
+  public Set<Node> allCommitsCurrentBranch(@NotNull GraphElement graphElement);
 
   @Nullable
   public GraphFragment relateFragment(@NotNull GraphElement graphElement);

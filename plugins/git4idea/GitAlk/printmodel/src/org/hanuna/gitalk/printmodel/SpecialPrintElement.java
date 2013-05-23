@@ -11,6 +11,11 @@ public class SpecialPrintElement {
   private final int position;
   private final Type type;
   private final boolean selected;
+
+  public boolean isMarked() {
+    return marked;
+  }
+
   private final boolean marked;
 
   public SpecialPrintElement(@NotNull GraphElement graphElement, int position, @NotNull Type type, boolean selected, boolean marked) {

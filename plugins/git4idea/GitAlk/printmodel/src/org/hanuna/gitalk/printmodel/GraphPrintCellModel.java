@@ -14,6 +14,9 @@ public interface GraphPrintCellModel {
   @NotNull
   public SelectController getSelectController();
 
+  @NotNull
+  public CommitSelectController getCommitSelectController();
+
   public void recalculate(@NotNull UpdateRequest updateRequest);
 
   public void setLongEdgeVisibility(boolean visibility);

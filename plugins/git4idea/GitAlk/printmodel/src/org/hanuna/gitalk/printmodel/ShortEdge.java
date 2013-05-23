@@ -26,6 +26,10 @@ public class ShortEdge {
     return edge;
   }
 
+  public boolean isMarked() {
+    return marked;
+  }
+
   public boolean isUsual() {
     return edge.getType() == Edge.EdgeType.USUAL;
   }

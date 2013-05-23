@@ -18,6 +18,8 @@ public interface UI_Controller {
 
   public void click(@Nullable GraphElement graphElement);
 
+  public void click(int rowIndex);
+
   public void over(@Nullable GraphElement graphElement);
 
   public void hideAll();

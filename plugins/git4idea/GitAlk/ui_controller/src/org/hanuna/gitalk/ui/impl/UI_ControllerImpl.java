@@ -158,6 +158,16 @@ public class UI_ControllerImpl implements UI_Controller {
     events.runJumpToRow(updateRequest.from());
   }
 
+  public void click(int rowIndex) {
+    dataPack.getPrintCellModel().getCommitSelectController().deselectAll();
+    Node node = dataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
+    if (node != null) {
+      FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
+      dataPack.getPrintCellModel().getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
+    }
+    events.runUpdateUI();
+  }
+
   @Override
   public void doubleClick(int rowIndex) {
     if (rowIndex == graphTableModel.getRowCount() - 1) {

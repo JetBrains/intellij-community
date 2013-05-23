@@ -60,14 +60,24 @@ public class PositionUtil {
     return commitCell.getPrintCell();
   }
 
+
   @Nullable
-  public static Hash getCommit(MouseEvent e, TableModel model) {
+  public static Node getNode(MouseEvent e, TableModel model) {
     GraphPrintCell cell = getGraphPrintCell(e, model);
     for (SpecialPrintElement element : cell.getSpecialPrintElements()) {
       Node node = element.getGraphElement().getNode();
       if (node != null) {
-        return node.getCommitHash();
+        return node;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Hash getCommit(MouseEvent e, TableModel model) {
+    Node node = getNode(e, model);
+    if (node != null) {
+      return node.getCommitHash();
     }
     return null;
   }

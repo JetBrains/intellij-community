@@ -43,6 +43,7 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
     return selectController;
   }
 
+  @NotNull
   public CommitSelectController getCommitSelectController() {
     return commitSelectController;
   }

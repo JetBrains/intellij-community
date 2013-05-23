@@ -111,7 +111,11 @@ public class UI_GraphTable extends JTable {
         if (jumpToNode != null) {
           jumpToRow(jumpToNode.getRowIndex());
         }
-        ui_controller.click(overCell(e));
+        GraphElement graphElement = overCell(e);
+        ui_controller.click(graphElement);
+        if (graphElement == null) {
+          ui_controller.click(PositionUtil.getRowIndex(e));
+        }
       }
       else {
         int rowIndex = PositionUtil.getRowIndex(e);
