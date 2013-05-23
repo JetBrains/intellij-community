@@ -99,10 +99,4 @@ public class MoveToPackageFix implements LocalQuickFix {
       LOG.error(e);
     }
   }
-
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-
 }
