@@ -131,21 +131,14 @@ public class Swing_UI {
 
       @Override
       public void hint(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        showHint(e, GitLogIcons.MOVE, "Move " + renderCommits(commitsBeingDragged));
+        List<Ref> refsAbove = getRefsAbove(commit);
+        showHint(e, GitLogIcons.MOVE, "Move " + renderCommits(commitsBeingDragged) +
+                                      (refsAbove.size() == 1 ? " in branch " + refsAbove.get(0).getName() : ""));
       }
 
       @Override
       public void perform(final Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
-        Set<Node> upRefNodes = ui_controller.getDataPackUtils().getUpRefNodes(commit);
-        List<Ref> refs = new ArrayList<Ref>();
-        for (Node refNode : upRefNodes) {
-          List<Ref> nodeRefs = ui_controller.getDataPack().getRefsModel().refsToCommit(refNode.getCommitHash());
-          for (Ref ref : nodeRefs) {
-            if (ref.getType() == Ref.RefType.LOCAL_BRANCH || ref.getType() == Ref.RefType.REMOTE_BRANCH) {
-              refs.add(ref);
-            }
-          }
-        }
+        List<Ref> refs = getRefsAbove(commit);
 
         if (refs.size() == 1) {
           Ref ref = refs.get(0);
@@ -173,6 +166,20 @@ public class Swing_UI {
           }).showInCenterOf(e.getComponent());
         }
       }
+    }
+
+    private List<Ref> getRefsAbove(Node commit) {
+      Set<Node> upRefNodes = ui_controller.getDataPackUtils().getUpRefNodes(commit);
+      List<Ref> refs = new ArrayList<Ref>();
+      for (Node refNode : upRefNodes) {
+        List<Ref> nodeRefs = ui_controller.getDataPack().getRefsModel().refsToCommit(refNode.getCommitHash());
+        for (Ref ref : nodeRefs) {
+          if (ref.getType() == Ref.RefType.LOCAL_BRANCH || ref.getType() == Ref.RefType.REMOTE_BRANCH) {
+            refs.add(ref);
+          }
+        }
+      }
+      return refs;
     }
 
     private final Action MOVE_ABOVE = new MoveAction(InteractiveRebaseBuilder.InsertPosition.ABOVE);
