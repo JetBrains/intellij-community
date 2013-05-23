@@ -179,7 +179,7 @@ public class WebServer implements Disposable {
             localAddress = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port);
             openChannels.add(bootstrap.bind(localAddress));
           }
-          catch (UnknownHostException e) {
+          catch (UnknownHostException ignored) {
             return port;
           }
           catch (ChannelException e) {
