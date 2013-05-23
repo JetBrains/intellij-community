@@ -1,5 +1,7 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -137,6 +139,15 @@ public class UI_GraphTable extends JTable {
       ui_controller.over(overCell(e));
     }
 
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      // Do nothing
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      // Do nothing
+    }
 
     @Override
     public void mousePressed(MouseEvent e) {
