@@ -71,7 +71,7 @@ public class MainFrame {
     tablePanel.add(branchScroll);
   }
 
-  private void packTopGraphPanel() {
+  private void packToolbar() {
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
     topPanel.setMaximumSize(new Dimension(10000, 10));
 
@@ -131,7 +131,7 @@ public class MainFrame {
   private void packMainPanel() {
     mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-    packTopGraphPanel();
+    packToolbar();
     mainPanel.add(topPanel);
     mainPanel.add(tablePanel);
   }
