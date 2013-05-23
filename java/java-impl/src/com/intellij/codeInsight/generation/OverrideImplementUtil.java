@@ -476,6 +476,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     Project project = aClass.getProject();
     registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return chooser;
+    }
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
