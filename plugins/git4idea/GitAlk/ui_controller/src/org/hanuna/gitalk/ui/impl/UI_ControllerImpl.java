@@ -12,6 +12,7 @@ import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
+import org.hanuna.gitalk.data.rebase.RebaseCommand;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -58,6 +59,40 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
   private GitActionHandler myGitActionHandler = GitActionHandler.DO_NOTHING;
+  private InteractiveRebaseBuilder myInteractiveRebaseBuilder = new InteractiveRebaseBuilder() {
+    @Override
+    public void startRebase(Ref subjectRef, Node onto) {
+      dataLoader.getInteractiveRebaseBuilder().startRebase(subjectRef, onto);
+      dataInit();
+      events.runUpdateUI();
+    }
+
+    @Override
+    public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
+      dataLoader.getInteractiveRebaseBuilder().startRebaseOnto(subjectRef, base, nodesToRebase);
+      dataInit();
+      events.runUpdateUI();
+    }
+
+    @Override
+    public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
+      dataLoader.getInteractiveRebaseBuilder().moveCommits(subjectRef, base, position, nodesToInsert);
+      dataInit();
+      events.runUpdateUI();
+    }
+
+    @Override
+    public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
+      dataLoader.getInteractiveRebaseBuilder().fixUp(subjectRef, target, nodesToFixUp);
+      dataInit();
+      events.runUpdateUI();
+    }
+
+    @Override
+    public List<RebaseCommand> getRebaseCommands() {
+      return super.getRebaseCommands();
+    }
+  };
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
@@ -303,7 +338,7 @@ public class UI_ControllerImpl implements UI_Controller {
   @NotNull
   @Override
   public InteractiveRebaseBuilder getInteractiveRebaseBuilder() {
-    return dataLoader.getInteractiveRebaseBuilder();
+    return myInteractiveRebaseBuilder;
   }
 
   @NotNull
