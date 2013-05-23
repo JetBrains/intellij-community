@@ -2,6 +2,8 @@ package org.hanuna.gitalk.graphmodel.fragment;
 
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.graphmodel.fragment.elements.SimpleGraphFragment;
@@ -9,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -33,6 +36,40 @@ public class FragmentGenerator {
   public void setUnconcealedNodeFunction(Function<Node, Boolean> isUnconcealedNode) {
     shortFragmentGenerator.setUnconcealedNodeFunction(isUnconcealedNode);
     this.isUnhiddenNodes = isUnconcealedNode;
+  }
+
+  @NotNull
+  public Set<Node> allCommitsCurrentBranch(@NotNull Node node) {
+    Set<Node> nodes = new HashSet<Node>();
+    //down walk
+    Set<Node> downNodes = new HashSet<Node>();
+    downNodes.add(node);
+    while (!downNodes.isEmpty()) {
+      Iterator<Node> iteratorNode = downNodes.iterator();
+      Node nextNode = iteratorNode.next();
+      iteratorNode.remove();
+      if (nodes.add(nextNode)) {
+        for (Edge edge: nextNode.getDownEdges()) {
+          downNodes.add(edge.getDownNode());
+        }
+      }
+    }
+
+    Set<Node> upNodes = new HashSet<Node>();
+    upNodes.add(node);
+    nodes.remove(node); // for start process
+    while (!upNodes.isEmpty()) {
+      Iterator<Node> nodeIterator = upNodes.iterator();
+      Node nextNode = nodeIterator.next();
+      nodeIterator.remove();
+      if (nodes.add(nextNode)) {
+        for (Edge edge: nextNode.getUpEdges()) {
+          upNodes.add(edge.getUpNode());
+        }
+      }
+    }
+
+    return nodes;
   }
 
   public GraphFragment getFragment(@NotNull Node node) {

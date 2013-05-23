@@ -8,10 +8,15 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * @author erokhins
  */
 public interface FragmentManager {
+
+  @NotNull
+  public Set<GraphElement> allCommitsCurrentBranch(@NotNull GraphElement graphElement);
 
   @Nullable
   public GraphFragment relateFragment(@NotNull GraphElement graphElement);

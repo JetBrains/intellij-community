@@ -34,6 +34,10 @@ public class SelectController {
     }
   }
 
+  public void select(Set<GraphElement> selectedElements) {
+    this.selectedElements.addAll(selectedElements);
+  }
+
   public void deselectAll() {
     selectedElements.clear();
   }

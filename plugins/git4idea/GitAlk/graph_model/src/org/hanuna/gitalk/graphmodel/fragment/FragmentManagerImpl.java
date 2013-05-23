@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author erokhins
@@ -62,6 +64,23 @@ public class FragmentManagerImpl implements FragmentManager {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Set<GraphElement> allCommitsCurrentBranch(@NotNull GraphElement graphElement) {
+    Node node = graphElement.getNode();
+    if (node == null) {
+      node = graphElement.getEdge().getUpNode();
+    }
+    Set<Node> nodes = fragmentGenerator.allCommitsCurrentBranch(node);
+
+    Set<GraphElement> elements = new HashSet<GraphElement>();
+    for (Node node1 : nodes) {
+      elements.add(node1);
+      elements.addAll(node1.getDownEdges());
+    }
+    return elements;
   }
 
   @Nullable
