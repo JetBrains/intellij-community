@@ -97,7 +97,7 @@ public class GrDelegatesToUtil {
 
   @Nullable
   private static PsiType inferDelegateType(@NotNull PsiAnnotation delegatesTo, GrClosureSignatureUtil.ArgInfo<PsiElement>[] map) {
-    final PsiAnnotationMemberValue value = delegatesTo.findAttributeValue("value");
+    final PsiAnnotationMemberValue value = delegatesTo.findDeclaredAttributeValue("value");
     if (value instanceof GrReferenceExpression) {
       return extractTypeFromClassType(((GrReferenceExpression)value).getType());
     }
