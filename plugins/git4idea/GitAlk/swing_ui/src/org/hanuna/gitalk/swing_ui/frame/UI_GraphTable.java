@@ -1,15 +1,16 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;
+import org.hanuna.gitalk.swing_ui.render.PositionUtil;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphCellPainter;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -61,17 +62,17 @@ public class UI_GraphTable extends JTable {
     private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
 
-    @NotNull
     private GraphPrintCell getGraphPrintCell(MouseEvent e) {
-      int rowIndex = e.getY() / HEIGHT_CELL;
-      GraphCommitCell commitCell = (GraphCommitCell)UI_GraphTable.this.getModel().getValueAt(rowIndex, 0);
-      return commitCell.getPrintCell();
+      return PositionUtil.getGraphPrintCell(e, getModel());
+    }
+
+    private Hash getCommit(MouseEvent e) {
+      return PositionUtil.getCommit(e, getModel());
     }
 
     @Nullable
     private GraphElement overCell(MouseEvent e) {
-      int rowIndex = e.getY() / HEIGHT_CELL;
-      int y = e.getY() - rowIndex * HEIGHT_CELL;
+      int y = PositionUtil.getYInsideRow(e);
       int x = e.getX();
       GraphPrintCell row = getGraphPrintCell(e);
       return graphPainter.mouseOver(row, x, y);
@@ -79,8 +80,7 @@ public class UI_GraphTable extends JTable {
 
     @Nullable
     private Node arrowToNode(MouseEvent e) {
-      int rowIndex = e.getY() / HEIGHT_CELL;
-      int y = e.getY() - rowIndex * HEIGHT_CELL;
+      int y = PositionUtil.getYInsideRow(e);
       int x = e.getX();
       GraphPrintCell row = getGraphPrintCell(e);
       SpecialPrintElement printElement = graphPainter.mouseOverArrow(row, x, y);
@@ -105,7 +105,7 @@ public class UI_GraphTable extends JTable {
         ui_controller.click(overCell(e));
       }
       else {
-        int rowIndex = e.getY() / HEIGHT_CELL;
+        int rowIndex = PositionUtil.getRowIndex(e);
         ui_controller.doubleClick(rowIndex);
       }
     }
