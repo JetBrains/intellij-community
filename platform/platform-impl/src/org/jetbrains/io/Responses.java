@@ -23,12 +23,10 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -36,6 +34,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.DATE;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
@@ -55,6 +54,10 @@ public final class Responses {
   };
 
   private static String SERVER_HEADER_VALUE;
+
+  public static void addAllowAnyOrigin(HttpResponse response) {
+    response.setHeader(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+  }
 
   public static void addDate(HttpResponse response) {
     addDate(response, Calendar.getInstance().getTime());
@@ -84,10 +87,25 @@ public final class Responses {
 
   public static void send(HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
     ChannelBuffer content = response.getContent();
-    if (content != ChannelBuffers.EMPTY_BUFFER) {
-      setContentLength(response, content.readableBytes());
+    setContentLength(response, content == ChannelBuffers.EMPTY_BUFFER ? 0 : content.readableBytes());
+
+    boolean keepAlive = addKeepAliveIfNeed(response, request);
+    addCommonHeaders(response);
+    send(response, context, !keepAlive);
+  }
+
+  public static boolean addKeepAliveIfNeed(HttpResponse response, HttpRequest request) {
+    if (isKeepAlive(request)) {
+      response.setHeader(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+      return true;
     }
-    send(response, context, !isKeepAlive(request));
+    return false;
+  }
+
+  public static void addCommonHeaders(HttpResponse response) {
+    addServer(response);
+    addDate(response);
+    addAllowAnyOrigin(response);
   }
 
   public static HttpResponse create(String contentType) {
@@ -97,18 +115,17 @@ public final class Responses {
   }
 
   public static void send(CharSequence content, HttpRequest request, ChannelHandlerContext context) {
-    send(new DefaultHttpResponse(HTTP_1_1, OK), ChannelBuffers.copiedBuffer(content, CharsetUtil.US_ASCII), request, context);
+    send(content, CharsetUtil.US_ASCII, request, context);
   }
 
-  public static void send(HttpResponse response, byte[] bytes, HttpRequest request, ChannelHandlerContext context) {
-    send(response, ChannelBuffers.wrappedBuffer(bytes), request, context);
+  public static void send(CharSequence content, Charset charset, HttpRequest request, ChannelHandlerContext context) {
+    DefaultHttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+    response.setContent(ChannelBuffers.copiedBuffer(content, charset));
+    send(response, request, context);
   }
 
-  public static void send(HttpResponse response, ChannelBuffer content, HttpRequest request, ChannelHandlerContext context) {
-    response.setContent(content);
-    addServer(response);
-    addDate(response);
-    response.setHeader("Access-Control-Allow-Origin", "*");
+  public static void send(byte[] bytes, HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
+    response.setContent(ChannelBuffers.wrappedBuffer(bytes));
     send(response, request, context);
   }
 
@@ -127,18 +144,26 @@ public final class Responses {
     }
   }
 
-  public static void sendError(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus) {
-    sendError(request, context, new DefaultHttpResponse(HTTP_1_1, responseStatus));
+  public static void sendStatus(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus) {
+    sendStatus(new DefaultHttpResponse(HTTP_1_1, responseStatus), request, context);
   }
 
-  public static void sendError(HttpRequest request, ChannelHandlerContext context, HttpResponse response) {
+  public static void sendStatus(HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
     response.setHeader(CONTENT_TYPE, "text/html");
-    addServer(response);
-    addDate(response);
+    if (request.getMethod() != HttpMethod.HEAD) {
+      String message = response.getStatus().toString();
+      response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
+                                                      "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + SERVER_HEADER_VALUE + "</p>",
+                                                      CharsetUtil.US_ASCII));
+    }
+    send(response, request, context);
+  }
 
-    String message = response.getStatus().toString();
-    response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
-                                                    "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + SERVER_HEADER_VALUE + "</p>", CharsetUtil.US_ASCII));
+  public static void sendOptionsResponse(String allowHeaders, HttpRequest request, ChannelHandlerContext context) {
+    HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+    response.setHeader(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+    response.setHeader(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS, allowHeaders);
+    response.setHeader(HttpHeaders.Names.ALLOW, allowHeaders);
     send(response, request, context);
   }
 }

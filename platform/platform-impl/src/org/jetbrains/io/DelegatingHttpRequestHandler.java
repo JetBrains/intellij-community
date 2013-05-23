@@ -35,7 +35,7 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
           BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
           icon.paintIcon(null, image.getGraphics(), 0, 0);
           byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
-          Responses.send(FileResponses.createResponse(urlDecoder.getPath()), icoBytes, request, context);
+          Responses.send(icoBytes, FileResponses.createResponse(urlDecoder.getPath()), request, context);
           return;
         }
       }
@@ -62,7 +62,7 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
       connectedHandler.process(urlDecoder, request, context);
       return;
     }
-    Responses.sendError(request, context, NOT_FOUND);
+    Responses.sendStatus(request, context, NOT_FOUND);
   }
 
   @Override

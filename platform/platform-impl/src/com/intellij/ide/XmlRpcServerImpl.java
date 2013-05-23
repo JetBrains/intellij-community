@@ -128,11 +128,8 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       return true;
     }
     else if (HttpMethod.POST.getName().equals(request.getHeader("Access-Control-Request-Method"))) {
-      assert request.getMethod() == HttpMethod.OPTIONS;
-      HttpResponse response = Responses.create("text/plain");
-      response.setHeader("Access-Control-Allow-Origin", "*");
-      response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-      Responses.send(response, request, context);
+      LOG.assertTrue(request.getMethod() == HttpMethod.OPTIONS);
+      Responses.sendOptionsResponse("POST, OPTIONS", request, context);
       return true;
     }
     return false;

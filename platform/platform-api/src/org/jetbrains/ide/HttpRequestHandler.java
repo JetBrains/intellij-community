@@ -24,7 +24,7 @@ import java.io.IOException;
 
 public abstract class HttpRequestHandler {
   public boolean isSupported(HttpRequest request) {
-    return request.getMethod() == HttpMethod.GET;
+    return request.getMethod() == HttpMethod.GET || request.getMethod() == HttpMethod.HEAD;
   }
 
   public abstract boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context)
