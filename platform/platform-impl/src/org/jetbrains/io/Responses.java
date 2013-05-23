@@ -23,10 +23,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 
 import java.text.DateFormat;
@@ -36,6 +33,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.DATE;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
@@ -55,6 +53,12 @@ public final class Responses {
   };
 
   private static String SERVER_HEADER_VALUE;
+
+  public static void addAllowAnyOrigin(HttpResponse response) {
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers", "*");
+  }
 
   public static void addDate(HttpResponse response) {
     addDate(response, Calendar.getInstance().getTime());
@@ -105,10 +109,13 @@ public final class Responses {
   }
 
   public static void send(HttpResponse response, ChannelBuffer content, HttpRequest request, ChannelHandlerContext context) {
+    if (isKeepAlive(request)) {
+      response.setHeader(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+    }
     response.setContent(content);
     addServer(response);
     addDate(response);
-    response.setHeader("Access-Control-Allow-Origin", "*");
+    addAllowAnyOrigin(response);
     send(response, request, context);
   }
 
@@ -137,8 +144,11 @@ public final class Responses {
     addDate(response);
 
     String message = response.getStatus().toString();
-    response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
-                                                    "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + SERVER_HEADER_VALUE + "</p>", CharsetUtil.US_ASCII));
+    if (request.getMethod() != HttpMethod.HEAD) {
+      response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
+                                                      "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + SERVER_HEADER_VALUE + "</p>",
+                                                      CharsetUtil.US_ASCII));
+    }
     send(response, request, context);
   }
 }
