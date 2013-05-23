@@ -3,6 +3,8 @@ package gitlog;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -42,6 +44,11 @@ public class GitLogComponent extends AbstractProjectComponent {
         mySwingUi = new Swing_UI(ui_controller);
         ui_controller.addControllerListener(mySwingUi.getControllerListener());
         ui_controller.init(false);
+
+        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow("Git Log");
+        if (toolWindow != null && toolWindow.isActive()) {
+          toolWindow.activate(null);
+        }
       }
     });
   }
