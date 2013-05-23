@@ -1,12 +1,12 @@
 package gitlog;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchUiHandlerImpl;
@@ -19,13 +19,12 @@ import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.repo.GitRepository;
 import org.hanuna.gitalk.data.CommitDataGetter;
+import org.hanuna.gitalk.data.rebase.GitActionHandler;
+import org.hanuna.gitalk.data.rebase.RebaseCommand;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.refs.Ref;
-import org.hanuna.gitalk.ui.GitActionHandler;
-import org.hanuna.gitalk.ui.RebaseCommand;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Date;
@@ -51,7 +50,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
   }
 
   @Override
-  public void cherryPick(final Ref targetRef, final List<Node> nodesToPick, final Callback callback) {
+  public void cherryPick(final Ref targetRef, final List<Node> nodesToPick, final GitActionHandler.Callback callback) {
     assert targetRef.getType() == Ref.RefType.LOCAL_BRANCH;
     new Task.Backgroundable(myProject, "Cherry-picking", false) {
       @Override
@@ -65,12 +64,13 @@ public class GitActionHandlerImpl implements GitActionHandler {
         GitCherryPicker cherryPicker = new GitCherryPicker(GitActionHandlerImpl.this.myProject, myGit, myPlatformFacade, true);
 
         final CommitDataGetter commitDataGetter = myLogComponent.getUiController().getDataPack().getCommitDataGetter();
-        cherryPicker.cherryPick(Collections.singletonMap(myRepository, Lists.transform(nodesToPick, new Function<Node, GitCommit>() {
+        List<GitCommit> commits = ContainerUtil.map(nodesToPick, new Function<Node, GitCommit>() {
           @Override
-          public GitCommit apply(@Nullable Node input) {
-            return convertNodeToCommit(input, commitDataGetter);
+          public GitCommit fun(Node node) {
+            return convertNodeToCommit(node, commitDataGetter);
           }
-        })));
+        });
+        cherryPicker.cherryPick(Collections.singletonMap(myRepository, commits));
       }
 
       @Override
@@ -123,11 +123,13 @@ public class GitActionHandlerImpl implements GitActionHandler {
   }
 
   private String description(String commitMessage) {
-    return commitMessage.substring(commitMessage.indexOf("\n"));
+    int index = commitMessage.indexOf("\n");
+    return index > -1 ? commitMessage.substring(index) : "";
   }
 
   private String subject(String commitMessage) {
-    return commitMessage.substring(0, commitMessage.indexOf("\n"));
+    int index = commitMessage.indexOf("\n");
+    return index > -1 ? commitMessage.substring(0, index) : commitMessage;
   }
 
 }

@@ -74,6 +74,7 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="log_data" />
     <orderEntry type="module" module-name="graph" />
+    <orderEntry type="module" module-name="data_model" />
   </component>
 </module>
 
