@@ -48,4 +48,7 @@ public interface UI_Controller {
   public void jumpToCommit(Hash commitHash);
 
   List<Ref> getRefs();
+
+  @NotNull
+  DragDropListener getDragDropListener();
 }

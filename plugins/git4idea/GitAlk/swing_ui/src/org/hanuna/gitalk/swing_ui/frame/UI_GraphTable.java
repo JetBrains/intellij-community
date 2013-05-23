@@ -9,9 +9,9 @@ import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;
 import org.hanuna.gitalk.swing_ui.render.PositionUtil;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphCellPainter;
+import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +33,6 @@ public class UI_GraphTable extends JTable {
   private final MouseAdapter mouseAdapter = new MyMouseAdapter();
 
   private Hash myCommitBeingDragged = null;
-  private DragDropListener myDragDropListener = new DragDropListener();
 
   public UI_GraphTable(UI_Controller ui_controller) {
     super(ui_controller.getGraphTableModel());
@@ -55,10 +54,6 @@ public class UI_GraphTable extends JTable {
 
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
-  }
-
-  public void setDragDropListener(@NotNull DragDropListener dragDropListener) {
-    myDragDropListener = dragDropListener;
   }
 
   public void jumpToRow(int rowIndex) {
@@ -147,20 +142,20 @@ public class UI_GraphTable extends JTable {
     public void mousePressed(MouseEvent e) {
       myCommitBeingDragged = getCommit(e);
       if (myCommitBeingDragged != null) {
-        myDragDropListener.draggingStarted(myCommitBeingDragged);
+        ui_controller.getDragDropListener().draggingStarted(myCommitBeingDragged);
       }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
       if (myCommitBeingDragged == null) return;
-      handleEvent(e, myDragDropListener.drop());
+      handleEvent(e, ui_controller.getDragDropListener().drop());
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
       if (myCommitBeingDragged == null) return;
-      handleEvent(e, myDragDropListener.drag());
+      handleEvent(e, ui_controller.getDragDropListener().drag());
     }
 
     private void handleEvent(MouseEvent e, DragDropListener.Handler handler) {

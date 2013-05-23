@@ -18,6 +18,7 @@ import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.ui.ControllerListener;
+import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
@@ -51,6 +52,8 @@ public class UI_ControllerImpl implements UI_Controller {
   private GraphElement prevGraphElement = null;
   private Set<Hash> prevSelectionBranches;
   private List<Ref> myRefs;
+
+  private DragDropListener dragDropListener = DragDropListener.EMPTY;
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
@@ -290,4 +293,13 @@ public class UI_ControllerImpl implements UI_Controller {
     return myRefs;
   }
 
+  @NotNull
+  @Override
+  public DragDropListener getDragDropListener() {
+    return dragDropListener;
+  }
+
+  public void setDragDropListener(@NotNull DragDropListener dragDropListener) {
+    this.dragDropListener = dragDropListener;
+  }
 }
