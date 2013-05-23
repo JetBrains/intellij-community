@@ -10,6 +10,8 @@ import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
+import org.hanuna.gitalk.data.rebase.GitActionHandler;
+import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -55,6 +57,7 @@ public class UI_ControllerImpl implements UI_Controller {
   private List<Ref> myRefs;
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
+  private GitActionHandler myGitActionHandler = GitActionHandler.DO_NOTHING;
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
@@ -297,8 +300,29 @@ public class UI_ControllerImpl implements UI_Controller {
     this.dragDropListener = dragDropListener;
   }
 
+  @NotNull
+  @Override
+  public InteractiveRebaseBuilder getInteractiveRebaseBuilder() {
+    return dataLoader.getInteractiveRebaseBuilder();
+  }
+
+  @NotNull
+  @Override
+  public GitActionHandler getGitActionHandler() {
+    return myGitActionHandler;
+  }
+
+  public void setGitActionHandler(@NotNull GitActionHandler gitActionHandler) {
+    myGitActionHandler = gitActionHandler;
+  }
+
   @Override
   public DataPack getDataPack() {
     return dataPack;
+  }
+
+  @Override
+  public DataPackUtils getDataPackUtils() {
+    return dataPackUtils;
   }
 }

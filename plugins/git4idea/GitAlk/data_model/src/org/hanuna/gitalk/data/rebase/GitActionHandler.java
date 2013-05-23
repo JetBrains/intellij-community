@@ -6,6 +6,24 @@ import org.hanuna.gitalk.refs.Ref;
 import java.util.List;
 
 public interface GitActionHandler {
+  GitActionHandler DO_NOTHING = new GitActionHandler() {
+    @Override
+    public void cherryPick(Ref targetRef, List<Node> nodesToPick, Callback callback) {
+    }
+
+    @Override
+    public void rebase(Node onto, Ref subjectRef, Callback callback) {
+    }
+
+    @Override
+    public void rebaseOnto(Node onto, Ref subjectRef, List<Node> nodesToRebase, Callback callback) {
+    }
+
+    @Override
+    public void interactiveRebase(Ref subjectRef, List<RebaseCommand> commands, Callback callback) {
+    }
+  };
+
   interface Callback {
     void disableModifications();
     void enableModifications();
