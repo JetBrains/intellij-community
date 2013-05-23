@@ -27,9 +27,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.HtmlPsiUtil;
 import com.intellij.xml.util.XmlPsiUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +62,7 @@ public class ScriptSupportUtil {
             @Override
             public Result<XmlTag[]> compute() {
               final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
-              final XmlDocument document = HtmlUtil.getRealXmlDocument(element.getDocument());
+              final XmlDocument document = HtmlPsiUtil.getRealXmlDocument(element.getDocument());
 
               if (document != null) {
                 PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
