@@ -43,19 +43,19 @@ import static org.jboss.netty.channel.Channels.pipeline;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-public class WebServer implements Disposable {
+public class BuiltInServer implements Disposable {
   static final String START_TIME_PATH = "/startTime";
 
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
-  static final Logger LOG = Logger.getInstance(WebServer.class);
+  static final Logger LOG = Logger.getInstance(BuiltInServer.class);
 
   @NonNls
   private static final String PROPERTY_ONLY_ANY_HOST = "rpc.onlyAnyHost";
 
   private final NioServerSocketChannelFactory channelFactory;
 
-  public WebServer() {
+  public BuiltInServer() {
     Executor pooledThreadExecutor = new PooledThreadExecutor();
     channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1);
   }

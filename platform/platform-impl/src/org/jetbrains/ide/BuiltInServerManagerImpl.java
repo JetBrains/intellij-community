@@ -18,7 +18,7 @@ import org.jboss.netty.channel.ChannelException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.io.WebServer;
+import org.jetbrains.io.BuiltInServer;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -36,7 +36,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   private final AtomicBoolean started = new AtomicBoolean(false);
 
   @Nullable
-  private WebServer server;
+  private BuiltInServer server;
   private boolean myEnabledInUnitTestMode;
 
   @Override
@@ -95,11 +95,11 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       @Override
       public void run() {
         try {
-          server = new WebServer();
+          server = new BuiltInServer();
         }
         catch (ChannelException e) {
           LOG.info(e);
-          String groupDisplayId = "Web Server";
+          String groupDisplayId = "Built-in Server";
           Notifications.Bus.register(groupDisplayId, NotificationDisplayType.STICKY_BALLOON);
           new Notification(groupDisplayId, "Internal HTTP server disabled",
                            "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
@@ -121,10 +121,10 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
         detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true);
         if (detectedPortNumber == -1) {
-          LOG.info("web server cannot be started, cannot bind to port");
+          LOG.info("built-in server cannot be started, cannot bind to port");
         }
         else {
-          LOG.info("web server started, port " + detectedPortNumber);
+          LOG.info("built-in server started, port " + detectedPortNumber);
         }
       }
     });

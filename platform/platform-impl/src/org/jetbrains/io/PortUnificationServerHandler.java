@@ -112,6 +112,6 @@ final class PortUnificationServerHandler extends FrameDecoder {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-    WebServer.LOG.error(event.getCause());
+    BuiltInServer.LOG.error(event.getCause());
   }
 }

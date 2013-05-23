@@ -41,8 +41,8 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
 
     HttpRequest request = (HttpRequest)event.getMessage();
-    if (WebServer.LOG.isDebugEnabled()) {
-      WebServer.LOG.debug(request.toString());
+    if (BuiltInServer.LOG.isDebugEnabled()) {
+      BuiltInServer.LOG.debug(request.toString());
     }
     QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
     HttpRequestHandler connectedHandler = (HttpRequestHandler)context.getAttachment();
@@ -64,8 +64,8 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
         return;
       }
     }
-    else if (urlDecoder.getPath().equals(WebServer.START_TIME_PATH)) {
-      Responses.send(WebServer.getApplicationStartTime(), request, context);
+    else if (urlDecoder.getPath().equals(BuiltInServer.START_TIME_PATH)) {
+      Responses.send(BuiltInServer.getApplicationStartTime(), request, context);
       return;
     }
 
@@ -79,7 +79,7 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
         }
       }
       catch (Throwable e) {
-        WebServer.LOG.error(e);
+        BuiltInServer.LOG.error(e);
       }
     }
     Responses.sendStatus(request, context, NOT_FOUND);
@@ -88,7 +88,7 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
     try {
-      WebServer.LOG.error(event.getCause());
+      BuiltInServer.LOG.error(event.getCause());
     }
     finally {
       context.setAttachment(null);
