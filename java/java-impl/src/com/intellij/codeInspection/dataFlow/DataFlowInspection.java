@@ -19,7 +19,6 @@ import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SurroundWithIfFix;
-import com.intellij.codeInspection.dataFlowUi.ConditionCheckDialog;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;

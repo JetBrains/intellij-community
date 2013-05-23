@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.dataFlowUi;
+package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInspection.*;
