@@ -46,13 +46,17 @@ public class StringPartInfo {
 
     final PsiElement parent = PsiTreeUtil.findCommonParent(start, fin);
 
-    if (parent != null && parent.getParent() instanceof GrLiteral) {
+    if (parent != null && isStringLiteral(parent.getParent())) {
       return new StringPartInfo((GrLiteral)parent.getParent(), new TextRange(startOffset, endOffset));
     }
     if (parent instanceof GrString && !parent.getTextRange().equalsToRange(startOffset, endOffset)) {
       return new StringPartInfo((GrLiteral)parent, new TextRange(startOffset, endOffset));
     }
     return null;
+  }
+
+  private static boolean isStringLiteral(final PsiElement psi) {
+    return psi instanceof GrLiteral /*&& TokenSets.STRING_LITERAL_SET.contains(GrLiteralImpl.getLiteralType((GrLiteral)psi))*/;
   }
 
   public StringPartInfo(@NotNull GrLiteral literal, @NotNull final TextRange range) {

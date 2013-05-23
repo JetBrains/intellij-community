@@ -6,6 +6,7 @@ foo 1,2,3
 -----
 def preved = foo(1, 2, 3)
 preved
+preved
 preved<caret>
 preved
 preved

@@ -398,20 +398,18 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  public static PsiElement findAnchor(@NotNull GrIntroduceContext context,
-                                      @NotNull GrIntroduceSettings settings,
-                                      @NotNull PsiElement[] occurrences,
+  public static PsiElement findAnchor(@NotNull PsiElement[] occurrences,
                                       @NotNull PsiElement container) {
     if (occurrences.length == 0) return null;
+
     PsiElement candidate;
-    if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
+    if (occurrences.length == 1) {
       candidate = occurrences[0];
       candidate = findContainingStatement(candidate);
     }
     else {
-      GroovyRefactoringUtil.sortOccurrences(occurrences);
       candidate = occurrences[0];
-      while (candidate != null && !container.equals(candidate.getParent())) {
+      while (candidate != null && candidate.getParent() != container) {
         candidate = candidate.getParent();
       }
     }

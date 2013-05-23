@@ -711,13 +711,10 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static PsiElement findEnclosingStatement(@Nullable PsiElement context) {
-    if (context == null) return null;
-    context = PsiTreeUtil.getParentOfType(context, GrStatement.class, false);
+  public static GrStatement findEnclosingStatement(@Nullable PsiElement context) {
     while (context != null) {
-      final PsiElement parent = context.getParent();
-      if (parent instanceof GrControlFlowOwner) return context;
-      context = parent;
+      if (isExpressionStatement(context)) return (GrStatement)context;
+      context = PsiTreeUtil.getParentOfType(context, GrStatement.class, true);
     }
     return null;
   }

@@ -199,7 +199,7 @@ public class GrIntroduceFieldProcessor {
       anchor = PsiTreeUtil.getParentOfType(variable, GrStatement.class);
     }
     else {
-      anchor = (GrStatement)GrIntroduceHandlerBase.findAnchor(context, settings, context.getOccurrences(), container);
+      anchor = (GrStatement)GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), container);
     }
 
     generateAssignment(field, anchor, container);
@@ -282,7 +282,7 @@ public class GrIntroduceFieldProcessor {
       }
     });
     if (elements.size() == 0) return null;
-    return GrIntroduceHandlerBase.findAnchor(context, settings, ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
+    return GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 
   private static PsiElement replaceOccurrence(GrVariable field, PsiElement occurrence, PsiClass containingClass) {

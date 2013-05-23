@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.refactoring.introduceVariable
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
 import org.jetbrains.plugins.groovy.intentions.declaration.GrIntroduceLocalVariableIntention
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler
@@ -63,21 +64,31 @@ public class IntroduceLocalVariableTest extends GrIntentionTestCase {
     @Override
     protected void processIntention(PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
       setSelection(editor, getTargetExpression(element));
-      new MockGrIntroduceVariableHandler().invoke(project, editor, element.containingFile, null);
+      MockSettings settings = new MockSettings(false, "varName", null, false)
+      new MockGrIntroduceVariableHandler(settings).invoke(project, editor, element.containingFile, null);
     }
   }
 
   static class MockGrIntroduceVariableHandler extends GrIntroduceVariableHandler {
+    private final MockSettings mySettings
+
+    MockGrIntroduceVariableHandler(MockSettings settings) {
+      mySettings = settings
+    }
+
     @NotNull
     @Override
     protected GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
-      new MockGrIntroduceVariableDialog(context, new GroovyVariableValidator(context))
+      new MockGrIntroduceVariableDialog(context, new GroovyVariableValidator(context), mySettings)
     }
   }
 
   static class MockGrIntroduceVariableDialog extends GroovyIntroduceVariableDialog {
-    MockGrIntroduceVariableDialog(GrIntroduceContext context, GroovyVariableValidator validator) {
+    private final MockSettings mySettings
+
+    MockGrIntroduceVariableDialog(GrIntroduceContext context, GroovyVariableValidator validator, MockSettings settings) {
       super(context, validator)
+      mySettings = settings
     }
 
     @Override
@@ -86,9 +97,7 @@ public class IntroduceLocalVariableTest extends GrIntentionTestCase {
     }
 
     @Override
-    MockSettings getSettings() {
-      new MockSettings()
-    }
+    MockSettings getSettings() { mySettings }
 
     @Override
     boolean isOK() {
@@ -97,25 +106,36 @@ public class IntroduceLocalVariableTest extends GrIntentionTestCase {
   }
 
   static class MockSettings implements GroovyIntroduceVariableSettings {
+    private final boolean myFinal
+    private final String myName
+    private final boolean myAllOccurrences
+    private final PsiType myType
+
+    MockSettings(final boolean isFinal, final String name, PsiType type, boolean allOccurrences) {
+      myFinal = isFinal
+      myName = name
+      myType = type
+      myAllOccurrences = allOccurrences
+    }
 
     @Override
     boolean isDeclareFinal() {
-      return false
+      return myFinal
     }
 
     @Override
     String getName() {
-      return "varName"
+        myName
     }
 
     @Override
     boolean replaceAllOccurrences() {
-      return false
+      return myAllOccurrences
     }
 
     @Override
     PsiType getSelectedType() {
-      return null
+      return myType
     }
   }
 }
