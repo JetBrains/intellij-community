@@ -39,10 +39,12 @@ public class WebServerManagerImpl extends WebServerManager {
   private WebServer server;
   private boolean myEnabledInUnitTestMode;
 
+  @Override
   public int getPort() {
     return detectedPortNumber == -1 ? getDefaultPort() : detectedPortNumber;
   }
 
+  @Override
   public WebServerManager waitForStart() {
     Future<?> serverStartFuture = startServerInPooledThread();
     if (serverStartFuture != null) {
