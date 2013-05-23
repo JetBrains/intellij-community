@@ -3,6 +3,7 @@ package org.hanuna.gitalk.printmodel.impl;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.printmodel.CommitSelectController;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
@@ -19,23 +20,32 @@ class PrePrintCellModel {
   private List<GraphElement> visibleElementsInThisRow;
   private final int rowIndex;
   private final SelectController selectController;
+  private final CommitSelectController commitSelectController;
 
   public PrePrintCellModel(boolean hideLongEdge,
                            @NotNull LayoutModel layoutModel,
                            int rowIndex,
-                           @NotNull SelectController selectController) {
+                           @NotNull SelectController selectController, CommitSelectController commitSelectController) {
+    this.commitSelectController = commitSelectController;
     visibilityController = new GraphElementsVisibilityController(hideLongEdge, layoutModel);
     this.rowIndex = rowIndex;
     this.selectController = selectController;
     visibleElementsInThisRow = visibilityController.visibleElements(rowIndex);
   }
 
-  public PrePrintCellModel(@NotNull LayoutModel layoutModel, int rowIndex, @NotNull SelectController selectController) {
-    this(true, layoutModel, rowIndex, selectController);
+  public PrePrintCellModel(@NotNull LayoutModel layoutModel,
+                           int rowIndex,
+                           @NotNull SelectController selectController,
+                           CommitSelectController commitSelectController) {
+    this(true, layoutModel, rowIndex, selectController, commitSelectController);
   }
 
   public int getCountCells() {
     return visibleElementsInThisRow.size();
+  }
+
+  private boolean isMarked(Edge edge) {
+    return commitSelectController.isSelected(edge.getUpNode()) && commitSelectController.isSelected(edge.getDownNode());
   }
 
   @NotNull
@@ -48,7 +58,8 @@ class PrePrintCellModel {
       if (node != null) {
         if (node.getType() == Node.NodeType.COMMIT_NODE) {
           specialPrintElements
-            .add(new SpecialPrintElement(node, i, SpecialPrintElement.Type.COMMIT_NODE, selectController.isSelected(node)));
+            .add(new SpecialPrintElement(node, i, SpecialPrintElement.Type.COMMIT_NODE, selectController.isSelected(node),
+                                         commitSelectController.isSelected(node)));
         }
       }
       else {
@@ -65,11 +76,11 @@ class PrePrintCellModel {
             break;
           case LAST_VISIBLE:
             specialPrintElements
-              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.DOWN_ARROW, selectController.isSelected(edge)));
+              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.DOWN_ARROW, selectController.isSelected(edge), isMarked(edge)));
             break;
           case FIRST_VISIBLE:
             specialPrintElements
-              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.UP_ARROW, selectController.isSelected(edge)));
+              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.UP_ARROW, selectController.isSelected(edge), isMarked(edge)));
             break;
           default:
             throw new IllegalStateException();
@@ -91,7 +102,7 @@ class PrePrintCellModel {
         for (Edge edge : node.getDownEdges()) {
           int to = getter.getPosition(edge);
           assert to != -1;
-          shortEdges.add(new ShortEdge(edge, p, to, selectController.isSelected(edge)));
+          shortEdges.add(new ShortEdge(edge, p, to, selectController.isSelected(edge), isMarked(edge)));
         }
       }
     }
@@ -100,7 +111,7 @@ class PrePrintCellModel {
       if (edge != null) {
         int to = getter.getPosition(edge);
         if (to >= 0) {
-          shortEdges.add(new ShortEdge(edge, p, to, selectController.isSelected(edge)));
+          shortEdges.add(new ShortEdge(edge, p, to, selectController.isSelected(edge), isMarked(edge)));
         }
       }
     }

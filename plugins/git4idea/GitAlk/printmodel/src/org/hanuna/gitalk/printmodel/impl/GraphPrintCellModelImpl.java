@@ -15,14 +15,17 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
   private final LayoutModel layoutModel;
   private final SelectController selectController;
   private boolean hideLongEdges = true;
+  private final CommitSelectController commitSelectController;
 
   public GraphPrintCellModelImpl(Graph graph) {
     this.layoutModel = new LayoutModel(graph);
     this.selectController = new SelectController();
+    this.commitSelectController = new CommitSelectController();
   }
 
   private List<ShortEdge> getUpEdges(int rowIndex) {
-    PrePrintCellModel prevPreModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex - 1, selectController);
+    PrePrintCellModel prevPreModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex - 1, selectController,
+                                                           commitSelectController);
     return prevPreModel.downShortEdges();
   }
 
@@ -40,9 +43,14 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
     return selectController;
   }
 
+  public CommitSelectController getCommitSelectController() {
+    return commitSelectController;
+  }
+
   @NotNull
   public GraphPrintCell getGraphPrintCell(final int rowIndex) {
-    final PrePrintCellModel prePrintCellModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex, selectController);
+    final PrePrintCellModel prePrintCellModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex, selectController,
+                                                                      commitSelectController);
 
     return new GraphPrintCell() {
       @Override

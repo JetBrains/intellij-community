@@ -11,12 +11,14 @@ public class ShortEdge {
   private final int upPosition;
   private final int downPosition;
   private final boolean selected;
+  private final boolean marked;
 
-  public ShortEdge(@NotNull Edge edge, int upPosition, int downPosition, boolean selected) {
+  public ShortEdge(@NotNull Edge edge, int upPosition, int downPosition, boolean selected, boolean marked) {
     this.edge = edge;
     this.upPosition = upPosition;
     this.downPosition = downPosition;
     this.selected = selected;
+    this.marked = marked;
   }
 
   @NotNull

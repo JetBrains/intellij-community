@@ -11,12 +11,14 @@ public class SpecialPrintElement {
   private final int position;
   private final Type type;
   private final boolean selected;
+  private final boolean marked;
 
-  public SpecialPrintElement(@NotNull GraphElement graphElement, int position, @NotNull Type type, boolean selected) {
+  public SpecialPrintElement(@NotNull GraphElement graphElement, int position, @NotNull Type type, boolean selected, boolean marked) {
     this.graphElement = graphElement;
     this.position = position;
     this.type = type;
     this.selected = selected;
+    this.marked = marked;
   }
 
   @NotNull
