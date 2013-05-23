@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -313,7 +314,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                       value = value.getParent();
                     }
                     if (value != null) {
-                      final FileReference reference = FileReferenceUtil.findFileReference(value);
+                      final PsiFileReference reference = FileReferenceUtil.findFileReference(value);
                       if (reference != null) {
                         consumer.process(reference);
                       }

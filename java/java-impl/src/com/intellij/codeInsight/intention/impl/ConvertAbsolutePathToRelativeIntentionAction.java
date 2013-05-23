@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,9 +65,9 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
       }
     }
     else if (original instanceof FileReferenceOwner) {
-      final FileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
-      if (fileReference != null) {
-        return fileReference;
+      final PsiFileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
+      if (fileReference instanceof FileReference) {
+        return (FileReference)fileReference;
       }
     }
 

@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -83,7 +83,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
       myType = getLanguage().getAssociatedFileType();
       if (myType == null) {
         VirtualFile virtualFile = getOriginalFile().getVirtualFile();
-        myType = virtualFile == null ? FileTypeManager.getInstance().getFileTypeByFileName(getName()) : virtualFile.getFileType();
+        myType = virtualFile == null ? FileTypeRegistry.getInstance().getFileTypeByFileName(getName()) : virtualFile.getFileType();
       }
     }
     return myType;
