@@ -161,6 +161,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.USE_SMALL_LABELS_ON_TABS != myComponent.myUseSmallLabelsOnTabs.isSelected();
     settings.USE_SMALL_LABELS_ON_TABS = myComponent.myUseSmallLabelsOnTabs.isSelected();
 
+    update |= settings.WIDESCREEN_SUPPORT != myComponent.myWidescreenLayoutCheckBox.isSelected();
+    settings.WIDESCREEN_SUPPORT = myComponent.myWidescreenLayoutCheckBox.isSelected();
+
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
 
@@ -262,6 +265,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
     myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
     myComponent.myUseSmallLabelsOnTabs.setSelected(settings.USE_SMALL_LABELS_ON_TABS);
+    myComponent.myWidescreenLayoutCheckBox.setSelected(settings.WIDESCREEN_SUPPORT);
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -303,6 +307,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.DISABLE_MNEMONICS_IN_CONTROLS;
 
     isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.USE_SMALL_LABELS_ON_TABS;
+    isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.WIDESCREEN_SUPPORT;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
@@ -367,6 +372,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myHideNavigationPopupsCheckBox;
     private JCheckBox myAllowMergeButtons;
     private JBCheckBox myUseSmallLabelsOnTabs;
+    private JBCheckBox myWidescreenLayoutCheckBox;
     private JSlider myInitialTooltipDelaySlider;
     private ComboBox myPresentationModeFontSize;
     private JCheckBox myAllowStatusBar;
