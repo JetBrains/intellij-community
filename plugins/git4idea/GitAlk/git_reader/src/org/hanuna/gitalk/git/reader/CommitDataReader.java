@@ -1,23 +1,25 @@
 package org.hanuna.gitalk.git.reader;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.hanuna.gitalk.common.Executor;
-import org.hanuna.gitalk.git.reader.util.GitException;
-import org.hanuna.gitalk.git.reader.util.GitProcessFactory;
-import org.hanuna.gitalk.git.reader.util.ProcessOutputReader;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.history.GitHistoryUtils;
+import git4idea.history.browser.GitCommit;
+import git4idea.repo.GitRepository;
+import gitlog.GitLogComponent;
 import org.hanuna.gitalk.log.commit.CommitData;
-import org.hanuna.gitalk.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author erokhins
  */
 public class CommitDataReader {
-  private String line;
   private Project myProject;
 
   public CommitDataReader(Project project) {
@@ -26,53 +28,26 @@ public class CommitDataReader {
 
   @NotNull
   public CommitData readCommitData(@NotNull String commitHash) {
-    try {
-      Process process = GitProcessFactory.getInstance(myProject).commitData(commitHash);
-      line = null;
-      ProcessOutputReader outputReader = new ProcessOutputReader(new Executor<String>() {
-        @Override
-        public void execute(String key) {
-          if (line != null) {
-            throw new IllegalStateException("unaccepted second line: " + key);
-          }
-          line = key;
-        }
-      });
-      outputReader.startRead(process);
-      if (line == null) {
-        throw new IllegalStateException("line is not read");
-      }
-      return CommitParser.parseCommitData(line);
-    }
-    catch (IOException e) {
-      throw new IllegalStateException();
-    }
-    catch (GitException e) {
-      throw new IllegalStateException(e.getMessage());
-    }
+    return readCommitsData(Collections.singletonList(commitHash)).get(0);
   }
 
-  @NotNull
-  public List<CommitData> readCommitsData(@NotNull String commitHashes) {
+
+  public List<CommitData> readCommitsData(@NotNull List<String> hashes) {
+    GitRepository repository = ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
+    List<GitCommit> gitCommits;
     try {
-      final List<CommitData> commitDatas = new ArrayList<CommitData>();
-      ProcessOutputReader outputReader = new ProcessOutputReader(new Executor<String>() {
-        @Override
-        public void execute(String key) {
-          CommitData data = CommitParser.parseCommitData(key);
-          commitDatas.add(data);
-        }
-      });
-      Process process = GitProcessFactory.getInstance(myProject).commitDatas(commitHashes);
-      outputReader.startRead(process);
-      return commitDatas;
+      gitCommits = GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(repository.getRoot()), null, hashes);
     }
-    catch (IOException e) {
-      throw new IllegalStateException();
+    catch (VcsException e) {
+      throw new IllegalStateException(e);
     }
-    catch (GitException e) {
-      throw new IllegalStateException(e.getMessage());
-    }
+
+    return ContainerUtil.map(gitCommits, new Function<GitCommit, CommitData>() {
+      @Override
+      public CommitData fun(GitCommit gitCommit) {
+        return new CommitData(gitCommit);
+      }
+    });
   }
 
 }

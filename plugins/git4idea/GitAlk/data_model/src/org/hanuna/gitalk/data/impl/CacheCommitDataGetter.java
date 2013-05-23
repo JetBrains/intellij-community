@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Function;
@@ -83,11 +84,13 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   }
 
   private void preLoadCommitData(@NotNull List<Node> nodes) {
-    StringBuilder s = new StringBuilder();
-    for (Node node : nodes) {
-      s.append(node.getCommitHash().toStrHash()).append(" ");
-    }
-    List<CommitData> commitDataList = commitDataReader.readCommitsData(s.toString());
+    List<String> hashes = ContainerUtil.map(nodes, new com.intellij.util.Function<Node, String>() {
+      @Override
+      public String fun(Node node) {
+        return node.getCommitHash().toStrHash();
+      }
+    });
+    List<CommitData> commitDataList = commitDataReader.readCommitsData(hashes);
 
     for (CommitData commitData : commitDataList) {
       cache.addToCache(commitData.getCommitHash(), commitData);

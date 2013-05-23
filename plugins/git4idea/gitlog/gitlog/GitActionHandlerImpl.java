@@ -15,19 +15,15 @@ import git4idea.branch.GitSmartOperationDialog;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.commands.Git;
 import git4idea.history.browser.GitCommit;
-import git4idea.history.browser.SHAHash;
-import git4idea.history.wholeTree.AbstractHash;
 import git4idea.repo.GitRepository;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.RebaseCommand;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -67,7 +63,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
         List<GitCommit> commits = ContainerUtil.map(nodesToPick, new Function<Node, GitCommit>() {
           @Override
           public GitCommit fun(Node node) {
-            return convertNodeToCommit(node, commitDataGetter);
+            return commitDataGetter.getCommitData(node).getFullCommit();
           }
         });
         cherryPicker.cherryPick(Collections.singletonMap(myRepository, commits));
@@ -111,25 +107,6 @@ public class GitActionHandlerImpl implements GitActionHandler {
   @Override
   public void interactiveRebase(Ref subjectRef, List<RebaseCommand> commands, Callback callback) {
     throw new UnsupportedOperationException();
-  }
-
-  private GitCommit convertNodeToCommit(Node node, CommitDataGetter commitDataGetter) {
-    CommitData commit = commitDataGetter.getCommitData(node);
-    AbstractHash abstractHash = AbstractHash.create(commit.getCommitHash().toStrHash());
-    // TODO author == committer
-    return new GitCommit(myRepository.getRoot(), abstractHash, SHAHash.emulate(abstractHash), commit.getAuthor(),
-                         commit.getAuthor(), new Date(commit.getTimeStamp()), subject(commit.getMessage()),
-                         description(commit.getMessage()), null, null, null, null, null, null, null, null, commit.getTimeStamp());
-  }
-
-  private String description(String commitMessage) {
-    int index = commitMessage.indexOf("\n");
-    return index > -1 ? commitMessage.substring(index) : "";
-  }
-
-  private String subject(String commitMessage) {
-    int index = commitMessage.indexOf("\n");
-    return index > -1 ? commitMessage.substring(0, index) : commitMessage;
   }
 
 }
