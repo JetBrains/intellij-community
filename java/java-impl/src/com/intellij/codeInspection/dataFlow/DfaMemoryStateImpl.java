@@ -171,7 +171,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public int hashCode() {
-    return ((myEqClasses.hashCode() * 31 + myStack.hashCode()) * 31 + myVariableStates.hashCode()) * 31 + myUnknownVariables.hashCode();
+    return 0;
+    //return ((myEqClasses.hashCode() * 31 + myStack.hashCode()) * 31 + myVariableStates.hashCode()) * 31 + myUnknownVariables.hashCode();
   }
 
   private void appendClass(StringBuffer buf, int aClassIndex) {
