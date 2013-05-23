@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -188,7 +188,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       if (notfound &&       // no dtd ref at all
           targetElement instanceof XmlFile &&
           deps.size() == 1 &&
-          ((XmlFile)targetElement).getFileType() != StdFileTypes.DTD
+          ((XmlFile)targetElement).getFileType() != DTDFileType.INSTANCE
          ) {
         XmlDocument document = ((XmlFile)targetElement).getDocument();
         final XmlTag rootTag = document.getRootTag();
