@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
@@ -65,4 +66,6 @@ public interface UI_Controller {
   DataPack getDataPack();
 
   DataPackUtils getDataPackUtils();
+
+  Project getProject();
 }

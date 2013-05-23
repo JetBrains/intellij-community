@@ -360,4 +360,9 @@ public class UI_ControllerImpl implements UI_Controller {
   public DataPackUtils getDataPackUtils() {
     return dataPackUtils;
   }
+
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
 }
