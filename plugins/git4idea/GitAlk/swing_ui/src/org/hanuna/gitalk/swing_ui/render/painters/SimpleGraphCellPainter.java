@@ -24,6 +24,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private final Stroke selectUsual = new BasicStroke(SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   private final Stroke selectHide = new BasicStroke(SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
 
+  private final Color markColor = Color.BLACK;
 
   private void paintUpLine(int from, int to, Color color) {
     int x1 = WIDTH_NODE * from + WIDTH_NODE / 2;
@@ -100,10 +101,18 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     for (ShortEdge edge : row.getUpEdges()) {
+      if (edge.isMarked()) {
+        setStroke(edge.isUsual(), true);
+        paintUpLine(edge.getDownPosition(), edge.getUpPosition(), markColor);
+      }
       setStroke(edge.isUsual(), edge.isSelected());
       paintUpLine(edge.getDownPosition(), edge.getUpPosition(), ColorGenerator.getColor(edge.getEdge().getBranch()));
     }
     for (ShortEdge edge : row.getDownEdges()) {
+      if (edge.isMarked()) {
+        setStroke(edge.isUsual(), true);
+        paintDownLine(edge.getUpPosition(), edge.getDownPosition(), markColor);
+      }
       setStroke(edge.isUsual(), edge.isSelected());
       paintDownLine(edge.getUpPosition(), edge.getDownPosition(), ColorGenerator.getColor(edge.getEdge().getBranch()));
     }
@@ -113,17 +122,28 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         case COMMIT_NODE:
           Node node = printElement.getGraphElement().getNode();
           assert node != null;
+          if (printElement.isMarked()) {
+            paintCircle(printElement.getPosition(), markColor, true);
+          }
           paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), printElement.isSelected());
           break;
         case UP_ARROW:
           edge = printElement.getGraphElement().getEdge();
           assert edge != null;
+          if (printElement.isMarked()) {
+            setStroke(edge.getType() == Edge.EdgeType.USUAL, true);
+            paintShow(printElement.getPosition(), markColor);
+          }
           setStroke(edge.getType() == Edge.EdgeType.USUAL, printElement.isSelected());
           paintShow(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
           break;
         case DOWN_ARROW:
           edge = printElement.getGraphElement().getEdge();
           assert edge != null;
+          if (printElement.isMarked()) {
+            setStroke(edge.getType() == Edge.EdgeType.USUAL, true);
+            paintHide(printElement.getPosition(), markColor);
+          }
           setStroke(edge.getType() == Edge.EdgeType.USUAL, printElement.isSelected());
           paintHide(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
           break;

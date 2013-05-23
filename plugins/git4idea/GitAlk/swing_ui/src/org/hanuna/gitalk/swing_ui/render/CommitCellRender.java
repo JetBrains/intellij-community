@@ -38,4 +38,9 @@ public class CommitCellRender extends AbstractPaddingCellRender {
     Graphics2D g2 = (Graphics2D)g;
     refPainter.draw(g2, cell.getRefsToThisCommit(), 0);
   }
+
+  @Override
+  protected boolean isMarked(JTable table, Object value) {
+    return false;
+  }
 }

@@ -18,6 +18,8 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
 
   protected abstract void additionPaint(Graphics g, JTable table, Object value);
 
+  protected abstract boolean isMarked(JTable table, Object value);
+
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     return cellRender.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -31,6 +33,9 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
       this.table = table;
       this.value = value;
       super.getTableCellRendererComponent(table, getCellText(table, value), isSelected, hasFocus, row, column);
+      if (isMarked(table, value)) {
+        super.setFont(super.getFont().deriveFont(Font.BOLD));
+      }
       Border paddingBorder = BorderFactory.createEmptyBorder(0, getLeftPadding(table, value), 0, 0);
       this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
       return this;

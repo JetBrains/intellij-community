@@ -62,6 +62,7 @@ public class Swing_UI {
         @Override
         public void run() {
           mainFrame.getGraphTable().jumpToRow(rowIndex);
+          ui_controller.click(rowIndex);
         }
       });
     }

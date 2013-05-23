@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.swing_ui.render;
 
+import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
@@ -62,6 +63,17 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     refPainter.draw(g2, cell.getRefsToThisCommit(), padding);
 
     g.drawImage(image, 0, 0, null);
+  }
+
+  @Override
+  protected boolean isMarked(JTable table, Object value) {
+    GraphCommitCell cell = getAssertGraphCommitCell(value);
+    for (SpecialPrintElement printElement : cell.getPrintCell().getSpecialPrintElements()) {
+      if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE && printElement.isMarked()) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
