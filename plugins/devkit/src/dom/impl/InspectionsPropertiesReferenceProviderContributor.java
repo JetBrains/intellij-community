@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,22 @@ import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 
-import static com.intellij.patterns.StandardPatterns.string;
-
 /**
  * User: anna
  * Date: 10/7/11
  */
 public class InspectionsPropertiesReferenceProviderContributor extends PsiReferenceContributor {
+
+  private static final String[] EXTENSION_TAG_NAMES = new String[]{
+    "localInspection", "globalInspection",
+    "configurable", "applicationConfigurable", "projectConfigurable"
+  };
+
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     ElementPattern pattern = XmlPatterns.xmlAttributeValue()
       .withParent(XmlPatterns.xmlAttribute().withLocalName("key", "groupKey")
-                    .withParent(XmlPatterns.xmlTag().withName("localInspection", "globalInspection")
+                    .withParent(XmlPatterns.xmlTag().withName(EXTENSION_TAG_NAMES)
                                   .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin"))));
     registrar.registerReferenceProvider(pattern, new InspectionsKeyPropertiesReferenceProvider(false),
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
