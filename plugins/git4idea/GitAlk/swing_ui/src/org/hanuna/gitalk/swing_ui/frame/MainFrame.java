@@ -1,9 +1,12 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
+import com.intellij.icons.AllIcons;
 import org.hanuna.gitalk.ui.UI_Controller;
+import org.hanuna.gitalk.ui.impl.UI_ControllerImpl;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -63,6 +66,16 @@ public class MainFrame {
     });
 
     myToolbar.add(visibleLongEdges);
+
+    Action refresh = new AbstractAction("", AllIcons.Actions.Refresh) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        UI_ControllerImpl uiControllerImpl = (UI_ControllerImpl)ui_controller;
+        uiControllerImpl.init(false);
+        uiControllerImpl.updateUI();
+      }
+    };
+    myToolbar.add(new JButton(refresh));
 
     myToolbar.add(Box.createHorizontalGlue());
   }

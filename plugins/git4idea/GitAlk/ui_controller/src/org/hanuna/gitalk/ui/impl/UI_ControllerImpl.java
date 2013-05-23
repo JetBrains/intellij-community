@@ -42,7 +42,7 @@ import java.util.Set;
  */
 public class UI_ControllerImpl implements UI_Controller {
 
-  private final DataLoader dataLoader;
+  private DataLoader dataLoader;
   private final EventsController events = new EventsController();
   private final Project myProject;
 
@@ -96,7 +96,6 @@ public class UI_ControllerImpl implements UI_Controller {
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
-    dataLoader = new DataLoaderImpl(myProject);
   }
 
   private void dataInit() {
@@ -112,6 +111,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   public void init(boolean readAllLog) {
     events.setState(ControllerListener.State.PROGRESS);
+    dataLoader = new DataLoaderImpl(myProject);
     Executor<String> statusUpdater = new Executor<String>() {
       @Override
       public void execute(String key) {
@@ -364,5 +364,9 @@ public class UI_ControllerImpl implements UI_Controller {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  public void updateUI() {
+    events.runUpdateUI();
   }
 }
