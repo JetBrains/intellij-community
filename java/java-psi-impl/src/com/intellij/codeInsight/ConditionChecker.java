@@ -56,7 +56,7 @@ import java.util.*;
  *         Creation Date: 8/14/12
  */
 public class ConditionChecker implements Serializable {
-  private final @NotNull Type myConditionCheckType;
+  @NotNull private final Type myConditionCheckType;
 
   public enum Type {
     IS_NULL_METHOD("IsNull Method"),
@@ -77,9 +77,9 @@ public class ConditionChecker implements Serializable {
     }
   }
 
-  private final @NotNull String myClassName;
-  private final @NotNull String myMethodName;
-  private final @NotNull List<String> myParameterClassList;
+  @NotNull private final String myClassName;
+  @NotNull private final String myMethodName;
+  @NotNull private final List<String> myParameterClassList;
   private final int myCheckedParameterIndex;
   private final String myFullName;
 
@@ -217,8 +217,8 @@ public class ConditionChecker implements Serializable {
 
   static class FromConfigBuilder extends Builder {
     private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ConditionCheck.FromConfigBuilder");
-    private final @NotNull String serializedRepresentation;
-    private final @NotNull Type type;
+    @NotNull private final String serializedRepresentation;
+    @NotNull private final Type type;
 
     FromConfigBuilder(@NotNull String serializedRepresentation, @NotNull Type type) {
       this.serializedRepresentation = serializedRepresentation;
@@ -265,7 +265,7 @@ public class ConditionChecker implements Serializable {
           throw new IllegalArgumentException(
             "Name should contain 1+ parameter (between opening and closing parenthesis).  " + serializedRepresentation);
         }
-        else if (allParametersSubString.contains("*") && allParametersSubString.indexOf("*") == allParametersSubString.lastIndexOf("*")) {
+        if (allParametersSubString.contains("*") && allParametersSubString.indexOf("*") == allParametersSubString.lastIndexOf("*")) {
           throw new IllegalArgumentException("Selected Parameter should be surrounded by asterisks.  " + serializedRepresentation);
         }
 
@@ -303,9 +303,9 @@ public class ConditionChecker implements Serializable {
 
   public static class FromPsiBuilder extends Builder {
     private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ConditionCheck.FromPsiBuilder");
-    private final @NotNull PsiMethod psiMethod;
-    private final @NotNull PsiParameter psiParameter;
-    private final @NotNull Type type;
+    @NotNull private final PsiMethod psiMethod;
+    @NotNull private final PsiParameter psiParameter;
+    @NotNull private final Type type;
 
     public FromPsiBuilder(@NotNull PsiMethod psiMethod, @NotNull PsiParameter psiParameter, @NotNull Type type) {
       this.psiMethod = psiMethod;

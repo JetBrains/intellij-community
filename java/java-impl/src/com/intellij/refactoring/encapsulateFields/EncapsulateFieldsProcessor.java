@@ -16,6 +16,7 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -75,7 +76,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return RefactoringBundle.message("encapsulate.fields.command.name", UsageViewUtil.getDescriptiveName(myClass));
+    return RefactoringBundle.message("encapsulate.fields.command.name", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

@@ -19,7 +19,7 @@
  * User: max
  * Date: Jan 28, 2002
  * Time: 10:16:39 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.dataFlow;
@@ -73,7 +73,7 @@ public class DataFlowRunner {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
       final PsiElement parent = containingClass.getParent();
-      final PsiCodeBlock block = DfaUtil.getTopmostBlockInSameClass(parent);
+      final PsiCodeBlock block = DfaPsiUtil.getTopmostBlockInSameClass(parent);
       if ((parent instanceof PsiNewExpression || parent instanceof PsiDeclarationStatement) && block != null) {
         final EnvironmentalInstructionVisitor envVisitor = new EnvironmentalInstructionVisitor(visitor, parent);
         final RunnerResult result = analyzeMethod(block, envVisitor);
@@ -257,7 +257,7 @@ public class DataFlowRunner {
     private void checkEnvironment(DataFlowRunner runner, DfaMemoryState memState, @Nullable PsiElement anchor) {
       if (myClassParent == anchor) {
         DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
-        copy.flushFields(runner);
+        copy.flushFields(runner.getFields());
         Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
         for (DfaVariableValue value : vars) {
           copy.flushDependencies(value);

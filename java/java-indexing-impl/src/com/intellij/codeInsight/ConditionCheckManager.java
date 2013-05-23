@@ -40,14 +40,14 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private State state;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ConditionCheckManager");
 
-  private List<ConditionChecker> myIsNullCheckMethods = new ArrayList<ConditionChecker>();
-  private List<ConditionChecker> myIsNotNullCheckMethods = new ArrayList<ConditionChecker>();
+  private final List<ConditionChecker> myIsNullCheckMethods = new ArrayList<ConditionChecker>();
+  private final List<ConditionChecker> myIsNotNullCheckMethods = new ArrayList<ConditionChecker>();
 
-  private List<ConditionChecker> myAssertIsNullMethods = new ArrayList<ConditionChecker>();
-  private List<ConditionChecker> myAssertIsNotNullMethods = new ArrayList<ConditionChecker>();
+  private final List<ConditionChecker> myAssertIsNullMethods = new ArrayList<ConditionChecker>();
+  private final List<ConditionChecker> myAssertIsNotNullMethods = new ArrayList<ConditionChecker>();
 
-  private List<ConditionChecker> myAssertTrueMethods = new ArrayList<ConditionChecker>();
-  private List<ConditionChecker> myAssertFalseMethods = new ArrayList<ConditionChecker>();
+  private final List<ConditionChecker> myAssertTrueMethods = new ArrayList<ConditionChecker>();
+  private final List<ConditionChecker> myAssertFalseMethods = new ArrayList<ConditionChecker>();
 
   public static ConditionCheckManager getInstance(Project project) {
     return ServiceManager.getService(project, ConditionCheckManager.class);

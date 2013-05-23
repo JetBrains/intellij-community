@@ -19,7 +19,7 @@
  * User: max
  * Date: Jan 11, 2002
  * Time: 3:05:34 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.dataFlow;
@@ -33,9 +33,10 @@ import com.intellij.psi.PsiVariable;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ControlFlow {
-  private final ArrayList<Instruction> myInstructions = new ArrayList<Instruction>();
+  private final List<Instruction> myInstructions = new ArrayList<Instruction>();
   private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
   private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
   private DfaVariableValue[] myFields;
@@ -92,7 +93,7 @@ public class ControlFlow {
 
   public String toString() {
     StringBuilder result = new StringBuilder();
-    final ArrayList<Instruction> instructions = myInstructions;
+    final List<Instruction> instructions = myInstructions;
 
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);

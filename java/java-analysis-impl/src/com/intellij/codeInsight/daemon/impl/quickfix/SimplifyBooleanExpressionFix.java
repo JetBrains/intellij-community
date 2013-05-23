@@ -21,9 +21,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,45 +40,54 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimplifyBooleanExpressionFix implements IntentionAction {
+public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
+  public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
 
-  private final PsiExpression mySubExpression;
   private final Boolean mySubExpressionValue;
 
   // subExpressionValue == Boolean.TRUE or Boolean.FALSE if subExpression evaluates to boolean constant and needs to be replaced
   //   otherwise subExpressionValue= null and we starting to simplify expression without any further knowledge
-  public SimplifyBooleanExpressionFix(PsiExpression subExpression, Boolean subExpressionValue) {
-    mySubExpression = subExpression;
+  public SimplifyBooleanExpressionFix(@NotNull PsiExpression subExpression, Boolean subExpressionValue) {
+    super(subExpression);
     mySubExpressionValue = subExpressionValue;
   }
 
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("simplify.boolean.expression.text", mySubExpression.getText(), mySubExpressionValue);
+    PsiExpression expression = getSubExpression();
+    return QuickFixBundle.message("simplify.boolean.expression.text", expression.getText(), mySubExpressionValue);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("simplify.boolean.expression.family");
+    return FAMILY_NAME;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return mySubExpression.isValid()
-           && mySubExpression.getManager().isInProject(mySubExpression)
-           && !PsiUtil.isAccessedForWriting(mySubExpression)
-      ;
+  public boolean isAvailable() {
+    PsiExpression expression = getSubExpression();
+    return super.isAvailable()
+           && expression != null
+           && expression.isValid()
+           && expression.getManager().isInProject(expression)
+           && !PsiUtil.isAccessedForWriting(expression);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!isAvailable(project, editor, file)) return;
-    LOG.assertTrue(mySubExpression.isValid());
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(mySubExpression)) return;
-    simplifyExpression(project, mySubExpression, mySubExpressionValue);
+  public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    if (!isAvailable()) return;
+    final PsiExpression expression = getSubExpression();
+    LOG.assertTrue(expression.isValid());
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return;
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        simplifyExpression(project, expression, mySubExpressionValue);
+      }
+    });
   }
 
   public static void simplifyExpression(Project project, final PsiExpression subExpression, final Boolean subExpressionValue) {
@@ -224,6 +233,11 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       }
     });
     return canBeSimplified.get().booleanValue();
+  }
+
+  private PsiExpression getSubExpression() {
+    PsiElement element = getStartElement();
+    return element instanceof PsiExpression ? (PsiExpression)element : null;
   }
 
   private static class ExpressionVisitor extends JavaElementVisitor {
@@ -419,10 +433,5 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     if (operand == null) return null;
     String text = operand.getText();
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

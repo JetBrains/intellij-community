@@ -1573,7 +1573,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (dfaValue == null) {
       PsiType type = expression.getType();
-      return myFactory.createTypeValueWithNullability(type, DfaUtil.getElementNullability(type, field));
+      return myFactory.createTypeValueWithNullability(type, DfaPsiUtil.getElementNullability(type, field));
     }
     return dfaValue;
   }
@@ -1610,7 +1610,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return result;
     }
 
-    if (DfaUtil.isFinalField(var) || DfaUtil.isPlainMutableField(var)) {
+    if (DfaPsiUtil.isFinalField(var) || DfaPsiUtil.isPlainMutableField(var)) {
       DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
       if (qualifierValue != null) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, isCall || qualifierValue.isViaMethods());

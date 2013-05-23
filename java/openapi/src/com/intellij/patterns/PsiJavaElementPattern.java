@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElementPattern<T,Self>> extends PsiElementPattern<T,Self> {
-  private static final @NonNls String VALUE = "value";
+  @NonNls private static final String VALUE = "value";
 
   public PsiJavaElementPattern(final Class<T> aClass) {
     super(aClass);
@@ -61,11 +61,12 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
 
   public Self nameIdentifierOf(final Class<? extends PsiMember> aClass) {
-    return nameIdentifierOf(PsiJavaPatterns.instanceOf(aClass));
+    return nameIdentifierOf(StandardPatterns.instanceOf(aClass));
   }
-  
+
   public Self nameIdentifierOf(final ElementPattern<? extends PsiMember> pattern) {
     return with(new PatternCondition<T>("nameIdentifierOf") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         if (!(t instanceof PsiIdentifier)) return false;
 
@@ -81,6 +82,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
 
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     return with(new PatternCondition<T>("methodCallParameter") {
+      @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof PsiExpressionList) {
@@ -106,6 +108,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
 
   public Self constructorParameter(final int index, final String... fqns) {
     return with(new PatternCondition<T>("methodCallParameter") {
+      @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof PsiExpressionList) {

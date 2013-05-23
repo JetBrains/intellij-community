@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -140,7 +141,7 @@ public class GuessManagerImpl extends GuessManager {
 
   @Nullable
   private static Map<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace) {
-    PsiElement scope = DfaUtil.getTopmostBlockInSameClass(forPlace);
+    PsiElement scope = DfaPsiUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
       PsiFile file = forPlace.getContainingFile();
       if (!(file instanceof PsiCodeFragment)) {

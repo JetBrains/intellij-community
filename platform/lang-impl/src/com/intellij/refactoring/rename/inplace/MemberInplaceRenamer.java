@@ -16,6 +16,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -201,7 +202,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
           }
 
           final String commandName = RefactoringBundle
-            .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
+            .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), DescriptiveNameUtil.getDescriptiveName(variable), newName);
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             @Override
             public void run() {

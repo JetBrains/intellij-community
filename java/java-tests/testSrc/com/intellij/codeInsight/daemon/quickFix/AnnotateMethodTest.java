@@ -24,7 +24,7 @@ public class AnnotateMethodTest extends LightQuickFix15TestCase {
       protected AnnotateMethodFix createAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
         return new AnnotateMethodFix(defaultNotNull, annotationsToRemove){
           @Override
-          public int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+          public int shouldAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
             @NonNls String name = method.getName();
             int ret = name.startsWith("annotateBase") ? 0  // yes, annotate all
                       : name.startsWith("dontAnnotateBase") ? 1 // do not annotate base

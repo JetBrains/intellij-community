@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -259,7 +260,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(mySettings.getToReplaceIn()));
+    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
   @NotNull

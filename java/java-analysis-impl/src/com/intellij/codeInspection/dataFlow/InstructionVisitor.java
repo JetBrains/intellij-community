@@ -121,7 +121,7 @@ public abstract class InstructionVisitor {
     if (variable != null) {
       memState.flushVariable(variable);
     } else {
-      memState.flushFields(runner);
+      memState.flushFields(runner.getFields());
     }
     return nextInstruction(instruction, runner, memState);
   }

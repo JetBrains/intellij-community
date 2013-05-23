@@ -23,14 +23,14 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class AddNullableNotNullAnnotationFix extends AddAnnotationFix {
+public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
   public AddNullableNotNullAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner owner, @NotNull String... annotationToRemove) {
-    super(fqn, owner, annotationToRemove);
+    super(fqn, owner, PsiNameValuePair.EMPTY_ARRAY, annotationToRemove);
   }
 
   @Override
@@ -38,7 +38,7 @@ public class AddNullableNotNullAnnotationFix extends AddAnnotationFix {
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-     if (!super.isAvailable(project, file, startElement, endElement)) {
+    if (!super.isAvailable(project, file, startElement, endElement)) {
       return false;
     }
     PsiModifierListOwner owner = getContainer(startElement);

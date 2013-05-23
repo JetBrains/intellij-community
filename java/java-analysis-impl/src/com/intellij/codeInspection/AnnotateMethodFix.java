@@ -17,20 +17,18 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +43,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   protected final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
-  public AnnotateMethodFix(final String fqn, String... annotationsToRemove) {
+  public AnnotateMethodFix(@NotNull String fqn, @NotNull String... annotationsToRemove) {
     myAnnotation = fqn;
     myAnnotationsToRemove = annotationsToRemove;
   }
@@ -68,7 +66,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (!AnnotationUtil.isAnnotated(superMethod, myAnnotation, false, false) && superMethod.getManager().isInProject(superMethod)) {
-        int ret = annotateBaseMethod(method, superMethod, project);
+        int ret = shouldAnnotateBaseMethod(method, superMethod, project);
         if (ret != 0 && ret != 1) return;
         if (ret == 0) {
           toAnnotate.add(superMethod);
@@ -91,15 +89,9 @@ public class AnnotateMethodFix implements LocalQuickFix {
     UndoUtil.markPsiFileForUndo(method.getContainingFile());
   }
 
-  public int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
-    String implement = !method.hasModifierProperty(PsiModifier.ABSTRACT) && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
-                  ? InspectionsBundle.message("inspection.annotate.quickfix.implements")
-                  : InspectionsBundle.message("inspection.annotate.quickfix.overrides");
-    String message = InspectionsBundle.message("inspection.annotate.quickfix.overridden.method.messages",
-                                               UsageViewUtil.getDescriptiveName(method), implement,
-                                               UsageViewUtil.getDescriptiveName(superMethod));
-    String title = InspectionsBundle.message("inspection.annotate.quickfix.overridden.method.warning");
-    return Messages.showYesNoCancelDialog(project, message, title, Messages.getQuestionIcon());
+  // 0-annotate, 1-do not annotate, 2- cancel
+  public int shouldAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+    return 0;
   }
 
   protected boolean annotateOverriddenMethods() {
@@ -114,7 +106,8 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   private void annotateMethod(@NotNull PsiMethod method) {
     try {
-      new AddAnnotationFix(myAnnotation, method, myAnnotationsToRemove).invoke(method.getProject(), null, method.getContainingFile());
+      AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
+      fix.invoke(method.getProject(), method.getContainingFile(), method, method);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

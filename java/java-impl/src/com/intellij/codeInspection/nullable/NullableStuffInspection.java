@@ -21,8 +21,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
-import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -34,15 +34,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,22 +98,28 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
           if (nameIdentifier != null && nameIdentifier.isPhysical()) {
             if (PropertyUtil.isSimpleGetter(getter)) {
+              AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)) {
+                @Override
+                public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
+                  return 1;
+                }
+              };
               if (REPORT_NOT_ANNOTATED_GETTER) {
                 if (!AnnotationUtil.isAnnotated(getter, manager.getAllAnnotations(), false, false) &&
                     !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
                   holder.registerProblem(nameIdentifier, InspectionsBundle
                     .message("inspection.nullable.problems.annotated.field.getter.not.annotated", StringUtil.getShortName(anno)),
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
+                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
                 }
               }
               if (annotated.isDeclaredNotNull && manager.isNullable(getter, false)) {
                 holder.registerProblem(nameIdentifier, InspectionsBundle.message(
                   "inspection.nullable.problems.annotated.field.getter.conflict", StringUtil.getShortName(anno), nullableSimpleName),
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
               } else if (annotated.isDeclaredNullable && manager.isNotNull(getter, false)) {
                 holder.registerProblem(nameIdentifier, InspectionsBundle.message(
                   "inspection.nullable.problems.annotated.field.getter.conflict", StringUtil.getShortName(anno), notNullSimpleName),
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
               }
             }
           }
@@ -158,7 +161,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             }
           }
 
-          for (PsiExpression rhs : findAllConstructorInitializers(field)) {
+          for (PsiExpression rhs : DfaPsiUtil.findAllConstructorInitializers(field)) {
             if (rhs instanceof PsiReferenceExpression) {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
               if (target instanceof PsiParameter) {
@@ -451,20 +454,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     return new OptionsPanel();
   }
 
-  private static class MyAddNullableAnnotationFix extends AddNullableAnnotationFix {
-    public MyAddNullableAnnotationFix(PsiParameter parameter) {
-      super(parameter);
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
-                               @NotNull PsiElement startElement,
-                               @NotNull PsiElement endElement) {
-      return true;
-    }
-  }
-
   private static class MyAnnotateMethodFix extends AnnotateMethodFix {
     public MyAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
       super(defaultNotNull, annotationsToRemove);
@@ -473,6 +462,11 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     @Override
     protected boolean annotateOverriddenMethods() {
       return true;
+    }
+
+    @Override
+    public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
+      return 1;
     }
 
     @Override
@@ -526,43 +520,5 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
       REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
     }
-  }
-
-  public static List<PsiExpression> findAllConstructorInitializers(PsiField field) {
-    final List<PsiExpression> result = ContainerUtil.createLockFreeCopyOnWriteList();
-    ContainerUtil.addIfNotNull(result, field.getInitializer());
-
-    PsiClass containingClass = field.getContainingClass();
-    if (containingClass != null) {
-      LocalSearchScope scope = new LocalSearchScope(containingClass.getConstructors());
-      ReferencesSearch.search(field, scope, false).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            final PsiAssignmentExpression assignment = getAssignmentExpressionIfOnAssignmentLhs(element);
-            final PsiMethod method = PsiTreeUtil.getParentOfType(assignment, PsiMethod.class);
-            if (method != null && method.isConstructor() && assignment != null) {
-              ContainerUtil.addIfNotNull(result, assignment.getRExpression());
-            }
-          }
-          return true;
-        }
-      });
-    }
-    return result;
-  }
-
-  @Nullable
-  private static PsiAssignmentExpression getAssignmentExpressionIfOnAssignmentLhs(PsiElement expression) {
-    PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-    if (!(parent instanceof PsiAssignmentExpression)) {
-      return null;
-    }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-    if (!PsiTreeUtil.isAncestor(assignmentExpression.getLExpression(), expression, false)) {
-      return null;
-    }
-    return assignmentExpression;
   }
 }

@@ -19,6 +19,7 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -92,7 +93,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
           String scopeString = data.myOptions.searchScope == null ? null : data.myOptions.searchScope.getDisplayName();
           return FindBundle.message("recent.find.usages.action.description",
                                     StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
-                                    UsageViewUtil.getDescriptiveName(psiElement),
+                                    DescriptiveNameUtil.getDescriptiveName(psiElement),
                                     scopeString == null ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName() : scopeString);
         }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeCook;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,7 +64,7 @@ public class TypeCookDialog extends RefactoringDialog {
       PsiElement element = elements[i];
       name.append(StringUtil.capitalize(UsageViewUtil.getType(element)));
       name.append(" ");
-      name.append(UsageViewUtil.getDescriptiveName(element));
+      name.append(DescriptiveNameUtil.getDescriptiveName(element));
       if (i < elements.length - 1) {
         name.append("<br>");
       }

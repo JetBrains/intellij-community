@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
@@ -159,11 +159,11 @@ public class DfaVariableValue extends DfaValue {
     }
 
     PsiVariable var = getPsiVariable();
-    Nullness nullability = DfaUtil.getElementNullability(getVariableType(), var);
+    Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
     if (nullability == Nullness.UNKNOWN && var != null) {
-      if (DfaUtil.isNullableInitialized(var, true)) {
+      if (DfaPsiUtil.isNullableInitialized(var, true)) {
         nullability = Nullness.NULLABLE;
-      } else if (DfaUtil.isNullableInitialized(var, false)) {
+      } else if (DfaPsiUtil.isNullableInitialized(var, false)) {
         nullability = Nullness.NOT_NULL;
       }
     }
@@ -172,7 +172,7 @@ public class DfaVariableValue extends DfaValue {
 
     return nullability;
   }
-  
+
   public boolean isLocalVariable() {
     return myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter;
   }

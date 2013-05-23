@@ -19,7 +19,7 @@
  * User: max
  * Date: Jan 26, 2002
  * Time: 10:46:40 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.dataFlow.instructions;
@@ -31,10 +31,11 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.openapi.progress.ProgressManager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class Instruction {
   private int myIndex;
-  private final ArrayList<DfaMemoryState> myProcessedStates;
+  private final List<DfaMemoryState> myProcessedStates;
 
   protected Instruction() {
     myProcessedStates = new ArrayList<DfaMemoryState>();

@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.guess.impl;
+package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;

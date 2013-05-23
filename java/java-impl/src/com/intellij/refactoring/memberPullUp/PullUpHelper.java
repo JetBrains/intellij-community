@@ -29,6 +29,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +55,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.VisibilityUtil;
@@ -154,7 +154,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
   }
 
   protected String getCommandName() {
-    return RefactoringBundle.message("pullUp.command", UsageViewUtil.getDescriptiveName(mySourceClass));
+    return RefactoringBundle.message("pullUp.command", DescriptiveNameUtil.getDescriptiveName(mySourceClass));
   }
 
   public void moveMembersToBase() throws IncorrectOperationException {

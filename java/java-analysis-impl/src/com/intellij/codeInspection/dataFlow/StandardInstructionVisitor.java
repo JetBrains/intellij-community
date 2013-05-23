@@ -55,7 +55,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return Nullness.NOT_NULL;
       }
 
-      return callExpression != null ? DfaUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
+      return callExpression != null ? DfaPsiUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
     }
   };
 
@@ -74,7 +74,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
         Map<PsiExpression, Nullness> map = ContainerUtil.newHashMap();
         for (int i = 0; i < checkedCount; i++) {
-          map.put(args[i], DfaUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
+          map.put(args[i], DfaPsiUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
         }
         return map;
       }
@@ -112,7 +112,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
       final PsiVariable psiVariable = var.getPsiVariable();
-      if (DfaUtil.getElementNullability(var.getVariableType(), psiVariable) == Nullness.NOT_NULL) {
+      if (DfaPsiUtil.getElementNullability(var.getVariableType(), psiVariable) == Nullness.NOT_NULL) {
         if (!memState.applyNotNull(dfaSource)) {
           onAssigningToNotNullableVariable(instruction);
         }
@@ -215,7 +215,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     finally {
       memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
       if (instruction.shouldFlushFields()) {
-        memState.flushFields(runner);
+        memState.flushFields(runner.getFields());
       }
     }
   }
@@ -229,7 +229,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     final PsiType type = instruction.getResultType();
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
-    
+
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
       return factory.getBoxedFactory().createUnboxed(qualifierValue);
     }

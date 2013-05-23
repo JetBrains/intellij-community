@@ -42,7 +42,7 @@ import java.util.*;
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private final DfaValueFactory myFactory;
 
-  private final ArrayList<SortedIntSet> myEqClasses = new ArrayList<SortedIntSet>();
+  private final List<SortedIntSet> myEqClasses = new ArrayList<SortedIntSet>();
   private int myStateSize = 0;
   private final Stack<DfaValue> myStack = new Stack<DfaValue>();
   private TIntStack myOffsetStack = new TIntStack(1);
@@ -691,7 +691,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private static boolean isMaybeBoxedConstant(DfaValue val) {
     return val instanceof DfaConstValue ||
-           (val instanceof DfaBoxedValue && ((DfaBoxedValue)val).getWrappedValue() instanceof DfaConstValue);
+           val instanceof DfaBoxedValue && ((DfaBoxedValue)val).getWrappedValue() instanceof DfaConstValue;
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
@@ -788,7 +788,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         state.setNullable(false);
         return state;
       }
-      
+
       myVariableStates.put(dfaVar, state);
     }
 
@@ -804,16 +804,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void flushFields(DataFlowRunner runner) {
+  public void flushFields(DfaVariableValue[] fields) {
     Set<DfaVariableValue> allVars = new HashSet<DfaVariableValue>(myVariableStates.keySet());
-    Collections.addAll(allVars, runner.getFields());
-    
+    Collections.addAll(allVars, fields);
+
     Set<DfaVariableValue> dependencies  = new HashSet<DfaVariableValue>();
     for (DfaVariableValue variableValue : allVars) {
       dependencies.addAll(myFactory.getVarFactory().getAllQualifiedBy(variableValue));
     }
     allVars.addAll(dependencies);
-    
+
     for (DfaVariableValue value : allVars) {
       if (myVariableStates.containsKey(value) || getEqClassIndex(value) >= 0) {
         if (value.isFlushableByCalls()) {

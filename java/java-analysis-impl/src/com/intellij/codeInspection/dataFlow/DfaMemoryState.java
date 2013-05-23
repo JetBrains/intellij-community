@@ -47,7 +47,7 @@ public interface DfaMemoryState {
 
   boolean applyNotNull(DfaValue value);
 
-  void flushFields(DataFlowRunner runner);
+  void flushFields(DfaVariableValue[] fields);
 
   void flushVariable(DfaVariableValue variable);
 

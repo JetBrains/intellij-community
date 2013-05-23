@@ -16,14 +16,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,22 +62,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
 
     final PsiFile file = expression.getContainingFile();
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    final PsiConditionalExpression conditionalExpression = replaceWthConditionalExpression(project, myText + "!=null", expression, suggestDefaultValue(expression));
-
-    final PsiExpression elseExpression = conditionalExpression.getElseExpression();
-    if (elseExpression != null) {
-      selectInEditor(elseExpression);
-    }
-  }
-
-  private static void selectInEditor(@NotNull PsiElement element) {
-    final Editor editor = PsiUtilBase.findEditor(element);
-    if (editor == null) return;
-
-    final TextRange expressionRange = element.getTextRange();
-    editor.getCaretModel().moveToOffset(expressionRange.getStartOffset());
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().setSelection(expressionRange.getStartOffset(), expressionRange.getEndOffset());
+    replaceWthConditionalExpression(project, myText + "!=null", expression, suggestDefaultValue(expression));
   }
 
   @NotNull
