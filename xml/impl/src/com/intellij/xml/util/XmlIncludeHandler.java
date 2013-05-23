@@ -17,10 +17,14 @@ package com.intellij.xml.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author mike
@@ -51,14 +55,19 @@ public class XmlIncludeHandler {
     final XmlAttributeValue xmlAttributeValue = hrefAttribute.getValueElement();
     if (xmlAttributeValue == null) return null;
 
-    final FileReferenceSet referenceSet = FileReferenceSet.createSet(xmlAttributeValue, false, true, false);
-
-    final PsiReference reference = referenceSet.getLastReference();
-    if (reference == null) return null;
-
-    final PsiElement target = reference.resolve();
-
-    if (!(target instanceof XmlFile)) return null;
-    return (XmlFile)target;
+    List<PsiReference> references = Arrays.asList(xmlAttributeValue.getReferences());
+    if (references.size() > 0) {
+      Collections.sort(references, new Comparator<PsiReference>() {
+        @Override
+        public int compare(PsiReference reference1, PsiReference reference2) {
+          return reference2.getRangeInElement().getStartOffset() - reference1.getRangeInElement().getStartOffset();
+        }
+      });
+      PsiElement target = references.get(0).resolve();
+      if (target instanceof XmlFile) {
+        return (XmlFile) target;
+      }
+    }
+    return null;
   }
 }
