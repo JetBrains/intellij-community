@@ -40,7 +40,6 @@ public class Swing_UI {
                 if (mainFrame == null) {
                     mainFrame = new MainFrame(ui_controller);
                 }
-                mainFrame.setVisible(true);
                 errorFrame.setVisible(false);
                 progressFrame.setVisible(false);
                 break;

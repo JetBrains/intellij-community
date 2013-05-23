@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
 import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.swing_ui.UI_Utilities;
 import org.hanuna.gitalk.ui.UI_Controller;
 
 import javax.swing.*;
@@ -14,7 +13,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author erokhins
  */
-public class MainFrame extends JFrame {
+public class MainFrame {
     private final UI_Controller ui_controller;
     private final UI_GraphTable graphTable;
     private final UI_RefTable refTable;
@@ -134,29 +133,15 @@ public class MainFrame extends JFrame {
         packTopGraphPanel();
         mainPanel.add(topPanel);
         mainPanel.add(tablePanel);
-
-
-        setContentPane(mainPanel);
-        pack();
     }
 
     private void packElements() {
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setTitle("GitAlk");
-
         packTables();
         packMainPanel();
 
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         int height = screenDimension.height * 4 / 5;
         int width = screenDimension.width * 3 / 4;
-
-        setSize(new Dimension(width, height));
-        UI_Utilities.setCenterLocation(this);
-    }
-
-    public void showUi() {
-        setVisible(true);
     }
 
   public JPanel getMainComponent() {
