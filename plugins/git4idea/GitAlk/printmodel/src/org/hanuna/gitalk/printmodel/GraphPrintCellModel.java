@@ -8,13 +8,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GraphPrintCellModel {
 
-    @NotNull
-    public GraphPrintCell getGraphPrintCell(final int rowIndex);
+  @NotNull
+  public GraphPrintCell getGraphPrintCell(final int rowIndex);
 
-    @NotNull
-    public SelectController getSelectController();
+  @NotNull
+  public SelectController getSelectController();
 
-    public void recalculate(@NotNull UpdateRequest updateRequest);
+  public void recalculate(@NotNull UpdateRequest updateRequest);
 
-    public void setLongEdgeVisibility(boolean visibility);
+  public void setLongEdgeVisibility(boolean visibility);
 }

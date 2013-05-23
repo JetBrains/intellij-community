@@ -10,10 +10,10 @@ import java.util.List;
  */
 public interface CommitParents {
 
-    @NotNull
-    public Hash getCommitHash();
+  @NotNull
+  public Hash getCommitHash();
 
-    @NotNull
-    public List<Hash> getParentHashes();
+  @NotNull
+  public List<Hash> getParentHashes();
 
 }

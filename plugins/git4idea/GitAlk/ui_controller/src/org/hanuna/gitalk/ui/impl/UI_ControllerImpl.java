@@ -35,225 +35,232 @@ import java.util.Set;
  */
 public class UI_ControllerImpl implements UI_Controller {
 
-    private final DataLoader dataLoader = new DataLoaderImpl();
-    private final EventsController events = new EventsController();
+  private final DataLoader dataLoader = new DataLoaderImpl();
+  private final EventsController events = new EventsController();
 
-    private DataPack dataPack;
-    private RefTreeTableModel refTableModel;
-    private RefTreeModel refTreeModel;
+  private DataPack dataPack;
+  private RefTreeTableModel refTableModel;
+  private RefTreeModel refTreeModel;
 
-    private GraphTableModel graphTableModel;
+  private GraphTableModel graphTableModel;
 
-    private GraphElement prevGraphElement = null;
-    private Set<Hash> prevSelectionBranches;
+  private GraphElement prevGraphElement = null;
+  private Set<Hash> prevSelectionBranches;
 
-    private void dataInit() {
-        dataPack = dataLoader.getDataPack();
-        refTreeModel = new RefTreeModelImpl(dataPack.getRefsModel());
-        refTableModel = new RefTreeTableModel(refTreeModel);
-        graphTableModel = new GraphTableModel(dataPack);
+  private void dataInit() {
+    dataPack = dataLoader.getDataPack();
+    refTreeModel = new RefTreeModelImpl(dataPack.getRefsModel());
+    refTableModel = new RefTreeTableModel(refTreeModel);
+    graphTableModel = new GraphTableModel(dataPack);
 
-        prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
+    prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
+  }
+
+  public void init(boolean readAllLog) {
+    events.setState(ControllerListener.State.PROGRESS);
+    Executor<String> statusUpdater = new Executor<String>() {
+      @Override
+      public void execute(String key) {
+        events.setUpdateProgressMessage(key);
+      }
+    };
+
+    try {
+      if (readAllLog) {
+        dataLoader.readAllLog(statusUpdater);
+      }
+      else {
+        dataLoader.readNextPart(statusUpdater);
+      }
+      dataInit();
+      events.setState(ControllerListener.State.USUAL);
     }
+    catch (IOException e) {
+      events.setState(ControllerListener.State.ERROR);
+      events.setErrorMessage(e.getMessage());
+    }
+    catch (GitException e) {
+      events.setState(ControllerListener.State.ERROR);
+      events.setErrorMessage(e.getMessage());
+    }
+  }
 
-    public void init(boolean readAllLog) {
-        events.setState(ControllerListener.State.PROGRESS);
-        Executor<String> statusUpdater = new Executor<String>() {
+
+  @Override
+  @NotNull
+  public TableModel getGraphTableModel() {
+    return graphTableModel;
+  }
+
+  @Override
+  @NotNull
+  public TreeTableModel getRefsTreeTableModel() {
+    return refTableModel;
+  }
+
+  @Override
+  public RefTreeModel getRefTreeModel() {
+    return refTreeModel;
+  }
+
+  @Override
+  public void addControllerListener(@NotNull ControllerListener listener) {
+    events.addListener(listener);
+  }
+
+  @Override
+  public void removeAllListeners() {
+    events.removeAllListeners();
+  }
+
+  @Override
+  public void over(@Nullable GraphElement graphElement) {
+    SelectController selectController = dataPack.getPrintCellModel().getSelectController();
+    FragmentManager fragmentManager = dataPack.getGraphModel().getFragmentManager();
+    if (graphElement == prevGraphElement) {
+      return;
+    }
+    else {
+      prevGraphElement = graphElement;
+    }
+    selectController.deselectAll();
+    if (graphElement == null) {
+      events.runUpdateUI();
+    }
+    else {
+      GraphFragment graphFragment = fragmentManager.relateFragment(graphElement);
+      selectController.select(graphFragment);
+      events.runUpdateUI();
+    }
+  }
+
+  public void click(@Nullable GraphElement graphElement) {
+    SelectController selectController = dataPack.getPrintCellModel().getSelectController();
+    FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
+    selectController.deselectAll();
+    if (graphElement == null) {
+      return;
+    }
+    GraphFragment fragment = fragmentController.relateFragment(graphElement);
+    if (fragment == null) {
+      return;
+    }
+    UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
+    events.runUpdateUI();
+    //TODO:
+    events.runJumpToRow(updateRequest.from());
+  }
+
+  @Override
+  public void doubleClick(int rowIndex) {
+    if (rowIndex == graphTableModel.getRowCount() - 1) {
+      readNextPart();
+    }
+  }
+
+  @Override
+  public void updateVisibleBranches() {
+    final Set<Hash> checkedCommitHashes = refTreeModel.getCheckedCommits();
+    if (!prevSelectionBranches.equals(checkedCommitHashes)) {
+      MyTimer timer = new MyTimer("update branch shows");
+
+      prevSelectionBranches = new HashSet<Hash>(checkedCommitHashes);
+      dataPack.getGraphModel().setVisibleBranchesNodes(new Function<Node, Boolean>() {
+        @NotNull
+        @Override
+        public Boolean get(@NotNull Node key) {
+          return key.getType() == Node.NodeType.COMMIT_NODE && checkedCommitHashes.contains(key.getCommitHash());
+        }
+      });
+
+      events.runUpdateUI();
+      //TODO:
+      events.runJumpToRow(0);
+
+      timer.print();
+    }
+  }
+
+
+  @Override
+  public void readNextPart() {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          events.setState(ControllerListener.State.PROGRESS);
+
+          dataLoader.readNextPart(new Executor<String>() {
             @Override
             public void execute(String key) {
-                events.setUpdateProgressMessage(key);
+              events.setUpdateProgressMessage(key);
             }
-        };
+          });
 
-        try {
-            if (readAllLog) {
-                dataLoader.readAllLog(statusUpdater);
-            } else {
-                dataLoader.readNextPart(statusUpdater);
-            }
-            dataInit();
-            events.setState(ControllerListener.State.USUAL);
-        } catch (IOException e) {
-            events.setState(ControllerListener.State.ERROR);
-            events.setErrorMessage(e.getMessage());
-        } catch (GitException e) {
-            events.setState(ControllerListener.State.ERROR);
-            events.setErrorMessage(e.getMessage());
+
+          events.setState(ControllerListener.State.USUAL);
+          events.runUpdateUI();
+
         }
-    }
-
-
-    @Override
-    @NotNull
-    public TableModel getGraphTableModel() {
-        return graphTableModel;
-    }
-
-    @Override
-    @NotNull
-    public TreeTableModel getRefsTreeTableModel() {
-        return refTableModel;
-    }
-
-    @Override
-    public RefTreeModel getRefTreeModel() {
-        return refTreeModel;
-    }
-
-    @Override
-    public void addControllerListener(@NotNull ControllerListener listener) {
-        events.addListener(listener);
-    }
-
-    @Override
-    public void removeAllListeners() {
-        events.removeAllListeners();
-    }
-
-    @Override
-    public void over(@Nullable GraphElement graphElement) {
-        SelectController selectController = dataPack.getPrintCellModel().getSelectController();
-        FragmentManager fragmentManager = dataPack.getGraphModel().getFragmentManager();
-        if (graphElement == prevGraphElement) {
-            return;
-        } else {
-            prevGraphElement = graphElement;
+        catch (IOException e) {
+          events.setState(ControllerListener.State.ERROR);
+          events.setErrorMessage(e.getMessage());
         }
-        selectController.deselectAll();
-        if (graphElement == null) {
-            events.runUpdateUI();
-        } else {
-            GraphFragment graphFragment = fragmentManager.relateFragment(graphElement);
-            selectController.select(graphFragment);
-            events.runUpdateUI();
+        catch (GitException e) {
+          events.setState(ControllerListener.State.ERROR);
+          events.setErrorMessage(e.getMessage());
         }
-    }
+      }
+    }).start();
 
-    public void click(@Nullable GraphElement graphElement) {
-        SelectController selectController = dataPack.getPrintCellModel().getSelectController();
-        FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
-        selectController.deselectAll();
-        if (graphElement == null) {
-            return;
-        }
-        GraphFragment fragment = fragmentController.relateFragment(graphElement);
-        if (fragment == null) {
-            return;
-        }
-        UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
+  }
+
+  @Override
+  public void showAll() {
+    dataPack.getGraphModel().getFragmentManager().showAll();
+    events.runUpdateUI();
+    events.runJumpToRow(0);
+  }
+
+  @Override
+  public void hideAll() {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        events.setState(ControllerListener.State.PROGRESS);
+        events.setUpdateProgressMessage("Hide long branches");
+        MyTimer timer = new MyTimer("hide All");
+        dataPack.getGraphModel().getFragmentManager().hideAll();
+
         events.runUpdateUI();
         //TODO:
-        events.runJumpToRow(updateRequest.from());
-    }
-
-    @Override
-    public void doubleClick(int rowIndex) {
-        if (rowIndex == graphTableModel.getRowCount() - 1) {
-            readNextPart();
-        }
-    }
-
-    @Override
-    public void updateVisibleBranches() {
-        final Set<Hash> checkedCommitHashes = refTreeModel.getCheckedCommits();
-        if (! prevSelectionBranches.equals(checkedCommitHashes)) {
-            MyTimer timer = new MyTimer("update branch shows");
-
-            prevSelectionBranches = new HashSet<Hash>(checkedCommitHashes);
-            dataPack.getGraphModel().setVisibleBranchesNodes(new Function<Node, Boolean>() {
-                @NotNull
-                @Override
-                public Boolean get(@NotNull Node key) {
-                    return key.getType() == Node.NodeType.COMMIT_NODE && checkedCommitHashes.contains(key.getCommitHash());
-                }
-            });
-
-            events.runUpdateUI();
-            //TODO:
-            events.runJumpToRow(0);
-
-            timer.print();
-        }
-    }
-
-
-    @Override
-    public void readNextPart() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    events.setState(ControllerListener.State.PROGRESS);
-
-                    dataLoader.readNextPart(new Executor<String>() {
-                        @Override
-                        public void execute(String key) {
-                            events.setUpdateProgressMessage(key);
-                        }
-                    });
-
-
-                    events.setState(ControllerListener.State.USUAL);
-                    events.runUpdateUI();
-
-                } catch (IOException e) {
-                    events.setState(ControllerListener.State.ERROR);
-                    events.setErrorMessage(e.getMessage());
-                } catch (GitException e) {
-                    events.setState(ControllerListener.State.ERROR);
-                    events.setErrorMessage(e.getMessage());
-                }
-            }
-        }).start();
-
-    }
-
-    @Override
-    public void showAll() {
-        dataPack.getGraphModel().getFragmentManager().showAll();
-        events.runUpdateUI();
         events.runJumpToRow(0);
+        timer.print();
+
+        events.setState(ControllerListener.State.USUAL);
+      }
+    }).start();
+  }
+
+  @Override
+  public void setLongEdgeVisibility(boolean visibility) {
+    dataPack.getPrintCellModel().setLongEdgeVisibility(visibility);
+    events.runUpdateUI();
+  }
+
+  @Override
+  public void jumpToCommit(Hash commitHash) {
+    Graph graph = dataPack.getGraphModel().getGraph();
+    int row = -1;
+    for (int i = 0; i < graph.getNodeRows().size(); i++) {
+      Node node = graph.getCommitNodeInRow(i);
+      if (node != null && node.getCommitHash().equals(commitHash)) {
+        row = i;
+        break;
+      }
     }
-
-    @Override
-    public void hideAll() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                events.setState(ControllerListener.State.PROGRESS);
-                events.setUpdateProgressMessage("Hide long branches");
-                MyTimer timer = new MyTimer("hide All");
-                dataPack.getGraphModel().getFragmentManager().hideAll();
-
-                events.runUpdateUI();
-                //TODO:
-                events.runJumpToRow(0);
-                timer.print();
-
-                events.setState(ControllerListener.State.USUAL);
-            }
-        }).start();
+    if (row != -1) {
+      events.runJumpToRow(row);
     }
-
-    @Override
-    public void setLongEdgeVisibility(boolean visibility) {
-        dataPack.getPrintCellModel().setLongEdgeVisibility(visibility);
-        events.runUpdateUI();
-    }
-
-    @Override
-    public void jumpToCommit(Hash commitHash) {
-        Graph graph = dataPack.getGraphModel().getGraph();
-        int row = -1;
-        for (int i = 0; i < graph.getNodeRows().size(); i++) {
-            Node node = graph.getCommitNodeInRow(i);
-            if (node != null && node.getCommitHash().equals(commitHash)) {
-                row = i;
-                break;
-            }
-        }
-        if (row != -1) {
-            events.runJumpToRow(row);
-        }
-    }
+  }
 }

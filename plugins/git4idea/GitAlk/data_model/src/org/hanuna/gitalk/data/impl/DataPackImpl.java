@@ -24,83 +24,85 @@ import java.util.List;
  * @author erokhins
  */
 public class DataPackImpl implements DataPack {
-    public static DataPackImpl buildDataPack(@NotNull List<CommitParents> commitParentsList, @NotNull List<Ref> allRefs,
-                                      Executor<String> statusUpdater) {
-        statusUpdater.execute("Build graph");
+  public static DataPackImpl buildDataPack(@NotNull List<CommitParents> commitParentsList,
+                                           @NotNull List<Ref> allRefs,
+                                           Executor<String> statusUpdater) {
+    statusUpdater.execute("Build graph");
 
-        MyTimer timer = new MyTimer("graph build");
-        MutableGraph graph = GraphBuilder.build(commitParentsList);
-        timer.print();
+    MyTimer timer = new MyTimer("graph build");
+    MutableGraph graph = GraphBuilder.build(commitParentsList);
+    timer.print();
 
-        timer.clear("graphModel build");
-        GraphModel graphModel = new GraphModelImpl(graph);
-        timer.print();
+    timer.clear("graphModel build");
+    GraphModel graphModel = new GraphModelImpl(graph);
+    timer.print();
 
-        statusUpdater.execute("Build print model");
-        timer.clear("build printModel");
-        final GraphPrintCellModel printCellModel = new GraphPrintCellModelImpl(graphModel.getGraph());
-        timer.print();
-        graphModel.addUpdateListener(new Executor<UpdateRequest>() {
-            @Override
-            public void execute(UpdateRequest key) {
-                printCellModel.recalculate(key);
-            }
-        });
+    statusUpdater.execute("Build print model");
+    timer.clear("build printModel");
+    final GraphPrintCellModel printCellModel = new GraphPrintCellModelImpl(graphModel.getGraph());
+    timer.print();
+    graphModel.addUpdateListener(new Executor<UpdateRequest>() {
+      @Override
+      public void execute(UpdateRequest key) {
+        printCellModel.recalculate(key);
+      }
+    });
 
-        final RefsModel refsModel = new RefsModel(allRefs);
-        graphModel.getFragmentManager().setUnconcealedNodeFunction(new Function<Node, Boolean>() {
-            @NotNull
-            @Override
-            public Boolean get(@NotNull Node key) {
-                if (key.getDownEdges().isEmpty() || key.getUpEdges().isEmpty() || refsModel.isBranchRef(key.getCommitHash())) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });
-        return new DataPackImpl(graphModel, refsModel, printCellModel);
-    }
+    final RefsModel refsModel = new RefsModel(allRefs);
+    graphModel.getFragmentManager().setUnconcealedNodeFunction(new Function<Node, Boolean>() {
+      @NotNull
+      @Override
+      public Boolean get(@NotNull Node key) {
+        if (key.getDownEdges().isEmpty() || key.getUpEdges().isEmpty() || refsModel.isBranchRef(key.getCommitHash())) {
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+    });
+    return new DataPackImpl(graphModel, refsModel, printCellModel);
+  }
 
 
-    private final GraphModel graphModel;
-    private final RefsModel refsModel;
-    private final GraphPrintCellModel printCellModel;
-    private final CommitDataGetter commitDataGetter = new CacheCommitDataGetter(this);
+  private final GraphModel graphModel;
+  private final RefsModel refsModel;
+  private final GraphPrintCellModel printCellModel;
+  private final CommitDataGetter commitDataGetter = new CacheCommitDataGetter(this);
 
-    private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel) {
-        this.graphModel = graphModel;
-        this.refsModel = refsModel;
-        this.printCellModel = printCellModel;
-    }
+  private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel) {
+    this.graphModel = graphModel;
+    this.refsModel = refsModel;
+    this.printCellModel = printCellModel;
+  }
 
-    public void appendCommits(@NotNull List<CommitParents> commitParentsList, @NotNull Executor<String> statusUpdater) {
-        statusUpdater.execute("Rebuild graph and print model");
-        MyTimer timer = new MyTimer("append commits");
-        graphModel.appendCommitsToGraph(commitParentsList);
-        timer.print();
-    }
+  public void appendCommits(@NotNull List<CommitParents> commitParentsList, @NotNull Executor<String> statusUpdater) {
+    statusUpdater.execute("Rebuild graph and print model");
+    MyTimer timer = new MyTimer("append commits");
+    graphModel.appendCommitsToGraph(commitParentsList);
+    timer.print();
+  }
 
-    @Override
-    public CommitDataGetter getCommitDataGetter() {
-        return commitDataGetter;
-    }
+  @Override
+  public CommitDataGetter getCommitDataGetter() {
+    return commitDataGetter;
+  }
 
-    @NotNull
-    @Override
-    public RefsModel getRefsModel() {
-        return refsModel;
-    }
+  @NotNull
+  @Override
+  public RefsModel getRefsModel() {
+    return refsModel;
+  }
 
-    @NotNull
-    @Override
-    public GraphModel getGraphModel() {
-        return graphModel;
-    }
+  @NotNull
+  @Override
+  public GraphModel getGraphModel() {
+    return graphModel;
+  }
 
-    @NotNull
-    @Override
-    public GraphPrintCellModel getPrintCellModel() {
-        return printCellModel;
-    }
+  @NotNull
+  @Override
+  public GraphPrintCellModel getPrintCellModel() {
+    return printCellModel;
+  }
 }

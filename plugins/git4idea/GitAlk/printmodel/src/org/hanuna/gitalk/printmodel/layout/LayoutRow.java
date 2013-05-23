@@ -10,8 +10,8 @@ import java.util.List;
  * @author erokhins
  */
 public interface LayoutRow {
-    @NotNull
-    public List<GraphElement> getOrderedGraphElements();
+  @NotNull
+  public List<GraphElement> getOrderedGraphElements();
 
-    public NodeRow getGraphNodeRow();
+  public NodeRow getGraphNodeRow();
 }

@@ -10,28 +10,28 @@ import java.util.List;
  * @author erokhins
  */
 public class TimestampCommitParents implements CommitParents {
-    private final CommitParents commitParents;
-    private final long timestamp;
+  private final CommitParents commitParents;
+  private final long timestamp;
 
-    public TimestampCommitParents(CommitParents commitParents, long timestamp) {
-        this.commitParents = commitParents;
-        this.timestamp = timestamp;
-    }
+  public TimestampCommitParents(CommitParents commitParents, long timestamp) {
+    this.commitParents = commitParents;
+    this.timestamp = timestamp;
+  }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-    @NotNull
-    @Override
-    public Hash getCommitHash() {
-        return commitParents.getCommitHash();
-    }
+  @NotNull
+  @Override
+  public Hash getCommitHash() {
+    return commitParents.getCommitHash();
+  }
 
-    @NotNull
-    @Override
-    public List<Hash> getParentHashes() {
-        return commitParents.getParentHashes();
-    }
+  @NotNull
+  @Override
+  public List<Hash> getParentHashes() {
+    return commitParents.getParentHashes();
+  }
 
 }

@@ -19,69 +19,72 @@ import java.util.List;
  * @author erokhins
  */
 public class CommitParentsReader {
-    private static final int COMMIT_BLOCK_SIZE = 1000;
+  private static final int COMMIT_BLOCK_SIZE = 1000;
 
-    private long lastTimeStamp = 0;
-    private Executor<Integer> progressUpdater;
+  private long lastTimeStamp = 0;
+  private Executor<Integer> progressUpdater;
 
-    private List<TimestampCommitParents> nextBlock() throws IOException, GitException {
-        final List<TimestampCommitParents> commitParentsList = new ArrayList<TimestampCommitParents>();
-        final MyTimer gitThink = new MyTimer("gitThink");
-        final MyTimer readTimer = new MyTimer("read commit parents");
-        ProcessOutputReader outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
-            private boolean wasReadFirstLine = false;
-            @Override
-            public void execute(String key) {
-                if (!wasReadFirstLine) {
-                    wasReadFirstLine = true;
-                    gitThink.print();
-                    readTimer.clear();
-                }
-                TimestampCommitParents commitParents = CommitParser.parseTimestampParentHashes(key);
-                commitParentsList.add(commitParents);
-            }
-        });
-        if (lastTimeStamp == 0) {
-            outputReader.startRead(GitProcessFactory.firstPart(COMMIT_BLOCK_SIZE));
-        } else {
-            outputReader.startRead(GitProcessFactory.logPart(lastTimeStamp, COMMIT_BLOCK_SIZE));
+  private List<TimestampCommitParents> nextBlock() throws IOException, GitException {
+    final List<TimestampCommitParents> commitParentsList = new ArrayList<TimestampCommitParents>();
+    final MyTimer gitThink = new MyTimer("gitThink");
+    final MyTimer readTimer = new MyTimer("read commit parents");
+    ProcessOutputReader outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
+      private boolean wasReadFirstLine = false;
+
+      @Override
+      public void execute(String key) {
+        if (!wasReadFirstLine) {
+          wasReadFirstLine = true;
+          gitThink.print();
+          readTimer.clear();
         }
-        return commitParentsList;
+        TimestampCommitParents commitParents = CommitParser.parseTimestampParentHashes(key);
+        commitParentsList.add(commitParents);
+      }
+    });
+    if (lastTimeStamp == 0) {
+      outputReader.startRead(GitProcessFactory.firstPart(COMMIT_BLOCK_SIZE));
     }
-
-    private void removeElementsWithLastTimeStamp(List<TimestampCommitParents> commitParentsList) {
-        int lastOkIndex = -5;
-        for (int i = commitParentsList.size() - 1; i >= 0; i--) {
-            if (commitParentsList.get(i).getTimestamp() != lastTimeStamp) {
-                lastOkIndex = i;
-                break;
-            }
-        }
-        commitParentsList.subList(lastOkIndex + 1, commitParentsList.size()).clear();
+    else {
+      outputReader.startRead(GitProcessFactory.logPart(lastTimeStamp, COMMIT_BLOCK_SIZE));
     }
+    return commitParentsList;
+  }
 
-    /**
-     * @return empty list, if all commits was readied
-     */
-    @NotNull
-    public List<CommitParents> readNextBlock(final Executor<String> statusUpdater) throws IOException, GitException {
-        statusUpdater.execute("Begin load git repository");
-        progressUpdater = new Executor<Integer>() {
-            @Override
-            public void execute(Integer key) {
-                statusUpdater.execute("Read " + key + " commits");
-            }
-        };
-        List<TimestampCommitParents> commitParentsList = nextBlock();
-        TimestampCommitParents lastCommit = commitParentsList.get(commitParentsList.size() - 1);
-        lastTimeStamp = lastCommit.getTimestamp();
-
-        if (commitParentsList.size() == COMMIT_BLOCK_SIZE) {
-            removeElementsWithLastTimeStamp(commitParentsList);
-        } else {
-            lastTimeStamp++;
-        }
-        return Collections.<CommitParents>unmodifiableList(commitParentsList);
+  private void removeElementsWithLastTimeStamp(List<TimestampCommitParents> commitParentsList) {
+    int lastOkIndex = -5;
+    for (int i = commitParentsList.size() - 1; i >= 0; i--) {
+      if (commitParentsList.get(i).getTimestamp() != lastTimeStamp) {
+        lastOkIndex = i;
+        break;
+      }
     }
+    commitParentsList.subList(lastOkIndex + 1, commitParentsList.size()).clear();
+  }
+
+  /**
+   * @return empty list, if all commits was readied
+   */
+  @NotNull
+  public List<CommitParents> readNextBlock(final Executor<String> statusUpdater) throws IOException, GitException {
+    statusUpdater.execute("Begin load git repository");
+    progressUpdater = new Executor<Integer>() {
+      @Override
+      public void execute(Integer key) {
+        statusUpdater.execute("Read " + key + " commits");
+      }
+    };
+    List<TimestampCommitParents> commitParentsList = nextBlock();
+    TimestampCommitParents lastCommit = commitParentsList.get(commitParentsList.size() - 1);
+    lastTimeStamp = lastCommit.getTimestamp();
+
+    if (commitParentsList.size() == COMMIT_BLOCK_SIZE) {
+      removeElementsWithLastTimeStamp(commitParentsList);
+    }
+    else {
+      lastTimeStamp++;
+    }
+    return Collections.<CommitParents>unmodifiableList(commitParentsList);
+  }
 
 }

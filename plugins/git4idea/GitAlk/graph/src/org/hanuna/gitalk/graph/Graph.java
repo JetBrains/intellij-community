@@ -12,9 +12,9 @@ import java.util.List;
  */
 public interface Graph {
 
-    @NotNull
-    public List<NodeRow> getNodeRows();
+  @NotNull
+  public List<NodeRow> getNodeRows();
 
-    @Nullable
-    public Node getCommitNodeInRow(int rowIndex);
+  @Nullable
+  public Node getCommitNodeInRow(int rowIndex);
 }

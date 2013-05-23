@@ -6,13 +6,14 @@ import org.jetbrains.annotations.NotNull;
  * @author erokhins
  */
 public interface Generator<T> {
-    /**
-     * @exception java.util.NoSuchElementException
-     * @exception IllegalArgumentException
-     */
-    @NotNull
-    public T generate(@NotNull T prev, int steps);
+  /**
+   * @throws java.util.NoSuchElementException
+   *
+   * @throws IllegalArgumentException
+   */
+  @NotNull
+  public T generate(@NotNull T prev, int steps);
 
-    @NotNull
-    public T generateFirst();
+  @NotNull
+  public T generateFirst();
 }

@@ -14,26 +14,32 @@ import javax.swing.table.TableModel;
  */
 public interface UI_Controller {
 
-    public TableModel getGraphTableModel();
+  public TableModel getGraphTableModel();
 
-    public void click(@Nullable GraphElement graphElement);
-    public void over(@Nullable GraphElement graphElement);
-    public void hideAll();
+  public void click(@Nullable GraphElement graphElement);
 
-    public void showAll();
-    public void setLongEdgeVisibility(boolean visibility);
-    public void updateVisibleBranches();
+  public void over(@Nullable GraphElement graphElement);
 
-    public TreeTableModel getRefsTreeTableModel();
-    public RefTreeModel getRefTreeModel();
+  public void hideAll();
 
-    public void addControllerListener(@NotNull ControllerListener listener);
+  public void showAll();
+
+  public void setLongEdgeVisibility(boolean visibility);
+
+  public void updateVisibleBranches();
+
+  public TreeTableModel getRefsTreeTableModel();
+
+  public RefTreeModel getRefTreeModel();
+
+  public void addControllerListener(@NotNull ControllerListener listener);
 
 
-    public void removeAllListeners();
+  public void removeAllListeners();
 
-    public void doubleClick(int rowIndex);
-    public void readNextPart();
+  public void doubleClick(int rowIndex);
 
-    public void jumpToCommit(Hash commitHash);
+  public void readNextPart();
+
+  public void jumpToCommit(Hash commitHash);
 }

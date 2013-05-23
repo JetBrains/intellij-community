@@ -7,17 +7,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Edge extends GraphElement {
 
-    @NotNull
-    public Node getUpNode();
+  @NotNull
+  public Node getUpNode();
 
-    @NotNull
-    public Node getDownNode();
+  @NotNull
+  public Node getDownNode();
 
-    @NotNull
-    public EdgeType getType();
+  @NotNull
+  public EdgeType getType();
 
-    public static enum EdgeType {
-        USUAL,
-        HIDE_FRAGMENT
-    }
+  public static enum EdgeType {
+    USUAL,
+    HIDE_FRAGMENT
+  }
 }

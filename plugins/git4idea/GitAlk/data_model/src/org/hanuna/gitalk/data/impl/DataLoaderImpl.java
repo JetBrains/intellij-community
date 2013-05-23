@@ -18,53 +18,53 @@ import java.util.List;
  * @author erokhins
  */
 public class DataLoaderImpl implements DataLoader {
-    private State state = State.UNINITIALIZED;
-    private DataPackImpl dataPack;
-    private CommitParentsReader partReader = new CommitParentsReader();
+  private State state = State.UNINITIALIZED;
+  private DataPackImpl dataPack;
+  private CommitParentsReader partReader = new CommitParentsReader();
 
-    @Override
-    public void readAllLog(@NotNull Executor<String> statusUpdater) throws IOException, GitException {
-        if (state != State.UNINITIALIZED) {
-            throw new IllegalStateException("data was read");
-        }
-        state = State.ALL_LOG_READER;
-        FullLogCommitParentsReader reader = new FullLogCommitParentsReader(statusUpdater);
-        List<CommitParents> commitParentsList = reader.readAllCommitParents();
+  @Override
+  public void readAllLog(@NotNull Executor<String> statusUpdater) throws IOException, GitException {
+    if (state != State.UNINITIALIZED) {
+      throw new IllegalStateException("data was read");
+    }
+    state = State.ALL_LOG_READER;
+    FullLogCommitParentsReader reader = new FullLogCommitParentsReader(statusUpdater);
+    List<CommitParents> commitParentsList = reader.readAllCommitParents();
+
+    List<Ref> allRefs = new RefReader().readAllRefs();
+    dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater);
+  }
+
+  @Override
+  public void readNextPart(@NotNull Executor<String> statusUpdater) throws IOException, GitException {
+    switch (state) {
+      case ALL_LOG_READER:
+        throw new IllegalStateException("data was read");
+      case UNINITIALIZED:
+        List<CommitParents> commitParentsList = partReader.readNextBlock(statusUpdater);
+        state = State.PART_LOG_READER;
 
         List<Ref> allRefs = new RefReader().readAllRefs();
         dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater);
+        break;
+      case PART_LOG_READER:
+        List<CommitParents> nextPart = partReader.readNextBlock(statusUpdater);
+        dataPack.appendCommits(nextPart, statusUpdater);
+        break;
+      default:
+        throw new IllegalStateException();
     }
+  }
 
-    @Override
-    public void readNextPart(@NotNull Executor<String> statusUpdater) throws IOException, GitException {
-        switch (state) {
-            case ALL_LOG_READER:
-                throw new IllegalStateException("data was read");
-            case UNINITIALIZED:
-                List<CommitParents> commitParentsList = partReader.readNextBlock(statusUpdater);
-                state = State.PART_LOG_READER;
+  @NotNull
+  @Override
+  public DataPack getDataPack() {
+    return dataPack;
+  }
 
-                List<Ref> allRefs = new RefReader().readAllRefs();
-                dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater);
-                break;
-            case PART_LOG_READER:
-                List<CommitParents> nextPart = partReader.readNextBlock(statusUpdater);
-                dataPack.appendCommits(nextPart, statusUpdater);
-                break;
-            default:
-                throw new IllegalStateException();
-        }
-    }
-
-    @NotNull
-    @Override
-    public DataPack getDataPack() {
-        return dataPack;
-    }
-
-    private static enum State {
-        UNINITIALIZED,
-        ALL_LOG_READER,
-        PART_LOG_READER
-    }
+  private static enum State {
+    UNINITIALIZED,
+    ALL_LOG_READER,
+    PART_LOG_READER
+  }
 }

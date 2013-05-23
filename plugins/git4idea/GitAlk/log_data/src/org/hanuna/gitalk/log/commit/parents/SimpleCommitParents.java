@@ -10,23 +10,23 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleCommitParents implements CommitParents {
-    private final Hash commitHash;
-    private final List<Hash> parentHashes;
+  private final Hash commitHash;
+  private final List<Hash> parentHashes;
 
-    public SimpleCommitParents(Hash commitHash, List<Hash> parentHashes) {
-        this.commitHash = commitHash;
-        this.parentHashes = parentHashes;
-    }
+  public SimpleCommitParents(Hash commitHash, List<Hash> parentHashes) {
+    this.commitHash = commitHash;
+    this.parentHashes = parentHashes;
+  }
 
-    @NotNull
-    @Override
-    public Hash getCommitHash() {
-        return commitHash;
-    }
+  @NotNull
+  @Override
+  public Hash getCommitHash() {
+    return commitHash;
+  }
 
-    @NotNull
-    @Override
-    public List<Hash> getParentHashes() {
-        return parentHashes;
-    }
+  @NotNull
+  @Override
+  public List<Hash> getParentHashes() {
+    return parentHashes;
+  }
 }

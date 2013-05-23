@@ -11,15 +11,15 @@ import java.util.List;
  */
 public class GraphCommitCell extends CommitCell {
 
-    private final GraphPrintCell row;
+  private final GraphPrintCell row;
 
-    public GraphCommitCell(GraphPrintCell row, String text, List<Ref> refsToThisCommit) {
-        super(text, refsToThisCommit);
-        this.row = row;
-    }
+  public GraphCommitCell(GraphPrintCell row, String text, List<Ref> refsToThisCommit) {
+    super(text, refsToThisCommit);
+    this.row = row;
+  }
 
-    public GraphPrintCell getPrintCell() {
-        return row;
-    }
+  public GraphPrintCell getPrintCell() {
+    return row;
+  }
 
 }

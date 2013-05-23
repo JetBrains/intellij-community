@@ -8,19 +8,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GraphElement {
 
-    @NotNull
-    public Branch getBranch();
+  @NotNull
+  public Branch getBranch();
 
-    /**
-     * @return node, if this GraphElement was Node, another - null
-     */
-    @Nullable
-    public Node getNode();
+  /**
+   * @return node, if this GraphElement was Node, another - null
+   */
+  @Nullable
+  public Node getNode();
 
-    /**
-     * @return edge, if this GraphElement was Edge, another - null
-     */
-    @Nullable
-    public Edge getEdge();
+  /**
+   * @return edge, if this GraphElement was Edge, another - null
+   */
+  @Nullable
+  public Edge getEdge();
 
 }

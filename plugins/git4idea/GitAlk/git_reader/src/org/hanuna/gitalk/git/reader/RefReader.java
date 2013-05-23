@@ -16,37 +16,37 @@ import java.util.List;
  * @author erokhins
  */
 public class RefReader {
-    private final List<Ref> refs = new ArrayList<Ref>();
-    private final ProcessOutputReader outputReader;
+  private final List<Ref> refs = new ArrayList<Ref>();
+  private final ProcessOutputReader outputReader;
 
-    public RefReader(@NotNull Executor<Integer> progressUpdater) {
-        outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
-            @Override
-            public void execute(String key) {
-                appendLine(key);
-            }
-        });
-    }
+  public RefReader(@NotNull Executor<Integer> progressUpdater) {
+    outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
+      @Override
+      public void execute(String key) {
+        appendLine(key);
+      }
+    });
+  }
 
-    public RefReader() {
-        this(new Executor<Integer>() {
-            @Override
-            public void execute(Integer key) {
+  public RefReader() {
+    this(new Executor<Integer>() {
+      @Override
+      public void execute(Integer key) {
 
-            }
-        });
-    }
+      }
+    });
+  }
 
-    private void appendLine(@NotNull String line) {
-        refs.addAll(RefParser.parseCommitRefs(line));
-    }
+  private void appendLine(@NotNull String line) {
+    refs.addAll(RefParser.parseCommitRefs(line));
+  }
 
-    @NotNull
-    public List<Ref> readAllRefs() throws GitException, IOException {
-        Process process = GitProcessFactory.refs();
-        outputReader.startRead(process);
-        return refs;
-    }
+  @NotNull
+  public List<Ref> readAllRefs() throws GitException, IOException {
+    Process process = GitProcessFactory.refs();
+    outputReader.startRead(process);
+    return refs;
+  }
 
 
 }

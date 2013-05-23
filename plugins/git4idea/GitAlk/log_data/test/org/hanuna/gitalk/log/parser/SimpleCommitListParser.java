@@ -13,28 +13,29 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleCommitListParser {
-    public static List<CommitParents> parseCommitList(@NotNull String input) {
-        SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
-        try {
-            return parser.readAllCommits();
-        } catch (IOException e) {
-            throw new IllegalStateException();
-        }
+  public static List<CommitParents> parseCommitList(@NotNull String input) {
+    SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
+    try {
+      return parser.readAllCommits();
     }
-
-    private final BufferedReader bufferedReader;
-
-    public SimpleCommitListParser(StringReader bufferedReader) {
-        this.bufferedReader = new BufferedReader(bufferedReader);
+    catch (IOException e) {
+      throw new IllegalStateException();
     }
+  }
 
-    public List<CommitParents> readAllCommits() throws IOException {
-        String line;
-        List<CommitParents> commitParentses = new ArrayList<CommitParents>();
-        while ((line = bufferedReader.readLine()) != null) {
-            commitParentses.add(CommitParser.parseCommitParents(line));
-        }
-        return commitParentses;
+  private final BufferedReader bufferedReader;
+
+  public SimpleCommitListParser(StringReader bufferedReader) {
+    this.bufferedReader = new BufferedReader(bufferedReader);
+  }
+
+  public List<CommitParents> readAllCommits() throws IOException {
+    String line;
+    List<CommitParents> commitParentses = new ArrayList<CommitParents>();
+    while ((line = bufferedReader.readLine()) != null) {
+      commitParentses.add(CommitParser.parseCommitParents(line));
     }
+    return commitParentses;
+  }
 
 }

@@ -12,36 +12,36 @@ import java.util.List;
  * @author erokhins
  */
 class MutableLayoutRow implements LayoutRow {
-    private final List<GraphElement> graphElements;
-    private NodeRow nodeRow;
+  private final List<GraphElement> graphElements;
+  private NodeRow nodeRow;
 
-    public MutableLayoutRow() {
-        graphElements = new LinkedList<GraphElement>();
-    }
+  public MutableLayoutRow() {
+    graphElements = new LinkedList<GraphElement>();
+  }
 
-    public MutableLayoutRow(@NotNull LayoutRow layoutRow) {
-        this.graphElements = new LinkedList<GraphElement>(layoutRow.getOrderedGraphElements());
-        this.nodeRow = layoutRow.getGraphNodeRow();
-    }
+  public MutableLayoutRow(@NotNull LayoutRow layoutRow) {
+    this.graphElements = new LinkedList<GraphElement>(layoutRow.getOrderedGraphElements());
+    this.nodeRow = layoutRow.getGraphNodeRow();
+  }
 
-    // modifiable List
-    @NotNull
-    public List<GraphElement> getModifiableOrderedGraphElements() {
-        return graphElements;
-    }
+  // modifiable List
+  @NotNull
+  public List<GraphElement> getModifiableOrderedGraphElements() {
+    return graphElements;
+  }
 
-    public void setNodeRow(@NotNull NodeRow nodeRow) {
-        this.nodeRow = nodeRow;
-    }
+  public void setNodeRow(@NotNull NodeRow nodeRow) {
+    this.nodeRow = nodeRow;
+  }
 
-    @NotNull
-    @Override
-    public List<GraphElement> getOrderedGraphElements() {
-        return Collections.unmodifiableList(graphElements);
-    }
+  @NotNull
+  @Override
+  public List<GraphElement> getOrderedGraphElements() {
+    return Collections.unmodifiableList(graphElements);
+  }
 
-    @Override
-    public NodeRow getGraphNodeRow() {
-        return nodeRow;
-    }
+  @Override
+  public NodeRow getGraphNodeRow() {
+    return nodeRow;
+  }
 }
