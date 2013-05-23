@@ -17,7 +17,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -25,12 +25,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +66,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
     if (method == null) return;
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    int index = ArrayUtil.find(parameters, parameter);
+    int index = ArrayUtilRt.find(parameters, parameter);
 
     List<PsiParameter> toAnnotate = new ArrayList<PsiParameter>();
 
@@ -84,7 +85,8 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
       try {
         assert psiParam != null : toAnnotate;
         if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
-          new AddAnnotationFix(myAnnotation, psiParam, myAnnosToRemove).invoke(project, null, psiParam.getContainingFile());
+          AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, PsiNameValuePair.EMPTY_ARRAY, myAnnosToRemove);
+          fix.invoke(project, psiParam.getContainingFile(), psiParam, psiParam);
         }
       }
       catch (IncorrectOperationException e) {
