@@ -19,7 +19,7 @@
  * User: dsl
  * Date: 07.06.2002
  * Time: 18:48:01
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.util;
@@ -28,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
@@ -46,7 +45,7 @@ public class VisibilityUtil  {
   }
 
   public static int compare(@PsiModifier.ModifierConstant String v1, @PsiModifier.ModifierConstant String v2) {
-    return ArrayUtil.find(visibilityModifiers, v2) - ArrayUtil.find(visibilityModifiers, v1);
+    return ArrayUtilRt.find(visibilityModifiers, v2) - ArrayUtilRt.find(visibilityModifiers, v1);
   }
 
   @PsiModifier.ModifierConstant
@@ -123,11 +122,10 @@ public class VisibilityUtil  {
     return PsiBundle.visibilityPresentation(modifier);
   }
 
-  public static void fixVisibility(UsageInfo[] usageInfos, PsiMember member, @PsiModifier.ModifierConstant String newVisibility) {
+  public static void fixVisibility(PsiElement[] elements, PsiMember member, @PsiModifier.ModifierConstant String newVisibility) {
     if (newVisibility == null) return;
     if (ESCALATE_VISIBILITY.equals(newVisibility)) {
-      for (UsageInfo info : usageInfos) {
-        final PsiElement element = info.getElement();
+      for (PsiElement element : elements) {
         if (element != null) {
           escalateVisibility(member, element);
         }

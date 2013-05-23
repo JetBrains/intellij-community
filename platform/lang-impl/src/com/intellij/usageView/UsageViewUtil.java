@@ -25,6 +25,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -123,4 +125,15 @@ public class UsageViewUtil {
     final int size = collection.size();
     return size == 0 ? UsageInfo.EMPTY_ARRAY : collection.toArray(new UsageInfo[size]);
   }
+
+  @NotNull
+  public static PsiElement[] toElements(@NotNull UsageInfo[] usageInfos) {
+    return ContainerUtil.map2Array(usageInfos, PsiElement.class, new Function<UsageInfo, PsiElement>() {
+      @Override
+      public PsiElement fun(UsageInfo info) {
+        return info.getElement();
+      }
+    });
+  }
+
 }
