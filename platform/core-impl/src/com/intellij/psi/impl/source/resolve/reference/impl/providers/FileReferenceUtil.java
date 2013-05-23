@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -55,10 +54,10 @@ public class FileReferenceUtil {
   public static PsiFile findFile(PsiReference...references) {
     for (int i = references.length - 1; i >= 0; i--) {
       PsiReference ref = references[i];
-      if (ref instanceof PsiDynaReference) {
-        ref = ((PsiDynaReference)ref).getLastFileReference();
+      if (ref instanceof FileReferenceOwner && !(ref instanceof PsiFileReference)) {
+        ref = ((FileReferenceOwner)ref).getLastFileReference();
       }
-      if (ref instanceof FileReference) {
+      if (ref instanceof PsiFileReference) {
         final PsiElement file = references[i].resolve();
         return file instanceof PsiFile ? (PsiFile)file : null;
       }
@@ -67,15 +66,15 @@ public class FileReferenceUtil {
   }
 
   @Nullable
-  public static FileReference findFileReference(@NotNull PsiElement element) {
+  public static PsiFileReference findFileReference(@NotNull PsiElement element) {
     final PsiReference[] references = element.getReferences();
     for (int i = references.length - 1; i >= 0; i--) {
       PsiReference ref = references[i];
-      if (ref instanceof PsiDynaReference) {
-        ref = ((PsiDynaReference)ref).getLastFileReference();
+      if (ref instanceof FileReferenceOwner && !(ref instanceof PsiFileReference)) {
+        ref = ((FileReferenceOwner)ref).getLastFileReference();
       }
-      if (ref instanceof FileReference) {
-        return (FileReference)references[i];
+      if (ref instanceof PsiFileReference) {
+        return (PsiFileReference)references[i];
       }
     }
     return null;
