@@ -28,6 +28,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class ScriptSupportUtil {
                     return true;
                   }
                 };
-                XmlUtil.processXmlElements(document, psiElementProcessor, true);
+                XmlPsiUtil.processXmlElements(document, psiElementProcessor, true);
               }
 
               return new Result<XmlTag[]>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
