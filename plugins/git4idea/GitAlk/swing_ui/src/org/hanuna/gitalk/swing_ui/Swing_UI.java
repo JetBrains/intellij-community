@@ -19,7 +19,12 @@ public class Swing_UI {
     private final UI_Controller ui_controller;
     private MainFrame mainFrame = null;
 
-    public Swing_UI(UI_Controller ui_controller) {
+
+  public MainFrame getMainFrame() {
+    return mainFrame;
+  }
+
+  public Swing_UI(UI_Controller ui_controller) {
         this.ui_controller = ui_controller;
     }
 

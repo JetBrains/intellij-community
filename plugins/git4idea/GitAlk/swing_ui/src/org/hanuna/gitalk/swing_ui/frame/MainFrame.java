@@ -159,4 +159,7 @@ public class MainFrame extends JFrame {
         setVisible(true);
     }
 
+  public JPanel getMainComponent() {
+    return mainPanel;
+  }
 }

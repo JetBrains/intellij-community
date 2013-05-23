@@ -169,7 +169,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   }
 
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
-  private void updateRepositoriesCollection() {
+  public void updateRepositoriesCollection() {
     Map<VirtualFile, GitRepository> repositories;
     try {
       REPO_LOCK.readLock().lock();

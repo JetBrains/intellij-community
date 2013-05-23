@@ -11,11 +11,13 @@ import com.intellij.ui.content.ContentManager;
  * @author Kirill Likhodedov
  */
 public class GitLogToolWindowFactory implements ToolWindowFactory {
+
   @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     final ContentManager contentManager = toolWindow.getContentManager();
-    MainPanel mainPanel = new MainPanel();
+    MainPanel mainPanel = new MainPanel(project);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(mainPanel, "", false);
     contentManager.addContent(content);
   }
+
 }

@@ -84,6 +84,11 @@
       <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
       <implementation-class>git4idea.repo.GitRepositoryManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>gitlog.GitLogComponent</interface-class>
+      <implementation-class>gitlog.GitLogComponent</implementation-class>
+    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">

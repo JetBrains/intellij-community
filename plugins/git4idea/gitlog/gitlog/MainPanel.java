@@ -1,6 +1,7 @@
 package gitlog;
 
-import com.intellij.ui.components.JBLabel;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,9 +11,11 @@ import java.awt.*;
  */
 public class MainPanel extends JPanel {
 
-  MainPanel() {
+  MainPanel(Project project) {
     super(new BorderLayout());
-    add(new JBLabel("Test"));
+
+    GitLogComponent gitLogComponent = ServiceManager.getService(project, GitLogComponent.class);
+    add(gitLogComponent.getMainGitAlkComponent());
   }
 
 }
