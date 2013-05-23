@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.ui;
 
 import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
@@ -51,4 +52,6 @@ public interface UI_Controller {
 
   @NotNull
   DragDropListener getDragDropListener();
+
+  DataPack getDataPack();
 }

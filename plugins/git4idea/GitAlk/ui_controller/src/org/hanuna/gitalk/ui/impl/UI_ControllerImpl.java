@@ -305,4 +305,9 @@ public class UI_ControllerImpl implements UI_Controller {
   public void setDragDropListener(@NotNull DragDropListener dragDropListener) {
     this.dragDropListener = dragDropListener;
   }
+
+  @Override
+  public DataPack getDataPack() {
+    return dataPack;
+  }
 }

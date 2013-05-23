@@ -23,6 +23,7 @@ public class GitLogComponent extends AbstractProjectComponent {
   private GitRepositoryManager myRepositoryManager;
   private GitRepository myRepository;
   private Swing_UI mySwingUi;
+  private UI_ControllerImpl myUiController;
 
   protected GitLogComponent(Project project, GitRepositoryManager repositoryManager) {
     super(project);
@@ -40,11 +41,11 @@ public class GitLogComponent extends AbstractProjectComponent {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       @Override
       public void run() {
-        UI_ControllerImpl ui_controller = new UI_ControllerImpl(myProject);
-        mySwingUi = new Swing_UI(ui_controller);
-        ui_controller.addControllerListener(mySwingUi.getControllerListener());
-        ui_controller.setDragDropListener(mySwingUi.getDragDropListener());
-        ui_controller.init(false);
+        myUiController = new UI_ControllerImpl(myProject);
+        mySwingUi = new Swing_UI(myUiController);
+        myUiController.addControllerListener(mySwingUi.getControllerListener());
+        myUiController.setDragDropListener(mySwingUi.getDragDropListener());
+        myUiController.init(false);
 
         final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow("Git Log");
         if (toolWindow != null && toolWindow.isActive()) {
@@ -60,5 +61,9 @@ public class GitLogComponent extends AbstractProjectComponent {
 
   public GitRepository getRepository() {
     return myRepository;
+  }
+
+  public UI_ControllerImpl getUiController() {
+    return myUiController;
   }
 }

@@ -36,7 +36,7 @@ import java.util.Map;
  *
  * @author Kirill Likhodedov
  */
-interface GitBranchUiHandler {
+public interface GitBranchUiHandler {
 
   @NotNull
   ProgressIndicator getProgressIndicator();

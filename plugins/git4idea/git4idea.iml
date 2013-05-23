@@ -71,6 +71,9 @@
     <orderEntry type="module" module-name="cucumber-test-runner" scope="RUNTIME" />
     <orderEntry type="module" module-name="ui_controller" />
     <orderEntry type="module" module-name="swing_ui" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="log_data" />
+    <orderEntry type="module" module-name="graph" />
   </component>
 </module>
 

@@ -45,7 +45,7 @@ import java.util.Map;
  *
  * @author Kirill Likhodedov
  */
-final class GitBranchWorker {
+public final class GitBranchWorker {
 
   private static final Logger LOG = Logger.getInstance(GitBranchWorker.class);
 
@@ -54,7 +54,7 @@ final class GitBranchWorker {
   @NotNull private final Git myGit;
   @NotNull private final GitBranchUiHandler myUiHandler;
 
-  GitBranchWorker(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler) {
+  public GitBranchWorker(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler) {
     myProject = project;
     myFacade = facade;
     myGit = git;
