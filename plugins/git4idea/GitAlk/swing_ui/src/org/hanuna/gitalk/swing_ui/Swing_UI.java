@@ -1,8 +1,13 @@
 package org.hanuna.gitalk.swing_ui;
 
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
 import org.hanuna.gitalk.swing_ui.frame.ProgressFrame;
@@ -12,7 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author erokhins
@@ -66,7 +73,10 @@ public class Swing_UI {
   private class DragDropConditions {
 
     public boolean sameBranch(Node commit, List<Node> commitsBeingDragged) {
-      return true; // TODO
+      for (Node dragged : commitsBeingDragged) {
+        if (!ui_controller.getDataPackUtils().isSameBranch(commit, dragged)) return false;
+      }
+      return true;
     }
   }
 
@@ -111,7 +121,13 @@ public class Swing_UI {
       }
     };
 
-    private final Action MOVE = new Action() {
+    private class MoveAction implements Action {
+
+      private final InteractiveRebaseBuilder.InsertPosition myPosition;
+
+      private MoveAction(InteractiveRebaseBuilder.InsertPosition position) {
+        myPosition = position;
+      }
 
       @Override
       public void hint(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
@@ -119,12 +135,51 @@ public class Swing_UI {
       }
 
       @Override
-      public void perform(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+      public void perform(final Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
+        Set<Node> upRefNodes = ui_controller.getDataPackUtils().getUpRefNodes(commit);
+        List<Ref> refs = new ArrayList<Ref>();
+        for (Node refNode : upRefNodes) {
+          List<Ref> nodeRefs = ui_controller.getDataPack().getRefsModel().refsToCommit(refNode.getCommitHash());
+          for (Ref ref : nodeRefs) {
+            if (ref.getType() == Ref.RefType.LOCAL_BRANCH || ref.getType() == Ref.RefType.REMOTE_BRANCH) {
+              refs.add(ref);
+            }
+          }
+        }
 
+        if (refs.size() == 1) {
+          Ref ref = refs.get(0);
+          ui_controller.getInteractiveRebaseBuilder().moveCommits(ref, commit, myPosition, commitsBeingDragged);
+        }
+        else {
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Ref>("Select target branch", refs.toArray(new Ref[refs.size()])) {
+
+            @NotNull
+            @Override
+            public String getTextFor(Ref value) {
+              return value.getName();
+            }
+
+            @Override
+            public PopupStep onChosen(Ref selectedValue, boolean finalChoice) {
+              ui_controller.getInteractiveRebaseBuilder().moveCommits(selectedValue, commit, myPosition, commitsBeingDragged);
+              return FINAL_CHOICE;
+            }
+
+            @Override
+            public boolean isSpeedSearchEnabled() {
+              return true;
+            }
+          }).showInCenterOf(e.getComponent());
+        }
       }
-    };
+    }
 
-    private final Action PICK = new Action() {
+    private final Action MOVE_ABOVE = new MoveAction(InteractiveRebaseBuilder.InsertPosition.ABOVE);
+
+    private final Action MOVE_BELOW = new MoveAction(InteractiveRebaseBuilder.InsertPosition.BELOW);
+
+    private final Action CHERRY_PICK = new Action() {
 
       @Override
       public void hint(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
@@ -181,7 +236,7 @@ public class Swing_UI {
       @Override
       public void above(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
         if (myConditions.sameBranch(commit, commitsBeingDragged)) {
-          currentAction = MOVE;
+          currentAction = MOVE_ABOVE;
         }
         else {
           currentAction = FORBIDDEN;
@@ -191,7 +246,7 @@ public class Swing_UI {
       @Override
       public void below(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
         if (myConditions.sameBranch(commit, commitsBeingDragged)) {
-          currentAction = MOVE;
+          currentAction = MOVE_BELOW;
         }
         else {
           currentAction = FORBIDDEN;
@@ -200,6 +255,8 @@ public class Swing_UI {
 
       @Override
       public void over(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+        Node topComit = commitsBeingDragged.get(0);
+        //ui_controller.getDataPack().getRefsModel().isBranchRef(topComit.getCommitHash())
         // cherry pick (different branches)
         // rebase (different branches + label on top)
         // nothing otherwise
@@ -303,6 +360,7 @@ public class Swing_UI {
     public void draggingCanceled(List<Node> commitsBeingDragged) {
       dragDropHint.hide();
     }
+
   }
 
   private class SwingControllerListener implements ControllerListener {
