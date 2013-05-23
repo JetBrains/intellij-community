@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.impl;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
@@ -35,8 +36,9 @@ import java.util.Set;
  */
 public class UI_ControllerImpl implements UI_Controller {
 
-  private final DataLoader dataLoader = new DataLoaderImpl();
+  private final DataLoader dataLoader;
   private final EventsController events = new EventsController();
+  private final Project myProject;
 
   private DataPack dataPack;
   private RefTreeTableModel refTableModel;
@@ -46,6 +48,11 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private GraphElement prevGraphElement = null;
   private Set<Hash> prevSelectionBranches;
+
+  public UI_ControllerImpl(Project project) {
+    myProject = project;
+    dataLoader = new DataLoaderImpl(myProject);
+  }
 
   private void dataInit() {
     dataPack = dataLoader.getDataPack();

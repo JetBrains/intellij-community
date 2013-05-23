@@ -2,6 +2,7 @@ package gitlog;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -34,13 +35,22 @@ public class GitLogComponent extends AbstractProjectComponent {
     ((GitRepositoryManagerImpl)myRepositoryManager).updateRepositoriesCollection();
     myRepository = myRepositoryManager.getRepositories().get(0);
 
-    UI_ControllerImpl ui_controller = new UI_ControllerImpl();
-    mySwingUi = new Swing_UI(ui_controller);
-    ui_controller.addControllerListener(mySwingUi.getControllerListener());
-    ui_controller.init(false);
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        UI_ControllerImpl ui_controller = new UI_ControllerImpl(myProject);
+        mySwingUi = new Swing_UI(ui_controller);
+        ui_controller.addControllerListener(mySwingUi.getControllerListener());
+        ui_controller.init(false);
+      }
+    });
   }
 
   public JPanel getMainGitAlkComponent() {
     return mySwingUi.getMainFrame().getMainComponent();
+  }
+
+  public GitRepository getRepository() {
+    return myRepository;
   }
 }

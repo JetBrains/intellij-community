@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.git.reader;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.git.reader.util.GitException;
@@ -24,6 +25,12 @@ public class CommitParentsReader {
   private long lastTimeStamp = 0;
   private Executor<Integer> progressUpdater;
 
+  private Project myProject;
+
+  public CommitParentsReader(Project project) {
+    myProject = project;
+  }
+
   private List<TimestampCommitParents> nextBlock() throws IOException, GitException {
     final List<TimestampCommitParents> commitParentsList = new ArrayList<TimestampCommitParents>();
     final MyTimer gitThink = new MyTimer("gitThink");
@@ -43,10 +50,10 @@ public class CommitParentsReader {
       }
     });
     if (lastTimeStamp == 0) {
-      outputReader.startRead(GitProcessFactory.firstPart(COMMIT_BLOCK_SIZE));
+      outputReader.startRead(GitProcessFactory.getInstance(myProject).firstPart(COMMIT_BLOCK_SIZE));
     }
     else {
-      outputReader.startRead(GitProcessFactory.logPart(lastTimeStamp, COMMIT_BLOCK_SIZE));
+      outputReader.startRead(GitProcessFactory.getInstance(myProject).logPart(lastTimeStamp, COMMIT_BLOCK_SIZE));
     }
     return commitParentsList;
   }
