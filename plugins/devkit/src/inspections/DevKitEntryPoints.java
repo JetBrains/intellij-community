@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,26 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 
 /**
  * User: anna
  */
 public class DevKitEntryPoints implements ImplicitUsageProvider {
+
   @Override
   public boolean isImplicitUsage(PsiElement element) {
     if (element instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass)element;
+      if (psiClass.isEnum() ||
+          psiClass.isAnnotationType() ||
+          psiClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return false;
+      }
+
       final PsiClass domClass =
         JavaPsiFacade.getInstance(element.getProject()).findClass("com.intellij.util.xml.DomElement", element.getResolveScope());
-      if (domClass != null && ((PsiClass)element).isInheritor(domClass, true)) {
+      if (domClass != null && psiClass.isInheritor(domClass, true)) {
         return true;
       }
     }
