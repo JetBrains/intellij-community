@@ -16,6 +16,7 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.printmodel.SelectController;
+import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.ui.ControllerListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.TableModel;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -48,6 +50,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private GraphElement prevGraphElement = null;
   private Set<Hash> prevSelectionBranches;
+  private List<Ref> myRefs;
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
@@ -58,6 +61,7 @@ public class UI_ControllerImpl implements UI_Controller {
     dataPack = dataLoader.getDataPack();
     refTreeModel = new RefTreeModelImpl(dataPack.getRefsModel());
     refTableModel = new RefTreeTableModel(refTreeModel);
+    myRefs = dataPack.getRefsModel().getAllRefs();
     graphTableModel = new GraphTableModel(dataPack);
 
     prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
@@ -280,4 +284,10 @@ public class UI_ControllerImpl implements UI_Controller {
       events.runJumpToRow(row);
     }
   }
+
+  @Override
+  public List<Ref> getRefs() {
+    return myRefs;
+  }
+
 }

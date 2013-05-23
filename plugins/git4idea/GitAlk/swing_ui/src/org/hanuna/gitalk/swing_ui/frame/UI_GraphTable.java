@@ -67,6 +67,13 @@ public class UI_GraphTable extends JTable {
     scrollRectToVisible(getCellRect(rowIndex, 0, false));
   }
 
+  @Override
+  public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+    // HACK: table changes selection on drag-n-drop actions otherwise
+    if (extend) return;
+    super.changeSelection(rowIndex, columnIndex, toggle, extend); // TODO
+  }
+
   private class MyMouseAdapter extends MouseAdapter {
     private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
