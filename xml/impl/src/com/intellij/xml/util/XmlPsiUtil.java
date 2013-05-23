@@ -4,7 +4,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -118,7 +118,7 @@ public class XmlPsiUtil {
       }
       if (targetFile != null && child instanceof XmlEntityDecl) {
         XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)child;
-        XmlEntityRefImpl.cacheParticularEntity(targetFile, xmlEntityDecl);
+        XmlEntityCache.cacheParticularEntity(targetFile, xmlEntityDecl);
       }
       return true;
     }
@@ -207,7 +207,7 @@ public class XmlPsiUtil {
           public Result<PsiElement> compute() {
             final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
             if (res == null) return new Result<PsiElement>(res, targetFile);
-            if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
+            if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
             return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
           }
         }, false);

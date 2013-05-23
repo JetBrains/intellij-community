@@ -51,6 +51,7 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -1057,7 +1058,7 @@ public class XmlUtil {
     if (currentElement != null) {
       final String name = _element.getName();
       if (_element instanceof XmlEntityDecl) {
-        final XmlEntityDecl cachedEntity = XmlEntityRefImpl.getCachedEntity((PsiFile)currentElement, name);
+        final XmlEntityDecl cachedEntity = XmlEntityCache.getCachedEntity((PsiFile)currentElement, name);
         if (cachedEntity != null) return cachedEntity;
       }
 

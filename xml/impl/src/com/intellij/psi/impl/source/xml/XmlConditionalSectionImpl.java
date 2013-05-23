@@ -52,7 +52,7 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
           final String text = xmlEntityRef.getText();
           String name = text.substring(1,text.length() - 1);
 
-          PsiElement psiElement = targetFile != null ? XmlEntityRefImpl.getCachedEntity( targetFile, name): null;
+          PsiElement psiElement = targetFile != null ? XmlEntityCache.getCachedEntity(targetFile, name): null;
 
           if (psiElement instanceof XmlEntityDecl) {
             final XmlEntityDecl decl = (XmlEntityDecl)psiElement;
