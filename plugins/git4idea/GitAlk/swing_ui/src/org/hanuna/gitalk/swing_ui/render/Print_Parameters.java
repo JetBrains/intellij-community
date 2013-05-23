@@ -5,6 +5,7 @@ package org.hanuna.gitalk.swing_ui.render;
  */
 public class Print_Parameters {
   public static final int HEIGHT_CELL = 22;
+  public static final int EDGE_FIELD = 5;
 
   public static final int WIDTH_NODE = 15;
   public static final int CIRCLE_RADIUS = 5;
