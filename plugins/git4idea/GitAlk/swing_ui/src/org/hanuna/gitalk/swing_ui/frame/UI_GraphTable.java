@@ -36,6 +36,7 @@ public class UI_GraphTable extends JTable {
   }
 
   private void prepare() {
+    setTableHeader(null);
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(graphPainter));
     setRowHeight(HEIGHT_CELL);
     setShowHorizontalLines(false);
