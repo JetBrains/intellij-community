@@ -19,6 +19,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -77,6 +79,19 @@ public class UI_GraphTable extends JTable {
 
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
+    addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          if (myNodesBeingDragged != null && dragged) {
+            ui_controller.getDragDropListener().draggingCanceled(myNodesBeingDragged);
+          }
+          myNodesBeingDragged = null;
+          myRowIndicesBeingDragged = null;
+          dragged = false;
+        }
+      }
+    });
   }
 
   public void jumpToRow(int rowIndex) {
