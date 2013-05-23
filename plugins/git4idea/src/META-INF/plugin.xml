@@ -172,7 +172,8 @@
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
 
-    <toolWindow factoryClass="gitlog.GitLogToolWindowFactory" id="Git Log" anchor="bottom" canCloseContents="true" />
+    <toolWindow factoryClass="gitlog.GitLogToolWindowFactory" id="Git Log" anchor="bottom" canCloseContents="true"
+        icon="/icons/gitlog.png" />
 
   </extensions>
 
