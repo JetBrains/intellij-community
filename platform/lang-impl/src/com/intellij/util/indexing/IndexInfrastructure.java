@@ -74,10 +74,6 @@ public class IndexInfrastructure {
     return indexDir;
   }
 
-  public static File getStubVersionsDirectory() {
-    return new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), STUB_VERSIONS);
-  }
-
   private static volatile long ourLastStamp; // ensure any file index stamp increases
 
   public static synchronized void rewriteVersion(final File file, final int version) throws IOException {

@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -405,8 +404,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           }
         }
 
-        File dir= IndexInfrastructure.getStubVersionsDirectory();
-        if (dir.exists()) dir.delete();
+        //File dir= IndexInfrastructure.getStubVersionsDirectory();
+        //if (dir.exists()) dir.delete();
         super.clear();
       }
       finally {
