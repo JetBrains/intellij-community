@@ -24,7 +24,7 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.ide.HttpRequestHandler;
-import org.jetbrains.ide.WebServerManager;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
@@ -69,7 +69,7 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
       return;
     }
 
-    for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
+    for (HttpRequestHandler handler : BuiltInServerManager.EP_NAME.getExtensions()) {
       try {
         if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
           if (context.getAttachment() == null) {

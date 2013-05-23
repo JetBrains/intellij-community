@@ -24,8 +24,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class WebServerManagerImpl extends WebServerManager {
-  private static final Logger LOG = Logger.getInstance(WebServerManager.class);
+public class BuiltInServerManagerImpl extends BuiltInServerManager {
+  private static final Logger LOG = Logger.getInstance(BuiltInServerManager.class);
 
   @NonNls
   public static final String PROPERTY_RPC_PORT = "rpc.port";
@@ -45,7 +45,7 @@ public class WebServerManagerImpl extends WebServerManager {
   }
 
   @Override
-  public WebServerManager waitForStart() {
+  public BuiltInServerManager waitForStart() {
     Future<?> serverStartFuture = startServerInPooledThread();
     if (serverStartFuture != null) {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
@@ -74,9 +74,9 @@ public class WebServerManagerImpl extends WebServerManager {
       }
 
       veryFirstProjectOpening = false;
-      WebServerManager webServerManager = WebServerManager.getInstance();
-      if (webServerManager instanceof WebServerManagerImpl) {
-        ((WebServerManagerImpl)webServerManager).startServerInPooledThread();
+      BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
+      if (builtInServerManager instanceof BuiltInServerManagerImpl) {
+        ((BuiltInServerManagerImpl)builtInServerManager).startServerInPooledThread();
       }
     }
   }
