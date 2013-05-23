@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.search;
+package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,10 @@ public class FileTypeIndexTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testAddFileType() throws Exception {
+    addAndRemoveFileType();
+  }
+
+  static void addAndRemoveFileType() {
     FileType foo = new FakeFileType() {
       @Override
       public boolean isMyFileType(VirtualFile file) {

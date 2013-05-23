@@ -112,12 +112,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
-    if (/*ApplicationManager.getApplication().isInternal() ||*/ Registry.is("ide.windowSystem.supportWidescreen", false)) {
-      Rectangle mainScreenBounds = ScreenUtil.getMainScreenBounds();
-      if (!mainScreenBounds.isEmpty() && ((double)mainScreenBounds.width/ mainScreenBounds.height) > 1.34) {
-        myWidescreen = true;
-      }
-    }
+    myWidescreen = UISettings.getInstance().WIDESCREEN_SUPPORT;
     if (myWidescreen) {
       myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
     }
@@ -525,6 +520,24 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     }
 
     resizer.setSize(actualSize);
+  }
+
+  private void updateLayout() {
+    if (myWidescreen != UISettings.getInstance().WIDESCREEN_SUPPORT) {
+      JComponent documentComponent = (myWidescreen ? myVerticalSplitter : myHorizontalSplitter).getInnerComponent();
+      myWidescreen = UISettings.getInstance().WIDESCREEN_SUPPORT;
+      if (myWidescreen) {
+        myVerticalSplitter.setInnerComponent(null);
+        myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
+      }
+      else {
+        myHorizontalSplitter.setInnerComponent(null);
+        myVerticalSplitter.setInnerComponent(myHorizontalSplitter);
+      }
+      myLayeredPane.remove(myWidescreen ? myVerticalSplitter : myHorizontalSplitter);
+      myLayeredPane.add(myWidescreen ? myHorizontalSplitter : myVerticalSplitter, DEFAULT_LAYER);
+      setDocumentComponent(documentComponent);
+    }
   }
 
 
@@ -1017,6 +1030,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
   private final class MyUISettingsListenerImpl implements UISettingsListener{
     public final void uiSettingsChanged(final UISettings source){
       updateToolStripesVisibility();
+      updateLayout();
     }
   }
 
