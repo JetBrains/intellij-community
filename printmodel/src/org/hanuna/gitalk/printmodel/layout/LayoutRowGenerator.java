@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * @author erokhins
  */
-class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> {
+class LayoutRowGenerator extends AbstractGenerator<LayoutRow, MutableLayoutRow> {
     private final Graph graph;
 
     public LayoutRowGenerator(@NotNull Graph graph) {

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public abstract class AbstractGenerator<M extends T, T> implements Generator<T> {
+public abstract class AbstractGenerator<T, M extends T> implements Generator<T> {
 
 
     @NotNull
