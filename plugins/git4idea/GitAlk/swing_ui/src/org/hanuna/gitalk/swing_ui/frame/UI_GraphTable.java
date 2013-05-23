@@ -15,11 +15,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.EDGE_FIELD;
@@ -33,7 +36,10 @@ public class UI_GraphTable extends JTable {
   private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
   private final MouseAdapter mouseAdapter = new MyMouseAdapter();
 
-  private Node myNodeBeingDragged = null;
+  private List<Node> myNodesBeingDragged = null;
+  private int[] myRowIndicesBeingDragged = null;
+  private int[][] selectionHistory = new int[2][];
+  private boolean dragged = false;
 
   public UI_GraphTable(UI_Controller ui_controller) {
     super(ui_controller.getGraphTableModel());
@@ -52,6 +58,22 @@ public class UI_GraphTable extends JTable {
     getColumnModel().getColumn(0).setPreferredWidth(700);
     getColumnModel().getColumn(1).setMinWidth(90);
     getColumnModel().getColumn(2).setMinWidth(90);
+
+    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        if (selectionHistory[0] == null) {
+          selectionHistory[0] = getSelectedRows();
+        }
+        else if (selectionHistory[1] == null) {
+          selectionHistory[1] = getSelectedRows();
+        }
+        else {
+          selectionHistory[0] = selectionHistory[1];
+          selectionHistory[1] = getSelectedRows();
+        }
+      }
+    });
 
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
@@ -150,25 +172,55 @@ public class UI_GraphTable extends JTable {
 
     @Override
     public void mousePressed(MouseEvent e) {
-      myNodeBeingDragged = getNode(e);
-      if (myNodeBeingDragged != null) {
-        ui_controller.getDragDropListener().draggingStarted(getSelectedNodes());
+      dragged = false;
+      Node node = getNode(e);
+      if (node != null) {
+
+        // HACK: mousePressed changes current selection, so we take previous one if available
+        int[] selection = selectionHistory[0] == null ? getSelectedRows() : selectionHistory[0];
+        boolean contains = false;
+        for (int i : selection) {
+          if (i == getSelectedRow()) {
+            contains = true;
+            break;
+          }
+        }
+
+        final int[] relevantSelection = contains ? selection : getSelectedRows();
+        Arrays.sort(relevantSelection);
+
+        List<Node> commitsBeingDragged = nodes(relevantSelection);
+        myNodesBeingDragged = commitsBeingDragged;
+        myRowIndicesBeingDragged = relevantSelection;
+        ui_controller.getDragDropListener().draggingStarted(commitsBeingDragged);
       }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-      if (myNodeBeingDragged == null) return;
-      handleEvent(e, ui_controller.getDragDropListener().drop());
+      if (dragged && myNodesBeingDragged != null) {
+        handleEvent(e, ui_controller.getDragDropListener().drop(), myNodesBeingDragged);
+      }
+      dragged = false;
+      myNodesBeingDragged = null;
+      myRowIndicesBeingDragged = null;
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-      if (myNodeBeingDragged == null) return;
-      handleEvent(e, ui_controller.getDragDropListener().drag());
+      if (myNodesBeingDragged == null) return;
+      dragged = true;
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          setSelection(myRowIndicesBeingDragged);
+        }
+      });
+
+      handleEvent(e, ui_controller.getDragDropListener().drag(), myNodesBeingDragged);
     }
 
-    private void handleEvent(MouseEvent e, DragDropListener.Handler handler) {
+    private void handleEvent(MouseEvent e, DragDropListener.Handler handler, List<Node> selectedNodes) {
       Node commit = getNode(e);
       if (commit == null) {
         return;
@@ -179,27 +231,37 @@ public class UI_GraphTable extends JTable {
       for (SpecialPrintElement element : getGraphPrintCell(e).getSpecialPrintElements()) {
         if (element.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
           if (PositionUtil.overNode(element.getPosition(), e.getX(), yOffset)) {
-            handler.overNode(rowIndex, commit, e, getSelectedNodes());
+            handler.overNode(rowIndex, commit, e, selectedNodes);
             return;
           }
         }
       }
 
       if (yOffset <= EDGE_FIELD) {
-        handler.above(rowIndex, commit, e, getSelectedNodes());
+        handler.above(rowIndex, commit, e, selectedNodes);
       }
       else if (yOffset >= HEIGHT_CELL - EDGE_FIELD) {
-        handler.below(rowIndex, commit, e, getSelectedNodes());
+        handler.below(rowIndex, commit, e, selectedNodes);
       }
       else {
-        handler.over(rowIndex, commit, e, getSelectedNodes());
+        handler.over(rowIndex, commit, e, selectedNodes);
       }
     }
   }
 
+  private void setSelection(int[] nodesBeingDragged) {
+    for (int index : nodesBeingDragged) {
+      getSelectionModel().addSelectionInterval(index, index);
+    }
+  }
+
   private List<Node> getSelectedNodes() {
-    List<Node> result = new ArrayList<Node>();
     int[] selectedRows = getSelectedRows();
+    return nodes(selectedRows);
+  }
+
+  private List<Node> nodes(int[] selectedRows) {
+    List<Node> result = new ArrayList<Node>();
     Arrays.sort(selectedRows);
     for (int rowIndex : selectedRows) {
       Node node = PositionUtil.getNode(PositionUtil.getGraphPrintCell(getModel(), rowIndex));
