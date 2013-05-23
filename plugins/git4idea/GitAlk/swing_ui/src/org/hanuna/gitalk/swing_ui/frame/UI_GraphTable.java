@@ -199,7 +199,9 @@ public class UI_GraphTable extends JTable {
 
   private List<Node> getSelectedNodes() {
     List<Node> result = new ArrayList<Node>();
-    for (int rowIndex : getSelectedRows()) {
+    int[] selectedRows = getSelectedRows();
+    Arrays.sort(selectedRows);
+    for (int rowIndex : selectedRows) {
       Node node = PositionUtil.getNode(PositionUtil.getGraphPrintCell(getModel(), rowIndex));
       if (node != null) {
         result.add(node);
