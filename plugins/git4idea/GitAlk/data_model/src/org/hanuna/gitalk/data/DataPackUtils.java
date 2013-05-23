@@ -1,5 +1,7 @@
 package org.hanuna.gitalk.data;
 
+import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
@@ -42,4 +44,18 @@ public class DataPackUtils {
   public Node getNode(int rowIndex) {
     return dataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
   }
+
+  public int getRowByHash(Hash commitHash) {
+    Graph graph = dataPack.getGraphModel().getGraph();
+    int row = -1;
+    for (int i = 0; i < graph.getNodeRows().size(); i++) {
+      Node node = graph.getCommitNodeInRow(i);
+      if (node != null && node.getCommitHash().equals(commitHash)) {
+        row = i;
+        break;
+      }
+    }
+    return row;
+  }
+
 }
