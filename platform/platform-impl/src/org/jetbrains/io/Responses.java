@@ -18,6 +18,7 @@ package org.jetbrains.io;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -25,6 +26,7 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -34,9 +36,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.DATE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.*;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -56,7 +56,7 @@ public final class Responses {
   private static String SERVER_HEADER_VALUE;
 
   public static void addAllowAnyOrigin(HttpResponse response) {
-    response.setHeader(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+    response.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
   }
 
   public static void addDate(HttpResponse response) {
@@ -67,15 +67,20 @@ public final class Responses {
     response.setHeader(DATE, DATE_FORMAT.get().format(date));
   }
 
-  public static void addServer(HttpResponse response) {
+  @Nullable
+  public static String getServerHeaderValue() {
     if (SERVER_HEADER_VALUE == null) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
         SERVER_HEADER_VALUE = ApplicationInfoEx.getInstanceEx().getFullApplicationName();
       }
     }
-    if (SERVER_HEADER_VALUE != null) {
-      response.setHeader("Server", SERVER_HEADER_VALUE);
+    return SERVER_HEADER_VALUE;
+  }
+
+  public static void addServer(HttpResponse response) {
+    if (getServerHeaderValue() != null) {
+      response.setHeader(SERVER, getServerHeaderValue());
     }
   }
 
@@ -153,7 +158,7 @@ public final class Responses {
     if (request.getMethod() != HttpMethod.HEAD) {
       String message = response.getStatus().toString();
       response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
-                                                      "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + SERVER_HEADER_VALUE + "</p>",
+                                                      "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + StringUtil.notNullize(getServerHeaderValue(), "") + "</p>",
                                                       CharsetUtil.US_ASCII));
     }
     send(response, request, context);
@@ -161,9 +166,9 @@ public final class Responses {
 
   public static void sendOptionsResponse(String allowHeaders, HttpRequest request, ChannelHandlerContext context) {
     HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
-    response.setHeader(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-    response.setHeader(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS, allowHeaders);
-    response.setHeader(HttpHeaders.Names.ALLOW, allowHeaders);
+    response.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+    response.setHeader(ACCESS_CONTROL_ALLOW_METHODS, allowHeaders);
+    response.setHeader(ALLOW, allowHeaders);
     send(response, request, context);
   }
 }
