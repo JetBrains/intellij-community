@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.data.impl;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Function;
@@ -31,11 +32,12 @@ public class CacheCommitDataGetter implements CommitDataGetter {
       return readCommitData(key);
     }
   }, 5000);
-  private final CommitDataReader commitDataReader = new CommitDataReader();
+  private final CommitDataReader commitDataReader;
   private final DataPack dataPack;
 
-  public CacheCommitDataGetter(DataPack dataPack) {
+  public CacheCommitDataGetter(Project project, DataPack dataPack) {
     this.dataPack = dataPack;
+    commitDataReader = new CommitDataReader(project);
   }
 
   @NotNull

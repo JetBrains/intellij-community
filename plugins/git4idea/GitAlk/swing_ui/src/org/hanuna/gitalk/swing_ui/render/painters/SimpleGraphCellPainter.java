@@ -6,6 +6,7 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
+import org.hanuna.gitalk.swing_ui.render.PositionUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -133,53 +134,23 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   }
 
-  private float distance(int x1, int y1, int x2, int y2) {
-    return (float)Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-  }
-
-  private boolean overUpEdge(ShortEdge edge, int x, int y) {
-    float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2;
-    int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2;
-    int y2 = -HEIGHT_CELL / 2;
-    //return true;
-    return (distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick);
-  }
-
-  private boolean overDownEdge(ShortEdge edge, int x, int y) {
-    float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2;
-    int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2;
-    int y2 = HEIGHT_CELL + HEIGHT_CELL / 2;
-    return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick;
-  }
-
-  private boolean overNode(int position, int x, int y) {
-    int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
-    int y0 = HEIGHT_CELL / 2;
-    int r = CIRCLE_RADIUS;
-    return distance(x0, y0, x, y) <= r;
-  }
-
   @Nullable
   @Override
   public GraphElement mouseOver(GraphPrintCell row, int x, int y) {
     for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
       if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
-        if (overNode(printElement.getPosition(), x, y)) {
+        if (PositionUtil.overNode(printElement.getPosition(), x, y)) {
           return printElement.getGraphElement();
         }
       }
     }
     for (ShortEdge edge : row.getUpEdges()) {
-      if (overUpEdge(edge, x, y)) {
+      if (PositionUtil.overUpEdge(edge, x, y)) {
         return edge.getEdge();
       }
     }
     for (ShortEdge edge : row.getDownEdges()) {
-      if (overDownEdge(edge, x, y)) {
+      if (PositionUtil.overDownEdge(edge, x, y)) {
         return edge.getEdge();
       }
     }
@@ -192,7 +163,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   public SpecialPrintElement mouseOverArrow(GraphPrintCell row, int x, int y) {
     for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
       if (printElement.getType() != SpecialPrintElement.Type.COMMIT_NODE) {
-        if (overNode(printElement.getPosition(), x, y)) {
+        if (PositionUtil.overNode(printElement.getPosition(), x, y)) {
           return printElement;
         }
       }

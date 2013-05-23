@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.git.reader;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.git.reader.util.GitProcessFactory;
@@ -17,11 +18,16 @@ import java.util.List;
  */
 public class CommitDataReader {
   private String line;
+  private Project myProject;
+
+  public CommitDataReader(Project project) {
+    myProject = project;
+  }
 
   @NotNull
   public CommitData readCommitData(@NotNull String commitHash) {
     try {
-      Process process = GitProcessFactory.commitData(commitHash);
+      Process process = GitProcessFactory.getInstance(myProject).commitData(commitHash);
       line = null;
       ProcessOutputReader outputReader = new ProcessOutputReader(new Executor<String>() {
         @Override
@@ -57,7 +63,7 @@ public class CommitDataReader {
           commitDatas.add(data);
         }
       });
-      Process process = GitProcessFactory.commitDatas(commitHashes);
+      Process process = GitProcessFactory.getInstance(myProject).commitDatas(commitHashes);
       outputReader.startRead(process);
       return commitDatas;
     }

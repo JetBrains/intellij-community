@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.data.impl;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
@@ -26,7 +27,7 @@ import java.util.List;
 public class DataPackImpl implements DataPack {
   public static DataPackImpl buildDataPack(@NotNull List<CommitParents> commitParentsList,
                                            @NotNull List<Ref> allRefs,
-                                           Executor<String> statusUpdater) {
+                                           Executor<String> statusUpdater, Project project) {
     statusUpdater.execute("Build graph");
 
     MyTimer timer = new MyTimer("graph build");
@@ -61,19 +62,20 @@ public class DataPackImpl implements DataPack {
         }
       }
     });
-    return new DataPackImpl(graphModel, refsModel, printCellModel);
+    return new DataPackImpl(graphModel, refsModel, printCellModel, project);
   }
 
 
   private final GraphModel graphModel;
   private final RefsModel refsModel;
   private final GraphPrintCellModel printCellModel;
-  private final CommitDataGetter commitDataGetter = new CacheCommitDataGetter(this);
+  private final CommitDataGetter commitDataGetter;
 
-  private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel) {
+  private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel, Project project) {
     this.graphModel = graphModel;
     this.refsModel = refsModel;
     this.printCellModel = printCellModel;
+    commitDataGetter = new CacheCommitDataGetter(project, this);
   }
 
   public void appendCommits(@NotNull List<CommitParents> commitParentsList, @NotNull Executor<String> statusUpdater) {

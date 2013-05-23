@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.git.reader;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.git.reader.util.GitProcessFactory;
@@ -18,8 +19,10 @@ import java.util.List;
 public class RefReader {
   private final List<Ref> refs = new ArrayList<Ref>();
   private final ProcessOutputReader outputReader;
+  private Project myProject;
 
-  public RefReader(@NotNull Executor<Integer> progressUpdater) {
+  public RefReader(@NotNull Executor<Integer> progressUpdater, Project project) {
+    myProject = project;
     outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
       @Override
       public void execute(String key) {
@@ -28,13 +31,13 @@ public class RefReader {
     });
   }
 
-  public RefReader() {
+  public RefReader(Project project) {
     this(new Executor<Integer>() {
       @Override
       public void execute(Integer key) {
 
       }
-    });
+    }, project);
   }
 
   private void appendLine(@NotNull String line) {
@@ -43,7 +46,7 @@ public class RefReader {
 
   @NotNull
   public List<Ref> readAllRefs() throws GitException, IOException {
-    Process process = GitProcessFactory.refs();
+    Process process = GitProcessFactory.getInstance(myProject).refs();
     outputReader.startRead(process);
     return refs;
   }

@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.git.reader;
 
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.git.reader.util.GitException;
@@ -17,8 +18,10 @@ import java.util.List;
  */
 public class FullLogCommitParentsReader {
   private final Executor<String> statusUpdater;
+  private Project myProject;
 
-  public FullLogCommitParentsReader(final Executor<String> statusUpdater) {
+  public FullLogCommitParentsReader(Project project, final Executor<String> statusUpdater) {
+    myProject = project;
     this.statusUpdater = statusUpdater;
   }
 
@@ -49,7 +52,7 @@ public class FullLogCommitParentsReader {
       }
     });
     statusUpdater.execute("Begin load git repository");
-    outputReader.startRead(GitProcessFactory.allLog());
+    outputReader.startRead(GitProcessFactory.getInstance(myProject).allLog());
     readTimer.print();
     return commitParentsList;
   }
