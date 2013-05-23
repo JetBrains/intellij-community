@@ -18,6 +18,7 @@
     <orderEntry type="library" name="swingx-1.6.1" level="project" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="swingx" level="project" />
+    <orderEntry type="module" module-name="git4idea" />
   </component>
 </module>
 
