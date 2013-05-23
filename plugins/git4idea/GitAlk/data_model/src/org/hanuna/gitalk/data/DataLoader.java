@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.data;
 
 import org.hanuna.gitalk.common.Executor;
+import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,9 @@ public interface DataLoader {
   public void readAllLog(@NotNull Executor<String> statusUpdater) throws IOException, GitException;
 
   public void readNextPart(@NotNull Executor<String> statusUpdater) throws IOException, GitException;
+
+  @NotNull
+  public InteractiveRebaseBuilder getInteractiveRebaseBuilder();
 
   @NotNull
   public DataPack getDataPack();

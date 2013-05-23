@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.ui;
+package org.hanuna.gitalk.data.rebase;
 
 import org.hanuna.gitalk.graph.elements.Node;
 

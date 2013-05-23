@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.git.reader.CommitParentsReader;
 import org.hanuna.gitalk.git.reader.FullLogCommitParentsReader;
 import org.hanuna.gitalk.git.reader.RefReader;
@@ -61,6 +62,12 @@ public class DataLoaderImpl implements DataLoader {
       default:
         throw new IllegalStateException();
     }
+  }
+
+  @NotNull
+  @Override
+  public InteractiveRebaseBuilder getInteractiveRebaseBuilder() {
+    return new InteractiveRebaseBuilder();
   }
 
   @NotNull
