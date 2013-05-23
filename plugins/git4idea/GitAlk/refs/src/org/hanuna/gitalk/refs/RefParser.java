@@ -21,7 +21,10 @@ public class RefParser {
     String[] longRefPaths = refPaths.split(", ");
     List<Ref> refs = new ArrayList<Ref>();
     for (String longRefPatch : longRefPaths) {
-      refs.add(createRef(hash, longRefPatch));
+      Ref ref = createRef(hash, longRefPatch);
+      if (ref.getType() != Ref.RefType.STASH) {
+        refs.add(ref);
+      }
     }
     return refs;
   }
