@@ -174,9 +174,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
-        boolean isClass = withElement != null || isClassField(fieldName);
+        Class clazz = String.class;
+        if (withElement != null || isClassField(fieldName)) {
+          clazz = PsiClass.class;
+        } else if (field.getType() == PsiType.BOOLEAN) {
+          clazz = Boolean.class;
+        }
         final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), isClass ? PsiClass.class : String.class).setDeclaringElement(field);
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
       }
       return;
