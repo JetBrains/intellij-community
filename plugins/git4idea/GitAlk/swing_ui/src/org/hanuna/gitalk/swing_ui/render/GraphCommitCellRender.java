@@ -44,7 +44,13 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   @Override
   protected String getCellText(JTable table, Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
-    return cell.getText();
+    if (cell == null) {
+      System.err.println("No cell for value: " + value);
+      return "!!! No cell for value: " + value;
+    }
+    else {
+      return cell.getText();
+    }
   }
 
   @Override
