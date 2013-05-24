@@ -455,7 +455,7 @@ public class UI_ControllerImpl implements UI_Controller {
     private Ref resultRef = null;
 
     private FakeCommitParents createFake(Hash oldHash, Hash newParent) {
-      return new FakeCommitParents(newParent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, oldHash));
+      return new FakeCommitParents(newParent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, FakeCommitParents.getOriginal(oldHash)));
     }
 
     public void reset() {
@@ -518,7 +518,7 @@ public class UI_ControllerImpl implements UI_Controller {
         FakeCommitParents lowestFakeCommit = fakeBranch.get(fakeBranch.size() - 1);
         Node lowestFakeNode = du.getNodeByHash(lowestFakeCommit.getCommitHash());
 
-        if (du.isAncestorOf(lowestFakeNode, branchBase)) {
+        if (lowestFakeNode == branchBase || du.isAncestorOf(lowestFakeNode, branchBase)) {
           branchBase = getParent(lowestFakeNode);
         }
       }

@@ -56,4 +56,9 @@ public class FakeCommitParents implements CommitParents {
   public RebaseCommand getCommand() {
     return command;
   }
+
+  @Override
+  public String toString() {
+    return fakeHash + " -> " + command;
+  }
 }
