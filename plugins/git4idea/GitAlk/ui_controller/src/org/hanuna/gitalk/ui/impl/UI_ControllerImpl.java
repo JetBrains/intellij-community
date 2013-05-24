@@ -449,58 +449,109 @@ public class UI_ControllerImpl implements UI_Controller {
   private class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {
 
     private Node base = null;
-    private List<FakeCommitParents> fakeCommits = new ArrayList<FakeCommitParents>();
+    private List<FakeCommitParents> fakeBranch = new ArrayList<FakeCommitParents>();
     private Ref subjectRef = null;
     private Ref resultRef = null;
 
+    private Map<Hash, FakeCommitParents> fakeCommits = new HashMap<Hash, FakeCommitParents>();
+
+    private FakeCommitParents fake(Hash oldHash, Hash newParent) {
+      FakeCommitParents existing = fakeCommits.get(oldHash);
+      if (existing != null) return existing;
+      FakeCommitParents fake =
+        new FakeCommitParents(newParent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, oldHash));
+      fakeCommits.put(oldHash, fake);
+      return fake;
+    }
+
+    private boolean isFake(Hash hash) {
+      return fakeCommits.containsKey(hash);
+    }
+
     public void reset() {
       base = null;
-      fakeCommits.clear();
+      fakeBranch.clear();
       subjectRef = null;
       resultRef = null;
+      fakeCommits.clear();
     }
 
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
       List<Node> commitsToRebase =
-        getDataPackUtils().getCommitsToRebase(onto, getDataPackUtils().getNodeByHash(subjectRef.getCommitHash()));
+        getDataPackUtils().getCommitsDownToCommon(onto, getDataPackUtils().getNodeByHash(subjectRef.getCommitHash()));
       startRebaseOnto(subjectRef, onto, commitsToRebase.subList(0, commitsToRebase.size() - 1));
+    }
+
+    private void setResultRef(Ref subjectRef, Hash fakeTarget) {
+      resultRef = new Ref(fakeTarget, subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
     }
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
       this.subjectRef = subjectRef;
       this.base = base;
-      fakeCommits.clear();
 
-      // Copy commits
-      List<Node> reversed = new ArrayList<Node>(nodesToRebase);
-      Collections.reverse(reversed);
-      Hash parent = base.getCommitHash();
-      for (Node node : reversed) {
-        FakeCommitParents fakeCommit =
-          new FakeCommitParents(parent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, node.getCommitHash()));
-        parent = fakeCommit.getCommitHash();
-        fakeCommits.add(fakeCommit);
-      }
+      this.fakeBranch = createFakeCommits(base, nodesToRebase);
 
-      Collections.reverse(fakeCommits);
-      resultRef = new Ref(parent, subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
+      setResultRef(subjectRef, createFakeCommits(base, nodesToRebase).get(0).getCommitHash());
     }
 
     @Override
     public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
-      super.moveCommits(subjectRef, base, position, nodesToInsert); // TODO
+      if (resultRef == null) {
+        DataPackUtils du = getDataPackUtils();
+        if (position == InsertPosition.BELOW) {
+          // TODO: what if many edges?
+          base = getParent(base);
+        }
+        Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
+        if (du.isAncestorOf(base, lowestInserted)) {
+          this.base = base;
+          //this.fakeBranch = createFakeCommits(base, )
+        }
+        else {
+          // TODO: many parents?
+          this.base = getParent(lowestInserted);
+        }
+
+        List<Node> commitsAboveBase = du.getCommitsInBranchAboveBase(base, subjectRef);
+
+
+      }
+    }
+
+    private List<FakeCommitParents> createFakeCommits(Node base, List<Node> nodesToRebase) {
+      List<FakeCommitParents> result = new ArrayList<FakeCommitParents>();
+      List<Node> reversed = reverse(nodesToRebase);
+      Hash parent = base.getCommitHash();
+      for (Node node : reversed) {
+        FakeCommitParents fakeCommit = fake(node.getCommitHash(), parent);
+        parent = fakeCommit.getCommitHash();
+        result.add(fakeCommit);
+      }
+      Collections.reverse(result);
+      return result;
+    }
+
+    private List<Node> reverse(List<Node> nodesToRebase) {
+      List<Node> reversed = new ArrayList<Node>(nodesToRebase);
+      Collections.reverse(reversed);
+      return reversed;
+    }
+
+    private Node getParent(Node base) {
+      return base.getDownEdges().get(0).getDownNode();
     }
 
     @Override
     public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
-      super.fixUp(subjectRef, target, nodesToFixUp); // TODO
+      // TODO
     }
 
     @Override
     public List<RebaseCommand> getRebaseCommands() {
-      return ContainerUtil.map(fakeCommits, new com.intellij.util.Function<FakeCommitParents, RebaseCommand>() {
+      return ContainerUtil.map(fakeBranch, new com.intellij.util.Function<FakeCommitParents, RebaseCommand>() {
         @Override
         public RebaseCommand fun(FakeCommitParents fakeCommitParents) {
           return fakeCommitParents.getCommand();
@@ -509,7 +560,7 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     public FakeCommitsInfo getFakeCommitsInfo() {
-      return new FakeCommitsInfo(fakeCommits, base, resultRef, subjectRef);
+      return new FakeCommitsInfo(fakeBranch, fakeCommits.keySet(), base, resultRef, subjectRef);
     }
   }
 

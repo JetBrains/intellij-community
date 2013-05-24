@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
@@ -13,8 +14,7 @@ import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -49,6 +49,18 @@ public class DataLoaderImpl implements DataLoader {
       case ALL_LOG_READER:
         throw new IllegalStateException("data was read");
       case UNINITIALIZED:
+        List<Ref> allRefs = new ArrayList<Ref>();
+        allRefs.addAll(new RefReader(myProject).readAllRefs());
+        if (fakeCommits.resultRef != null) {
+          allRefs.add(fakeCommits.resultRef);
+          allRefs.remove(fakeCommits.subjectRef);
+        }
+
+        Set<Hash> visible = new HashSet<Hash>();
+        for (Ref ref : allRefs) {
+          visible.add(ref.getCommitHash());
+        }
+
         System.out.println("=== readNextPart() called with " + fakeCommits.commits.size() + " fake commits");
         List<CommitParents> commitParentsList = new ArrayList<CommitParents>();
         List<CommitParents> commits = partReader.readNextBlock(statusUpdater);
@@ -56,16 +68,13 @@ public class DataLoaderImpl implements DataLoader {
           if (fakeCommits.base != null && commit.getCommitHash().equals(fakeCommits.base.getCommitHash())) {
             commitParentsList.addAll(fakeCommits.commits);
           }
-          commitParentsList.add(commit);
+          if (visible.contains(commit.getCommitHash())) {
+            commitParentsList.add(commit);
+            visible.addAll(commit.getParentHashes());
+          }
         }
         state = State.PART_LOG_READER;
 
-        List<Ref> allRefs = new ArrayList<Ref>();
-        allRefs.addAll(new RefReader(myProject).readAllRefs());
-        if (fakeCommits.resultRef != null) {
-          allRefs.add(fakeCommits.resultRef);
-          allRefs.remove(fakeCommits.subjectRef);
-        }
         dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject);
         break;
       case PART_LOG_READER:
