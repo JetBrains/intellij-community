@@ -56,7 +56,7 @@ public class GrDelegatesToUtil {
     if (signature == null) return null;
 
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] map = GrClosureSignatureUtil.mapParametersToArguments(
-      signature, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), place, false, true
+      signature, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), place, false, false
     );
 
     if (map == null) {
@@ -112,7 +112,18 @@ public class GrDelegatesToUtil {
 
       final int parameter = findTargetParameter(delegatesTo, target);
       if (parameter >= 0) {
-        return map[parameter].type;
+        final PsiType type = map[parameter].type;
+        final Integer index = GrAnnotationUtil.inferIntegerAttribute(delegatesTo, "genericTypeIndex");
+        if (index == null) {
+          return type;
+        }
+        if (type instanceof PsiClassType) {
+          final PsiType[] parameters = ((PsiClassType)type).getParameters();
+          if (parameters.length > index) {
+            return parameters[index];
+          }
+        }
+        return null;
       }
     }
     else if (value instanceof PsiExpression) {

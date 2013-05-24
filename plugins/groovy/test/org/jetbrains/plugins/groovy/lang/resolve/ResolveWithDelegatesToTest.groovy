@@ -631,6 +631,15 @@ foo(4) {
 ''', 'Integer')
   }
 
+  void testGenericTypeIndex() {
+    assertScript('''\
+def foo(@DelegatesTo.Target def map, @DelegatesTo(genericTypeIndex = 1) Closure c) {}
+
+foo([1:'ab', 2:'cde']) {
+  sub<caret>string(1)
+}
+''', 'String')
+  }
 
   void assertScript(String text, String resolvedClass) {
     myFixture.configureByText('_a.groovy', text)

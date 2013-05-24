@@ -34,4 +34,14 @@ public class GrAnnotationUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static Integer inferIntegerAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
+    if (targetValue instanceof PsiLiteral) {
+      final Object value = ((PsiLiteral)targetValue).getValue();
+      if (value instanceof Integer) return (Integer)value;
+    }
+    return null;
+  }
 }
