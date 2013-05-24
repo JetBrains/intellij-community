@@ -186,12 +186,13 @@ public class Swing_UI {
 
       @Override
       public void perform(final Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
-        runRefAction(commit, e, new RefAction() {
-          @Override
-          public void perform(Ref ref) {
-            ui_controller.getGitActionHandler().cherryPick(ref, commitsBeingDragged, myCallback);
-          }
-        });
+        List<Ref> localRefs = getLocalRefs(commit.getCommitHash());
+        showRefPopup(localRefs.isEmpty() ? getLocalRefsAbove(commit) : localRefs, e.getComponent(), new RefAction() {
+              @Override
+              public void perform(Ref ref) {
+                ui_controller.getGitActionHandler().cherryPick(ref, commitsBeingDragged, myCallback);
+              }
+            });
       }
     };
 
