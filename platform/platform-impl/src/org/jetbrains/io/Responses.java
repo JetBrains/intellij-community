@@ -150,16 +150,30 @@ public final class Responses {
   }
 
   public static void sendStatus(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus) {
-    sendStatus(new DefaultHttpResponse(HTTP_1_1, responseStatus), request, context);
+    sendStatus(request, context, responseStatus, null);
+  }
+
+  public static void sendStatus(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus, @Nullable String description) {
+    sendStatus(new DefaultHttpResponse(HTTP_1_1, responseStatus), request, context, description);
   }
 
   public static void sendStatus(HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
+    sendStatus(response, request, context, null);
+  }
+
+  public static void sendStatus(HttpResponse response, HttpRequest request, ChannelHandlerContext context, @Nullable String description) {
     response.setHeader(CONTENT_TYPE, "text/html");
     if (request.getMethod() != HttpMethod.HEAD) {
       String message = response.getStatus().toString();
-      response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
-                                                      "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + StringUtil.notNullize(getServerHeaderValue(), "") + "</p>",
-                                                      CharsetUtil.US_ASCII));
+
+      StringBuilder builder = new StringBuilder();
+      builder.append("<!doctype html><title>").append(message).append("</title>").append("<h1 style=\"text-align: center\">").append(message).append("</h1>");
+      if (description != null) {
+        builder.append("<p>").append(description).append("</p>");
+      }
+      builder.append("<hr/><p style=\"text-align: center\">").append(StringUtil.notNullize(getServerHeaderValue(), "")).append("</p>");
+
+      response.setContent(ChannelBuffers.copiedBuffer(builder, CharsetUtil.UTF_8));
     }
     send(response, request, context);
   }

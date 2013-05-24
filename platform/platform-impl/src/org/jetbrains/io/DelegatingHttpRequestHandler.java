@@ -44,7 +44,9 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
     if (BuiltInServer.LOG.isDebugEnabled()) {
       BuiltInServer.LOG.debug(request.toString());
     }
+
     QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
+
     HttpRequestHandler connectedHandler = (HttpRequestHandler)context.getAttachment();
     if (connectedHandler != null) {
       if (connectedHandler.isSupported(request) && connectedHandler.process(urlDecoder, request, context)) {
