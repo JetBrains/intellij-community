@@ -49,7 +49,6 @@ public abstract class FileEditorManager {
    *
    * @param file file to open
    * @param focusEditor <code>true</code> if need to focus
-   * @param searchForOpen
    * @return array of opened editors
    */
   @NotNull
