@@ -11,10 +11,12 @@ public class FakeCommitsInfo {
   public final List<FakeCommitParents> commits;
   public final Node base;
   public final Ref resultRef;
+  public final Ref subjectRef;
 
-  public FakeCommitsInfo(List<FakeCommitParents> commits, Node base, Ref resultRef) {
+  public FakeCommitsInfo(List<FakeCommitParents> commits, Node base, Ref resultRef, Ref subjectRef) {
     this.commits = commits;
     this.base = base;
     this.resultRef = resultRef;
+    this.subjectRef = subjectRef;
   }
 }
