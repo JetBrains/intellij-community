@@ -200,8 +200,8 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
   private static class ReplaceCastFix extends ReplaceFix {
 
-    private String myInstanceofType;
-    private String myCastType;
+    private final String myInstanceofType;
+    private final String myCastType;
 
     public ReplaceCastFix(String instanceofType, String castType) {
       myInstanceofType = instanceofType;
