@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,17 +36,20 @@ public class AssignmentToCollectionFieldFromParameterInspection
    */
   public boolean ignorePrivateMethods = true;
 
+  @Override
   @NotNull
   public String getID() {
     return "AssignmentToCollectionOrArrayFieldFromParameter";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "assignment.collection.array.field.from.parameter.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiExpression rhs = (PsiExpression)infos[0];
@@ -64,6 +67,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
     }
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
@@ -72,6 +76,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
       "ignorePrivateMethods");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AssignmentToCollectionFieldFromParameterVisitor();
   }

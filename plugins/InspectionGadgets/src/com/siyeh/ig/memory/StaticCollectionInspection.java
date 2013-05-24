@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,24 +34,28 @@ public class StaticCollectionInspection extends BaseInspection {
    */
   public boolean m_ignoreWeakCollections = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "static.collection.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "static.collection.problem.descriptor");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
       "static.collection.ignore.option"),
                                           this, "m_ignoreWeakCollections");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new StaticCollectionVisitor();
   }

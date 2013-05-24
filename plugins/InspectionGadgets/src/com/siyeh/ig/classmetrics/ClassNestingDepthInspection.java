@@ -27,26 +27,31 @@ public class ClassNestingDepthInspection
 
   private static final int CLASS_NESTING_LIMIT = 1;
 
+  @Override
   @NotNull
   public String getID() {
     return "InnerClassTooDeeplyNested";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "inner.class.too.deeply.nested.display.name");
   }
 
+  @Override
   protected int getDefaultLimit() {
     return CLASS_NESTING_LIMIT;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message(
       "inner.class.too.deeply.nested.nesting.limit.option");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer nestingLevel = (Integer)infos[0];
@@ -55,6 +60,7 @@ public class ClassNestingDepthInspection
       nestingLevel);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassNestingLevel();
   }

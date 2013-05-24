@@ -65,6 +65,7 @@ public class UtilityClassWithPublicConstructorInspection
       m_multipleConstructors = multipleConstructors;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

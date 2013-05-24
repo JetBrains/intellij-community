@@ -28,22 +28,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledHashcodeInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "misspelled.hashcode.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "misspelled.hashcode.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix(HardcodedMethodConstants.HASH_CODE);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MisspelledHashcodeVisitor();
   }

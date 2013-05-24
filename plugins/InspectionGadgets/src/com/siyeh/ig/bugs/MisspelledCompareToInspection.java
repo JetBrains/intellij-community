@@ -28,22 +28,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledCompareToInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "misspelled.compareto.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "misspelled.compareto.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix(HardcodedMethodConstants.COMPARE_TO);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MisspelledCompareToVisitor();
   }

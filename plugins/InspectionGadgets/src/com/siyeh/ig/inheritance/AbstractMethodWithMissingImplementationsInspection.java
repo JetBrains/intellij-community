@@ -35,18 +35,21 @@ import java.util.List;
 public class AbstractMethodWithMissingImplementationsInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "abstract.method.with.missing.implementations.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.method.with.missing.implementations.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AbstractMethodWithMissingImplementationsVisitor();
   }
@@ -150,6 +153,7 @@ public class AbstractMethodWithMissingImplementationsInspection
       this.aClass = aClass;
     }
 
+    @Override
     public void run() {
       final SearchScope searchScope = aClass.getUseScope();
       inheritors = ClassInheritorsSearch.search(aClass, searchScope, true)

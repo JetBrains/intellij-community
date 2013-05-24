@@ -51,6 +51,7 @@ public class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
     return new MakeFieldStaticFinalFix(field.getName());
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(

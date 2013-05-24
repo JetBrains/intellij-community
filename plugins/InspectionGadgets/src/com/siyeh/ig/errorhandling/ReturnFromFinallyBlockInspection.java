@@ -24,25 +24,30 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnFromFinallyBlockInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ReturnInsideFinallyBlock";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("return.from.finally.block.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("return.from.finally.block.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReturnFromFinallyBlockVisitor();
   }

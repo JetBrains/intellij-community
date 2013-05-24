@@ -64,6 +64,7 @@ public class StringToStringInspection extends BaseInspection {
 
   private static class StringToStringFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

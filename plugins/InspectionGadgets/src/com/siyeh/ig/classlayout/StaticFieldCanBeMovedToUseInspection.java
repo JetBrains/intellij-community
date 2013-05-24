@@ -40,6 +40,7 @@ public class StaticFieldCanBeMovedToUseInspection extends BaseGlobalInspection {
     //        "static.field.can.be.moved.to.use.display.name");
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity, AnalysisScope analysisScope,

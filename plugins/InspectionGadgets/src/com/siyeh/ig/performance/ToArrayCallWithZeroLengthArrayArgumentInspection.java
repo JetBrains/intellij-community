@@ -66,6 +66,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
 
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("to.array.call.with.zero.length.array.argument.quickfix");

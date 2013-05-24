@@ -29,22 +29,26 @@ import org.jetbrains.annotations.NotNull;
 public class ReadResolveAndWriteReplaceProtectedInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "readresolve.writereplace.protected.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "readresolve.writereplace.protected.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReadResolveWriteReplaceProtectedVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new ChangeModifierFix(PsiModifier.PROTECTED);
   }

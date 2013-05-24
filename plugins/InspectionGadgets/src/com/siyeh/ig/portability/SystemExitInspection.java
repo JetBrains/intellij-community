@@ -33,16 +33,19 @@ public class SystemExitInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreInMainMethod = false;
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToSystemExit";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("system.exit.call.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final String className = (String)infos[0];
@@ -55,6 +58,7 @@ public class SystemExitInspection extends BaseInspection {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("system.exit.call.ignore.option"), this, "ignoreInMainMethod");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SystemExitVisitor();
   }

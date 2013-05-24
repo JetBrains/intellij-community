@@ -26,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class AwaitNotInLoopInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "await.not.in.loop.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "await.not.in.loop.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AwaitNotInLoopVisitor();
   }

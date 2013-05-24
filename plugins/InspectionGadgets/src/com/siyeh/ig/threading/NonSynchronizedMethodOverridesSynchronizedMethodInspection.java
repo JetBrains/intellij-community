@@ -15,23 +15,25 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
-import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "non.synchronized.method.overrides.synchronized.method.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -43,6 +45,7 @@ public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
     return new ChangeModifierFix(PsiModifier.SYNCHRONIZED);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NonSynchronizedMethodOverridesSynchronizedMethodVisitor();
   }

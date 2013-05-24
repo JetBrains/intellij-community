@@ -112,6 +112,7 @@ public class IndexOfReplaceableByContainsInspection
       replaceExpression(expression, newExpressionText);
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

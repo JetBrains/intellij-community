@@ -61,6 +61,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
   private static class CallToStringConcatCanBeReplacedByOperatorFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("call.to.string.concat.can.be.replaced.by.operator.quickfix");

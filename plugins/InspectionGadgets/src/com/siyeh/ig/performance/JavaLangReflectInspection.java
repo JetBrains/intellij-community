@@ -27,18 +27,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaLangReflectInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "java.lang.reflect.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "java.lang.reflect.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new JavaLangReflectVisitor();
   }

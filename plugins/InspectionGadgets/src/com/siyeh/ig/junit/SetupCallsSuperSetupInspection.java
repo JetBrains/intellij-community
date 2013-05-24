@@ -52,6 +52,7 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
 
   private static class AddSuperSetUpCall extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

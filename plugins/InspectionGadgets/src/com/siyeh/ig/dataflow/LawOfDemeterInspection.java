@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,17 +35,20 @@ public class LawOfDemeterInspection extends BaseInspection {
   private static final Key<Integer> key =
     Key.create("LawOfDemeterInspection");
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("law.of.demeter.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "law.of.demeter.problem.descriptor");
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -53,6 +56,7 @@ public class LawOfDemeterInspection extends BaseInspection {
                                           "ignoreLibraryCalls");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LawOfDemeterVisitor();
   }

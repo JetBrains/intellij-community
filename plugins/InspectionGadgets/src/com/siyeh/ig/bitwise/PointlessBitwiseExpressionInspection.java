@@ -169,6 +169,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
 
   private class PointlessBitwiseFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

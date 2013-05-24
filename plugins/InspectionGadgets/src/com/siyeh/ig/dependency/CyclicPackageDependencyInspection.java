@@ -38,6 +38,7 @@ public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
       "cyclic.package.dependency.display.name");
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity,

@@ -24,22 +24,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowFromFinallyBlockInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "throw.from.finally.block.display.name");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "throw.from.finally.block.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThrowFromFinallyBlockVisitor();
   }

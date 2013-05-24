@@ -39,6 +39,7 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
     return true;
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -50,6 +51,7 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
     return new ChangeModifierFix(PsiModifier.STATIC);
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {

@@ -22,26 +22,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class CyclomaticComplexityInspection extends MethodMetricInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "OverlyComplexMethod";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "cyclomatic.complexity.display.name");
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 10;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message(
       "method.complexity.limit.option");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer complexity = (Integer)infos[0];
@@ -49,6 +54,7 @@ public class CyclomaticComplexityInspection extends MethodMetricInspection {
       "cyclomatic.complexity.problem.descriptor", complexity);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodComplexityVisitor();
   }

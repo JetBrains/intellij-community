@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.j2me;
 
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,12 +35,14 @@ public class OverlyLargePrimitiveArrayInitializerInspection
    */
   public int m_limit = 64;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "large.initializer.primitive.type.array.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer numElements = (Integer)infos[0];
@@ -49,6 +51,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
       numElements);
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionGadgetsBundle.message(
@@ -56,6 +59,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
       this, "m_limit");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new OverlyLargePrimitiveArrayInitializerVisitor();
   }

@@ -27,23 +27,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemSetSecurityManagerInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToSystemSetSecurityManager";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "system.set.security.manager.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "system.set.security.manager.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SystemSetSecurityManagerVisitor();
   }

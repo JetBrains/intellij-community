@@ -27,18 +27,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstantiationOfUtilityClassInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "instantiation.utility.class.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "instantiation.utility.class.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new InstantiationOfUtilityClassVisitor();
   }

@@ -26,22 +26,26 @@ import org.jetbrains.annotations.NotNull;
 public class NullArgumentToVariableArgMethodInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "null.argument.to.var.arg.method.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "null.argument.to.var.arg.method.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NullArgumentToVariableArgVisitor();
   }

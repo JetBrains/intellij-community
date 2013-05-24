@@ -77,6 +77,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
 
   private static class InlineCallFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.inline.quickfix");

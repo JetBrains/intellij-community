@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +33,14 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
     this.name = name;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(
       "smth.unnecessary.remove.quickfix", name);
   }
 
+  @Override
   protected void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     final PsiElement keywordElement = descriptor.getPsiElement();

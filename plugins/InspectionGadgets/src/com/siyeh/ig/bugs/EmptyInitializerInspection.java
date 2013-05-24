@@ -30,35 +30,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "EmptyClassInitializer";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "empty.class.initializer.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "empty.class.initializer.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new EmptyInitializerFix();
   }
 
   private static class EmptyInitializerFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "empty.class.initializer.delete.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
@@ -70,6 +76,7 @@ public class EmptyInitializerInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EmptyInitializerVisitor();
   }

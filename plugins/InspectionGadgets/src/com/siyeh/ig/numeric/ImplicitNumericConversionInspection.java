@@ -112,6 +112,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       }
     }
 
+    @Override
     @NotNull
     public String getName() {
       return m_name;

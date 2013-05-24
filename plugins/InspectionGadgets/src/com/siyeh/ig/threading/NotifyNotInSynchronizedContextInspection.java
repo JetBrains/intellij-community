@@ -29,18 +29,21 @@ import org.jetbrains.annotations.NotNull;
 public class NotifyNotInSynchronizedContextInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "notify.not.in.synchronized.context.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "notify.not.in.synchronized.context.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NotifyNotInSynchronizedContextVisitor();
   }

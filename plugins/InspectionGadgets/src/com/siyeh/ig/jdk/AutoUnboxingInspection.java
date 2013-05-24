@@ -125,6 +125,7 @@ public class AutoUnboxingInspection extends BaseInspection {
 
   private static class AutoUnboxingFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

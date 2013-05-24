@@ -30,25 +30,30 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryConditionalExpressionInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "RedundantConditionalExpression";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unnecessary.conditional.expression.display.name");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryConditionalExpressionVisitor();
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiConditionalExpression expression =
@@ -73,6 +78,7 @@ public class UnnecessaryConditionalExpressionInspection
     }
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryConditionalFix();
   }
@@ -80,12 +86,14 @@ public class UnnecessaryConditionalExpressionInspection
   private static class UnnecessaryConditionalFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiConditionalExpression expression =

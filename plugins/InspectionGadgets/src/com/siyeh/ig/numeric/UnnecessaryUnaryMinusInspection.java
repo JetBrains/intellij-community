@@ -30,18 +30,21 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unnecessary.unary.minus.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.unary.minus.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryUnaryMinusFix();
@@ -49,12 +52,14 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
   private static class UnnecessaryUnaryMinusFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.unary.minus.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
@@ -100,6 +105,7 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryUnaryMinusVisitor();
   }

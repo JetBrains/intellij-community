@@ -15,25 +15,27 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.psi.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AmbiguousMethodCallInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("ambiguous.method.call.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiClass superClass = (PsiClass)infos[0];
@@ -41,6 +43,7 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("ambiguous.method.call.problem.descriptor", superClass.getName(), outerClass.getName());
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new AmbiguousMethodCallFix();
@@ -48,11 +51,13 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
 
   private static class AmbiguousMethodCallFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("ambiguous.method.call.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
@@ -62,12 +67,14 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AmbiguousMethodCallVisitor();
   }
 
   private static class AmbiguousMethodCallVisitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();

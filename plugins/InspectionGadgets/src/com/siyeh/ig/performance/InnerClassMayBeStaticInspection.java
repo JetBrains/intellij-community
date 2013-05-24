@@ -58,6 +58,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
 
   private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("make.static.quickfix");

@@ -32,12 +32,14 @@ import org.jetbrains.annotations.NotNull;
 public class LiteralAsArgToStringEqualsInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "literal.as.arg.to.string.equals.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final String methodName = (String)infos[0];
@@ -46,22 +48,26 @@ public class LiteralAsArgToStringEqualsInspection
       methodName);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LiteralAsArgToEqualsVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new SwapEqualsFix();
   }
 
   private static class SwapEqualsFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "literal.as.arg.to.string.equals.flip.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiExpression argument =

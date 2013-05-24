@@ -24,18 +24,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassLoaderInstantiationInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "class.loader.instantiation.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.loader.instantiation.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassLoaderInstantiationVisitor();
   }

@@ -26,16 +26,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class BusyWaitInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("busy.wait.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("busy.wait.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BusyWaitVisitor();
   }

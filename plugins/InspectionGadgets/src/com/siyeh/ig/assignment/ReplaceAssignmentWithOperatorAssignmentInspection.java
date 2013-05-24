@@ -136,6 +136,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
         signText);
     }
 
+    @Override
     @NotNull
     public String getName() {
       return m_name;

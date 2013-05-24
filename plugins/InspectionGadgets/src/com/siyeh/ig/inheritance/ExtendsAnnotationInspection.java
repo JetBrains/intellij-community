@@ -27,21 +27,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsAnnotationInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ClassExplicitlyAnnotation";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "extends.annotation.display.name");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass containingClass = (PsiClass)infos[0];
@@ -50,6 +54,7 @@ public class ExtendsAnnotationInspection extends BaseInspection {
       containingClass.getName());
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ExtendsAnnotationVisitor();
   }

@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiTryStatement;
-import com.intellij.psi.JspPsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,21 +25,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyTryBlockInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("empty.try.block.display.name");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "empty.try.block.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EmptyTryBlockVisitor();
   }

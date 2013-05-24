@@ -30,11 +30,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("extract.method.quickfix");
   }
 
+  @Override
   public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiExpression expression =
       (PsiExpression)descriptor.getPsiElement();
@@ -45,6 +47,7 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
     final DataManager dataManager = DataManager.getInstance();
     final DataContext dataContext = dataManager.getDataContext();
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         extractHandler.invoke(project,
                               new PsiElement[]{expression}, dataContext);

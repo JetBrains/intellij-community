@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.JspPsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,31 +29,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassInTopLevelPackageInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ClassWithoutPackageStatement";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "class.in.top.level.package.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.in.top.level.package.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MoveClassFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassInTopLevelPackageVisitor();
   }

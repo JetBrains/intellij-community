@@ -99,6 +99,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
       this.replacementString = replacementString;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

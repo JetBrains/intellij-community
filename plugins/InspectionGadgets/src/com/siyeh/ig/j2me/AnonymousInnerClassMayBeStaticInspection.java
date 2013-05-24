@@ -27,24 +27,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "anonymous.inner.may.be.named.static.inner.class.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MoveAnonymousToInnerClassFix(
       InspectionGadgetsBundle.message(
         "anonymous.inner.may.be.named.static.inner.class.quickfix"));
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AnonymousInnerClassMayBeStaticVisitor();
   }

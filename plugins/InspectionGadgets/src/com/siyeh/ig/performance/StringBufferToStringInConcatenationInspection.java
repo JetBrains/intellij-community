@@ -56,6 +56,7 @@ public class StringBufferToStringInConcatenationInspection
 
   private static class StringBufferToStringFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

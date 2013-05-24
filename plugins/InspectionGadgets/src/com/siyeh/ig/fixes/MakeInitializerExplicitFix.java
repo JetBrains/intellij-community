@@ -26,12 +26,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(
       "make.initialization.explicit.quickfix");
   }
 
+  @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     final PsiElement fieldName = descriptor.getPsiElement();

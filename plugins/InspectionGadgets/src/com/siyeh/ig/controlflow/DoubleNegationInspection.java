@@ -30,11 +30,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class DoubleNegationInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("double.negation.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("double.negation.problem.descriptor");
@@ -45,6 +47,7 @@ public class DoubleNegationInspection extends BaseInspection {
     return true;
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new DoubleNegationFix();
@@ -52,11 +55,13 @@ public class DoubleNegationInspection extends BaseInspection {
 
   private static class DoubleNegationFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("double.negation.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement expression = descriptor.getPsiElement();
       if (expression instanceof PsiPrefixExpression) {
@@ -96,6 +101,7 @@ public class DoubleNegationInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DoubleNegationVisitor();
   }

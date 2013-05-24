@@ -57,6 +57,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
       this.replacement = replacement;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

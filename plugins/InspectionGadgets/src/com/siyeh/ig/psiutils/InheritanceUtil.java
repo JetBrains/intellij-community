@@ -61,6 +61,7 @@ public class InheritanceUtil {
     final SearchScope scope = GlobalSearchScope.allScope(class1.getProject());
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true, true);
     return !search.forEach(new Processor<PsiClass>() {
+      @Override
       public boolean process(PsiClass inheritor) {
         return !inheritor.equals(class2) && !inheritor.isInheritor(class2, true);
       }
@@ -81,6 +82,7 @@ public class InheritanceUtil {
   public static boolean hasOneInheritor(final PsiClass aClass) {
     final CountingProcessor processor = new CountingProcessor(2);
     ProgressManager.getInstance().runProcess(new Runnable() {
+      @Override
       public void run() {
         ClassInheritorsSearch.search(aClass, aClass.getUseScope(), false).forEach(processor);
       }

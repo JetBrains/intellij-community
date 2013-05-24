@@ -28,22 +28,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledToStringInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "misspelled.tostring.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "misspelled.tostring.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix(HardcodedMethodConstants.TO_STRING);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MisspelledToStringVisitor();
   }

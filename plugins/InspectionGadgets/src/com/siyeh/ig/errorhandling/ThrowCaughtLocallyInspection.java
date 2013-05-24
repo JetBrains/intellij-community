@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,18 +34,21 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
    */
   public boolean ignoreRethrownExceptions = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "throw.caught.locally.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "throw.caught.locally.problem.descriptor");
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -53,6 +56,7 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
                                           "ignoreRethrownExceptions");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThrowCaughtLocallyVisitor();
   }

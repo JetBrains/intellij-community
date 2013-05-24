@@ -55,6 +55,7 @@ public class ThreadRunInspection extends BaseInspection {
 
   private static class ThreadRunFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -80,6 +81,7 @@ public class ThreadRunInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThreadRunVisitor();
   }

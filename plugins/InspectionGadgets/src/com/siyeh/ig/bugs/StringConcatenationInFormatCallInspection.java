@@ -57,6 +57,7 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
       myPlural = plural;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (myPlural) {

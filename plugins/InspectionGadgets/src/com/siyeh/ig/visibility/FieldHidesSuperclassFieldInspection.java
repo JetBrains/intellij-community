@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -38,37 +38,44 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
    */
   public boolean m_ignoreInvisibleFields = true;
 
+  @Override
   @NotNull
   public String getID() {
     return "FieldNameHidesFieldInSuperclass";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "field.name.hides.in.superclass.display.name");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.name.hides.in.superclass.problem.descriptor");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
       "field.name.hides.in.superclass.ignore.option"),
                                           this, "m_ignoreInvisibleFields");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FieldHidesSuperclassFieldVisitor();
   }

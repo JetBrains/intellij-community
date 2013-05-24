@@ -54,6 +54,7 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
     }
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new AmbiguousMethodCallFix();
@@ -61,11 +62,13 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
 
   private static class AmbiguousMethodCallFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("ambiguous.field.access.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiReferenceExpression)) {

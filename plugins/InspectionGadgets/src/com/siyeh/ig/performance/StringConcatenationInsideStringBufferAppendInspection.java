@@ -63,6 +63,7 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
 
   private static class ReplaceWithChainedAppendFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

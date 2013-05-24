@@ -39,6 +39,7 @@ public class FieldCanBeMovedToSubclassInspection extends BaseGlobalInspection {
     //return InspectionGadgetsBundle.message("field.can.be.moved.so.subclass.display.name");
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity, AnalysisScope analysisScope,

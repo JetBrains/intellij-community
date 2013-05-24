@@ -51,6 +51,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
 
   private static final Comparator<PsiClass> INTERFACE_COMPARATOR =
     new Comparator<PsiClass>() {
+      @Override
       public int compare(PsiClass object1, PsiClass object2) {
         if (object1 == null && object2 == null) {
           return 0;

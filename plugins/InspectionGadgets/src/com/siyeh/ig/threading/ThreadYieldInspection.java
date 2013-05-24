@@ -27,22 +27,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadYieldInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToThreadYield";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("thread.yield.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.yield.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThreadYieldVisitor();
   }

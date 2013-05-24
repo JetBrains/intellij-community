@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,30 +31,36 @@ public class EmptyStatementBodyInspection extends BaseInspection {
    */
   public boolean m_reportEmptyBlocks = true;
 
+  @Override
   @NotNull
   public String getID() {
     return "StatementWithEmptyBody";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("statement.with.empty.body.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("statement.with.empty.body.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("statement.with.empty.body.include.option"),
                                           this, "m_reportEmptyBlocks");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EmptyStatementVisitor();
   }

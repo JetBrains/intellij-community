@@ -29,17 +29,20 @@ import org.jetbrains.annotations.NotNull;
 public class StaticFieldReferenceOnSubclassInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "StaticFieldReferencedViaSubclass";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "static.field.via.subclass.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass declaringClass = (PsiClass)infos[0];
@@ -50,18 +53,21 @@ public class StaticFieldReferenceOnSubclassInspection
       referencedClass.getQualifiedName());
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new StaticFieldOnSubclassFix();
   }
 
   private static class StaticFieldOnSubclassFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "static.field.via.subclass.rationalize.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiIdentifier name =
@@ -75,6 +81,7 @@ public class StaticFieldReferenceOnSubclassInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new StaticFieldOnSubclassVisitor();
   }

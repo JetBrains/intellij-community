@@ -63,6 +63,7 @@ public class HighlightUtils {
     }
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
+      @Override
       public void run() {
         final PsiElement[] elements =
           PsiUtilCore.toPsiElementArray(elementCollection);

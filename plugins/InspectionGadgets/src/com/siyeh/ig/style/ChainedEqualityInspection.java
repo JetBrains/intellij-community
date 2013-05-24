@@ -26,21 +26,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChainedEqualityInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ChainedEqualityComparisons";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("chained.equality.comparisons.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("chained.equality.comparisons.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ChainedEqualityVisitor();
   }

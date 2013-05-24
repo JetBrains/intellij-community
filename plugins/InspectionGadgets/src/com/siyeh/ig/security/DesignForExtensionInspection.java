@@ -24,17 +24,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class DesignForExtensionInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("design.for.extension.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "design.for.extension.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DesignForExtensionVisitor();
   }

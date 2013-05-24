@@ -43,6 +43,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
       "method.return.always.constant.display.name");
   }
 
+  @Override
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity, AnalysisScope scope, InspectionManager manager,
     GlobalInspectionContext globalContext) {

@@ -22,24 +22,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestingDepthInspection extends MethodMetricInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "OverlyNestedMethod";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("nesting.depth.display.name");
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 5;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message("nesting.depth.limit.option");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer nestingDepth = (Integer)infos[0];
@@ -47,6 +52,7 @@ public class NestingDepthInspection extends MethodMetricInspection {
       "nesting.depth.problem.descriptor", nestingDepth);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NestingDepthMethodVisitor();
   }

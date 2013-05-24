@@ -69,6 +69,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
       replacementText = getCollectionsMethodCallText(referenceName);
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

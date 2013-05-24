@@ -24,18 +24,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInInterfaceInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "constant.declared.in.interface.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "constant.declared.in.interface.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ConstantDeclaredInInterfaceVisitor();
   }

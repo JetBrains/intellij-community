@@ -30,39 +30,46 @@ import org.jetbrains.annotations.NotNull;
 public class LongLiteralsEndingWithLowercaseLInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "LongLiteralEndingWithLowercaseL";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "long.literals.ending.with.lowercase.l.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "long.literals.ending.with.lowercase.l.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LongLiteralWithLowercaseLVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new LongLiteralFix();
   }
 
   private static class LongLiteralFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "long.literals.ending.with.lowercase.l.replace.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiExpression literal =

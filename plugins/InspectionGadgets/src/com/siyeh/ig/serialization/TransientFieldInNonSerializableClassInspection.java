@@ -32,12 +32,14 @@ import org.jetbrains.annotations.NotNull;
 public class TransientFieldInNonSerializableClassInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "transient.field.in.non.serializable.class.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiField field = (PsiField)infos[0];
@@ -46,6 +48,7 @@ public class TransientFieldInNonSerializableClassInspection
       field.getName());
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new TransientFieldInNonSerializableClassFix();
   }
@@ -54,12 +57,14 @@ public class TransientFieldInNonSerializableClassInspection
   private static class TransientFieldInNonSerializableClassFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "transient.field.in.non.serializable.class.remove.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement transientModifier = descriptor.getPsiElement();
@@ -67,6 +72,7 @@ public class TransientFieldInNonSerializableClassInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TransientFieldInNonSerializableClassVisitor();
   }

@@ -32,31 +32,37 @@ import java.util.Set;
 
 public class MethodOverridesStaticMethodInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "MethodOverridesStaticMethodOfSuperclass";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "method.overrides.static.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.overrides.static.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodOverridesStaticMethodVisitor();
   }

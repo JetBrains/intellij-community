@@ -26,12 +26,14 @@ import org.jetbrains.annotations.NotNull;
 public class EqualsBetweenInconvertibleTypesInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "equals.between.inconvertible.types.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType comparedType = (PsiType)infos[0];
@@ -42,10 +44,12 @@ public class EqualsBetweenInconvertibleTypesInspection
       comparisonType.getPresentableText());
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EqualsBetweenInconvertibleTypesVisitor();
   }
@@ -83,8 +87,8 @@ public class EqualsBetweenInconvertibleTypesInspection
       }
       final PsiType comparedTypeErasure = TypeConversionUtil.erasure(comparedType);
       final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(comparisonType);
-      if (comparedTypeErasure == null || 
-          comparisonTypeErasure == null || 
+      if (comparedTypeErasure == null ||
+          comparisonTypeErasure == null ||
           TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
         return;
       }

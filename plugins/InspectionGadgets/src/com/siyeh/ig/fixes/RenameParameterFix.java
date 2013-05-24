@@ -20,8 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class RenameParameterFix extends InspectionGadgetsFix {
@@ -33,11 +33,13 @@ public class RenameParameterFix extends InspectionGadgetsFix {
     m_targetName = targetName;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
   }
 
+  @Override
   public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement nameIdentifier = descriptor.getPsiElement();
     final PsiElement elementToRename = nameIdentifier.getParent();

@@ -101,6 +101,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
 
   private class LogStatementGuardedByLogConditionFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.quickfix");

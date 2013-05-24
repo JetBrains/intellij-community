@@ -30,31 +30,37 @@ import java.util.Set;
 
 public class MethodOverridesPrivateMethodInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "MethodOverridesPrivateMethodOfSuperclass";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "method.overrides.private.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.overrides.private.display.name.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodOverridesPrivateMethodVisitor();
   }

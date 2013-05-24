@@ -44,6 +44,7 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
       "class.with.too.many.dependents.display.name");
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity,
@@ -73,6 +74,7 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
     };
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionGadgetsBundle.message(

@@ -26,17 +26,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConnectionResourceInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ConnectionOpenedButNotSafelyClosed";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "connection.opened.not.safely.closed.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
@@ -45,6 +48,7 @@ public class ConnectionResourceInspection extends BaseInspection {
       "resource.opened.not.closed.problem.descriptor", text);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new RecordStoreResourceVisitor();
   }

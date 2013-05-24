@@ -74,6 +74,7 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
       this.removeTryCatch = removeTryCatch;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (removeTryCatch) {
