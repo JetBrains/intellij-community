@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +37,13 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
 
-public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
-
+public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
   @NonNls private static final String INSPECTION = "Inspection";
 
   private String m_shortName = null;
   private long timestamp = -1L;
-  private final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
 
   @Override
   @NotNull
@@ -185,7 +184,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
   @Override
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {
     super.inspectionStarted(session, isOnTheFly);
-    if (inspectionGadgetsPlugin.isTelemetryEnabled()) {
+    if (InspectionGadgetsTelemetry.isEnabled()) {
       timestamp = System.currentTimeMillis();
     }
   }
@@ -194,14 +193,14 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
   public void inspectionFinished(@NotNull LocalInspectionToolSession session,
                                  @NotNull ProblemsHolder problemsHolder) {
     super.inspectionFinished(session, problemsHolder);
-    if (inspectionGadgetsPlugin.isTelemetryEnabled()) {
+    if (InspectionGadgetsTelemetry.isEnabled()) {
       if (timestamp < 0L) {
         LOG.warn("finish reported without corresponding start");
         return;
       }
       final long end = System.currentTimeMillis();
       final String displayName = getDisplayName();
-      inspectionGadgetsPlugin.getTelemetry().reportRun(displayName, end - timestamp);
+      InspectionGadgetsTelemetry.getInstance().reportRun(displayName, end - timestamp);
       timestamp = -1L;
     }
   }

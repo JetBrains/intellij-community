@@ -15,21 +15,19 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.Language;
-import com.intellij.lang.jsp.JspxFileViewProvider;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +44,13 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
   /**
    * To appear in "Apply Fix" statement when multiple Quick Fixes exist
    */
+  @Override
   @NotNull
   public String getFamilyName() {
     return "";
   }
 
+  @Override
   public final void applyFix(@NotNull Project project,
                              @NotNull ProblemDescriptor descriptor) {
     final PsiElement problemElement = descriptor.getPsiElement();
@@ -145,6 +145,10 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     styleManager.reformat(replacementExp);
   }
 
+  private static boolean isInJsp(PsiElement file) {
+    return PsiUtilCore.getTemplateLanguageFile(file) instanceof ServerPageFile;
+  }
+
   protected static void replaceStatementAndShortenClassNames(
     @NotNull PsiStatement statement,
     @NotNull @NonNls String newStatementText)
@@ -154,11 +158,11 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
       CodeStyleManager.getInstance(project);
     final JavaCodeStyleManager javaStyleManager =
       JavaCodeStyleManager.getInstance(project);
-    if (JspPsiUtil.isInJspFile(statement)) {
+    if (isInJsp(statement)) {
       final PsiDocumentManager documentManager =
         PsiDocumentManager.getInstance(project);
-      final JspFile file = JspPsiUtil.getJspFile(statement);
-      final Document document = documentManager.getDocument(file);
+      final PsiFile jspFile = PsiUtilCore.getTemplateLanguageFile(statement);
+      final Document document = documentManager.getDocument(jspFile);
       if (document == null) {
         return;
       }
@@ -167,10 +171,10 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
       document.replaceString(textRange.getStartOffset(),
                              textRange.getEndOffset(), newStatementText);
       documentManager.commitDocument(document);
-      final JspxFileViewProvider viewProvider = file.getViewProvider();
+      final FileViewProvider viewProvider = jspFile.getViewProvider();
       PsiElement elementAt =
         viewProvider.findElementAt(textRange.getStartOffset(),
-                                   StdLanguages.JAVA);
+                                   JavaLanguage.INSTANCE);
       if (elementAt == null) {
         return;
       }
@@ -211,13 +215,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     if (containingPsiFile == null) {
       return false;
     }
-    final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
-    final Project project = problemElement.getProject();
-    final ReadonlyStatusHandler handler =
-      ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus status =
-      handler.ensureFilesWritable(virtualFile);
-    return status.hasReadonlyFiles();
+    return !FileModificationService.getInstance().prepareFileForWrite(containingPsiFile);
   }
 
   protected static String getElementText(@NotNull PsiElement element,

@@ -15,21 +15,25 @@
  */
 package com.siyeh.ig.telemetry;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionGadgetsTelemetry {
+  private static final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
+  private static volatile boolean telemetryEnabled = false;
 
   private final ConcurrentHashMap<String, InspectionRunTime> inspectionRunTimes =
-    new ConcurrentHashMap();
+    new ConcurrentHashMap<String, InspectionRunTime>();
 
   public List<InspectionRunTime> buildList() {
     if (inspectionRunTimes.isEmpty()) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
-    return new ArrayList(inspectionRunTimes.values());
+    return new ArrayList<InspectionRunTime>(inspectionRunTimes.values());
   }
 
   public void reportRun(String inspectionID, long runTime) {
@@ -49,5 +53,21 @@ public class InspectionGadgetsTelemetry {
 
   public void reset() {
     inspectionRunTimes.clear();
+  }
+
+  public static boolean isEnabled() {
+    return telemetryEnabled;
+  }
+
+  public static void setEnabled(boolean enabled) {
+    telemetryEnabled = enabled;
+    if (telemetryEnabled) {
+      telemetry.reset();
+    }
+  }
+
+  @NotNull
+  public static InspectionGadgetsTelemetry getInstance() {
+    return telemetry;
   }
 }
