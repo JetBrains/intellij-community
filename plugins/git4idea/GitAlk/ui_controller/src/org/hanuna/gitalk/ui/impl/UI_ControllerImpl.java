@@ -486,8 +486,10 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     private void setResultRef(Ref subjectRef) {
-      this.subjectRef = subjectRef;
-      resultRef = new Ref(fakeBranch.get(0).getCommitHash(), subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
+      if (resultRef == null) {
+        this.subjectRef = subjectRef;
+      }
+      this.resultRef = new Ref(fakeBranch.get(0).getCommitHash(), subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
     }
 
     @Override
@@ -502,40 +504,49 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
-      if (resultRef == null) {
-        DataPackUtils du = getDataPackUtils();
-        if (position == InsertPosition.BELOW) {
-          insertAfter = base.getRowIndex() + 1;
-          // TODO: what if many edges?
-          base = getParent(base);
-        }
-        else {
-          insertAfter = base.getRowIndex();
-        }
-        Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
-        if (du.isAncestorOf(base, lowestInserted)) {
-          this.branchBase = base;
-        }
-        else {
-          // TODO: many parents?
-          this.branchBase = getParent(lowestInserted);
-        }
-
-        Set<Node> nodesToRemove = new HashSet<Node>(nodesToInsert);
-        List<Node> branch = du.getCommitsInBranchAboveBase(this.branchBase, du.getNodeByHash(subjectRef.getCommitHash()));
-        List<Node> result = new ArrayList<Node>();
-        for (Node node : branch) {
-          if (node == base) {
-            result.addAll(nodesToInsert);
-          }
-          if (!nodesToRemove.contains(node)) {
-            result.add(node);
-          }
-        }
-        this.fakeBranch = createFakeCommits(this.branchBase, result);
-
-        setResultRef(subjectRef);
+      if (resultRef != null && resultRef != subjectRef) {
+        reset();
       }
+      DataPackUtils du = getDataPackUtils();
+      if (position == InsertPosition.BELOW) {
+        insertAfter = base.getRowIndex() + 1;
+        // TODO: what if many edges?
+        base = getParent(base);
+      }
+      else {
+        insertAfter = base.getRowIndex();
+      }
+      Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
+      if (du.isAncestorOf(base, lowestInserted)) {
+        this.branchBase = base;
+      }
+      else {
+        // TODO: many parents?
+        this.branchBase = getParent(lowestInserted);
+      }
+
+      if (!fakeBranch.isEmpty()) {
+        FakeCommitParents lowestFakeCommit = fakeBranch.get(fakeBranch.size() - 1);
+        Node lowestFakeNode = du.getNodeByHash(lowestFakeCommit.getCommitHash());
+
+        if (du.isAncestorOf(lowestFakeNode, branchBase)) {
+          branchBase = getParent(lowestFakeNode);
+        }
+      }
+
+      Set<Node> nodesToRemove = new HashSet<Node>(nodesToInsert);
+      List<Node> branch = du.getCommitsInBranchAboveBase(this.branchBase, du.getNodeByHash(subjectRef.getCommitHash()));
+      List<Node> result = new ArrayList<Node>();
+      for (Node node : branch) {
+        if (node == base) {
+          result.addAll(nodesToInsert);
+        }
+        if (!nodesToRemove.contains(node)) {
+          result.add(node);
+        }
+      }
+      this.fakeBranch = createFakeCommits(this.branchBase, result);
+      setResultRef(subjectRef);
     }
 
     private List<FakeCommitParents> createFakeCommits(Node base, List<Node> nodesToRebase) {

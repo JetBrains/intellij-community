@@ -296,7 +296,7 @@ public class Swing_UI {
       List<Ref> result = new ArrayList<Ref>();
       List<Ref> nodeRefs = ui_controller.getDataPack().getRefsModel().refsToCommit(commitHash);
       for (Ref ref : nodeRefs) {
-        if (ref.getType() == Ref.RefType.LOCAL_BRANCH) {
+        if (ref.getType() == Ref.RefType.LOCAL_BRANCH || ref.getType() == Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE) {
           result.add(ref);
         }
       }

@@ -20,11 +20,14 @@ public class FakeCommitParents implements CommitParents {
   }
 
   public static Hash getOriginal(Hash hash) {
-    return isFake(hash) ? Hash.build(hash.toStrHash().substring(FAKE_HASH_PREFIX.length())) : hash;
+    return Hash.build(getOriginal(hash.toStrHash()));
   }
 
   public static String getOriginal(String hash) {
-    return isFake(hash) ? hash.substring(FAKE_HASH_PREFIX.length()) : hash;
+    while (isFake(hash)) {
+      hash = hash.substring(FAKE_HASH_PREFIX.length());
+    }
+    return hash;
   }
 
   private final RebaseCommand command;
