@@ -454,19 +454,8 @@ public class UI_ControllerImpl implements UI_Controller {
     private Ref subjectRef = null;
     private Ref resultRef = null;
 
-    private Map<Hash, FakeCommitParents> fakeCommits = new HashMap<Hash, FakeCommitParents>();
-
     private FakeCommitParents createFake(Hash oldHash, Hash newParent) {
-      FakeCommitParents existing = fakeCommits.get(oldHash);
-      if (existing != null) return existing;
-      FakeCommitParents fake =
-        new FakeCommitParents(newParent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, oldHash));
-      fakeCommits.put(oldHash, fake);
-      return fake;
-    }
-
-    private boolean isFake(Hash hash) {
-      return fakeCommits.containsKey(hash);
+      return new FakeCommitParents(newParent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, oldHash));
     }
 
     public void reset() {
@@ -475,7 +464,6 @@ public class UI_ControllerImpl implements UI_Controller {
       fakeBranch.clear();
       subjectRef = null;
       resultRef = null;
-      fakeCommits.clear();
     }
 
     @Override
@@ -604,7 +592,7 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     public FakeCommitsInfo getFakeCommitsInfo() {
-      return new FakeCommitsInfo(fakeBranch, fakeCommits.keySet(), branchBase, insertAfter, resultRef, subjectRef);
+      return new FakeCommitsInfo(fakeBranch, branchBase, insertAfter, resultRef, subjectRef);
     }
   }
 
