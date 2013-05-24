@@ -36,36 +36,21 @@ public class MainFrame {
     myToolbar.setLayout(new BoxLayout(myToolbar, BoxLayout.LINE_AXIS));
     myToolbar.setMaximumSize(new Dimension(10000, 10));
 
-    JButton hideButton = new JButton("Hide");
-    hideButton.addMouseListener(new MouseAdapter() {
+    Action hide = new AbstractAction("", GitLogIcons.SPIDER) {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public void actionPerformed(ActionEvent e) {
         ui_controller.hideAll();
       }
-    });
-    myToolbar.add(hideButton);
+    };
+    myToolbar.add(new JButton(hide));
 
-    JButton showButton = new JButton("Show");
-    showButton.addMouseListener(new MouseAdapter() {
+    Action show = new AbstractAction("", GitLogIcons.WEB) {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public void actionPerformed(ActionEvent e) {
         ui_controller.showAll();
       }
-    });
-    myToolbar.add(showButton);
-
-
-    final JCheckBox visibleLongEdges = new JCheckBox("Show full patch", false);
-    visibleLongEdges.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
-      }
-
-
-    });
-
-    myToolbar.add(visibleLongEdges);
+    };
+    myToolbar.add(new JButton(show));
 
     Action refresh = new AbstractAction("", AllIcons.Actions.Refresh) {
       @Override
@@ -82,6 +67,15 @@ public class MainFrame {
       }
     };
     myToolbar.add(new JButton(apply));
+
+    final JCheckBox visibleLongEdges = new JCheckBox("Show full patch", false);
+    visibleLongEdges.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
+      }
+    });
+    myToolbar.add(visibleLongEdges);
 
     myToolbar.add(Box.createHorizontalGlue());
   }
