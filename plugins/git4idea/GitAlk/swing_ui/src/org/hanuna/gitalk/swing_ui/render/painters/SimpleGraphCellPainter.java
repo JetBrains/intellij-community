@@ -96,56 +96,81 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
+  private interface LitePrinter {
+    void print(Color color);
+  }
+
+  private void drawLogick(boolean selected, boolean marked, boolean isUsual, Color usualColor, LitePrinter printer) {
+    if (selected) {
+      setStroke(isUsual, true);
+      printer.print(markColor);
+      setStroke(isUsual, false);
+      printer.print(usualColor);
+    } else {
+      setStroke(isUsual, marked);
+      printer.print(usualColor);
+    }
+  }
+
   @Override
   public void draw(Graphics2D g2, GraphPrintCell row) {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    for (ShortEdge edge : row.getUpEdges()) {
-      if (edge.isMarked()) {
-        setStroke(edge.isUsual(), true);
-        paintUpLine(edge.getDownPosition(), edge.getUpPosition(), markColor);
-      }
-      setStroke(edge.isUsual(), edge.isSelected());
-      paintUpLine(edge.getDownPosition(), edge.getUpPosition(), ColorGenerator.getColor(edge.getEdge().getBranch()));
+    for (final ShortEdge edge : row.getUpEdges()) {
+      drawLogick(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()),
+                 new LitePrinter() {
+                   @Override
+                   public void print(Color color) {
+                     paintUpLine(edge.getDownPosition(), edge.getUpPosition(), color);
+                   }
+                 });
     }
-    for (ShortEdge edge : row.getDownEdges()) {
-      if (edge.isMarked()) {
-        setStroke(edge.isUsual(), true);
-        paintDownLine(edge.getUpPosition(), edge.getDownPosition(), markColor);
-      }
-      setStroke(edge.isUsual(), edge.isSelected());
-      paintDownLine(edge.getUpPosition(), edge.getDownPosition(), ColorGenerator.getColor(edge.getEdge().getBranch()));
+    for (final ShortEdge edge : row.getDownEdges()) {
+      drawLogick(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()),
+                 new LitePrinter() {
+                   @Override
+                   public void print(Color color) {
+                     paintDownLine(edge.getUpPosition(), edge.getDownPosition(), color);
+                   }
+                 });
+
     }
-    for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
-      Edge edge;
+    for (final SpecialPrintElement printElement : row.getSpecialPrintElements()) {
+      final Edge edge;
       switch (printElement.getType()) {
         case COMMIT_NODE:
           Node node = printElement.getGraphElement().getNode();
           assert node != null;
-          if (printElement.isMarked()) {
+          if (printElement.isSelected()) {
             paintCircle(printElement.getPosition(), markColor, true);
+            paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), false);
+          } else {
+            paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), printElement.isMarked());
           }
-          paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), printElement.isSelected());
           break;
         case UP_ARROW:
           edge = printElement.getGraphElement().getEdge();
           assert edge != null;
-          if (printElement.isMarked()) {
-            setStroke(edge.getType() == Edge.EdgeType.USUAL, true);
-            paintShow(printElement.getPosition(), markColor);
-          }
-          setStroke(edge.getType() == Edge.EdgeType.USUAL, printElement.isSelected());
-          paintShow(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
+          drawLogick(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL,
+                     ColorGenerator.getColor(edge.getBranch()),
+                     new LitePrinter() {
+                       @Override
+                       public void print(Color color) {
+                         paintShow(printElement.getPosition(), color);
+                       }
+                     });
           break;
         case DOWN_ARROW:
           edge = printElement.getGraphElement().getEdge();
           assert edge != null;
-          if (printElement.isMarked()) {
-            setStroke(edge.getType() == Edge.EdgeType.USUAL, true);
-            paintHide(printElement.getPosition(), markColor);
-          }
-          setStroke(edge.getType() == Edge.EdgeType.USUAL, printElement.isSelected());
-          paintHide(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
+          drawLogick(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL,
+                     ColorGenerator.getColor(edge.getBranch()),
+                     new LitePrinter() {
+                       @Override
+                       public void print(Color color) {
+                         paintHide(printElement.getPosition(), color);
+                       }
+                     });
           break;
         default:
           throw new IllegalStateException();
