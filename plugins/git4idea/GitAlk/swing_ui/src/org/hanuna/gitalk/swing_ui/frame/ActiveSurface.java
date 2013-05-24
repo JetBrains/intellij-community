@@ -1,14 +1,13 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.ui.UI_Controller;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,16 +22,7 @@ public class ActiveSurface extends JPanel {
 
   ActiveSurface(UI_Controller ui_controller) {
     this.graphTable = new UI_GraphTable(ui_controller);
-    List<Ref> allRefs = ui_controller.getRefs();
-    ArrayList<Ref> refsWithoutTags = new ArrayList<Ref>(Collections2.filter(allRefs, new Predicate<Ref>() {
-      @Override
-      public boolean apply(@Nullable Ref input) {
-        assert input != null;
-        Ref.RefType type = input.getType();
-        return type == Ref.RefType.LOCAL_BRANCH || type == Ref.RefType.REMOTE_BRANCH || type == Ref.RefType.ANOTHER;
-      }
-    }));
-    myBranchesPanel = new BranchesPanel(ui_controller, refsWithoutTags);
+    myBranchesPanel = new BranchesPanel(ui_controller);
     packTables();
   }
 
@@ -46,4 +36,7 @@ public class ActiveSurface extends JPanel {
     add(new JScrollPane(graphTable), BorderLayout.CENTER);
   }
 
+  public BranchesPanel getBranchesPanel() {
+    return myBranchesPanel;
+  }
 }

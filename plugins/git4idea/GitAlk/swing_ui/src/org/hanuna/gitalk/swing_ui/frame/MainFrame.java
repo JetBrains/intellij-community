@@ -91,4 +91,8 @@ public class MainFrame {
   public JPanel getMainComponent() {
     return mainPanel;
   }
+
+  public BranchesPanel getBranchPanel() {
+    return myActiveSurface.getBranchesPanel();
+  }
 }

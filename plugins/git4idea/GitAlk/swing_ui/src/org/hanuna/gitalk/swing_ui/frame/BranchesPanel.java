@@ -1,6 +1,8 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
 import com.google.common.collect.Ordering;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.refs.Ref;
@@ -25,14 +27,14 @@ import java.util.Map;
 public class BranchesPanel extends JPanel {
 
   private final UI_Controller myUiController;
-  private final List<Ref> myRefs;
+  private List<Ref> myRefs;
   private final RefPainter myRefPainter;
 
   private Map<Integer, Ref> myRefPositions = new HashMap<Integer, Ref>();
 
-  public BranchesPanel(UI_Controller ui_controller, List<Ref> refs) {
+  public BranchesPanel(UI_Controller ui_controller) {
     myUiController = ui_controller;
-    myRefs = refs;
+    myRefs = getRefsToDisplayOnPanel();
     myRefPainter = new RefPainter();
 
     setPreferredSize(new Dimension(-1, Print_Parameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
@@ -67,6 +69,43 @@ public class BranchesPanel extends JPanel {
   @Override
   protected void paintComponent(Graphics g) {
     myRefPositions = myRefPainter.draw((Graphics2D)g, myRefs, UIUtil.DEFAULT_HGAP);
+  }
+
+  public void rebuild() {
+    myRefs = getRefsToDisplayOnPanel();
+    getParent().repaint();
+  }
+
+  private List<Ref> getRefsToDisplayOnPanel() {
+    List<Ref> allRefs = myUiController.getRefs();
+    final List<Ref> localRefs = ContainerUtil.filter(allRefs, new Condition<Ref>() {
+      @Override
+      public boolean value(Ref ref) {
+        return ref.getType() == Ref.RefType.LOCAL_BRANCH;
+      }
+    });
+
+    return ContainerUtil.filter(allRefs, new Condition<Ref>() {
+      @Override
+      public boolean value(Ref ref) {
+        if (ref.getType() == Ref.RefType.REMOTE_BRANCH) {
+          return !thereIsLocalRefOfHash(ref.getCommitHash(), localRefs);
+        }
+        if (ref.getType() == Ref.RefType.LOCAL_BRANCH) {
+          return true;
+        }
+        return false;
+      }
+    });
+  }
+
+  private static boolean thereIsLocalRefOfHash(Hash commitHash, List<Ref> localRefs) {
+    for (Ref localRef : localRefs) {
+      if (localRef.getCommitHash().equals(commitHash)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }
