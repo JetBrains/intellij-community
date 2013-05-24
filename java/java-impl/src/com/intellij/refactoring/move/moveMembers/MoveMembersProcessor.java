@@ -203,7 +203,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           final PsiElement anchor;
           if (anchorsInSourceClass.containsKey(member)) {
             final PsiMember memberInSourceClass = anchorsInSourceClass.get(member);
-            //anchor should be already moved as myMembersToMove contains members in order they appear in source class 
+            //anchor should be already moved as myMembersToMove contains members in order they appear in source class
             anchor = memberInSourceClass != null ? movedMembers.get(memberInSourceClass) : null;
           }
           else {
@@ -258,7 +258,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         filtered.add(usage);
       }
     }
-    VisibilityUtil.fixVisibility(filtered.toArray(new UsageInfo[filtered.size()]), newMember, myNewVisibility);
+    UsageInfo[] infos = filtered.toArray(new UsageInfo[filtered.size()]);
+    VisibilityUtil.fixVisibility(UsageViewUtil.toElements(infos), newMember, myNewVisibility);
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

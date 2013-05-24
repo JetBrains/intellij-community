@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.util;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.PsiElement;
@@ -62,7 +63,7 @@ public class RefactoringUIUtil {
       if (i > 0) buffer.append(", ");
       buffer.append(UsageViewUtil.getType(elements[i]));
       buffer.append(" ");
-      buffer.append(UsageViewUtil.getDescriptiveName(elements[i]));
+      buffer.append(DescriptiveNameUtil.getDescriptiveName(elements[i]));
     }
 
     return buffer.toString();

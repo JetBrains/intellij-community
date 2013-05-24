@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
@@ -384,10 +385,10 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(parent);
       }
     }
-    
+
     if (callExpression == null) return;
-      
-      
+
+
     //LOG.assertTrue(callExpression != null);
 
     //check for x.getFoo()(args)
@@ -404,7 +405,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         }
       }
     }
-    
+
     GrArgumentList argList = callExpression.getArgumentList();
     LOG.assertTrue(argList != null);
     GrExpression[] oldArgs = argList.getExpressionArguments();
@@ -613,7 +614,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(mySettings.getToReplaceIn()));
+    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
 

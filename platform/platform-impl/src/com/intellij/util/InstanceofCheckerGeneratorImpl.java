@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
@@ -43,6 +44,7 @@ public class InstanceofCheckerGeneratorImpl extends InstanceofCheckerGenerator {
     }
   };
 
+  @NotNull
   public Condition<Object> getInstanceofChecker(final Class<?> someClass) {
     return myCache.get(someClass);
   }

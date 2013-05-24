@@ -17,6 +17,7 @@
 package com.intellij.usageView;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.ElementDescriptionLocation;
@@ -49,7 +50,7 @@ public class UsageViewNodeTextLocation extends ElementDescriptionLocation {
       if (element instanceof PsiMetaOwner) {
         final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
         if (metaData instanceof PsiPresentableMetaData) {
-          return ((PsiPresentableMetaData)metaData).getTypeName() + " " + UsageViewUtil.getMetaDataName(metaData);
+          return ((PsiPresentableMetaData)metaData).getTypeName() + " " + DescriptiveNameUtil.getMetaDataName(metaData);
         }
       }
 

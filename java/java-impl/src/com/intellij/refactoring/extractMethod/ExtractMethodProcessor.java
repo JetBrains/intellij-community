@@ -1054,7 +1054,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         final PsiClass nullableAnnotationClass =
           JavaPsiFacade.getInstance(myProject).findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
         if (nullableAnnotationClass != null) {
-          new AddNullableAnnotationFix(newMethod).invoke(myProject, myEditor, myTargetClass.getContainingFile());
+          new AddNullableAnnotationFix(newMethod).invoke(myProject, myTargetClass.getContainingFile(), newMethod, newMethod);
         }
       }
     }

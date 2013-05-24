@@ -18,6 +18,9 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -27,7 +30,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +78,12 @@ public class ReturnNullInspection extends BaseInspection {
       NullableNotNullManager.getInstance(elt.getProject());
     return new DelegatingFix(new AnnotateMethodFix(
       manager.getDefaultNullable(),
-      ArrayUtil.toStringArray(manager.getNotNulls())));
+      ArrayUtil.toStringArray(manager.getNotNulls())){
+      @Override
+      public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
+        return SuperMethodWarningUtil.askWhetherShouldAnnotateBaseMethod(method, superMethod);
+      }
+    });
   }
 
   @Override

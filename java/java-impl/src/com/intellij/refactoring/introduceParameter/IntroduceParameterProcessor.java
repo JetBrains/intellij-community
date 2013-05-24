@@ -25,6 +25,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -535,7 +536,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myMethodToReplaceIn));
+    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(myMethodToReplaceIn));
   }
 
   @Nullable

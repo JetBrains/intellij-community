@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -48,7 +49,12 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new DelegatingFix(new AnnotateMethodFix("org.junit.Test"));
+    return new DelegatingFix(new AnnotateMethodFix("org.junit.Test"){
+      @Override
+      public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
+        return 1;
+      }
+    });
   }
 
   @Override

@@ -16,13 +16,13 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
@@ -101,11 +101,11 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   }
 
   private static String buildPropertyName(PsiElement e, boolean property) {
-    if (property) return UsageViewUtil.getDescriptiveName(e);
+    if (property) return DescriptiveNameUtil.getDescriptiveName(e);
 
     List<String> path = new ArrayList<String>();
     do {
-      path.add(UsageViewUtil.getDescriptiveName(e));
+      path.add(DescriptiveNameUtil.getDescriptiveName(e));
     }
     while ((e = PsiTreeUtil.getParentOfType(e, XmlTag.class)) != null);
     Collections.reverse(path);

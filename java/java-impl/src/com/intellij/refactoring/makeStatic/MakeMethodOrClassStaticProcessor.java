@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -274,7 +275,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   protected String getCommandName() {
-    return RefactoringBundle.message("make.static.command", UsageViewUtil.getDescriptiveName(myMember));
+    return RefactoringBundle.message("make.static.command", DescriptiveNameUtil.getDescriptiveName(myMember));
   }
 
   public T getMember() {

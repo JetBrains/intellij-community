@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -44,7 +45,6 @@ import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceSearchingScanner;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
@@ -906,7 +906,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
 
   protected String getCommandName() {
-    return RefactoringBundle.message("replace.inheritance.with.delegation.command", UsageViewUtil.getDescriptiveName(myClass));
+    return RefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
   private Set<PsiMember> getAllBaseClassMembers() {

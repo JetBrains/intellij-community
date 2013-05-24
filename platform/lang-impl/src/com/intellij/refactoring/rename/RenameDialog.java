@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -119,7 +120,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   private String getFullName() {
-    final String name = UsageViewUtil.getDescriptiveName(myPsiElement);
+    final String name = DescriptiveNameUtil.getDescriptiveName(myPsiElement);
     return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
   }
 

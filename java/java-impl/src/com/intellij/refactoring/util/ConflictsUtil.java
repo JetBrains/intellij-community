@@ -20,13 +20,13 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public class ConflictsUtil {
       }
       else { // method somewhere in base class
         if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
-          String className = CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(method.getContainingClass()));
+          String className = CommonRefactoringUtil.htmlEmphasize(DescriptiveNameUtil.getDescriptiveName(method.getContainingClass()));
           if (PsiUtil.getAccessLevel(prototype.getModifierList()) >= PsiUtil.getAccessLevel(method.getModifierList()) ) {
             boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
             boolean isMyMethodAbstract = refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.ABSTRACT);

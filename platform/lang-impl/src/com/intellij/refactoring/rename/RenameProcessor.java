@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -254,7 +255,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myNewName = newName;
     myAllRenames.put(myPrimaryElement, newName);
     myCommandName = RefactoringBundle
-      .message("renaming.0.1.to.2", UsageViewUtil.getType(myPrimaryElement), UsageViewUtil.getDescriptiveName(myPrimaryElement), newName);
+      .message("renaming.0.1.to.2", UsageViewUtil.getType(myPrimaryElement), DescriptiveNameUtil.getDescriptiveName(myPrimaryElement), newName);
   }
 
   @Override
