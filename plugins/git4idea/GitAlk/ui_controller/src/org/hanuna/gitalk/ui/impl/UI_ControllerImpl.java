@@ -514,7 +514,7 @@ public class UI_ControllerImpl implements UI_Controller {
           this.base = getParent(lowestInserted);
         }
 
-        List<Node> inputNodes = du.getCommitsInBranchAboveBase(this.base, subjectRef);
+        List<Node> inputNodes = du.getCommitsInBranchAboveBase(this.base, du.getNodeByHash(subjectRef.getCommitHash()));
         inputNodes.removeAll(nodesToInsert);
         inputNodes.addAll(0, nodesToInsert);
         this.fakeBranch = createFakeCommits(this.base, inputNodes);

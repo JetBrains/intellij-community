@@ -126,20 +126,16 @@ public class DataPackUtils {
     return null;
   }
 
-  public List<Node> getCommitsInBranchAboveBase(Node firstToInclude, Ref branchLabel) {
+  public List<Node> getCommitsInBranchAboveBase(Node base, Node branchHead) {
     List<Node> result = new ArrayList<Node>();
-    Node node = firstToInclude;
-    while (true) {
-      if (node != firstToInclude) {
-        result.add(node);
-      }
-      if (node.getCommitHash().equals(branchLabel.getCommitHash())) {
-        break;
-      }
+    Node node = branchHead;
+    while (node != base) {
+      result.add(node);
       // TODO: multiple edges must not appear
       // TODO: if there are no edges, we are in the wrong branch
-      node = node.getUpEdges().get(0).getUpNode();
+      node = node.getDownEdges().get(0).getDownNode();
     }
+    Collections.reverse(result);
     return result;
   }
 }
