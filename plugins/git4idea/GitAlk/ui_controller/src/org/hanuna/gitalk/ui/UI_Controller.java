@@ -68,4 +68,6 @@ public interface UI_Controller {
   DataPackUtils getDataPackUtils();
 
   Project getProject();
+
+  void refresh();
 }

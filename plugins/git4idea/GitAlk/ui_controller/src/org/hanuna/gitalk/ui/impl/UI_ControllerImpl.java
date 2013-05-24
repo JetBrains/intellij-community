@@ -368,6 +368,12 @@ public class UI_ControllerImpl implements UI_Controller {
     return myProject;
   }
 
+  @Override
+  public void refresh() {
+    init(false);
+    updateUI();
+  }
+
   public void updateUI() {
     events.runUpdateUI();
   }
