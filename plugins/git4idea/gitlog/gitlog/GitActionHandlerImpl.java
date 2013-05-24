@@ -219,7 +219,8 @@ public class GitActionHandlerImpl implements GitActionHandler {
 
   private void handleRebaseResult(GitUpdateResult result, Node onto, Ref subjectRef) {
     // TODO branch name if available
-    String target = onto.getCommitHash().toStrHash();
+    Ref ref = myUiController.getDataPackUtils().findRefOfNode(onto);
+    String target = ref == null ? onto.getCommitHash().toStrHash() : ref.getName();
 
     switch (result) {
       case NOTHING_TO_UPDATE:

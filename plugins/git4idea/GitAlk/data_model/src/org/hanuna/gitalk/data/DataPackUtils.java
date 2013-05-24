@@ -6,6 +6,7 @@ import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,4 +102,13 @@ public class DataPackUtils {
     return new ArrayList<Node>(all);
   }
 
+  @Nullable
+  public Ref findRefOfNode(Node node) {
+    for (Ref ref : this.dataPack.getRefsModel().getAllRefs()) {
+      if (ref.getCommitHash().equals(node.getCommitHash())) {
+        return ref;
+      }
+    }
+    return null;
+  }
 }
