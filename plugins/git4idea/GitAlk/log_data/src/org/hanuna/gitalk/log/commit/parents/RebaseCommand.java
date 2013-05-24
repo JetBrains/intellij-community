@@ -23,4 +23,9 @@ public class RebaseCommand {
   public Hash getCommit() {
     return commit;
   }
+
+  @Override
+  public String toString() {
+    return kind + " " + getCommit().toStrHash();
+  }
 }
