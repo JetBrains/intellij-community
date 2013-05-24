@@ -57,9 +57,7 @@ public class UI_GraphTable extends JTable {
     setShowHorizontalLines(false);
     setIntercellSpacing(new Dimension(0, 0));
 
-    getColumnModel().getColumn(0).setPreferredWidth(700);
-    getColumnModel().getColumn(1).setMinWidth(90);
-    getColumnModel().getColumn(2).setMinWidth(90);
+    setPreferredColumnWidths();
 
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -96,6 +94,12 @@ public class UI_GraphTable extends JTable {
         }
       }
     });
+  }
+
+  public void setPreferredColumnWidths() {
+    getColumnModel().getColumn(0).setPreferredWidth(700);
+    getColumnModel().getColumn(1).setMinWidth(90);
+    getColumnModel().getColumn(2).setMinWidth(90);
   }
 
   public void jumpToRow(int rowIndex) {

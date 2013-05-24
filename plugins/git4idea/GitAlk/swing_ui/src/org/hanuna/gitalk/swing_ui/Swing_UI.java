@@ -505,6 +505,7 @@ public class Swing_UI {
         @Override
         public void run() {
           mainFrame.getGraphTable().setModel(ui_controller.getGraphTableModel());
+          mainFrame.getGraphTable().setPreferredColumnWidths();
           mainFrame.getGraphTable().repaint();
           mainFrame.refresh();
         }
