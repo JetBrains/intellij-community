@@ -65,7 +65,7 @@ public abstract class FileTypeRegistry {
    * @param file to analyze
    * @return {@link com.intellij.openapi.fileTypes.PlainTextFileType} if file looks like text,
    *          or another file type if some file type detector identified the file
-   *          or the {@link UnknownFileType} if file looks like binary or was unable to analyze.
+   *          or the {@link UnknownFileType} if file is binary or we are unable to detect.
    */
   @NotNull
   public abstract FileType detectFileTypeFromContent(@NotNull VirtualFile file);
