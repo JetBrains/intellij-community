@@ -97,7 +97,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
     toolbarActions.add(createCloseAction(defaultExecutor, contentDescriptor));
 
-    showConsole(defaultExecutor, contentDescriptor, term.getTermPanel());
+    showConsole(defaultExecutor, contentDescriptor, term.getTerminalPanel());
 
     processHandler.startNotify();
   }

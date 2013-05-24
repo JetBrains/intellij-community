@@ -28,7 +28,11 @@ public class JBTerminal extends SwingJediTerminal {
 
   @Override
   protected SwingTerminalPanel createTerminalPanel(StyleState styleState, BackBuffer backBuffer, LinesBuffer scrollBuffer) {
-    return new JBTerminalPanel(backBuffer, scrollBuffer, styleState, createBoundColorSchemeDelegate(null));
+    return new JBTerminalPanel(backBuffer, scrollBuffer, styleState, getColorScheme());
+  }
+
+  public EditorColorsScheme getColorScheme() {
+    return createBoundColorSchemeDelegate(null);
   }
 
   @Override
