@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.RebaseCommand;
@@ -203,7 +204,7 @@ public class Swing_UI {
 
       @Override
       public void perform(final Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        showRefPopup(getLocalRefsAbove(commitsBeingDragged.get(0)), e.getComponent(), new RefAction() {
+        showRefPopup(getLocalRefs(commitsBeingDragged.get(0).getCommitHash()), e.getComponent(), new RefAction() {
               @Override
               public void perform(Ref ref) {
                 ui_controller.getGitActionHandler().rebase(commit, ref, myCallback);
@@ -261,14 +262,20 @@ public class Swing_UI {
       Set<Node> upRefNodes = ui_controller.getDataPackUtils().getUpRefNodes(commit);
       List<Ref> refs = new ArrayList<Ref>();
       for (Node refNode : upRefNodes) {
-        List<Ref> nodeRefs = ui_controller.getDataPack().getRefsModel().refsToCommit(refNode.getCommitHash());
-        for (Ref ref : nodeRefs) {
-          if (ref.getType() == Ref.RefType.LOCAL_BRANCH && !ref.getName().equals("HEAD")) {
-            refs.add(ref);
-          }
-        }
+        refs.addAll(getLocalRefs(refNode.getCommitHash()));
       }
       return refs;
+    }
+
+    private List<Ref> getLocalRefs(Hash commitHash) {
+      List<Ref> result = new ArrayList<Ref>();
+      List<Ref> nodeRefs = ui_controller.getDataPack().getRefsModel().refsToCommit(commitHash);
+      for (Ref ref : nodeRefs) {
+        if (ref.getType() == Ref.RefType.LOCAL_BRANCH && !ref.getName().equals("HEAD")) {
+          result.add(ref);
+        }
+      }
+      return result;
     }
 
     private CharSequence renderCommits(List<Node> commitsBeingDragged) {
@@ -286,10 +293,6 @@ public class Swing_UI {
     private class ActionHandler extends Handler implements Action {
       private Action currentAction = NONE;
 
-      private boolean sameLocalBranch(Node commit, List<Node> commitsBeingDragged) {
-        return myConditions.sameBranch(commit, commitsBeingDragged) && !getLocalRefsAbove(commit).isEmpty();
-      }
-
       private void decide(Node commit, MouseEvent e, List<Node> commitsBeingDragged, Action actionForInteractive, boolean overCommit) {
         if (myConditions.sameBranch(commit, commitsBeingDragged)) {
           if (!getLocalRefsAbove(commit).isEmpty()) {
@@ -305,10 +308,20 @@ public class Swing_UI {
       }
 
       private Action pickOrRebase(Node commit, MouseEvent e, List<Node> commitsBeingDragged, boolean overCommit) {
-        // labelOnTop
-        // modifiers
-        // multiple selection: sequential selection + rebase modifier -> rebase, otherwise -> pick
-        return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR;
+        Node topCommit = commitsBeingDragged.get(0);
+        boolean hasLabelOnTop = !getLocalRefs(topCommit.getCommitHash()).isEmpty();
+        if (commitsBeingDragged.size() == 1 && hasLabelOnTop) {
+          return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR;
+        }
+        else {
+          if (!getLocalRefsAbove(commit).isEmpty()) {
+            return CHERRY_PICK;
+          }
+          else {
+            return FORBIDDEN_NO_LOCAL_BRANCH;
+          }
+        }
+        // todo modifiers
       }
 
       @Override
