@@ -2,6 +2,7 @@ package gitlog;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -25,7 +26,9 @@ public class GitLogComponent extends AbstractProjectComponent {
   private Swing_UI mySwingUi;
   private UI_ControllerImpl myUiController;
 
-  protected GitLogComponent(Project project, GitRepositoryManager repositoryManager) {
+  @SuppressWarnings("UnusedParameters")
+  protected GitLogComponent(Project project, GitRepositoryManager makeSureRepositoryManagerIsInitialized,
+                            DirectoryIndex makeSureIndexIsInitialized) {
     super(project);
     myProject = project;
   }
@@ -34,13 +37,13 @@ public class GitLogComponent extends AbstractProjectComponent {
   public void initComponent() {
     super.initComponent();
 
-    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    ((GitRepositoryManagerImpl)myRepositoryManager).updateRepositoriesCollection();
-    myRepository = myRepositoryManager.getRepositories().get(0);
-
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       @Override
       public void run() {
+        myRepositoryManager = GitUtil.getRepositoryManager(myProject);
+        ((GitRepositoryManagerImpl)myRepositoryManager).updateRepositoriesCollection();
+        myRepository = myRepositoryManager.getRepositories().get(0);
+
         myUiController = new UI_ControllerImpl(myProject);
         mySwingUi = new Swing_UI(myUiController);
         myUiController.addControllerListener(mySwingUi.getControllerListener());
