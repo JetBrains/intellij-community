@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ public class FileTemplateDescriptor {
   private final String myFileName;
 
   public FileTemplateDescriptor(@NonNls String fileName) {
-    this(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
+    this(fileName, FileTypeRegistry.getInstance().getFileTypeByFileName(fileName).getIcon());
   }
 
   public FileTemplateDescriptor(@NonNls String fileName, Icon icon) {
