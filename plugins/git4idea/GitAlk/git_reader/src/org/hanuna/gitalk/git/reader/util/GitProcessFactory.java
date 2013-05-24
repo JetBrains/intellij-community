@@ -52,7 +52,6 @@ public class GitProcessFactory {
   public Process logPart(long startTimestamp, int maxCount) throws IOException {
     String request = "git log --before=" + startTimestamp + " " + ALL + " --max-count=" + maxCount + " --date-order" +
                      " --pretty=format:%ct|-%h|-%p --encoding=UTF-8 --full-history --sparse";
-    System.out.println(request);
     return request(request);
   }
 
@@ -63,6 +62,7 @@ public class GitProcessFactory {
   }
 
   private Process request(String request) throws IOException {
+    System.out.println(request);
     GitRepository repository = ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
     return Runtime.getRuntime().exec(request, ArrayUtil.EMPTY_STRING_ARRAY, new File(repository.getRoot().getPath()));
   }
