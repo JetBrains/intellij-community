@@ -381,9 +381,25 @@ public class Swing_UI {
       }
 
       @Override
-      public void perform(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+      public void perform(Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
         currentAction.perform(commit, e, commitsBeingDragged);
         dragDropHint.hide();
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            for (Node node : commitsBeingDragged) {
+              Node newNode = ui_controller.getDataPackUtils().getFakeNodeByHash(node.getCommitHash(), true);
+              if (newNode == null) {
+                System.out.println("No node for " + node.getCommitHash());
+              }
+              else {
+                int index = newNode.getRowIndex();
+                mainFrame.getGraphTable().getSelectionModel().addSelectionInterval(index, index);
+              }
+            }
+            System.out.println("done");
+          }
+        });
       }
     }
 

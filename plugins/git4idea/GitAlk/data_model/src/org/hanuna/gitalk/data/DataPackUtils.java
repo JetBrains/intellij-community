@@ -6,6 +6,7 @@ import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,26 @@ public class DataPackUtils {
       }
     }
     return null;
+  }
+
+  public Node getFakeNodeByHash(Hash hash, boolean original) {
+    hash = originalIfNeeded(hash, original);
+    Graph graph = dataPack.getGraphModel().getGraph();
+    for (int i = 0; i < graph.getNodeRows().size(); i++) {
+      Node node = graph.getCommitNodeInRow(i);
+      if (node != null) {
+        Hash commitHash = node.getCommitHash();
+        if (FakeCommitParents.isFake(commitHash) && originalIfNeeded(commitHash, original).equals(hash)) {
+          return node;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static Hash originalIfNeeded(Hash hash, boolean original) {
+    if (original) return FakeCommitParents.getOriginal(hash);
+    return hash;
   }
 
   @Nullable

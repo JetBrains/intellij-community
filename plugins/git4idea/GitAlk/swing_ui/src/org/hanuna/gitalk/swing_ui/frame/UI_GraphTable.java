@@ -76,6 +76,7 @@ public class UI_GraphTable extends JTable {
         if (selectedRow >= 0) {
           ui_controller.click(selectedRow);
         }
+        System.out.println("Selection");
       }
     });
 

@@ -37,7 +37,8 @@ public class FakeCommitParents implements CommitParents {
   public FakeCommitParents(@NotNull Hash parent, @NotNull RebaseCommand command) {
     this.parent = parent;
     this.command = command;
-    this.fakeHash = Hash.build(FAKE_HASH_PREFIX + command.getCommit().toStrHash());
+    this.fakeHash = Hash.build(FAKE_HASH_PREFIX + getOriginal(command.getCommit().toStrHash()));
+    //this.fakeHash = Hash.build(FAKE_HASH_PREFIX + command.getCommit().toStrHash());
   }
 
   @NotNull
