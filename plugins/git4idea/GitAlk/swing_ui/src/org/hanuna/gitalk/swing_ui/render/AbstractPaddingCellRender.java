@@ -1,5 +1,7 @@
 package org.hanuna.gitalk.swing_ui.render;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -12,16 +14,16 @@ import java.awt.*;
 public abstract class AbstractPaddingCellRender implements TableCellRenderer {
   private ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
 
-  protected abstract int getLeftPadding(JTable table, Object value);
+  protected abstract int getLeftPadding(JTable table, @Nullable Object value);
 
-  protected abstract String getCellText(JTable table, Object value);
+  protected abstract String getCellText(JTable table, @Nullable Object value);
 
-  protected abstract void additionPaint(Graphics g, JTable table, Object value);
+  protected abstract void additionPaint(Graphics g, JTable table, @Nullable Object value);
 
-  protected abstract boolean isMarked(JTable table, Object value);
+  protected abstract boolean isMarked(JTable table, @Nullable Object value);
 
   @Override
-  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+  public Component getTableCellRendererComponent(JTable table, @Nullable Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     return cellRender.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
   }
 

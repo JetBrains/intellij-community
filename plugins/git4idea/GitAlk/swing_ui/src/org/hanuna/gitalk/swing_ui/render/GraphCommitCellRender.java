@@ -4,6 +4,7 @@ import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,8 +30,12 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   }
 
   @Override
-  protected int getLeftPadding(JTable table, Object value) {
+  protected int getLeftPadding(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
+
+    if (cell == null) {
+      return 0;
+    }
 
     FontRenderContext fontContext = ((Graphics2D)table.getGraphics()).getFontRenderContext();
     int refPadding = refPainter.padding(cell.getRefsToThisCommit(), fontContext);
@@ -42,10 +47,9 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   }
 
   @Override
-  protected String getCellText(JTable table, Object value) {
+  protected String getCellText(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
     if (cell == null) {
-      System.err.println("No cell for value: " + value);
       return "!!! No cell for value: " + value;
     }
     else {
@@ -54,8 +58,11 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   }
 
   @Override
-  protected void additionPaint(Graphics g, JTable table, Object value) {
+  protected void additionPaint(Graphics g, JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
+    if (cell == null) {
+      return;
+    }
 
     BufferedImage image = new BufferedImage(1000, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
@@ -71,8 +78,11 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   }
 
   @Override
-  protected boolean isMarked(JTable table, Object value) {
+  protected boolean isMarked(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
+    if (cell == null) {
+      return false;
+    }
     for (SpecialPrintElement printElement : cell.getPrintCell().getSpecialPrintElements()) {
       if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE && printElement.isMarked()) {
         return true;
