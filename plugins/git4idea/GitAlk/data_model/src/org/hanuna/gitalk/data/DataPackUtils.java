@@ -135,7 +135,7 @@ public class DataPackUtils {
       // TODO: if there are no edges, we are in the wrong branch
       node = node.getDownEdges().get(0).getDownNode();
     }
-    Collections.reverse(result);
+    //Collections.reverse(result);
     return result;
   }
 }

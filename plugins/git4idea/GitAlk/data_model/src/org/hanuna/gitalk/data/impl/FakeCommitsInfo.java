@@ -13,13 +13,15 @@ public class FakeCommitsInfo {
   public final List<FakeCommitParents> commits;
   public final Set<Hash> commitsToHide;
   public final Node base;
+  public final int insertAbove;
   public final Ref resultRef;
   public final Ref subjectRef;
 
-  public FakeCommitsInfo(List<FakeCommitParents> commits, Set<Hash> commitsToHide, Node base, Ref resultRef, Ref subjectRef) {
+  public FakeCommitsInfo(List<FakeCommitParents> commits, Set<Hash> commitsToHide, Node base, int insertAbove, Ref resultRef, Ref subjectRef) {
     this.commits = commits;
     this.commitsToHide = commitsToHide;
     this.base = base;
+    this.insertAbove = insertAbove;
     this.resultRef = resultRef;
     this.subjectRef = subjectRef;
   }

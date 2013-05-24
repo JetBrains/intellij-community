@@ -449,6 +449,7 @@ public class UI_ControllerImpl implements UI_Controller {
   private class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {
 
     private Node base = null;
+    private int insertAfter = -1;
     private List<FakeCommitParents> fakeBranch = new ArrayList<FakeCommitParents>();
     private Ref subjectRef = null;
     private Ref resultRef = null;
@@ -470,6 +471,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     public void reset() {
       base = null;
+      insertAfter = -1;
       fakeBranch.clear();
       subjectRef = null;
       resultRef = null;
@@ -491,6 +493,7 @@ public class UI_ControllerImpl implements UI_Controller {
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
       this.base = base;
+      this.insertAfter = base.getRowIndex();
 
       this.fakeBranch = createFakeCommits(base, nodesToRebase);
 
@@ -502,8 +505,12 @@ public class UI_ControllerImpl implements UI_Controller {
       if (resultRef == null) {
         DataPackUtils du = getDataPackUtils();
         if (position == InsertPosition.BELOW) {
+          insertAfter = base.getRowIndex() + 1;
           // TODO: what if many edges?
           base = getParent(base);
+        }
+        else {
+          insertAfter = base.getRowIndex();
         }
         Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
         if (du.isAncestorOf(base, lowestInserted)) {
@@ -516,7 +523,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
         List<Node> inputNodes = du.getCommitsInBranchAboveBase(this.base, du.getNodeByHash(subjectRef.getCommitHash()));
         inputNodes.removeAll(nodesToInsert);
-        inputNodes.addAll(0, nodesToInsert);
+        inputNodes.addAll(nodesToInsert);
         this.fakeBranch = createFakeCommits(this.base, inputNodes);
 
         setResultRef(subjectRef);
@@ -562,7 +569,7 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     public FakeCommitsInfo getFakeCommitsInfo() {
-      return new FakeCommitsInfo(fakeBranch, fakeCommits.keySet(), base, resultRef, subjectRef);
+      return new FakeCommitsInfo(fakeBranch, fakeCommits.keySet(), base, insertAfter, resultRef, subjectRef);
     }
   }
 
