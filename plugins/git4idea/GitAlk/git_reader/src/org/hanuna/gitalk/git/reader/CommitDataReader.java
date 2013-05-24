@@ -10,6 +10,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import gitlog.GitLogComponent;
 import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,10 @@ public class CommitDataReader {
     GitRepository repository = ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
     List<GitCommit> gitCommits;
     try {
+      MyTimer timer = new MyTimer();
+      timer.clear();
       gitCommits = GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(repository.getRoot()), null, trueHashes);
+      System.out.println("Details loading took " + timer.get() + "ms for " + trueHashes.size() + " hashes");
     }
     catch (VcsException e) {
       throw new IllegalStateException(e);
