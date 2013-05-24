@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.ui.impl;
 
 import com.intellij.openapi.project.Project;
+import gitlog.GitActionHandlerImpl;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
@@ -58,7 +59,7 @@ public class UI_ControllerImpl implements UI_Controller {
   private List<Ref> myRefs;
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
-  private GitActionHandler myGitActionHandler = GitActionHandler.DO_NOTHING;
+  private GitActionHandler myGitActionHandler;
   private InteractiveRebaseBuilder myInteractiveRebaseBuilder = new InteractiveRebaseBuilder() {
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
@@ -96,6 +97,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
+    myGitActionHandler = new GitActionHandlerImpl(myProject);
   }
 
   private void dataInit() {
