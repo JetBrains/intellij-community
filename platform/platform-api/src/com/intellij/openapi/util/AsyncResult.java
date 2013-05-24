@@ -105,6 +105,7 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
+  @Override
   @NotNull
   public final AsyncResult<T> notify(@NotNull final ActionCallback child) {
     super.notify(child);
