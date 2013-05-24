@@ -8,10 +8,12 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitRepositoryManagerImpl;
 import org.hanuna.gitalk.swing_ui.Swing_UI;
 import org.hanuna.gitalk.ui.impl.UI_ControllerImpl;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -49,6 +51,13 @@ public class GitLogComponent extends AbstractProjectComponent {
         myUiController.addControllerListener(mySwingUi.getControllerListener());
         myUiController.setDragDropListener(mySwingUi.getDragDropListener());
         myUiController.init(false);
+
+        myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+          @Override
+          public void repositoryChanged(@NotNull GitRepository repository) {
+            myUiController.refresh();
+          }
+        });
 
         final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow("Git Log");
         if (toolWindow != null && toolWindow.isActive()) {
