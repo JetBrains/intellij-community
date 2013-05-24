@@ -97,7 +97,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
-    myGitActionHandler = new GitActionHandlerImpl(myProject);
+    myGitActionHandler = new GitActionHandlerImpl(myProject, this);
   }
 
   private void dataInit() {

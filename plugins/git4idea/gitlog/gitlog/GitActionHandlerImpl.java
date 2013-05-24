@@ -25,6 +25,7 @@ import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.RebaseCommand;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.refs.Ref;
+import org.hanuna.gitalk.ui.UI_Controller;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -37,13 +38,15 @@ import java.util.List;
 public class GitActionHandlerImpl implements GitActionHandler {
 
   private final Project myProject;
+  private final UI_Controller myUiController;
   private final GitRepository myRepository;
   private final Git myGit;
   private final GitPlatformFacade myPlatformFacade;
   private final GitLogComponent myLogComponent;
 
-  public GitActionHandlerImpl(Project project) {
+  public GitActionHandlerImpl(Project project, UI_Controller uiController) {
     myProject = project;
+    myUiController = uiController;
     myLogComponent = ServiceManager.getService(project, GitLogComponent.class);
     myRepository = myLogComponent.getRepository();
     myGit = ServiceManager.getService(Git.class);
@@ -77,6 +80,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
 
       @Override
       public void onSuccess() {
+        myUiController.refresh();
         callback.enableModifications();
       }
 
@@ -136,6 +140,17 @@ public class GitActionHandlerImpl implements GitActionHandler {
           case NOT_READY:
             break;
         }
+      }
+
+      @Override
+      public void onSuccess() {
+        myUiController.refresh();
+        callback.enableModifications();
+      }
+
+      @Override
+      public void onCancel() {
+        onSuccess();
       }
     }.queue();
   }
