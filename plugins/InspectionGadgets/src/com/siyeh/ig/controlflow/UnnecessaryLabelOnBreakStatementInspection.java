@@ -29,22 +29,26 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryLabelOnBreakStatementInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unnecessary.label.on.break.statement.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.label.on.break.statement.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryLabelOnBreakStatementFix();
   }
@@ -52,12 +56,14 @@ public class UnnecessaryLabelOnBreakStatementInspection
   private static class UnnecessaryLabelOnBreakStatementFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.label.remove.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement breakKeywordElement = descriptor.getPsiElement();
@@ -72,6 +78,7 @@ public class UnnecessaryLabelOnBreakStatementInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryLabelOnBreakStatementVisitor();
   }

@@ -106,6 +106,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
       m_name = name;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return m_name;

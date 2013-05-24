@@ -27,18 +27,21 @@ import org.jetbrains.annotations.NotNull;
 public class AssignmentToStaticFieldFromInstanceMethodInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "assignment.to.static.field.from.instance.method.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "assignment.to.static.field.from.instance.method.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AssignmentToStaticFieldFromInstanceMethod();
   }

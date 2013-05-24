@@ -143,6 +143,7 @@ public class ObjectEqualityInspection extends BaseInspection {
       final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit(6);
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcess(new Runnable() {
+        @Override
         public void run() {
           ClassInheritorsSearch.search(aClass, scope, true, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
         }

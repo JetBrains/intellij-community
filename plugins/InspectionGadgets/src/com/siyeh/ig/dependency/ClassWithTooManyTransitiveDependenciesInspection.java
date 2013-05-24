@@ -45,6 +45,7 @@ public class ClassWithTooManyTransitiveDependenciesInspection
       "class.with.too.many.transitive.dependencies.display.name");
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity,
@@ -73,6 +74,7 @@ public class ClassWithTooManyTransitiveDependenciesInspection
     };
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionGadgetsBundle.message(

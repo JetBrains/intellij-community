@@ -17,7 +17,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,21 +31,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "NonShortCircuitBooleanExpression";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.problem.descriptor");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new NonShortCircuitBooleanFix();
   }
@@ -50,11 +57,13 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
   private static class NonShortCircuitBooleanFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.replace.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
       final IElementType tokenType = expression.getOperationTokenType();
@@ -80,6 +89,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NonShortCircuitBooleanVisitor();
   }

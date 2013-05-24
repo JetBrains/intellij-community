@@ -33,20 +33,24 @@ public class ConstructorCountInspection extends ClassMetricInspection {
 
   public boolean ignoreDeprecatedConstructors = false;
 
+  @Override
   @NotNull
   public String getID() {
     return "ClassWithTooManyConstructors";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("too.many.constructors.display.name");
   }
 
+  @Override
   protected int getDefaultLimit() {
     return CONSTRUCTOR_COUNT_LIMIT;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message("too.many.constructors.count.limit.option");
   }
@@ -68,12 +72,14 @@ public class ConstructorCountInspection extends ClassMetricInspection {
     return panel;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
     return InspectionGadgetsBundle.message("too.many.constructors.problem.descriptor", count);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ConstructorCountVisitor();
   }

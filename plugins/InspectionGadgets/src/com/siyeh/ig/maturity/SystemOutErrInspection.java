@@ -27,23 +27,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemOutErrInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "UseOfSystemOutOrSystemErr";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "use.system.out.err.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.system.out.err.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SystemOutErrVisitor();
   }

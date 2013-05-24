@@ -26,27 +26,32 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsSuperCloneInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CloneDoesntCallSuperClone";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "clone.doesnt.call.super.clone.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "clone.doesnt.call.super.clone.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NoExplicitCloneCallsVisitor();
   }

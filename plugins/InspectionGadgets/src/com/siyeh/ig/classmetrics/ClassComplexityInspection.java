@@ -27,26 +27,31 @@ public class ClassComplexityInspection
 
   private static final int DEFAULT_COMPLEXITY_LIMIT = 80;
 
+  @Override
   @NotNull
   public String getID() {
     return "OverlyComplexClass";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "overly.complex.class.display.name");
   }
 
+  @Override
   protected int getDefaultLimit() {
     return DEFAULT_COMPLEXITY_LIMIT;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message(
       "cyclomatic.complexity.limit.option");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer totalComplexity = (Integer)infos[0];
@@ -54,6 +59,7 @@ public class ClassComplexityInspection
       "overly.complex.class.problem.descriptor", totalComplexity);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassComplexityVisitor();
   }

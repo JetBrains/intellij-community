@@ -19,16 +19,18 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class DeleteImportFix extends InspectionGadgetsFix {
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("delete.import.quickfix");
   }
 
+  @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     final PsiElement importStatement = descriptor.getPsiElement();

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 class ConvertOctalLiteralToDecimalFix
   extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(

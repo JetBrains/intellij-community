@@ -46,6 +46,7 @@ public class NonFinalFieldInEnumInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("non.final.field.in.enum.problem.descriptor", enumClass.getName());
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[1];

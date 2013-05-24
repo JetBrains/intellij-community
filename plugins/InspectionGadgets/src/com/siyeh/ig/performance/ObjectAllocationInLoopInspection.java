@@ -25,18 +25,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectAllocationInLoopInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "object.allocation.in.loop.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "object.allocation.in.loop.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ObjectAllocationInLoopsVisitor();
   }

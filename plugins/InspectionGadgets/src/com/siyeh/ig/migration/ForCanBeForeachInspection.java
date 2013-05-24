@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ForCanBeForeachInspection extends BaseInspection {
 
@@ -88,6 +88,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
 
   private class ForCanBeForeachFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("foreach.replace.quickfix");

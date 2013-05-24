@@ -29,27 +29,32 @@ import org.jetbrains.annotations.NotNull;
 public class ReadObjectAndWriteObjectPrivateInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "NonPrivateSerializationMethod";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "readwriteobject.private.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "readwriteobject.private.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReadObjectWriteObjectPrivateVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new ChangeModifierFix(PsiModifier.PRIVATE);
   }

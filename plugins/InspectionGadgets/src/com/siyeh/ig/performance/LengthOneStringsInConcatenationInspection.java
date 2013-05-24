@@ -63,6 +63,7 @@ public class LengthOneStringsInConcatenationInspection
   private static class ReplaceStringsWithCharsFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

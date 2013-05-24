@@ -27,29 +27,34 @@ import org.jetbrains.annotations.Nullable;
 
 public class EqualsUsesNonFinalVariableInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "NonFinalFieldReferenceInEquals";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "non.final.field.in.equals.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.field.in.equals.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EqualsUsesNonFinalVariableVisitor();
   }

@@ -32,11 +32,13 @@ import java.util.List;
 
 public class PublicConstructorInNonPublicClassInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("public.constructor.in.non.public.class.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
@@ -44,10 +46,12 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       method.getName());
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PublicConstructorInNonPublicClassVisitor();
   }
 
+  @Override
   @NotNull
   public InspectionGadgetsFix[] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList();
@@ -68,6 +72,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       this.modifier = modifier;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -76,6 +81,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       );
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiModifierList modifierList = (PsiModifierList)element.getParent();

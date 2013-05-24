@@ -24,27 +24,32 @@ import org.jetbrains.annotations.NotNull;
 public class SerializableInnerClassHasSerialVersionUIDFieldInspection
   extends SerializableInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "serializable.inner.class.has.serial.version.uid.field.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serializable.inner.class.has.serial.version.uid.field.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new AddSerialVersionUIDFix();
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SerializableInnerClassHasSerialVersionUIDFieldVisitor(this);
   }

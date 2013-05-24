@@ -102,6 +102,7 @@ public class MemberSignature implements Comparable<MemberSignature> {
     return modifiers;
   }
 
+  @Override
   public int compareTo(MemberSignature other) {
     final int result = name.compareTo(other.name);
     if (result != 0) {

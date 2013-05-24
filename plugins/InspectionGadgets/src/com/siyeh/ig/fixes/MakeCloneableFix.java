@@ -33,6 +33,7 @@ public class MakeCloneableFix extends InspectionGadgetsFix {
     this.isInterface = isInterface;
   }
 
+  @Override
   @NotNull
   public String getName() {
     if (isInterface) {

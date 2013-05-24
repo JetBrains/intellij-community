@@ -85,6 +85,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   private static class SizeReplaceableByIsEmptyFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("size.replaceable.by.isempty.quickfix");

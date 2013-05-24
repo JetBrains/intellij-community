@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class LoopWithImplicitTerminationConditionInspection
   extends BaseInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -38,6 +39,7 @@ public class LoopWithImplicitTerminationConditionInspection
       "loop.with.implicit.termination.condition.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     if (Boolean.TRUE.equals(infos[0])) {
@@ -48,6 +50,7 @@ public class LoopWithImplicitTerminationConditionInspection
       "loop.with.implicit.termination.condition.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new LoopWithImplicitTerminationConditionFix();
@@ -56,12 +59,14 @@ public class LoopWithImplicitTerminationConditionInspection
   private static class LoopWithImplicitTerminationConditionFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "loop.with.implicit.termination.condition.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
@@ -171,6 +176,7 @@ public class LoopWithImplicitTerminationConditionInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LoopWithImplicitTerminationConditionVisitor();
   }

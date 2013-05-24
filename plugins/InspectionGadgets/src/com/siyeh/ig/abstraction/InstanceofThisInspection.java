@@ -24,16 +24,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceofThisInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("instanceof.check.for.this.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("instanceof.check.for.this.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new InstanceofThisVisitor();
   }

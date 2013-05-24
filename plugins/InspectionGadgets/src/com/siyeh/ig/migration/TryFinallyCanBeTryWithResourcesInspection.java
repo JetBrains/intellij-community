@@ -67,6 +67,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
     public TryFinallyCanBeTryWithResourcesFix() {}
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");

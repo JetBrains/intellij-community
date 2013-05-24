@@ -25,16 +25,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ResultOfObjectAllocationIgnoredVisitor();
   }

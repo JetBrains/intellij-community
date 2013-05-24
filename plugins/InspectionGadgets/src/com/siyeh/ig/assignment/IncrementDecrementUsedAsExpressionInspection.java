@@ -97,6 +97,7 @@ public class IncrementDecrementUsedAsExpressionInspection
       this.elementText = elementText;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

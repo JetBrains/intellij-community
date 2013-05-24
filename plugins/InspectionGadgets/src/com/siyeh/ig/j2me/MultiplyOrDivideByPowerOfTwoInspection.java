@@ -41,12 +41,14 @@ public class MultiplyOrDivideByPowerOfTwoInspection
    */
   public boolean checkDivision = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "multiply.or.divide.by.power.of.two.display.name");
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -54,6 +56,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
                                           "checkDivision");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -111,6 +114,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     return expString;
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (expression instanceof PsiBinaryExpression) {
@@ -136,12 +140,14 @@ public class MultiplyOrDivideByPowerOfTwoInspection
 
   private static class MultiplyByPowerOfTwoFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "multiply.or.divide.by.power.of.two.replace.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiExpression expression =
@@ -151,6 +157,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ConstantShiftVisitor();
   }

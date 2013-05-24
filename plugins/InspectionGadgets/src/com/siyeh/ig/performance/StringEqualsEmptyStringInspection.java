@@ -64,6 +64,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       this.useIsEmpty = useIsEmpty;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (useIsEmpty) {

@@ -74,6 +74,7 @@ public class ConstantConditionalExpressionInspection
 
   private static class ConstantConditionalFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

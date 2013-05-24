@@ -24,21 +24,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class PublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("public.field.accessed.in.synchronized.context.display.name");
   }
 
+  @Override
   @NotNull
   public String getID() {
     return "NonPrivateFieldAccessedInSynchronizedContext";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("public.field.accessed.in.synchronized.context.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PublicFieldAccessedInSynchronizedContextVisitor();
   }

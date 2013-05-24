@@ -55,6 +55,7 @@ public class ConstantStringInternInspection extends BaseInspection {
 
   private static class ConstantStringInternFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

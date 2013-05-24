@@ -71,6 +71,7 @@ public class TailRecursionInspection extends BaseInspection {
 
   private static class RemoveTailRecursionFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

@@ -116,6 +116,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection {
       myQualifiedClassName = qualifiedClassName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

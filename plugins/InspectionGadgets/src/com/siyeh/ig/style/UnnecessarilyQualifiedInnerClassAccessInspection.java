@@ -71,6 +71,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
   private static class UnnecessarilyQualifiedInnerClassAccessFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

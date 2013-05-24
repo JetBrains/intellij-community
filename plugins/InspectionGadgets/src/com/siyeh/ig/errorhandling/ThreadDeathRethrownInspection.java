@@ -24,23 +24,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadDeathRethrownInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ThreadDeathNotRethrown";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "thread.death.rethrown.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.death.rethrown.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThreadDeathRethrownVisitor();
   }

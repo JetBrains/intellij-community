@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -48,6 +48,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
 
   private static class AssertEqualsMayBeAssertSameFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("assertequals.may.be.assertsame.quickfix");

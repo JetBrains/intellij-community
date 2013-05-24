@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -27,12 +29,14 @@ import java.util.Set;
 
 public class StaticInheritanceInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "static.inheritance.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -46,6 +50,7 @@ public class StaticInheritanceInspection extends BaseInspection {
   }
 
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new StaticInheritanceVisitor();
   }

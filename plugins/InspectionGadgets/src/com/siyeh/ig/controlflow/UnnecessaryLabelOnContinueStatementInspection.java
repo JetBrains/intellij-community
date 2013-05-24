@@ -29,22 +29,26 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryLabelOnContinueStatementInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unnecessary.label.on.continue.statement.display.name");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.label.on.continue.statement.problem.descriptor");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryLabelOnContinueStatementFix();
   }
@@ -52,12 +56,14 @@ public class UnnecessaryLabelOnContinueStatementInspection
   private static class UnnecessaryLabelOnContinueStatementFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.label.remove.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement continueKeywordElement =
@@ -73,6 +79,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryLabelOnContinueStatementVisitor();
   }

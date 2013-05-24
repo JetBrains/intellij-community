@@ -24,18 +24,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnThisInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "synchronize.on.this.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "synchronize.on.this.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SynchronizeOnThisVisitor();
   }

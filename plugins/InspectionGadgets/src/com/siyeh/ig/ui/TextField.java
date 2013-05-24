@@ -78,14 +78,17 @@ public class TextField extends JTextField {
       this.property = property;
     }
 
+    @Override
     public void insertUpdate(DocumentEvent documentEvent) {
       textChanged();
     }
 
+    @Override
     public void removeUpdate(DocumentEvent documentEvent) {
       textChanged();
     }
 
+    @Override
     public void changedUpdate(DocumentEvent documentEvent) {
       textChanged();
     }

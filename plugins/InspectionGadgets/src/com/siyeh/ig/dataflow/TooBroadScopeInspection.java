@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Collection;
 
 public class TooBroadScopeInspection extends BaseInspection {
@@ -94,6 +94,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       this.variableName = variableName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", variableName);

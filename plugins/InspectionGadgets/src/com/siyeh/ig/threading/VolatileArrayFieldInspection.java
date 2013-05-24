@@ -25,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class VolatileArrayFieldInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "volatile.array.field.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
@@ -39,6 +41,7 @@ public class VolatileArrayFieldInspection extends BaseInspection {
       "volatile.field.problem.descriptor", typeString);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new VolatileArrayFieldVisitor();
   }

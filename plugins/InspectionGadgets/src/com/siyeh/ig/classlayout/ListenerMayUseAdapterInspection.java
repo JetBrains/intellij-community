@@ -29,7 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ListenerMayUseAdapterInspection extends BaseInspection {
 
@@ -76,6 +76,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       this.adapterClass = adapterClass;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

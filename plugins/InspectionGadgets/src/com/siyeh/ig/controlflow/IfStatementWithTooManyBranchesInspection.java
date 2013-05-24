@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,12 +38,14 @@ public class IfStatementWithTooManyBranchesInspection
    */
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "if.statement.with.too.many.branches.display.name");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionGadgetsBundle.message(
@@ -51,6 +53,7 @@ public class IfStatementWithTooManyBranchesInspection
       this, "m_limit");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer branchCount = (Integer)infos[0];
@@ -59,6 +62,7 @@ public class IfStatementWithTooManyBranchesInspection
       branchCount);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IfStatementWithTooManyBranchesVisitor();
   }

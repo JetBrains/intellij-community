@@ -53,6 +53,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
   private static class MissingDeprecatedAnnotationFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");

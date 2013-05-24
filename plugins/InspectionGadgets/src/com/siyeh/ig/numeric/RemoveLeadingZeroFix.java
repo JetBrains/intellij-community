@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 class RemoveLeadingZeroFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(

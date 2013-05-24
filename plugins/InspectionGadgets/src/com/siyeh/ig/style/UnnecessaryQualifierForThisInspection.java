@@ -30,22 +30,26 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryQualifierForThisInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unnecessary.qualifier.for.this.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.qualifier.for.this.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryQualifierForThisVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryQualifierForThisFix();
   }
@@ -53,12 +57,14 @@ public class UnnecessaryQualifierForThisInspection
   private static class UnnecessaryQualifierForThisFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.qualifier.for.this.remove.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement qualifier = descriptor.getPsiElement();

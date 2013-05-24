@@ -28,23 +28,27 @@ import org.jetbrains.annotations.NotNull;
 public class CollectionsMustHaveInitialCapacityInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CollectionWithoutInitialCapacity";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "collections.must.have.initial.capacity.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "collections.must.have.initial.capacity.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new CollectionInitialCapacityVisitor();
   }

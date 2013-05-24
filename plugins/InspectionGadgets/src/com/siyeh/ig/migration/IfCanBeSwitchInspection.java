@@ -123,6 +123,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final JCheckBox checkBox1 = new JCheckBox(InspectionGadgetsBundle.message("if.can.be.switch.int.option"), suggestIntSwitches);
     final ButtonModel model1 = checkBox1.getModel();
     model1.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         suggestIntSwitches = model1.isSelected();
       }
@@ -133,6 +134,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final JCheckBox checkBox2 = new JCheckBox(InspectionGadgetsBundle.message("if.can.be.switch.enum.option"), suggestEnumSwitches);
     final ButtonModel model2 = checkBox2.getModel();
     model2.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         suggestEnumSwitches = model2.isSelected();
       }
@@ -148,6 +150,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       myMinimumBranches = minimumBranches;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("if.can.be.switch.quickfix");

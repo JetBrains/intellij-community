@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.j2me;
 
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,18 +34,21 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
    */
   public int m_limit = 64;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "large.array.allocation.no.outofmemoryerror.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "large.array.allocation.no.outofmemoryerror.problem.descriptor");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionGadgetsBundle.message(
@@ -53,6 +56,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
       this, "m_limit");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new CheckForOutOfMemoryOnLargeArrayAllocationVisitor();
   }

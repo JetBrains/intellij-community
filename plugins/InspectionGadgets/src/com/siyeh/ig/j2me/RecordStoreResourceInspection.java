@@ -25,17 +25,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class RecordStoreResourceInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "RecordStoreOpenedButNotSafelyClosed";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "recordstore.opened.not.safely.closed.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
@@ -46,6 +49,7 @@ public class RecordStoreResourceInspection extends BaseInspection {
       "resource.opened.not.closed.problem.descriptor", text);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new RecordStoreResourceVisitor();
   }

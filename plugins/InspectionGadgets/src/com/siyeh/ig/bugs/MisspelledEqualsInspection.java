@@ -28,22 +28,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledEqualsInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "misspelled.equals.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "misspelled.equals.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix(HardcodedMethodConstants.EQUALS);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MisspelledEqualsVisitor();
   }

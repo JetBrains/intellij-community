@@ -39,6 +39,7 @@ public class CyclicClassInitializationInspection extends BaseGlobalInspection {
       "cyclic.class.initialization.display.name");
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity,

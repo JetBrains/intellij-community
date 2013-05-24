@@ -24,12 +24,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class OverloadedVarargsMethodInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "overloaded.vararg.method.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiMethod element = (PsiMethod)infos[0];
@@ -43,6 +45,7 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new OverloadedVarargMethodVisitor();
   }

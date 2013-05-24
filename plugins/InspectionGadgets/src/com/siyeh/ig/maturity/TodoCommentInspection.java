@@ -23,16 +23,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class TodoCommentInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("todo.comment.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("todo.comment.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassWithoutToStringVisitor();
   }

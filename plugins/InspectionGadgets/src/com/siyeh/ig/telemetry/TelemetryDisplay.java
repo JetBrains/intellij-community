@@ -44,6 +44,7 @@ class TelemetryDisplay {
     final Comparator<InspectionRunTime> nameComparator =
       new Comparator<InspectionRunTime>() {
 
+        @Override
         public int compare(InspectionRunTime runTime1,
                            InspectionRunTime runTime2) {
           return runTime1.getInspectionName().compareToIgnoreCase(
@@ -53,6 +54,7 @@ class TelemetryDisplay {
     final Comparator<InspectionRunTime> runCountComparator =
       new Comparator<InspectionRunTime>() {
 
+        @Override
         public int compare(InspectionRunTime runTime1,
                            InspectionRunTime runTime2) {
           return runTime1.getRunCount() - runTime2.getRunCount();
@@ -61,6 +63,7 @@ class TelemetryDisplay {
     final Comparator<InspectionRunTime> totalRunTimeComparator =
       new Comparator<InspectionRunTime>() {
 
+        @Override
         public int compare(InspectionRunTime runTime1,
                            InspectionRunTime runTime2) {
           final long totalRunTime1 = runTime1.getTotalRunTime();
@@ -79,6 +82,7 @@ class TelemetryDisplay {
     final Comparator<InspectionRunTime> averageRunTimeComparator =
       new Comparator<InspectionRunTime>() {
 
+        @Override
         public int compare(InspectionRunTime runTime1,
                            InspectionRunTime runTime2) {
           final double averageRunTime1 =

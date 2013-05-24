@@ -28,18 +28,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssignmentUsedAsConditionInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "assignment.used.as.condition.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "assignment.used.as.condition.problem.descriptor");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new AssignmentUsedAsConditionFix();
   }
@@ -47,12 +50,14 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
   private static class AssignmentUsedAsConditionFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "assignment.used.as.condition.replace.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiAssignmentExpression expression =
@@ -66,6 +71,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AssignmentUsedAsConditionVisitor();
   }

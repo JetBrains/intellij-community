@@ -65,11 +65,13 @@ public class UnnecessaryThisInspection extends BaseInspection {
 
   private static class UnnecessaryThisFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement thisToken = descriptor.getPsiElement();
