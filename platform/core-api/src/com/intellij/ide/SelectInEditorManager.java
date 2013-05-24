@@ -33,5 +33,4 @@ public abstract class SelectInEditorManager{
    *  or this method is called again.
    */
   public abstract void selectInEditor(VirtualFile file, int startOffset, int endOffset, boolean toSelectLine, boolean toUseNormalSelection);
-
 }
