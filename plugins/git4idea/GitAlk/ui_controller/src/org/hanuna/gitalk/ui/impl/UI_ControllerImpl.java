@@ -509,7 +509,7 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     public FakeCommitsInfo getFakeCommitsInfo() {
-      return new FakeCommitsInfo(fakeCommits, base, resultRef);
+      return new FakeCommitsInfo(fakeCommits, base, resultRef, subjectRef);
     }
   }
 
