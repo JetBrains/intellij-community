@@ -72,9 +72,14 @@ public final class Ref {
 
   public static enum RefType {
     LOCAL_BRANCH,
+    BRANCH_UNDER_INTERACTIVE_REBASE,
     REMOTE_BRANCH,
     TAG,
     STASH,
-    ANOTHER
+    ANOTHER;
+
+    public boolean isBranch() {
+      return this == LOCAL_BRANCH || this == BRANCH_UNDER_INTERACTIVE_REBASE || this == REMOTE_BRANCH;
+    }
   }
 }

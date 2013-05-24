@@ -2,6 +2,7 @@ package org.hanuna.gitalk.swing_ui.render;
 
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 import org.hanuna.gitalk.ui.tables.CommitCell;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,6 +50,11 @@ public class CommitCellRender extends AbstractPaddingCellRender {
 
   @Override
   protected boolean isMarked(JTable table, Object value) {
+    return false;
+  }
+
+  @Override
+  protected boolean isFake(JTable table, @Nullable Object value) {
     return false;
   }
 }

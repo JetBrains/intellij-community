@@ -143,7 +143,7 @@ public class DataLoaderImpl implements DataLoader {
       }
 
       Collections.reverse(fakeCommits);
-      resultRef = new Ref(parent, subjectRef.getName() + " - interactive", subjectRef.getType());
+      resultRef = new Ref(parent, subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
 
       // todo move label
 

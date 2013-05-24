@@ -41,6 +41,8 @@ public class RefPainter {
     switch (ref.getType()) {
       case LOCAL_BRANCH:
         return Color.orange;
+      case BRANCH_UNDER_INTERACTIVE_REBASE:
+        return Color.yellow;
       case REMOTE_BRANCH:
         return Color.cyan;
       case TAG:

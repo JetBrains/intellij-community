@@ -25,7 +25,7 @@ public class RefsModel {
 
   public boolean isBranchRef(@NotNull Hash commitHash) {
     for (Ref ref : refsToCommit(commitHash)) {
-      if (ref.getType() == Ref.RefType.LOCAL_BRANCH || ref.getType() == Ref.RefType.REMOTE_BRANCH) {
+      if (ref.getType().isBranch()) {
         return true;
       }
     }
