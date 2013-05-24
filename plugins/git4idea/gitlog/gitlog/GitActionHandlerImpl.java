@@ -66,6 +66,48 @@ public class GitActionHandlerImpl implements GitActionHandler {
   }
 
   @Override
+  public void abortRebase() {
+    new Task.Backgroundable(myProject, "Aborting rebase...", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        GitRebaser rebaser = new GitRebaser(GitActionHandlerImpl.this.myProject, myGit, indicator);
+        rebaser.abortRebase(myRepository.getRoot());
+      }
+
+      @Override
+      public void onSuccess() {
+        refresh();
+      }
+
+      @Override
+      public void onCancel() {
+        onSuccess();
+      }
+    }.queue();
+  }
+
+  @Override
+  public void continueRebase() {
+    new Task.Backgroundable(myProject, "Rebasing...", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        GitRebaser rebaser = new GitRebaser(GitActionHandlerImpl.this.myProject, myGit, indicator);
+        rebaser.continueRebase(myRepository.getRoot());
+      }
+
+      @Override
+      public void onSuccess() {
+        refresh();
+      }
+
+      @Override
+      public void onCancel() {
+        onSuccess();
+      }
+    }.queue();
+  }
+
+  @Override
   public void cherryPick(final Ref targetRef, final List<Node> nodesToPick, final GitActionHandler.Callback callback) {
     assertLocalBranch(targetRef);
     new Task.Backgroundable(myProject, "Cherry-picking...", false) {
@@ -92,7 +134,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
 
       @Override
       public void onSuccess() {
-        myUiController.refresh();
+        refresh();
         callback.enableModifications();
       }
 
@@ -144,7 +186,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
 
       @Override
       public void onSuccess() {
-        myUiController.refresh();
+        refresh();
         callback.enableModifications();
       }
 
@@ -153,6 +195,10 @@ public class GitActionHandlerImpl implements GitActionHandler {
         onSuccess();
       }
     }.queue();
+  }
+
+  private void refresh() {
+    myRepository.update();
   }
 
   private void handleRebaseResult(GitUpdateResult result, Node onto, Ref subjectRef) {

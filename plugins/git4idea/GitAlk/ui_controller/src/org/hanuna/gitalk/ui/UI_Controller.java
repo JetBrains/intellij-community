@@ -76,4 +76,6 @@ public interface UI_Controller {
   GitActionHandler.Callback getCallback();
 
   void cancelInteractiveRebase();
+
+  GitRepository getRepository();
 }

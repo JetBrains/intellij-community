@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.impl;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -8,7 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import git4idea.repo.GitRepository;
 import gitlog.GitActionHandlerImpl;
+import gitlog.GitLogComponent;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
@@ -436,6 +439,11 @@ public class UI_ControllerImpl implements UI_Controller {
   @Override
   public GitActionHandler.Callback getCallback() {
     return myCallback;
+  }
+
+  @Override
+  public GitRepository getRepository() {
+    return ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
   }
 
   private static class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {

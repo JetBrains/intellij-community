@@ -1,12 +1,17 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.util.ui.UIUtil;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryChangeListener;
 import org.hanuna.gitalk.swing_ui.GitLogIcons;
 import org.hanuna.gitalk.ui.UI_Controller;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -19,6 +24,9 @@ public class MainFrame {
   private final JPanel myToolbar = new JPanel();
   private final JPanel mainPanel = new JPanel();
 
+  private final JButton myAbortButton = new JButton("Abort Rebase");
+  private final JButton myContinueButton = new JButton("Continue Rebase");
+
   private final ActiveSurface myActiveSurface;
 
 
@@ -26,6 +34,25 @@ public class MainFrame {
     this.ui_controller = ui_controller;
     myActiveSurface = new ActiveSurface(ui_controller);
     packMainPanel();
+
+    ui_controller.getProject().getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+      @Override
+      public void repositoryChanged(@NotNull final GitRepository repository) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            updateToolbar(repository);
+          }
+        });
+
+      }
+    });
+  }
+
+  private void updateToolbar(GitRepository repository) {
+    boolean rebasing = repository.getState() == GitRepository.State.REBASING;
+    myAbortButton.setVisible(rebasing);
+    myContinueButton.setVisible(rebasing);
   }
 
   public UI_GraphTable getGraphTable() {
@@ -105,6 +132,22 @@ public class MainFrame {
     });
     myToolbar.add(visibleLongEdges);
 
+    myAbortButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.getGitActionHandler().abortRebase();
+      }
+    });
+    myToolbar.add(myAbortButton);
+
+    myContinueButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.getGitActionHandler().continueRebase();
+      }
+    });
+    myToolbar.add(myContinueButton);
+
     myToolbar.add(Box.createHorizontalGlue());
   }
 
@@ -120,7 +163,8 @@ public class MainFrame {
     return mainPanel;
   }
 
-  public BranchesPanel getBranchPanel() {
-    return myActiveSurface.getBranchesPanel();
+  public void refresh() {
+    myActiveSurface.getBranchesPanel().rebuild();
+    updateToolbar(ui_controller.getRepository());
   }
 }

@@ -9,6 +9,14 @@ import java.util.List;
 public interface GitActionHandler {
   GitActionHandler DO_NOTHING = new GitActionHandler() {
     @Override
+    public void abortRebase() {
+    }
+
+    @Override
+    public void continueRebase() {
+    }
+
+    @Override
     public void cherryPick(Ref targetRef, List<Node> nodesToPick, Callback callback) {
     }
 
@@ -24,6 +32,10 @@ public interface GitActionHandler {
     public void interactiveRebase(Ref subjectRef, Node onto, Callback callback, List<RebaseCommand> commands) {
     }
   };
+
+  void abortRebase();
+
+  void continueRebase();
 
   interface Callback {
     void disableModifications();
