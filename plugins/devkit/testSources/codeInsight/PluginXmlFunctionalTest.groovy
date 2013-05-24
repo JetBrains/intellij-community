@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.jetbrains.idea.devkit.codeInsight
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.psi.ElementDescriptionUtil
@@ -194,6 +196,24 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   public void testLoadForDefaultProject() throws Exception {
     configureByFile();
     myFixture.testHighlighting(true, true, true);
+  }
+
+  public void testImplicitUsagesDomElement() {
+    myFixture.addClass("package com.intellij.util.xml; public interface DomElement {}")
+    myFixture.addClass("package com.intellij.util.xml; public interface GenericAttributeValue<T> extends DomElement {}")
+
+    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection())
+    myFixture.configureByFile("ImplicitUsagesDomElement.java")
+    myFixture.testHighlighting()
+  }
+
+  public void testImplicitUsagesDomElementVisitor() {
+    myFixture.addClass("package com.intellij.util.xml; public interface DomElement {}")
+    myFixture.addClass("package com.intellij.util.xml; public interface DomElementVisitor {}")
+
+    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection())
+    myFixture.configureByFile("ImplicitUsagesDomElementVisitor.java")
+    myFixture.testHighlighting()
   }
 
   static Collection<Class<? extends LocalInspectionTool>> getInspectionClasses() {
