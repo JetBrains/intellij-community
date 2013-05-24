@@ -425,7 +425,7 @@ public class UI_ControllerImpl implements UI_Controller {
     if (rebaseDelegate.resultRef == null) {
       return;
     }
-    getGitActionHandler().interactiveRebase(rebaseDelegate.subjectRef, rebaseDelegate.base, getCallback(),
+    getGitActionHandler().interactiveRebase(rebaseDelegate.subjectRef, rebaseDelegate.branchBase, getCallback(),
                                             rebaseDelegate.getRebaseCommands());
     cancelInteractiveRebase();
   }
@@ -448,7 +448,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {
 
-    private Node base = null;
+    private Node branchBase = null;
     private int insertAfter = -1;
     private List<FakeCommitParents> fakeBranch = new ArrayList<FakeCommitParents>();
     private Ref subjectRef = null;
@@ -470,7 +470,7 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     public void reset() {
-      base = null;
+      branchBase = null;
       insertAfter = -1;
       fakeBranch.clear();
       subjectRef = null;
@@ -492,7 +492,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
-      this.base = base;
+      this.branchBase = base;
       this.insertAfter = base.getRowIndex();
 
       this.fakeBranch = createFakeCommits(base, nodesToRebase);
@@ -514,17 +514,25 @@ public class UI_ControllerImpl implements UI_Controller {
         }
         Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
         if (du.isAncestorOf(base, lowestInserted)) {
-          this.base = base;
+          this.branchBase = base;
         }
         else {
           // TODO: many parents?
-          this.base = getParent(lowestInserted);
+          this.branchBase = getParent(lowestInserted);
         }
 
-        List<Node> inputNodes = du.getCommitsInBranchAboveBase(this.base, du.getNodeByHash(subjectRef.getCommitHash()));
-        inputNodes.removeAll(nodesToInsert);
-        inputNodes.addAll(nodesToInsert);
-        this.fakeBranch = createFakeCommits(this.base, inputNodes);
+        Set<Node> nodesToRemove = new HashSet<Node>(nodesToInsert);
+        List<Node> branch = du.getCommitsInBranchAboveBase(this.branchBase, du.getNodeByHash(subjectRef.getCommitHash()));
+        List<Node> result = new ArrayList<Node>();
+        for (Node node : branch) {
+          if (node == base) {
+            result.addAll(nodesToInsert);
+          }
+          if (!nodesToRemove.contains(node)) {
+            result.add(node);
+          }
+        }
+        this.fakeBranch = createFakeCommits(this.branchBase, result);
 
         setResultRef(subjectRef);
       }
@@ -569,7 +577,7 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     public FakeCommitsInfo getFakeCommitsInfo() {
-      return new FakeCommitsInfo(fakeBranch, fakeCommits.keySet(), base, insertAfter, resultRef, subjectRef);
+      return new FakeCommitsInfo(fakeBranch, fakeCommits.keySet(), branchBase, insertAfter, resultRef, subjectRef);
     }
   }
 

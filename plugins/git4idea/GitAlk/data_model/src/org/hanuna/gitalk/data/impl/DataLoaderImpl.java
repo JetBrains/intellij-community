@@ -70,10 +70,17 @@ public class DataLoaderImpl implements DataLoader {
           CommitParents commit = commits.get(i);
           if (fakeCommits.base != null && i == fakeCommits.insertAbove) {
             commitParentsList.addAll(fakeCommits.commits);
+            for (CommitParents fakeCommit : fakeCommits.commits) {
+              //System.out.println("Visible from fake_" + fakeCommit.getCommitHash() + ": " + fakeCommit.getParentHashes());
+              visible.addAll(fakeCommit.getParentHashes());
+            }
           }
           if (visible.contains(commit.getCommitHash())) {
             commitParentsList.add(commit);
             visible.addAll(commit.getParentHashes());
+          }
+          else {
+            System.out.println("Hidden: " + commit.getCommitHash());
           }
         }
         state = State.PART_LOG_READER;

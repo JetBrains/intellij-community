@@ -71,16 +71,11 @@ public class DataPackUtils {
   }
 
   public boolean isAncestorOf(Node ancestor, Node child) {
-    return dataPack.getGraphModel().getFragmentManager().getUpNodes(ancestor).contains(child);
+    return ancestor != child && dataPack.getGraphModel().getFragmentManager().getUpNodes(ancestor).contains(child);
   }
 
   @Nullable
   public Node getCommonParent(Node a, Node b, Node c) {
-    if (isAncestorOf(a, b)) {
-      if (isAncestorOf(a, c)) return a;
-    }
-    if (isAncestorOf(b, a) && isAncestorOf(b, c)) return b;
-    if (isAncestorOf(c, a) && isAncestorOf(c, b)) return c;
     return null;
   }
 
