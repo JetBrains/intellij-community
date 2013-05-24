@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl.references;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -81,9 +82,10 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     PyExpression qualifier = myElement.getQualifier();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(CompletionUtil.getOriginalOrSelf(myElement).getContainingFile());
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
-      PyType type = TypeEvalContext.fast().getType(qualifier);
+      PyType type = context.getType(qualifier);
       if (type != null) {
         Object[] variants = getTypeCompletionVariants(myElement, type);
         if (!alreadyHasImportKeyword()) {
@@ -97,7 +99,7 @@ public class PyImportReference extends PyReferenceImpl {
     }
     else {
       // complete to possible modules
-      return new ImportVariantCollector().execute();
+      return new ImportVariantCollector(context).execute();
     }
   }
 
@@ -153,8 +155,10 @@ public class PyImportReference extends PyReferenceImpl {
     private final PsiFile myCurrentFile;
     private final Set<String> myNamesAlready;
     private final List<Object> myObjects;
+    @NotNull private final TypeEvalContext myContext;
 
-    public ImportVariantCollector() {
+    public ImportVariantCollector(@NotNull TypeEvalContext context) {
+      myContext = context;
       PsiFile currentFile = myElement.getContainingFile();
       if (currentFile != null) currentFile = currentFile.getOriginalFile();
       myCurrentFile = currentFile;
@@ -177,7 +181,7 @@ public class PyImportReference extends PyReferenceImpl {
             addImportedNames(from_import.getImportElements()); // don't propose already imported items
             // try to collect submodules
             PyExpression module = (PyExpression)mod_candidate;
-            PyType qualifierType = TypeEvalContext.fast().getType(module);
+            PyType qualifierType = myContext.getType(module);
             if (qualifierType != null) {
               ProcessingContext ctx = new ProcessingContext();
               ctx.put(PyType.CTX_NAMES, myNamesAlready);

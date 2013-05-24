@@ -56,7 +56,7 @@ public class PyTestUtil {
   }
 
   public static boolean isPyTestClass(PyClass pyClass) {
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null && PYTHON_TEST_QUALIFIED_CLASSES.contains(type.getClassQName())) {
         return true;
       }

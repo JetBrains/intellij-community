@@ -6,7 +6,6 @@ package com.jetbrains.python.testing.doctest;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -59,7 +58,7 @@ public class PythonDocTestConfigurationProducer extends PythonTestConfigurationP
     final Module module = location.getModule();
     if (!isPythonModule(module)) return false;
     final PsiElement element = location.getPsiElement();
-    if (element instanceof PsiDirectory) {
+    if (element instanceof PsiFile) {
       final PyDocTestVisitor visitor = new PyDocTestVisitor();
       element.accept(visitor);
       return visitor.hasTests;

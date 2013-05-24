@@ -617,8 +617,8 @@ public class PyUtil {
            : psiNamedElement.getName();
   }
 
-  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls) {
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    for (PyClassLikeType type : cls.getAncestorTypes(context)) {
       if (type == null) {
         return true;
       }
@@ -656,12 +656,42 @@ public class PyUtil {
     return true;
   }
 
-  public static void removeQualifier(PyReferenceExpression element) {
+  public static void removeQualifier(@NotNull final PyReferenceExpression element) {
     final PyExpression qualifier = element.getQualifier();
-    if (qualifier != null) {
-      final PsiElement dot = qualifier.getNextSibling();
-      if (dot != null) dot.delete();
-      qualifier.delete();
+    if (qualifier == null) return;
+
+    if (qualifier instanceof PyCallExpression) {
+      final StringBuilder newElement = new StringBuilder(element.getLastChild().getText());
+      final PyExpression callee = ((PyCallExpression)qualifier).getCallee();
+      if (callee instanceof PyReferenceExpression) {
+        final PyExpression calleeQualifier = ((PyReferenceExpression)callee).getQualifier();
+        if (calleeQualifier != null)
+          newElement.insert(0, calleeQualifier.getText() + ".");
+      }
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
+      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), newElement.toString());
+      element.replace(expression);
+    }
+    else {
+      final PsiReference reference = qualifier.getReference();
+      if (reference != null) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved instanceof PyTargetExpression) {
+          final PsiElement parent = resolved.getParent();
+          if (parent instanceof PyAssignmentStatement) {
+            final PyExpression value = ((PyAssignmentStatement)parent).getAssignedValue();
+            if (value instanceof PyCallExpression) {
+              final PyExpression callee = ((PyCallExpression)value).getCallee();
+              if (callee instanceof PyReferenceExpression) {
+                final PyExpression calleeQualifier = ((PyReferenceExpression)callee).getQualifier();
+                if (calleeQualifier != null) {
+                  value.replace(calleeQualifier);
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -968,7 +998,7 @@ public class PyUtil {
     if (isBaseException(pyClass.getQualifiedName())) {
       return true;
     }
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null && isBaseException(type.getClassQName())) {
         return true;
       }

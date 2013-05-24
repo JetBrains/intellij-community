@@ -39,11 +39,12 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
       if (element instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
         if (qualifier != null) {
-          final PyType type = TypeEvalContext.fast().getType(qualifier);
+          final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
+          final PyType type = context.getType(qualifier);
           if (type == null || type instanceof PyTypeReference) {
             final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
             if (call != null && element == call.getCallee()) {
-              return checkMatchingSignatureGroup(call, targets);
+              return checkMatchingSignatureGroup(call, targets, context);
             }
             return UNTYPED;
           }
@@ -74,7 +75,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Nullable
-  private static UsageType checkMatchingSignatureGroup(PyCallExpression call, UsageTarget[] targets) {
+  private static UsageType checkMatchingSignatureGroup(PyCallExpression call, UsageTarget[] targets, TypeEvalContext context) {
     if (targets.length == 1 && targets[0] instanceof PsiElementUsageTarget) {
       final PsiElement element = ((PsiElementUsageTarget)targets[0]).getElement();
       if (element instanceof PyFunction) {
@@ -82,7 +83,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
         final PyFunction.Modifier modifier = function.getModifier();
         PyCallExpression.PyMarkedCallee callee = new PyCallExpression.PyMarkedCallee(function, modifier, 1, true);
         CallArgumentsMappingImpl mapping = new CallArgumentsMappingImpl(call.getArgumentList());
-        mapping.mapArguments(callee, null);
+        mapping.mapArguments(callee, context);
         if (mapping.hasProblems()) {
           return SIGNATURE_MISMATCH;
         }

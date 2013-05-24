@@ -110,7 +110,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         return replaceSubstringWithDictFormatting(oldExpression, quotes, prefix, suffix, formatValue, newText);
       }
       else {
-        final TypeEvalContext context = TypeEvalContext.slow();
+        final TypeEvalContext context = TypeEvalContext.userInitiated(oldExpression.getContainingFile());
         final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();

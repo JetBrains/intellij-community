@@ -13,6 +13,7 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -141,9 +143,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   public void apply(@NotNull PsiFile file, State annotationResult, @NotNull AnnotationHolder holder) {
     if (annotationResult == null || !file.isValid()) return;
     final String text = file.getText();
+    Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+
     for (Problem problem : annotationResult.problems) {
-      if (ignoreDueToSettings(file.getProject(), problem)) continue;
-      int offset = StringUtil.lineColToOffset(text, problem.myLine - 1, problem.myColumn - 1);
+      if (ignoreDueToSettings(project, problem)) continue;
+      final int line = problem.myLine - 1;
+      final int column = problem.myColumn - 1;
+      int offset = document != null ? document.getLineStartOffset(line) + column : StringUtil.lineColToOffset(text, line, column);
       PsiElement problemElement = file.findElementAt(offset);
       if (!(problemElement instanceof PsiWhiteSpace) && !(problem.myCode.startsWith("E3"))) {
         final PsiElement elementAfter = file.findElementAt(offset + 1);
@@ -153,8 +160,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       }
       if (problemElement != null) {
         TextRange problemRange = problemElement.getTextRange();
-        if (StringUtil.offsetToLineNumber(text, problemRange.getStartOffset()) != StringUtil.offsetToLineNumber(text, problemRange.getEndOffset())) {
-          problemRange = new TextRange(offset, StringUtil.lineColToOffset(text, problem.myLine, 0)-1);
+        if (crossesLineBoundary(document, text, problemRange)) {
+          int lineEndOffset = document != null ? document.getLineEndOffset(line) : StringUtil.lineColToOffset(text, line+1, 0) - 1;
+          problemRange = new TextRange(offset, lineEndOffset);
         }
         final Annotation annotation;
         final String message = "PEP 8: " + problem.myDescription;
@@ -178,6 +186,15 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
                                                                            }));
       }
     }
+  }
+
+  private static boolean crossesLineBoundary(@Nullable Document document, String text, TextRange problemRange) {
+    int start = problemRange.getStartOffset();
+    int end = problemRange.getEndOffset();
+    if (document != null) {
+      return document.getLineNumber(start) != document.getLineNumber(end);
+    }
+    return StringUtil.offsetToLineNumber(text, start) != StringUtil.offsetToLineNumber(text, end);
   }
 
   private static boolean ignoreDueToSettings(Project project, Problem problem) {

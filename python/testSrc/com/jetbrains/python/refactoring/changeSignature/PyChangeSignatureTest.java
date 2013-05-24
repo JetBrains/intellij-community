@@ -35,6 +35,14 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(1, "b", null, false)));
   }
 
+  public void testRemoveKeyedParam() { //PY-9753
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "tries", null, false),
+                                              new PyParameterInfo(2, "delay", "3", true),
+                                              new PyParameterInfo(3, "backoff", "1", true),
+                                              new PyParameterInfo(4, "exceptions_to_check", "Exception", true),
+                                              new PyParameterInfo(5, "retry_for_lambda", "None", true)));
+  }
+
   public void testSwitchPositionalParam() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(1, "b", null, false), new PyParameterInfo(0, "a", null, false)));
   }
@@ -120,6 +128,10 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest("some_function_name", Arrays.asList(new PyParameterInfo(0, "argument_1", null, false),
                                                               new PyParameterInfo(2, "opt2", "None", true),
                                                               new PyParameterInfo(3, "**extra_info", null, false)));
+  }
+  public void testMoveParam() {
+    doChangeSignatureTest("f1", Arrays.asList(new PyParameterInfo(1, "b", "2", true),
+                                                new PyParameterInfo(0, "a", "1", true)));
   }
 
   public void testMoveRenameParam() {

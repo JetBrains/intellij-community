@@ -131,8 +131,12 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     offset = getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
     List<PsiReference> referencesList = new ArrayList<PsiReference>();
+    final PsiFile file = element.getContainingFile();
+    final PyResolveContext resolveContext = file != null ?
+                                     PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file)) :
+                                     PyResolveContext.defaultContext();
     while (element != null) {
-      addReferences(offset, element, referencesList);
+      addReferences(offset, element, referencesList, resolveContext);
       offset = element.getStartOffsetInParent() + offset;
       if (element instanceof PsiFile) break;
       element = element.getParent();
@@ -144,14 +148,11 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
                                  referencesList.get(referencesList.size() - 1).getElement());
   }
 
-  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
+  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences,
+                                    PyResolveContext resolveContext) {
     final PsiReference[] references;
     if (element instanceof PyReferenceOwner) {
-      final PsiFile file = element.getContainingFile();
-      final PyResolveContext context = file != null ?
-                                       PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.fastStubOnly(file)) :
-                                       PyResolveContext.defaultContext();
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(context);
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
       references = reference == null ? PsiReference.EMPTY_ARRAY : new PsiReference[] {reference};
     }
     else {

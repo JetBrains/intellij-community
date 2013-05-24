@@ -118,7 +118,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         return pyType;
       }
       if (!context.maySwitchToAST(this)) {
-        final PsiElement value = getStub() != null ? findAssignedValueByStub() : findAssignedValue();
+        final PsiElement value = getStub() != null ? findAssignedValueByStub(context) : findAssignedValue();
         if (value instanceof PyTypedElement) {
           return context.getType((PyTypedElement)value);
         }
@@ -438,7 +438,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
-  public PsiElement findAssignedValueByStub() {
+  public PsiElement findAssignedValueByStub(@NotNull TypeEvalContext context) {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null && stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
       final PyQualifiedName initializer = stub.getInitializer();
@@ -451,7 +451,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             return ((PyFile)parent).getElementNamed(name);
           }
           else if (parent instanceof PyClass) {
-            final PyType type = TypeEvalContext.fastStubOnly(null).getType((PyClass)parent);
+            final PyType type = context.getType((PyClass)parent);
             if (type != null) {
               final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
                                                                                     PyResolveContext.noImplicits());

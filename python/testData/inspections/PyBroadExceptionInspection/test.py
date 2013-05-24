@@ -8,6 +8,11 @@ except <weak_warning descr="Too broad exception clause">Exception</weak_warning>
 
 try:
     function_throws_exception()
+except <weak_warning descr="Too broad exception clause">BaseException</weak_warning>:
+    pass
+
+try:
+    function_throws_exception()
 except ExceptionKlass:
     pass
 

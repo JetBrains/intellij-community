@@ -18,6 +18,9 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
   public void testTrueNegative() {
     doTest();
   }
+  public void testDoubleUnderscore() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile("inspections/PyProtectedMemberInspection/" + getTestName(true) + ".py");

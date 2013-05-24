@@ -214,6 +214,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PyKeywordArgument keywordArgument = argumentList.getKeywordArgument(paramName);
     if (keywordArgument != null) {
       params.add(keywordArgument.getText());
+      useKeywords = true;
       return currentIndex + 1;
     }
     else if (currentIndex < arguments.length) {
@@ -222,14 +223,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         params.add(currentParameter.getText());
       }
       else if (oldIndex < arguments.length && (
-        !info.getDefaultInSignature() || !(currentParameter instanceof PyKeywordArgument))) {
-        addOldPositionParameter(params, arguments[oldIndex], info);
+        !(info.getDefaultInSignature() && arguments[oldIndex].getText().equals(info.getDefaultValue())) || !(currentParameter instanceof PyKeywordArgument))) {
+        return addOldPositionParameter(params, arguments[oldIndex], info, currentIndex);
       }
       else
         return currentIndex;
     }
     else if (oldIndex < arguments.length) {
-      addOldPositionParameter(params, arguments[oldIndex], info);
+      return addOldPositionParameter(params, arguments[oldIndex], info, currentIndex);
     }
     else if (!info.getDefaultInSignature()) {
       params.add( useKeywords ? paramName + " = " + info.getDefaultValue()
@@ -242,24 +243,28 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return currentIndex + 1;
   }
 
-  private void addOldPositionParameter(List<String> params,
-                                                 PyExpression argument,
-                                                 PyParameterInfo info) {
+  private int addOldPositionParameter(List<String> params,
+                                      PyExpression argument,
+                                      PyParameterInfo info, int currentIndex) {
     final String paramName = info.getName();
     if (argument instanceof PyKeywordArgument) {
       final PyExpression valueExpression = ((PyKeywordArgument)argument).getValueExpression();
 
-      if (!paramName.equals(argument.getName()) && !StringUtil.isEmptyOrSpaces(info.getDefaultValue())
-          && !info.getDefaultInSignature())
-        params.add(useKeywords ? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());
+      if (!paramName.equals(argument.getName()) && !StringUtil.isEmptyOrSpaces(info.getDefaultValue())) {
+        if (!info.getDefaultInSignature())
+          params.add(useKeywords ? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());
+        else
+          return currentIndex;
+      }
       else {
         params.add(valueExpression == null ? paramName : paramName + " = " + valueExpression.getText());
         useKeywords = true;
       }
     }
     else {
-      params.add(useKeywords ? paramName + " = " + argument.getText() : argument.getText());
+      params.add(useKeywords && !argument.getText().equals(info.getDefaultValue())? paramName + " = " + argument.getText() : argument.getText());
     }
+    return currentIndex + 1;
   }
 
   private static boolean isPythonUsage(UsageInfo info) {

@@ -79,11 +79,29 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final boolean[] mayBeStatic = {true};
       PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
         @Override
+        public void visitPyRaiseStatement(PyRaiseStatement node) {
+          super.visitPyRaiseStatement(node);
+          final PyExpression[] expressions = node.getExpressions();
+          if (expressions.length == 1) {
+            final PyExpression expression = expressions[0];
+            if (expression instanceof PyCallExpression) {
+              final PyExpression callee = ((PyCallExpression)expression).getCallee();
+              if (callee != null && PyNames.NOT_IMPLEMENTED_ERROR.equals(callee.getText()))
+                mayBeStatic[0] = false;
+            }
+            else if (PyNames.NOT_IMPLEMENTED_ERROR.equals(expression.getText())) {
+              mayBeStatic[0] = false;
+            }
+          }
+        }
+
+        @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
           if (selfName.equals(node.getName())) {
             mayBeStatic[0] = false;
           }
+
         }
 
       };

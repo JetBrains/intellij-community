@@ -21,7 +21,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
   }
 
   @Override
-  public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+  public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
     doEvaluate(expression, callback, true);
   }
 

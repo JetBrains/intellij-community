@@ -87,30 +87,30 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           }
         }
       }
-      return getReturnTypeByQName(qname, function);
+      return getReturnTypeByQName(qname, function, context);
     }
     return null;
   }
 
   @Nullable
-  public PyType getConstructorType(@NotNull PyClass cls) {
+  public PyType getConstructorType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final String classQName = cls.getQualifiedName();
     if (classQName != null) {
       final PyQualifiedName canonicalQName = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(classQName));
       if (canonicalQName != null) {
         final PyQualifiedName qname = canonicalQName.append(PyNames.INIT);
-        return getReturnTypeByQName(qname.toString(), cls);
+        return getReturnTypeByQName(qname.toString(), cls, context);
       }
     }
     return null;
   }
 
   @Nullable
-  private PyType getReturnTypeByQName(@NotNull String qname, @NotNull PsiElement anchor) {
+  private PyType getReturnTypeByQName(@NotNull String qname, @NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
     final LanguageLevel level = LanguageLevel.forElement(anchor);
     final String key = String.format("Python%d/%s.return", level.getVersion(), qname);
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-    final Ref<PyType> cached = cache.getStdlibType(key);
+    final Ref<PyType> cached = cache.getStdlibType(key, context);
     if (cached != null) {
       return cached.get();
     }
@@ -133,7 +133,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String name = param.getName();
     final String qname = getQualifiedName(func, param);
     if (qname != null && name != null) {
-      return getParameterTypeByQName(qname, name, func);
+      return getParameterTypeByQName(qname, name, func, context);
     }
     return null;
   }
@@ -175,7 +175,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     PyType rtype;
     do {
       final String overloadedQName = String.format("%s.%d", qname, i);
-      rtype = getReturnTypeByQName(overloadedQName, anchor);
+      rtype = getReturnTypeByQName(overloadedQName, anchor, context);
       if (rtype != null) {
         boolean matched = true;
         boolean notNullParameterMatch = false;
@@ -192,7 +192,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
               continue;
             }
             final PyType argType = context.getType(entry.getKey());
-            final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
+            final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor, context);
             if (PyTypeChecker.match(paramType, argType, context)) {
               if (paramType != null && !PyTypeChecker.isUnknown(argType)) {
                 notNullParameterMatch = true;
@@ -230,7 +230,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
     final LanguageLevel level = LanguageLevel.forElement(anchor);
-    final PyType paramType = getParameterTypeByQName(overloadedQName, "mode", anchor);
+    final PyType paramType = getParameterTypeByQName(overloadedQName, "mode", anchor, context);
     final PyType argType;
     // Binary mode
     if (mode.contains("b")) {
@@ -249,11 +249,14 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private PyType getParameterTypeByQName(@NotNull String functionQName, @NotNull String name, @NotNull PsiElement anchor) {
+  private PyType getParameterTypeByQName(@NotNull String functionQName,
+                                         @NotNull String name,
+                                         @NotNull PsiElement anchor,
+                                         @NotNull TypeEvalContext context) {
     final LanguageLevel level = LanguageLevel.forElement(anchor);
     final String key = String.format("Python%d/%s.%s", level.getVersion(), functionQName, name);
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-    final Ref<PyType> cached = cache.getStdlibType(key);
+    final Ref<PyType> cached = cache.getStdlibType(key, context);
     if (cached != null) {
       return cached.get();
     }
