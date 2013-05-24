@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.project.Project;
+import git4idea.repo.GitRepository;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
