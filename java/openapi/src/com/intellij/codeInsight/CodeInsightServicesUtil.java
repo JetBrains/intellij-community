@@ -68,7 +68,11 @@ public class CodeInsightServicesUtil {
       if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
         PsiExpression operand = expression.getOperand();
         if (operand instanceof PsiParenthesizedExpression) {
-          operand = ((PsiParenthesizedExpression)operand).getExpression();
+          final PsiElement parent = booleanExpression.getParent();
+          if (parent instanceof PsiPolyadicExpression && 
+              ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.ANDAND) {
+            operand = ((PsiParenthesizedExpression)operand).getExpression();
+          }
         }
         return operand;
       }
