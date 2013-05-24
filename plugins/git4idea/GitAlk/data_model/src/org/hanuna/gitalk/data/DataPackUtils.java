@@ -66,11 +66,25 @@ public class DataPackUtils {
 
   @Nullable
   public Node getCommonParent(Node a, Node b) {
-    List<Node> common = getCommitsToRebase(a, b);
-    return common.isEmpty() ? null : common.get(common.size() - 1);
+    List<Node> commitDiff = getCommitsDownToCommon(a, b);
+    return commitDiff.isEmpty() ? null : commitDiff.get(commitDiff.size() - 1);
   }
 
-  public List<Node> getCommitsToRebase(Node newBase, Node head) {
+  public boolean isAncestorOf(Node ancestor, Node child) {
+    return dataPack.getGraphModel().getFragmentManager().getUpNodes(ancestor).contains(child);
+  }
+
+  @Nullable
+  public Node getCommonParent(Node a, Node b, Node c) {
+    if (isAncestorOf(a, b)) {
+      if (isAncestorOf(a, c)) return a;
+    }
+    if (isAncestorOf(b, a) && isAncestorOf(b, c)) return b;
+    if (isAncestorOf(c, a) && isAncestorOf(c, b)) return c;
+    return null;
+  }
+
+  public List<Node> getCommitsDownToCommon(Node newBase, Node head) {
     final List<Node> all = getAllAncestors(newBase, new Predicate<Node>() {
       @Override
       public boolean apply(@Nullable Node input) {
@@ -110,5 +124,22 @@ public class DataPackUtils {
       }
     }
     return null;
+  }
+
+  public List<Node> getCommitsInBranchAboveBase(Node firstToInclude, Ref branchLabel) {
+    List<Node> result = new ArrayList<Node>();
+    Node node = firstToInclude;
+    while (true) {
+      if (node != firstToInclude) {
+        result.add(node);
+      }
+      if (node.getCommitHash().equals(branchLabel.getCommitHash())) {
+        break;
+      }
+      // TODO: multiple edges must not appear
+      // TODO: if there are no edges, we are in the wrong branch
+      node = node.getUpEdges().get(0).getUpNode();
+    }
+    return result;
   }
 }
