@@ -13,7 +13,9 @@ import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
 import org.hanuna.gitalk.swing_ui.frame.ProgressFrame;
-import org.hanuna.gitalk.ui.*;
+import org.hanuna.gitalk.ui.ControllerListener;
+import org.hanuna.gitalk.ui.DragDropListener;
+import org.hanuna.gitalk.ui.UI_Controller;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -152,7 +154,7 @@ public class Swing_UI {
 
       @Override
       public void hint(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        List<Ref> refsAbove = getRefsAbove(commit);
+        List<Ref> refsAbove = getLocalRefsAbove(commit);
         showHint(e, GitLogIcons.MOVE, "Move " + renderCommits(commitsBeingDragged) +
                                       (refsAbove.size() == 1 ? " in branch " + refsAbove.get(0).getName() : ""));
 
@@ -201,28 +203,10 @@ public class Swing_UI {
 
       @Override
       public void perform(final Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        showRefPopup(getRefsAbove(commitsBeingDragged.get(0)), e.getComponent(), new RefAction() {
+        showRefPopup(getLocalRefsAbove(commitsBeingDragged.get(0)), e.getComponent(), new RefAction() {
               @Override
               public void perform(Ref ref) {
                 ui_controller.getGitActionHandler().rebase(commit, ref, myCallback);
-              }
-            });
-      }
-    };
-
-    private final Action REBASE_SOME_COMMITS_ONTO_COMMIT_UNDER_CURSOR = new Action() {
-
-      @Override
-      public void hint(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        showHint(e, GitLogIcons.REBASE, "Rebase " + renderCommits(commitsBeingDragged) + " interactively");
-      }
-
-      @Override
-      public void perform(final Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
-        showRefPopup(getRefsAbove(commitsBeingDragged.get(0)), e.getComponent(), new RefAction() {
-              @Override
-              public void perform(Ref ref) {
-                ui_controller.getInteractiveRebaseBuilder().startRebaseOnto(ref, commit, commitsBeingDragged);
               }
             });
       }
@@ -247,30 +231,39 @@ public class Swing_UI {
       }
     };
 
-    private final Action FORBIDDEN = new Action() {
+    private class ForbiddenAction implements Action {
+
+      private final String message;
+
+      private ForbiddenAction(String message) {
+        this.message = message;
+      }
 
       @Override
       public void hint(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        showHint(e, GitLogIcons.FORBIDDEN, "No action possible");
+        showHint(e, GitLogIcons.FORBIDDEN, message);
       }
 
       @Override
       public void perform(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
         // Do nothing
       }
-    };
-
-    private void runRefAction(Node commit, MouseEvent e, RefAction action) {
-      showRefPopup(getRefsAbove(commit), e.getComponent(), action);
     }
 
-    private List<Ref> getRefsAbove(Node commit) {
+    private final Action FORBIDDEN = new ForbiddenAction("No action possible");
+    private final Action FORBIDDEN_NO_LOCAL_BRANCH = new ForbiddenAction("No local branch");
+
+    private void runRefAction(Node commit, MouseEvent e, RefAction action) {
+      showRefPopup(getLocalRefsAbove(commit), e.getComponent(), action);
+    }
+
+    private List<Ref> getLocalRefsAbove(Node commit) {
       Set<Node> upRefNodes = ui_controller.getDataPackUtils().getUpRefNodes(commit);
       List<Ref> refs = new ArrayList<Ref>();
       for (Node refNode : upRefNodes) {
         List<Ref> nodeRefs = ui_controller.getDataPack().getRefsModel().refsToCommit(refNode.getCommitHash());
         for (Ref ref : nodeRefs) {
-          if (ref.getType() == Ref.RefType.LOCAL_BRANCH || ref.getType() == Ref.RefType.REMOTE_BRANCH) {
+          if (ref.getType() == Ref.RefType.LOCAL_BRANCH && !ref.getName().equals("HEAD")) {
             refs.add(ref);
           }
         }
@@ -293,31 +286,39 @@ public class Swing_UI {
     private class ActionHandler extends Handler implements Action {
       private Action currentAction = NONE;
 
+      private boolean sameLocalBranch(Node commit, List<Node> commitsBeingDragged) {
+        return myConditions.sameBranch(commit, commitsBeingDragged) && !getLocalRefsAbove(commit).isEmpty();
+      }
+
+      private void decide(Node commit, MouseEvent e, List<Node> commitsBeingDragged, Action actionForInteractive, boolean overCommit) {
+        if (myConditions.sameBranch(commit, commitsBeingDragged)) {
+          if (!getLocalRefsAbove(commit).isEmpty()) {
+            currentAction = actionForInteractive;
+          }
+          else {
+            currentAction = FORBIDDEN_NO_LOCAL_BRANCH;
+          }
+        }
+        else {
+          currentAction = pickOrRebase(commit, e, commitsBeingDragged, overCommit);
+        }
+      }
+
       private Action pickOrRebase(Node commit, MouseEvent e, List<Node> commitsBeingDragged, boolean overCommit) {
         // labelOnTop
         // modifiers
         // multiple selection: sequential selection + rebase modifier -> rebase, otherwise -> pick
-        return REBASE_SOME_COMMITS_ONTO_COMMIT_UNDER_CURSOR;
+        return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR;
       }
 
       @Override
       public void above(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        if (myConditions.sameBranch(commit, commitsBeingDragged)) {
-          currentAction = MOVE_ABOVE;
-        }
-        else {
-          currentAction = pickOrRebase(commit, e, commitsBeingDragged, false);
-        }
+        decide(commit, e, commitsBeingDragged, MOVE_ABOVE, false);
       }
 
       @Override
       public void below(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        if (myConditions.sameBranch(commit, commitsBeingDragged)) {
-          currentAction = MOVE_BELOW;
-        }
-        else {
-          currentAction = pickOrRebase(commit, e, commitsBeingDragged, false);
-        }
+        decide(commit, e, commitsBeingDragged, MOVE_BELOW, false);
       }
 
       @Override
@@ -327,12 +328,7 @@ public class Swing_UI {
 
       @Override
       public void overNode(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
-        if (myConditions.sameBranch(commit, commitsBeingDragged)) {
-          currentAction = FIX_UP;
-        }
-        else {
-          currentAction = pickOrRebase(commit, e, commitsBeingDragged, true);
-        }
+        decide(commit, e, commitsBeingDragged, FIX_UP, false);
       }
 
       @Override
