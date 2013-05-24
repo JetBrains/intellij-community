@@ -81,7 +81,7 @@ public class GraphBuilder {
   private MutableNode addCurrentCommitAndFinishRow(@NotNull Hash commitHash) {
     MutableNode node = underdoneNodes.remove(commitHash);
     if (node == null) {
-      node = new MutableNode(new Branch(commitHash), commitHash);
+      node = createNode(commitHash, new Branch(commitHash));
     }
     node.setType(COMMIT_NODE);
     node.setNodeRow(nextRow);
@@ -95,7 +95,7 @@ public class GraphBuilder {
   private void addParent(MutableNode node, Hash parentHash, Branch branch) {
     MutableNode parentNode = underdoneNodes.remove(parentHash);
     if (parentNode == null) {
-      parentNode = new MutableNode(branch, parentHash);
+      parentNode = createNode(parentHash, branch);
       createUsualEdge(node, parentNode, branch);
       underdoneNodes.put(parentHash, parentNode);
     }
@@ -109,7 +109,7 @@ public class GraphBuilder {
         parentNode.setType(EDGE_NODE);
         nextRow.getInnerNodeList().add(parentNode);
 
-        MutableNode newParentNode = new MutableNode(parentNode.getBranch(), parentHash);
+        MutableNode newParentNode = createNode(parentHash, parentNode.getBranch());
         createUsualEdge(parentNode, newParentNode, parentNode.getBranch());
         underdoneNodes.put(parentHash, newParentNode);
       }
@@ -118,6 +118,10 @@ public class GraphBuilder {
         underdoneNodes.put(parentHash, parentNode);
       }
     }
+  }
+
+  private MutableNode createNode(Hash hash, Branch branch) {
+    return new MutableNode(branch, hash);
   }
 
   private void append(@NotNull CommitParents commitParents) {

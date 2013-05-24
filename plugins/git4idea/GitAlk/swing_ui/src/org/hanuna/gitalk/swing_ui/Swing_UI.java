@@ -8,8 +8,8 @@ import com.intellij.ui.LightweightHint;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
-import org.hanuna.gitalk.data.rebase.RebaseCommand;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,6 +104,25 @@ public class Swing_UI {
       }
       return true;
     }
+  }
+
+  enum Mode {
+    DEFAULT,
+    CHERRY_PICK,
+    REBASE,
+    INTERACTIVE,
+  }
+
+  @NotNull
+  private Mode getMode(MouseEvent e) {
+    boolean ctrl = (e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0;
+    boolean alt = (e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0;
+    boolean shift = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
+
+    if (alt && ctrl) return Mode.INTERACTIVE;
+    if (alt) return Mode.CHERRY_PICK;
+    if (ctrl) return Mode.REBASE;
+    return Mode.DEFAULT;
   }
 
   interface Action {
@@ -215,6 +235,24 @@ public class Swing_UI {
       }
     };
 
+    private final Action REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR_INTERACTIVE = new Action() {
+
+      @Override
+      public void hint(Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+        showHint(e, GitLogIcons.REBASE_INTERACTIVE, "Rebase " + renderCommits(commitsBeingDragged) + " interactively");
+      }
+
+      @Override
+      public void perform(final Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
+        showRefPopup(getLocalRefs(commitsBeingDragged.get(0).getCommitHash()), e.getComponent(), new RefAction() {
+              @Override
+              public void perform(Ref ref) {
+                ui_controller.getInteractiveRebaseBuilder().startRebaseOnto(ref, commit, commitsBeingDragged);
+              }
+            });
+      }
+    };
+
     private final Action FIX_UP = new Action() {
 
       @Override
@@ -313,6 +351,9 @@ public class Swing_UI {
         Node topCommit = commitsBeingDragged.get(0);
         boolean hasLabelOnTop = !getLocalRefs(topCommit.getCommitHash()).isEmpty();
         if (commitsBeingDragged.size() == 1 && hasLabelOnTop) {
+          if (getMode(e) == Mode.INTERACTIVE) {
+            return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR_INTERACTIVE;
+          }
           return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR;
         }
         else {

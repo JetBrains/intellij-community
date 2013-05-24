@@ -13,18 +13,17 @@ import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
-import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
-import org.hanuna.gitalk.data.rebase.RebaseCommand;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
+import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.ui.ControllerListener;
@@ -49,7 +48,7 @@ import java.util.Set;
  */
 public class UI_ControllerImpl implements UI_Controller {
 
-  private volatile DataLoader dataLoader;
+  private volatile DataLoaderImpl dataLoader;
   private final EventsController events = new EventsController();
   private final Project myProject;
   private final BackgroundTaskQueue myDataLoaderQueue;
@@ -67,33 +66,30 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
   private GitActionHandler myGitActionHandler;
+
   private InteractiveRebaseBuilder myInteractiveRebaseBuilder = new InteractiveRebaseBuilder() {
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
       dataLoader.getInteractiveRebaseBuilder().startRebase(subjectRef, onto);
-      dataInit();
-      events.runUpdateUI();
+      refresh();
     }
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
       dataLoader.getInteractiveRebaseBuilder().startRebaseOnto(subjectRef, base, nodesToRebase);
-      dataInit();
-      events.runUpdateUI();
+      refresh();
     }
 
     @Override
     public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
       dataLoader.getInteractiveRebaseBuilder().moveCommits(subjectRef, base, position, nodesToInsert);
-      dataInit();
-      events.runUpdateUI();
+      refresh();
     }
 
     @Override
     public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
       dataLoader.getInteractiveRebaseBuilder().fixUp(subjectRef, target, nodesToFixUp);
-      dataInit();
-      events.runUpdateUI();
+      refresh();
     }
 
     @Override
@@ -124,7 +120,7 @@ public class UI_ControllerImpl implements UI_Controller {
       @Override
       public void consume(final ProgressIndicator indicator) {
         events.setState(ControllerListener.State.PROGRESS);
-        dataLoader = new DataLoaderImpl(UI_ControllerImpl.this.myProject);
+        dataLoader = (dataLoader == null) ? new DataLoaderImpl(myProject) : dataLoader.copyInteractive();
         Executor<String> statusUpdater = new Executor<String>() {
           @Override
           public void execute(String key) {

@@ -10,13 +10,20 @@ import org.jetbrains.annotations.NotNull;
 public class CommitData {
 
   private final GitCommit myCommit;
+  private final Hash hash;
 
   public CommitData(GitCommit commit) {
     myCommit = commit;
+    hash = Hash.build(myCommit.getShortHash().getString());
+  }
+
+  public CommitData(GitCommit commit, Hash hash) {
+    myCommit = commit;
+    this.hash = hash;
   }
 
   public Hash getCommitHash() {
-    return Hash.build(myCommit.getShortHash().getString());
+    return hash;
   }
 
   @NotNull

@@ -23,7 +23,7 @@ import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateResult;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
-import org.hanuna.gitalk.data.rebase.RebaseCommand;
+import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.ui.UI_Controller;
@@ -170,7 +170,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
   }
 
   @Override
-  public void interactiveRebase(Ref subjectRef, List<RebaseCommand> commands, Callback callback) {
+  public void interactiveRebase(Ref subjectRef, Node onto, Callback callback, List<RebaseCommand> commands) {
     throw new UnsupportedOperationException();
   }
 

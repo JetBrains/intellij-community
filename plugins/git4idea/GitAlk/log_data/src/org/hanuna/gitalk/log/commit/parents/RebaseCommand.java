@@ -1,18 +1,17 @@
-package org.hanuna.gitalk.data.rebase;
+package org.hanuna.gitalk.log.commit.parents;
 
-import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.commit.Hash;
 
 public class RebaseCommand {
   public enum RebaseCommandKind {
     PICK,
-    FIXUP,
-    REWORD
+    FIXUP
   }
 
   private final RebaseCommandKind kind;
-  private final Node commit;
+  private final Hash commit;
 
-  public RebaseCommand(RebaseCommandKind kind, Node commit) {
+  public RebaseCommand(RebaseCommandKind kind, Hash commit) {
     this.kind = kind;
     this.commit = commit;
   }
@@ -21,7 +20,7 @@ public class RebaseCommand {
     return kind;
   }
 
-  public Node getCommit() {
+  public Hash getCommit() {
     return commit;
   }
 }

@@ -12,6 +12,7 @@ import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.log.commit.CommitData;
+import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     @Override
     public CommitData get(@NotNull Hash key) {
       return readCommitData(key);
-    }
+      }
   }, 5000);
   private final CommitDataReader commitDataReader;
   private final DataPack dataPack;
@@ -87,7 +88,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     List<String> hashes = ContainerUtil.map(nodes, new com.intellij.util.Function<Node, String>() {
       @Override
       public String fun(Node node) {
-        return node.getCommitHash().toStrHash();
+        return FakeCommitParents.getOriginal(node.getCommitHash()).toStrHash();
       }
     });
     List<CommitData> commitDataList = commitDataReader.readCommitsData(hashes);
