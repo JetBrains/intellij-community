@@ -243,9 +243,4 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   public void setName(String name) throws IncorrectOperationException {
     NamedObjectDescriptor.setName(myTag, name);
   }
-
-  @Override
-  public String toString() {
-    return getName();
-  }
 }

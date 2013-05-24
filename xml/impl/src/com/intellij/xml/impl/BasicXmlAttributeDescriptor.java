@@ -73,4 +73,9 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
   public boolean isEnumerated(@Nullable XmlElement context) {
     return isEnumerated();
   }
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }

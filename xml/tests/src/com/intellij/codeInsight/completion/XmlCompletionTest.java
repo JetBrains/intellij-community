@@ -636,5 +636,15 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
                        "xsi:noNamespaceSchemaLocation",
                        "xsi:type");
   }
+
+  public void testRequiredAttributesOnTop() throws Exception {
+    myFixture.configureByText("foo.html", "<img <caret>");
+    myFixture.completeBasic();
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertEquals("alt", strings.get(0));
+    assertEquals("src", strings.get(1));
+    assertEquals("align", strings.get(2));
+  }
 }
 
