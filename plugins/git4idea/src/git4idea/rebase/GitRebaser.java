@@ -171,6 +171,12 @@ public class GitRebaser {
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
 
+    GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
+    // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
+    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor(rebaseEditorService, myProject, root, rh);
+    Integer rebaseEditorNo = editor.getHandlerNo();
+    rebaseEditorService.configureHandler(rh, rebaseEditorNo);
+
     final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     rebaseTask.setProgressIndicator(myProgressIndicator);
@@ -341,6 +347,20 @@ public class GitRebaser {
 
     @Override protected boolean proceedAfterAllMerged() throws VcsException {
       return myRebaser.continueRebase(myRoot);
+    }
+  }
+
+  public static class TrivialEditor extends GitInteractiveRebaseEditorHandler{
+    public TrivialEditor(@NotNull GitRebaseEditorService service,
+                         @NotNull Project project,
+                         @NotNull VirtualFile root,
+                         @NotNull GitHandler handler) {
+      super(service, project, root, handler);
+    }
+
+    @Override
+    public int editCommits(String path) {
+      return 0;
     }
   }
 
