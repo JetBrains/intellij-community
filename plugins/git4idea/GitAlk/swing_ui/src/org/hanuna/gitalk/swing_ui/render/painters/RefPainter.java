@@ -39,6 +39,8 @@ public class RefPainter {
 
   private Color refBackgroundColor(@NotNull Ref ref) {
     switch (ref.getType()) {
+      case HEAD:
+        return Color.GREEN;
       case LOCAL_BRANCH:
         return Color.orange;
       case BRANCH_UNDER_INTERACTIVE_REBASE:

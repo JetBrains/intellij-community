@@ -81,7 +81,7 @@ public class BranchesPanel extends JPanel {
     final List<Ref> localRefs = ContainerUtil.filter(allRefs, new Condition<Ref>() {
       @Override
       public boolean value(Ref ref) {
-        return ref.getType() == Ref.RefType.LOCAL_BRANCH;
+        return ref.getType().isLocalOrHead();
       }
     });
 

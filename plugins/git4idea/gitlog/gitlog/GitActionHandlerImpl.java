@@ -162,7 +162,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
   }
 
   private static void assertLocalBranch(Ref targetRef) {
-    assert targetRef.getType() == Ref.RefType.LOCAL_BRANCH;
+    assert targetRef.getType().isLocalOrHead();
   }
 
   private void checkout(Ref targetRef, ProgressIndicator indicator) {

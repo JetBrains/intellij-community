@@ -43,7 +43,7 @@ public class RefParser {
   @NotNull
   private static Ref createRef(@NotNull Hash hash, @NotNull String longRefPath) {
     if (longRefPath.equals("HEAD")) {
-      return new Ref(hash, "HEAD", Ref.RefType.LOCAL_BRANCH);
+      return new Ref(hash, "HEAD", Ref.RefType.HEAD);
     }
 
     if (longRefPath.equals("refs/stash")) {

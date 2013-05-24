@@ -32,7 +32,7 @@ public class RefTreeModelImpl implements RefTreeModel {
     List<Ref> allRefs = refsModel.getAllRefs();
     Hash headHash = allRefs.get(0).getCommitHash();
     for (Ref ref : allRefs) {
-      if (ref.getName().equals("HEAD")) {
+      if (ref.getType() == Ref.RefType.HEAD) {
         headHash = ref.getCommitHash();
         break;
       }
