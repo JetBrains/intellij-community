@@ -510,12 +510,12 @@ public class UI_ControllerImpl implements UI_Controller {
       }
       DataPackUtils du = getDataPackUtils();
       if (position == InsertPosition.BELOW) {
-        insertAfter = base.getRowIndex() + 1;
+        //insertAfter = base.getRowIndex() + 1;
         // TODO: what if many edges?
         base = getParent(base);
       }
       else {
-        insertAfter = base.getRowIndex();
+        //insertAfter = base.getRowIndex();
       }
       Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
       if (du.isAncestorOf(base, lowestInserted)) {
@@ -553,6 +553,15 @@ public class UI_ControllerImpl implements UI_Controller {
       }
 
       this.fakeBranch = createFakeCommits(this.branchBase, result);
+
+      int maxIndex = -1;
+      for (Node node : result) {
+        if (maxIndex < node.getRowIndex()) {
+          maxIndex = node.getRowIndex();
+        }
+      }
+      insertAfter = maxIndex + 1;
+
       setResultRef(subjectRef);
     }
 

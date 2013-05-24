@@ -68,7 +68,7 @@ public class DataLoaderImpl implements DataLoader {
         List<CommitParents> commits = partReader.readNextBlock(statusUpdater);
         for (int i = 0; i < commits.size(); i++) {
           CommitParents commit = commits.get(i);
-          if (fakeCommits.base != null && i == fakeCommits.insertAbove) {
+          if (fakeCommits.base != null && commitParentsList.size() + fakeCommits.commits.size() == fakeCommits.insertAbove) {
             commitParentsList.addAll(fakeCommits.commits);
             for (CommitParents fakeCommit : fakeCommits.commits) {
               //System.out.println("Visible from fake_" + fakeCommit.getCommitHash() + ": " + fakeCommit.getParentHashes());
@@ -78,6 +78,7 @@ public class DataLoaderImpl implements DataLoader {
           if (visible.contains(commit.getCommitHash())) {
             commitParentsList.add(commit);
             visible.addAll(commit.getParentHashes());
+
           }
           else {
             System.out.println("Hidden: " + commit.getCommitHash());
