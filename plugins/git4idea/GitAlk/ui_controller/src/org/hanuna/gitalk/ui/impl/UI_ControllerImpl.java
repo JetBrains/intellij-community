@@ -494,6 +494,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
+      reset();
       this.branchBase = base;
       this.insertAfter = base.getRowIndex();
 
@@ -537,14 +538,20 @@ public class UI_ControllerImpl implements UI_Controller {
       Set<Node> nodesToRemove = new HashSet<Node>(nodesToInsert);
       List<Node> branch = du.getCommitsInBranchAboveBase(this.branchBase, du.getNodeByHash(subjectRef.getCommitHash()));
       List<Node> result = new ArrayList<Node>();
+      boolean baseFound = false;
       for (Node node : branch) {
         if (node == base) {
           result.addAll(nodesToInsert);
+          baseFound = true;
         }
         if (!nodesToRemove.contains(node)) {
           result.add(node);
         }
       }
+      if (!baseFound) {
+        result.addAll(nodesToInsert);
+      }
+
       this.fakeBranch = createFakeCommits(this.branchBase, result);
       setResultRef(subjectRef);
     }
