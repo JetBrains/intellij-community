@@ -74,6 +74,10 @@ public class UI_GraphTable extends JTable {
           selectionHistory[0] = selectionHistory[1];
           selectionHistory[1] = getSelectedRows();
         }
+        int selectedRow = getSelectedRow();
+        if (selectedRow >= 0) {
+          ui_controller.click(selectedRow);
+        }
       }
     });
 
