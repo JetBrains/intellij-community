@@ -424,6 +424,11 @@ public class UI_ControllerImpl implements UI_Controller {
     }
     getGitActionHandler().interactiveRebase(rebaseDelegate.subjectRef, rebaseDelegate.base, getCallback(),
                                             rebaseDelegate.getRebaseCommands());
+    cancelInteractiveRebase();
+  }
+
+  @Override
+  public void cancelInteractiveRebase() {
     rebaseDelegate.reset();
     refresh();
   }

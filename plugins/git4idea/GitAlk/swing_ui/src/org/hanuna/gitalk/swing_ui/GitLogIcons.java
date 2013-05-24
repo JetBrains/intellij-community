@@ -13,6 +13,7 @@ public class GitLogIcons {
   public static final Icon FORBIDDEN = IconLoader.getIcon("/forbidden-32.png");
 
   public static final Icon APPLY = IconLoader.getIcon("/apply-16.png");
+  public static final Icon CANCEL = IconLoader.getIcon("/cancel-16.png");
   //public static final Icon SPIDER = IconLoader.getIcon("/spider-16.png");
   public static final Icon SPIDER = IconLoader.getIcon("/spider-1-16.png");
   //public static final Icon SPIDER = IconLoader.getIcon("/spider-16-2.png");

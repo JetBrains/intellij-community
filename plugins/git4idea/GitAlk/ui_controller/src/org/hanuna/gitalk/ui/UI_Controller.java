@@ -74,4 +74,6 @@ public interface UI_Controller {
   void applyInteractiveRebase();
 
   GitActionHandler.Callback getCallback();
+
+  void cancelInteractiveRebase();
 }

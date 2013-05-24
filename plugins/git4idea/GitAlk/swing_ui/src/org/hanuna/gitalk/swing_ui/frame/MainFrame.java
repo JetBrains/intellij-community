@@ -37,6 +37,10 @@ public class MainFrame {
     myToolbar.setMaximumSize(new Dimension(10000, 10));
 
     Action hide = new AbstractAction("", GitLogIcons.SPIDER) {
+      {
+        putValue(SHORT_DESCRIPTION, "Collapse linear branches");
+      }
+
       @Override
       public void actionPerformed(ActionEvent e) {
         ui_controller.hideAll();
@@ -45,6 +49,10 @@ public class MainFrame {
     myToolbar.add(new JButton(hide));
 
     Action show = new AbstractAction("", GitLogIcons.WEB) {
+      {
+        putValue(SHORT_DESCRIPTION, "Expand all branches");
+      }
+
       @Override
       public void actionPerformed(ActionEvent e) {
         ui_controller.showAll();
@@ -53,6 +61,10 @@ public class MainFrame {
     myToolbar.add(new JButton(show));
 
     Action refresh = new AbstractAction("", AllIcons.Actions.Refresh) {
+      {
+        putValue(SHORT_DESCRIPTION, "Refresh");
+      }
+
       @Override
       public void actionPerformed(ActionEvent e) {
         ui_controller.refresh();
@@ -61,12 +73,28 @@ public class MainFrame {
     myToolbar.add(new JButton(refresh));
 
     Action apply = new AbstractAction("", GitLogIcons.APPLY) {
+      {
+        putValue(SHORT_DESCRIPTION, "Apply interactive rebase");
+      }
+
       @Override
       public void actionPerformed(ActionEvent e) {
         ui_controller.applyInteractiveRebase();
       }
     };
     myToolbar.add(new JButton(apply));
+
+    Action cancel = new AbstractAction("", GitLogIcons.CANCEL) {
+      {
+        putValue(SHORT_DESCRIPTION, "Cancel interactive rebase");
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.cancelInteractiveRebase();
+      }
+    };
+    myToolbar.add(new JButton(cancel));
 
     final JCheckBox visibleLongEdges = new JCheckBox("Show full patch", false);
     visibleLongEdges.addMouseListener(new MouseAdapter() {
