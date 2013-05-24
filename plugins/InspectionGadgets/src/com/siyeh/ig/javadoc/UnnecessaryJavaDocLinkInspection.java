@@ -62,14 +62,12 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "unnecessary.javadoc.link.this.method.problem.descriptor");
     }
-    else if (n == THIS_CLASS) {
+    if (n == THIS_CLASS) {
       return InspectionGadgetsBundle.message(
         "unnecessary.javadoc.link.this.class.problem.descriptor");
     }
-    else {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.javadoc.link.super.method.problem.descriptor");
-    }
+    return InspectionGadgetsBundle.message(
+      "unnecessary.javadoc.link.super.method.problem.descriptor");
   }
 
   @Override
@@ -94,6 +92,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
       this.tagName = tagName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
