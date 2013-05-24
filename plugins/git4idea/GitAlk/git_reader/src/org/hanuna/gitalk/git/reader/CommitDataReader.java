@@ -21,19 +21,14 @@ import java.util.*;
  * @author erokhins
  */
 public class CommitDataReader {
-  private Project myProject;
-
-  public CommitDataReader(Project project) {
-    myProject = project;
-  }
 
   @NotNull
-  public CommitData readCommitData(@NotNull String commitHash) {
-    return readCommitsData(Collections.singletonList(commitHash)).get(0);
+  public static CommitData readCommitData(Project project, @NotNull String commitHash) {
+    return readCommitsData(project, Collections.singletonList(commitHash)).get(0);
   }
 
 
-  public List<CommitData> readCommitsData(@NotNull List<String> hashes) {
+  public static List<CommitData> readCommitsData(Project project, @NotNull List<String> hashes) {
     // true -> fake
     Map<String, String> fakeHashes = new HashMap<String, String>();
     Set<String> trueHashes = new HashSet<String>();
@@ -49,12 +44,12 @@ public class CommitDataReader {
       }
     }
 
-    GitRepository repository = ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
+    GitRepository repository = ServiceManager.getService(project, GitLogComponent.class).getRepository();
     List<GitCommit> gitCommits;
     try {
       MyTimer timer = new MyTimer();
       timer.clear();
-      gitCommits = GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(repository.getRoot()), null, trueHashes);
+      gitCommits = GitHistoryUtils.commitsDetails(project, new FilePathImpl(repository.getRoot()), null, trueHashes);
       System.out.println("Details loading took " + timer.get() + "ms for " + trueHashes.size() + " hashes");
     }
     catch (VcsException e) {

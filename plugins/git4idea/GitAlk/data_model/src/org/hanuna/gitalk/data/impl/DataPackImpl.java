@@ -1,6 +1,8 @@
 package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
+import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
@@ -12,6 +14,7 @@ import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.impl.GraphModelImpl;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
@@ -27,7 +30,7 @@ import java.util.List;
 public class DataPackImpl implements DataPack {
   public static DataPackImpl buildDataPack(@NotNull List<CommitParents> commitParentsList,
                                            @NotNull List<Ref> allRefs,
-                                           Executor<String> statusUpdater, Project project) {
+                                           Executor<String> statusUpdater, Project project, CacheGet<Hash, CommitData> commitDataCache) {
     statusUpdater.execute("Build graph");
 
     MyTimer timer = new MyTimer("graph build");
@@ -62,7 +65,7 @@ public class DataPackImpl implements DataPack {
         }
       }
     });
-    return new DataPackImpl(graphModel, refsModel, printCellModel, project);
+    return new DataPackImpl(graphModel, refsModel, printCellModel, project, commitDataCache);
   }
 
 
@@ -71,11 +74,12 @@ public class DataPackImpl implements DataPack {
   private final GraphPrintCellModel printCellModel;
   private final CommitDataGetter commitDataGetter;
 
-  private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel, Project project) {
+  private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel, Project project,
+                       CacheGet<Hash, CommitData> commitDataCache) {
     this.graphModel = graphModel;
     this.refsModel = refsModel;
     this.printCellModel = printCellModel;
-    commitDataGetter = new CacheCommitDataGetter(project, this);
+    commitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache);
   }
 
   public void appendCommits(@NotNull List<CommitParents> commitParentsList, @NotNull Executor<String> statusUpdater) {

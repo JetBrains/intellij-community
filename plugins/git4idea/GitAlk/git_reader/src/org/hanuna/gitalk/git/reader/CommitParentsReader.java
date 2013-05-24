@@ -20,7 +20,7 @@ import java.util.List;
  * @author erokhins
  */
 public class CommitParentsReader {
-  private static final int COMMIT_BLOCK_SIZE = 1000;
+  public static final int COMMIT_BLOCK_SIZE = 1000;
 
   private long lastTimeStamp = 0;
   private Executor<Integer> progressUpdater;

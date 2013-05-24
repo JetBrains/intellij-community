@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -13,21 +14,26 @@ import git4idea.repo.GitRepository;
 import gitlog.GitActionHandlerImpl;
 import gitlog.GitLogComponent;
 import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
+import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
+import org.hanuna.gitalk.data.impl.CacheCommitDataGetter;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
 import org.hanuna.gitalk.data.impl.FakeCommitsInfo;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
+import org.hanuna.gitalk.git.reader.CommitDataReader;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.SelectController;
@@ -104,6 +110,7 @@ public class UI_ControllerImpl implements UI_Controller {
       return super.getRebaseCommands();
     }
   };
+  private boolean myCommitDetailsPreloaded;
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
@@ -120,14 +127,30 @@ public class UI_ControllerImpl implements UI_Controller {
     dataPackUtils = new DataPackUtils(dataPack);
 
     prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        preloadCommitDetails();
+      }
+    });
+
   }
+
+  private final CacheGet<Hash, CommitData> commitDataCache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
+    @NotNull
+    @Override
+    public CommitData get(@NotNull Hash key) {
+      return CommitDataReader.readCommitData(myProject, key.toStrHash());
+      }
+  }, 5000);
+
 
   public void init(final boolean readAllLog, boolean inBackground, final boolean reusePreviousGitOutput) {
     final Consumer<ProgressIndicator> doInit = new Consumer<ProgressIndicator>() {
       @Override
       public void consume(final ProgressIndicator indicator) {
         events.setState(ControllerListener.State.PROGRESS);
-        dataLoader = new DataLoaderImpl(myProject, reusePreviousGitOutput);
+        dataLoader = new DataLoaderImpl(myProject, reusePreviousGitOutput, commitDataCache);
         Executor<String> statusUpdater = new Executor<String>() {
           @Override
           public void execute(String key) {
@@ -180,6 +203,18 @@ public class UI_ControllerImpl implements UI_Controller {
     else {
       doInit.consume(new EmptyProgressIndicator());
     }
+
+  }
+
+  private void preloadCommitDetails() {
+    if (myCommitDetailsPreloaded) {
+      return;
+    }
+    CommitDataGetter commitDataGetter = dataPack.getCommitDataGetter();
+    if (commitDataGetter instanceof CacheCommitDataGetter) {
+      ((CacheCommitDataGetter)commitDataGetter).initiallyPreloadCommitDetails();
+    }
+    myCommitDetailsPreloaded = true;
   }
 
 

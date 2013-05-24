@@ -4,10 +4,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.git.reader.CommitDataReader;
+import org.hanuna.gitalk.git.reader.CommitParentsReader;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
@@ -26,20 +26,15 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
-
-  private final CacheGet<Hash, CommitData> cache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
-    @NotNull
-    @Override
-    public CommitData get(@NotNull Hash key) {
-      return readCommitData(key);
-      }
-  }, 5000);
-  private final CommitDataReader commitDataReader;
   private final DataPack dataPack;
 
-  public CacheCommitDataGetter(Project project, DataPack dataPack) {
+  private final CacheGet<Hash, CommitData> cache;
+  private Project myProject;
+
+  public CacheCommitDataGetter(Project project, DataPack dataPack, CacheGet<Hash, CommitData> commitDataCache) {
+    myProject = project;
     this.dataPack = dataPack;
-    commitDataReader = new CommitDataReader(project);
+    cache = commitDataCache;
   }
 
   @NotNull
@@ -97,7 +92,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
         return FakeCommitParents.getOriginal(node.getCommitHash()).toStrHash();
       }
     });
-    List<CommitData> commitDataList = commitDataReader.readCommitsData(hashes);
+    List<CommitData> commitDataList = CommitDataReader.readCommitsData(myProject, hashes);
 
     for (CommitData commitData : commitDataList) {
       cache.addToCache(commitData.getCommitHash(), commitData);
@@ -105,8 +100,14 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   }
 
 
-  @NotNull
-  private CommitData readCommitData(@NotNull Hash hash) {
-    return commitDataReader.readCommitData(hash.toStrHash());
+  public void initiallyPreloadCommitDetails() {
+    List<Node> nodes = new ArrayList<Node>();
+    for (int i = 0; i < CommitParentsReader.COMMIT_BLOCK_SIZE; i++) {
+      Node commitNode = getCommitNodeInRow(i);
+      if (commitNode != null) {
+        nodes.add(commitNode);
+      }
+    }
+    preLoadCommitData(nodes);
   }
 }

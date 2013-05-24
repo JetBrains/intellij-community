@@ -2,6 +2,7 @@ package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
@@ -9,6 +10,7 @@ import org.hanuna.gitalk.git.reader.CommitParentsReader;
 import org.hanuna.gitalk.git.reader.FullLogCommitParentsReader;
 import org.hanuna.gitalk.git.reader.RefReader;
 import org.hanuna.gitalk.git.reader.util.GitException;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -22,13 +24,15 @@ import java.util.*;
 public class DataLoaderImpl implements DataLoader {
   private final Project myProject;
   private final boolean myReusePreviousGitOutput;
+  private final CacheGet<Hash, CommitData> myCommitDataCache;
   private State state = State.UNINITIALIZED;
   private volatile DataPackImpl dataPack;
   private CommitParentsReader partReader;
 
-  public DataLoaderImpl(Project project, boolean reusePreviousGitOutput) {
+  public DataLoaderImpl(Project project, boolean reusePreviousGitOutput, CacheGet<Hash, CommitData> commitDataCache) {
     myProject = project;
     myReusePreviousGitOutput = reusePreviousGitOutput;
+    myCommitDataCache = commitDataCache;
     partReader = new CommitParentsReader(project, reusePreviousGitOutput);
   }
 
@@ -42,7 +46,7 @@ public class DataLoaderImpl implements DataLoader {
     List<CommitParents> commitParentsList = reader.readAllCommitParents();
 
     List<Ref> allRefs = new RefReader(myProject, myReusePreviousGitOutput).readAllRefs();
-    dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject);
+    dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject, myCommitDataCache);
   }
 
   @Override
@@ -88,7 +92,7 @@ public class DataLoaderImpl implements DataLoader {
         }
         state = State.PART_LOG_READER;
 
-        dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject);
+        dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject, myCommitDataCache);
         break;
       case PART_LOG_READER:
         List<CommitParents> nextPart = partReader.readNextBlock(statusUpdater);
