@@ -94,8 +94,20 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
     return application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
+        int defaultPort = getDefaultPort();
+        int workerCount = 1;
+        // if user set special port number for some service (eg built-in web server), we should slightly increase worker count
+        if (Runtime.getRuntime().availableProcessors() > 1) {
+          for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
+            if (customPortServerManager.getPort() != defaultPort) {
+              workerCount = 2;
+              break;
+            }
+          }
+        }
+
         try {
-          server = new BuiltInServer();
+          server = new BuiltInServer(workerCount);
         }
         catch (ChannelException e) {
           LOG.info(e);
@@ -119,7 +131,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
           }
         });
 
-        detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true);
+        detectedPortNumber = server.start(defaultPort, PORTS_COUNT, true);
         if (detectedPortNumber == -1) {
           LOG.info("built-in server cannot be started, cannot bind to port");
         }

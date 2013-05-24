@@ -58,8 +58,12 @@ public class BuiltInServer implements Disposable {
   private final NioServerSocketChannelFactory channelFactory;
 
   public BuiltInServer() {
+    this(1);
+  }
+
+  public BuiltInServer(int workerCount) {
     Executor pooledThreadExecutor = new PooledThreadExecutor();
-    channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1);
+    channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, workerCount);
   }
 
   public boolean isRunning() {
