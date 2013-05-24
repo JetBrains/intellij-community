@@ -64,6 +64,7 @@ public class DataLoaderImpl implements DataLoader {
         allRefs.addAll(new RefReader(myProject).readAllRefs());
         if (fakeCommits.resultRef != null) {
           allRefs.add(fakeCommits.resultRef);
+          allRefs.remove(fakeCommits.subjectRef);
         }
         dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject);
         break;
