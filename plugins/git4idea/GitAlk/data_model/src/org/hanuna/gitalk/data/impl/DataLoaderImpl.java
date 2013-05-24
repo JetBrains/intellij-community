@@ -21,13 +21,15 @@ import java.util.*;
  */
 public class DataLoaderImpl implements DataLoader {
   private final Project myProject;
+  private final boolean myReusePreviousGitOutput;
   private State state = State.UNINITIALIZED;
   private volatile DataPackImpl dataPack;
   private CommitParentsReader partReader;
 
-  public DataLoaderImpl(Project project) {
+  public DataLoaderImpl(Project project, boolean reusePreviousGitOutput) {
     myProject = project;
-    partReader = new CommitParentsReader(project);
+    myReusePreviousGitOutput = reusePreviousGitOutput;
+    partReader = new CommitParentsReader(project, reusePreviousGitOutput);
   }
 
   @Override
@@ -39,7 +41,7 @@ public class DataLoaderImpl implements DataLoader {
     FullLogCommitParentsReader reader = new FullLogCommitParentsReader(myProject, statusUpdater);
     List<CommitParents> commitParentsList = reader.readAllCommitParents();
 
-    List<Ref> allRefs = new RefReader(myProject).readAllRefs();
+    List<Ref> allRefs = new RefReader(myProject, myReusePreviousGitOutput).readAllRefs();
     dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject);
   }
 
@@ -50,7 +52,7 @@ public class DataLoaderImpl implements DataLoader {
         throw new IllegalStateException("data was read");
       case UNINITIALIZED:
         List<Ref> allRefs = new ArrayList<Ref>();
-        allRefs.addAll(new RefReader(myProject).readAllRefs());
+        allRefs.addAll(new RefReader(myProject, myReusePreviousGitOutput).readAllRefs());
         if (fakeCommits.resultRef != null) {
           allRefs.add(0, fakeCommits.resultRef);
           allRefs.remove(fakeCommits.subjectRef);

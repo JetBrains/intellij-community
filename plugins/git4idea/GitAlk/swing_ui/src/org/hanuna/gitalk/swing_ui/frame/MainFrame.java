@@ -94,7 +94,7 @@ public class MainFrame {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        ui_controller.refresh();
+        ui_controller.refresh(false);
       }
     };
     myToolbar.add(new JButton(refresh));

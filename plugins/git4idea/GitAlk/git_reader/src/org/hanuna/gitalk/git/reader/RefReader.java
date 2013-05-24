@@ -20,9 +20,13 @@ public class RefReader {
   private final List<Ref> refs = new ArrayList<Ref>();
   private final ProcessOutputReader outputReader;
   private Project myProject;
+  private final boolean myReusePreviousGitOutput;
 
-  public RefReader(@NotNull Executor<Integer> progressUpdater, Project project) {
+  private static List<Ref> ourPreviousOutput;
+
+  private RefReader(@NotNull Executor<Integer> progressUpdater, Project project, boolean reusePreviousGitOutput) {
     myProject = project;
+    myReusePreviousGitOutput = reusePreviousGitOutput;
     outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
       @Override
       public void execute(String key) {
@@ -31,13 +35,13 @@ public class RefReader {
     });
   }
 
-  public RefReader(Project project) {
+  public RefReader(Project project, boolean reusePreviousGitOutput) {
     this(new Executor<Integer>() {
       @Override
       public void execute(Integer key) {
 
       }
-    }, project);
+    }, project, reusePreviousGitOutput);
   }
 
   private void appendLine(@NotNull String line) {
@@ -46,9 +50,15 @@ public class RefReader {
 
   @NotNull
   public List<Ref> readAllRefs() throws GitException, IOException {
+    if (myReusePreviousGitOutput && ourPreviousOutput != null) {
+      return ourPreviousOutput;
+    }
+
     Process process = GitProcessFactory.getInstance(myProject).refs();
     outputReader.startRead(process);
-    return refs;
+    List<Ref> refs1 = refs;
+    ourPreviousOutput = refs1;
+    return refs1;
   }
 
 

@@ -78,25 +78,25 @@ public class UI_ControllerImpl implements UI_Controller {
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
       rebaseDelegate.startRebase(subjectRef, onto);
-      refresh();
+      refresh(true);
     }
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
       rebaseDelegate.startRebaseOnto(subjectRef, base, nodesToRebase);
-      refresh();
+      refresh(true);
     }
 
     @Override
     public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
       rebaseDelegate.moveCommits(subjectRef, base, position, nodesToInsert);
-      refresh();
+      refresh(true);
     }
 
     @Override
     public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
       rebaseDelegate.fixUp(subjectRef, target, nodesToFixUp);
-      refresh();
+      refresh(true);
     }
 
     @Override
@@ -122,12 +122,12 @@ public class UI_ControllerImpl implements UI_Controller {
     prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
   }
 
-  public void init(final boolean readAllLog, boolean inBackground) {
+  public void init(final boolean readAllLog, boolean inBackground, final boolean reusePreviousGitOutput) {
     final Consumer<ProgressIndicator> doInit = new Consumer<ProgressIndicator>() {
       @Override
       public void consume(final ProgressIndicator indicator) {
         events.setState(ControllerListener.State.PROGRESS);
-        dataLoader = new DataLoaderImpl(myProject);
+        dataLoader = new DataLoaderImpl(myProject, reusePreviousGitOutput);
         Executor<String> statusUpdater = new Executor<String>() {
           @Override
           public void execute(String key) {
@@ -412,8 +412,8 @@ public class UI_ControllerImpl implements UI_Controller {
   }
 
   @Override
-  public void refresh() {
-    init(false, true);
+  public void refresh(boolean reusePreviousGitOutput) {
+    init(false, true, reusePreviousGitOutput);
   }
 
   public void updateUI() {
@@ -433,7 +433,7 @@ public class UI_ControllerImpl implements UI_Controller {
   @Override
   public void cancelInteractiveRebase() {
     rebaseDelegate.reset();
-    refresh();
+    refresh(true);
   }
 
   @Override

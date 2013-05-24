@@ -70,7 +70,7 @@ public interface UI_Controller {
 
   Project getProject();
 
-  void refresh();
+  void refresh(boolean dontReadFromGit);
 
   void applyInteractiveRebase();
 

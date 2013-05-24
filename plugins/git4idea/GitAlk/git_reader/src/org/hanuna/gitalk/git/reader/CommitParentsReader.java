@@ -26,9 +26,12 @@ public class CommitParentsReader {
   private Executor<Integer> progressUpdater;
 
   private Project myProject;
+  private final boolean myReusePreviousGitOutput;
+  private static List<CommitParents> ourPreviousOutput;
 
-  public CommitParentsReader(Project project) {
+  public CommitParentsReader(Project project, boolean reusePreviousGitOutput) {
     myProject = project;
+    myReusePreviousGitOutput = reusePreviousGitOutput;
   }
 
   private List<TimestampCommitParents> nextBlock() throws IOException, GitException {
@@ -74,6 +77,10 @@ public class CommitParentsReader {
    */
   @NotNull
   public List<CommitParents> readNextBlock(final Executor<String> statusUpdater) throws IOException, GitException {
+    if (myReusePreviousGitOutput && ourPreviousOutput != null) {
+      return ourPreviousOutput;
+    }
+
     statusUpdater.execute("Loading Git history...");
     progressUpdater = new Executor<Integer>() {
       @Override
@@ -91,7 +98,9 @@ public class CommitParentsReader {
     else {
       lastTimeStamp++;
     }
-    return Collections.<CommitParents>unmodifiableList(commitParentsList);
+    List<CommitParents> commitParentses = Collections.<CommitParents>unmodifiableList(commitParentsList);
+    ourPreviousOutput = commitParentses;
+    return commitParentses;
   }
 
 }

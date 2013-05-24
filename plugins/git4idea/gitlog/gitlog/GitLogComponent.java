@@ -50,12 +50,12 @@ public class GitLogComponent extends AbstractProjectComponent {
         mySwingUi = new Swing_UI(myUiController);
         myUiController.addControllerListener(mySwingUi.getControllerListener());
         myUiController.setDragDropListener(mySwingUi.getDragDropListener());
-        myUiController.init(false, false);
+        myUiController.init(false, false, false);
 
         myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
           @Override
           public void repositoryChanged(@NotNull GitRepository repository) {
-            myUiController.refresh();
+            myUiController.refresh(false);
           }
         });
 
