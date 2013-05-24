@@ -227,7 +227,12 @@ public class Swing_UI {
         showRefPopup(getLocalRefs(commitsBeingDragged.get(0).getCommitHash()), e.getComponent(), new RefAction() {
               @Override
               public void perform(Ref ref) {
-                ui_controller.getInteractiveRebaseBuilder().startRebaseOnto(ref, commit, commitsBeingDragged);
+                if (commitsBeingDragged.size() > 1) {
+                  ui_controller.getInteractiveRebaseBuilder().startRebaseOnto(ref, commit, commitsBeingDragged);
+                }
+                else {
+                  ui_controller.getInteractiveRebaseBuilder().startRebase(ref, commit);
+                }
               }
             });
       }

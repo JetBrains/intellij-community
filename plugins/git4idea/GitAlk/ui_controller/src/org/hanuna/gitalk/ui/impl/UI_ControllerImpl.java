@@ -446,7 +446,7 @@ public class UI_ControllerImpl implements UI_Controller {
     return ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
   }
 
-  private static class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {
+  private class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {
 
     private Node base = null;
     private List<FakeCommitParents> fakeCommits = new ArrayList<FakeCommitParents>();
@@ -462,8 +462,9 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
-      // todo find base
-      startRebaseOnto(subjectRef, onto, Collections.<Node>emptyList());
+      List<Node> commitsToRebase =
+        getDataPackUtils().getCommitsToRebase(onto, getDataPackUtils().getNodeByHash(subjectRef.getCommitHash()));
+      startRebaseOnto(subjectRef, onto, commitsToRebase.subList(0, commitsToRebase.size() - 1));
     }
 
     @Override
@@ -485,9 +486,6 @@ public class UI_ControllerImpl implements UI_Controller {
 
       Collections.reverse(fakeCommits);
       resultRef = new Ref(parent, subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
-
-      // todo move label
-
     }
 
     @Override
