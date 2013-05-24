@@ -51,6 +51,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
     new Task.Backgroundable(myProject, "Cherry-picking", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        callback.disableModifications();
         GitLocalBranch currentBranch = myRepository.getCurrentBranch();
         if (currentBranch == null || !currentBranch.getName().equals(targetRef.getName())) {
           indicator.setText("Checking out " + targetRef.getName());
