@@ -91,23 +91,6 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   @Override
-  public Annotation createInformationAnnotation(@NotNull PsiElement elt, String message) {
-    assertMyFile(elt);
-    return createAnnotation(elt.getTextRange(), HighlightSeverity.INFO, message);
-  }
-
-  @Override
-  public Annotation createInformationAnnotation(@NotNull ASTNode node, String message) {
-    assertMyFile(node.getPsi());
-    return createAnnotation(node.getTextRange(), HighlightSeverity.INFO, message);
-  }
-
-  @Override
-  public Annotation createInformationAnnotation(@NotNull TextRange range, String message) {
-    return createAnnotation(range, HighlightSeverity.INFO, message);
-  }
-
-  @Override
   public Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message) {
     assertMyFile(elt);
     return createAnnotation(elt.getTextRange(), HighlightSeverity.WEAK_WARNING, message);
