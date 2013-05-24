@@ -58,7 +58,9 @@ public class DataLoaderImpl implements DataLoader {
 
         Set<Hash> visible = new HashSet<Hash>();
         for (Ref ref : allRefs) {
-          visible.add(ref.getCommitHash());
+          if (ref.getType() != Ref.RefType.HEAD) {
+            visible.add(ref.getCommitHash());
+          }
         }
 
         System.out.println("=== readNextPart() called with " + fakeCommits.commits.size() + " fake commits");
