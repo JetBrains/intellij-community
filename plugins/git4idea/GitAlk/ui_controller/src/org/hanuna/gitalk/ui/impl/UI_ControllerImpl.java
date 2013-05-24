@@ -151,6 +151,13 @@ public class UI_ControllerImpl implements UI_Controller {
           events.setState(ControllerListener.State.ERROR);
           events.setErrorMessage(e.getMessage());
         }
+
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            updateUI();
+          }
+        });
       }
     };
 
@@ -404,7 +411,6 @@ public class UI_ControllerImpl implements UI_Controller {
   @Override
   public void refresh() {
     init(false, true);
-    updateUI();
   }
 
   public void updateUI() {
