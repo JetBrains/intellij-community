@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,8 +15,11 @@ import git4idea.branch.GitBranchWorker;
 import git4idea.branch.GitSmartOperationDialog;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.commands.Git;
+import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.history.browser.GitCommit;
+import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
+import git4idea.update.GitUpdateResult;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.RebaseCommand;
@@ -23,6 +27,7 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,7 +53,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
   @Override
   public void cherryPick(final Ref targetRef, final List<Node> nodesToPick, final GitActionHandler.Callback callback) {
     assertLocalBranch(targetRef);
-    new Task.Backgroundable(myProject, "Cherry-picking", false) {
+    new Task.Backgroundable(myProject, "Cherry-picking...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         callback.disableModifications();
@@ -101,7 +106,38 @@ public class GitActionHandlerImpl implements GitActionHandler {
   }
 
   @Override
-  public void rebase(Node onto, Ref subjectRef, Callback callback) {
+  public void rebase(final Node onto, final Ref subjectRef, final Callback callback) {
+    new Task.Backgroundable(myProject, "Rebasing...", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        callback.disableModifications();
+        GitRebaser rebaser = new GitRebaser(GitActionHandlerImpl.this.myProject, myGit, indicator);
+        List<String> params = Arrays.asList(onto.getCommitHash().toStrHash(), subjectRef.getName());
+        GitUpdateResult result = rebaser.rebase(myRepository.getRoot(), params, null, new GitLineHandlerAdapter() {
+          @Override
+          public void onLineAvailable(String line, Key outputType) {
+            // TODO report progress
+          }
+        });
+
+        switch (result) {
+          case NOTHING_TO_UPDATE:
+            break;
+          case SUCCESS:
+            break;
+          case SUCCESS_WITH_RESOLVED_CONFLICTS:
+            break;
+          case INCOMPLETE:
+            break;
+          case CANCEL:
+            break;
+          case ERROR:
+            break;
+          case NOT_READY:
+            break;
+        }
+      }
+    }.queue();
   }
 
   @Override
