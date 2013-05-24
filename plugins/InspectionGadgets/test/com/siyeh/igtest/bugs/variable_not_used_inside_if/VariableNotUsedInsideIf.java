@@ -36,4 +36,10 @@ public class VariableNotUsedInsideIf {
       
     }
   }
+
+  void money(String s) {
+    if ((s == null)) {
+      System.out.println();
+    }
+  }
 }
