@@ -60,13 +60,14 @@ public class Swing_UI {
           mainFrame = new MainFrame(ui_controller);
         }
         errorFrame.setVisible(false);
-        progressFrame.setVisible(false);
+        myCallback.enableModifications();
         break;
       case ERROR:
         errorFrame.setVisible(true);
+        myCallback.enableModifications();
         break;
       case PROGRESS:
-        progressFrame.setVisible(true);
+        myCallback.disableModifications();
         break;
       default:
         throw new IllegalArgumentException();

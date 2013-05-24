@@ -22,7 +22,7 @@ import java.util.List;
 public class DataLoaderImpl implements DataLoader {
   private final Project myProject;
   private State state = State.UNINITIALIZED;
-  private DataPackImpl dataPack;
+  private volatile DataPackImpl dataPack;
   private CommitParentsReader partReader;
 
   public DataLoaderImpl(Project project) {

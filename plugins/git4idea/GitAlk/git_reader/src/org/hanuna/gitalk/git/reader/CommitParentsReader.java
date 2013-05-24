@@ -74,11 +74,11 @@ public class CommitParentsReader {
    */
   @NotNull
   public List<CommitParents> readNextBlock(final Executor<String> statusUpdater) throws IOException, GitException {
-    statusUpdater.execute("Begin load git repository");
+    statusUpdater.execute("Loading Git history...");
     progressUpdater = new Executor<Integer>() {
       @Override
       public void execute(Integer key) {
-        statusUpdater.execute("Read " + key + " commits");
+        statusUpdater.execute("Reading " + key + " commits...");
       }
     };
     List<TimestampCommitParents> commitParentsList = nextBlock();

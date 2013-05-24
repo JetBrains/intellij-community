@@ -1,6 +1,12 @@
 package org.hanuna.gitalk.ui.impl;
 
+import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import gitlog.GitActionHandlerImpl;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
@@ -43,9 +49,10 @@ import java.util.Set;
  */
 public class UI_ControllerImpl implements UI_Controller {
 
-  private DataLoader dataLoader;
+  private volatile DataLoader dataLoader;
   private final EventsController events = new EventsController();
   private final Project myProject;
+  private final BackgroundTaskQueue myDataLoaderQueue;
 
   private DataPack dataPack;
   private DataPackUtils dataPackUtils;
@@ -98,6 +105,7 @@ public class UI_ControllerImpl implements UI_Controller {
   public UI_ControllerImpl(Project project) {
     myProject = project;
     myGitActionHandler = new GitActionHandlerImpl(myProject, this);
+    myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading...");
   }
 
   private void dataInit() {
@@ -111,33 +119,56 @@ public class UI_ControllerImpl implements UI_Controller {
     prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
   }
 
-  public void init(boolean readAllLog) {
-    events.setState(ControllerListener.State.PROGRESS);
-    dataLoader = new DataLoaderImpl(myProject);
-    Executor<String> statusUpdater = new Executor<String>() {
+  public void init(final boolean readAllLog, boolean inBackground) {
+    final Consumer<ProgressIndicator> doInit = new Consumer<ProgressIndicator>() {
       @Override
-      public void execute(String key) {
-        events.setUpdateProgressMessage(key);
+      public void consume(final ProgressIndicator indicator) {
+        events.setState(ControllerListener.State.PROGRESS);
+        dataLoader = new DataLoaderImpl(UI_ControllerImpl.this.myProject);
+        Executor<String> statusUpdater = new Executor<String>() {
+          @Override
+          public void execute(String key) {
+            events.setUpdateProgressMessage(key);
+            indicator.setText(key);
+          }
+        };
+
+        try {
+          if (readAllLog) {
+            dataLoader.readAllLog(statusUpdater);
+          }
+          else {
+            dataLoader.readNextPart(statusUpdater);
+          }
+          dataInit();
+          events.setState(ControllerListener.State.USUAL);
+        }
+        catch (IOException e) {
+          events.setState(ControllerListener.State.ERROR);
+          events.setErrorMessage(e.getMessage());
+        }
+        catch (GitException e) {
+          events.setState(ControllerListener.State.ERROR);
+          events.setErrorMessage(e.getMessage());
+        }
       }
     };
 
-    try {
-      if (readAllLog) {
-        dataLoader.readAllLog(statusUpdater);
-      }
-      else {
-        dataLoader.readNextPart(statusUpdater);
-      }
-      dataInit();
-      events.setState(ControllerListener.State.USUAL);
+    if (inBackground) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading...", false) {
+            public void run(@NotNull final ProgressIndicator indicator) {
+              doInit.consume(indicator);
+            }
+          });
+        }
+      });
+
     }
-    catch (IOException e) {
-      events.setState(ControllerListener.State.ERROR);
-      events.setErrorMessage(e.getMessage());
-    }
-    catch (GitException e) {
-      events.setState(ControllerListener.State.ERROR);
-      events.setErrorMessage(e.getMessage());
+    else {
+      doInit.consume(new EmptyProgressIndicator());
     }
   }
 
@@ -250,9 +281,8 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @Override
   public void readNextPart() {
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading...", false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         try {
           events.setState(ControllerListener.State.PROGRESS);
 
@@ -277,8 +307,7 @@ public class UI_ControllerImpl implements UI_Controller {
           events.setErrorMessage(e.getMessage());
         }
       }
-    }).start();
-
+    });
   }
 
   @Override
@@ -290,22 +319,26 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @Override
   public void hideAll() {
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        events.setState(ControllerListener.State.PROGRESS);
-        events.setUpdateProgressMessage("Hide long branches");
-        MyTimer timer = new MyTimer("hide All");
-        dataPack.getGraphModel().getFragmentManager().hideAll();
+    new Task.Backgroundable(myProject, "Hiding long branches...", false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            events.setState(ControllerListener.State.PROGRESS);
+            events.setUpdateProgressMessage("Hide long branches");
+            MyTimer timer = new MyTimer("hide All");
+            dataPack.getGraphModel().getFragmentManager().hideAll();
 
-        events.runUpdateUI();
-        //TODO:
-        events.runJumpToRow(0);
-        timer.print();
+            events.runUpdateUI();
+            //TODO:
+            events.runJumpToRow(0);
+            timer.print();
 
-        events.setState(ControllerListener.State.USUAL);
+            events.setState(ControllerListener.State.USUAL);
+          }
+        });
       }
-    }).start();
+    }.queue();
   }
 
   @Override
@@ -370,7 +403,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @Override
   public void refresh() {
-    init(false);
+    init(false, true);
     updateUI();
   }
 
