@@ -18,6 +18,7 @@ package org.jetbrains.io;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.Semaphore;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -31,6 +32,7 @@ import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.net.InetAddress;
@@ -46,7 +48,7 @@ import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class BuiltInServer implements Disposable {
   static final String START_TIME_PATH = "/startTime";
 
-  private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
+  private final ChannelGroup openChannels = new DefaultChannelGroup();
 
   static final Logger LOG = Logger.getInstance(BuiltInServer.class);
 
@@ -76,7 +78,25 @@ public class BuiltInServer implements Disposable {
     ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(new PortUnificationServerHandler(openChannels)));
-    return bind(firstPort, portsCount, tryAnyPort, bootstrap);
+    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap);
+    bindCustomPorts(firstPort, port, bootstrap);
+    return port;
+  }
+
+  private void bindCustomPorts(int firstPort, int port, ServerBootstrap bootstrap) {
+    for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
+      try {
+        int customPortServerManagerPort = customPortServerManager.getPort();
+        SubServer subServer = new SubServer(customPortServerManager, bootstrap);
+        Disposer.register(this, subServer);
+        if (customPortServerManagerPort != firstPort && customPortServerManagerPort != port) {
+          subServer.bind(customPortServerManagerPort);
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
   }
 
   private static boolean checkPort(final InetSocketAddress remoteAddress) {
