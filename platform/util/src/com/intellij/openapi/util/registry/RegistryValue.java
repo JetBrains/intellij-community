@@ -18,6 +18,7 @@ package com.intellij.openapi.util.registry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -192,7 +193,7 @@ public class RegistryValue {
     setValue(getBundleValue(myKey, true));
   }
 
-  public void addListener(final RegistryValueListener listener, Disposable parent) {
+  public void addListener(@NotNull final RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, new Disposable() {
       public void dispose() {
