@@ -30,16 +30,19 @@ public class DelegatingFix extends InspectionGadgetsFix {
     this.delegate = delegate;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return delegate.getName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return delegate.getName();
   }
 
+  @Override
   protected void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     delegate.applyFix(project, descriptor);
