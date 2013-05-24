@@ -47,13 +47,13 @@ public class DataPackUtils {
   }
 
   public int getRowByHash(Hash commitHash) {
-    return getNodeByHash(commitHash).getRowIndex();
+    Node node = getNodeByHash(commitHash);
+    return node == null ? -1 : node.getRowIndex();
   }
 
   @Nullable
   public Node getNodeByHash(Hash hash) {
     Graph graph = dataPack.getGraphModel().getGraph();
-    int row = -1;
     for (int i = 0; i < graph.getNodeRows().size(); i++) {
       Node node = graph.getCommitNodeInRow(i);
       if (node != null && node.getCommitHash().equals(hash)) {
