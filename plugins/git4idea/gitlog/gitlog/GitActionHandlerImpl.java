@@ -91,7 +91,23 @@ public class GitActionHandlerImpl implements GitActionHandler {
     new Task.Backgroundable(myProject, "Rebasing...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        GitRebaser rebaser = new GitRebaser(GitActionHandlerImpl.this.myProject, myGit, indicator);
+        final GitLineHandler h = new GitLineHandler(GitActionHandlerImpl.this.myProject, myRepository.getRoot(), GitCommand.REBASE);
+        GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
+
+        // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
+        TrivialEditor editor = new TrivialEditor(rebaseEditorService, GitActionHandlerImpl.this.myProject, myRepository.getRoot(), h);
+        Integer rebaseEditorNo = editor.getHandlerNo();
+        rebaseEditorService.configureHandler(h, rebaseEditorNo);
+
+        // TODO unregister handler
+
+        GitRebaser rebaser = new GitRebaser(myProject, myGit, null) {
+          @Override
+          protected GitLineHandler createHandler(VirtualFile root) {
+            return h;
+          }
+        };
+
         rebaser.continueRebase(myRepository.getRoot());
       }
 
@@ -323,4 +339,17 @@ public class GitActionHandlerImpl implements GitActionHandler {
     }
   }
 
+  private class TrivialEditor extends GitInteractiveRebaseEditorHandler{
+    public TrivialEditor(@NotNull GitRebaseEditorService service,
+                         @NotNull Project project,
+                         @NotNull VirtualFile root,
+                         @NotNull GitHandler handler) {
+      super(service, project, root, handler);
+    }
+
+    @Override
+    public int editCommits(String path) {
+      return 0;
+    }
+  }
 }
