@@ -171,7 +171,12 @@ public class GitActionHandlerImpl implements GitActionHandler {
 
   @Override
   public void interactiveRebase(Ref subjectRef, Node onto, Callback callback, List<RebaseCommand> commands) {
-    throw new UnsupportedOperationException();
+    // todo
+    System.out.println(subjectRef.getName());
+    System.out.println(onto.getCommitHash());
+    for (RebaseCommand command : commands) {
+      System.out.println(command.getKind() + " " + command.getCommit());
+    }
   }
 
 }

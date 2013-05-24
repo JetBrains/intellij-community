@@ -1,10 +1,13 @@
 package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.git.reader.CommitParentsReader;
 import org.hanuna.gitalk.git.reader.FullLogCommitParentsReader;
@@ -46,6 +49,14 @@ public class DataLoaderImpl implements DataLoader {
 
   public DataLoaderImpl copyInteractive() {
     return new DataLoaderImpl(myProject, myInteractiveRebaseBuilder);
+  }
+
+  public void applyInteractiveRebase(GitActionHandler handler, GitActionHandler.Callback callback) {
+    if (myInteractiveRebaseBuilder.resultRef == null) {
+      return;
+    }
+    handler.interactiveRebase(myInteractiveRebaseBuilder.subjectRef, myInteractiveRebaseBuilder.base, callback, myInteractiveRebaseBuilder.getRebaseCommands());
+    myInteractiveRebaseBuilder.reset();
   }
 
   @Override
@@ -119,6 +130,13 @@ public class DataLoaderImpl implements DataLoader {
     private Ref subjectRef = null;
     private Ref resultRef = null;
 
+    public void reset() {
+      base = null;
+      fakeCommits.clear();
+      subjectRef = null;
+      resultRef = null;
+    }
+
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
       // todo find base
@@ -161,7 +179,12 @@ public class DataLoaderImpl implements DataLoader {
 
     @Override
     public List<RebaseCommand> getRebaseCommands() {
-      return super.getRebaseCommands(); // TODO
+      return ContainerUtil.map(fakeCommits, new Function<FakeCommitParents, RebaseCommand>() {
+        @Override
+        public RebaseCommand fun(FakeCommitParents fakeCommitParents) {
+          return fakeCommitParents.getCommand();
+        }
+      });
     }
   }
 }

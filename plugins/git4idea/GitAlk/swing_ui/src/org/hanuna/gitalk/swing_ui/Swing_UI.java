@@ -6,10 +6,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
@@ -38,7 +36,6 @@ public class Swing_UI {
   private final DragDropListener myDragDropListener = new SwingDragDropListener();
   private final UI_Controller ui_controller;
   private final DragDropConditions myConditions = new DragDropConditions();
-  private final GitActionHandler.Callback myCallback = new Callback();
   private MainFrame mainFrame = null;
 
 
@@ -61,14 +58,14 @@ public class Swing_UI {
           mainFrame = new MainFrame(ui_controller);
         }
         errorFrame.setVisible(false);
-        myCallback.enableModifications();
+        ui_controller.getCallback().enableModifications();
         break;
       case ERROR:
         errorFrame.setVisible(true);
-        myCallback.enableModifications();
+        ui_controller.getCallback().enableModifications();
         break;
       case PROGRESS:
-        myCallback.disableModifications();
+        ui_controller.getCallback().disableModifications();
         break;
       default:
         throw new IllegalArgumentException();
@@ -77,23 +74,6 @@ public class Swing_UI {
 
   public DragDropListener getDragDropListener() {
     return myDragDropListener;
-  }
-
-  private static class Callback implements GitActionHandler.Callback {
-    @Override
-    public void disableModifications() {
-
-    }
-
-    @Override
-    public void enableModifications() {
-
-    }
-
-    @Override
-    public void interactiveCommandApplied(RebaseCommand command) {
-
-    }
   }
 
   private class DragDropConditions {
@@ -211,7 +191,7 @@ public class Swing_UI {
         showRefPopup(localRefs.isEmpty() ? getLocalRefsAbove(commit) : localRefs, e.getComponent(), new RefAction() {
               @Override
               public void perform(Ref ref) {
-                ui_controller.getGitActionHandler().cherryPick(ref, commitsBeingDragged, myCallback);
+                ui_controller.getGitActionHandler().cherryPick(ref, commitsBeingDragged, ui_controller.getCallback());
               }
             });
       }
@@ -229,7 +209,7 @@ public class Swing_UI {
         showRefPopup(getLocalRefs(commitsBeingDragged.get(0).getCommitHash()), e.getComponent(), new RefAction() {
               @Override
               public void perform(Ref ref) {
-                ui_controller.getGitActionHandler().rebase(commit, ref, myCallback);
+                ui_controller.getGitActionHandler().rebase(commit, ref, ui_controller.getCallback());
               }
             });
       }
@@ -350,13 +330,17 @@ public class Swing_UI {
       private Action pickOrRebase(Node commit, MouseEvent e, List<Node> commitsBeingDragged, boolean overCommit) {
         Node topCommit = commitsBeingDragged.get(0);
         boolean hasLabelOnTop = !getLocalRefs(topCommit.getCommitHash()).isEmpty();
+        boolean interactive = getMode(e) == Mode.INTERACTIVE;
         if (commitsBeingDragged.size() == 1 && hasLabelOnTop) {
-          if (getMode(e) == Mode.INTERACTIVE) {
+          if (interactive) {
             return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR_INTERACTIVE;
           }
           return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR;
         }
         else {
+          if (interactive && hasLabelOnTop) {
+            return REBASE_WHOLE_BRANCH_ONTO_COMMIT_UNDER_CURSOR_INTERACTIVE;
+          }
           if (!getLocalRefsAbove(commit).isEmpty()) {
             return CHERRY_PICK;
           }
@@ -364,7 +348,6 @@ public class Swing_UI {
             return FORBIDDEN_NO_LOCAL_BRANCH;
           }
         }
-        // todo modifiers
       }
 
       @Override

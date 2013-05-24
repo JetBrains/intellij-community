@@ -66,6 +66,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
   private GitActionHandler myGitActionHandler;
+  private final GitActionHandler.Callback myCallback = new Callback();
 
   private InteractiveRebaseBuilder myInteractiveRebaseBuilder = new InteractiveRebaseBuilder() {
     @Override
@@ -412,4 +413,33 @@ public class UI_ControllerImpl implements UI_Controller {
   public void updateUI() {
     events.runUpdateUI();
   }
+
+  @Override
+  public void applyInteractiveRebase() {
+    dataLoader.applyInteractiveRebase(getGitActionHandler(), myCallback);
+    refresh();
+  }
+
+  @Override
+  public GitActionHandler.Callback getCallback() {
+    return myCallback;
+  }
+
+  private static class Callback implements GitActionHandler.Callback {
+    @Override
+    public void disableModifications() {
+
+    }
+
+    @Override
+    public void enableModifications() {
+
+    }
+
+    @Override
+    public void interactiveCommandApplied(RebaseCommand command) {
+
+    }
+  }
+
 }

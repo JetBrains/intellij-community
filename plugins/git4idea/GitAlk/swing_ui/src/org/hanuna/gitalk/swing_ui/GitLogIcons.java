@@ -11,4 +11,6 @@ public class GitLogIcons {
   public static final Icon REBASE_INTERACTIVE = IconLoader.getIcon("/edit-32.png");
   public static final Icon FIX_UP = IconLoader.getIcon("/fixup-32.png");
   public static final Icon FORBIDDEN = IconLoader.getIcon("/forbidden-32.png");
+
+  public static final Icon APPLY = IconLoader.getIcon("/apply-16.png");
 }

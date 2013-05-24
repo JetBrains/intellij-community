@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
 import com.intellij.icons.AllIcons;
+import org.hanuna.gitalk.swing_ui.GitLogIcons;
 import org.hanuna.gitalk.ui.UI_Controller;
 
 import javax.swing.*;
@@ -73,6 +74,14 @@ public class MainFrame {
       }
     };
     myToolbar.add(new JButton(refresh));
+
+    Action apply = new AbstractAction("", GitLogIcons.APPLY) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.applyInteractiveRebase();
+      }
+    };
+    myToolbar.add(new JButton(apply));
 
     myToolbar.add(Box.createHorizontalGlue());
   }

@@ -70,4 +70,8 @@ public interface UI_Controller {
   Project getProject();
 
   void refresh();
+
+  void applyInteractiveRebase();
+
+  GitActionHandler.Callback getCallback();
 }
