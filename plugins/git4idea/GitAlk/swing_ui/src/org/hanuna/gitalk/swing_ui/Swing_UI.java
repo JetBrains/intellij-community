@@ -506,6 +506,7 @@ public class Swing_UI {
         public void run() {
           mainFrame.getGraphTable().setModel(ui_controller.getGraphTableModel());
           mainFrame.getGraphTable().repaint();
+          mainFrame.getBranchPanel().rebuild();
         }
       });
     }
