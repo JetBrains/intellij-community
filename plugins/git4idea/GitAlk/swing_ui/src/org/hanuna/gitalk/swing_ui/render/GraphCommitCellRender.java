@@ -25,7 +25,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   }
 
   private GraphCommitCell getAssertGraphCommitCell(Object value) {
-    assert value instanceof GraphCommitCell;
     return (GraphCommitCell)value;
   }
 
