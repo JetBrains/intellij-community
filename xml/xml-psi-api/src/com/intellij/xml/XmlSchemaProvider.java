@@ -19,7 +19,7 @@ package com.intellij.xml;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
@@ -63,7 +63,7 @@ public abstract class XmlSchemaProvider {
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @NotNull PsiFile baseFile) {
     final PsiDirectory directory = baseFile.getParent();
-    final Module module = ModuleUtil.findModuleForPsiElement(directory == null ? baseFile : directory);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(directory == null ? baseFile : directory);
     return findSchema(namespace, module, baseFile);
   }
 
