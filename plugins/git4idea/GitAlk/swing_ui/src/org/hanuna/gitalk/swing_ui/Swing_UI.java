@@ -469,7 +469,7 @@ public class Swing_UI {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          mainFrame.getGraphTable().updateUI();
+          mainFrame.getGraphTable().setModel(ui_controller.getGraphTableModel());
         }
       });
     }
