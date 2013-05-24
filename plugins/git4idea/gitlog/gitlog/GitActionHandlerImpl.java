@@ -10,6 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
+import git4idea.Notificator;
 import git4idea.branch.GitBranchUiHandlerImpl;
 import git4idea.branch.GitBranchWorker;
 import git4idea.branch.GitSmartOperationDialog;
@@ -124,18 +125,26 @@ public class GitActionHandlerImpl implements GitActionHandler {
           }
         });
 
+        // TODO branch name if available
+        String target = onto.getCommitHash().toStrHash();
+
         switch (result) {
           case NOTHING_TO_UPDATE:
             break;
           case SUCCESS:
+            Notificator.getInstance(GitActionHandlerImpl.this.myProject).notifySuccess("",
+                                                                                       "Rebased " + subjectRef.getName() + " to " + target);
             break;
           case SUCCESS_WITH_RESOLVED_CONFLICTS:
+            Notificator.getInstance(GitActionHandlerImpl.this.myProject).notifySuccess("",
+                                                                                       "Rebased " + subjectRef.getName() + " to " + target);
             break;
           case INCOMPLETE:
             break;
           case CANCEL:
             break;
           case ERROR:
+            // error is notified inside the rebaser
             break;
           case NOT_READY:
             break;
