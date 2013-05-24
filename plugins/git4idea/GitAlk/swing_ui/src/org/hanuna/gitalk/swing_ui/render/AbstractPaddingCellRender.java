@@ -12,6 +12,8 @@ import java.awt.*;
  * @author erokhins
  */
 public abstract class AbstractPaddingCellRender implements TableCellRenderer {
+  public static final Color MARKED_BACKGROUND = new Color(0xB6, 0xE4, 0xFF);
+
   private ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
 
   protected abstract int getLeftPadding(JTable table, @Nullable Object value);
@@ -35,8 +37,11 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
       this.table = table;
       this.value = value;
       super.getTableCellRendererComponent(table, getCellText(table, value), isSelected, hasFocus, row, column);
-      if (isMarked(table, value)) {
-        super.setFont(super.getFont().deriveFont(Font.BOLD));
+      if (isMarked(table, value) && !isSelected) {
+        setBackground(MARKED_BACKGROUND);
+      }
+      else {
+        setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
       }
       Border paddingBorder = BorderFactory.createEmptyBorder(0, getLeftPadding(table, value), 0, 0);
       this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
