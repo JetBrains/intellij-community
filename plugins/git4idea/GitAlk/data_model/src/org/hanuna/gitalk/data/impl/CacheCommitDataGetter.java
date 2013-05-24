@@ -47,7 +47,9 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   public CommitData getCommitData(@NotNull Node node) {
     Hash hash = node.getCommitHash();
     if (FakeCommitParents.isFake(hash)) {
-      hash = FakeCommitParents.getOriginal(hash);
+      Hash originalHash = FakeCommitParents.getOriginal(hash);
+      CommitData originalData = getCommitData(originalHash);
+      return new CommitData(originalData.getFullCommit(), hash);
     }
     if (!cache.containsKey(hash)) {
       runLoadAroundCommitData(node);
