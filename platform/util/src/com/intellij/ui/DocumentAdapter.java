@@ -18,18 +18,21 @@ package com.intellij.ui;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-/** 
+/**
  * @author cdr
  */
 public abstract class DocumentAdapter implements DocumentListener {
+  @Override
   public void insertUpdate(DocumentEvent e) {
     textChanged(e);
   }
 
+  @Override
   public void removeUpdate(DocumentEvent e) {
     textChanged(e);
   }
 
+  @Override
   public void changedUpdate(DocumentEvent e) {
     textChanged(e);
   }
