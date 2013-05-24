@@ -455,7 +455,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     private Map<Hash, FakeCommitParents> fakeCommits = new HashMap<Hash, FakeCommitParents>();
 
-    private FakeCommitParents fake(Hash oldHash, Hash newParent) {
+    private FakeCommitParents createFake(Hash oldHash, Hash newParent) {
       FakeCommitParents existing = fakeCommits.get(oldHash);
       if (existing != null) return existing;
       FakeCommitParents fake =
@@ -483,18 +483,18 @@ public class UI_ControllerImpl implements UI_Controller {
       startRebaseOnto(subjectRef, onto, commitsToRebase.subList(0, commitsToRebase.size() - 1));
     }
 
-    private void setResultRef(Ref subjectRef, Hash fakeTarget) {
-      resultRef = new Ref(fakeTarget, subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
+    private void setResultRef(Ref subjectRef) {
+      this.subjectRef = subjectRef;
+      resultRef = new Ref(fakeBranch.get(0).getCommitHash(), subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
     }
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
-      this.subjectRef = subjectRef;
       this.base = base;
 
       this.fakeBranch = createFakeCommits(base, nodesToRebase);
 
-      setResultRef(subjectRef, createFakeCommits(base, nodesToRebase).get(0).getCommitHash());
+      setResultRef(subjectRef);
     }
 
     @Override
@@ -508,16 +508,18 @@ public class UI_ControllerImpl implements UI_Controller {
         Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
         if (du.isAncestorOf(base, lowestInserted)) {
           this.base = base;
-          //this.fakeBranch = createFakeCommits(base, )
         }
         else {
           // TODO: many parents?
           this.base = getParent(lowestInserted);
         }
 
-        List<Node> commitsAboveBase = du.getCommitsInBranchAboveBase(base, subjectRef);
+        List<Node> inputNodes = du.getCommitsInBranchAboveBase(this.base, subjectRef);
+        inputNodes.removeAll(nodesToInsert);
+        inputNodes.addAll(0, nodesToInsert);
+        this.fakeBranch = createFakeCommits(this.base, inputNodes);
 
-
+        setResultRef(subjectRef);
       }
     }
 
@@ -526,7 +528,7 @@ public class UI_ControllerImpl implements UI_Controller {
       List<Node> reversed = reverse(nodesToRebase);
       Hash parent = base.getCommitHash();
       for (Node node : reversed) {
-        FakeCommitParents fakeCommit = fake(node.getCommitHash(), parent);
+        FakeCommitParents fakeCommit = createFake(node.getCommitHash(), parent);
         parent = fakeCommit.getCommitHash();
         result.add(fakeCommit);
       }

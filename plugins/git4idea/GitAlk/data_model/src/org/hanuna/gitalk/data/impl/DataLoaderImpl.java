@@ -52,7 +52,7 @@ public class DataLoaderImpl implements DataLoader {
         List<Ref> allRefs = new ArrayList<Ref>();
         allRefs.addAll(new RefReader(myProject).readAllRefs());
         if (fakeCommits.resultRef != null) {
-          allRefs.add(fakeCommits.resultRef);
+          allRefs.add(0, fakeCommits.resultRef);
           allRefs.remove(fakeCommits.subjectRef);
         }
 

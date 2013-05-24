@@ -91,7 +91,7 @@ public class BranchesPanel extends JPanel {
         if (ref.getType() == Ref.RefType.REMOTE_BRANCH) {
           return !thereIsLocalRefOfHash(ref.getCommitHash(), localRefs);
         }
-        if (ref.getType() == Ref.RefType.LOCAL_BRANCH) {
+        if (ref.getType().isBranch()) {
           return true;
         }
         return false;

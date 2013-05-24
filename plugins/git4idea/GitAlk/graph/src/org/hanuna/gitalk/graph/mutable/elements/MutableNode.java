@@ -121,4 +121,9 @@ public class MutableNode implements Node {
   public Edge getEdge() {
     return null;
   }
+
+  @Override
+  public String toString() {
+    return getType() + " " + getCommitHash();
+  }
 }
