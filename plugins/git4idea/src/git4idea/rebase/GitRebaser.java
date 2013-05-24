@@ -53,9 +53,9 @@ public class GitRebaser {
   private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
   @NotNull private final Git myGit;
-  private final @Nullable ProgressIndicator myProgressIndicator;
+  private @Nullable ProgressIndicator myProgressIndicator;
 
-  public GitRebaser(Project project, @NotNull Git git, ProgressIndicator progressIndicator) {
+  public GitRebaser(Project project, @NotNull Git git, @Nullable ProgressIndicator progressIndicator) {
     myProject = project;
     myGit = git;
     myProgressIndicator = progressIndicator;
@@ -63,11 +63,15 @@ public class GitRebaser {
     mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
   }
 
+  public void setProgressIndicator(@Nullable ProgressIndicator progressIndicator) {
+    myProgressIndicator = progressIndicator;
+  }
+
   public GitUpdateResult rebase(@NotNull VirtualFile root,
                                 @NotNull List<String> parameters,
                                 @Nullable final Runnable onCancel,
                                 @Nullable GitLineHandlerListener lineListener) {
-    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    final GitLineHandler rebaseHandler = createHandler(root);
     rebaseHandler.addParameters(parameters);
     if (lineListener != null) {
       rebaseHandler.addLineListener(lineListener);
@@ -108,6 +112,10 @@ public class GitRebaser {
       updateResult.set(handleRebaseFailure(root, rebaseHandler, rebaseConflictDetector, untrackedFilesDetector));
     }
     return updateResult.get();
+  }
+
+  protected GitLineHandler createHandler(VirtualFile root) {
+    return new GitLineHandler(myProject, root, GitCommand.REBASE);
   }
 
   public GitUpdateResult handleRebaseFailure(VirtualFile root, GitLineHandler pullHandler,
