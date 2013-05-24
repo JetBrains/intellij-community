@@ -21,10 +21,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author erokhins
@@ -287,8 +285,16 @@ public class Swing_UI {
       Set<Node> upRefNodes = ui_controller.getDataPackUtils().getUpRefNodes(commit);
       List<Ref> refs = new ArrayList<Ref>();
       for (Node refNode : upRefNodes) {
-        refs.addAll(getLocalRefs(refNode.getCommitHash()));
+        if (refNode.getType() == Node.NodeType.COMMIT_NODE) {
+          refs.addAll(getLocalRefs(refNode.getCommitHash()));
+        }
       }
+      Collections.sort(refs, new Comparator<Ref>() {
+        @Override
+        public int compare(Ref o1, Ref o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
       return refs;
     }
 
