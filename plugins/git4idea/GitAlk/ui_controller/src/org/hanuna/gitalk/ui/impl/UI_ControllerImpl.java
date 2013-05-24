@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gitlog.GitActionHandlerImpl;
 import org.hanuna.gitalk.commit.Hash;
@@ -16,6 +17,7 @@ import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
+import org.hanuna.gitalk.data.impl.FakeCommitsInfo;
 import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.git.reader.util.GitException;
@@ -23,6 +25,7 @@ import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
+import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.refs.Ref;
@@ -39,9 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -68,28 +69,30 @@ public class UI_ControllerImpl implements UI_Controller {
   private GitActionHandler myGitActionHandler;
   private final GitActionHandler.Callback myCallback = new Callback();
 
+  private final MyInteractiveRebaseBuilder rebaseDelegate = new MyInteractiveRebaseBuilder();
   private InteractiveRebaseBuilder myInteractiveRebaseBuilder = new InteractiveRebaseBuilder() {
+
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
-      dataLoader.getInteractiveRebaseBuilder().startRebase(subjectRef, onto);
+      rebaseDelegate.startRebase(subjectRef, onto);
       refresh();
     }
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
-      dataLoader.getInteractiveRebaseBuilder().startRebaseOnto(subjectRef, base, nodesToRebase);
+      rebaseDelegate.startRebaseOnto(subjectRef, base, nodesToRebase);
       refresh();
     }
 
     @Override
     public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
-      dataLoader.getInteractiveRebaseBuilder().moveCommits(subjectRef, base, position, nodesToInsert);
+      rebaseDelegate.moveCommits(subjectRef, base, position, nodesToInsert);
       refresh();
     }
 
     @Override
     public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
-      dataLoader.getInteractiveRebaseBuilder().fixUp(subjectRef, target, nodesToFixUp);
+      rebaseDelegate.fixUp(subjectRef, target, nodesToFixUp);
       refresh();
     }
 
@@ -121,7 +124,7 @@ public class UI_ControllerImpl implements UI_Controller {
       @Override
       public void consume(final ProgressIndicator indicator) {
         events.setState(ControllerListener.State.PROGRESS);
-        dataLoader = (dataLoader == null) ? new DataLoaderImpl(myProject) : dataLoader.copyInteractive();
+        dataLoader = new DataLoaderImpl(myProject);
         Executor<String> statusUpdater = new Executor<String>() {
           @Override
           public void execute(String key) {
@@ -135,7 +138,7 @@ public class UI_ControllerImpl implements UI_Controller {
             dataLoader.readAllLog(statusUpdater);
           }
           else {
-            dataLoader.readNextPart(statusUpdater);
+            dataLoader.readNextPart(statusUpdater, rebaseDelegate.getFakeCommitsInfo());
           }
           dataInit();
           events.setState(ControllerListener.State.USUAL);
@@ -295,7 +298,7 @@ public class UI_ControllerImpl implements UI_Controller {
             public void execute(String key) {
               events.setUpdateProgressMessage(key);
             }
-          });
+          }, rebaseDelegate.getFakeCommitsInfo());
 
 
           events.setState(ControllerListener.State.USUAL);
@@ -416,13 +419,87 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @Override
   public void applyInteractiveRebase() {
-    dataLoader.applyInteractiveRebase(getGitActionHandler(), myCallback);
+    if (rebaseDelegate.resultRef == null) {
+      return;
+    }
+    getGitActionHandler().interactiveRebase(rebaseDelegate.subjectRef, rebaseDelegate.base, getCallback(),
+                                            rebaseDelegate.getRebaseCommands());
+    rebaseDelegate.reset();
     refresh();
   }
 
   @Override
   public GitActionHandler.Callback getCallback() {
     return myCallback;
+  }
+
+  private static class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {
+
+    private Node base = null;
+    private List<FakeCommitParents> fakeCommits = new ArrayList<FakeCommitParents>();
+    private Ref subjectRef = null;
+    private Ref resultRef = null;
+
+    public void reset() {
+      base = null;
+      fakeCommits.clear();
+      subjectRef = null;
+      resultRef = null;
+    }
+
+    @Override
+    public void startRebase(Ref subjectRef, Node onto) {
+      // todo find base
+      startRebaseOnto(subjectRef, onto, Collections.<Node>emptyList());
+    }
+
+    @Override
+    public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
+      this.subjectRef = subjectRef;
+      this.base = base;
+      fakeCommits.clear();
+
+      // Copy commits
+      List<Node> reversed = new ArrayList<Node>(nodesToRebase);
+      Collections.reverse(reversed);
+      Hash parent = base.getCommitHash();
+      for (Node node : reversed) {
+        FakeCommitParents fakeCommit =
+          new FakeCommitParents(parent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, node.getCommitHash()));
+        parent = fakeCommit.getCommitHash();
+        fakeCommits.add(fakeCommit);
+      }
+
+      Collections.reverse(fakeCommits);
+      resultRef = new Ref(parent, subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
+
+      // todo move label
+
+    }
+
+    @Override
+    public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
+      super.moveCommits(subjectRef, base, position, nodesToInsert); // TODO
+    }
+
+    @Override
+    public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
+      super.fixUp(subjectRef, target, nodesToFixUp); // TODO
+    }
+
+    @Override
+    public List<RebaseCommand> getRebaseCommands() {
+      return ContainerUtil.map(fakeCommits, new com.intellij.util.Function<FakeCommitParents, RebaseCommand>() {
+        @Override
+        public RebaseCommand fun(FakeCommitParents fakeCommitParents) {
+          return fakeCommitParents.getCommand();
+        }
+      });
+    }
+
+    public FakeCommitsInfo getFakeCommitsInfo() {
+      return new FakeCommitsInfo(fakeCommits, base, resultRef);
+    }
   }
 
   private static class Callback implements GitActionHandler.Callback {
