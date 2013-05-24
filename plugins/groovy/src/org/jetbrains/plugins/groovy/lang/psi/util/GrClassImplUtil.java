@@ -421,7 +421,10 @@ public class GrClassImplUtil {
         List<PsiClass> result = new ArrayList<PsiClass>();
         for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
           final PsiClass inner = (PsiClass)info.getElement();
-          if (lastParent == null || !inner.getContainingClass().isInterface()) {
+          final PsiClass containingClass = inner.getContainingClass();
+          assert containingClass != null;
+
+          if (lastParent == null || !containingClass.isInterface() || PsiTreeUtil.isAncestor(containingClass, place, false)) {
             ContainerUtil.addIfNotNull(result, inner);
           }
         }

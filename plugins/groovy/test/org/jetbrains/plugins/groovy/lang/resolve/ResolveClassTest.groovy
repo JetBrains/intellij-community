@@ -263,7 +263,8 @@ print Component
 print Li<caret>st
 ''')
     def target = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
-    assertEquals('java.util.List', target.getQualifiedName())
+    assert target instanceof PsiClass
+    assertEquals('java.util.List', target.qualifiedName)
   }
 
   void testSuper() {
@@ -290,6 +291,19 @@ new Foo().Inn<caret>er
 ''')
 
     assertNull(ref.resolve())
+  }
+
+  void testInnerClassOfInterfaceInsideItself() {
+    resolveByText('''\
+public interface OuterInterface {
+    static enum InnerEnum {
+        ONE, TWO
+        public static Inne<caret>rEnum getSome() {
+            ONE
+        }
+    }
+}
+''', PsiClass)
   }
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
