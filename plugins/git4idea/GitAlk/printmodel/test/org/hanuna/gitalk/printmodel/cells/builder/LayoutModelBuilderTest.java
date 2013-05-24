@@ -4,10 +4,12 @@ import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
+import org.hanuna.gitalk.refs.Ref;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
@@ -20,7 +22,7 @@ public class LayoutModelBuilderTest {
   private void runTest(String input, String out) throws IOException {
     SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
     List<CommitParents> commitParentses = parser.readAllCommits();
-    LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(commitParentses));
+    LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(commitParentses, Collections.<Ref>emptyList()));
     assertEquals(out, toStr(layoutModel));
   }
 

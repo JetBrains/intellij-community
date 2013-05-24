@@ -4,12 +4,10 @@ import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.hanuna.gitalk.log.commit.CommitParents;
+import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.hanuna.gitalk.graph.elements.Node.NodeType.*;
 
@@ -21,9 +19,11 @@ class GraphAppendBuilder {
 
 
   private final MutableGraph graph;
+  private final Collection<Ref> myRefs;
 
-  public GraphAppendBuilder(MutableGraph graph) {
+  public GraphAppendBuilder(MutableGraph graph, Collection<Ref> allRefs) {
     this.graph = graph;
+    myRefs = allRefs;
   }
 
   private MutableNodeRow getLastRowInGraph() {
@@ -98,7 +98,8 @@ class GraphAppendBuilder {
       commitLogIndexes.put(commitParentses.get(i).getCommitHash(), i + startIndex);
     }
 
-    GraphBuilder builder = new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow);
+    GraphBuilder builder = new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow,
+                                            myRefs);
     builder.runBuild(commitParentses);
   }
 

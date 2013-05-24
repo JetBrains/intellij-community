@@ -6,12 +6,10 @@ import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.hanuna.gitalk.graph.mutable.elements.UsualEdge;
 import org.hanuna.gitalk.log.commit.CommitParents;
+import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.hanuna.gitalk.graph.elements.Node.NodeType.*;
 
@@ -19,17 +17,18 @@ import static org.hanuna.gitalk.graph.elements.Node.NodeType.*;
  * @author erokhins
  */
 public class GraphBuilder {
-  public static MutableGraph build(@NotNull List<CommitParents> commitParentses) {
+
+  public static MutableGraph build(@NotNull List<CommitParents> commitParentses, Collection<Ref> allRefs) {
     Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
       commitLogIndexes.put(commitParentses.get(i).getCommitHash(), i);
     }
-    GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, commitLogIndexes);
+    GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, commitLogIndexes, allRefs);
     return builder.runBuild(commitParentses);
   }
 
-  public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<CommitParents> commitParentses) {
-    new GraphAppendBuilder(graph).appendToGraph(commitParentses);
+  public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<CommitParents> commitParentses, Collection<Ref> allRefs) {
+    new GraphAppendBuilder(graph, allRefs).appendToGraph(commitParentses);
   }
 
   // local package
@@ -43,6 +42,7 @@ public class GraphBuilder {
   private final MutableGraph graph;
   private final Map<Hash, MutableNode> underdoneNodes;
   private Map<Hash, Integer> commitHashLogIndexes;
+  private Collection<Ref> myRefs;
 
   private MutableNodeRow nextRow;
 
@@ -50,20 +50,21 @@ public class GraphBuilder {
                       Map<Hash, Integer> commitHashLogIndexes,
                       MutableGraph graph,
                       Map<Hash, MutableNode> underdoneNodes,
-                      MutableNodeRow nextRow) {
+                      MutableNodeRow nextRow, Collection<Ref> refs) {
     this.lastLogIndex = lastLogIndex;
     this.commitHashLogIndexes = commitHashLogIndexes;
     this.graph = graph;
     this.underdoneNodes = underdoneNodes;
     this.nextRow = nextRow;
+    myRefs = refs;
   }
 
-  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph) {
-    this(lastLogIndex, commitHashLogIndexes, graph, new HashMap<Hash, MutableNode>(), new MutableNodeRow(graph, 0));
+  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph, Collection<Ref> refs) {
+    this(lastLogIndex, commitHashLogIndexes, graph, new HashMap<Hash, MutableNode>(), new MutableNodeRow(graph, 0), refs);
   }
 
-  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes) {
-    this(lastLogIndex, commitHashLogIndexes, new MutableGraph());
+  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, Collection<Ref> refs) {
+    this(lastLogIndex, commitHashLogIndexes, new MutableGraph(), refs);
   }
 
 
@@ -81,7 +82,7 @@ public class GraphBuilder {
   private MutableNode addCurrentCommitAndFinishRow(@NotNull Hash commitHash) {
     MutableNode node = underdoneNodes.remove(commitHash);
     if (node == null) {
-      node = createNode(commitHash, new Branch(commitHash));
+      node = createNode(commitHash, new Branch(commitHash, myRefs));
     }
     node.setType(COMMIT_NODE);
     node.setNodeRow(nextRow);
@@ -133,7 +134,7 @@ public class GraphBuilder {
     }
     else {
       for (Hash parentHash : parents) {
-        addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash));
+        addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash, myRefs));
       }
     }
   }

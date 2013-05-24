@@ -2,8 +2,10 @@ package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
+import org.hanuna.gitalk.refs.Ref;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
@@ -17,7 +19,7 @@ public class GraphBuilderTest {
 
   public void runTest(String input, String out) {
     List<CommitParents> commitParentses = SimpleCommitListParser.parseCommitList(input);
-    MutableGraph graph = GraphBuilder.build(commitParentses);
+    MutableGraph graph = GraphBuilder.build(commitParentses, Collections.<Ref>emptyList());
     assertEquals(out, toStr(graph));
   }
 

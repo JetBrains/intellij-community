@@ -6,6 +6,7 @@ import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
+import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class GraphTestUtils {
     catch (IOException e) {
       throw new IllegalStateException();
     }
-    return GraphBuilder.build(commitParentses);
+    return GraphBuilder.build(commitParentses, Collections.<Ref>emptyList());
   }
 
   // "1 20 3" -> {1,20,3}

@@ -13,6 +13,8 @@ import java.util.Map;
 public class ColorGenerator {
   private static final Map<Integer, Color> colorMap = new HashMap<Integer, Color>();
 
+  private static final Map<Branch, Color> ourCachedColors = new HashMap<Branch, Color>();
+
   @NotNull
   public static Color getColor(@NotNull Branch branch) {
     int indexColor = branch.getBranchNumber();

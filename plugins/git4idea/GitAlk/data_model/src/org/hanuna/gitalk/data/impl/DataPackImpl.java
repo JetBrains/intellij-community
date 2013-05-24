@@ -31,11 +31,11 @@ public class DataPackImpl implements DataPack {
     statusUpdater.execute("Build graph");
 
     MyTimer timer = new MyTimer("graph build");
-    MutableGraph graph = GraphBuilder.build(commitParentsList);
+    MutableGraph graph = GraphBuilder.build(commitParentsList, allRefs);
     timer.print();
 
     timer.clear("graphModel build");
-    GraphModel graphModel = new GraphModelImpl(graph);
+    GraphModel graphModel = new GraphModelImpl(graph, allRefs);
     timer.print();
 
     statusUpdater.execute("Build print model");
