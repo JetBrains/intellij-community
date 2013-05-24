@@ -110,7 +110,15 @@ public class UI_ControllerImpl implements UI_Controller {
       return super.getRebaseCommands();
     }
   };
+
   private boolean myCommitDetailsPreloaded;
+  private final CacheGet<Hash, CommitData> commitDataCache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
+    @NotNull
+    @Override
+    public CommitData get(@NotNull Hash key) {
+      return CommitDataReader.readCommitData(myProject, key.toStrHash());
+      }
+  }, 5000);
 
   public UI_ControllerImpl(Project project) {
     myProject = project;
@@ -135,15 +143,6 @@ public class UI_ControllerImpl implements UI_Controller {
     });
 
   }
-
-  private final CacheGet<Hash, CommitData> commitDataCache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
-    @NotNull
-    @Override
-    public CommitData get(@NotNull Hash key) {
-      return CommitDataReader.readCommitData(myProject, key.toStrHash());
-      }
-  }, 5000);
-
 
   public void init(final boolean readAllLog, boolean inBackground, final boolean reusePreviousGitOutput) {
     final Consumer<ProgressIndicator> doInit = new Consumer<ProgressIndicator>() {
