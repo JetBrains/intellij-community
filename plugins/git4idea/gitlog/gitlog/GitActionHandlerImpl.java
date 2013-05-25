@@ -228,9 +228,30 @@ public class GitActionHandlerImpl implements GitActionHandler {
   }
 
   @Override
-  public void interactiveRebase(Ref subjectRef, Node onto, Callback callback, final List<RebaseCommand> commands) {
+  public void interactiveRebase(Ref subjectRef, Node onto, final Callback callback, final List<RebaseCommand> commands) {
     final GitLineHandler h = new GitLineHandler(myProject, myRepository.getRoot(), GitCommand.REBASE);
-    h.addParameters("-i");
+    h.addParameters("-i", "-v");
+
+    h.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (line.toLowerCase().startsWith("rebasing")) {
+          line = line.trim();
+          String progress = line.substring(line.indexOf('(') + 1, line.lastIndexOf('/'));
+          Integer index = null;
+          try {
+            index = Integer.parseInt(progress) - 1;
+            if (index >= 0 && index < commands.size()) {
+              callback.interactiveCommandApplied(commands.get(index));
+            }
+          }
+          catch (NumberFormatException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    });
+
     // for testing: h.addParameters("HEAD~" + commands.size());
     GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
 
