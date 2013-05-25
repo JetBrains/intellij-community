@@ -51,6 +51,9 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
 
       GraphCommitCell.Kind kind = getKind(table, value);
       switch (kind) {
+        case APPLIED:
+          setForeground(Color.GREEN);
+          break;
         case NORMAL:
           setForeground(Color.BLACK);
           break;

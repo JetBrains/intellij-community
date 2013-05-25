@@ -696,9 +696,13 @@ public class UI_ControllerImpl implements UI_Controller {
     public FakeCommitsInfo getFakeCommitsInfo() {
       return new FakeCommitsInfo(fakeBranch, branchBase, insertAfter, resultRef, subjectRef);
     }
+
+    public void applied(RebaseCommand command) {
+      ((GraphTableModel)getGraphTableModel()).addApplied(command.getCommit());
+    }
   }
 
-  private static class Callback implements GitActionHandler.Callback {
+  private class Callback implements GitActionHandler.Callback {
     @Override
     public void disableModifications() {
 
@@ -711,7 +715,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void interactiveCommandApplied(RebaseCommand command) {
-
+      rebaseDelegate.applied(command);
     }
   }
 

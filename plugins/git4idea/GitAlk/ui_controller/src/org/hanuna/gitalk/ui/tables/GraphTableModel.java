@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui.tables;
 
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
@@ -23,6 +24,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   private final Map<Hash, String> reworded = new HashMap<Hash, String>();
   private final Set<Hash> fixedUp = new HashSet<Hash>();
+  private final Set<Hash> applied = new HashSet<Hash>();
 
   public GraphTableModel(@NotNull DataPack dataPack) {
     this.dataPack = dataPack;
@@ -90,6 +92,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   private GraphCommitCell.Kind getCellKind(Node node) {
     Hash hash = node.getCommitHash();
+    if (applied.contains(hash)) return GraphCommitCell.Kind.APPLIED;
     if (fixedUp.contains(hash)) return GraphCommitCell.Kind.FIXUP;
     if (reworded.containsKey(hash)) return GraphCommitCell.Kind.REWORD;
     if (FakeCommitParents.isFake(hash)) return GraphCommitCell.Kind.PICK;
@@ -137,5 +140,10 @@ public class GraphTableModel extends AbstractTableModel {
 
   public void addFixedUp(Collection<Hash> collection) {
     fixedUp.addAll(collection);
+  }
+
+  public void addApplied(Hash commit) {
+    applied.add(commit);
+    fireTableCellUpdated(new DataPackUtils(dataPack).getRowByHash(commit), 0);
   }
 }

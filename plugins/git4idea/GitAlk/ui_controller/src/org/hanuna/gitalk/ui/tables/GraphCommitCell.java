@@ -15,7 +15,8 @@ public class GraphCommitCell extends CommitCell {
     NORMAL,
     PICK,
     FIXUP,
-    REWORD
+    REWORD,
+    APPLIED
   }
 
   private final GraphPrintCell row;
