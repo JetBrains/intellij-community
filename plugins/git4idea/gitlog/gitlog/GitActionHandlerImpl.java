@@ -1,5 +1,6 @@
 package gitlog;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -242,7 +243,13 @@ public class GitActionHandlerImpl implements GitActionHandler {
           try {
             index = Integer.parseInt(progress) - 1;
             if (index >= 0 && index < commands.size()) {
-              callback.interactiveCommandApplied(commands.get(index));
+              final Integer finalIndex = index;
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  callback.interactiveCommandApplied(commands.get(finalIndex));
+                }
+              });
             }
           }
           catch (NumberFormatException e) {
