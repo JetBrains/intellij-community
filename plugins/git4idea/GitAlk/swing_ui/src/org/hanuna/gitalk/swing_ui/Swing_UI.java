@@ -339,6 +339,13 @@ public class Swing_UI {
       }
 
       private Action pickOrRebase(Node commit, MouseEvent e, List<Node> commitsBeingDragged, boolean overCommit) {
+        Mode mode = getMode(e);
+        if (mode == Mode.CHERRY_PICK) {
+          if (myConditions.sameBranch(commit, commitsBeingDragged)) {
+            return FORBIDDEN;
+          }
+          return CHERRY_PICK;
+        }
         Node topCommit = commitsBeingDragged.get(0);
         boolean hasLabelOnTop = !getLocalRefs(topCommit.getCommitHash()).isEmpty();
         boolean interactive = getMode(e) == Mode.INTERACTIVE;
