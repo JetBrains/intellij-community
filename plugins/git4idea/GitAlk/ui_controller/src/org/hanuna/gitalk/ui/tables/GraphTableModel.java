@@ -12,10 +12,7 @@ import org.hanuna.gitalk.ui.impl.DateConverter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -25,6 +22,7 @@ public class GraphTableModel extends AbstractTableModel {
   private final DataPack dataPack;
 
   private final Map<Hash, String> reworded = new HashMap<Hash, String>();
+  private final Set<Hash> fixedUp = new HashSet<Hash>();
 
   public GraphTableModel(@NotNull DataPack dataPack) {
     this.dataPack = dataPack;
@@ -92,6 +90,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   private GraphCommitCell.Kind getCellKind(Node node) {
     Hash hash = node.getCommitHash();
+    if (fixedUp.contains(hash)) return GraphCommitCell.Kind.FIXUP;
     if (reworded.containsKey(hash)) return GraphCommitCell.Kind.REWORD;
     if (FakeCommitParents.isFake(hash)) return GraphCommitCell.Kind.PICK;
     return GraphCommitCell.Kind.NORMAL;
@@ -136,4 +135,7 @@ public class GraphTableModel extends AbstractTableModel {
     //fireTableDataChanged();
   }
 
+  public void addFixedUp(Collection<Hash> collection) {
+    fixedUp.addAll(collection);
+  }
 }

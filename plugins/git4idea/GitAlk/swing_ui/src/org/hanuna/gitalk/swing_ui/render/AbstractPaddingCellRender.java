@@ -60,7 +60,7 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
           break;
         case FIXUP:
           setFont(getFont().deriveFont(Font.BOLD));
-          setForeground(Color.DARK_GRAY);
+          setForeground(Color.GRAY);
           break;
         case REWORD:
           setFont(getFont().deriveFont(Font.BOLD));

@@ -39,6 +39,6 @@ public class RebaseCommand {
 
   @Override
   public String toString() {
-    return kind + " " + getCommit().toStrHash();
+    return kind + " " + getCommit().toStrHash() + (newMessage == null ? "" : " " + newMessage);
   }
 }

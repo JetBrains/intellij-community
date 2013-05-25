@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 import gitlog.GitActionHandlerImpl;
@@ -184,6 +183,7 @@ public class UI_ControllerImpl implements UI_Controller {
         }
 
         ((GraphTableModel) getGraphTableModel()).addReworded(rebaseDelegate.reworded);
+        ((GraphTableModel) getGraphTableModel()).addFixedUp(rebaseDelegate.fixedUp);
 
         SelectController selectController = dataPack.getPrintCellModel().getSelectController();
         Set<GraphElement> selection = new HashSet<GraphElement>();
@@ -509,6 +509,7 @@ public class UI_ControllerImpl implements UI_Controller {
     private Ref subjectRef = null;
     private Ref resultRef = null;
     private Map<Hash, String> reworded = new HashMap<Hash, String>();
+    private Set<Hash> fixedUp = new HashSet<Hash>();
     private List<Hash> selected = new ArrayList<Hash>();
 
     private FakeCommitParents createFake(Hash oldHash, Hash newParent) {
@@ -522,6 +523,7 @@ public class UI_ControllerImpl implements UI_Controller {
       subjectRef = null;
       resultRef = null;
       reworded.clear();
+      fixedUp.clear();
       selected.clear();
     }
 
@@ -618,12 +620,26 @@ public class UI_ControllerImpl implements UI_Controller {
       }
 
       setResultRef(subjectRef);
+      dumpCommands();
     }
 
     @Override
     public void reword(Ref subjectRef, Node commitToReword, String newMessage) {
       moveCommits(subjectRef, commitToReword, InsertPosition.ABOVE, Collections.singletonList(commitToReword));
       reworded.put(FakeCommitParents.fakeHash(commitToReword.getCommitHash()), newMessage);
+      dumpCommands();
+    }
+
+    @Override
+    public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
+      moveCommits(subjectRef, target, InsertPosition.BELOW, nodesToFixUp);
+      for (Node node : nodesToFixUp) {
+        fixedUp.add(FakeCommitParents.fakeHash(node.getCommitHash()));
+      }
+      dumpCommands();
+    }
+
+    private void dumpCommands() {
       for (RebaseCommand command : getRebaseCommands()) {
         System.out.println(command);
       }
@@ -653,22 +669,28 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     @Override
-    public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
-      // TODO
-    }
-
-    @Override
     public List<RebaseCommand> getRebaseCommands() {
-      return ContainerUtil.map(fakeBranch, new com.intellij.util.Function<FakeCommitParents, RebaseCommand>() {
-        @Override
-        public RebaseCommand fun(FakeCommitParents fakeCommitParents) {
-          String newMessage = reworded.get(fakeCommitParents.getCommitHash());
-          if (newMessage != null) {
-            return new RebaseCommand(RebaseCommand.RebaseCommandKind.REWORD, fakeCommitParents.getCommand().getCommit(), newMessage);
-          }
-          return fakeCommitParents.getCommand();
+      List<RebaseCommand> result = new ArrayList<RebaseCommand>();
+      int fixupPos = 0;
+      for (FakeCommitParents fakeCommit : fakeBranch) {
+        Hash hash = fakeCommit.getCommitHash();
+        String newMessage = reworded.get(hash);
+        RebaseCommand command;
+        if (fixedUp.contains(hash)) {
+          command = new RebaseCommand(RebaseCommand.RebaseCommandKind.FIXUP, fakeCommit.getCommand().getCommit());
+          result.add(fixupPos, command);
+          continue;
         }
-      });
+        else if (newMessage != null) {
+          command = new RebaseCommand(RebaseCommand.RebaseCommandKind.REWORD, fakeCommit.getCommand().getCommit(), newMessage);
+        }
+        else {
+          command = fakeCommit.getCommand();
+        }
+        result.add(command);
+        fixupPos = result.size() - 1;
+      }
+      return result;
     }
 
     public FakeCommitsInfo getFakeCommitsInfo() {
