@@ -284,7 +284,10 @@ public class UI_GraphTable extends JTable {
     }
   }
 
-  private void setSelection(int[] nodesBeingDragged) {
+  private void setSelection(@Nullable int[] nodesBeingDragged) {
+    if (nodesBeingDragged == null) {
+      return;
+    }
     for (int index : nodesBeingDragged) {
       getSelectionModel().addSelectionInterval(index, index);
     }
