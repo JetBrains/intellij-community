@@ -79,4 +79,6 @@ public interface UI_Controller {
   void cancelInteractiveRebase();
 
   GitRepository getRepository();
+
+  boolean isInteractiveRebaseInProgress();
 }

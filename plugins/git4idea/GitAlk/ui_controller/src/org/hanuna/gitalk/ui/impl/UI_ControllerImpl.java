@@ -496,6 +496,11 @@ public class UI_ControllerImpl implements UI_Controller {
     return ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
   }
 
+  @Override
+  public boolean isInteractiveRebaseInProgress() {
+    return rebaseDelegate.branchBase != null;
+  }
+
   private class MyInteractiveRebaseBuilder extends InteractiveRebaseBuilder {
 
     private Node branchBase = null;
