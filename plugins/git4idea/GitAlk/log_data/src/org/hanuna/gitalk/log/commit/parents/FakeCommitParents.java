@@ -30,15 +30,19 @@ public class FakeCommitParents implements CommitParents {
     return hash;
   }
 
+  public static Hash fakeHash(Hash hash) {
+    return Hash.build(FAKE_HASH_PREFIX + getOriginal(hash.toStrHash()));
+  }
+
   private final RebaseCommand command;
   private final Hash fakeHash;
+
   private final Hash parent;
 
   public FakeCommitParents(@NotNull Hash parent, @NotNull RebaseCommand command) {
     this.parent = parent;
     this.command = command;
-    this.fakeHash = Hash.build(FAKE_HASH_PREFIX + getOriginal(command.getCommit().toStrHash()));
-    //this.fakeHash = Hash.build(FAKE_HASH_PREFIX + command.getCommit().toStrHash());
+    this.fakeHash = fakeHash(command.getCommit());
   }
 
   @NotNull

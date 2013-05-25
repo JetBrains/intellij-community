@@ -17,6 +17,8 @@ public interface ControllerListener {
 
   public void setUpdateProgressMessage(@NotNull String progressMessage);
 
+  //void addToSelection(int rowIndex);
+
   public static enum State {
     USUAL,
     ERROR,

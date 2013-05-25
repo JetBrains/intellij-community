@@ -491,6 +491,26 @@ public class Swing_UI {
       dragDropHint.hide();
     }
 
+    @Override
+    public void reword(final int row, final String message) {
+      final Node node = ui_controller.getDataPackUtils().getNode(row);
+      if (node == null) {
+        return;
+      }
+      runRefAction(node, new MouseEvent(mainFrame.getGraphTable(), 0, 0L, 0, 0, 0, 0, false), new RefAction() {
+        @Override
+        public void perform(Ref ref) {
+          ui_controller.getInteractiveRebaseBuilder().reword(ref, node, message);
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              int index = node.getRowIndex();
+              mainFrame.getGraphTable().getSelectionModel().addSelectionInterval(index, index);
+            }
+          });
+        }
+      });
+    }
   }
 
   private static void showRefPopup(final List<Ref> refs, Component popupParent, final RefAction refAction) {

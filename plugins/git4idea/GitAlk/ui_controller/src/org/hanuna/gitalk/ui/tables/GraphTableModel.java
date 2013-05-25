@@ -1,15 +1,21 @@
 package org.hanuna.gitalk.ui.tables;
 
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.CommitData;
+import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
+import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.refs.Ref;
+import org.hanuna.gitalk.swing_ui.render.PositionUtil;
 import org.hanuna.gitalk.ui.impl.DateConverter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author erokhins
@@ -17,6 +23,8 @@ import java.util.List;
 public class GraphTableModel extends AbstractTableModel {
   private final String[] columnNames = {"Subject", "Author", "Date"};
   private final DataPack dataPack;
+
+  private final Map<Hash, String> reworded = new HashMap<Hash, String>();
 
   public GraphTableModel(@NotNull DataPack dataPack) {
     this.dataPack = dataPack;
@@ -44,18 +52,25 @@ public class GraphTableModel extends AbstractTableModel {
     }
     switch (columnIndex) {
       case 0:
+        GraphPrintCell graphPrintCell = dataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
+        GraphCommitCell.Kind cellKind = getCellKind(PositionUtil.getNode(graphPrintCell));
         String message = "";
         List<Ref> refs = Collections.emptyList();
         if (data != null) {
-          message = data.getMessage();
-          refs = dataPack.getRefsModel().refsToCommit(data.getCommitHash());
+          if (cellKind == GraphCommitCell.Kind.REWORD) {
+            message = reworded.get(commitNode.getCommitHash());
+          }
+          else {
+            message = data.getMessage();
+            refs = dataPack.getRefsModel().refsToCommit(data.getCommitHash());
+          }
         }
         else {
           if (rowIndex == getRowCount() - 1) {
             message = "load more commits";
           }
         }
-        return new GraphCommitCell(dataPack.getPrintCellModel().getGraphPrintCell(rowIndex), message, refs);
+        return new GraphCommitCell(graphPrintCell, cellKind, message, refs);
       case 1:
         if (data == null) {
           return "";
@@ -73,6 +88,13 @@ public class GraphTableModel extends AbstractTableModel {
       default:
         throw new IllegalArgumentException("columnIndex > 2");
     }
+  }
+
+  private GraphCommitCell.Kind getCellKind(Node node) {
+    Hash hash = node.getCommitHash();
+    if (reworded.containsKey(hash)) return GraphCommitCell.Kind.REWORD;
+    if (FakeCommitParents.isFake(hash)) return GraphCommitCell.Kind.PICK;
+    return GraphCommitCell.Kind.NORMAL;
   }
 
   @Override
@@ -99,6 +121,19 @@ public class GraphTableModel extends AbstractTableModel {
     return columnIndex == 0;
   }
 
+  public void clearReworded() {
+    reworded.clear();
+    //fireTableDataChanged();
+  }
 
+  public void addReworded(Hash hash, String newMessage) {
+    reworded.put(hash, newMessage);
+    //fireTableDataChanged();
+  }
+
+  public void addReworded(Map<Hash, String> map) {
+    reworded.putAll(map);
+    //fireTableDataChanged();
+  }
 
 }

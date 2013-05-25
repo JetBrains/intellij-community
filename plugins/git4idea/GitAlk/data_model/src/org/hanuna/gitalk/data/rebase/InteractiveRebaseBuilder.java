@@ -26,6 +26,10 @@ public class InteractiveRebaseBuilder {
 
   }
 
+  public void reword(Ref subjectRef, Node commitToReword, String newMessage) {
+
+  }
+
   public List<RebaseCommand> getRebaseCommands() {
     return Collections.emptyList();
   }

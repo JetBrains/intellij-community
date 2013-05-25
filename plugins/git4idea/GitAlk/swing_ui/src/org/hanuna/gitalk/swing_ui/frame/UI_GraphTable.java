@@ -321,7 +321,7 @@ public class UI_GraphTable extends JTable {
   @Override
   public void setValueAt(Object aValue, int row, int column) {
     if (column == 0 && aValue instanceof String) {
-      System.out.println("New message: " + aValue);
+      ui_controller.getDragDropListener().reword(row, aValue.toString());
       return;
     }
     super.setValueAt(aValue, row, column);
@@ -332,9 +332,8 @@ public class UI_GraphTable extends JTable {
     if (e instanceof KeyEvent) {
       KeyEvent keyEvent = (KeyEvent)e;
       if (keyEvent.getKeyCode() == KeyEvent.VK_F2) {
-        boolean b = super.editCellAt(row, column, e);
-        myCellEditor.getTableCellEditorComponent(this, null, false, row, column).transferFocus();
-        return b;
+        //myCellEditor.getTableCellEditorComponent(this, null, false, row, column).transferFocus();
+        return super.editCellAt(row, column, e);
       }
       else {
         return false;

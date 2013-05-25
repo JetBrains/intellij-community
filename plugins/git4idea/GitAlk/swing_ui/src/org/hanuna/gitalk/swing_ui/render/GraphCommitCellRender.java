@@ -1,7 +1,5 @@
 package org.hanuna.gitalk.swing_ui.render;
 
-import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
@@ -94,17 +92,12 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   }
 
   @Override
-  protected boolean isFake(JTable table, @Nullable Object value) {
+  protected GraphCommitCell.Kind getKind(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
     if (cell == null) {
-      return false;
+      return GraphCommitCell.Kind.NORMAL;
     }
 
-    Node node = PositionUtil.getNode(cell.getPrintCell());
-    if (node == null) {
-      return false;
-    }
-
-    return FakeCommitParents.isFake(node.getCommitHash());
+    return cell.getKind();
   }
 }

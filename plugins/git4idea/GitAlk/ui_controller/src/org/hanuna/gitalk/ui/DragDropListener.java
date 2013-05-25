@@ -45,4 +45,9 @@ public class DragDropListener {
 
   }
 
+  // This method totally should not be here
+  public void reword(int row, String message) {
+
+  }
+
 }

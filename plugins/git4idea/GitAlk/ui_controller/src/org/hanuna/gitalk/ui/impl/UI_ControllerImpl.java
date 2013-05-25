@@ -106,6 +106,12 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     @Override
+    public void reword(Ref subjectRef, Node commitToReword, String newMessage) {
+      rebaseDelegate.reword(subjectRef, commitToReword, newMessage);
+      refresh(true);
+    }
+
+    @Override
     public List<RebaseCommand> getRebaseCommands() {
       return super.getRebaseCommands();
     }
@@ -176,6 +182,16 @@ public class UI_ControllerImpl implements UI_Controller {
           events.setState(ControllerListener.State.ERROR);
           events.setErrorMessage(e.getMessage());
         }
+
+        ((GraphTableModel) getGraphTableModel()).addReworded(rebaseDelegate.reworded);
+
+        SelectController selectController = dataPack.getPrintCellModel().getSelectController();
+        Set<GraphElement> selection = new HashSet<GraphElement>();
+        for (Hash hash : rebaseDelegate.selected) {
+          Node node = getDataPackUtils().getNodeByHash(hash);
+          selection.add(node);
+        }
+        selectController.select(selection);
 
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
@@ -487,6 +503,8 @@ public class UI_ControllerImpl implements UI_Controller {
     private List<FakeCommitParents> fakeBranch = new ArrayList<FakeCommitParents>();
     private Ref subjectRef = null;
     private Ref resultRef = null;
+    private Map<Hash, String> reworded = new HashMap<Hash, String>();
+    private List<Hash> selected = new ArrayList<Hash>();
 
     private FakeCommitParents createFake(Hash oldHash, Hash newParent) {
       return new FakeCommitParents(newParent, new RebaseCommand(RebaseCommand.RebaseCommandKind.PICK, FakeCommitParents.getOriginal(oldHash)));
@@ -498,6 +516,8 @@ public class UI_ControllerImpl implements UI_Controller {
       fakeBranch.clear();
       subjectRef = null;
       resultRef = null;
+      reworded.clear();
+      selected.clear();
     }
 
     @Override
@@ -521,6 +541,8 @@ public class UI_ControllerImpl implements UI_Controller {
       this.insertAfter = base.getRowIndex();
 
       this.fakeBranch = createFakeCommits(base, nodesToRebase);
+
+      selected.add(fakeBranch.get(0).getCommitHash());
 
       setResultRef(subjectRef);
     }
@@ -584,7 +606,22 @@ public class UI_ControllerImpl implements UI_Controller {
       }
       insertAfter = maxIndex + 1;
 
+      selected.clear();
+      for (Node node : nodesToInsert) {
+        Hash fakeHash = FakeCommitParents.fakeHash(node.getCommitHash());
+        selected.add(fakeHash);
+      }
+
       setResultRef(subjectRef);
+    }
+
+    @Override
+    public void reword(Ref subjectRef, Node commitToReword, String newMessage) {
+      moveCommits(subjectRef, commitToReword, InsertPosition.ABOVE, Collections.singletonList(commitToReword));
+      reworded.put(FakeCommitParents.fakeHash(commitToReword.getCommitHash()), newMessage);
+      for (RebaseCommand command : getRebaseCommands()) {
+        System.out.println(command);
+      }
     }
 
     private List<FakeCommitParents> createFakeCommits(Node base, List<Node> nodesToRebase) {
@@ -620,6 +657,10 @@ public class UI_ControllerImpl implements UI_Controller {
       return ContainerUtil.map(fakeBranch, new com.intellij.util.Function<FakeCommitParents, RebaseCommand>() {
         @Override
         public RebaseCommand fun(FakeCommitParents fakeCommitParents) {
+          String newMessage = reworded.get(fakeCommitParents.getCommitHash());
+          if (newMessage != null) {
+            return new RebaseCommand(RebaseCommand.RebaseCommandKind.REWORD, fakeCommitParents.getCommand().getCommit(), newMessage);
+          }
           return fakeCommitParents.getCommand();
         }
       });

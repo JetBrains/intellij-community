@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.swing_ui.render;
 
+import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
 
   protected abstract boolean isMarked(JTable table, @Nullable Object value);
 
-  protected abstract boolean isFake(JTable table, @Nullable Object value);
+  protected abstract GraphCommitCell.Kind getKind(JTable table, @Nullable Object value);
 
   @Override
   public Component getTableCellRendererComponent(JTable table, @Nullable Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -48,8 +49,23 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
       Border paddingBorder = BorderFactory.createEmptyBorder(0, getLeftPadding(table, value), 0, 0);
       this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
 
-      if (isFake(table, value)) {
-        setFont(getFont().deriveFont(Font.BOLD));
+      GraphCommitCell.Kind kind = getKind(table, value);
+      switch (kind) {
+        case NORMAL:
+          setForeground(Color.BLACK);
+          break;
+        case PICK:
+          setFont(getFont().deriveFont(Font.BOLD));
+          setForeground(Color.BLACK);
+          break;
+        case FIXUP:
+          setFont(getFont().deriveFont(Font.BOLD));
+          setForeground(Color.DARK_GRAY);
+          break;
+        case REWORD:
+          setFont(getFont().deriveFont(Font.BOLD));
+          setForeground(Color.blue);
+          break;
       }
 
       return this;
