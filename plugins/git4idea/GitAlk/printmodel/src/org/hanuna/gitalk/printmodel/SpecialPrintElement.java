@@ -17,18 +17,29 @@ public class SpecialPrintElement {
   }
 
   private final boolean marked;
+  private final int dragAndDropSelect;  // 0 -nothing -1 -down 1 - up
 
-  public SpecialPrintElement(@NotNull GraphElement graphElement, int position, @NotNull Type type, boolean selected, boolean marked) {
+  public SpecialPrintElement(@NotNull GraphElement graphElement,
+                             int position,
+                             @NotNull Type type,
+                             boolean selected,
+                             boolean marked,
+                             int dragAndDropSelect) {
     this.graphElement = graphElement;
     this.position = position;
     this.type = type;
     this.selected = selected;
     this.marked = marked;
+    this.dragAndDropSelect = dragAndDropSelect;
   }
 
   @NotNull
   public GraphElement getGraphElement() {
     return graphElement;
+  }
+
+  public int getDragAndDropSelect() {
+    return dragAndDropSelect;
   }
 
   public int getPosition() {

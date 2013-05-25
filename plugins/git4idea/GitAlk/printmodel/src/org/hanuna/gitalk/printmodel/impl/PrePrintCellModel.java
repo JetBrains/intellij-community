@@ -57,9 +57,17 @@ class PrePrintCellModel {
       Node node = element.getNode();
       if (node != null) {
         if (node.getType() == Node.NodeType.COMMIT_NODE) {
+          int dragAndDropSelect = 0;
+          if (node == commitSelectController.getDragAndDropNode()) {
+            if (commitSelectController.isAbove()) {
+              dragAndDropSelect = 1;
+            } else {
+              dragAndDropSelect = -1;
+            }
+          }
           specialPrintElements
             .add(new SpecialPrintElement(node, i, SpecialPrintElement.Type.COMMIT_NODE, selectController.isSelected(node),
-                                         commitSelectController.isSelected(node)));
+                                         commitSelectController.isSelected(node), dragAndDropSelect));
         }
       }
       else {
@@ -76,11 +84,13 @@ class PrePrintCellModel {
             break;
           case LAST_VISIBLE:
             specialPrintElements
-              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.DOWN_ARROW, selectController.isSelected(edge), isMarked(edge)));
+              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.DOWN_ARROW, selectController.isSelected(edge), isMarked(edge),
+                                           0));
             break;
           case FIRST_VISIBLE:
             specialPrintElements
-              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.UP_ARROW, selectController.isSelected(edge), isMarked(edge)));
+              .add(new SpecialPrintElement(edge, i, SpecialPrintElement.Type.UP_ARROW, selectController.isSelected(edge), isMarked(edge),
+                                           0));
             break;
           default:
             throw new IllegalStateException();

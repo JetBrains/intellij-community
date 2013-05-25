@@ -44,6 +44,22 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.drawLine(x1, y1, x2, y2);
   }
 
+  private void paintAbove(int position, Color color) {
+    int x1 = WIDTH_NODE * position + 3;
+    int y = 4;
+    int x2 = WIDTH_NODE * position + WIDTH_NODE - 4;
+    g2.setColor(color);
+    g2.drawLine(x1, y, x2, y);
+  }
+
+  private void paintBelow(int position, Color color) {
+    int x1 = WIDTH_NODE * position + 3;
+    int y = HEIGHT_CELL - 4;
+    int x2 = WIDTH_NODE * position + WIDTH_NODE - 4;
+    g2.setColor(color);
+    g2.drawLine(x1, y, x2, y);
+  }
+
 
   private void paintCircle(int position, Color color, boolean select) {
     int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
@@ -112,6 +128,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
+
+
   @Override
   public void draw(Graphics2D g2, GraphPrintCell row) {
     this.g2 = g2;
@@ -177,6 +195,17 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       }
     }
 
+    for (final SpecialPrintElement printElement : row.getSpecialPrintElements()) {
+      if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE && printElement.getDragAndDropSelect() != 0) {
+        Node node = printElement.getGraphElement().getNode();
+        assert node != null;
+        if (printElement.getDragAndDropSelect() > 0) {
+          paintAbove(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()));
+        } else {
+          paintBelow(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()));
+        }
+      }
+    }
   }
 
   @Nullable

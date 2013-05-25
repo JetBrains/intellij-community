@@ -16,6 +16,7 @@ import org.hanuna.gitalk.ui.ControllerListener;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -368,23 +369,32 @@ public class Swing_UI {
         }
       }
 
+      private void setDragAndDropNode(@Nullable Node node, boolean above) {
+        ui_controller.getDataPack().getPrintCellModel().getCommitSelectController().selectDragAndDropNode(node, above);
+        Swing_UI.this.swingControllerListener.updateUI();
+      }
+
       @Override
       public void above(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+        setDragAndDropNode(commit, true);
         decide(commit, e, commitsBeingDragged, MOVE_ABOVE, false);
       }
 
       @Override
       public void below(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+        setDragAndDropNode(commit, false);
         decide(commit, e, commitsBeingDragged, MOVE_BELOW, false);
       }
 
       @Override
       public void over(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+        setDragAndDropNode(null, true);
         overNode(rowIndex, commit, e, commitsBeingDragged);
       }
 
       @Override
       public void overNode(int rowIndex, Node commit, MouseEvent e, List<Node> commitsBeingDragged) {
+        setDragAndDropNode(null, true);
         decide(commit, e, commitsBeingDragged, FIX_UP, false);
       }
 
@@ -395,6 +405,7 @@ public class Swing_UI {
 
       @Override
       public void perform(Node commit, MouseEvent e, final List<Node> commitsBeingDragged) {
+        setDragAndDropNode(null, true);
         currentAction.perform(commit, e, commitsBeingDragged);
         dragDropHint.hide();
         SwingUtilities.invokeLater(new Runnable() {

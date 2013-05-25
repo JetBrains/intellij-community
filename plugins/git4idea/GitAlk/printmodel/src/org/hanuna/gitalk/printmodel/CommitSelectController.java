@@ -19,6 +19,7 @@ package org.hanuna.gitalk.printmodel;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,6 +27,23 @@ import java.util.Set;
 public class CommitSelectController {
   private final Set<Node> selectedNodes = new HashSet<Node>();
 
+  private Node dragAndDropNode = null;
+  private boolean above;
+
+
+  // node == null - unSelect
+  public void selectDragAndDropNode(@Nullable Node node, boolean above) {
+    dragAndDropNode = node;
+    this.above = above;
+  }
+
+  public Node getDragAndDropNode() {
+    return dragAndDropNode;
+  }
+
+  public boolean isAbove() {
+    return above;
+  }
 
   public void select(Set<Node> nodes) {
     selectedNodes.addAll(nodes);
