@@ -448,6 +448,7 @@ public class Swing_UI {
     private void showHint(MouseEvent e, Icon icon, String text) {
       dragDropHint.hide();
       hintLabel.setIcon(icon);
+      if (text.length() > 80) text = text.substring(0, 80) + "...";
       hintLabel.setText(text + "        ");
       dragDropHint.show((JComponent)e.getComponent(), e.getX() + 8, e.getY() + 8, null, new HintHint(e));
     }
