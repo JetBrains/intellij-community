@@ -18,6 +18,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
+import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -25,6 +26,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EventObject;
 import java.util.List;
 
 import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.EDGE_FIELD;
@@ -37,6 +39,12 @@ public class UI_GraphTable extends JTable {
   private final UI_Controller ui_controller;
   private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
   private final MouseAdapter mouseAdapter = new MyMouseAdapter();
+  private final DefaultCellEditor myCellEditor = new DefaultCellEditor(new JTextField()) {
+    @Override
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+      return super.getTableCellEditorComponent(table, value == null ? "null" : ((GraphCommitCell)value).getText(), isSelected, row, column);
+    }
+  };
 
   private List<Node> myNodesBeingDragged = null;
   private int[] myRowIndicesBeingDragged = null;
@@ -51,6 +59,9 @@ public class UI_GraphTable extends JTable {
   }
 
   private void prepare() {
+    myCellEditor.setClickCountToStart(2);
+    setSurrendersFocusOnKeystroke(true);
+
     setTableHeader(null);
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(graphPainter));
     setRowHeight(HEIGHT_CELL);
@@ -296,4 +307,36 @@ public class UI_GraphTable extends JTable {
     return result;
   }
 
+  @Override
+  public TableCellEditor getCellEditor(int row, int column) {
+    if (column == 0) {
+      return myCellEditor;
+    }
+    return super.getCellEditor(row, column);
+  }
+
+  @Override
+  public void setValueAt(Object aValue, int row, int column) {
+    if (column == 0 && aValue instanceof String) {
+      System.out.println("New message: " + aValue);
+      return;
+    }
+    super.setValueAt(aValue, row, column);
+  }
+
+  @Override
+  public boolean editCellAt(int row, int column, EventObject e) {
+    if (e instanceof KeyEvent) {
+      KeyEvent keyEvent = (KeyEvent)e;
+      if (keyEvent.getKeyCode() == KeyEvent.VK_F2) {
+        boolean b = super.editCellAt(row, column, e);
+        myCellEditor.getTableCellEditorComponent(this, null, false, row, column).transferFocus();
+        return b;
+      }
+      else {
+        return false;
+      }
+    }
+    return super.editCellAt(row, column, e);
+  }
 }

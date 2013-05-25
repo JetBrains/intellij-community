@@ -93,4 +93,12 @@ public class GraphTableModel extends AbstractTableModel {
   public String getColumnName(int column) {
     return columnNames[column];
   }
+
+  @Override
+  public boolean isCellEditable(int rowIndex, int columnIndex) {
+    return columnIndex == 0;
+  }
+
+
+
 }
