@@ -108,7 +108,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
 
   @Override
   public void cherryPick(final Ref targetRef, final List<Node> nodesToPick, final GitActionHandler.Callback callback) {
-    assertLocalBranch(targetRef);
+    assert targetRef.getType().isLocalOrHead() : "unexpected type for cherry-pick: " + targetRef.getType();
     new Task.Backgroundable(myProject, "Cherry-picking...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -142,10 +142,6 @@ public class GitActionHandlerImpl implements GitActionHandler {
         onSuccess();
       }
     }.queue();
-  }
-
-  private static void assertLocalBranch(Ref targetRef) {
-    assert targetRef.getType().isLocalOrHead();
   }
 
   private void checkout(Ref targetRef, ProgressIndicator indicator) {
