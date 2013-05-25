@@ -288,10 +288,9 @@ public class GitActionHandlerImpl implements GitActionHandler {
                 case FIXUP:
                   w.print("fixup " + hash + "\n");
                   break;
-                // TODO reword
-                //case REWORD:
-                //  w.print("reword " + hash + "\n");
-                //  break;
+                case REWORD:
+                  w.print("reword " + hash + "\n");
+                  break;
               }
             }
           }
@@ -312,7 +311,7 @@ public class GitActionHandlerImpl implements GitActionHandler {
     private String findCommitMessageForHash(String hash) {
       for (RebaseCommand command : myCommands) {
         if (command.getCommit().toStrHash().startsWith(hash)) {
-          return "found commit message for " + command.getCommit().toStrHash();
+          return command.getNewMessage();
         }
       }
       return null;
