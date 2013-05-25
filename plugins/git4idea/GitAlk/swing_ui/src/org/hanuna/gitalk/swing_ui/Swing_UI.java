@@ -501,13 +501,13 @@ public class Swing_UI {
         @Override
         public void perform(Ref ref) {
           ui_controller.getInteractiveRebaseBuilder().reword(ref, node, message);
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              int index = node.getRowIndex();
-              mainFrame.getGraphTable().getSelectionModel().addSelectionInterval(index, index);
-            }
-          });
+      //    SwingUtilities.invokeLater(new Runnable() {
+      //      @Override
+      //      public void run() {
+      //        int index = node.getRowIndex();
+      //        mainFrame.getGraphTable().getSelectionModel().addSelectionInterval(index, index);
+      //      }
+      //    });
         }
       });
     }
@@ -592,6 +592,17 @@ public class Swing_UI {
         @Override
         public void run() {
           progressFrame.setMessage(progressMessage);
+        }
+      });
+    }
+
+    @Override
+    public void addToSelection(final Hash hash) {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          int row = ui_controller.getDataPackUtils().getRowByHash(hash);
+          mainFrame.getGraphTable().getSelectionModel().addSelectionInterval(row, row);
         }
       });
     }

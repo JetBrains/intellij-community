@@ -185,18 +185,18 @@ public class UI_ControllerImpl implements UI_Controller {
         ((GraphTableModel) getGraphTableModel()).addReworded(rebaseDelegate.reworded);
         ((GraphTableModel) getGraphTableModel()).addFixedUp(rebaseDelegate.fixedUp);
 
-        SelectController selectController = dataPack.getPrintCellModel().getSelectController();
-        Set<GraphElement> selection = new HashSet<GraphElement>();
-        for (Hash hash : rebaseDelegate.selected) {
-          Node node = getDataPackUtils().getNodeByHash(hash);
-          selection.add(node);
-        }
-        selectController.select(selection);
-
+        //SelectController selectController = dataPack.getPrintCellModel().getSelectController();
+        //Set<GraphElement> selection = new HashSet<GraphElement>();
+        //Node node = getDataPackUtils().getNodeByHash(hash);
+        //selectController.select(selection);
+        //
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
             updateUI();
+            for (Hash hash : rebaseDelegate.selected) {
+              events.addToSelection(hash);
+            }
           }
         });
       }

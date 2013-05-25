@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.impl;
 
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.ui.ControllerListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +49,12 @@ public class EventsController {
 
   public void removeAllListeners() {
     listeners.clear();
+  }
+
+  public void addToSelection(Hash hash) {
+    for (ControllerListener listener : listeners) {
+      listener.addToSelection(hash);
+    }
   }
 
 }

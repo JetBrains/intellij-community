@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui;
 
+import org.hanuna.gitalk.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,6 +17,8 @@ public interface ControllerListener {
   public void setErrorMessage(@NotNull String errorMessage);
 
   public void setUpdateProgressMessage(@NotNull String progressMessage);
+
+  void addToSelection(Hash hash);
 
   //void addToSelection(int rowIndex);
 
