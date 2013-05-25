@@ -14,6 +14,7 @@ import java.awt.*;
  */
 public abstract class AbstractPaddingCellRender implements TableCellRenderer {
   public static final Color MARKED_BACKGROUND = new Color(0xB6, 0xE4, 0xFF);
+  public static final Color APPLIED_BACKGROUND = new Color(0x92, 0xF5, 0x8F);
 
   private ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
 
@@ -52,7 +53,7 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
       GraphCommitCell.Kind kind = getKind(table, value);
       switch (kind) {
         case APPLIED:
-          setForeground(Color.GREEN);
+          setBackground(APPLIED_BACKGROUND);
           break;
         case NORMAL:
           setForeground(Color.BLACK);
