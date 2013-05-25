@@ -72,14 +72,16 @@ public class DataLoaderImpl implements DataLoader {
         System.out.println("=== readNextPart() called with " + fakeCommits.commits.size() + " fake commits");
         List<CommitParents> commitParentsList = new ArrayList<CommitParents>();
         List<CommitParents> commits = partReader.readNextBlock(statusUpdater);
+        boolean inserted = false;
         for (int i = 0; i < commits.size(); i++) {
           CommitParents commit = commits.get(i);
-          if (fakeCommits.base != null && commitParentsList.size() + fakeCommits.commits.size() == fakeCommits.insertAbove) {
+          if (!inserted && fakeCommits.base != null && commitParentsList.size() + fakeCommits.commits.size() >= fakeCommits.insertAbove) {
             commitParentsList.addAll(fakeCommits.commits);
             for (CommitParents fakeCommit : fakeCommits.commits) {
               //System.out.println("Visible from fake_" + fakeCommit.getCommitHash() + ": " + fakeCommit.getParentHashes());
               visible.addAll(fakeCommit.getParentHashes());
             }
+            inserted = true;
           }
           if (visible.contains(commit.getCommitHash())) {
             commitParentsList.add(commit);
