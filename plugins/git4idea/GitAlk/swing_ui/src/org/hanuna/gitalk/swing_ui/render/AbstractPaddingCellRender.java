@@ -51,16 +51,17 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
       this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
 
       GraphCommitCell.Kind kind = getKind(table, value);
+      Color textColor = isSelected ? table.getSelectionForeground() : Color.BLACK;
       switch (kind) {
         case APPLIED:
           setBackground(APPLIED_BACKGROUND);
           break;
         case NORMAL:
-          setForeground(Color.BLACK);
+          setForeground(textColor);
           break;
         case PICK:
           setFont(getFont().deriveFont(Font.BOLD));
-          setForeground(Color.BLACK);
+          setForeground(textColor);
           break;
         case FIXUP:
           setFont(getFont().deriveFont(Font.BOLD));
