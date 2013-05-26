@@ -47,6 +47,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
@@ -106,27 +107,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       installDnD();
     }
     setOpaque(true);
-    editor.getComponent().addComponentListener(new ComponentListener() {
-      @Override
-      public void componentResized(ComponentEvent event) {
-        updateSize();
-      }
-
-      @Override
-      public void componentMoved(ComponentEvent event) {
-
-      }
-
-      @Override
-      public void componentShown(ComponentEvent event) {
-
-      }
-
-      @Override
-      public void componentHidden(ComponentEvent event) {
-
-      }
-    });
+    if (Registry.is("editor.distraction.free.mode")) {
+      editor.getComponent().addComponentListener(new ComponentAdapter(){
+        @Override
+        public void componentResized(ComponentEvent event) {
+          updateSize();
+        }
+      });
+    }
   }
 
   @SuppressWarnings({"ConstantConditions"})
@@ -284,11 +272,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (w == 0) return;
 
-    final int x1 = getAnnotationsAreaOffset();
-    g.setColor(myEditor.getBackgroundColor());
-    g.fillRect(x1, clip.y, w, clip.height);
-
-    paintCaretRowBackground(g, x1, w);
+    final Color background = Registry.is("editor.distraction.free.mode") ? myEditor.getBackgroundColor() : getBackground();
+    paintBackground(g, clip, getAnnotationsAreaOffset(), w, background);
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
     g.setColor(color != null ? color : JBColor.blue);
@@ -347,7 +332,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintBackground(final Graphics g, final Rectangle clip, final int x, final int width) {
-    g.setColor(getBackground());
+    paintBackground(g, clip, x, width, getBackground());
+  }
+
+  private void paintBackground(final Graphics g,
+                               final Rectangle clip,
+                               final int x,
+                               final int width,
+                               Color background) {
+    g.setColor(background);
     g.fillRect(x, clip.y, width, clip.height);
 
     paintCaretRowBackground(g, x, width);
@@ -557,14 +550,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     EditorSettings settings = myEditor.getSettings();
 
-    if (myEditor.getComponent().isShowing()) {
+    if (myEditor.getComponent().isShowing() && Registry.is("editor.distraction.free.mode")) {
       int editorLocation = (int)myEditor.getComponent().getLocationOnScreen().getX();
       int rightMarginX = settings.getRightMargin(myEditor.getProject()) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocation;
 
       int width = (int)WindowManager.getInstance().getIdeFrame(myEditor.getProject()).getComponent().getSize().getWidth();
-      //int width = (int)myEditor.getComponent().getSize().getWidth();
       if (rightMarginX < width && editorLocation < width - rightMarginX) {
-        myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX)/2-20);
+        myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX)/2 - editorLocation);
       }
     }
   }
