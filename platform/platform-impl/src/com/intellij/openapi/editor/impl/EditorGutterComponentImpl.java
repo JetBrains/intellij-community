@@ -47,6 +47,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -555,10 +556,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     EditorSettings settings = myEditor.getSettings();
-    int rightMarginX = settings.getRightMargin(myEditor.getProject()) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
 
-    int width = (int)myEditor.getComponent().getSize().getWidth();
-    if (rightMarginX < width) {
+    int editorLocation = (int)myEditor.getComponent().getLocationOnScreen().getX();
+    int rightMarginX = settings.getRightMargin(myEditor.getProject()) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocation;
+
+    int width = (int)WindowManager.getInstance().getIdeFrame(myEditor.getProject()).getComponent().getSize().getWidth();
+    //int width = (int)myEditor.getComponent().getSize().getWidth();
+    if (rightMarginX < width && editorLocation < width - rightMarginX) {
       myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX)/2-20);
     }
   }
