@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -104,6 +105,27 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       installDnD();
     }
     setOpaque(true);
+    editor.getComponent().addComponentListener(new ComponentListener() {
+      @Override
+      public void componentResized(ComponentEvent event) {
+        updateSize();
+      }
+
+      @Override
+      public void componentMoved(ComponentEvent event) {
+
+      }
+
+      @Override
+      public void componentShown(ComponentEvent event) {
+
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent event) {
+
+      }
+    });
   }
 
   @SuppressWarnings({"ConstantConditions"})
@@ -261,7 +283,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (w == 0) return;
 
-    paintBackground(g, clip, getAnnotationsAreaOffset(), w);
+    final int x1 = getAnnotationsAreaOffset();
+    g.setColor(myEditor.getBackgroundColor());
+    g.fillRect(x1, clip.y, w, clip.height);
+
+    paintCaretRowBackground(g, x1, w);
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
     g.setColor(color != null ? color : JBColor.blue);
@@ -526,6 +552,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (gutterSize > 0) gutterSize += GAP_BETWEEN_ANNOTATIONS;
       myTextAnnotationGutterSizes.set(j, gutterSize);
       myTextAnnotationGuttersSize += gutterSize;
+    }
+
+    EditorSettings settings = myEditor.getSettings();
+    int rightMarginX = settings.getRightMargin(myEditor.getProject()) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
+
+    int width = (int)myEditor.getComponent().getSize().getWidth();
+    if (rightMarginX < width) {
+      myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX)/2-20);
     }
   }
 
@@ -1381,7 +1415,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void invokePopup(MouseEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
-    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
+    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA && !myTextAnnotationGutters.isEmpty()) {
       DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
       actionGroup.add(new CloseAnnotationsAction());
       final List<AnAction> addActions = new ArrayList<AnAction>();
