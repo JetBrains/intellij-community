@@ -62,6 +62,7 @@ public class IfStatementWithIdenticalBranchesInspection
     public CollapseIfFix() {
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

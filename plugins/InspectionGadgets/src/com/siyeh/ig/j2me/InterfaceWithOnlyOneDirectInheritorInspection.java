@@ -24,16 +24,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class InterfaceWithOnlyOneDirectInheritorInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("interface.one.inheritor.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("interface.one.inheritor.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new InterfaceWithOnlyOneDirectInheritorVisitor();
   }

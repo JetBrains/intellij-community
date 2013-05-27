@@ -76,10 +76,11 @@ public class GlobalSearchScopes {
 
     @Override
     public boolean contains(VirtualFile file) {
-      NamedScopesHolder holder = NamedScopeManager.getInstance(getProject());
+      Project project = getProject();
+      NamedScopesHolder holder = NamedScopeManager.getInstance(project);
       final PackageSet packageSet = mySet.getValue();
       if (packageSet != null) {
-        if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, holder);
+        if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, project, holder);
         PsiFile psiFile = myManager.findFile(file);
         return psiFile != null && packageSet.contains(psiFile, holder);
       }

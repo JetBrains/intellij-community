@@ -62,7 +62,7 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
         return false;
       }
       VirtualFile file = filePointer.getFile();
-      if (file != null && file.isValid() && filter.first.contains(file, filter.second)) {
+      if (file != null && file.isValid() && filter.first.contains(file, getProject(), filter.second)) {
         applyFilter(true);
         return true;
       }

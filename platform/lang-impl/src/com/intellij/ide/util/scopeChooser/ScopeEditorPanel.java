@@ -86,7 +86,7 @@ public class ScopeEditorPanel {
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
 
-  public ScopeEditorPanel(Project project, final NamedScopesHolder holder) {
+  public ScopeEditorPanel(@NotNull final Project project, final NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
 
@@ -105,8 +105,8 @@ public class ScopeEditorPanel {
     myTreeMarker = new Marker() {
       @Override
       public boolean isMarked(VirtualFile file) {
-        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, myHolder)
-                                                                                   : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myHolder), myHolder));
+        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, project, myHolder)
+                                                                                   : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myProject), myHolder));
       }
     };
 

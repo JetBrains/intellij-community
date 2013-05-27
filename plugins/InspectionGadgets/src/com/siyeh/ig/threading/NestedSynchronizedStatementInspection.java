@@ -26,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedSynchronizedStatementInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "nested.synchronized.statement.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "nested.synchronized.statement.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NestedSynchronizedStatementVisitor();
   }

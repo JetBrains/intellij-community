@@ -25,22 +25,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadDumpStackInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToThreadDumpStack";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("dumpstack.call.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "dumpstack.call.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThreadDumpStackVisitor();
   }

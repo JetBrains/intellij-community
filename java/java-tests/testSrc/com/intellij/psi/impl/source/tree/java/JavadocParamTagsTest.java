@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
@@ -163,7 +163,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
             final PsiDocTag[] tags = docComment.getTags();
             final PsiDocTag tag2 = factory.createParamTag("p2", "");
             docComment.addAfter(tag2, tags[0]);
-            docComment = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(docComment);
+            docComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(docComment);
             assertEquals(
               "/**\n" +
               " * Javadoc\n" +

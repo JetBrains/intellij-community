@@ -69,6 +69,7 @@ public class NonExceptionNameEndsWithExceptionInspection
       this.name = name;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

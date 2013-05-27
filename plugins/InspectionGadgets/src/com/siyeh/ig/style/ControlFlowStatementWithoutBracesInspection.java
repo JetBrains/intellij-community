@@ -50,6 +50,7 @@ public class ControlFlowStatementWithoutBracesInspection
 
   private static class ControlFlowStatementFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

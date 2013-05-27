@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +26,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,12 +45,14 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
    */
   public boolean m_ignoreStaticAccessFromStaticContext = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unqualified.static.usage.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     if (infos[0] instanceof PsiMethodCallExpression) {
@@ -63,6 +65,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
     }
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel =
       new MultipleCheckboxOptionsPanel(this);
@@ -78,10 +81,12 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
     return optionsPanel;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnqualifiedStaticCallVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     if (infos[0] instanceof PsiMethodCallExpression) {
       return new UnqualifiedStaticAccessFix(false);
@@ -100,6 +105,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
       m_fixField = fixField;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (m_fixField) {
@@ -112,6 +118,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
       }
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiReferenceExpression expression =

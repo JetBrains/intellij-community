@@ -27,7 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnnecessaryConstructorInspection extends BaseInspection {
 
@@ -77,6 +77,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
 
   private static class UnnecessaryConstructorFix
     extends InspectionGadgetsFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

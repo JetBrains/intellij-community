@@ -28,22 +28,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeStaticInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "field.may.be.static.display.name");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FieldMayBeStaticVisitor();
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.may.be.static.problem.descriptor");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new ChangeModifierFix(PsiModifier.STATIC);
   }

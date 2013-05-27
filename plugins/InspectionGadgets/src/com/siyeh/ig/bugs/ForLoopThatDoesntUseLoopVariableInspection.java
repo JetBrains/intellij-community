@@ -24,12 +24,14 @@ import org.jetbrains.annotations.NotNull;
 public class ForLoopThatDoesntUseLoopVariableInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "for.loop.not.use.loop.variable.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final boolean condition = ((Boolean)infos[0]).booleanValue();
@@ -46,6 +48,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
       "for.loop.not.use.loop.variable.problem.descriptor.update");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ForLoopThatDoesntUseLoopVariableVisitor();
   }

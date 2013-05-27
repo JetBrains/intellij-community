@@ -65,12 +65,14 @@ public class ConstantIfStatementInspection extends BaseInspection {
 
   private static class ConstantIfStatementFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement ifKeyword = descriptor.getPsiElement();

@@ -29,23 +29,27 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessarySuperConstructorInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "UnnecessaryCallToSuper";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unnecessary.super.constructor.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.super.constructor.problem.descriptor");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessarySuperConstructorFix();
   }
@@ -53,12 +57,14 @@ public class UnnecessarySuperConstructorInspection
   private static class UnnecessarySuperConstructorFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.super.constructor.remove.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement superCall = descriptor.getPsiElement();
@@ -68,6 +74,7 @@ public class UnnecessarySuperConstructorInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessarySuperConstructorVisitor();
   }

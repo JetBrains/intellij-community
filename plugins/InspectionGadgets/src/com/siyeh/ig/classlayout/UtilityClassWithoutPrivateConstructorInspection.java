@@ -100,6 +100,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
 
   private static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
@@ -122,6 +123,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         final PsiElement context = element.getParent();
         if (context instanceof PsiNewExpression) {
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               Messages.showInfoMessage(aClass.getProject(),
                                        "Utility class has instantiations, private constructor will not be created",
@@ -144,6 +146,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
 
   private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.make.quickfix");

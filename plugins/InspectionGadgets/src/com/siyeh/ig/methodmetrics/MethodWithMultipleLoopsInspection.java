@@ -23,12 +23,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodWithMultipleLoopsInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "method.with.multiple.loops.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer negationCount = (Integer)infos[0];
@@ -36,6 +38,7 @@ public class MethodWithMultipleLoopsInspection extends BaseInspection {
       "method.with.multiple.loops.problem.descriptor", negationCount);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodWithMultipleLoopsVisitor();
   }

@@ -57,6 +57,7 @@ public class InstantiatingObjectToGetClassObjectInspection
   private static class InstantiatingObjectToGetClassObjectFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

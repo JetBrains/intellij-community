@@ -80,12 +80,19 @@ class SuperMethodWarningDialog extends DialogWrapper {
                                  ? IdeBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, className)
                                  : IdeBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, className)));
     } else {
-      labelsPanel.add(new JLabel(IdeBundle.message("label.implements.method.of_interfaces")));
+      final JLabel multLabel = new JLabel(IdeBundle.message("label.implements.method.of_interfaces"));
+      multLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      labelsPanel.add(multLabel);
+ 
       for (final String className : myClassNames) {
         labelsPanel.add(new JLabel("    " + className));
       }
     }
-    labelsPanel.add(new JLabel(IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", myActionString, myClassNames.length > 1 ? 2 : 1)));
+ 
+    final JLabel doYouWantLabel = new JLabel(
+      IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", myActionString, myClassNames.length > 1 ? 2 : 1));
+    doYouWantLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+    labelsPanel.add(doYouWantLabel);
     panel.add(labelsPanel, BorderLayout.CENTER);
     return panel;
   }

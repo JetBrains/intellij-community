@@ -16,7 +16,7 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -172,7 +172,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       GenerateMembersUtil.insertMembersAtOffset(file, offset, Collections.singletonList(info));
 
       final PsiMethod member = info.getPsiMember();
-      return member != null ? CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(member) : null;
+      return member != null ? CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(member) : null;
     }
 
     private static int findOffsetToInsertMethodTo(Editor editor, PsiFile file) {

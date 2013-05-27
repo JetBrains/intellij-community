@@ -31,10 +31,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -53,7 +50,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-@NonNls public class TestEditorManagerImpl extends FileEditorManagerEx implements ApplicationComponent, ProjectComponent {
+@NonNls
+public class TestEditorManagerImpl extends FileEditorManagerEx implements ApplicationComponent, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
 
   private final Project myProject;
@@ -376,8 +374,14 @@ import java.util.Map;
 
   @Override
   @NotNull
-  public FileEditor[] getAllEditors(){
-    throw new UnsupportedOperationException();
+  public FileEditor[] getAllEditors() {
+    FileEditor[] result = new FileEditor[myVirtualFile2Editor.size()];
+    int i = 0;
+    for (Map.Entry<VirtualFile, Editor> entry : myVirtualFile2Editor.entrySet()) {
+      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(entry.getValue());
+      result[i++] = textEditor;
+    }
+    return result;
   }
 
   @Override

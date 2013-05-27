@@ -94,6 +94,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
       this.modifiersText = modifiersText;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", modifiersText);

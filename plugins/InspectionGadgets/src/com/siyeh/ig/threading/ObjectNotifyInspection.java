@@ -28,38 +28,45 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectNotifyInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToNotifyInsteadOfNotifyAll";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("object.notify.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "object.notify.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ObjectNotifyVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new ObjectNotifyFix();
   }
 
   private static class ObjectNotifyFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "object.notify.replace.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement methodNameElement = descriptor.getPsiElement();

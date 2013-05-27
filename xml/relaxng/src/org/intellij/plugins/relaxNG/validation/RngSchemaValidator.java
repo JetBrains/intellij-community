@@ -92,6 +92,9 @@ public class RngSchemaValidator extends ExternalAnnotator {
 
   public static void handleError(SAXParseException ex, PsiFile file, Document document, ValidationMessageConsumer consumer) {
     final String systemId = ex.getSystemId();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("RNG Schema error: " + ex.getMessage() + " [" + systemId + "]");
+    }
 
     if (systemId != null) {
       final VirtualFile virtualFile = findVirtualFile(systemId);

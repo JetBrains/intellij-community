@@ -32,18 +32,21 @@ import org.jetbrains.annotations.Nullable;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "redundant.method.override.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "redundant.method.override.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RedundantMethodOverrideFix();
@@ -52,12 +55,14 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   private static class RedundantMethodOverrideFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "redundant.method.override.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
@@ -67,6 +72,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new RedundantMethodOverrideVisitor();
   }

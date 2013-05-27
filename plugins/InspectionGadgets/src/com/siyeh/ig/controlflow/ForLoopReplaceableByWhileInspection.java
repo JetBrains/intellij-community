@@ -70,6 +70,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
 
   private static class ReplaceForByWhileFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

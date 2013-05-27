@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -58,13 +58,13 @@ class JavaWithForSurrounder extends JavaStatementsSurrounder{
     bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    forStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(forStatement);
+    forStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(forStatement);
     PsiStatement initialization = forStatement.getInitialization();
     if (initialization == null) {
       return null;
     }
     TextRange range1 = initialization.getTextRange();
-    
+
     PsiStatement update = forStatement.getUpdate();
     if (update == null) {
       return null;

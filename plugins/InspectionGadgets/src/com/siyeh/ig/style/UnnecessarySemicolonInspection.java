@@ -61,6 +61,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
 
   private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

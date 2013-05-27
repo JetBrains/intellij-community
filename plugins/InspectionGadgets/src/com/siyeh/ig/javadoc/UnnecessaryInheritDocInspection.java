@@ -59,6 +59,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
 
   private static class UnnecessaryInheritDocFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

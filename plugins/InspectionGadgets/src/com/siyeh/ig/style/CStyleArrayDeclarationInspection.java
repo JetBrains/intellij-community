@@ -30,18 +30,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class CStyleArrayDeclarationInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "c.style.array.declaration.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "c.style.array.declaration.problem.descriptor");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new CStyleArrayDeclarationFix();
   }
@@ -49,12 +52,14 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
   private static class CStyleArrayDeclarationFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "c.style.array.declaration.replace.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement nameElement = descriptor.getPsiElement();
@@ -64,6 +69,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new CStyleArrayDeclarationVisitor();
   }

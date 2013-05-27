@@ -31,18 +31,21 @@ import org.jetbrains.annotations.Nullable;
 
 public class SingleCharacterStartsWithInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "single.character.startswith.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "single.character.startswith.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new SingleCharacterStartsWithFix();
@@ -51,12 +54,14 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
   private static class SingleCharacterStartsWithFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "single.character.startswith.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
@@ -93,6 +98,7 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SingleCharacterStartsWithVisitor();
   }

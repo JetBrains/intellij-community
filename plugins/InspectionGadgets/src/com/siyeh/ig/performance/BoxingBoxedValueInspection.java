@@ -76,6 +76,7 @@ public class BoxingBoxedValueInspection extends BaseInspection {
 
   private static class BoxingBoxedValueFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

@@ -57,6 +57,7 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
 
   private static class AddSuperTearDownCall extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

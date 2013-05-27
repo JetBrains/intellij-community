@@ -25,17 +25,20 @@ import org.jetbrains.annotations.NotNull;
 public class ExternalizableWithSerializationMethodsInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ExternalizableClassWithSerializationMethods";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "externalizable.with.serialization.methods.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
@@ -54,6 +57,7 @@ public class ExternalizableWithSerializationMethodsInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ExternalizableDefinesSerializationMethodsVisitor();
   }

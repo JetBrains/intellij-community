@@ -70,6 +70,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
 
   private static class OverlyStrongCastFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

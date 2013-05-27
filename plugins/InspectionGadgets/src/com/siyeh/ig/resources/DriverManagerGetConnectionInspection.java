@@ -27,23 +27,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class DriverManagerGetConnectionInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToDriverManagerGetConnection";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "drivermanager.call.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "drivermanager.call.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DriverManagerGetConnectionVisitor();
   }

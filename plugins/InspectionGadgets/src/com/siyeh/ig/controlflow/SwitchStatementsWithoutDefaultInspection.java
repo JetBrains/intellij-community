@@ -29,26 +29,31 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreFullyCoveredEnums = true;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("switch.statements.without.default.display.name");
   }
 
+  @Override
   @NotNull
   public String getID() {
     return "SwitchStatementWithoutDefaultBranch";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("switch.statements.without.default.problem.descriptor");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option"),
                                           this, "m_ignoreFullyCoveredEnums");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SwitchStatementsWithoutDefaultVisitor();
   }

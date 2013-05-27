@@ -55,6 +55,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
 
   private static class UnnecessarySuperQualifierFix
     extends InspectionGadgetsFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

@@ -25,20 +25,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "type.parameter.hides.visible.type.display.name");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
@@ -47,6 +51,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
       aClass.getQualifiedName());
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TypeParameterHidesVisibleTypeVisitor();
   }

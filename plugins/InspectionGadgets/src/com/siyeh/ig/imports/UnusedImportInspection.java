@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public class UnusedImportInspection extends BaseInspection {
 
     @Override
     public void visitJavaFile(PsiJavaFile file) {
-      if (JspPsiUtil.isInJspFile(file)) {
+      if (FileTypeUtils.isInJsp(file)) {
         return;
       }
       final PsiImportList importList = file.getImportList();

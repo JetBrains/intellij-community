@@ -58,6 +58,7 @@ public class ExtendsObjectInspection extends BaseInspection {
 
   private static class ExtendsObjectFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

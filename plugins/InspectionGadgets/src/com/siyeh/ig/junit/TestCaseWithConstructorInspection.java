@@ -25,17 +25,20 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestCaseWithConstructorInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "JUnitTestCaseWithNonTrivialConstructors";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "test.case.with.constructor.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     if (Boolean.TRUE.equals(infos[0])) {
@@ -48,6 +51,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TestCaseWithConstructorVisitor();
   }

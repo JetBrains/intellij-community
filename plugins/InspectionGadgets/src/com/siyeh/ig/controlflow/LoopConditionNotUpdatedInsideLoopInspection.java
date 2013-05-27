@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,18 +38,21 @@ public class LoopConditionNotUpdatedInsideLoopInspection
   @SuppressWarnings({"PublicField"})
   public boolean ignoreIterators = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "loop.condition.not.updated.inside.loop.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "loop.condition.not.updated.inside.loop.problem.descriptor");
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
@@ -57,6 +60,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection
       this, "ignoreIterators");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LoopConditionNotUpdatedInsideLoopVisitor();
   }

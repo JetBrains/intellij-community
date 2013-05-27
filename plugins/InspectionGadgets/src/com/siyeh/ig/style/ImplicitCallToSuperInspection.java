@@ -28,7 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ImplicitCallToSuperInspection extends BaseInspection {
 
@@ -63,6 +63,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
 
   private static class AddExplicitSuperCall extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

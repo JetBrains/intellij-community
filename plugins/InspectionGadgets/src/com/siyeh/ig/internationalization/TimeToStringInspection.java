@@ -24,23 +24,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class TimeToStringInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToTimeToString";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "time.tostring.call.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "time.tostring.call.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TimeToStringVisitor();
   }

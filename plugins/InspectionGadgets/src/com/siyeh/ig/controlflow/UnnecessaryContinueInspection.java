@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,16 +34,19 @@ public class UnnecessaryContinueInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreInThenBranch = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("unnecessary.continue.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.continue.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -52,10 +56,12 @@ public class UnnecessaryContinueInspection extends BaseInspection {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.return.option"), this, "ignoreInThenBranch");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryContinueVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new DeleteUnnecessaryStatementFix("continue");
   }
@@ -64,7 +70,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
 
     @Override
     public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
         return;
       }
       final PsiStatement continuedStatement = statement.findContinuedStatement();

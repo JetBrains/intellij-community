@@ -68,6 +68,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
   private static class ExtendsObjectFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -110,6 +111,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ExtendsObjectVisitor();
   }

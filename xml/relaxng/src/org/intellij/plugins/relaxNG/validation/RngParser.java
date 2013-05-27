@@ -18,7 +18,9 @@ package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +32,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.util.XmlUtil;
+import com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl;
 import com.thaiopensource.relaxng.impl.SchemaReaderImpl;
 import com.thaiopensource.util.PropertyMap;
 import com.thaiopensource.util.PropertyMapBuilder;
@@ -38,17 +41,26 @@ import com.thaiopensource.xml.sax.Sax2XMLReaderCreator;
 import com.thaiopensource.xml.sax.XMLReaderCreator;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.ast.builder.BuildException;
 import org.kohsuke.rngom.ast.builder.IncludedGrammar;
 import org.kohsuke.rngom.ast.builder.SchemaBuilder;
 import org.kohsuke.rngom.ast.om.ParsedPattern;
 import org.kohsuke.rngom.binary.SchemaBuilderImpl;
+import org.kohsuke.rngom.binary.SchemaPatternBuilder;
 import org.kohsuke.rngom.digested.DPattern;
 import org.kohsuke.rngom.digested.DSchemaBuilderImpl;
+import org.kohsuke.rngom.dt.CachedDatatypeLibraryFactory;
+import org.kohsuke.rngom.dt.CascadingDatatypeLibraryFactory;
+import org.kohsuke.rngom.dt.DoNothingDatatypeLibraryFactoryImpl;
+import org.kohsuke.rngom.dt.builtin.BuiltinDatatypeLibraryFactory;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
 import org.kohsuke.rngom.parse.Parseable;
 import org.kohsuke.rngom.parse.compact.CompactParseable;
 import org.kohsuke.rngom.parse.xml.SAXParseable;
+import org.relaxng.datatype.DatatypeLibrary;
+import org.relaxng.datatype.DatatypeLibraryFactory;
+import org.relaxng.datatype.helpers.DatatypeLibraryLoader;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -64,6 +76,29 @@ import java.io.StringReader;
 */
 public class RngParser {
   private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.RngParser");
+
+  private static final NotNullLazyValue<DatatypeLibraryFactory> DT_LIBRARY_FACTORY = new AtomicNotNullLazyValue<DatatypeLibraryFactory>() {
+    @NotNull
+    @Override
+    protected DatatypeLibraryFactory compute() {
+      return new BuiltinDatatypeLibraryFactory(new CachedDatatypeLibraryFactory(
+        new CascadingDatatypeLibraryFactory(createXsdDatatypeFactory(), new DatatypeLibraryLoader())) {
+          @Override
+          public synchronized DatatypeLibrary createDatatypeLibrary(String namespaceURI) {
+            return super.createDatatypeLibrary(namespaceURI);
+          }
+        });
+    }
+  };
+
+  private static DatatypeLibraryFactory createXsdDatatypeFactory() {
+    try {
+      return new DatatypeLibraryFactoryImpl();
+    } catch (Throwable e) {
+      LOG.error("Could not create DT library implementation 'com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl'. Plugin's classpath seems to be broken.", e);
+      return new DoNothingDatatypeLibraryFactoryImpl();
+    }
+  }
 
   static final Key<CachedValue<Schema>> SCHEMA_KEY = Key.create("SCHEMA");
   static final Key<CachedValue<DPattern>> PATTERN_KEY = Key.create("PATTERN");
@@ -91,14 +126,21 @@ public class RngParser {
     try {
       final Parseable p = createParsable(file, eh);
       if (checking) {
-        p.parse(new SchemaBuilderImpl(eh));
+        p.parse(new SchemaBuilderImpl(eh, DT_LIBRARY_FACTORY.getValue(), new SchemaPatternBuilder()));
       } else {
         return p.parse(new DSchemaBuilderImpl());
       }
     } catch (BuildException e) {
       LOG.info(e);
     } catch (IllegalSchemaException e) {
-      LOG.info("invalid schema: " + file.getVirtualFile().getPresentableUrl());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("invalid schema: " + virtualFile.getPresentableUrl(), e);
+        } else {
+          LOG.info("invalid schema: " + virtualFile.getPresentableUrl() + ". [" + e.getMessage() + "]");
+        }
+      }
     }
     return null;
   }
@@ -151,6 +193,9 @@ public class RngParser {
       //    "file://tmp/foo.bar"  (produced by com.intellij.openapi.vfs.VfsUtil.fixIDEAUrl) doesn't work: "java.net.UnknownHostException: tmp"
       //    "file:/tmp/foo.bar"   (produced by File.toURL()) works fine
       s = s.replaceFirst("file:/+", "file:/");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Fixed URL: " + url + " -> " + s);
+      }
     }
     return s;
   }

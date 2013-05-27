@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -118,7 +118,7 @@ public class GrSetStrongTypeIntention extends Intention {
     builder.replaceElement(replaceElement, chooseTypeExpression);
 
 
-    final PsiElement afterPostprocess = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(elementToBuildTemplate);
+    final PsiElement afterPostprocess = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(elementToBuildTemplate);
     final Template template = builder.buildTemplate();
     TextRange range = afterPostprocess.getTextRange();
     Document document = editor.getDocument();

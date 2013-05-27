@@ -26,21 +26,25 @@ import java.util.Set;
 
 public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "LocalVariableUsedAndDeclaredInDifferentSwitchBranches";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("switch.statement.with.confusing.declaration.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("switch.statement.with.confusing.declaration.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SwitchStatementWithConfusingDeclarationVisitor();
   }

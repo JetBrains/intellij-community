@@ -16,9 +16,9 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.psi.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,17 +39,20 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
    */
   public boolean m_ignorePrimitives = false;
 
+  @Override
   @NotNull
   public String getID() {
     return "InstanceVariableMayNotBeInitialized";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "instance.variable.may.not.be.initialized.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Boolean junitTestCase = (Boolean)infos[0];
@@ -61,16 +64,19 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       "instance.variable.may.not.be.initialized.problem.descriptor");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
       InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
       this, "m_ignorePrimitives");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new MakeInitializerExplicitFix();
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new InstanceVariableInitializationVisitor();
   }

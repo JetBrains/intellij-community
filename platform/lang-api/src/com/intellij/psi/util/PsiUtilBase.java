@@ -45,7 +45,6 @@ import javax.swing.*;
 import java.util.*;
 
 public class PsiUtilBase extends PsiUtilCore {
-
   public static final PsiParser NULL_PARSER = new PsiParser() {
     @Override
     @NotNull
@@ -165,15 +164,6 @@ public class PsiUtilBase extends PsiUtilCore {
     if (project == null) return null;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     return file == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
-  }
-
-  public static Language getDialect(@NotNull PsiElement element) {
-    return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
-  }
-
-  private static Language narrowLanguage(final Language language, final Language candidate) {
-    if (candidate.isKindOf(language)) return candidate;
-    return language;
   }
 
   @Nullable

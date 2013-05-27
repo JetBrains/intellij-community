@@ -28,29 +28,34 @@ import org.jetbrains.annotations.Nullable;
 public class HashCodeUsesNonFinalVariableInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "NonFinalFieldReferencedInHashCode";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "non.final.field.in.hashcode.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.field.in.hashcode.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new HashCodeUsesNonFinalVariableVisitor();
   }

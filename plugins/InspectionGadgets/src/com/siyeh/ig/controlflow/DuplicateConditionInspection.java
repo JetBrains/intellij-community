@@ -40,22 +40,26 @@ public class DuplicateConditionInspection extends BaseInspection {
   // This is a dirty fix of 'squared' algorithm performance issue.
   private static final int LIMIT_DEPTH = 20;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("duplicate.condition.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("duplicate.condition.problem.descriptor");
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option"),
                                           this, "ignoreMethodCalls");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DuplicateConditionVisitor();
   }

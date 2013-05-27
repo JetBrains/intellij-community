@@ -60,6 +60,7 @@ public class ConditionSignalInspection extends BaseInspection {
 
   private static class ConditionSignalFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

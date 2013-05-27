@@ -29,18 +29,21 @@ import org.jetbrains.annotations.NotNull;
 public class IteratorHasNextCallsIteratorNextInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "iterator.hasnext.which.calls.next.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "iterator.hasnext.which.calls.next.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IteratorHasNextCallsIteratorNext();
   }

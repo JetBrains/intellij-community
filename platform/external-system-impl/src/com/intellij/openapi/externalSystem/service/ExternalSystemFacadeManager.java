@@ -186,8 +186,8 @@ public class ExternalSystemFacadeManager {
         return params;
       }
 
-      @NotNull
       @Override
+      @NotNull
       public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         ProcessHandler processHandler = startProcess();
         return new DefaultExecutionResult(null, processHandler, AnAction.EMPTY_ARRAY);

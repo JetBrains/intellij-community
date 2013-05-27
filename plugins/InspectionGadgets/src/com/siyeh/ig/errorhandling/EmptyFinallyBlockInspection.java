@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyFinallyBlockInspection extends BaseInspection {
@@ -57,6 +58,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
   }
 
   private static class RemoveTryFinallyBlockFix extends InspectionGadgetsFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("remove.try.finally.block.quickfix");
@@ -98,6 +100,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
   }
 
   private static class RemoveFinallyBlockFix extends InspectionGadgetsFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("remove.finally.block.quickfix");
@@ -147,7 +150,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
     public void visitTryStatement(
       @NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
         return;
       }
       final PsiCodeBlock finallyBlock = statement.getFinallyBlock();

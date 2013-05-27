@@ -440,4 +440,13 @@ public class PsiUtilCore {
     int index = qName.lastIndexOf('.');
     return index < 0 ? newName : qName.substring(0, index + 1) + newName;
   }
+
+  public static Language getDialect(@NotNull PsiElement element) {
+    return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
+  }
+
+  protected static Language narrowLanguage(final Language language, final Language candidate) {
+    if (candidate.isKindOf(language)) return candidate;
+    return language;
+  }
 }

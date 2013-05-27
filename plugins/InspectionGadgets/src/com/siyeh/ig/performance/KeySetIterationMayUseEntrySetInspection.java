@@ -63,6 +63,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
   private static class KeySetIterationMapUseEntrySetFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

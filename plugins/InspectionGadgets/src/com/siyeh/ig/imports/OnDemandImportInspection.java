@@ -19,20 +19,24 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class OnDemandImportInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("import.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("import.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PackageImportVisitor();
   }
@@ -47,7 +51,7 @@ public class OnDemandImportInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)parent;
-      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(aClass.getContainingFile())) {
         return;
       }
       if (!file.getClasses()[0].equals(aClass)) {

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
@@ -214,7 +214,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
                                ExpectedTypeInfo[] expectedTypes,
                                @Nullable final PsiElement context) {
 
-    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
+    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
     if (method == null) {
       return;
@@ -231,7 +231,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       .setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
     PsiCodeBlock body = method.getBody();
     builder.setEndVariableAfter(shouldBeAbstract || body == null ? method : body.getLBrace());
-    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
+    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
     if (method == null) return;
 
     RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());

@@ -79,6 +79,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
   private static class CharUsedInArithmeticContentFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.quickfix");
@@ -108,6 +109,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       this.typeText = typeText;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.cast.quickfix", typeText);

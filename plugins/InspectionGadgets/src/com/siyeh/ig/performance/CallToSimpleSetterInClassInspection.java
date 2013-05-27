@@ -42,21 +42,25 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
   @SuppressWarnings("UnusedDeclaration")
   public boolean onlyReportPrivateSetter = false;
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToSimpleSetterFromWithinClass";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
@@ -67,17 +71,20 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
     return optionsPanel;
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new InlineCallFix();
   }
 
   private static class InlineCallFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.inline.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement methodIdentifier = descriptor.getPsiElement();
@@ -133,6 +140,7 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new CallToSimpleSetterInClassVisitor();
   }

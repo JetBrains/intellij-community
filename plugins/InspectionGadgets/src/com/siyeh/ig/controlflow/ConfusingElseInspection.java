@@ -72,6 +72,7 @@ public class ConfusingElseInspection extends BaseInspection {
 
   private static class ConfusingElseFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("confusing.else.unwrap.quickfix");

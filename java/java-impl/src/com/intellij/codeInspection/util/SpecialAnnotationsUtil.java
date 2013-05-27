@@ -16,12 +16,8 @@
 
 package com.intellij.codeInspection.util;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -32,24 +28,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -169,7 +159,7 @@ public class SpecialAnnotationsUtil {
 
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        doQuickFixInternal(project, targetList, qualifiedName);
+        SpecialAnnotationsUtilBase.doQuickFixInternal(project, targetList, qualifiedName);
       }
 
       @Override
@@ -177,63 +167,5 @@ public class SpecialAnnotationsUtil {
         return true;
       }
     };
-  }
-
-  public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(final String text,
-                                                                        final String family,
-                                                                        final List<String> targetList,
-                                                                        final String qualifiedName,
-                                                                        final PsiElement context) {
-    return new LocalQuickFix() {
-      @Override
-      @NotNull
-      public String getName() {
-        return text;
-      }
-
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return family;
-      }
-
-      @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        doQuickFixInternal(project, targetList, qualifiedName);
-      }
-    };
-  }
-
-  private static void doQuickFixInternal(final Project project, final List<String> targetList, final String qualifiedName) {
-    targetList.add(qualifiedName);
-    Collections.sort(targetList);
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    //correct save settings
-
-    //TODO lesya
-    InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
-    /*
-    try {
-      inspectionProfile.save();
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-    }
-
-    */
-  }
-
-  public static void createAddToSpecialAnnotationFixes(final PsiModifierListOwner owner, final Processor<String> processor) {
-    final PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null) {
-      final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
-      for (PsiAnnotation psiAnnotation : psiAnnotations) {
-        @NonNls final String name = psiAnnotation.getQualifiedName();
-        if (name == null) continue;
-        if (name.startsWith("java.") || name.startsWith("javax.") ||
-            (name.startsWith("org.jetbrains.") && AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name)))) continue;
-        if (!processor.process(name)) break;
-      }
-    }
   }
 }

@@ -17,9 +17,9 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,16 +30,19 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
   @SuppressWarnings({"PublicField"})
   public boolean reportMethodParameters = true;
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("synchronization.on.local.variable.or.method.parameter.display.name");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Boolean localVariable = (Boolean)infos[0];
@@ -51,12 +54,14 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SynchronizationOnLocalVariableVisitor();
   }
 
   private class SynchronizationOnLocalVariableVisitor extends BaseInspectionVisitor {
 
+    @Override
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       if (!reportLocalVariables && !reportMethodParameters) {

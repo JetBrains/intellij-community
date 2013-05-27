@@ -30,11 +30,7 @@ import org.jetbrains.annotations.NotNull;
                     "OverlyLongMethod",
                     "ClassWithTooManyMethods"})
 public class InspectionGadgetsPlugin implements ApplicationComponent {
-
-  private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
-  private volatile boolean telemetryEnabled = false;
-
-  public static boolean getUpToDateTelemetryEnabled(final Consumer<Boolean> consumer, Disposable disposable) {
+  public static boolean getUpToDateTelemetryEnabled(@NotNull final Consumer<Boolean> consumer, @NotNull Disposable disposable) {
     final RegistryValue registryValue = Registry.get("inspectionGadgets.telemetry.enabled");
     registryValue.addListener(new RegistryValueListener.Adapter() {
       @Override
@@ -58,24 +54,24 @@ public class InspectionGadgetsPlugin implements ApplicationComponent {
     return "InspectionGadgets";
   }
 
+  @NotNull
   public InspectionGadgetsTelemetry getTelemetry() {
-    return telemetry;
+    return InspectionGadgetsTelemetry.getInstance();
   }
 
   @Override
   public void initComponent() {
-    telemetryEnabled = getUpToDateTelemetryEnabled(new Consumer<Boolean>() {
+    boolean telemetryEnabled = getUpToDateTelemetryEnabled(new Consumer<Boolean>() {
       @Override
       public void consume(Boolean value) {
-        telemetryEnabled = value.booleanValue();
-        if (telemetryEnabled) {
-          telemetry.reset();
-        }
+        boolean enabled = value.booleanValue();
+        InspectionGadgetsTelemetry.setEnabled(enabled);
       }
     }, ApplicationManager.getApplication());
+    InspectionGadgetsTelemetry.setEnabled(telemetryEnabled);
   }
 
   public boolean isTelemetryEnabled() {
-    return telemetryEnabled;
+    return InspectionGadgetsTelemetry.isEnabled();
   }
 }

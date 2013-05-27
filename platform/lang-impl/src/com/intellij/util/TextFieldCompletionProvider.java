@@ -2,6 +2,8 @@ package com.intellij.util;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
@@ -67,6 +69,25 @@ public abstract class TextFieldCompletionProvider {
   protected abstract void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result);
 
   public EditorTextField createEditor(Project project) {
-    return new EditorTextField(createDocument(project, ""), project, PlainTextLanguage.INSTANCE.getAssociatedFileType());
+    return createEditor(project, true);
+  }
+  
+  public EditorTextField createEditor(Project project, final boolean shouldHaveBorder) {
+    return new EditorTextField(createDocument(project, ""), project, PlainTextLanguage.INSTANCE.getAssociatedFileType()) {
+      @Override
+      protected boolean shouldHaveBorder() {
+        return shouldHaveBorder;
+      }
+
+      @Override
+      protected void updateBorder(@NotNull EditorEx editor) {
+        if (shouldHaveBorder) {
+          super.updateBorder(editor);
+        }
+        else {
+          editor.setBorder(null);
+        }
+      }
+    };
   }
 }

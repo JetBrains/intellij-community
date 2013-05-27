@@ -312,6 +312,7 @@ param
 params
 patcher
 patchers
+pathname
 pctfree
 pctincrease
 pctthreshold
@@ -399,6 +400,7 @@ serializer
 serializers
 servererror
 servlet
+servlets
 shader
 significand
 significands
@@ -489,6 +491,7 @@ varray
 verdana
 versa
 vertices
+viewlet
 vtlvariable
 watchlist
 webservice

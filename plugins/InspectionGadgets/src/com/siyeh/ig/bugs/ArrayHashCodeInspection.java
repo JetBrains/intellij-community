@@ -66,6 +66,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
       this.deepHashCode = deepHashCode;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (deepHashCode) {

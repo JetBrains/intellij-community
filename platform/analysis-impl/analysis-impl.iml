@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="extensions" />
+    <orderEntry type="module" module-name="resources-en" />
   </component>
 </module>
 

@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -60,7 +60,7 @@ class StatementMover extends LineMover {
       final PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statementToSurroundWithCodeBlock);
       blockStatement.getCodeBlock().replace(codeBlock);
       PsiBlockStatement newStatement = (PsiBlockStatement)statementToSurroundWithCodeBlock.replace(blockStatement);
-      newStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newStatement);
+      newStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newStatement);
       info.toMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()), document.getLineNumber(lineRangeMarker.getEndOffset())+1);
       PsiCodeBlock newCodeBlock = newStatement.getCodeBlock();
       if (down) {

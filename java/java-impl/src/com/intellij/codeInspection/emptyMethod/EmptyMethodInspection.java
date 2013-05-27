@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -134,10 +135,10 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     if (message != null) {
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
-      SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
+      SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
         @Override
         public boolean process(final String qualifiedName) {
-          fixes.add(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
+          fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
             QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
             QuickFixBundle.message("fix.add.special.annotation.family"),
             EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));

@@ -63,6 +63,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
   }
 
   private static class MathRandomCastToIntegerFix extends InspectionGadgetsFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

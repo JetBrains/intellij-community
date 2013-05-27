@@ -63,6 +63,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
     }
 
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

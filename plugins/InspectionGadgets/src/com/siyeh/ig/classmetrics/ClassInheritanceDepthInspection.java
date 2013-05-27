@@ -28,6 +28,7 @@ import java.util.Set;
 public class ClassInheritanceDepthInspection
   extends ClassMetricInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ClassTooDeepInInheritanceTree";
@@ -35,20 +36,24 @@ public class ClassInheritanceDepthInspection
 
   private static final int CLASS_INHERITANCE_LIMIT = 2;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("class.too.deep.display.name");
   }
 
+  @Override
   protected int getDefaultLimit() {
     return CLASS_INHERITANCE_LIMIT;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message(
       "class.too.deep.inheritance.depth.limit.option");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
@@ -56,6 +61,7 @@ public class ClassInheritanceDepthInspection
       "class.too.deep.problem.descriptor", count);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassNestingLevel();
   }

@@ -142,6 +142,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
       m_name = InspectionGadgetsBundle.message("string.replace.quickfix", calculateReplacementExpression(expression));
     }
 
+    @Override
     @NotNull
     public String getName() {
       return m_name;

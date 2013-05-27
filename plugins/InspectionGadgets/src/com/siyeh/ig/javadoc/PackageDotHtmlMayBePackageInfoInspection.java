@@ -73,6 +73,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
   private static class DeletePackageDotHtmlFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.delete.quickfix");
@@ -107,6 +108,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       this.aPackage = aPackage;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.convert.quickfix");
@@ -165,6 +167,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
           final AsyncResult<DataContext> dataContextFromFocus = DataManager.getInstance().getDataContextFromFocus();
           dataContextFromFocus.doWhenDone(
             new AsyncResult.Handler<DataContext>() {
+              @Override
               public void run(DataContext dataContext) {
                 final FileEditorManager editorManager = FileEditorManager.getInstance(project);
                 final VirtualFile virtualFile = file.getVirtualFile();

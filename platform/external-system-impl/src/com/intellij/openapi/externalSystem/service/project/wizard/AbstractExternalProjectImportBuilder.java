@@ -309,7 +309,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   /**
-   * Applies gradle-plugin-specific settings like project files location etc to the given context.
+   * Applies external system-specific settings like project files location etc to the given context.
    * 
    * @param context  storage for the project/module settings.
    */

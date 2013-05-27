@@ -39,6 +39,7 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
       "cyclic.class.dependency.display.name");
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
     RefEntity refEntity,

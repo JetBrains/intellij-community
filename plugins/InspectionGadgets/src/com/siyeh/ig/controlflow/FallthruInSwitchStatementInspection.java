@@ -16,11 +16,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,42 +27,48 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.regex.Pattern;
 
 public class FallthruInSwitchStatementInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("fallthru.in.switch.statement.display.name");
   }
 
+  @Override
   @NotNull
   public String getID() {
     return "fallthrough";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("fallthru.in.switch.statement.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new FallthruInSwitchStatementFix();
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FallthroughInSwitchStatementVisitor();
   }
 
   private static class FallthruInSwitchStatementFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)descriptor.getPsiElement();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

@@ -25,6 +25,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -86,7 +87,7 @@ public class InspectionProfileConvertor {
         Element e = (Element)o;
         String key = e.getName();
         String levelName = e.getAttributeValue(LEVEL_ATT);
-        HighlightSeverity severity = myManager.getSeverityRegistrar().getSeverity(levelName);
+        HighlightSeverity severity = ((InspectionProfileManagerImpl)myManager).getSeverityRegistrar().getSeverity(levelName);
         HighlightDisplayLevel level = severity == null ? null : HighlightDisplayLevel.find(severity);
         if (level == null) continue;
         myDisplayLevelMap.put(key, level);

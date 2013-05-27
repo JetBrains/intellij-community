@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
@@ -40,7 +40,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,9 +63,10 @@ public class HighlightUtils {
     }
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
+      @Override
       public void run() {
         final PsiElement[] elements =
-          PsiUtilBase.toPsiElementArray(elementCollection);
+          PsiUtilCore.toPsiElementArray(elementCollection);
         final PsiElement firstElement = elements[0];
         if (!firstElement.isValid()) {
           return;
@@ -110,7 +111,7 @@ public class HighlightUtils {
   public static void showRenameTemplate(PsiElement context,
                                         PsiNameIdentifierOwner element,
                                         PsiReference... references) {
-    context = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
+    context = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(
       context);
     final Project project = context.getProject();
     final FileEditorManager fileEditorManager =

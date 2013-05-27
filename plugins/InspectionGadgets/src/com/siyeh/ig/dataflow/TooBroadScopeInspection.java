@@ -30,15 +30,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Collection;
 
 public class TooBroadScopeInspection extends BaseInspection {
@@ -94,6 +91,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       this.variableName = variableName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", variableName);
@@ -407,7 +405,7 @@ public class TooBroadScopeInspection extends BaseInspection {
           return;
         }
       }
-      if (insertionPoint != null && JspPsiUtil.isInJspFile(insertionPoint)) {
+      if (insertionPoint != null && FileTypeUtils.isInJsp(insertionPoint)) {
         PsiElement elementBefore = insertionPoint.getPrevSibling();
         elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore, PsiWhiteSpace.class);
         if (elementBefore instanceof PsiDeclarationStatement) {
