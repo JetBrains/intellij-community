@@ -281,7 +281,6 @@ binding.setVariable("platformImplementationModules", [
   "xdebugger-impl",
   "xml",
   "xml-psi-impl",
-  "terminal",
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
