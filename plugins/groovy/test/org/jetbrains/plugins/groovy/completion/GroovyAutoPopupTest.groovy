@@ -221,7 +221,9 @@ class Foo extends Abcdefg <caret>'''
     myFixture.addClass("package bar; public class Abcdefg {}")
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'Abcde '
-    myFixture.checkResult 'Abcdefg <caret>'
+    myFixture.checkResult '''import bar.Abcdefg
+
+Abcdefg <caret>'''
   }
 
   public void testPrivate() {

@@ -73,9 +73,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result) {
-    final ClassByNameMerger merger = new ClassByNameMerger(parameters, result);
-
+  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
     GroovyCompletionContributor.addAllClasses(parameters, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
@@ -84,11 +82,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         if (classElement != null) {
           classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
-        merger.consume(classElement);
+        result.addElement(element);
       }
     }, new InheritorsHolder(parameters.getPosition(), result), result.getPrefixMatcher());
-
-    merger.finishedClassProcessing();
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {
