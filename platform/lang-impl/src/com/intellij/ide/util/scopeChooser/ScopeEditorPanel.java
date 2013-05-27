@@ -86,7 +86,7 @@ public class ScopeEditorPanel {
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
 
-  public ScopeEditorPanel(final Project project, final NamedScopesHolder holder) {
+  public ScopeEditorPanel(@NotNull final Project project, final NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
 

@@ -40,7 +40,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   protected final Project myProject;
   private VirtualFile myProjectBaseDir;
 
-  public NamedScopesHolder(final Project project) {
+  public NamedScopesHolder(@NotNull Project project) {
     myProject = project;
   }
 
@@ -101,7 +101,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @Nullable
-  public static NamedScope getScope(final Project project, final String scopeName) {
+  public static NamedScope getScope(@NotNull Project project, final String scopeName) {
     final NamedScopesHolder[] holders = getAllNamedScopeHolders(project);
     for (NamedScopesHolder holder : holders) {
       final NamedScope scope = holder.getScope(scopeName);
@@ -112,7 +112,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return null;
   }
 
-  public static NamedScopesHolder[] getAllNamedScopeHolders(final Project project) {
+  public static NamedScopesHolder[] getAllNamedScopeHolders(@NotNull Project project) {
     NamedScopesHolder[] holders = new NamedScopesHolder[2];
     holders [0] = NamedScopeManager.getInstance(project);
     holders [1] = DependencyValidationManager.getInstance(project);
@@ -190,6 +190,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return null;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

@@ -24,6 +24,7 @@ import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.Colored;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,7 +42,7 @@ public class TestsScope extends NamedScope {
       }
 
       @Override
-      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+      public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
         return file != null && index.isInTestSourceContent(file);
       }

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +38,7 @@ public class ProjectFilesScope extends NamedScope {
       }
 
       @Override
-      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+      public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         if (file == null) return false;
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         return holder.getProject().isInitialized()

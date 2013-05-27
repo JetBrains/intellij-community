@@ -79,6 +79,7 @@ import java.util.Map;
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   public static ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
+  @NotNull
   protected final Project myProject;
   private Runnable myTreeChangeListener;
   protected DnDAwareTree myTree;
@@ -102,7 +103,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  protected AbstractProjectViewPane(Project project) {
+  protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
     WolfTheProblemSolver.ProblemListener problemListener = new WolfTheProblemSolver.ProblemListener() {
       @Override
