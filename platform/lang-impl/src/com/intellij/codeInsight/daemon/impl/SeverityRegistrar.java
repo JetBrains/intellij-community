@@ -29,7 +29,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -81,11 +83,11 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public static SeverityRegistrar getInstance() {
-    return InspectionProfileManager.getInstance().getSeverityRegistrar();
+    return ((InspectionProfileManagerImpl)InspectionProfileManager.getInstance()).getSeverityRegistrar();
   }
 
   public static SeverityRegistrar getInstance(@Nullable Project project) {
-    return project != null ? InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar() : getInstance();
+    return project != null ? InspectionProjectProfileManagerImpl.getInstanceImpl(project).getSeverityRegistrar() : getInstance();
   }
 
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor){

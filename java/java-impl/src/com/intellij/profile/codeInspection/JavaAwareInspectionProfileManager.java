@@ -25,7 +25,7 @@ import com.intellij.codeInsight.daemon.JavaAwareInspectionProfileCoverter;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.options.SchemesManagerFactory;
 
-public class JavaAwareInspectionProfileManager extends InspectionProfileManager{
+public class JavaAwareInspectionProfileManager extends InspectionProfileManagerImpl {
   public JavaAwareInspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
     super(registrar, schemesManagerFactory);
   }

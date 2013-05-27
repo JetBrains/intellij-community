@@ -24,6 +24,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +42,10 @@ public class DaemonCodeAnalyzerSettingsImpl extends DaemonCodeAnalyzerSettings i
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings");
   @NonNls private static final String ROOT_TAG = "root";
   @NonNls private static final String PROFILE_ATT = "profile";
-  @NonNls public static final String DEFAULT_PROFILE_ATT = "Default";
-  @NonNls public static final String PROFILE_COPY_NAME = "copy";
-  private final InspectionProfileManager myManager;
+  private final InspectionProfileManagerImpl myManager;
 
   public DaemonCodeAnalyzerSettingsImpl(InspectionProfileManager manager) {
-    myManager = manager;
+    myManager = (InspectionProfileManagerImpl)manager;
   }
 
   @Override

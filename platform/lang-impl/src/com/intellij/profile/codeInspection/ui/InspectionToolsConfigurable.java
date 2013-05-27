@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBScrollPane;
@@ -158,7 +159,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
               }
               for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
                 String level = iterator.next();
-                if (myProfileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
+                if (((InspectionProfileManagerImpl)myProfileManager).getOwnSeverityRegistrar().getSeverity(level) != null) {
                   iterator.remove();
                 }
               }
@@ -172,7 +173,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
                     HighlightInfoType.HighlightInfoTypeImpl info
                       = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50), com.intellij.openapi.editor.colors
                       .TextAttributesKey.createTextAttributesKey(level));
-                    myProfileManager.getOwnSeverityRegistrar()
+                    ((InspectionProfileManagerImpl)myProfileManager).getOwnSeverityRegistrar()
                       .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
                                         textAttributes.getErrorStripeColor());
                   }

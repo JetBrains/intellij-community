@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -34,12 +32,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -52,14 +46,13 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: anna
  * Date: 29-Nov-2005
  */
-public class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider, ExportableComponent, JDOMExternalizable,
+public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, ExportableComponent, JDOMExternalizable,
                                                                                    NamedComponent {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
@@ -70,21 +63,19 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   @NonNls private static final String INSPECTION_DIR = "inspection";
   @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION_DIR;
 
-  private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
-
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
-  public static InspectionProfileManager getInstance() {
-    return ServiceManager.getService(InspectionProfileManager.class);
+  public static InspectionProfileManagerImpl getInstanceImpl() {
+    return (InspectionProfileManagerImpl)ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  public InspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
+  public InspectionProfileManagerImpl(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
       @Override
       public InspectionProfileImpl readScheme(final Document document) {
-        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManager.this);
+        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
         profile.load(document.getRootElement());
         return profile;
       }
@@ -178,14 +169,14 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     }
   }
 
-  public void createDefaultProfile() {
+  private void createDefaultProfile() {
     final InspectionProfileImpl defaultProfile = (InspectionProfileImpl)createProfile();
     defaultProfile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
     addProfile(defaultProfile);
   }
 
 
-  public Profile loadProfile(String path) throws IOException, JDOMException {
+  public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()){
       InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), myRegistrar, this);
@@ -231,18 +222,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     }
   }
 
- /*
-   @NonNls private static final String BASE_PROFILE_ATTR = "base_profile";
-   private static String getBaseProfileName(File file) throws JDOMException, IOException {
-    return getRootElementAttribute(file, BASE_PROFILE_ATTR);
-  }*/
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "InspectionProfileManager";
-  }
-
   @Override
   public void updateProfile(@NotNull Profile profile) {
     mySchemesManager.addNewScheme(profile, true);
@@ -256,11 +235,13 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     }
   }
 
+  @NotNull
   @Override
   public SeverityRegistrar getSeverityRegistrar() {
     return mySeverityRegistrar;
   }
 
+  @NotNull
   @Override
   public SeverityRegistrar getOwnSeverityRegistrar() {
     return mySeverityRegistrar;
@@ -283,35 +264,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   @Override
   public Profile createProfile() {
     return createSampleProfile();
-  }
-
-  @Override
-  public void addProfileChangeListener(final ProfileChangeAdapter listener) {
-    myProfileChangeAdapters.add(listener);
-  }
-
-  @Override
-  public void addProfileChangeListener(ProfileChangeAdapter listener, Disposable parentDisposable) {
-    ContainerUtil.add(listener, myProfileChangeAdapters, parentDisposable);
-  }
-
-  @Override
-  public void removeProfileChangeListener(final ProfileChangeAdapter listener) {
-    myProfileChangeAdapters.remove(listener);
-  }
-
-  @Override
-  public void fireProfileChanged(final Profile profile) {
-    for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
-      adapter.profileChanged(profile);
-    }
-  }
-
-  @Override
-  public void fireProfileChanged(final Profile oldProfile, final Profile profile, final NamedScope scope) {
-    for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
-      adapter.profileActivated(oldProfile, profile);
-    }
   }
 
   @Override
@@ -359,18 +311,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     mySchemesManager.addNewScheme(profile, true);
   }
 
-  @Nullable
-  public static File getProfileDirectory() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + INSPECTION_DIR;
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!directory.mkdir()) {
-        return null;
-      }
-    }
-    return directory;
-  }
-
   @Override
   @NotNull
   public String[] getAvailableProfileNames() {
@@ -395,7 +335,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          InspectionProjectProfileManager.getInstance(project).updateStatusBar();
+          InspectionProjectProfileManagerImpl.getInstanceImpl(project).updateStatusBar();
         }
       });
     }

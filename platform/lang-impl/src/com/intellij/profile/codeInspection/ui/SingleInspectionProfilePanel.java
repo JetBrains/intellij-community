@@ -49,6 +49,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.actions.AddScopeAction;
@@ -977,7 +978,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
 
-    if (InspectionProfileManager.getInstance().getSchemesManager().isShared(selectedProfile)) {
+    if (((InspectionProfileManagerImpl)InspectionProfileManager.getInstance()).getSchemesManager().isShared(selectedProfile)) {
       if (descriptorsAreChanged()) {
         throw new ConfigurationException("Shared profile cannot be modified. Please do \"Save As...\" first.");
       }

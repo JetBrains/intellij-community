@@ -13,6 +13,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.mock.MockInspectionProfile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlElement;
@@ -41,7 +42,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
     final InspectionToolRegistrar registrar = new InspectionToolRegistrar(SearchableOptionsRegistrar.getInstance());
     registrar.registerTools(new InspectionToolProvider[0]);
-    final InspectionProfileManager inspectionProfileManager = new InspectionProfileManager(registrar, new MockSchemesManagerFactory());
+    final InspectionProfileManager inspectionProfileManager = new InspectionProfileManagerImpl(registrar, new MockSchemesManagerFactory());
     myInspectionProfile = new MockInspectionProfile();
     myAnnotationsManager = new DomElementAnnotationsManagerImpl(getProject()) {
 
