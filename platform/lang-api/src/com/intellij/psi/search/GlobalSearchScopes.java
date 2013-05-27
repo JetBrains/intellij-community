@@ -79,7 +79,7 @@ public class GlobalSearchScopes {
       NamedScopesHolder holder = NamedScopeManager.getInstance(getProject());
       final PackageSet packageSet = mySet.getValue();
       if (packageSet != null) {
-        if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, holder);
+        if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, getProject(), holder);
         PsiFile psiFile = myManager.findFile(file);
         return psiFile != null && packageSet.contains(psiFile, holder);
       }

@@ -25,6 +25,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.Colored;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,10 +38,15 @@ public class NonProjectFilesScope extends NamedScope {
     super(NAME, new AbstractPackageSet("NonProject") {
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+        return contains(file, holder.getProject(), holder);
+      }
+
+      @Override
+      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
         if (file == null) return true;
         if (file.getFileSystem() != LocalFileSystem.getInstance()) return true;
-        if (isInsideProjectContent(holder.getProject(), file)) return false;
-        return !ProjectScope.getProjectScope(holder.getProject()).contains(file);
+        if (isInsideProjectContent(project, file)) return false;
+        return !ProjectScope.getProjectScope(project).contains(file);
       }
     });
   }

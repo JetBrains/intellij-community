@@ -250,7 +250,7 @@ public class FileColorsModel implements Cloneable {
       if (scope != null) {
         final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
         final PackageSet packageSet = scope.getValue();
-        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, namedScopesHolder)) {
+        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, myProject, namedScopesHolder)) {
           return configuration;
         }
       }
@@ -261,7 +261,7 @@ public class FileColorsModel implements Cloneable {
       if (scope != null) {
         final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
         final PackageSet packageSet = scope.getValue();
-        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, namedScopesHolder)) {
+        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, myProject, namedScopesHolder)) {
           return configuration;
         }
       }

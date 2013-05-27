@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ComplementPackageSet extends PackageSetBase {
   private final PackageSet myComplementarySet;
@@ -27,8 +29,13 @@ public class ComplementPackageSet extends PackageSetBase {
 
   @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-    return myComplementarySet instanceof PackageSetBase ? !((PackageSetBase)myComplementarySet).contains(file, holder)
-                                                        : myComplementarySet.contains(getPsiFile(file, holder), holder);
+    return contains(file, holder.getProject(), holder);
+  }
+
+  @Override
+  public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+    return myComplementarySet instanceof PackageSetBase ? !((PackageSetBase)myComplementarySet).contains(file, project, holder)
+                                                        : myComplementarySet.contains(getPsiFile(file, project), holder);
   }
 
   @Override

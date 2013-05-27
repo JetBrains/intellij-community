@@ -15,12 +15,14 @@
  */
 package com.intellij.psi.search.scope;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,8 +33,13 @@ public class ProjectFilesScope extends NamedScope {
     super(NAME, new AbstractPackageSet("ProjectFiles") {
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+        return contains(file, holder.getProject(), holder);
+      }
+
+      @Override
+      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
         if (file == null) return false;
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         return holder.getProject().isInitialized()
                && !fileIndex.isIgnored(file)
                && fileIndex.getContentRootForFile(file) != null;
