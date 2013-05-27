@@ -108,6 +108,11 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
   }
 
   @Override
+  public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+    myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
+  }
+
+  @Override
   public void onEnd(@NotNull ExternalSystemTaskId id) {
     myTasksInProgress.remove(id);
     if (myTasksInProgress.isEmpty()) {

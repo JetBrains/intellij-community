@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
@@ -115,6 +116,9 @@ public class ExternalSystemUtil {
     final ToolWindow toolWindow = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
     if (toolWindow == null) {
       return null;
+    }
+    if (toolWindow instanceof ToolWindowImpl) {
+      ((ToolWindowImpl)toolWindow).ensureContentInitialized();
     }
 
     final ContentManager contentManager = toolWindow.getContentManager();
@@ -349,9 +353,7 @@ public class ExternalSystemUtil {
       @Override
       public void run() {
         if (modal) {
-          String title = ExternalSystemBundle.message("progress.import.text",
-                                                      projectName,
-                                                      ExternalSystemApiUtil.toReadableName(externalSystemId));
+          String title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
           ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -360,8 +362,7 @@ public class ExternalSystemUtil {
           });
         }
         else {
-          String title = ExternalSystemBundle.message("progress.refresh.text",
-                                                      projectName, ExternalSystemApiUtil.toReadableName(externalSystemId));
+          String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
           ProgressManager.getInstance().run(new Task.Backgroundable(project, title) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {

@@ -30,6 +30,9 @@
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowModuleService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowTaskService"/>
     
+    <!--Execution-->
+    <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
+    
   </extensions>
 
 </idea-plugin>

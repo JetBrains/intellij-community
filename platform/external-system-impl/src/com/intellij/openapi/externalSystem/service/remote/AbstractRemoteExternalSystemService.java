@@ -66,10 +66,6 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   @Override
   public void setSettings(@NotNull S settings) throws RemoteException {
     mySettings.set(settings);
-    if (settings.getNotificationListener() == null) {
-      ExternalSystemTaskNotificationListener listener = myListener.get();
-      settings.setNotificationListener(listener);
-    }
   }
 
   @Nullable
@@ -80,10 +76,11 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   @Override
   public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener listener) throws RemoteException {
     myListener.set(listener);
-    S s = mySettings.get();
-    if (s != null) {
-      s.setNotificationListener(listener);
-    }
+  }
+
+  @NotNull
+  public ExternalSystemTaskNotificationListener getNotificationListener() {
+    return myListener.get();
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,6 +53,7 @@ import java.util.regex.Pattern;
 public class ExternalSystemApiUtil {
 
   private static final Logger LOG = Logger.getInstance("#" + ExternalSystemApiUtil.class.getName());
+  private static final String LAST_USED_PROJECT_PATH_PREFIX = "LAST_EXTERNAL_PROJECT_PATH_";
 
   @NotNull public static final String PATH_SEPARATOR = "/";
 
@@ -210,21 +212,20 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static <K, V> Map<K, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes,
-                                                         @NotNull Function<DataNode<V>, K> grouper)
-  {
-    Map<K, List<DataNode<V>>> result = ContainerUtilRt.newHashMap();
-    for (DataNode<V> data : nodes) {
+  public static <K, V> Map<K, List<V>> groupBy(@NotNull Collection<V> nodes, @NotNull Function<V, K> grouper) {
+    Map<K, List<V>> result = ContainerUtilRt.newHashMap();
+    for (V data : nodes) {
       K key = grouper.fun(data);
       if (key == null) {
         LOG.warn(String.format(
           "Skipping entry '%s' during grouping. Reason: it's not possible to build a grouping key with grouping strategy '%s'. "
           + "Given entries: %s",
-          data, grouper.getClass(), nodes
-        ));
+          data,
+          grouper.getClass(),
+          nodes));
         continue;
       }
-      List<DataNode<V>> grouped = result.get(key);
+      List<V> grouped = result.get(key);
       if (grouped == null) {
         result.put(key, grouped = ContainerUtilRt.newArrayList());
       }
@@ -287,17 +288,12 @@ public class ExternalSystemApiUtil {
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
   }
 
-  @NotNull
-  public static String toReadableName(@NotNull ProjectSystemId id) {
-    return StringUtil.capitalize(id.toString().toLowerCase());
-  }
-
   public static void executeProjectChangeAction(@NotNull final Runnable task) {
     executeProjectChangeAction(false, task);
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final Runnable task) {
-    Runnable wrappedTask = new Runnable() {
+    executeOnEdt(synchronous, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -306,18 +302,20 @@ public class ExternalSystemApiUtil {
           }
         });
       }
-    };
-
+    });
+  }
+  
+  public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
     if (synchronous) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        wrappedTask.run();
+        task.run();
       }
       else {
-        UIUtil.invokeAndWaitIfNeeded(wrappedTask);
+        UIUtil.invokeAndWaitIfNeeded(task);
       }
     }
     else {
-      UIUtil.invokeLaterIfNeeded(wrappedTask);
+      UIUtil.invokeLaterIfNeeded(task);
     }
   }
 
@@ -359,5 +357,16 @@ public class ExternalSystemApiUtil {
    */
   public static boolean isNewProjectConstruction() {
     return ProjectManager.getInstance().getOpenProjects().length == 0;
+  }
+
+  @NotNull
+  public static String getLastUsedExternalProjectPath(@NotNull ProjectSystemId externalSystemId) {
+    return PropertiesComponent.getInstance().getValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), "");
+  }
+
+  public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
+    if (path != null) {
+      PropertiesComponent.getInstance().setValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), path);
+    }
   }
 }

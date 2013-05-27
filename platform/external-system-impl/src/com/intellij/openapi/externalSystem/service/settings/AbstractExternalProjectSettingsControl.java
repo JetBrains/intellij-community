@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.settings;
 
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
@@ -30,7 +31,9 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 4/24/13 1:19 PM
  */
-public abstract class AbstractExternalProjectSettingsControl<S extends ExternalProjectSettings> implements ExternalSettingsControl<S> {
+public abstract class AbstractExternalProjectSettingsControl<S extends ExternalProjectSettings>
+  implements ExternalSystemSettingsControl<S>
+{
 
   @NotNull private S myInitialSettings;
 
@@ -79,17 +82,11 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   protected abstract String applyExtraSettings(@NotNull S settings);
 
   public void disposeUIResources() {
-    myUseAutoImportBox = null;
-    disposeExtraUIControls();
+    ExternalSystemUiUtil.disposeUi(this);
   }
   
-  protected abstract void disposeExtraUIControls();
-
   @Override
   public void showUi(boolean show) {
-    myUseAutoImportBox.setVisible(show);
-    showExtraUi(show);
+    ExternalSystemUiUtil.showUi(this, show);
   }
-
-  protected abstract void showExtraUi(boolean show);
 }

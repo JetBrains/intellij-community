@@ -43,45 +43,46 @@ public class GradleExecutionHelper {
   public ModelBuilder<? extends IdeaProject> getModelBuilder(@NotNull final ExternalSystemTaskId id,
                                                              @Nullable GradleExecutionSettings settings,
                                                              @NotNull ProjectConnection connection,
+                                                             @NotNull ExternalSystemTaskNotificationListener listener,
                                                              boolean downloadLibraries)
   {
-    return getModelBuilder(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class, id, settings, connection);
+    return getModelBuilder(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class, id, settings, connection, listener);
   }
   
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
                                              @NotNull final ExternalSystemTaskId id,
                                              @Nullable GradleExecutionSettings settings,
-                                             @NotNull ProjectConnection connection)
+                                             @NotNull ProjectConnection connection,
+                                             @NotNull ExternalSystemTaskNotificationListener listener)
   {
     ModelBuilder<T> result = connection.model(modelType);
-    prepare(result, id, settings);
+    prepare(result, id, settings, listener);
     return result;
   }
 
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
-                                        @Nullable GradleExecutionSettings settings)
+                                        @Nullable GradleExecutionSettings settings,
+                                        @NotNull ExternalSystemTaskNotificationListener listener)
   {
     BuildLauncher result = connection.newBuild();
-    prepare(result, id, settings);
+    prepare(result, id, settings, listener);
     return result;
   }
 
-  private static void prepare(LongRunningOperation operation,
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static void prepare(@NotNull LongRunningOperation operation,
                               @NotNull final ExternalSystemTaskId id,
-                              @Nullable GradleExecutionSettings settings)
+                              @Nullable GradleExecutionSettings settings,
+                              @NotNull final ExternalSystemTaskNotificationListener listener)
   {
     if (settings == null) {
       return;
     }
-    final ExternalSystemTaskNotificationListener notificationListener = settings.getNotificationListener();
-    if (notificationListener == null) {
-      return;
-    }
 
-    notificationListener.onStart(id);
+    listener.onStart(id);
     final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
       operation.setJavaHome(new File(javaHome));
@@ -89,9 +90,11 @@ public class GradleExecutionHelper {
     operation.addProgressListener(new ProgressListener() {
       @Override
       public void statusChanged(ProgressEvent event) {
-        notificationListener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, event.getDescription()));
+        listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, event.getDescription()));
       }
     });
+    operation.setStandardOutput(new OutputWrapper(listener, id, true));
+    operation.setStandardError(new OutputWrapper(listener, id, false));
   }
 
   public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<ProjectConnection, T> f) {

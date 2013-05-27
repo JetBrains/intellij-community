@@ -48,11 +48,12 @@ public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionS
   public void executeTasks(@NotNull ExternalSystemTaskId id,
                            @NotNull List<String> taskNames,
                            @NotNull String projectPath,
-                           @Nullable S settings) throws RemoteException, ExternalSystemException
+                           @Nullable S settings,
+                           @Nullable String vmOptions) throws RemoteException, ExternalSystemException
   {
     myProgressManager.onQueued(id);
     try {
-      getDelegate().executeTasks(id, taskNames, projectPath, settings);
+      getDelegate().executeTasks(id, taskNames, projectPath, settings, vmOptions);
     }
     finally {
       myProgressManager.onEnd(id);
