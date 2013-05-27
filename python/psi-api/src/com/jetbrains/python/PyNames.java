@@ -31,6 +31,7 @@ public class PyNames {
   public static final String CLASS = "__class__";
   public static final String DUNDER_METACLASS = "__metaclass__";
   public static final String METACLASS = "metaclass";
+  public static final String TYPE = "type";
 
   public static final String SUPER = "super";
 
