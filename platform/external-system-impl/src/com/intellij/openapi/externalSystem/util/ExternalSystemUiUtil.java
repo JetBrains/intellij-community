@@ -38,6 +38,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -143,5 +144,35 @@ public class ExternalSystemUiUtil {
         } 
       }
     });
+  }
+
+  public static void showUi(@NotNull Object o, boolean show) {
+    for (Field field : o.getClass().getFields()) {
+      field.setAccessible(true);
+      try {
+        Object v = field.get(o);
+        if (v instanceof JComponent) {
+          ((JComponent)v).setVisible(show);
+        }
+      }
+      catch (IllegalAccessException e) {
+        // Ignore
+      }
+    }
+  }
+
+  public static void disposeUi(@NotNull Object o) {
+    for (Field field : o.getClass().getFields()) {
+      field.setAccessible(true);
+      try {
+        Object v = field.get(o);
+        if (v instanceof JComponent) {
+          field.set(o, null);
+        }
+      }
+      catch (IllegalAccessException e) {
+        // Ignore
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -51,7 +52,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
                                                   @NotNull final String projectPath,
                                                   final boolean downloadLibraries,
-                                                  @Nullable final GradleExecutionSettings settings)
+                                                  @Nullable final GradleExecutionSettings settings,
+                                                  @NotNull final ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
     if (settings != null) {
@@ -70,7 +72,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         myCachedExtensions = Pair.create(classNames, extensions);
       }
       for (GradleProjectResolverExtension extension : myCachedExtensions.second) {
-        DataNode<ProjectData> result = extension.resolveProjectInfo(id, projectPath, downloadLibraries, settings);
+        DataNode<ProjectData> result = extension.resolveProjectInfo(id, projectPath, downloadLibraries, settings, listener);
         if (result != null) {
           return result;
         }
@@ -80,7 +82,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return myHelper.execute(projectPath, settings, new Function<ProjectConnection, DataNode<ProjectData>>() {
       @Override
       public DataNode<ProjectData> fun(ProjectConnection connection) {
-        return doResolveProjectInfo(id, projectPath, settings, connection, downloadLibraries);
+        return doResolveProjectInfo(id, projectPath, settings, connection, listener, downloadLibraries);
       }
     });
   }
@@ -90,10 +92,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      @NotNull String projectPath,
                                                      @Nullable GradleExecutionSettings settings,
                                                      @NotNull ProjectConnection connection,
+                                                     @NotNull ExternalSystemTaskNotificationListener listener,
                                                      boolean downloadLibraries)
     throws IllegalArgumentException, IllegalStateException
   {
-    ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, settings, connection, downloadLibraries);
+    ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, settings, connection, listener, downloadLibraries);
     IdeaProject project = modelBuilder.get();
     DataNode<ProjectData> result = populateProject(project, projectPath);
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
    * @param downloadLibraries a hint that specifies if third-party libraries that are not available locally should be resolved (downloaded)
    * @param settings          settings to use for the project resolving;
    *                          <code>null</code> as indication that no specific settings are required
+   * @param listener          callback to be notified about the execution
    * @return object-level representation of the target external system project;
    *         <code>null</code> if it's not possible to resolve the project due to the objective reasons
    * @throws ExternalSystemException  in case when unexpected exception occurs during project info construction
@@ -49,6 +51,7 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
   DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                            @NotNull String projectPath,
                                            boolean downloadLibraries,
-                                           @Nullable S settings)
+                                           @Nullable S settings,
+                                           @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }

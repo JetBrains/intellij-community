@@ -112,16 +112,6 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     content.add(myGradleHomePathField, ExternalSystemUiUtil.getFillLineConstraints(0));
   }
 
-  @Override
-  protected void showExtraUi(boolean show) {
-    myGradleHomeLabel.setVisible(show);
-    myGradleHomePathField.setVisible(show);
-    myUseWrapperButton.setVisible(show);
-    myUseLocalDistributionButton.setVisible(show);
-    myGradleHomeLabel.setVisible(show);
-    myGradleHomePathField.setVisible(show);
-  }
-
   private void initWrapperControls() {
     ActionListener listener = new ActionListener() {
             @Override
@@ -280,14 +270,6 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     myGradleHomeModifiedByUser = false;
   }
   
-  @Override
-  protected void disposeExtraUIControls() {
-    myGradleHomeLabel = null;
-    myGradleHomePathField = null;
-    myUseWrapperButton = null;
-    myUseLocalDistributionButton = null;
-  }
-
   void showBalloonIfNecessary() {
     if (!myShowBalloonIfNecessary || !myGradleHomePathField.isEnabled()) {
       return;

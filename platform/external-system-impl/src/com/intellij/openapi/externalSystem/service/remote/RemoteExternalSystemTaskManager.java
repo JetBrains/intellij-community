@@ -44,7 +44,8 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
       public void executeTasks(@NotNull ExternalSystemTaskId id,
                                @NotNull List<String> taskNames,
                                @NotNull String projectPath,
-                               @Nullable ExternalSystemExecutionSettings settings) throws RemoteException, ExternalSystemException
+                               @Nullable ExternalSystemExecutionSettings settings,
+                               @Nullable String vmOptions) throws RemoteException, ExternalSystemException
       {
       }
 
@@ -68,6 +69,9 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
       }
     };
 
-  void executeTasks(@NotNull ExternalSystemTaskId id, @NotNull List<String> taskNames, @NotNull String projectPath, @Nullable S settings)
-    throws RemoteException, ExternalSystemException;
+  void executeTasks(@NotNull ExternalSystemTaskId id,
+                    @NotNull List<String> taskNames,
+                    @NotNull String projectPath,
+                    @Nullable S settings,
+                    @Nullable String vmOptions) throws RemoteException, ExternalSystemException;
 }

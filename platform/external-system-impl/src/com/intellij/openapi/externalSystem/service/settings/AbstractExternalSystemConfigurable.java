@@ -20,10 +20,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
+import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -69,13 +66,13 @@ public abstract class AbstractExternalSystemConfigurable<
   > implements SearchableConfigurable, Configurable.NoScroll
 {
 
-  @NotNull private final List<ExternalSettingsControl<ProjectSettings>> myProjectSettingsControls = ContainerUtilRt.newArrayList();
+  @NotNull private final List<ExternalSystemSettingsControl<ProjectSettings>> myProjectSettingsControls = ContainerUtilRt.newArrayList();
 
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project         myProject;
 
-  @Nullable private ExternalSettingsControl<SystemSettings> mySystemSettingsControl;
-  @Nullable private ExternalSettingsControl<ProjectSettings> myActiveProjectSettingsControl;
+  @Nullable private ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
+  @Nullable private ExternalSystemSettingsControl<ProjectSettings> myActiveProjectSettingsControl;
 
   private PaintAwarePanel  myComponent;
   private JBList           myProjectsList;
@@ -114,8 +111,8 @@ public abstract class AbstractExternalSystemConfigurable<
   @SuppressWarnings("unchecked")
   @NotNull
   private SystemSettings getSettings() {
-    ExternalSystemManager<ProjectSettings, L, SystemSettings, ?, ?> manager
-      = (ExternalSystemManager<ProjectSettings, L, SystemSettings, ?, ?>)ExternalSystemApiUtil.getManager(myExternalSystemId);
+    ExternalSystemManager<ProjectSettings, L, SystemSettings, ?, ?> manager =
+      (ExternalSystemManager<ProjectSettings, L, SystemSettings, ?, ?>)ExternalSystemApiUtil.getManager(myExternalSystemId);
     assert manager != null;
     return manager.getSettingsProvider().fun(myProject);
   }
@@ -128,7 +125,7 @@ public abstract class AbstractExternalSystemConfigurable<
 
     addTitle(ExternalSystemBundle.message("settings.title.linked.projects", myExternalSystemId.getReadableName()));
     myComponent.add(new JBScrollPane(myProjectsList), ExternalSystemUiUtil.getFillLineConstraints(1));
-    
+
     addTitle(ExternalSystemBundle.message("settings.title.project.settings"));
     List<ProjectSettings> settings = ContainerUtilRt.newArrayList(s.getLinkedProjectsSettings());
     myProjectsList.setVisibleRowCount(Math.max(3, Math.min(5, settings.size())));
@@ -141,7 +138,7 @@ public abstract class AbstractExternalSystemConfigurable<
 
     myProjectSettingsControls.clear();
     for (ProjectSettings setting : settings) {
-      ExternalSettingsControl<ProjectSettings> control = createProjectSettingsControl(setting);
+      ExternalSystemSettingsControl<ProjectSettings> control = createProjectSettingsControl(setting);
       control.fillUi(myComponent, 1);
       myProjectsModel.addElement(getProjectName(setting.getExternalProjectPath()));
       myProjectSettingsControls.add(control);
@@ -187,7 +184,7 @@ public abstract class AbstractExternalSystemConfigurable<
    * @return          control for managing given project settings
    */
   @NotNull
-  protected abstract ExternalSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
+  protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
   
   @NotNull
   protected String getProjectName(@NotNull String path) {
@@ -209,11 +206,11 @@ public abstract class AbstractExternalSystemConfigurable<
    *                  <code>null</code> if current external system doesn't have system-level settings (only project-level settings)
    */
   @Nullable
-  protected abstract ExternalSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings); 
+  protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
 
   @Override
   public boolean isModified() {
-    for (ExternalSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
+    for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
       if (control.isModified()) {
         return true;
       }
@@ -228,7 +225,7 @@ public abstract class AbstractExternalSystemConfigurable<
     publisher.onBulkChangeStart();
     try {
       List<ProjectSettings> projectSettings = ContainerUtilRt.newArrayList();
-      for (ExternalSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
+      for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
         ProjectSettings s = newProjectSettings();
         control.apply(s);
         projectSettings.add(s);
@@ -251,7 +248,7 @@ public abstract class AbstractExternalSystemConfigurable<
 
   @Override
   public void reset() {
-    for (ExternalSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
+    for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
       control.reset();
     }
     if (mySystemSettingsControl != null) {
@@ -261,7 +258,7 @@ public abstract class AbstractExternalSystemConfigurable<
 
   @Override
   public void disposeUIResources() {
-    for (ExternalSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
+    for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
       control.disposeUIResources();
     }
     myProjectSettingsControls.clear();

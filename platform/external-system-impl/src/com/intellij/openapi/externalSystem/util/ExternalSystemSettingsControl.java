@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.settings;
+package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ import java.awt.*;
  * @since 4/28/13 12:15 AM
  * @param <S>  settings type
  */
-public interface ExternalSettingsControl<S> {
+public interface ExternalSystemSettingsControl<S> {
 
   /**
    * Adds current control-specific UI controls to the given canvas.

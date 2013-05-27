@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.model.settings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,15 +58,6 @@ public class ExternalSystemExecutionSettings implements Serializable {
 
   public void setVerboseProcessing(boolean verboseProcessing) {
     myVerboseProcessing.set(verboseProcessing);
-  }
-
-  @Nullable
-  public ExternalSystemTaskNotificationListener getNotificationListener() {
-    return myNotificationListener.get();
-  }
-
-  public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener listener) {
-    myNotificationListener.set(listener);
   }
 
   @Override

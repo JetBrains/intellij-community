@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.remote.impl;
 
-import com.intellij.openapi.externalSystem.build.ExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.gradle.tooling.BuildLauncher;
@@ -41,12 +43,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public void executeTasks(@NotNull final ExternalSystemTaskId id,
                            @NotNull final List<String> taskNames,
                            @NotNull String projectPath,
-                           @Nullable final GradleExecutionSettings settings) throws ExternalSystemException
+                           @Nullable final GradleExecutionSettings settings,
+                           @Nullable final String vmOptions,
+                           @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException
   {
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {
       @Override
       public Void fun(ProjectConnection connection) {
-        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings);
+        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
+        if (!StringUtil.isEmpty(vmOptions)) {
+          launcher.setJvmArguments(vmOptions);
+        }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();
         return null;

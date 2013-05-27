@@ -48,6 +48,11 @@ public class ProjectSystemId implements Serializable {
   }
 
   @NotNull
+  public String getId() {
+    return myId;
+  }
+
+  @NotNull
   public String getReadableName() {
     return myReadableName;
   }

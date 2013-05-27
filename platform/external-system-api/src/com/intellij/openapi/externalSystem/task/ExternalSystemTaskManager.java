@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.build;
+package com.intellij.openapi.externalSystem.task;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,11 @@ import java.util.List;
  */
 public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
 
-  void executeTasks(@NotNull ExternalSystemTaskId id, @NotNull List<String> taskNames, @NotNull String projectPath, @Nullable S settings)
+  void executeTasks(@NotNull ExternalSystemTaskId id,
+                    @NotNull List<String> taskNames,
+                    @NotNull String projectPath,
+                    @Nullable S settings,
+                    @Nullable String vmOptions,
+                    @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException;
 }

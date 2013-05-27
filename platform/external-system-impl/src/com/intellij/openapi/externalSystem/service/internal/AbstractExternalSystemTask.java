@@ -35,7 +35,7 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
 
   @NotNull private final ExternalSystemTaskId myId;
   @NotNull private final ProjectSystemId      myExternalSystemId;
-  @NotNull private final String               myExernalProjectPath;
+  @NotNull private final String               myExternalProjectPath;
 
   protected AbstractExternalSystemTask(@NotNull ProjectSystemId id,
                                        @NotNull ExternalSystemTaskType type,
@@ -45,7 +45,7 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
     myExternalSystemId = id;
     myIdeProject = project;
     myId = ExternalSystemTaskId.create(type, myIdeProject);
-    myExernalProjectPath = externalProjectPath;
+    myExternalProjectPath = externalProjectPath;
   }
 
   @NotNull
@@ -77,13 +77,18 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
     return myIdeProject;
   }
 
+  @NotNull
+  public String getExternalProjectPath() {
+    return myExternalProjectPath;
+  }
+
   public void refreshState() {
     if (getState() != ExternalSystemTaskState.IN_PROGRESS) {
       return;
     }
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     try {
-      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject, myExernalProjectPath, myExternalSystemId);
+      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject, myExternalProjectPath, myExternalSystemId);
       setState(facade.isTaskInProgress(getId()) ? ExternalSystemTaskState.IN_PROGRESS : ExternalSystemTaskState.FAILED);
     }
     catch (Throwable e) {

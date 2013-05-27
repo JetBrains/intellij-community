@@ -42,10 +42,10 @@ public class PaintAwarePanel extends JPanel {
 
   @Override
   public void paint(Graphics g) {
-    super.paint(g);
     if (myPaintCallback != null) {
       myPaintCallback.consume(g);
     }
+    super.paint(g);
   }
 
   @Nullable

@@ -9,6 +9,7 @@ import com.intellij.util.containers.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 
+import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -80,6 +81,16 @@ public class ExternalSystemProgressNotificationManagerImpl extends RemoteObject
         entry.getKey().onStatusChange(event);
       }
     } 
+  }
+
+  @Override
+  public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) throws RemoteException {
+    for (Map.Entry<ExternalSystemTaskNotificationListener, Set<ExternalSystemTaskId>> entry : myListeners.entrySet()) {
+      final Set<ExternalSystemTaskId> ids = entry.getValue();
+      if (Collections.EMPTY_SET == ids || ids.contains(id)) {
+        entry.getKey().onTaskOutput(id, text, stdOut);
+      }
+    }
   }
 
   @Override
