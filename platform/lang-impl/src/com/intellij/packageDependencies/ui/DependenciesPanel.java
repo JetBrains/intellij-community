@@ -59,6 +59,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.*;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -223,6 +224,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     initTree(myLeftTree, false);
     initTree(myRightTree, true);
+
+    setEmptyText(mySettings.UI_FILTER_LEGALS);
 
     if (builders.size() == 1) {
       AnalysisScope scope = builders.get(0).getScope();
@@ -643,8 +646,15 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       mySettings.UI_FILTER_LEGALS = flag;
+      setEmptyText(flag);
       rebuild();
     }
+  }
+
+  private void setEmptyText(boolean flag) {
+    final String emptyText = flag ? "No illegal dependencies found" : "Nothing to show";
+    myLeftTree.getEmptyText().setText(emptyText);
+    myRightTree.getEmptyText().setText(emptyText);
   }
 
   private final class EditDependencyRulesAction extends AnAction {

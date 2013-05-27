@@ -80,6 +80,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       this.field = field;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

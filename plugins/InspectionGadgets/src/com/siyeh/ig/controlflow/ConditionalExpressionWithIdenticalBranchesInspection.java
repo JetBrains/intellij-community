@@ -30,30 +30,35 @@ import org.jetbrains.annotations.NotNull;
 public class ConditionalExpressionWithIdenticalBranchesInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "conditional.expression.with.identical.branches.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "conditional.expression.with.identical.branches.problem.descriptor");
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new CollapseConditional();
   }
 
   private static class CollapseConditional extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "conditional.expression.with.identical.branches.collapse.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiConditionalExpression expression =
@@ -66,6 +71,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ConditionalExpressionWithIdenticalBranchesVisitor();
   }

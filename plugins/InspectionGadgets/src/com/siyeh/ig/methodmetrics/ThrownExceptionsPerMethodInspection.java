@@ -25,17 +25,20 @@ import org.jetbrains.annotations.NotNull;
 public class ThrownExceptionsPerMethodInspection
   extends MethodMetricInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "thrown.exceptions.per.method.display.name");
   }
 
+  @Override
   @NotNull
   public String getID() {
     return "MethodWithTooExceptionsDeclared";
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer exceptionCount = (Integer)infos[0];
@@ -44,15 +47,18 @@ public class ThrownExceptionsPerMethodInspection
       exceptionCount);
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 3;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message(
       "thrown.exceptions.per.method.limit.option");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThrownExceptionsPerMethodVisitor();
   }

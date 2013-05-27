@@ -25,26 +25,31 @@ public class NonCommentSourceStatementsInspection
 
   private static final int DEFAULT_LIMIT = 30;
 
+  @Override
   @NotNull
   public String getID() {
     return "OverlyLongMethod";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "non.comment.source.statements.display.name");
   }
 
+  @Override
   protected int getDefaultLimit() {
     return DEFAULT_LIMIT;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message(
       "non.comment.source.statements.limit.option");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer statementCount = (Integer)infos[0];
@@ -53,6 +58,7 @@ public class NonCommentSourceStatementsInspection
       statementCount);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NonCommentSourceStatementsMethodVisitor();
   }

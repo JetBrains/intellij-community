@@ -20,6 +20,8 @@
  */
 package org.testng;
 
+import com.beust.jcommander.JCommander;
+import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 
 import java.io.*;
@@ -27,10 +29,12 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Vector;
 
 public class RemoteTestNGStarter {
+  public static boolean SM_RUNNER = System.getProperty("idea.testng.sm_runner") != null;
   private static final String SOCKET = "-socket";
   public static void main(String[] args) throws Exception {
     int i = 0;
@@ -88,6 +92,16 @@ public class RemoteTestNGStarter {
     }
     finally {
       reader.close();
+    }
+
+    if (SM_RUNNER) {
+      final IDEARemoteTestNG testNG = new IDEARemoteTestNG();
+      CommandLineArgs cla = new CommandLineArgs();
+      RemoteArgs ra = new RemoteArgs();
+      new JCommander(Arrays.asList(cla, ra), (String[])resultArgs.toArray(new String[resultArgs.size()]));
+      testNG.configure(cla);
+      testNG.run();
+      return;
     }
 
     try {

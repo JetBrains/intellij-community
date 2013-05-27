@@ -110,23 +110,27 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
    */
   public boolean m_recognizeExampleMediaType = false;
 
+  @Override
   @NotNull
   public String getID() {
     return "HardcodedFileSeparator";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "hardcoded.file.separator.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "hardcoded.file.separator.problem.descriptor");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
       InspectionGadgetsBundle.message(
@@ -134,6 +138,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
       this, "m_recognizeExampleMediaType");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new HardcodedFileSeparatorsVisitor();
   }

@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -42,6 +43,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -66,6 +68,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
 
   private PsiDirectory myTargetDirectory;
   @NonNls private static final String RECENT_KEYS = "CopyFile.RECENT_KEYS";
+  private boolean myFileCopy = false;
 
   public CopyFilesOrDirectoriesDialog(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
@@ -97,6 +100,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
           myNewNameField.select(0, dotIdx);
           myNewNameField.putClientProperty(DialogWrapperPeerImpl.HAVE_INITIAL_SELECTION, true);
         }
+        myFileCopy = true;
       }
       else {
         PsiDirectory directory = (PsiDirectory)elements[0];
@@ -225,6 +229,11 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
                                    Messages.getErrorIcon());
         return;
       }
+      
+      if (myFileCopy && !PathUtil.isValidFileName(newName)) {
+        Messages.showErrorDialog(myNewNameField, "Name is not a valid file name");
+        return;
+      }
     }
 
     if (myShowDirectoryField) {
@@ -274,7 +283,8 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       }
     }
     if (myShowNewNameField) {
-      if (getNewName().length() == 0) {
+      final String newName = getNewName();
+      if (newName.length() == 0 || myFileCopy && !PathUtil.isValidFileName(newName)) {
         setOKActionEnabled(false);
         return;
       }

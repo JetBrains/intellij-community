@@ -24,21 +24,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemGCInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToSystemGC";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("gc.call.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("gc.call.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SystemGCVisitor();
   }

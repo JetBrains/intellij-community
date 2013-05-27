@@ -86,6 +86,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       this.removeToString = removeToString;
     }
 
+    @Override
     @NotNull
     public String getName() {
       @NonNls final String expressionText;

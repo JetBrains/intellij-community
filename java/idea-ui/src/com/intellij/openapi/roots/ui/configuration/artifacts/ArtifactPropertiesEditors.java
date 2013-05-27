@@ -108,7 +108,7 @@ public class ArtifactPropertiesEditors {
   }
 
   @Nullable
-  public static String getHelpId(String title) {
+  public String getHelpId(String title) {
     if (ArtifactPropertiesEditor.VALIDATION_TAB.equals(title)) {
       return "reference.project.structure.artifacts.validation";
     }
@@ -117,6 +117,12 @@ public class ArtifactPropertiesEditors {
     }
     else if (ArtifactPropertiesEditor.POST_PROCESSING_TAB.equals(title)) {
       return "reference.project.structure.artifacts.postprocessing";
+    }
+    for (PropertiesEditorInfo editorInfo : myEditors) {
+      final ArtifactPropertiesEditor editor = editorInfo.myEditor;
+      if (editor.getTabName().equals(title)) {
+        return editor.getHelpId();
+      }
     }
     return null;
   }

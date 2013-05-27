@@ -23,11 +23,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
-import com.intellij.openapi.externalSystem.build.ExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
@@ -55,6 +56,7 @@ import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -72,8 +74,7 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
   GradleSettingsListener,
   GradleSettings,
   GradleLocalSettings,
-  GradleExecutionSettings>
-{
+  GradleExecutionSettings> {
 
   private static final Logger LOG = Logger.getInstance("#" + GradleManager.class.getName());
 
@@ -227,6 +228,12 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
 
   @Nullable
   @Override
+  public FileChooserDescriptor getExternalProjectConfigDescriptor() {
+    return GradleUtil.getGradleProjectFileChooserDescriptor();
+  }
+
+  @Nullable
+  @Override
   public Icon getProjectIcon() {
     return GradleIcons.Gradle;
   }
@@ -235,5 +242,11 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
   @Override
   public Icon getTaskIcon() {
     return DefaultExternalSystemUiAware.INSTANCE.getTaskIcon();
+  }
+
+  @NotNull
+  @Override
+  public String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
+    return GradleUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
   }
 }

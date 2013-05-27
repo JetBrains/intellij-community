@@ -51,13 +51,11 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -97,7 +95,7 @@ public class XmlUtil {
   @NonNls public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
 
   @NonNls public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
-  @NonNls public static final String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
+  @NonNls public static final String XINCLUDE_URI = XmlPsiUtil.XINCLUDE_URI;
 
   @NonNls public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
   @NonNls public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
@@ -152,7 +150,6 @@ public class XmlUtil {
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
   @NonNls public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
-  public static final Key<PsiAnchor> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
 
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
@@ -318,13 +315,11 @@ public class XmlUtil {
   }
 
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor processor, boolean deepFlag) {
-    return processXmlElements(element, processor, deepFlag, false);
+    return XmlPsiUtil.processXmlElements(element, processor, deepFlag);
   }
 
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor processor, boolean deepFlag, boolean wideFlag) {
-    if (element == null) return true;
-    PsiFile baseFile = element.isValid() ? element.getContainingFile() : null;
-    return processXmlElements(element, processor, deepFlag, wideFlag, baseFile);
+    return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag);
   }
 
   public static boolean processXmlElements(final XmlElement element,
@@ -332,7 +327,7 @@ public class XmlUtil {
                                            final boolean deepFlag,
                                            final boolean wideFlag,
                                            final PsiFile baseFile) {
-    return processXmlElements(element, processor, deepFlag, wideFlag, baseFile, true);
+    return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag, baseFile);
   }
 
   public static boolean processXmlElements(final XmlElement element,
@@ -341,18 +336,11 @@ public class XmlUtil {
                                            final boolean wideFlag,
                                            final PsiFile baseFile,
                                            boolean processIncludes) {
-    return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag, processIncludes);
+    return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag, baseFile, processIncludes);
   }
 
   public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor processor, final boolean deepFlag) {
-    final XmlElementProcessor p = new XmlElementProcessor(processor, element.getContainingFile());
-
-    final boolean wideFlag = false;
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (!p.processElement(child, deepFlag, wideFlag, true) && !wideFlag) return false;
-    }
-
-    return true;
+    return XmlPsiUtil.processXmlElementChildren(element, processor, deepFlag);
   }
 
   public static boolean tagFromTemplateFramework(@NotNull final XmlTag tag) {
@@ -611,172 +599,6 @@ public class XmlUtil {
 
   public static boolean isStubBuilding(PsiFile file) {
     return Boolean.TRUE.equals(file.getUserData(BUILDING_DOM_STUBS));
-  }
-
-  private static class XmlElementProcessor {
-    private final PsiElementProcessor processor;
-    private final PsiFile targetFile;
-
-    XmlElementProcessor(PsiElementProcessor _processor, PsiFile _targetFile) {
-      processor = _processor;
-      targetFile = _targetFile;
-    }
-
-    private boolean processXmlElements(PsiElement element, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
-      if (deepFlag) if (!processor.execute(element)) return false;
-
-      PsiElement startFrom = element.getFirstChild();
-
-      if (element instanceof XmlEntityRef) {
-        XmlEntityRef ref = (XmlEntityRef)element;
-
-        PsiElement newElement = parseEntityRef(targetFile, ref);
-
-        while (newElement != null) {
-          if (!processElement(newElement, deepFlag, wideFlag, processIncludes)) return false;
-          newElement = newElement.getNextSibling();
-        }
-
-        return true;
-      }
-      else if (element instanceof XmlConditionalSection) {
-        XmlConditionalSection xmlConditionalSection = (XmlConditionalSection)element;
-        if (!xmlConditionalSection.isIncluded(targetFile)) return true;
-        startFrom = xmlConditionalSection.getBodyStart();
-      }
-      else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
-        for (PsiElement psiElement : InclusionProvider.getIncludedTags((XmlTag)element)) {
-          if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
-        }
-      }
-
-      for (PsiElement child = startFrom; child != null; child = child.getNextSibling()) {
-        if (!processElement(child, deepFlag, wideFlag, processIncludes) && !wideFlag) return false;
-      }
-
-      return true;
-    }
-
-    private boolean processElement(PsiElement child, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
-      if (deepFlag) {
-        if (!processXmlElements(child, true, wideFlag, processIncludes)) {
-          return false;
-        }
-      }
-      else {
-        if (child instanceof XmlEntityRef) {
-          if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
-        }
-        else if (child instanceof XmlConditionalSection) {
-          if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
-        }
-        else if (processIncludes && XmlIncludeHandler.isXInclude(child)) {
-          if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
-        }
-        else if (!processor.execute(child)) return false;
-      }
-      if (targetFile != null && child instanceof XmlEntityDecl) {
-        XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)child;
-        XmlEntityRefImpl.cacheParticularEntity(targetFile, xmlEntityDecl);
-      }
-      return true;
-    }
-  }
-
-  private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = getContextType(ref);
-
-    {
-      final XmlEntityDecl entityDecl = ref.resolve(targetFile);
-      if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
-    }
-
-    PsiElement e = ref;
-    while (e != null) {
-      if (e.getUserData(XmlElement.INCLUDING_ELEMENT) != null) {
-        e = e.getUserData(XmlElement.INCLUDING_ELEMENT);
-        final PsiFile f = e.getContainingFile();
-        if (f != null) {
-          final XmlEntityDecl entityDecl = ref.resolve(targetFile);
-          if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
-        }
-
-        continue;
-      }
-      if (e instanceof PsiFile) {
-        PsiFile refFile = (PsiFile)e;
-        final XmlEntityDecl entityDecl = ref.resolve(refFile);
-        if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
-        break;
-      }
-
-      e = e.getParent();
-    }
-
-    final PsiElement element = ref.getUserData(XmlElement.DEPENDING_ELEMENT);
-    if (element instanceof XmlFile) {
-      final XmlEntityDecl entityDecl = ref.resolve((PsiFile)element);
-      if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
-    }
-
-    return null;
-  }
-
-  private static XmlEntityDecl.EntityContextType getContextType(XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = XmlEntityDecl.EntityContextType.GENERIC_XML;
-    PsiElement temp = ref;
-    while (temp != null) {
-      if (temp instanceof XmlAttributeDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTRIBUTE_SPEC;
-      }
-      else if (temp instanceof XmlElementDecl) {
-        type = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;
-      }
-      else if (temp instanceof XmlAttlistDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTLIST_SPEC;
-      }
-      else if (temp instanceof XmlEntityDecl) {
-        type = XmlEntityDecl.EntityContextType.ENTITY_DECL_CONTENT;
-      }
-      else if (temp instanceof XmlEnumeratedType) {
-        type = XmlEntityDecl.EntityContextType.ENUMERATED_TYPE;
-      }
-      else if (temp instanceof XmlAttributeValue) {
-        type = XmlEntityDecl.EntityContextType.ATTR_VALUE;
-      }
-      else {
-        temp = temp.getContext();
-        continue;
-      }
-      break;
-    }
-    return type;
-  }
-
-  private static final Key<CachedValue<PsiElement>> PARSED_DECL_KEY = Key.create("PARSED_DECL_KEY");
-
-  private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
-                                            final PsiFile targetFile,
-                                            final XmlEntityDecl.EntityContextType type,
-                                            final XmlEntityRef entityRef) {
-    synchronized (PsiLock.LOCK) { // we depend on targetFile and entityRef
-      CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
-      //    return entityDecl.parse(targetFile, type);
-
-      if (value == null) {
-        value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(new CachedValueProvider<PsiElement>() {
-          public Result<PsiElement> compute() {
-            final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-            if (res == null) return new Result<PsiElement>(res, targetFile);
-            if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
-            return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
-          }
-        }, false);
-        entityRef.putUserData(PARSED_DECL_KEY, value);
-      }
-
-      return value.getValue();
-    }
   }
 
   /**
@@ -1236,7 +1058,7 @@ public class XmlUtil {
     if (currentElement != null) {
       final String name = _element.getName();
       if (_element instanceof XmlEntityDecl) {
-        final XmlEntityDecl cachedEntity = XmlEntityRefImpl.getCachedEntity((PsiFile)currentElement, name);
+        final XmlEntityDecl cachedEntity = XmlEntityCache.getCachedEntity((PsiFile)currentElement, name);
         if (cachedEntity != null) return cachedEntity;
       }
 

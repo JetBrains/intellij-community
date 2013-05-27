@@ -24,27 +24,32 @@ import org.jetbrains.annotations.NotNull;
 
 public class LoopStatementsThatDontLoopInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "LoopStatementThatDoesntLoop";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "loop.statements.that.dont.loop.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "loop.statements.that.dont.loop.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LoopStatementsThatDontLoopVisitor();
   }

@@ -65,6 +65,7 @@ public class ReuseOfLocalVariableInspection
   private static class ReuseOfLocalVariableFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

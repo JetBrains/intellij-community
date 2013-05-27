@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -123,12 +124,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (p.isDisposed()) return;
-            r.run();
-          }
-        }, state);
+      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
     }
   }
 
@@ -145,12 +141,7 @@ public class MavenUtil {
         r.run();
       }
       else {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            public void run() {
-              if (p.isDisposed()) return;
-              r.run();
-            }
-          }, state);
+        ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
       }
     }
   }
@@ -168,12 +159,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      DumbService.getInstance(project).runWhenSmart(new Runnable() {
-        public void run() {
-          if (project.isDisposed()) return;
-          r.run();
-        }
-      });
+      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(r, project));
     }
   }
 
@@ -186,7 +172,7 @@ public class MavenUtil {
     }
 
     if (!project.isInitialized()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(r);
+      StartupManager.getInstance(project).registerPostStartupActivity(DisposeAwareRunnable.create(r, project));
       return;
     }
 

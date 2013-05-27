@@ -16,25 +16,13 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.annotations.Nullable
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
-import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
@@ -43,40 +31,40 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + "groovy/refactoring/introduceVariable/";
+    return TestUtils.testDataPath + "groovy/refactoring/introduceVariable/"
   }
 
-  public void testAbs() throws Throwable { doTest(); }
-  public void testCall1() throws Throwable { doTest(); }
-  public void testCall2() throws Throwable { doTest(); }
-  public void testCall3() throws Throwable { doTest(); }
-  public void testClos1() throws Throwable { doTest(); }
-  public void testClos2() throws Throwable { doTest(); }
-  public void testClos3() throws Throwable { doTest(); }
-  public void testClos4() throws Throwable { doTest(); }
-  public void testF2() throws Throwable { doTest(); }
-  public void testField1() throws Throwable { doTest(); }
-  public void testFirst() throws Throwable { doTest(); }
-  public void testIf1() throws Throwable { doTest(); }
-  public void testIf2() throws Throwable { doTest(); }
-  public void testLocal1() throws Throwable { doTest(); }
-  public void testLoop1() throws Throwable { doTest(); }
-  public void testLoop2() throws Throwable { doTest(); }
-  public void testLoop3() throws Throwable { doTest(); }
-  public void testLoop4() throws Throwable { doTest(); }
-  public void testLoop5() throws Throwable { doTest(); }
-  public void testLoop6() throws Throwable { doTest(); }
-  public void testLoop7() throws Throwable { doTest(); }
-  public void testLoop8() throws Throwable { doTest(); }
-  public void testInCase() {doTest();}
-  public void testCaseLabel() {doTest();}
+  public void testAbs()       { doTest() }
+  public void testCall1()     { doTest() }
+  public void testCall2()     { doTest() }
+  public void testCall3()     { doTest() }
+  public void testClos1()     { doTest() }
+  public void testClos2()     { doTest() }
+  public void testClos3()     { doTest() }
+  public void testClos4()     { doTest() }
+  public void testF2()        { doTest() }
+  public void testField1()    { doTest() }
+  public void testFirst()     { doTest() }
+  public void testIf1()       { doTest() }
+  public void testIf2()       { doTest() }
+  public void testLocal1()    { doTest() }
+  public void testLoop1()     { doTest() }
+  public void testLoop2()     { doTest() }
+  public void testLoop3()     { doTest() }
+  public void testLoop4()     { doTest() }
+  public void testLoop5()     { doTest() }
+  public void testLoop6()     { doTest() }
+  public void testLoop7()     { doTest() }
+  public void testLoop8()     { doTest() }
+  public void testInCase()    { doTest() }
+  public void testCaseLabel() { doTest() }
 
-  public void testDuplicatesInsideIf() throws Throwable { doTest(); }
-  public void testFromGString() throws Throwable { doTest(); }
+  public void testDuplicatesInsideIf() { doTest() }
+  public void testFromGString() { doTest() }
 
-  public void testCharArray() {doTest(true);}
-  
-  public void testCallableProperty() {doTest();}
+  public void testCharArray() {doTest(true) }
+
+  public void testCallableProperty() {doTest() }
 
   void testFqn() {
     myFixture.addClass('''\
@@ -108,107 +96,67 @@ print "a" + preved<caret> + "c"
 ''')
   }
 
-  protected static final String ALL_MARKER = "<all>";
+  protected static final String ALL_MARKER = "<all>"
 
-  protected boolean replaceAllOccurences = false;
+  private void processFile(String fileText, boolean explicitType) {
+    boolean replaceAllOccurrences = prepareText(fileText)
 
-  private String processFile(String fileText, boolean explicitType) {
-    String result;
-    int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
-    if (startOffset < 0) {
-      startOffset = fileText.indexOf(ALL_MARKER);
-      replaceAllOccurences = true;
-      fileText = removeAllMarker(fileText);
-    } else {
-      replaceAllOccurences = false;
-      fileText = TestUtils.removeBeginMarker(fileText);
-    }
-    int endOffset = fileText.indexOf(TestUtils.END_MARKER);
-    fileText = TestUtils.removeEndMarker(fileText);
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+    PsiType type = inferType(explicitType)
 
-    Editor myEditor = myFixture.getEditor();
+    final IntroduceLocalVariableTest.MockSettings settings = new IntroduceLocalVariableTest.MockSettings(false, "preved", type, replaceAllOccurrences)
+    final GrIntroduceVariableHandler introduceVariableHandler = new IntroduceLocalVariableTest.MockGrIntroduceVariableHandler(settings)
 
-    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-
-    // gathering data for introduce variable
-    final GrIntroduceVariableHandler introduceVariableHandler = new GrIntroduceVariableHandler();
-
-    GrExpression selectedExpr = GrIntroduceHandlerBase.findExpression(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
-    StringPartInfo stringPartInfo = GrIntroduceHandlerBase.findStringPart(((GroovyFileBase)myFixture.getFile()), startOffset, endOffset);
-
-    assertTrue("Selected expression reference points to null", selectedExpr != null || stringPartInfo != null);
-
-    final PsiElement tempContainer = GroovyRefactoringUtil.
-      getEnclosingContainer(GrIntroduceHandlerBase.getCurrentPlace(selectedExpr, null, stringPartInfo));
-    assertTrue(tempContainer instanceof GroovyPsiElement);
-
-    PsiElement[] occurrences = selectedExpr != null ?
-                               GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer) :
-                               [stringPartInfo.literal] as PsiElement[];
-    final String varName = "preved";
-    final PsiType varType;
-    if (explicitType) {
-      varType = selectedExpr.getType();
-    }
-    else {
-      varType = null;
-    }
-
-    final GrIntroduceContext context = new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, stringPartInfo, occurrences, tempContainer);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        introduceVariableHandler.runRefactoring(context, new GroovyIntroduceVariableSettings() {
-          @Override
-          public boolean isDeclareFinal() {
-            return false;
-          }
-
-          @Nullable
-          @Override
-          public PsiType getSelectedType() {
-            return varType;
-          }
-
-          @Override
-          public String getName() {
-            return varName;
-          }
-
-          @Override
-          public boolean replaceAllOccurrences() {
-            return IntroduceVariableTest.this.replaceAllOccurences;
-          }
-        });
-        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-      }
-    });
-
-
-    result = myEditor.getDocument().getText();
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    result = result.substring(0, caretOffset) + TestUtils.CARET_MARKER + result.substring(caretOffset);
-
-    return result;
+    introduceVariableHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, null)
   }
 
-  public void doTest(boolean explicitType) {
-    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-    doTest(data[0], data[1], explicitType);
+  private boolean prepareText(@NotNull String fileText) {
+    int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER)
+
+    boolean replaceAllOccurrences
+    if (startOffset < 0) {
+      startOffset = fileText.indexOf(ALL_MARKER)
+      replaceAllOccurrences = true
+      fileText = removeAllMarker(fileText)
+    }
+    else {
+      replaceAllOccurrences = false
+      fileText = TestUtils.removeBeginMarker(fileText)
+    }
+
+    int endOffset = fileText.indexOf(TestUtils.END_MARKER)
+    fileText = TestUtils.removeEndMarker(fileText)
+
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
+
+    myFixture.editor.selectionModel.setSelection(startOffset, endOffset)
+    replaceAllOccurrences
+  }
+
+  private PsiType inferType(boolean explicitType) {
+    if (explicitType) {
+      final int start = myFixture.editor.selectionModel.selectionStart
+      final int end = myFixture.editor.selectionModel.selectionEnd
+      final GrExpression expression = GrIntroduceHandlerBase.findExpression(myFixture.file, start, end)
+      if (expression != null) {
+        return expression.type
+      }
+    }
+    return null
+  }
+
+  public void doTest(boolean explicitType = false) {
+    def (String before, String after) = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test")
+    doTest(before, after, explicitType)
   }
 
   public void doTest(String before, String after, boolean explicitType = false) {
-    assertEquals(after.trim(), processFile(before, explicitType).trim())
-  }
-
-  public void doTest() {
-    doTest(false);
+    processFile(before, explicitType)
+    myFixture.checkResult(after, true)
   }
 
   protected static String removeAllMarker(String text) {
-    int index = text.indexOf(ALL_MARKER);
-    return text.substring(0, index) + text.substring(index + ALL_MARKER.length());
+    int index = text.indexOf(ALL_MARKER)
+    return text.substring(0, index) + text.substring(index + ALL_MARKER.length())
   }
 
 }

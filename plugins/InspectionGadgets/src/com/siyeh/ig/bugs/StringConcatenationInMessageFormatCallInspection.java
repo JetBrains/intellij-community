@@ -61,6 +61,7 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
       this.variableName = variableName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix", variableName);

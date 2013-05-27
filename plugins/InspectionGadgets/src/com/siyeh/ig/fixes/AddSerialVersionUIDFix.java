@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
   }
 
+  @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     final PsiElement classIdentifier = descriptor.getPsiElement();

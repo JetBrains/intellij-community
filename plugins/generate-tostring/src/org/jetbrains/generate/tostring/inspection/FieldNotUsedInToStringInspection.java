@@ -35,11 +35,13 @@ import java.util.Collections;
  */
 public class FieldNotUsedInToStringInspection extends AbstractToStringInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Field not used in 'toString()' method";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "FieldNotUsedInToString";
@@ -149,7 +151,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
       }
     }
 
-    private boolean usesReflection(PsiMethod method) {
+    private static boolean usesReflection(PsiMethod method) {
       @NonNls final String name = method.getName();
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
@@ -159,7 +161,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
       if ("getDeclaredFields".equals(name)) {
         return "java.lang.Class".equals(qualifiedName);
       }
-      else if ("toString".equals(name)) {
+      if ("toString".equals(name)) {
         return "org.apache.commons.lang.builder.ReflectionToStringBuilder".equals(qualifiedName) ||
           "java.util.Objects".equals(qualifiedName);
       }

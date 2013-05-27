@@ -25,18 +25,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class TransientFieldNotInitializedInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "transient.field.not.initialized.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "transient.field.not.initialized.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReadObjectInitializationVisitor();
   }

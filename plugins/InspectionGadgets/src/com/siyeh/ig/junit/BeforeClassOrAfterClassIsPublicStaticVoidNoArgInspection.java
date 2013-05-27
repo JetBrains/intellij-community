@@ -18,8 +18,8 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -110,6 +110,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
       myName = name;
     }
 
+    @Override
     protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (method != null) {
@@ -130,6 +131,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
       }
     }
 
+    @Override
     @NotNull
     public String getName() {
       return myName;

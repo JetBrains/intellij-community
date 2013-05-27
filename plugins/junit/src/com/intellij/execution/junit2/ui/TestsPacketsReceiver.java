@@ -123,7 +123,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     }
   }
 
-  public void notifyStart(TestProxy root) {
+  public synchronized void notifyStart(TestProxy root) {
     myModel = new JUnitRunningModel(root, myConsoleProperties);
     Disposer.register(this, myModel);
   }
@@ -204,11 +204,11 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     }
   }
 
-  public boolean isRunning() {
+  public synchronized boolean isRunning() {
     return !myIsTerminated;
   }
 
-  public void setTerminated(boolean terminated) {
+  public synchronized void setTerminated(boolean terminated) {
     myIsTerminated = terminated;
   }
 

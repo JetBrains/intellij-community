@@ -60,7 +60,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiElement[] elements = {anchorStatement};
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
-    if (prev instanceof PsiComment && SuppressManager.getInstance().getSuppressedInspectionIdsIn(prev) != null) {
+    if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       elements = new PsiElement[]{prev, anchorStatement};
     }
     try {

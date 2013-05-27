@@ -59,7 +59,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class FileReference implements FileReferenceOwner, PsiPolyVariantReference,
+public class FileReference implements PsiFileReference, FileReferenceOwner, PsiPolyVariantReference,
                                       QuickFixProvider<FileReference>, LocalQuickFixProvider,
                                       EmptyResolveMessageProvider, BindablePsiReference {
 

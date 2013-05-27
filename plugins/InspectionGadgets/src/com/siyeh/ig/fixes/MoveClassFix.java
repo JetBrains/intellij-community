@@ -16,26 +16,28 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Application;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.ide.DataManager;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveClassFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("move.class.quickfix");
   }
 
+  @Override
   public void doFix(@NotNull final Project project,
                     ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
@@ -43,6 +45,7 @@ public class MoveClassFix extends InspectionGadgetsFix {
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
 
+      @Override
       public void run() {
         final RefactoringActionHandlerFactory factory =
           RefactoringActionHandlerFactory.getInstance();

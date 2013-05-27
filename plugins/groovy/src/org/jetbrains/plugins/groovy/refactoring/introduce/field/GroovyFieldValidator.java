@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -44,7 +44,7 @@ public class GroovyFieldValidator extends GrIntroduceValidatorEngine {
           if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)toCheck) &&
               varName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(((PsiMethod)toCheck).getName()))) {
             conflicts.putValue(toCheck, message("access.to.created.field.0.will.be.overriden.by.method.1", htmlEmphasize(varName),
-                                                htmlEmphasize(UsageViewUtil.getDescriptiveName(toCheck))));
+                                                htmlEmphasize(DescriptiveNameUtil.getDescriptiveName(toCheck))));
           }
         }
       }

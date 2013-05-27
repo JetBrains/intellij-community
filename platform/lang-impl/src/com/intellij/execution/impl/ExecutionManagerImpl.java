@@ -27,6 +27,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -307,14 +308,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         stop(descriptor);
       }
     }
-    else {
-      start(project, configuration, executor, target, currentDescriptor);
-      return;
-    }
 
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), configuration);
+        if (runner != null && ExecutorRegistry.getInstance().isStarting(project, executor.getId(), runner.getRunnerId())) {
+          awaitingTerminationAlarm.addRequest(this, 100);
+          return;
+        }
         for (RunContentDescriptor descriptor : descriptorsToStop) {
           ProcessHandler processHandler = descriptor.getProcessHandler();
           if (processHandler != null && !processHandler.isProcessTerminated()) {
@@ -325,7 +327,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         start(project, configuration, executor, target, currentDescriptor);
       }
     };
-    awaitingTerminationAlarm.addRequest(runnable, 100);
+    awaitingTerminationAlarm.addRequest(runnable, 50);
   }
 
   private static void start(@NotNull Project project,

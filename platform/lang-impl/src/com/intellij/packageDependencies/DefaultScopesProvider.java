@@ -52,7 +52,12 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-        return holder.getProject() == myProject
+        return contains(file, holder.getProject(), holder);
+      }
+
+      @Override
+      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+        return project == myProject
                && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file);
       }
     });

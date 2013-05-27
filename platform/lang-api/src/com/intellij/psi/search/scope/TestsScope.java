@@ -16,6 +16,7 @@
 package com.intellij.psi.search.scope;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +24,7 @@ import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.Colored;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,9 +34,15 @@ public class TestsScope extends NamedScope {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public TestsScope() {
     super(NAME, new AbstractPackageSet("test:*..*") {
+
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-        final ProjectFileIndex index = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
+        return contains(file, holder.getProject(), holder);
+      }
+
+      @Override
+      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+        final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
         return file != null && index.isInTestSourceContent(file);
       }
     });

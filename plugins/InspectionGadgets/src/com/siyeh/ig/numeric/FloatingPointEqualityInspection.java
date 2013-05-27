@@ -27,16 +27,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class FloatingPointEqualityInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("floating.point.equality.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("floating.point.equality.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FloatingPointEqualityComparisonVisitor();
   }

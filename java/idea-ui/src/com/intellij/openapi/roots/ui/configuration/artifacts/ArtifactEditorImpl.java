@@ -554,7 +554,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     if (tab == 0) {
       return "reference.project.structure.artifacts.output";
     }
-    String helpId = ArtifactPropertiesEditors.getHelpId(myTabbedPane.getSelectedTitle());
+    String helpId = myPropertiesEditors.getHelpId(myTabbedPane.getSelectedTitle());
     return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
   }
 

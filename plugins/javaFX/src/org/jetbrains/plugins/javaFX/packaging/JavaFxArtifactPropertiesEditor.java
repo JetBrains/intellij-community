@@ -158,6 +158,12 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     }
   }
 
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "Project_Structure_Artifacts_Java_FX_tab";
+  }
+
   @Override
   public void reset() {
     setText(myTitleTF, myProperties.getTitle());

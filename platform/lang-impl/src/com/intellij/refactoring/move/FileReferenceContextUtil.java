@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -53,7 +53,7 @@ public class FileReferenceContextUtil {
 
         final PsiReference[] refs = element.getReferences();
         if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
-          final FileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
+          final PsiFileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
           if (ref != null) {
             final ResolveResult[] results = ref.multiResolve(false);
             for (ResolveResult result : results) {
@@ -120,7 +120,7 @@ public class FileReferenceContextUtil {
       PsiReference[] refs = element.getReferences();
       for (PsiReference ref : refs) {
         if (ref instanceof FileReferenceOwner) {
-          final FileReference fileReference = ((FileReferenceOwner)refs[0]).getLastFileReference();
+          final PsiFileReference fileReference = ((FileReferenceOwner)refs[0]).getLastFileReference();
           if (fileReference != null) {
             try {
               PsiElement newElement = fileReference.bindToElement(item);

@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
-import com.intellij.openapi.externalSystem.service.settings.ExternalSettingsControl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
@@ -43,10 +43,11 @@ import java.io.File;
  * @author Denis Zhdanov
  * @since 4/28/13 11:06 AM
  */
-public class GradleSystemSettingsControl implements ExternalSettingsControl<GradleSettings> {
-  
+public class GradleSystemSettingsControl implements ExternalSystemSettingsControl<GradleSettings> {
+
   @NotNull private final GradleSettings myInitialSettings;
-  
+
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private JLabel                    myServiceDirectoryLabel;
   private TextFieldWithBrowseButton myServiceDirectoryPathField;
   private boolean                   myServiceDirectoryPathModifiedByUser;
@@ -65,20 +66,17 @@ public class GradleSystemSettingsControl implements ExternalSettingsControl<Grad
 
   @Override
   public void showUi(boolean show) {
-    myServiceDirectoryLabel.setVisible(show);
-    myServiceDirectoryPathField.setVisible(show);
+    ExternalSystemUiUtil.showUi(this, show);
   }
 
   private void preparePathControl() {
     myServiceDirectoryPathField = new TextFieldWithBrowseButton();
-    myServiceDirectoryPathField.addBrowseFolderListener(
-      "",
-      GradleBundle.message("gradle.settings.title.service.dir.path"),
-      null,
-      new FileChooserDescriptor(false, true, false, false, false, false),
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-      false
-    );
+    myServiceDirectoryPathField.addBrowseFolderListener("",
+                                                        GradleBundle.message("gradle.settings.title.service.dir.path"),
+                                                        null,
+                                                        new FileChooserDescriptor(false, true, false, false, false, false),
+                                                        TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+                                                        false);
     myServiceDirectoryPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
@@ -139,7 +137,6 @@ public class GradleSystemSettingsControl implements ExternalSettingsControl<Grad
 
   @Override
   public void disposeUIResources() {
-    myServiceDirectoryLabel = null; 
-    myServiceDirectoryPathField = null; 
+    ExternalSystemUiUtil.disposeUi(this);
   }
 }

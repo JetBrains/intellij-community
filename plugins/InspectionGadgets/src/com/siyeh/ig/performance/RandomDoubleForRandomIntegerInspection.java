@@ -60,6 +60,7 @@ public class RandomDoubleForRandomIntegerInspection
   private static class RandomDoubleForRandomIntegerFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

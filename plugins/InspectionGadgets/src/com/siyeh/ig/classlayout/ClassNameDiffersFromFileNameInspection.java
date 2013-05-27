@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.JspPsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,18 +29,21 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "class.name.differs.from.file.name.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.differs.from.file.name.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiJavaFile file = (PsiJavaFile)infos[0];
@@ -57,6 +60,7 @@ public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
     return new RenameFix(filenameWithoutPrefix);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassNameDiffersFromFileNameVisitor();
   }

@@ -23,18 +23,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class TextLabelInSwitchStatementInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "text.label.in.switch.statement.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "text.label.in.switch.statement.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TextLabelInSwitchStatementVisitor();
   }

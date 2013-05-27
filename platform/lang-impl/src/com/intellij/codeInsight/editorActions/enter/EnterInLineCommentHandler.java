@@ -54,7 +54,11 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
             }
             document.insertString(caretOffset, prefix);
             return Result.Default;
+          } else {
+            caretOffsetRef.set(offset);
+            caretAdvance.set(-prefix.length() - 1);
           }
+          return Result.Default;
         }
       }
     }

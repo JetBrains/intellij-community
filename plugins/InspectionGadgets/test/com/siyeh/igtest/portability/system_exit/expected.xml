@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SystemExit.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Call to 'System.exit()' or related methods</problem_class>
+    <description>Call to &lt;code&gt;System.exit()&lt;/code&gt; is non-portable #loc</description>
+  </problem>
+
+</problems>

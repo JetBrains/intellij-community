@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" filepath="$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" filepath="$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsAnalysis/InspectionGadgetsAnalysis.iml" filepath="$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsAnalysis/InspectionGadgetsAnalysis.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" group="plugins/IntelliLang" />
@@ -151,6 +152,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/xml/impl/xml.iml" filepath="$PROJECT_DIR$/xml/impl/xml.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/openapi/xml-openapi.iml" filepath="$PROJECT_DIR$/xml/openapi/xml-openapi.iml" group="xml" />
+      <module fileurl="file://$PROJECT_DIR$/xml/xml-psi-api/xml-psi-api.iml" filepath="$PROJECT_DIR$/xml/xml-psi-api/xml-psi-api.iml" group="xml" />
+      <module fileurl="file://$PROJECT_DIR$/xml/xml-psi-impl/xml-psi-impl.iml" filepath="$PROJECT_DIR$/xml/xml-psi-impl/xml-psi-impl.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/tests/xml-tests.iml" filepath="$PROJECT_DIR$/xml/tests/xml-tests.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xpath.iml" filepath="$PROJECT_DIR$/plugins/xpath/xpath.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/xslt-debugger.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/xslt-debugger.iml" group="plugins" />

@@ -16,15 +16,11 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -70,7 +66,7 @@ public class JUnitRuleInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return infos.length > 1 ? new MakePublicStaticFix((String)infos[1], (String)infos[2]) : null;
+    return infos.length > 1 ? new MakePublicStaticFix((String)infos[1], infos[2].equals(CLASS_RULE_FQN)) : null;
   }
 
   @Override
@@ -82,35 +78,7 @@ public class JUnitRuleInspection extends BaseInspection {
         final boolean classRuleAnnotated = REPORT_CLASS_RULE_PROBLEMS && AnnotationUtil.isAnnotated(field, CLASS_RULE_FQN, false);
         if (ruleAnnotated || classRuleAnnotated) {
           String annotation = ruleAnnotated ? RULE_FQN : CLASS_RULE_FQN;
-          String errorMessage = null;
-          final boolean hasStatic = field.hasModifierProperty(PsiModifier.STATIC);
-          final boolean hasPublic = field.hasModifierProperty(PsiModifier.PUBLIC);
-          if (!hasPublic) {
-            if (classRuleAnnotated) {
-              if (!hasStatic) {
-                errorMessage = "public and static";
-              } else {
-                errorMessage = "public";
-              }
-            }
-            else {
-              if (!hasStatic){
-                errorMessage = "public";
-              } else {
-                errorMessage = "public and non-static";
-              }
-            }
-          }
-          else {
-            if (!hasStatic) {
-              if (classRuleAnnotated) {
-                errorMessage = "static";
-              }
-            }
-            else if (ruleAnnotated) {
-              errorMessage = "non-static";
-            }
-          }
+          String errorMessage = getPublicStaticErrorMessage(field, ruleAnnotated, classRuleAnnotated);
           if (errorMessage != null) {
             registerError(field.getNameIdentifier(), InspectionGadgetsBundle.message("junit.rule.problem.descriptor", annotation, errorMessage), "Make field " + errorMessage, annotation);
           }
@@ -122,31 +90,36 @@ public class JUnitRuleInspection extends BaseInspection {
     };
   }
 
-  private static class MakePublicStaticFix extends InspectionGadgetsFix {
-    private final String myName;
-    private final boolean myMakeStatic;
-
-    public MakePublicStaticFix(String name, String annotation) {
-      myName = name;
-      myMakeStatic = annotation.equals(CLASS_RULE_FQN);
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element != null) {
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiField) {
-          PsiUtil.setModifierProperty((PsiField)parent, PsiModifier.PUBLIC, true);
-          PsiUtil.setModifierProperty((PsiField)parent, PsiModifier.STATIC, myMakeStatic);
+  static String getPublicStaticErrorMessage(PsiField field, boolean shouldBeNonStatic, boolean shouldBeStatic) {
+    String errorMessage = null;
+    final boolean hasStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    final boolean hasPublic = field.hasModifierProperty(PsiModifier.PUBLIC);
+    if (!hasPublic) {
+      if (shouldBeStatic) {
+        if (!hasStatic) {
+          errorMessage = "public and static";
+        } else {
+          errorMessage = "public";
+        }
+      }
+      else {
+        if (!hasStatic){
+          errorMessage = "public";
+        } else {
+          errorMessage = "public and non-static";
         }
       }
     }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myName;
+    else {
+      if (!hasStatic) {
+        if (shouldBeStatic) {
+          errorMessage = "static";
+        }
+      }
+      else if (shouldBeNonStatic) {
+        errorMessage = "non-static";
+      }
     }
+    return errorMessage;
   }
 }

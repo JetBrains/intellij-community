@@ -150,7 +150,9 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     //noinspection unchecked
     return EMPTY;
   }
-  private static final MostlySingularMultiMap EMPTY = new MostlySingularMultiMap() {
+  private static final MostlySingularMultiMap EMPTY = new EmptyMap();
+
+  private static class EmptyMap extends MostlySingularMultiMap {
     @Override
     public void add(@NotNull Object key, @NotNull Object value) {
       throw new IncorrectOperationException();
@@ -192,5 +194,5 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     public Iterable get(@NotNull Object name) {
       return EmptyIterable.getInstance();
     }
-  };
+  }
 }

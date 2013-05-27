@@ -16,7 +16,10 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.Query;
@@ -44,12 +47,14 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
    */
   public boolean m_ignoreOverridesOfLibraryMethods = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "parameter.name.differs.from.overridden.parameter.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -57,6 +62,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
       infos[0]);
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel =
       new MultipleCheckboxOptionsPanel(this);
@@ -69,11 +75,13 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     return optionsPanel;
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameParameterFix((String)infos[0]);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ParameterNameDiffersFromOverriddenParameterVisitor();
   }

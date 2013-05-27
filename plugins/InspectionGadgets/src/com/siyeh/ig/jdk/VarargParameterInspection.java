@@ -61,6 +61,7 @@ public class VarargParameterInspection extends BaseInspection {
 
   private static class VarargParameterFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("variable.argument.method.quickfix");

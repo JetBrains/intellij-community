@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class ExtractParameterAsLocalVariableFix
   extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(

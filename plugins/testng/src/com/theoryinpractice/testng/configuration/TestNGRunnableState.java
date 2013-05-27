@@ -26,12 +26,18 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,6 +72,7 @@ import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
@@ -86,6 +93,7 @@ import java.net.UnknownHostException;
 
 public class TestNGRunnableState extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
+  private static final String TESTNG_TEST_FRAMEWORK_NAME = "TestNG";
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   private final TestNGConfiguration config;
   private final RunnerSettings runnerSettings;
@@ -123,6 +131,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
   @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+    final boolean smRunner = Registry.is("testng_sm_runner", false);
+    if (smRunner) {
+      return startSMRunner(executor);
+    }
     OSProcessHandler processHandler = startProcess();
     final TreeRootNode unboundOutputRoot = new TreeRootNode();
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings, unboundOutputRoot,
@@ -226,6 +238,62 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
     final DefaultExecutionResult result = new DefaultExecutionResult(console, processHandler);
     result.setRestartActions(rerunFailedTestsAction);
+    return result;
+  }
+
+  private ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
+    getJavaParameters().getVMParametersList().add("-Didea.testng.sm_runner");
+    getJavaParameters().getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+
+    OSProcessHandler handler = startProcess();
+    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(
+      new RuntimeConfigurationProducer.DelegatingRuntimeConfiguration<TestNGConfiguration>(
+        (TestNGConfiguration)getEnvironment().getRunProfile()),
+      TESTNG_TEST_FRAMEWORK_NAME,
+      executor
+    );
+
+    testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
+
+    final BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
+      TESTNG_TEST_FRAMEWORK_NAME,
+      testConsoleProperties,
+      getEnvironment().getRunnerSettings(),
+      getEnvironment().getConfigurationSettings(), null);
+
+
+    Disposer.register(getEnvironment().getProject(), smtConsoleView);
+    smtConsoleView.attachToProcess(handler);
+    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(smtConsoleView);
+    rerunFailedTestsAction.init(testConsoleProperties, getEnvironment());
+    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      @Override
+      public TestFrameworkRunningModel get() {
+        return ((SMTRunnerConsoleView)smtConsoleView).getResultsViewer();
+      }
+    });
+
+    final DefaultExecutionResult result = new DefaultExecutionResult(smtConsoleView, handler);
+    result.setRestartActions(rerunFailedTestsAction);
+
+    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(config, handler, runnerSettings);
+    final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(final ProcessEvent event) {
+
+        if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
+          task.finish();
+        }
+      }
+
+      @Override
+      public void startNotified(final ProcessEvent event) {
+        mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
+        ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
+      }
+    });
+
     return result;
   }
 

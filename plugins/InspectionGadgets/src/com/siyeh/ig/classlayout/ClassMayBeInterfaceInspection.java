@@ -31,30 +31,35 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassMayBeInterfaceInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "class.may.be.interface.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.may.be.interface.problem.descriptor");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new ClassMayBeInterfaceFix();
   }
 
   private static class ClassMayBeInterfaceFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "class.may.be.interface.convert.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiIdentifier classNameIdentifier =
@@ -149,6 +154,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassMayBeInterfaceVisitor();
   }

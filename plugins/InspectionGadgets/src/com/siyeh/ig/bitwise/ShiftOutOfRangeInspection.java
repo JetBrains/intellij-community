@@ -72,6 +72,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
       this.isLong = isLong;
     }
 
+    @Override
     @NotNull
     public String getName() {
       final int newValue;

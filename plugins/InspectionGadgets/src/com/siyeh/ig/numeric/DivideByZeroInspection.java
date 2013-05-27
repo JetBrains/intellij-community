@@ -25,22 +25,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class DivideByZeroInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "divzero";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("divide.by.zero.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "divide.by.zero.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DivisionByZeroVisitor();
   }

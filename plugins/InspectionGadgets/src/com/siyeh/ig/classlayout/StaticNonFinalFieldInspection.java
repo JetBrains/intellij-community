@@ -27,24 +27,28 @@ import org.jetbrains.annotations.Nullable;
 
 public class StaticNonFinalFieldInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "static.non.final.field.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "static.non.final.field.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new StaticNonFinalFieldVisitor();
   }

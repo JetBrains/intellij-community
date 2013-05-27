@@ -71,6 +71,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
   private static class MakePrivateFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("make.private.quickfix");

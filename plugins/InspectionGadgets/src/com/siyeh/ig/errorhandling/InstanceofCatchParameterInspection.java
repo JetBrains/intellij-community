@@ -24,18 +24,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceofCatchParameterInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "instanceof.catch.parameter.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "instanceof.catch.parameter.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new InstanceofCatchParameterVisitor();
   }

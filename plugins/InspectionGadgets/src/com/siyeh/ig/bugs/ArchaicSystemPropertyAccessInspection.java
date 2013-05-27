@@ -70,6 +70,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
 
   private static class ReplaceWithParseMethodFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -106,6 +107,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
   private static class ReplaceWithStandardPropertyAccessFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

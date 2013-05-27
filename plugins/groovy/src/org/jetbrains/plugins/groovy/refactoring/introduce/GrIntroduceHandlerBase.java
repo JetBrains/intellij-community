@@ -79,26 +79,30 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   };
 
+  @NotNull
   protected abstract String getRefactoringName();
 
+  @NotNull
   protected abstract String getHelpID();
 
   @NotNull
   protected abstract PsiElement findScope(GrExpression expression, GrVariable variable, StringPartInfo stringPart);
 
-  protected abstract void checkExpression(GrExpression selectedExpr) throws GrRefactoringError;
+  protected abstract void checkExpression(@NotNull GrExpression selectedExpr) throws GrRefactoringError;
 
-  protected abstract void checkVariable(GrVariable variable) throws GrRefactoringError;
+  protected abstract void checkVariable(@NotNull GrVariable variable) throws GrRefactoringError;
 
-  protected abstract void checkStringLiteral(StringPartInfo info) throws GrRefactoringError;
+  protected abstract void checkStringLiteral(@NotNull StringPartInfo info) throws GrRefactoringError;
 
-  protected abstract void checkOccurrences(PsiElement[] occurrences);
+  protected abstract void checkOccurrences(@NotNull PsiElement[] occurrences);
 
-  protected abstract GrIntroduceDialog<Settings> getDialog(GrIntroduceContext context);
+  @NotNull
+  protected abstract GrIntroduceDialog<Settings> getDialog(@NotNull GrIntroduceContext context);
 
   @Nullable
-  public abstract GrVariable runRefactoring(GrIntroduceContext context, Settings settings);
+  public abstract GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
 
+  @NotNull
   public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, boolean acceptVoidCalls) {
     int correctedOffset = correctOffset(editor, offset);
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
@@ -118,7 +122,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return expressions;
   }
 
-  public static boolean expressionIsIncorrect(GrExpression expression, boolean acceptVoidCalls) {
+  public static boolean expressionIsIncorrect(@Nullable GrExpression expression, boolean acceptVoidCalls) {
     if (expression instanceof GrParenthesizedExpression) return true;
     if (PsiUtil.isSuperReference(expression)) return true;
     if (expression instanceof GrAssignmentExpression) return true;
@@ -261,7 +265,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
       GrExpression selectedExpr = findExpression(file, startOffset, endOffset);
       final GrVariable variable = findVariable(file, startOffset, endOffset);
-      final StringPartInfo stringPart = findStringPart(file, startOffset, endOffset);
+      final StringPartInfo stringPart = StringPartInfo.findStringPart(file, startOffset, endOffset);
       if (variable != null) {
         checkVariable(variable);
       }
@@ -298,20 +302,6 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
-  }
-
-  @Nullable
-  public static StringPartInfo findStringPart(@NotNull PsiFile file, int startOffset, int endOffset) {
-    final PsiElement start = file.findElementAt(startOffset);
-    final PsiElement fin = file.findElementAt(endOffset);
-    if (start == null || fin == null) return null;
-
-    final PsiElement parent = PsiTreeUtil.findCommonParent(start, fin);
-
-    if (parent != null && parent.getParent() instanceof GrLiteral) {
-      return new StringPartInfo((GrLiteral)parent.getParent(), new TextRange(startOffset, endOffset));
-    }
-    return null;
   }
 
   @Nullable
@@ -408,20 +398,18 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  public static PsiElement findAnchor(@NotNull GrIntroduceContext context,
-                                      @NotNull GrIntroduceSettings settings,
-                                      @NotNull PsiElement[] occurrences,
+  public static PsiElement findAnchor(@NotNull PsiElement[] occurrences,
                                       @NotNull PsiElement container) {
     if (occurrences.length == 0) return null;
+
     PsiElement candidate;
-    if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
+    if (occurrences.length == 1) {
       candidate = occurrences[0];
       candidate = findContainingStatement(candidate);
     }
     else {
-      GroovyRefactoringUtil.sortOccurrences(occurrences);
       candidate = occurrences[0];
-      while (candidate != null && !container.equals(candidate.getParent())) {
+      while (candidate != null && candidate.getParent() != container) {
         candidate = candidate.getParent();
       }
     }
@@ -533,14 +521,37 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     String literalText = data.getText();
     String endQuote = data.getEndQuote();
 
-    String prefix = literalText.substring(0, range.getStartOffset()) + endQuote;
-    String suffix = startQuote + literalText.substring(range.getEndOffset());
+    String prefix = literalText.substring(0, range.getStartOffset()) ;
+    String suffix =  literalText.substring(range.getEndOffset());
 
-    final GrExpression concatenation =
-      GroovyPsiElementFactory.getInstance(project).createExpressionFromText(prefix + "+" + varName + "+" + suffix);
+    StringBuilder buffer = new StringBuilder();
+    if (!prefix.equals(startQuote)) {
+      buffer.append(prefix).append(endQuote).append('+');
+    }
+    buffer.append(varName);
+    if (!suffix.equals(endQuote)) {
+      buffer.append('+').append(startQuote).append(suffix);
+    }
+
+    final GrExpression concatenation = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer);
 
     final GrExpression concat = stringPart.getLiteral().replaceWithExpression(concatenation, false);
-    return ((GrBinaryExpression)((GrBinaryExpression)concat).getLeftOperand()).getRightOperand();
+    if (concat instanceof GrReferenceExpression) {
+      return concat;
+    }
+    else {
+      assert concat instanceof GrBinaryExpression;
+      final GrExpression left = ((GrBinaryExpression)concat).getLeftOperand();
+      if (left instanceof GrReferenceExpression) {
+        return left;
+      }
+      else {
+        assert left instanceof GrBinaryExpression;
+        final GrExpression right = ((GrBinaryExpression)left).getRightOperand();
+        assert right != null;
+        return right;
+      }
+    }
   }
 
   public interface Validator extends NameValidator {

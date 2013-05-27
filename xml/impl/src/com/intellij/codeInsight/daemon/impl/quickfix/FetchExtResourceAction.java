@@ -41,7 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -395,7 +395,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   private static Set<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context, final String url) {
     final Set<String> result = new LinkedHashSet<String>();
     if (context != null) {
-      XmlEntityRefImpl.copyEntityCaches(file, context);
+      XmlEntityCache.copyEntityCaches(file, context);
     }
 
     XmlUtil.processXmlElements(

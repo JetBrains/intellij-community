@@ -26,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedSwitchStatementInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "nested.switch.statement.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "nested.switch.statement.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NestedSwitchStatementVisitor();
   }

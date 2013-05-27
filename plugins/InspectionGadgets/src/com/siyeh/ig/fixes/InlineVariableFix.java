@@ -32,6 +32,7 @@ import java.util.Collection;
 
 public class InlineVariableFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("inline.variable.quickfix");

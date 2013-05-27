@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,6 +49,7 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider {
     final Set<PsiStatement> statements = new HashSet<PsiStatement>();
 
     for (PsiElement element : elements) {
+      ProgressManager.checkCanceled();
       if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
         final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement.class, true, PsiMethod.class);

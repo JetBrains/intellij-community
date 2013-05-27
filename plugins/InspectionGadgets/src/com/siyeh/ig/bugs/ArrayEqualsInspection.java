@@ -24,7 +24,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +68,7 @@ public class ArrayEqualsInspection extends BaseInspection {
       this.deepEquals = deepEquals;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (deepEquals) {

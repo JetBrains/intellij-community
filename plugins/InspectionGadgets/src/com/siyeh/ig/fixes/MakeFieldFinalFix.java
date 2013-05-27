@@ -47,6 +47,7 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
     return new MakeFieldFinalFix(field.getName());
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("make.field.final.quickfix",

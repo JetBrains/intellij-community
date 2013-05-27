@@ -35,12 +35,14 @@ public class UnpredictableBigDecimalConstructorCallInspection
   public boolean ignoreReferences = true;
   public boolean ignoreComplexLiterals = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "unpredictable.big.decimal.constructor.call.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -87,6 +89,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
       this.argumentText = argumentText;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -115,6 +118,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnpredictableBigDecimalConstructorCallVisitor();
   }

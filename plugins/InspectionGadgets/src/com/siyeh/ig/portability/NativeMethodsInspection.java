@@ -24,22 +24,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class NativeMethodsInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "NativeMethod";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("native.method.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "native.method.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NativeMethodVisitor();
   }

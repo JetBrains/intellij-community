@@ -27,22 +27,26 @@ import org.jetbrains.annotations.NotNull;
 public class ContinueOrBreakFromFinallyBlockInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "continue.or.break.from.finally.block.display.name");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "continue.or.break.from.finally.block.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ContinueOrBreakFromFinallyBlockVisitor();
   }

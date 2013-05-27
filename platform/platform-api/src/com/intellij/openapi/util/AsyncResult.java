@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AsyncResult<T> extends ActionCallback {
   private static final Logger LOG = Logger.getInstance(AsyncResult.class);
@@ -104,6 +105,7 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
+  @Override
   @NotNull
   public final AsyncResult<T> notify(@NotNull final ActionCallback child) {
     super.notify(child);
@@ -118,6 +120,7 @@ public class AsyncResult<T> extends ActionCallback {
     return getResultSync(-1);
   }
 
+  @Nullable
   public T getResultSync(long msTimeout) {
     if (isProcessed()) {
       return myResult;

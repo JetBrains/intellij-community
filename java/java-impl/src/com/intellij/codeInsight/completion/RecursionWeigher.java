@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Comparing;
@@ -79,7 +79,7 @@ class RecursionWeigher extends LookupElementWeigher {
     if (myCallQualifier != null &&
         myPositionQualifier != null &&
         myCallQualifier != myPositionQualifier &&
-        CodeInsightUtil.areExpressionsEquivalent(myCallQualifier, myPositionQualifier)) {
+        JavaPsiEquivalenceUtil.areExpressionsEquivalent(myCallQualifier, myPositionQualifier)) {
       return false;
     }
 
@@ -162,7 +162,7 @@ class RecursionWeigher extends LookupElementWeigher {
     return Result.normal;
   }
 
-  @Nullable 
+  @Nullable
   private String getSetterPropertyName(@Nullable PsiMethod calledMethod) {
     if (PropertyUtil.isSimplePropertySetter(calledMethod)) {
       assert calledMethod != null;

@@ -268,7 +268,6 @@ public final class Annotation implements Segment {
     if (myHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
       if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
       if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
-      if (mySeverity == HighlightSeverity.INFO) return CodeInsightColors.INFO_ATTRIBUTES;
       if (mySeverity == HighlightSeverity.WEAK_WARNING) return CodeInsightColors.WEAK_WARNING_ATTRIBUTES;
     }
 

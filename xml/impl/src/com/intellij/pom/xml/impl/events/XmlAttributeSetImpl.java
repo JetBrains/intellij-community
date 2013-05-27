@@ -18,7 +18,6 @@ package com.intellij.pom.xml.impl.events;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.XmlAttributeSet;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -59,9 +58,5 @@ public class XmlAttributeSetImpl implements XmlAttributeSet {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Attribute \"" + getName() + "\" for tag \"" + getTag().getName() + "\" set to \"" + getValue() + "\"";
-  }
-
-  public void accept(XmlChangeVisitor visitor) {
-    visitor.visitXmlAttributeSet(this);
   }
 }

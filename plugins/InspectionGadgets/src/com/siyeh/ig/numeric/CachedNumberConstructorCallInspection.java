@@ -80,12 +80,14 @@ public class CachedNumberConstructorCallInspection
       this.className = className;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "cached.number.constructor.call.quickfix", className);
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiNewExpression expression =

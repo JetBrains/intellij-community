@@ -28,26 +28,29 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public class NonThreadSafeLazyInitializationInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "non.thread.safe.lazy.initialization.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.thread.safe.lazy.initialization.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnsafeSafeLazyInitializationVisitor();
   }
@@ -89,6 +92,7 @@ public class NonThreadSafeLazyInitializationInspection
     private static boolean isAssignedOnce(PsiElement referent) {
       final int[] writeCount = new int[1];
       return ReferencesSearch.search(referent).forEach(new Processor<PsiReference>() {
+        @Override
         public boolean process(PsiReference reference) {
           PsiElement element = reference.getElement();
           if (!(element instanceof PsiExpression)) {
@@ -188,6 +192,7 @@ public class NonThreadSafeLazyInitializationInspection
   }
 
   private static class IntroduceHolderFix extends InspectionGadgetsFix {
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       PsiReferenceExpression expression = (PsiReferenceExpression)descriptor.getPsiElement();
       PsiElement resolved = expression.resolve();
@@ -226,6 +231,7 @@ public class NonThreadSafeLazyInitializationInspection
       return string + "Holder";
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Introduce holder class";

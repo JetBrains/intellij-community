@@ -53,6 +53,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -320,7 +321,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     super.performRefactoring(usageInfos);
     if (myNewVisibility == null) return;
     for (PsiMember member : members) {
-      VisibilityUtil.fixVisibility(usageInfos, member, myNewVisibility);
+      VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usageInfos), member, myNewVisibility);
     }
   }
 

@@ -63,6 +63,7 @@ public class SimplifiableConditionalExpressionInspection
   private static class SimplifiableConditionalFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

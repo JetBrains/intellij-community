@@ -18,6 +18,7 @@ package com.intellij.lang.xml;
 import com.intellij.find.impl.HelpID;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +26,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -98,7 +98,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)element;
       final PsiMetaData metaData = xmlTag.getMetaData();
-      final String name = metaData != null ? UsageViewUtil.getMetaDataName(metaData) : xmlTag.getName();
+      final String name = metaData != null ? DescriptiveNameUtil.getMetaDataName(metaData) : xmlTag.getName();
       return UsageViewBundle.message("usage.target.xml.tag.of.file", metaData == null ? "<" + name + ">" : name, xmlTag.getContainingFile().getName());
     }
     else if (element instanceof XmlAttributeValue) {

@@ -56,6 +56,7 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection
   private static class MultipleExceptionsDeclaredOnTestMethodFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

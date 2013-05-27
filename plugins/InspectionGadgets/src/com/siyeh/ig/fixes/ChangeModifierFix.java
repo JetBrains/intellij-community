@@ -17,7 +17,10 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -33,12 +36,14 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
     this.modifierText = modifierText;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("change.modifier.quickfix",
                                            modifierText);
   }
 
+  @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     final PsiElement element = descriptor.getPsiElement();

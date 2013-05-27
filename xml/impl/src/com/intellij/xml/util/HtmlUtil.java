@@ -42,7 +42,6 @@ import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -230,14 +229,7 @@ public class HtmlUtil {
 
   @Nullable
   public static XmlDocument getRealXmlDocument(@Nullable XmlDocument doc) {
-    if (doc == null) return null;
-    final PsiFile containingFile = doc.getContainingFile();
-
-    final PsiFile templateFile = TemplateLanguageUtil.getTemplateFile(containingFile);
-    if (templateFile instanceof XmlFile) {
-      return ((XmlFile)templateFile).getDocument();
-    }
-    return doc;
+    return HtmlPsiUtil.getRealXmlDocument(doc);
   }
 
   public static String[] getHtmlTagNames() {

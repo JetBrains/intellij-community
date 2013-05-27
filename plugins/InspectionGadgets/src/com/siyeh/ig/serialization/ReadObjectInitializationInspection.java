@@ -26,23 +26,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectInitializationInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "InstanceVariableMayNotBeInitializedByReadObject";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "readobject.initialization.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "readobject.initialization.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReadObjectInitializationVisitor();
   }

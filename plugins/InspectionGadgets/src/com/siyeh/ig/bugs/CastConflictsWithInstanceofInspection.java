@@ -200,14 +200,15 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
   private static class ReplaceCastFix extends ReplaceFix {
 
-    private String myInstanceofType;
-    private String myCastType;
+    private final String myInstanceofType;
+    private final String myCastType;
 
     public ReplaceCastFix(String instanceofType, String castType) {
       myInstanceofType = instanceofType;
       myCastType = castType;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.quickfix1", myCastType, myInstanceofType);
@@ -229,6 +230,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       myCastType = castType;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.quickfix2", myInstanceofType, myCastType);

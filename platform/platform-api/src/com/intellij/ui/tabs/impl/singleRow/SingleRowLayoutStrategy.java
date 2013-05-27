@@ -145,7 +145,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean drawPartialOverflowTabs() {
-      return true;
+      return false;
     }
 
     @Override

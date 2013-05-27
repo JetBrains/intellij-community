@@ -21,6 +21,10 @@
     <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginXmlDomFileDescription"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
+    <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
+                  extenderClass="org.jetbrains.idea.devkit.dom.impl.InternalDomExtender$ForAction"/>
+    <dom.extender domClass="org.jetbrains.idea.devkit.dom.Group"
+                  extenderClass="org.jetbrains.idea.devkit.dom.impl.InternalDomExtender$ForGroup"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension"
@@ -87,7 +91,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
-    <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>
+    <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.dom.impl.InspectionsPropertiesReferenceProviderContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>

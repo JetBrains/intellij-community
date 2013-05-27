@@ -24,17 +24,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ParametersPerMethodInspection extends MethodMetricInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "MethodWithTooManyParameters";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "parameters.per.method.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer parameterCount = (Integer)infos[0];
@@ -42,14 +45,17 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
       "parameters.per.method.problem.descriptor", parameterCount);
   }
 
+  @Override
   protected int getDefaultLimit() {
     return 5;
   }
 
+  @Override
   protected String getConfigurationLabel() {
     return InspectionGadgetsBundle.message("parameter.limit.option");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ParametersPerMethodVisitor();
   }

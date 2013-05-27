@@ -23,18 +23,17 @@ import com.siyeh.ig.telemetry.TelemetryToolWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class InspectionGadgetsProjectComponent implements ProjectComponent {
-
   private final Project project;
 
   public InspectionGadgetsProjectComponent(Project project) {
     this.project = project;
   }
 
+  @Override
   public void projectOpened() {
     final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
     final InspectionGadgetsTelemetry telemetry = inspectionGadgetsPlugin.getTelemetry();
     final boolean telemetryEnabled = InspectionGadgetsPlugin.getUpToDateTelemetryEnabled(new Consumer<Boolean>() {
-
       @Override
       public void consume(Boolean value) {
         final boolean telemetryEnabled = value.booleanValue();
@@ -53,16 +52,20 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent {
     }
   }
 
+  @Override
   public void projectClosed() {
     TelemetryToolWindow.unregister(project);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "InspectionGadgetsProjectComponent";
   }
 
+  @Override
   public void initComponent() {}
 
+  @Override
   public void disposeComponent() {}
 }

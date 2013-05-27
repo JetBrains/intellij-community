@@ -50,6 +50,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
   private static class ClassWithoutConstructorFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

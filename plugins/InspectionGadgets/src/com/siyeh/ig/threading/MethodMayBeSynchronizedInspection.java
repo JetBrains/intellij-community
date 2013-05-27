@@ -29,23 +29,27 @@ import org.jetbrains.annotations.Nullable;
 
 public class MethodMayBeSynchronizedInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "method.may.be.synchronized.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.may.be.synchronized.problem.descriptor");
   }
 
+  @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MethodMayBeSynchronizedQuickFix();
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodMayBeSynchronizedVisitor();
   }
@@ -53,12 +57,14 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
   private static class MethodMayBeSynchronizedQuickFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "method.may.be.synchronized.quickfix");
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement identifier = descriptor.getPsiElement();

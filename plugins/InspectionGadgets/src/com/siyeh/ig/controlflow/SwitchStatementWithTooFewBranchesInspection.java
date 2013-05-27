@@ -33,22 +33,26 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.display.name");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
                                               this, "m_limit");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer branchCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.problem.descriptor", branchCount);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SwitchStatementWithTooFewBranchesVisitor();
   }

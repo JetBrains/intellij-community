@@ -17,7 +17,7 @@ package com.siyeh.ig.classmetrics;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -117,8 +117,8 @@ public class MethodCountInspection extends BaseInspection {
           continue;
         }
         if (ignoreGettersAndSetters) {
-          if (PropertyUtils.isSimpleGetter(method) ||
-              PropertyUtils.isSimpleSetter(method)) {
+          if (PropertyUtil.isSimpleGetter(method) ||
+              PropertyUtil.isSimpleSetter(method)) {
             continue;
           }
         }

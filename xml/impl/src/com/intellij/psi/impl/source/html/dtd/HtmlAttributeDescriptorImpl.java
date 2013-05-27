@@ -85,4 +85,9 @@ public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
+
+  @Override
+  public String toString() {
+    return delegate.toString();
+  }
 }

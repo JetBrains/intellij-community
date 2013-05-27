@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
@@ -108,7 +109,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     writeTempFile();
     finish();
 
-    myClient.startListening(myConfig);
+    if (!Registry.is("testng_sm_runner", false)) myClient.startListening(myConfig);
   }
 
   @Override

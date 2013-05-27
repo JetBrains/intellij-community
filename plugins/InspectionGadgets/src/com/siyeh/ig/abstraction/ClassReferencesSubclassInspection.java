@@ -25,12 +25,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassReferencesSubclassInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "class.references.subclass.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiNamedElement element = (PsiNamedElement)infos[0];
@@ -46,6 +48,7 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
       containingClassName);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassReferencesSubclassVisitor();
   }

@@ -51,10 +51,7 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
   @Override
   public T getElement() {
     T element = myElement;
-    if (element != null && !element.isValid()) {
-      element = null;
-    }
-    return element;
+    return element.isValid() ? element : null;
   }
 
   public int hashCode() {
@@ -74,7 +71,6 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
 
   @Override
   public Segment getRange() {
-    T element = myElement;
-    return element == null ? null : element.getTextRange();
+    return myElement.getTextRange();
   }
 }

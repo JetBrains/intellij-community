@@ -23,7 +23,9 @@ import java.util.EventListener;
  * @see com.intellij.openapi.editor.Document#addDocumentListener(DocumentListener)
  * @see EditorEventMulticaster#addDocumentListener(DocumentListener)
  */
+@SuppressWarnings("JavadocReference")
 public interface DocumentListener extends EventListener{
+  DocumentListener[] EMPTY_ARRAY = new DocumentListener[0];
   /**
    * Called before the text of the document is changed.
    *

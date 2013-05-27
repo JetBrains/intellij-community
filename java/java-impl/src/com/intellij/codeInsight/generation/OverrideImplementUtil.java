@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 0-2 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,14 @@ import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -49,8 +48,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -61,7 +58,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -72,14 +68,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
-
-  @NonNls private static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
 
   private OverrideImplementUtil() { }
 
@@ -223,7 +215,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
 
     annotateOnOverrideImplement(result, aClass, method, insertOverrideIfPossible);
-    
+
     if (CodeStyleSettingsManager.getSettings(aClass.getProject()).REPEAT_SYNCHRONIZED && method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
       result.getModifierList().setModifierProperty(PsiModifier.SYNCHRONIZED, true);
     }
@@ -379,7 +371,6 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       final PsiCodeBlock body = result.getBody();
       if (body != null) body.delete();
     }
-
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     PsiType returnType = result.getReturnType();
     if (returnType == null) {
@@ -474,86 +465,29 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   public static MemberChooser<PsiMethodMember> showOverrideImplementChooser(Editor editor,
                                                                             final PsiElement aClass,
                                                                             final boolean toImplement,
-                                                                            Collection<CandidateInfo> candidates,
+                                                                            final Collection<CandidateInfo> candidates,
                                                                             Collection<CandidateInfo> secondary) {
+
+    final JavaOverrideImplementMemberChooser chooser =
+      JavaOverrideImplementMemberChooser.create(aClass, toImplement, candidates, secondary);
+    if (chooser == null) {
+      return null;
+    }
     Project project = aClass.getProject();
-    if (candidates.isEmpty() && secondary.isEmpty()) return null;
-
-    final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
-    final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary));
-
-    final Ref<Boolean> merge = Ref.create(PropertiesComponent.getInstance(project).getBoolean(PROP_COMBINED_OVERRIDE_IMPLEMENT, true));
-    final MemberChooser<PsiMethodMember> chooser =
-      new MemberChooser<PsiMethodMember>(toImplement || merge.get() ? all : onlyPrimary, false, true, project, PsiUtil.isLanguageLevel5OrHigher(aClass)) {
-        @Override
-        protected void fillToolbarActions(DefaultActionGroup group) {
-          super.fillToolbarActions(group);
-          if (toImplement) return;
-
-          final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement",
-                                                            AllIcons.General.Show_to_implement) {
-            @Override
-            public boolean isSelected(AnActionEvent e) {
-              return merge.get().booleanValue();
-            }
-
-            @Override
-            public void setSelected(AnActionEvent e, boolean state) {
-              merge.set(state);
-              resetElements(state ? all : onlyPrimary);
-              setTitle(getChooserTitle(false, merge));
-            }
-          };
-          mergeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
-
-          Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("OverrideMethods");
-          mergeAction.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myTree);
-
-          group.add(mergeAction);
-        }
-      };
-    chooser.setTitle(getChooserTitle(toImplement, merge));
     registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
 
-    chooser.setCopyJavadocVisible(true);
-
-    if (toImplement) {
-      chooser.selectElements(onlyPrimary);
-    }
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!toImplement || onlyPrimary.length == 0) {
-        chooser.selectElements(all);
-      }
-      chooser.close(DialogWrapper.OK_EXIT_CODE);
       return chooser;
     }
-
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
-    PropertiesComponent.getInstance(project).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, merge.get().toString());
     return chooser;
   }
 
-  private static String getChooserTitle(boolean toImplement, Ref<Boolean> merge) {
-    return toImplement
-                     ? CodeInsightBundle.message("methods.to.implement.chooser.title")
-                     : merge.get().booleanValue()
-                       ? CodeInsightBundle.message("methods.to.override.implement.chooser.title")
-                       : CodeInsightBundle.message("methods.to.override.chooser.title");
-  }
-
-  private static PsiMethodMember[] convertToMethodMembers(Collection<CandidateInfo> candidates) {
-    return ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
-        @Override
-        public PsiMethodMember fun(final CandidateInfo s) {
-          return new PsiMethodMember(s);
-        }
-      });
-  }
-
-  private static void registerHandlerForComplementaryAction(final Project project, final Editor editor, final PsiElement aClass,
+  private static void registerHandlerForComplementaryAction(final Project project,
+                                                            final Editor editor,
+                                                            final PsiElement aClass,
                                                             final boolean toImplement,
                                                             final MemberChooser<PsiMethodMember> chooser) {
     final JComponent preferredFocusedComponent = chooser.getPreferredFocusedComponent();

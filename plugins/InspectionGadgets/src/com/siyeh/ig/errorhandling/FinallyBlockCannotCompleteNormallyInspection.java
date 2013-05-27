@@ -28,27 +28,32 @@ import org.jetbrains.annotations.NotNull;
 public class FinallyBlockCannotCompleteNormallyInspection
   extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "finally";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "finally.block.cannot.complete.normally.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finally.block.cannot.complete.normally.problem.descriptor");
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FinallyBlockCannotCompleteNormallyVisitor();
   }

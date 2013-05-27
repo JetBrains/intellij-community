@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -100,12 +101,9 @@ public class GrIntroduceFieldProcessor {
 
   private void processOccurrences(@NotNull PsiClass targetClass, @NotNull GrVariable field) {
     if (context.getStringPart() != null) {
-      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(field.getName(), context.getStringPart(),
-                                                                      context.getProject());
-
-      context.getEditor().getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
-      context.getEditor().getSelectionModel().removeSelection();
-
+      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(field.getName(), context.getStringPart(), context.getProject());
+      final PsiElement occurrence = replaceOccurrence(field, expr, targetClass);
+      updateCaretPosition(occurrence);
     }
     else {
       if (settings.replaceAllOccurrences()) {
@@ -125,6 +123,11 @@ public class GrIntroduceFieldProcessor {
         }
       }
     }
+  }
+
+  private void updateCaretPosition(PsiElement occurrence) {
+    context.getEditor().getCaretModel().moveToOffset(occurrence.getTextRange().getEndOffset());
+    context.getEditor().getSelectionModel().removeSelection();
   }
 
   @NotNull
@@ -172,13 +175,26 @@ public class GrIntroduceFieldProcessor {
   }
 
   private void initializeInMethod(GrVariable field) {
-    if (context.getExpression() == null) return;
-
-    final GrExpression expression = context.getExpression();
     final PsiElement _scope = context.getScope();
     final PsiElement scope = _scope instanceof GroovyScriptClass ? ((GroovyScriptClass)_scope).getContainingFile() : _scope;
-    final GrMethod method = (GrMethod)GrIntroduceFieldHandler.getContainer(expression, scope);
-    LOG.assertTrue(method != null);
+
+    final GrExpression expression;
+    if (context.getExpression() != null) {
+      expression = context.getExpression();
+    }
+    else if (context.getStringPart() != null) {
+      expression = context.getStringPart().getLiteral();
+    }
+    else {
+      return;
+    }
+
+    final GrMember member = GrIntroduceFieldHandler.getContainer(expression, scope);
+    LOG.assertTrue(member != null);
+    GrOpenBlock container = member instanceof GrMethod? ((GrMethod)member).getBlock():
+                            member instanceof GrClassInitializer ? ((GrClassInitializer)member).getBlock():
+                            null;
+    assert container != null;
 
     final GrStatement anchor;
     if (settings.removeLocalVar()) {
@@ -186,10 +202,10 @@ public class GrIntroduceFieldProcessor {
       anchor = PsiTreeUtil.getParentOfType(variable, GrStatement.class);
     }
     else {
-      anchor = (GrStatement)GrIntroduceHandlerBase.findAnchor(context, settings, context.getOccurrences(), method.getBlock());
+      anchor = (GrStatement)GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), container);
     }
 
-    generateAssignment(field, anchor, method.getBlock());
+    generateAssignment(field, anchor, container);
   }
 
   private void initializeInConstructor(GrVariable field) {
@@ -269,10 +285,11 @@ public class GrIntroduceFieldProcessor {
       }
     });
     if (elements.size() == 0) return null;
-    return GrIntroduceHandlerBase.findAnchor(context, settings, ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
+    return GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 
-  private static void replaceOccurrence(GrVariable field, PsiElement occurrence, PsiClass containingClass) {
+  private PsiElement replaceOccurrence(GrVariable field, PsiElement occurrence, PsiClass containingClass) {
+    boolean isOriginal = occurrence == context.getExpression();
     final GrReferenceExpression newExpr = createRefExpression(field, occurrence, containingClass);
     final PsiElement replaced;
     if (occurrence instanceof GrExpression) {
@@ -285,6 +302,10 @@ public class GrIntroduceFieldProcessor {
     if (replaced instanceof GrQualifiedReference<?>) {
       GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)replaced);
     }
+    if (isOriginal) {
+      updateCaretPosition(replaced);
+    }
+    return replaced;
   }
 
   private static GrReferenceExpression createRefExpression(GrVariable field, PsiElement place, PsiClass containingClass) {

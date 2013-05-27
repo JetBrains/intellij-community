@@ -25,23 +25,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemGetenvInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToSystemGetenv";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "system.getenv.call.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "system.getenv.call.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SystemGetenvVisitor();
   }

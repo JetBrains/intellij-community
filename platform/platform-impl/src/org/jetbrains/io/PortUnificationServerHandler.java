@@ -2,12 +2,12 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.compression.ZlibDecoder;
 import org.jboss.netty.handler.codec.compression.ZlibEncoder;
 import org.jboss.netty.handler.codec.compression.ZlibWrapper;
-import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpContentCompressor;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
@@ -20,11 +20,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import java.net.SocketAddress;
 import java.security.KeyStore;
 import java.security.Security;
 
 @ChannelHandler.Sharable
-final class PortUnificationServerHandler extends FrameDecoder {
+final class PortUnificationServerHandler extends SimpleChannelUpstreamHandler {
   private static final AtomicNotNullLazyValue<SSLContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SSLContext>() {
     @NotNull
     @Override
@@ -57,6 +58,8 @@ final class PortUnificationServerHandler extends FrameDecoder {
   private final ChannelGroup openChannels;
   private final DelegatingHttpRequestHandler delegatingHttpRequestHandler;
 
+  private ChannelBuffer cumulation;
+
   public PortUnificationServerHandler(ChannelGroup openChannels) {
     this(new DelegatingHttpRequestHandler(), openChannels, true, true);
   }
@@ -76,11 +79,41 @@ final class PortUnificationServerHandler extends FrameDecoder {
   }
 
   @Override
-  protected ChannelBuffer decode(ChannelHandlerContext context, Channel channel, ChannelBuffer buffer) throws Exception {
-    if (buffer.readableBytes() < 5) {
-      return null;
+  public void messageReceived(
+    ChannelHandlerContext context, MessageEvent e) throws Exception {
+    Object m = e.getMessage();
+    if (!(m instanceof ChannelBuffer)) {
+      context.sendUpstream(e);
+      return;
     }
 
+    ChannelBuffer input = (ChannelBuffer) m;
+    if (!input.readable()) {
+      return;
+    }
+
+    if (cumulation == null) {
+      if (input.readableBytes() < 5) {
+        cumulation = context.getChannel().getConfig().getBufferFactory().getBuffer(8);
+        cumulation.writeBytes(input);
+      }
+      else {
+        decode(context, input, e.getRemoteAddress());
+      }
+    }
+    else {
+      if ((cumulation.readableBytes() + input.readableBytes()) < 5) {
+        cumulation.writeBytes(input);
+      }
+      else {
+        ChannelBuffer compositeBuffer = ChannelBuffers.wrappedBuffer(cumulation, input);
+        cumulation = null;
+        decode(context, compositeBuffer, e.getRemoteAddress());
+      }
+    }
+  }
+
+  private void decode(ChannelHandlerContext context, ChannelBuffer buffer, SocketAddress remoteAddress) throws Exception {
     ChannelPipeline pipeline = context.getPipeline();
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
       SSLEngine engine = SSL_SERVER_CONTEXT.getValue().createSSLEngine();
@@ -107,11 +140,11 @@ final class PortUnificationServerHandler extends FrameDecoder {
     }
     // must be after new channels handlers addition (netty bug?)
     pipeline.remove(this);
-    return buffer.readBytes(buffer.readableBytes());
+    Channels.fireMessageReceived(context, buffer, remoteAddress);
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-    WebServer.LOG.error(event.getCause());
+    BuiltInServer.LOG.error(event.getCause());
   }
 }

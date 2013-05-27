@@ -16,6 +16,6 @@ class Bar {
     }
 
     def foo() {
-        print <selection>f</selection>
+        print f<caret>
     }
 }

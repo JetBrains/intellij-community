@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     return new VariableNotUsedInsideIfVisitor();
   }
 
-  private static class VariableNotUsedInsideIfVisitor
-    extends BaseInspectionVisitor {
+  private static class VariableNotUsedInsideIfVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitConditionalExpression(PsiConditionalExpression expression) {
@@ -74,7 +73,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     @Override
     public void visitIfStatement(PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      final PsiExpression condition = statement.getCondition();
+      final PsiExpression condition = ParenthesesUtils.stripParentheses(statement.getCondition());
       if (!(condition instanceof PsiBinaryExpression)) {
         return;
       }
@@ -92,8 +91,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
       }
     }
 
-    private void checkVariableUsage(PsiReferenceExpression referenceExpression,
-                                    PsiElement thenContext, PsiElement elseContext) {
+    private void checkVariableUsage(PsiReferenceExpression referenceExpression, PsiElement thenContext, PsiElement elseContext) {
       if (thenContext == null) {
         return;
       }
@@ -105,8 +103,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
       if (contextExits(thenContext) || VariableAccessUtils.variableIsAssigned(variable, thenContext)) {
         return;
       }
-      if (elseContext != null &&
-          (contextExits(elseContext) || VariableAccessUtils.variableIsUsed(variable, elseContext))) {
+      if (elseContext != null && (contextExits(elseContext) || VariableAccessUtils.variableIsUsed(variable, elseContext))) {
         return;
       }
       registerError(referenceExpression);
@@ -153,10 +150,8 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     }
 
     private static boolean statementExits(PsiElement context) {
-      return context instanceof PsiReturnStatement ||
-             context instanceof PsiThrowStatement ||
-             context instanceof PsiBreakStatement ||
-             context instanceof PsiContinueStatement;
+      return context instanceof PsiReturnStatement || context instanceof PsiThrowStatement ||
+             context instanceof PsiBreakStatement || context instanceof PsiContinueStatement;
     }
   }
 }

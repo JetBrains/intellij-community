@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,12 +33,14 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
    */
   public boolean ignoreInterfacesThatOnlyDeclareConstants = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "interface.never.implemented.display.name");
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
@@ -47,12 +49,14 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
       "ignoreInterfacesThatOnlyDeclareConstants");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "interface.never.implemented.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new InterfaceNeverImplementedVisitor();
   }

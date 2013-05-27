@@ -84,6 +84,7 @@ public class ConstantMathCallInspection extends BaseInspection {
 
   private static class MakeStrictFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

@@ -125,6 +125,7 @@ public class AutoUnboxingInspection extends BaseInspection {
 
   private static class AutoUnboxingFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -160,9 +161,12 @@ public class AutoUnboxingInspection extends BaseInspection {
           replaceExpression(prefixExpression,
                             expressionText + '=' + newExpressionText + "+1");
         }
-        else {
+        else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
           replaceExpression(prefixExpression,
                             expressionText + '=' + newExpressionText + "-1");
+        } else {
+          replaceExpression(prefixExpression,
+                            prefixExpression.getOperationSign().getText() + newExpressionText);
         }
       }
       else if (parent instanceof PsiPostfixExpression) {
@@ -176,7 +180,7 @@ public class AutoUnboxingInspection extends BaseInspection {
                               expressionText + '=' + newExpressionText +
                               "+1");
           }
-          else {
+          else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
             replaceExpression(postfixExpression,
                               expressionText + '=' + newExpressionText +
                               "-1");

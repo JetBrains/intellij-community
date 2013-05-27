@@ -94,10 +94,12 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     return handlerMapping.handlers.containsKey(name);
   }
 
+  @Override
   public void addHandler(String name, Object handler) {
     handlerMapping.addHandler(name, handler);
   }
 
+  @Override
   public void removeHandler(String name) {
     handlerMapping.removeHandler(name);
   }
@@ -128,11 +130,8 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       return true;
     }
     else if (HttpMethod.POST.getName().equals(request.getHeader("Access-Control-Request-Method"))) {
-      assert request.getMethod() == HttpMethod.OPTIONS;
-      HttpResponse response = Responses.create("text/plain");
-      response.setHeader("Access-Control-Allow-Origin", "*");
-      response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-      Responses.send(response, request, context);
+      LOG.assertTrue(request.getMethod() == HttpMethod.OPTIONS);
+      Responses.sendOptionsResponse("POST, OPTIONS", request, context);
       return true;
     }
     return false;
@@ -158,6 +157,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       handlers.remove(handlerName);
     }
 
+    @Override
     public Object getHandler(String methodName) {
       Object handler = null;
       String handlerName = null;
@@ -204,6 +204,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     }
 
     private String getHandlers() {
+      //noinspection SpellCheckingInspection
       return String.format("%nhandlers: %s %s", Arrays.toString(handlers.keySet().toArray()), Arrays.toString(handlers.values().toArray()));
     }
 

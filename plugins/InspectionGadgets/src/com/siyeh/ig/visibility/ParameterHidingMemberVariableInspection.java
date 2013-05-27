@@ -46,30 +46,36 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreForAbstractMethods = false;
 
+  @Override
   @NotNull
   public String getID() {
     return "ParameterHidesMemberVariable";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("parameter.hides.member.variable.display.name");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("parameter.hides.member.variable.problem.descriptor", aClass.getName());
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option"),
@@ -85,6 +91,7 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
     return optionsPanel;
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ParameterHidingMemberVariableVisitor();
   }

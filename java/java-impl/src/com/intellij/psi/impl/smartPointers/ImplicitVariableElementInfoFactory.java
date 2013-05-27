@@ -15,16 +15,11 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ImplicitVariable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,69 +33,25 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
     return null;
   }
 
-  private static class ImplicitVariableInfo implements SmartPointerElementInfo {
-    private final ImplicitVariable myVar;
-    private final Project myProject;
-
+  private static class ImplicitVariableInfo extends HardElementInfo {
     public ImplicitVariableInfo(@NotNull ImplicitVariable var, @NotNull Project project) {
-      myVar = var;
-      myProject = project;
+      super(project, var);
     }
 
     @Override
     public PsiElement restoreElement() {
+      ImplicitVariable myVar = (ImplicitVariable)super.restoreElement();
       PsiIdentifier psiIdentifier = myVar.getNameIdentifier();
       if (psiIdentifier == null || psiIdentifier.isValid()) return myVar;
       return null;
     }
 
     @Override
-    @Nullable
-    public Document getDocumentToSynchronize() {
-      return null;
-    }
-
-    @Override
-    public void documentAndPsiInSync() {
-    }
-
-    @Override
-    public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
-    }
-
-    @Override
-    public void unfastenBelt(int offset) {
-    }
-
-    @Override
-    public int elementHashCode() {
-      return myVar.hashCode();
-    }
-
-    @Override
-    public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
-      if (other instanceof ImplicitVariableInfo) {
-        return myVar == ((ImplicitVariableInfo)other).myVar;
-      }
-      return Comparing.equal(restoreElement(), other.restoreElement());
-    }
-
-    @Override
-    public VirtualFile getVirtualFile() {
-      return PsiUtilCore.getVirtualFile(myVar);
-    }
-
-    @Override
     public Segment getRange() {
+      ImplicitVariable myVar = (ImplicitVariable)super.restoreElement();
       PsiIdentifier psiIdentifier = myVar.getNameIdentifier();
       if (psiIdentifier == null || !psiIdentifier.isValid()) return null;
       return psiIdentifier.getTextRange();
-    }
-
-    @NotNull
-    @Override
-    public Project getProject() {
-      return myProject;
     }
   }
 }

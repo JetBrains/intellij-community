@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MakeSerializableFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(

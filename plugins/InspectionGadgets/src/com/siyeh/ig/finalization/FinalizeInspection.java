@@ -31,17 +31,20 @@ public class FinalizeInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreTrivialFinalizers = true;
 
+  @Override
   @NotNull
   public String getID() {
     return "FinalizeDeclaration";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "finalize.declaration.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -55,6 +58,7 @@ public class FinalizeInspection extends BaseInspection {
       "ignoreTrivialFinalizers");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FinalizeDeclaredVisitor();
   }

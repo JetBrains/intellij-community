@@ -272,6 +272,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
   private class PointlessBooleanExpressionFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");

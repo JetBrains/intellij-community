@@ -172,10 +172,12 @@ class FormatDecode {
 
   private static class AllValidator implements Validator {
 
+    @Override
     public boolean valid(PsiType type) {
       return true;
     }
 
+    @Override
     public String type() {
       return "any";
     }
@@ -183,6 +185,7 @@ class FormatDecode {
 
   private static class DateValidator implements Validator {
 
+    @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
 
@@ -192,6 +195,7 @@ class FormatDecode {
              CommonClassNames.JAVA_UTIL_CALENDAR.equals(text);
     }
 
+    @Override
     public String type() {
       return "Date/Time";
     }
@@ -199,12 +203,14 @@ class FormatDecode {
 
   private static class CharValidator implements Validator {
 
+    @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
       return PsiType.CHAR.equals(type) ||
              CommonClassNames.JAVA_LANG_CHARACTER.equals(text);
     }
 
+    @Override
     public String type() {
       return "char";
     }
@@ -212,6 +218,7 @@ class FormatDecode {
 
   private static class IntValidator implements Validator {
 
+    @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
       return PsiType.INT.equals(type) ||
@@ -225,6 +232,7 @@ class FormatDecode {
              "java.math.BigInteger".equals(text);
     }
 
+    @Override
     public String type() {
       return "integer type";
     }
@@ -232,6 +240,7 @@ class FormatDecode {
 
   private static class FloatValidator implements Validator {
 
+    @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
       return PsiType.DOUBLE.equals(type) ||
@@ -241,6 +250,7 @@ class FormatDecode {
              "java.math.BigDecimal".equals(text);
     }
 
+    @Override
     public String type() {
       return "floating point";
     }

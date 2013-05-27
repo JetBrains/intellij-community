@@ -4,4 +4,4 @@ interface MyInterface {
     def foo(String s);
 }
 
-def a = <selection>MyInterface.CONST</selection>;
+def a = MyInterface.CONST<caret>;

@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalSystemConfigurable;
-import com.intellij.openapi.externalSystem.service.settings.ExternalSettingsControl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +40,13 @@ public class GradleConfigurable extends AbstractExternalSystemConfigurable<Gradl
 
   @NotNull
   @Override
-  protected ExternalSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
+  protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
     return new GradleProjectSettingsControl(settings);
   }
 
   @Nullable
   @Override
-  protected ExternalSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
+  protected ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
     return new GradleSystemSettingsControl(settings);
   }
 

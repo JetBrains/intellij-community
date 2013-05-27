@@ -24,17 +24,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfSunClassesInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("use.sun.classes.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.sun.classes.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UseOfSunClassesVisitor();
   }

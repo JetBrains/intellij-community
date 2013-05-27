@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.GitExternalApp;
 import org.jetbrains.git4idea.util.ScriptGenerator;
-import org.jetbrains.ide.WebServerManager;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +74,7 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @return the port number for XML RCP
    */
   public int getXmlRcpPort() {
-    return WebServerManager.getInstance().waitForStart().getPort();
+    return BuiltInServerManager.getInstance().waitForStart().getPort();
   }
 
   /**

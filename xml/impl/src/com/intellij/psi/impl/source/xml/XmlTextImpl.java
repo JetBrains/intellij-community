@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -228,7 +227,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   private XmlPsiPolicy getPolicy() {
-    return ((XMLLanguage)getLanguage()).getPsiPolicy();
+    return LanguageXmlPsiPolicy.INSTANCE.forLanguage(getLanguage());
   }
 
   public void insertText(String text, int displayOffset) throws IncorrectOperationException {

@@ -61,6 +61,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
     }
   }
 
+  @Override
   @NotNull
   public String getID() {
     return "ProhibitedExceptionCaught";

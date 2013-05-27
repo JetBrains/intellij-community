@@ -20,7 +20,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -77,6 +77,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
 
   private static class InlineCallFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.inline.quickfix");
@@ -174,7 +175,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
           return;
         }
       }
-      if (!PropertyUtils.isSimpleGetter(method)) {
+      if (!PropertyUtil.isSimpleGetter(method)) {
         return;
       }
       if (onlyReportPrivateGetter && !method.hasModifierProperty(PsiModifier.PRIVATE)) {

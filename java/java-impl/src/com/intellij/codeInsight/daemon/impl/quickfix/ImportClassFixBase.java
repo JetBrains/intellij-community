@@ -58,6 +58,7 @@ import java.util.regex.PatternSyntaxException;
  * @author peter
  */
 public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> implements HintAction, HighPriorityAction {
+  @NotNull
   private final T myElement;
   private final R myRef;
 
@@ -88,6 +89,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @NotNull
   public List<PsiClass> getClassesToImport() {
+    if (myRef instanceof PsiJavaReference) {
+      JavaResolveResult result = ((PsiJavaReference)myRef).advancedResolve(true);
+      PsiElement element = result.getElement();
+      // already imported
+      // can happen when e.g. class name happened to be in a method position
+      if (element instanceof PsiClass && result.isValidResult()) return Collections.emptyList();
+    }
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myElement.getProject());
     String name = getReferenceName(myRef);
     GlobalSearchScope scope = myElement.getResolveScope();
@@ -149,7 +157,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return null;
   }
 
-  protected List<PsiClass> filterByContext(List<PsiClass> candidates, T ref) {
+  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull T ref) {
     return candidates;
   }
 

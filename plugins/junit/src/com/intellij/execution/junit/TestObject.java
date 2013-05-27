@@ -278,7 +278,7 @@ public abstract class TestObject implements JavaCommandLine {
     Disposer.register(consoleView, unboundOutputRoot);
     final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView, unboundOutputRoot) {
       @Override
-      public void notifyStart(TestProxy root) {
+      public synchronized void notifyStart(TestProxy root) {
         if (!isRunning()) return;
         super.notifyStart(root);
         unboundOutputRoot.addChild(root);

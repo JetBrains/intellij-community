@@ -73,6 +73,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
 
   private static class DynamicRegexReplaceableByCompiledPatternFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

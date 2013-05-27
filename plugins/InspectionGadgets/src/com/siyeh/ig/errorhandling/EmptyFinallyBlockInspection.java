@@ -57,6 +57,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
   }
 
   private static class RemoveTryFinallyBlockFix extends InspectionGadgetsFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("remove.try.finally.block.quickfix");
@@ -98,6 +99,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
   }
 
   private static class RemoveFinallyBlockFix extends InspectionGadgetsFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("remove.finally.block.quickfix");

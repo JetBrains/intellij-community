@@ -42,11 +42,13 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntroduceConstantSettings> {
   public static final String REFACTORING_NAME = "Introduce Constant";
 
+  @NotNull
   @Override
   protected String getRefactoringName() {
     return REFACTORING_NAME;
   }
 
+  @NotNull
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
@@ -60,12 +62,12 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   @Override
-  protected void checkExpression(GrExpression selectedExpr) {
+  protected void checkExpression(@NotNull GrExpression selectedExpr) {
     selectedExpr.accept(new ConstantChecker(selectedExpr, selectedExpr));
   }
 
   @Override
-  protected void checkVariable(GrVariable variable) throws GrRefactoringError {
+  protected void checkVariable(@NotNull GrVariable variable) throws GrRefactoringError {
     final GrExpression initializer = variable.getInitializerGroovy();
     if (initializer == null) {
       throw new GrRefactoringError(RefactoringBundle.message("variable.does.not.have.an.initializer", variable.getName()));
@@ -74,12 +76,12 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   @Override
-  protected void checkStringLiteral(StringPartInfo info) throws GrRefactoringError {
+  protected void checkStringLiteral(@NotNull StringPartInfo info) throws GrRefactoringError {
     //todo
   }
 
   @Override
-  protected void checkOccurrences(PsiElement[] occurrences) {
+  protected void checkOccurrences(@NotNull PsiElement[] occurrences) {
     if (hasLhs(occurrences)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.variable.is.used.for.write"));
     }
@@ -99,13 +101,14 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     }
   }
 
+  @NotNull
   @Override
-  protected GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(GrIntroduceContext context) {
+  protected GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(@NotNull GrIntroduceContext context) {
     return new GrIntroduceConstantDialog(context, findContainingClass(context));
   }
 
   @Override
-  public GrField runRefactoring(GrIntroduceContext context, GrIntroduceConstantSettings settings) {
+  public GrField runRefactoring(@NotNull GrIntroduceContext context, @NotNull GrIntroduceConstantSettings settings) {
     return new GrIntroduceConstantProcessor(context, settings).run();
   }
 

@@ -102,6 +102,7 @@ desc
 deserializable
 deserializer
 deserializers
+devkit
 dirs
 distinctrow
 django
@@ -311,6 +312,7 @@ param
 params
 patcher
 patchers
+pathname
 pctfree
 pctincrease
 pctthreshold
@@ -398,6 +400,7 @@ serializer
 serializers
 servererror
 servlet
+servlets
 shader
 significand
 significands
@@ -488,6 +491,7 @@ varray
 verdana
 versa
 vertices
+viewlet
 vtlvariable
 watchlist
 webservice

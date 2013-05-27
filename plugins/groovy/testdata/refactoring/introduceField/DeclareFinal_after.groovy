@@ -3,6 +3,6 @@ class Foo {
     final f = bar + 5
 
     def foo() {
-        print <selection>f</selection>
+        print f<caret>
     }
 }

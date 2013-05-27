@@ -21,11 +21,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -162,8 +162,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field, With withElement) {
-    final PsiMethod getter = PropertyUtils.findGetterForField(field);
-    final PsiMethod setter = PropertyUtils.findSetterForField(field);
+    final PsiMethod getter = PropertyUtil.findGetterForField(field);
+    final PsiMethod setter = PropertyUtil.findSetterForField(field);
     if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) {
       return;
     }
@@ -174,9 +174,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
-        boolean isClass = withElement != null || isClassField(fieldName);
+        Class clazz = String.class;
+        if (withElement != null || isClassField(fieldName)) {
+          clazz = PsiClass.class;
+        } else if (field.getType() == PsiType.BOOLEAN) {
+          clazz = Boolean.class;
+        }
         final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), isClass ? PsiClass.class : String.class).setDeclaringElement(field);
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
       }
       return;

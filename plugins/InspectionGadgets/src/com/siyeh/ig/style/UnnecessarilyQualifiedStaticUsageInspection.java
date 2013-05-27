@@ -87,6 +87,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
 
   private static class UnnecessarilyQualifiedStaticUsageFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("unnecessary.qualifier.for.this.remove.quickfix");

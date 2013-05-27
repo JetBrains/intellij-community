@@ -53,6 +53,7 @@ public class ConfusingFloatingPointLiteralInspection
   private static class ConfusingFloatingPointLiteralFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(

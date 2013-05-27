@@ -26,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "nested.assignment.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "nested.assignment.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NestedAssignmentVisitor();
   }

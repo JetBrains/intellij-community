@@ -30,21 +30,25 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
 
   private static final Pattern newlines = Pattern.compile("\\\\n|\\\\r|\\\\0{0,1}12|\\\\0{0,1}15");
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("hardcoded.line.separator.display.name");
   }
 
+  @Override
   @NotNull
   public String getID() {
     return "HardcodedLineSeparator";
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("hardcoded.line.separator.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new HardcodedLineSeparatorsVisitor();
   }

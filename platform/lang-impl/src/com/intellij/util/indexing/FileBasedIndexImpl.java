@@ -62,6 +62,7 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.stubs.SerializationManagerEx;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -382,7 +383,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
-
+    if (extension instanceof StubUpdatingIndex) {
+      Map<FileType, Integer> versionMap = ((StubUpdatingIndex)extension).getVersionMap();
+      for (Map.Entry<FileType, Integer> entry : versionMap.entrySet()) {
+        ID stubId = IndexInfrastructure.getStubId(name, entry.getKey());
+        File file = IndexInfrastructure.getVersionFile(stubId);
+        Integer stubVersion = entry.getValue();
+        if (!file.exists() || IndexInfrastructure.versionDiffers(file, stubVersion)) {
+          LOG.info("Version has changed for index " + stubId + ". The index will be rebuilt.");
+          IndexInfrastructure.rewriteVersion(file, stubVersion);
+        }
+      }
+    }
     compactIndex(extension, version, versionFile);
     return versionChanged;
   }
@@ -1746,12 +1758,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public void run() {
         if (file.isValid()) {
+          ID stubId = IndexInfrastructure.getStubId(indexId, file.getFileType());
           if (currentFC != null) {
-            IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+            IndexingStamp.update(file, stubId, getIndexCreationStamp(stubId, file));
           }
           else {
             // mark the file as unindexed
-            IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP);
+            IndexingStamp.update(file, stubId, IndexInfrastructure.INVALID_STAMP);
           }
         }
       }
@@ -1973,7 +1986,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             @Override
             public void run() {
               for (ID<?, ?> indexId : affectedIndices) {
-                IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
+                ID id = IndexInfrastructure.getStubId(indexId, file.getFileType());
+                IndexingStamp.update(file, id, IndexInfrastructure.INVALID_STAMP2);
               }
             }
           });
@@ -2249,12 +2263,21 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
     return getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+           (isMock(file) || isFileIndexed(file, indexId));
   }
 
   private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
     return getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+           (isMock(file) || !isFileIndexed(file, indexId));
+  }
+
+  private static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexId) {
+    ID id = IndexInfrastructure.getStubId(indexId, file.getFileType());
+    return IndexingStamp.isFileIndexed(file, id, IndexInfrastructure.getIndexCreationStamp(id));
+  }
+
+  private static long getIndexCreationStamp(ID<?, ?> indexId, VirtualFile file) {
+    return IndexInfrastructure.getIndexCreationStamp(indexId, file);
   }
 
   private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {

@@ -27,17 +27,20 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassInitializerInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "NonStaticInitializer";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "class.initializer.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
@@ -50,6 +53,7 @@ public class ClassInitializerInspection extends BaseInspection {
     return new ChangeModifierFix(PsiModifier.STATIC);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassInitializerVisitor();
   }

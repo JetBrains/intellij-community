@@ -31,12 +31,14 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
     this.modifierText = modifierText;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("remove.modifier.quickfix",
                                            modifierText);
   }
 
+  @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     final PsiElement modifierElement = descriptor.getPsiElement();

@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +40,6 @@ import java.util.Map;
  * @author mike
  */
 public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
-  private static final Key<Map<String,CachedValue<XmlEntityDecl>>> XML_ENTITY_DECL_MAP = Key.create("XML_ENTITY_DECL_MAP");
   @NonNls private static final String GT_ENTITY = "&gt;";
   @NonNls private static final String QUOT_ENTITY = "&quot;";
 
@@ -57,37 +55,6 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return resolveEntity(this, text, targetFile);
   }
 
-  public static XmlEntityDecl getCachedEntity(PsiFile file, String name) {
-    CachedValue<XmlEntityDecl> cachedValue;
-    synchronized(PsiLock.LOCK) {
-      final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
-      cachedValue = cachingMap.get(name);
-    }
-    return cachedValue != null ? cachedValue.getValue():null;
-  }
-
-  public static void cacheParticularEntity(PsiFile file, XmlEntityDecl decl) {
-    synchronized(PsiLock.LOCK) {
-      final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
-      final String name = decl.getName();
-      if (cachingMap.containsKey(name)) return;
-      final SmartPsiElementPointer declPointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(decl);
-
-      cachingMap.put(
-        name, CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
-          public Result<XmlEntityDecl> compute() {
-            PsiElement declElement = declPointer.getElement();
-            if (declElement instanceof XmlEntityDecl && declElement.isValid() && name.equals(((XmlEntityDecl)declElement).getName()))
-              return new Result<XmlEntityDecl>((XmlEntityDecl)declElement, declElement);
-            cachingMap.put(name,null);
-            return new Result<XmlEntityDecl>(null,null);
-          }
-        },
-        false
-      ));
-    }
-  }
-
   public static XmlEntityDecl resolveEntity(final XmlElement element, final String text, PsiFile targetFile) {
     if (targetFile instanceof XmlFile) {
       XmlDocument document = ((XmlFile)targetFile).getDocument();
@@ -99,7 +66,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     final PsiElement targetElement = targetFile != null ? targetFile : element;
     CachedValue<XmlEntityDecl> value;
     synchronized(PsiLock.LOCK) {
-      Map<String, CachedValue<XmlEntityDecl>> map = getCachingMap(targetElement);
+      Map<String, CachedValue<XmlEntityDecl>> map = XmlEntityCache.getCachingMap(targetElement);
 
       value = map.get(entityName);
       final PsiFile containingFile = element.getContainingFile();
@@ -120,15 +87,6 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       }
     }
     return value.getValue();
-  }
-
-  private static Map<String, CachedValue<XmlEntityDecl>> getCachingMap(final PsiElement targetElement) {
-    Map<String, CachedValue<XmlEntityDecl>> map = targetElement.getUserData(XML_ENTITY_DECL_MAP);
-    if (map == null){
-      map = new HashMap<String,CachedValue<XmlEntityDecl>>();
-      targetElement.putUserData(XML_ENTITY_DECL_MAP, map);
-    }
-    return map;
   }
 
   private static final Key<Boolean> DISABLE_ENTITY_EXPAND = Key.create("disable.entity.expand");
@@ -188,7 +146,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       if (notfound &&       // no dtd ref at all
           targetElement instanceof XmlFile &&
           deps.size() == 1 &&
-          ((XmlFile)targetElement).getFileType() != StdFileTypes.DTD
+          ((XmlFile)targetElement).getFileType() != DTDFileType.INSTANCE
          ) {
         XmlDocument document = ((XmlFile)targetElement).getDocument();
         final XmlTag rootTag = document.getRootTag();
@@ -251,16 +209,6 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     else {
       visitor.visitElement(this);
     }
-  }
-
-  public static void copyEntityCaches(final PsiFile file, final PsiFile context) {
-    synchronized (PsiLock.LOCK) {
-      final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
-      for(Map.Entry<String,CachedValue<XmlEntityDecl>> entry:getCachingMap(context).entrySet()) {
-        cachingMap.put(entry.getKey(), entry.getValue());
-      }
-    }
-
   }
 
   public static void setNoEntityExpandOutOfDocument(XmlDocument doc, boolean b) {

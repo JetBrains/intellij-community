@@ -22,18 +22,21 @@ import org.jetbrains.annotations.NotNull;
 public class SerializableInnerClassWithNonSerializableOuterClassInspection
   extends SerializableInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "serializable.inner.class.with.non.serializable.outer.class.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serializable.inner.class.with.non.serializable.outer.class.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SerializableInnerClassWithNonSerializableOuterClassVisitor(this);
   }

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddThisQualifierFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("add.this.qualifier.quickfix");

@@ -15,7 +15,6 @@
  */
 package com.intellij.pom.xml.impl.events;
 
-import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.XmlTagChildAdd;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
@@ -39,9 +38,5 @@ public class XmlTagChildAddImpl implements XmlTagChildAdd {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "child added to " + getTag().getName() + " child: " + myChild.toString();
-  }
-
-  public void accept(XmlChangeVisitor visitor) {
-    visitor.visitXmlTagChildAdd(this);
   }
 }

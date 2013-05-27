@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.turnRefsToSuper;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
 
   protected String getCommandName() {
     return RefactoringBundle.message("turn.refs.to.super.command",
-                                     UsageViewUtil.getDescriptiveName(myClass), UsageViewUtil.getDescriptiveName(mySuper));
+                                     DescriptiveNameUtil.getDescriptiveName(myClass), DescriptiveNameUtil.getDescriptiveName(mySuper));
   }
 
   @NotNull

@@ -50,6 +50,7 @@ public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
     final DataManager dataManager = DataManager.getInstance();
     final DataContext dataContext = dataManager.getDataContext();
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
       }

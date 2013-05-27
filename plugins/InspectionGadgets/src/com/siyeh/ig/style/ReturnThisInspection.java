@@ -23,22 +23,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnThisInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ReturnOfThis";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("return.this.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "return.this.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReturnThisVisitor();
   }

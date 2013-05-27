@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.siyeh.ig.BaseInspection;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.ig.BaseInspection;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public abstract class ClassMetricInspection extends BaseInspection {
 
@@ -35,6 +35,7 @@ public abstract class ClassMetricInspection extends BaseInspection {
     return m_limit;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final String label = getConfigurationLabel();
     return new SingleIntegerFieldOptionsPanel(label,

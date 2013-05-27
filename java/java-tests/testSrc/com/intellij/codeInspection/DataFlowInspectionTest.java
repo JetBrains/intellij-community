@@ -68,7 +68,9 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testIDEA84489() throws Throwable { doTest(); }
   public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
   public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
+  public void testStringConcatAlwaysNotNull() throws Throwable { doTest(); }
 
+  public void testNotNullPrimitive() throws Throwable { doTest(); }
   public void testBoxing128() throws Throwable { doTest(); }
   public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
   public void testMultiCatch() throws Throwable { doTest(); }
@@ -147,6 +149,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testMutableVolatileNullableFieldsTreatment() { doTest(); }
   public void testMutableNotAnnotatedFieldsTreatment() { doTest(); }
   public void testSuperCallMayChangeFields() { doTest(); }
+  public void testOtherCallMayChangeFields() { doTest(); }
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }

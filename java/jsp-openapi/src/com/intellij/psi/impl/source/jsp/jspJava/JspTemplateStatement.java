@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.impl.source.jsp.jspJava;
 
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTemplateStatement;
 
 /**
  * @author peter
  */
-public interface JspTemplateStatement extends PsiStatement {
+public interface JspTemplateStatement extends PsiTemplateStatement {
 }

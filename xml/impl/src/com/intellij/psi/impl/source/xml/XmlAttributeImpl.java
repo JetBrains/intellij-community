@@ -416,8 +416,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       return setName(newName);
     }
 
-    // TODO[ik]: namespace support
-
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       if (element instanceof PsiMetaOwner) {
         final PsiMetaOwner owner = (PsiMetaOwner)element;
@@ -475,7 +473,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
             if (separator > 0) {
               element = element.withLookupString(name.substring(separator + 1));
             }
-            variants.add(element.withCaseSensitivity(caseSensitive).withInsertHandler(XmlAttributeInsertHandler.INSTANCE));
+            element = element.withCaseSensitivity(caseSensitive).withInsertHandler(XmlAttributeInsertHandler.INSTANCE);
+            variants.add(descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) : element);
           }
         }
       }
@@ -483,7 +482,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     private boolean isValidVariant(@NotNull XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes, final XmlExtension extension) {
       if (extension.isIndirectSyntax(descriptor)) return false;
-      String descriptorName = descriptor.getName();
+      String descriptorName = descriptor.getName(getParent());
       if (descriptorName == null) {
         LOG.error("Null descriptor name for " + descriptor + " " + descriptor.getClass() + " ");
         return false;

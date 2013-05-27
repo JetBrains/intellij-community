@@ -41,11 +41,13 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
       "move.anonymous.to.inner.quickfix");
   }
 
+  @Override
   @NotNull
   public String getName() {
     return name;
   }
 
+  @Override
   public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
     final PsiAnonymousClass aClass =
@@ -57,6 +59,7 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
     final DataManager dataManager = DataManager.getInstance();
     final DataContext dataContext = dataManager.getDataContext();
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
       }

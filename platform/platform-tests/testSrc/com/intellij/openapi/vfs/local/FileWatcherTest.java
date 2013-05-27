@@ -107,6 +107,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
       }
     });
 
+    ((LocalFileSystemImpl)myFileSystem).cleanupForNextTest();
+
     LOG = FileWatcher.getLog();
     LOG.debug("================== setting up " + getName() + " ==================");
   }

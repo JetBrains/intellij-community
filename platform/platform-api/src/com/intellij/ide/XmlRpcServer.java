@@ -19,7 +19,9 @@ import com.intellij.openapi.components.ServiceManager;
 
 public interface XmlRpcServer {
   void addHandler(String name, Object handler);
+
   boolean hasHandler(String name);
+
   void removeHandler(String name);
 
   final class SERVICE {

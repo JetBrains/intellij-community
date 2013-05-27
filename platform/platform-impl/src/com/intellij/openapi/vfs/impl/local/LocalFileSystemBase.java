@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,7 +77,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public VirtualFile findFileByIoFile(@NotNull File file) {
     String path = file.getAbsolutePath();
-    if (path == null) return null;
     return findFileByPath(path.replace(File.separatorChar, '/'));
   }
 
@@ -239,7 +239,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
     String path = file.getAbsolutePath();
-    if (path == null) return null;
     return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
   }
 
@@ -530,8 +529,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               @NotNull final VirtualFile vFile,
                               @NotNull final VirtualFile newParent,
                               @NotNull final String copyName) throws IOException {
-    final FileAttributes attributes = getAttributes(vFile);
+    if (!PathUtil.isValidFileName(copyName)) {
+      throw new IOException("Invalid file name: " + copyName);
+    }
 
+    FileAttributes attributes = getAttributes(vFile);
     if (attributes == null || attributes.isSpecial()) {
       throw new FileNotFoundException("Not a file: " + vFile);
     }

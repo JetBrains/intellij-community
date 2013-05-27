@@ -25,18 +25,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassNeverImplementedInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "abstract.class.never.implemented.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.class.never.implemented.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AbstractClassNeverImplementedVisitor();
   }

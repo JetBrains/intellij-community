@@ -95,7 +95,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new TreeMap<HighlightDisplayLevel, InspectionSeverityGroupNode>(new Comparator<HighlightDisplayLevel>() {
     @Override
     public int compare(HighlightDisplayLevel o1, HighlightDisplayLevel o2) {
-      return o1.getSeverity().compareTo(o2.getSeverity());
+      final int severityDiff = o1.getSeverity().compareTo(o2.getSeverity());
+      if (severityDiff == 0) {
+        return o1.toString().compareTo(o2.toString());
+      }
+      return severityDiff;
     }
   });
 

@@ -25,16 +25,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodCallInConstructorInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AbstractMethodCallInConstructorVisitor();
   }

@@ -27,17 +27,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonFinalCloneInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("non.final.clone.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.clone.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NonFinalCloneVisitor();
   }

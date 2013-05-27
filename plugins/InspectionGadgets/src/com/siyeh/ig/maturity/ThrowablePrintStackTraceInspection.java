@@ -26,23 +26,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowablePrintStackTraceInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "CallToPrintStackTrace";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "printstacktrace.call.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "printstacktrace.call.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThrowablePrintStackTraceVisitor();
   }
