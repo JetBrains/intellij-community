@@ -71,8 +71,6 @@ public interface Refactoring {
    * Analyses usages (presumably obtained from {@link #findUsages()} for possible conflicts
    * and (if refactoring is interactive) presents user with appropriate conflicts dialog.
    * @see #setInteractive(java.lang.Runnable)
-   * @param usages
-   * @return
    */
   boolean preprocessUsages(Ref<UsageInfo[]> usages);
 
@@ -94,7 +92,7 @@ public interface Refactoring {
    * <p/>
    * <ol>
    * <li> execute {@link #findUsages()} (with progress dialog and all)
-   * <li> execute {@link #preprocessUsages(com.intellij.openapi.util.Ref)} 
+   * <li> execute {@link #preprocessUsages(com.intellij.openapi.util.Ref)}
    * <li> if refactoring was not cancelled, check whether we {@link #shouldPreviewUsages(com.intellij.usageView.UsageInfo[])} , and show the preview
    * <li> execute {@link #doRefactoring(com.intellij.usageView.UsageInfo[])} if appropiate (if either the preview
    * was not shown, or 'Do Refactor' button have been pressed)

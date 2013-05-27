@@ -1314,7 +1314,7 @@
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.AssertEqualsCalledOnArrayInspection"/>
     <localInspection language="JAVA" shortName="JUnitRule" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="junit.rule.display.name" implementationClass="com.siyeh.ig.junit.JUnitRuleInspection" 
+                     key="junit.rule.display.name" implementationClass="com.siyeh.ig.junit.JUnitRuleInspection"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"/>
     <localInspection language="JAVA" shortName="JUnitDatapoint" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit.datapoint.display.name" implementationClass="com.siyeh.ig.junit.JUnitDatapointInspection"
