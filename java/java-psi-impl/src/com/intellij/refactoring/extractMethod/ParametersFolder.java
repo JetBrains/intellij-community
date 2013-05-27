@@ -31,7 +31,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +54,7 @@ public class ParametersFolder {
     myDeleted.clear();
   }
 
-  public boolean isParameterSafeToDelete(@NotNull ParameterTablePanel.VariableData data, @NotNull LocalSearchScope scope) {
+  public boolean isParameterSafeToDelete(@NotNull VariableData data, @NotNull LocalSearchScope scope) {
     Next:
     for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
       PsiElement expression = reference.getElement();
@@ -82,7 +82,7 @@ public class ParametersFolder {
     return false;
   }
 
-  public void foldParameterUsagesInBody(@NotNull ParameterTablePanel.VariableData data, PsiElement[] elements, SearchScope scope) {
+  public void foldParameterUsagesInBody(@NotNull VariableData data, PsiElement[] elements, SearchScope scope) {
     if (myDeleted.contains(data.variable)) return;
     final PsiExpression psiExpression = myExpressions.get(data.variable);
     if (psiExpression == null) return;
@@ -108,7 +108,7 @@ public class ParametersFolder {
     }
   }
 
-  public boolean isParameterFoldable(@NotNull ParameterTablePanel.VariableData data,
+  public boolean isParameterFoldable(@NotNull VariableData data,
                                      @NotNull LocalSearchScope scope,
                                      @NotNull final List<? extends PsiVariable> inputVariables) {
     final List<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope, inputVariables);
@@ -164,8 +164,8 @@ public class ParametersFolder {
     }
     return false;
   }
-  
-  private void setUniqueName(ParameterTablePanel.VariableData data) {
+
+  private void setUniqueName(VariableData data) {
     int idx = 1;
     while (myUsedNames.contains(data.name)) {
       data.name += idx;
@@ -173,7 +173,7 @@ public class ParametersFolder {
     myUsedNames.add(data.name);
   }
 
-  private static Set<PsiVariable> findUsedVariables(ParameterTablePanel.VariableData data, final List<? extends PsiVariable> inputVariables,
+  private static Set<PsiVariable> findUsedVariables(VariableData data, final List<? extends PsiVariable> inputVariables,
                                              PsiExpression expression) {
     final Set<PsiVariable> found = new HashSet<PsiVariable>();
     expression.accept(new JavaRecursiveElementVisitor() {
@@ -275,11 +275,11 @@ public class ParametersFolder {
   }
 
   @NotNull
-  public String getGeneratedCallArgument(@NotNull ParameterTablePanel.VariableData data) {
+  public String getGeneratedCallArgument(@NotNull VariableData data) {
     return myExpressions.containsKey(data.variable) ? myExpressions.get(data.variable).getText() : data.variable.getName();
   }
 
-  public boolean annotateWithParameter(@NotNull ParameterTablePanel.VariableData data, @NotNull PsiElement element) {
+  public boolean annotateWithParameter(@NotNull VariableData data, @NotNull PsiElement element) {
     final PsiExpression psiExpression = myExpressions.get(data.variable);
     if (psiExpression != null) {
       final PsiExpression expression = findEquivalent(psiExpression, element);

@@ -30,7 +30,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class InputVariables {
-  private final List<ParameterTablePanel.VariableData> myInputVariables;
+  private final List<VariableData> myInputVariables;
 
   private List<? extends PsiVariable> myInitialParameters;
   private final Project myProject;
@@ -62,20 +62,20 @@ public class InputVariables {
   /**
    * copy use only
    */
-  public InputVariables(List<ParameterTablePanel.VariableData> inputVariables,
+  public InputVariables(List<VariableData> inputVariables,
                         Project project,
                         LocalSearchScope scope) {
     myProject = project;
     myScope = scope;
-    myInputVariables = new ArrayList<ParameterTablePanel.VariableData>(inputVariables);
+    myInputVariables = new ArrayList<VariableData>(inputVariables);
   }
 
   public boolean isFoldable() {
     return myFolding.isFoldable();
   }
 
-  public ArrayList<ParameterTablePanel.VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {
-    final ArrayList<ParameterTablePanel.VariableData> inputData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.size());
+  public ArrayList<VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {
+    final ArrayList<VariableData> inputData = new ArrayList<VariableData>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
       String name = var.getName();
       if (!(var instanceof PsiParameter)) {
@@ -117,7 +117,7 @@ public class InputVariables {
         }
       }
 
-      ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(var, type);
+      VariableData data = new VariableData(var, type);
       data.name = name;
       data.passAsParameter = true;
       inputData.add(data);
@@ -127,9 +127,9 @@ public class InputVariables {
 
 
     if (myFoldingAvailable) {
-      final Set<ParameterTablePanel.VariableData> toDelete = new HashSet<ParameterTablePanel.VariableData>();
+      final Set<VariableData> toDelete = new HashSet<VariableData>();
       for (int i = inputData.size() - 1; i >=0; i--) {
-        final ParameterTablePanel.VariableData data = inputData.get(i);
+        final VariableData data = inputData.get(i);
         if (myFolding.isParameterSafeToDelete(data, myScope)) {
           toDelete.add(data);
         }
@@ -189,7 +189,7 @@ public class InputVariables {
     return currentType;
   }
 
-  public List<ParameterTablePanel.VariableData> getInputVariables() {
+  public List<VariableData> getInputVariables() {
     return myInputVariables;
   }
 
@@ -197,15 +197,15 @@ public class InputVariables {
     if (!myFoldingAvailable) return expression;
 
     boolean update = elements[0] == expression;
-    for (ParameterTablePanel.VariableData inputVariable : myInputVariables) {
+    for (VariableData inputVariable : myInputVariables) {
       myFolding.foldParameterUsagesInBody(inputVariable, elements, myScope);
     }
     return update ? (PsiExpression)elements[0] : expression;
   }
 
   public boolean toDeclareInsideBody(PsiVariable variable) {
-    final ArrayList<ParameterTablePanel.VariableData> knownVars = new ArrayList<ParameterTablePanel.VariableData>(myInputVariables);
-    for (ParameterTablePanel.VariableData data : knownVars) {
+    final ArrayList<VariableData> knownVars = new ArrayList<VariableData>(myInputVariables);
+    for (VariableData data : knownVars) {
       if (data.variable.equals(variable)) {
         return false;
       }
@@ -214,7 +214,7 @@ public class InputVariables {
   }
 
   public boolean contains(PsiVariable variable) {
-    for (ParameterTablePanel.VariableData data : myInputVariables) {
+    for (VariableData data : myInputVariables) {
       if (data.variable.equals(variable)) return true;
     }
     return false;
@@ -227,8 +227,8 @@ public class InputVariables {
                                               int endOffset) {
     final LocalSearchScope scope = new LocalSearchScope(codeFragment);
     Variables:
-    for (Iterator<ParameterTablePanel.VariableData> iterator = myInputVariables.iterator(); iterator.hasNext();) {
-      final ParameterTablePanel.VariableData data = iterator.next();
+    for (Iterator<VariableData> iterator = myInputVariables.iterator(); iterator.hasNext();) {
+      final VariableData data = iterator.next();
       for (PsiReference ref : ReferencesSearch.search(data.variable, scope)) {
         PsiElement element = ref.getElement();
         int elementOffset = controlFlow.getStartOffset(element);
@@ -257,7 +257,7 @@ public class InputVariables {
   }
 
 
-  public void appendCallArguments(ParameterTablePanel.VariableData data, StringBuilder buffer) {
+  public void appendCallArguments(VariableData data, StringBuilder buffer) {
     if (myFoldingAvailable) {
       buffer.append(myFolding.getGeneratedCallArgument(data));
     } else {
@@ -277,7 +277,7 @@ public class InputVariables {
   }
 
   public void annotateWithParameter(PsiJavaCodeReferenceElement reference) {
-    for (ParameterTablePanel.VariableData data : myInputVariables) {
+    for (VariableData data : myInputVariables) {
       final PsiElement element = reference.resolve();
       if (data.variable.equals(element)) {
         PsiType type = data.variable.getType();

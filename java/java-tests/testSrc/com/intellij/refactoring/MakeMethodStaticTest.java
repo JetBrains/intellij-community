@@ -22,7 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -176,7 +176,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     configureByFile("/refactoring/makeMethodStatic/beforePreserveTypeParams.java");
     performWithFields();
     checkResultByFile("/refactoring/makeMethodStatic/afterPreserveTypeParams.java");
-  } 
+  }
 
   public void testInnerStaticClassUsed() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/beforeInnerStaticClassUsed.java");
@@ -218,7 +218,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
-    final ArrayList<ParameterTablePanel.VariableData> parametersForFields = new ArrayList<ParameterTablePanel.VariableData>();
+    final ArrayList<VariableData> parametersForFields = new ArrayList<VariableData>();
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(method, parametersForFields);
 
     new MakeMethodStaticProcessor(
@@ -226,6 +226,6 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
-                           new ParameterTablePanel.VariableData[parametersForFields.size()]))).run();
+                           new VariableData[parametersForFields.size()]))).run();
   }
 }

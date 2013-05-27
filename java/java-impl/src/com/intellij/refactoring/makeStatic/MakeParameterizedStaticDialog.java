@@ -34,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -52,7 +53,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   private final JCheckBox myMakeFieldParameters = new JCheckBox();
 
   private ParameterTablePanel myParameterPanel;
-  private ParameterTablePanel.VariableData[] myVariableData;
+  private VariableData[] myVariableData;
   private final boolean myAnyNonFieldMembersUsed;
 
 
@@ -71,10 +72,10 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   }
 
   private boolean buildVariableData(InternalUsageInfo[] internalUsages) {
-    ArrayList<ParameterTablePanel.VariableData> variableDatum = new ArrayList<ParameterTablePanel.VariableData>();
+    ArrayList<VariableData> variableDatum = new ArrayList<VariableData>();
     boolean nonFieldUsages = MakeStaticUtil.collectVariableData(myMember, internalUsages, variableDatum);
 
-    myVariableData = variableDatum.toArray(new ParameterTablePanel.VariableData[0]);
+    myVariableData = variableDatum.toArray(new VariableData[0]);
     return nonFieldUsages;
   }
 
@@ -109,7 +110,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
    *
    * @return null if field parameters are not selected
    */
-  public ParameterTablePanel.VariableData[] getVariableData() {
+  public VariableData[] getVariableData() {
     if(myMakeFieldParameters != null && myMakeFieldParameters.isSelected()) {
       return myVariableData;
     }
