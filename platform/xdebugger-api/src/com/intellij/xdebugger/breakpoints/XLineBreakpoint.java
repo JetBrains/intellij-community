@@ -33,6 +33,7 @@ public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreak
 
   String getPresentableFilePath();
 
+  @Override
   @NotNull
   XLineBreakpointType<P> getType();
 

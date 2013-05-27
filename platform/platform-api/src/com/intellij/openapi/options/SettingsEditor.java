@@ -52,6 +52,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   public SettingsEditor(Factory<Settings> settingsFactory) {
     mySettingsFactory = settingsFactory;
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         disposeEditor();
         uninstallWatcher();
@@ -101,6 +102,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     return myEditorComponent;
   }
 
+  @Override
   public final void dispose() {
   }
 
@@ -112,6 +114,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     myWatcher = new UserActivityWatcher();
     myWatcher.register(c);
     UserActivityListener userActivityListener = new UserActivityListener() {
+      @Override
       public void stateChanged() {
         fireEditorStateChanged();
       }
