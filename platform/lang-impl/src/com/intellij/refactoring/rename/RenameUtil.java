@@ -16,7 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
@@ -290,7 +290,7 @@ public class RenameUtil {
       PsiElement element = usage.getElement();
 
       if (element == null) continue;
-      element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element, true);
+      element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element, true);
       if (element == null) continue;
 
       final ProperTextRange rangeInElement = usage.getRangeInElement();

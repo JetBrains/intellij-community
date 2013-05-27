@@ -16,7 +16,7 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -56,7 +56,7 @@ class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
     String oldText = statement.getText();
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
     PsiCodeBlock block = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
-    block = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(block);
+    block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
     PsiElement replace = block.getStatements()[0].replace(factory.createStatementFromText(oldText, block));
     int offset = replace.getTextRange().getEndOffset();
     return new TextRange(offset, offset);

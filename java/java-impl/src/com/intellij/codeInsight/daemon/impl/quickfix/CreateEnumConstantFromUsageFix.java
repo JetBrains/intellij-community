@@ -15,12 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +73,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
           builder.replaceElement(expression, new EmptyExpression());
         }
 
-        enumConstant = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(enumConstant);
+        enumConstant = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(enumConstant);
         final Template template = builder.buildTemplate();
 
         final Project project = targetClass.getProject();

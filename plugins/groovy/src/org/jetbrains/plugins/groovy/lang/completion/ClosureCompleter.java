@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -149,7 +149,7 @@ public abstract class ClosureCompleter {
       builder.replaceElement(nameIdentifier, new ParameterNameExpression(nameIdentifier.getText()));
     }
 
-    final GrClosableBlock afterPostprocess = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(templateClosure);
+    final GrClosableBlock afterPostprocess = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(templateClosure);
     final Template template = builder.buildTemplate();
     TextRange range = afterPostprocess.getTextRange();
     document.deleteString(range.getStartOffset(), range.getEndOffset());

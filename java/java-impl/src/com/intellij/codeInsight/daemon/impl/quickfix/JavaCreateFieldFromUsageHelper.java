@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -40,7 +40,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
                                     PsiSubstitutor substitutor) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
 
-    field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
+    field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
@@ -53,7 +53,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
       builder.replaceElement(field.getInitializer(), new EmptyExpression());
       PsiIdentifier identifier = field.getNameIdentifier();
       builder.setEndVariableAfter(identifier);
-      field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
+      field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
     }
     editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
     Template template = builder.buildInlineTemplate();

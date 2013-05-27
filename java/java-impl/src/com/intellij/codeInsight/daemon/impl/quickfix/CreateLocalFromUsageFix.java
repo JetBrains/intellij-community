@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
@@ -110,7 +110,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
-    var = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(var);
+    var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(var);
     if (var == null) return;
     TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
     builder.replaceElement(var.getTypeElement(), expression);
