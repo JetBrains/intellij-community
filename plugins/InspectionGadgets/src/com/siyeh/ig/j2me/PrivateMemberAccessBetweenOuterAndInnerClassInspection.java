@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +170,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
-      if (JspPsiUtil.isInJspFile(expression)) {
+      if (FileTypeUtils.isInJsp(expression)) {
         return;
       }
       super.visitNewExpression(expression);
@@ -213,7 +214,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     @Override
     public void visitReferenceExpression(
       @NotNull PsiReferenceExpression expression) {
-      if (JspPsiUtil.isInJspFile(expression)) {
+      if (FileTypeUtils.isInJsp(expression)) {
         // disable for jsp files IDEADEV-12957
         return;
       }

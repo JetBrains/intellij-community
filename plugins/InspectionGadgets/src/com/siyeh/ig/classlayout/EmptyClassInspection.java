@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +126,7 @@ public class EmptyClassInspection extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       //don't call super, to prevent drilldown
-      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(aClass.getContainingFile())) {
         return;
       }
       if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {

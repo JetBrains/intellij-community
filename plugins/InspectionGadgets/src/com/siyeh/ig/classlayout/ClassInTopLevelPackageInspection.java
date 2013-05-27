@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -25,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassInTopLevelPackageInspection extends BaseInspection {
@@ -70,7 +70,7 @@ public class ClassInTopLevelPackageInspection extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so that it doesn't drill down to inner classes
-      if (JspPsiUtil.isInJspFile(aClass)) {
+      if (FileTypeUtils.isInJsp(aClass)) {
         return;
       }
       if (ClassUtils.isInnerClass(aClass)) {

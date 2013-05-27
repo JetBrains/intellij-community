@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutConstructorInspection extends BaseInspection {
@@ -103,7 +104,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType() || JspPsiUtil.isInJspFile(aClass)) {
+          aClass.isAnnotationType() || FileTypeUtils.isInJsp(aClass)) {
         return;
       }
       if (aClass instanceof PsiTypeParameter ||
