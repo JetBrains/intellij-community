@@ -91,6 +91,9 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   private GraphCommitCell.Kind getCellKind(Node node) {
+    if (node == null) {
+      return GraphCommitCell.Kind.NORMAL;
+    }
     Hash hash = node.getCommitHash();
     if (applied.contains(hash)) return GraphCommitCell.Kind.APPLIED;
     if (fixedUp.contains(hash)) return GraphCommitCell.Kind.FIXUP;
