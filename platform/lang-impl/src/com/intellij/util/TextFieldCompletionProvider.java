@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author sergey.evdokimov
@@ -68,11 +69,21 @@ public abstract class TextFieldCompletionProvider {
 
   protected abstract void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result);
 
+  @NotNull
   public EditorTextField createEditor(Project project) {
     return createEditor(project, true);
   }
   
+  @NotNull
   public EditorTextField createEditor(Project project, final boolean shouldHaveBorder) {
+    return createEditor(project, shouldHaveBorder, null);
+  }
+  
+  @NotNull
+  public EditorTextField createEditor(Project project,
+                                      final boolean shouldHaveBorder,
+                                      @Nullable final Consumer<Editor> editorConstructionCallback)
+  {
     return new EditorTextField(createDocument(project, ""), project, PlainTextLanguage.INSTANCE.getAssociatedFileType()) {
       @Override
       protected boolean shouldHaveBorder() {
@@ -87,6 +98,15 @@ public abstract class TextFieldCompletionProvider {
         else {
           editor.setBorder(null);
         }
+      }
+
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx result = super.createEditor();
+        if (editorConstructionCallback != null) {
+          editorConstructionCallback.consume(result);
+        }
+        return result;
       }
     };
   }
