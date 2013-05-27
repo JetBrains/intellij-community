@@ -105,6 +105,7 @@ public class SingletonUtil {
       this.field = field;
     }
 
+    @Override
     public boolean process(PsiReference reference) {
       final PsiElement element = reference.getElement();
       final PsiElement parent = element.getParent();
