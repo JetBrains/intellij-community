@@ -51,7 +51,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
     final JUnitConfiguration.Data data = configuration.getPersistentData();
-    data.getPatterns().addAll(classes);
+    data.setPatterns(classes);
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
     data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
     configuration.setGeneratedName();
