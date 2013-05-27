@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.ChangeToAppendFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -88,7 +88,7 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression argument = arguments[0];
-      final PsiExpression appendExpression = ChangeToAppendFix.buildAppendExpression(qualifier, argument);
+      final PsiExpression appendExpression = ChangeToAppendUtil.buildAppendExpression(qualifier, argument);
       if (appendExpression == null) {
         return;
       }

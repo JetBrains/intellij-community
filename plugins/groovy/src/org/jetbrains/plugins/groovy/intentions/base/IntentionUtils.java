@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.intentions.base;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix;
 import com.intellij.codeInsight.template.*;
@@ -97,7 +97,7 @@ public class IntentionUtils {
       builder.setEndVariableAfter(method.getParameterList());
     }
 
-    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
+    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
     Template template = builder.buildTemplate();
 
     final PsiFile targetFile = owner.getContainingFile();

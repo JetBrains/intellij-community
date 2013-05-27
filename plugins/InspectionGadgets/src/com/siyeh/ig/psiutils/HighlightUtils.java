@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
@@ -111,7 +111,7 @@ public class HighlightUtils {
   public static void showRenameTemplate(PsiElement context,
                                         PsiNameIdentifierOwner element,
                                         PsiReference... references) {
-    context = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
+    context = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(
       context);
     final Project project = context.getProject();
     final FileEditorManager fileEditorManager =

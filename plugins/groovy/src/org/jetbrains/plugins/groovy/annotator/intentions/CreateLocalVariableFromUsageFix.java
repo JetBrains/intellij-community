@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -98,7 +98,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project), typeElement.getResolveScope());
     TemplateBuilderImpl builder = new TemplateBuilderImpl(decl);
     builder.replaceElement(typeElement, expr);
-    decl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl);
+    decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
     Template template = builder.buildTemplate();
 
     Editor newEditor = positionCursor(project, myOwner.getContainingFile(), decl);

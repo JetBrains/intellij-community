@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,7 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
     assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
     PsiElement decl = createAndInsertCast(instanceOfExpression, editor, file);
     if (decl == null) return;
-    decl = CodeStyleManager.getInstance(project).reformat(CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl));
+    decl = CodeStyleManager.getInstance(project).reformat(CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl));
     editor.getCaretModel().moveToOffset(decl.getTextRange().getEndOffset());
   }
 

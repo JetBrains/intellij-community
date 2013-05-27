@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -241,7 +241,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
         LOG.error(e);
       }
     }
-    CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(file);
+    CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(file);
     try {
       CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
     }
