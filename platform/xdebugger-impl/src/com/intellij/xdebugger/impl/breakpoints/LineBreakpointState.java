@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 * @author nik
 */
 @Tag("line-breakpoint")
-public class LineBreakpointState<P extends XBreakpointProperties> extends
-                                                                         BreakpointState<XLineBreakpoint<P>, P, XLineBreakpointType<P>> {
+public class LineBreakpointState<P extends XBreakpointProperties> extends BreakpointState<XLineBreakpoint<P>, P, XLineBreakpointType<P>> {
   private String myFileUrl;
   private int myLine;
   private boolean myTemporary;
@@ -67,6 +66,7 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends
     myTemporary = temporary;
   }
 
+  @Override
   public XBreakpointBase<XLineBreakpoint<P>,P, ?> createBreakpoint(@NotNull final XLineBreakpointType<P> type, @NotNull XBreakpointManagerImpl breakpointManager) {
     return new XLineBreakpointImpl<P>(type, breakpointManager, this);
   }

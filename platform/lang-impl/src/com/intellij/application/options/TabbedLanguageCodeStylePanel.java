@@ -35,6 +35,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.containers.hash.*;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -553,6 +555,15 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   @Override
   public boolean isCopyFromMenuAvailable() {
     return true;
+  }
+
+  @Override
+  public Set<String> processListOptions() {
+    final Set<String> result = new HashSet<String>();
+    for (CodeStyleAbstractPanel tab : myTabs) {
+      result.addAll(tab.processListOptions());
+    }
+    return result;
   }
 
   //========================================================================================================================================

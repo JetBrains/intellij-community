@@ -186,7 +186,7 @@ public class FormBuilder {
   }
 
   private static int getFill(JComponent component) {
-    if (component instanceof JComboBox) {
+    if (component instanceof JComboBox || component instanceof JSpinner) {
       return NONE;
     }
     else if (component instanceof JScrollPane) {
