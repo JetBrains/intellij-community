@@ -530,7 +530,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     calcIconAreaWidth();
     calcAnnotationsSize();
     if (oldIconsWidth != myLineMarkerAreaWidth || oldAnnotationsWidth != myTextAnnotationGuttersSize
-        || myLastPreferredHeight != myEditor.getPreferredHeight()) 
+        || myLastPreferredHeight != myEditor.getPreferredHeight())
     {
       fireResized();
     }
@@ -557,13 +557,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     EditorSettings settings = myEditor.getSettings();
 
-    int editorLocation = (int)myEditor.getComponent().getLocationOnScreen().getX();
-    int rightMarginX = settings.getRightMargin(myEditor.getProject()) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocation;
+    if (myEditor.getComponent().isShowing()) {
+      int editorLocation = (int)myEditor.getComponent().getLocationOnScreen().getX();
+      int rightMarginX = settings.getRightMargin(myEditor.getProject()) * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocation;
 
-    int width = (int)WindowManager.getInstance().getIdeFrame(myEditor.getProject()).getComponent().getSize().getWidth();
-    //int width = (int)myEditor.getComponent().getSize().getWidth();
-    if (rightMarginX < width && editorLocation < width - rightMarginX) {
-      myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX)/2-20);
+      int width = (int)WindowManager.getInstance().getIdeFrame(myEditor.getProject()).getComponent().getSize().getWidth();
+      //int width = (int)myEditor.getComponent().getSize().getWidth();
+      if (rightMarginX < width && editorLocation < width - rightMarginX) {
+        myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX)/2-20);
+      }
     }
   }
 
@@ -827,7 +829,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       action.fun(visibleFoldRegion);
     }
   }
-  
+
   private void paintFoldingBackground(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     int lineX = getWhitespaceSeparatorOffset();
     paintBackground(g, clip, getFoldingAreaOffset(), getFoldingAreaWidth());
