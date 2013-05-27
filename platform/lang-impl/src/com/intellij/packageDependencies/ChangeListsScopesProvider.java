@@ -33,13 +33,14 @@ import java.util.List;
  * @author anna
  */
 public class ChangeListsScopesProvider extends CustomScopesProviderEx {
-  private Project myProject;
+  @NotNull
+  private final Project myProject;
 
   public static ChangeListsScopesProvider getInstance(Project project) {
     return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, ChangeListsScopesProvider.class);
   }
 
-  public ChangeListsScopesProvider(Project project) {
+  public ChangeListsScopesProvider(@NotNull Project project) {
     myProject = project;
   }
 
@@ -97,7 +98,8 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
     return false;
   }
 
-  private static NamedScope createScope(final List<VirtualFile> files, String changeListName) {
+  @NotNull
+  private static NamedScope createScope(@NotNull final List<VirtualFile> files, @NotNull String changeListName) {
     return new NamedScope(changeListName, new PackageSetBase() {
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {

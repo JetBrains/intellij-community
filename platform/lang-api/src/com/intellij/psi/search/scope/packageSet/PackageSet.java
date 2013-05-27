@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface PackageSet {
-  boolean contains(PsiFile file, NamedScopesHolder holder);
+  boolean contains(@NotNull PsiFile file, NamedScopesHolder holder);
   @NotNull
   PackageSet createCopy();
   @NonNls @NotNull

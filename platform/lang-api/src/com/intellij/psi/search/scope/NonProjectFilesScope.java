@@ -17,7 +17,6 @@ package com.intellij.psi.search.scope;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
@@ -25,6 +24,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.Colored;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,17 +42,17 @@ public class NonProjectFilesScope extends NamedScope {
       }
 
       @Override
-      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+      public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         if (file == null) return true;
-        if (file.getFileSystem() != LocalFileSystem.getInstance()) return true;
+        if (!file.isInLocalFileSystem()) return true;
         if (isInsideProjectContent(project, file)) return false;
         return !ProjectScope.getProjectScope(project).contains(file);
       }
     });
   }
 
-  private static boolean isInsideProjectContent(Project project, VirtualFile file) {
-    if (file.getFileSystem() instanceof LocalFileSystem) {
+  private static boolean isInsideProjectContent(@NotNull Project project, @NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) {
       final String projectBaseDir = project.getBasePath();
       if (projectBaseDir != null) {
         return FileUtil.isAncestor(projectBaseDir, file.getPath(), false);
@@ -61,7 +61,8 @@ public class NonProjectFilesScope extends NamedScope {
     return false;
   }
 
-  public static NamedScope[] removeFromList(NamedScope[] scopes) {
+  @NotNull
+  public static NamedScope[] removeFromList(@NotNull NamedScope[] scopes) {
     int nonProjectIdx = -1;
     for (int i = 0, length = scopes.length; i < length; i++) {
       NamedScope scope = scopes[i];
