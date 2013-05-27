@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -35,9 +35,9 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
                                                          "var = " + expression.getText());
-      
+
       expression = expression.replace(assignment);
-      expression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expression);
+      expression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(expression);
       builder.replaceElement(((PyAssignmentStatement)expression).getLeftHandSideExpression(), "var");
       builder.run();

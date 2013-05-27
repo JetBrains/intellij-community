@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -87,7 +87,7 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
           function = (PyFunction)statementParent.addBefore(function, statement);
       }
 
-      function = CodeInsightUtilBase
+      function = CodeInsightUtilCore
         .forcePsiPostprocessAndRestoreElement(function);
 
       if (parent instanceof PyAssignmentStatement) {
@@ -97,8 +97,8 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
         PsiFile parentScope = lambdaExpression.getContainingFile();
         final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parentScope);
         PsiElement functionName = function.getNameIdentifier();
-        functionName = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(functionName);
-        lambdaExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(lambdaExpression);
+        functionName = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(functionName);
+        lambdaExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(lambdaExpression);
 
         ReferenceNameExpression refExpr = new ReferenceNameExpression(name);
 

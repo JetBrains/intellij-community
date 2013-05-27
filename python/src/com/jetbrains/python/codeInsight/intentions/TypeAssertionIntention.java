@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
@@ -124,7 +124,7 @@ public class TypeAssertionIntention implements IntentionAction {
       int textOffSet = element.getTextOffset();
       editor.getCaretModel().moveToOffset(textOffSet);
 
-      element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
+      element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
       builder.replaceRange(TextRange.create(text.length()-1, text.length()-1), PyNames.OBJECT);
       Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();

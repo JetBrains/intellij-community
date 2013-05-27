@@ -1,6 +1,6 @@
 package com.jetbrains.python.refactoring.introduce;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
@@ -143,7 +143,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
     Collection<String> candidates = generateSuggestedNames(expression);
-    
+
     Collection<String> res = new ArrayList<String>();
     for (String name : candidates) {
       if (myValidator.checkPossibleName(name, expression)) {
@@ -160,7 +160,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         res.add(name + index);
       }
     }
-    
+
     return res;
   }
 
@@ -441,7 +441,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       performIntroduceWithDialog(operation);
     }
   }
-  
+
   protected void performInplaceIntroduce(IntroduceOperation operation) {
     final PsiElement statement = performRefactoring(operation);
     if (statement instanceof PyAssignmentStatement) {
@@ -479,7 +479,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     PsiElement declaration = createDeclaration(operation);
 
     declaration = performReplace(declaration, operation);
-    declaration = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(declaration);
+    declaration = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(declaration);
     return declaration;
   }
 
@@ -494,10 +494,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                         : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
     return createDeclaration(project, assignmentText, anchor);
   }
-  
+
   private static class InitializerTextBuilder extends PyRecursiveElementVisitor {
     private final StringBuilder myResult = new StringBuilder();
-    
+
     @Override
     public void visitWhiteSpace(PsiWhiteSpace space) {
       myResult.append(space.getText().replace('\n', ' ').replace("\\", ""));

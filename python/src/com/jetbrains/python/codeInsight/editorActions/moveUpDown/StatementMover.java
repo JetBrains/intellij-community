@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight.editorActions.moveUpDown;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
 import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover;
@@ -241,7 +241,7 @@ public class StatementMover extends LineMover {
       }
     }
   }
-  
+
   private boolean isMoveToEmptyLine(Editor editor, MoveInfo info, boolean down) {
     final Document document = editor.getDocument();
     if (document.getLineCount() >= info.toMove2.endLine) {
@@ -467,7 +467,7 @@ public class StatementMover extends LineMover {
       }
       else
         myStatementListToAddPass.addBefore(passStatement, myStatementListToAddPass.getStatements()[0]);
-      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPass);
+      CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myStatementListToAddPass);
     }
     if (myStatementToIncreaseIndent != null) {
       if (!down && myStatementPartToRemovePass != null && myStatementToAddLinebreak == null) {
@@ -487,7 +487,7 @@ public class StatementMover extends LineMover {
       final PyPassStatement passStatement =
         PyElementGenerator.getInstance(editor.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS);
       myStatementListToAddPassAfter.add(passStatement);
-      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPassAfter);
+      CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myStatementListToAddPassAfter);
     }
 
     // remove obsolete pass statement

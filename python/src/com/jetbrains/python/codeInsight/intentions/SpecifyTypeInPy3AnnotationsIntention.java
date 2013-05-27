@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -69,7 +69,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     final PyNamedParameter namedParameter = elementGenerator.createParameter(name, defaultParamText, PyNames.OBJECT, LanguageLevel.forElement(parameter));
     assert namedParameter != null;
     parameter = (PyParameter)parameter.replace(namedParameter);
-    parameter = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(parameter);
+    parameter = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(parameter);
     editor.getCaretModel().moveToOffset(parameter.getTextOffset());
     PyAnnotation annotation = parameter instanceof PyNamedParameter? ((PyNamedParameter)parameter).getAnnotation() : null;
     if (annotation != null) {
@@ -101,7 +101,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       final PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(callable), PyFunction.class,
                                                                   functionText);
       callable = (PyFunction)callable.replace(function);
-      callable = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callable);
+      callable = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callable);
 
       final PyAnnotation annotation = ((PyFunction)callable).getAnnotation();
       assert annotation != null;

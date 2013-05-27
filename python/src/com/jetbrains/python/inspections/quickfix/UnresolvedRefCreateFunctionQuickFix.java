@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
@@ -85,7 +85,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
           function = (PyFunction)parent.addBefore(function, statement);
       }
     }
-    function = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
+    function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
     ParamHelper.walkDownParamArray(
       function.getParameterList().getParameters(),

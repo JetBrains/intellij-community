@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
@@ -125,7 +125,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
   }
 
   private static void showTemplateBuilder(PyFunction method) {
-    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
+    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);
     ParamHelper.walkDownParamArray(

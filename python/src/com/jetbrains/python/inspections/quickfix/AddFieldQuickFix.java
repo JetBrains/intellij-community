@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
@@ -87,7 +87,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   private void showTemplateBuilder(PsiElement initStatement) {
-    initStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(initStatement);
+    initStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(initStatement);
     if (initStatement instanceof PyAssignmentStatement) {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
       final PyExpression assignedValue = ((PyAssignmentStatement)initStatement).getAssignedValue();

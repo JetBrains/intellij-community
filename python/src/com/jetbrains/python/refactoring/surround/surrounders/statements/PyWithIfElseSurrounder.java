@@ -1,7 +1,7 @@
 package com.jetbrains.python.refactoring.surround.surrounders.statements;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -36,7 +36,7 @@ public class PyWithIfElseSurrounder extends PyStatementSurrounder {
     ifStatement = (PyIfStatement) parent.addBefore(ifStatement, elements[0]);
     parent.deleteChildRange(elements[0], elements[elements.length - 1]);
 
-    ifStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(ifStatement);
+    ifStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifStatement);
     if (ifStatement == null) {
       return null;
     }

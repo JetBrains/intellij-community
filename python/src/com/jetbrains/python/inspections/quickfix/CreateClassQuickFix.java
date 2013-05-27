@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -57,7 +57,7 @@ public class CreateClassQuickFix implements LocalQuickFix {
     else {
       pyClass = (PyClass) anchor.getParent().addBefore(pyClass, anchor);
     }
-    pyClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(pyClass);
+    pyClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(pyClass);
     TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(pyClass);
     builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");
     builder.replaceElement(pyClass.getStatementList(), PyNames.PASS);

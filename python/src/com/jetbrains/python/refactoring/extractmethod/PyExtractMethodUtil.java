@@ -1,6 +1,6 @@
 package com.jetbrains.python.refactoring.extractmethod;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
@@ -133,7 +133,7 @@ public class PyExtractMethodUtil {
 
               // Replace statements with call
               callElement = replaceElements(elementsRange, callElement);
-              callElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callElement);
+              callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
               processDuplicates(callElement, generatedMethod, finder, editor);
 
               // Set editor
@@ -186,7 +186,7 @@ public class PyExtractMethodUtil {
 
               // replace statements with call
               callElement = replaceElements(elementsRange, callElement);
-              callElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callElement);
+              callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
               processDuplicates(callElement, generatedMethod, finder, editor);
 
               // Set editor
