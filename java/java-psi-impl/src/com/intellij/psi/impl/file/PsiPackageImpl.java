@@ -31,19 +31,23 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
   public static boolean DEBUG = false;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
-  private volatile Set<String> myPublicClassNamesCache;
+  private volatile SoftReference<Set<String>> myPublicClassNamesCache;
   private final Object myPublicClassNamesCacheLock = new Object();
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
@@ -159,14 +163,16 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private Set<String> getClassNamesCache() {
-    if (myPublicClassNamesCache == null) {
-      Set<String> classNames = getFacade().getClassNames(this, allScope());
+    SoftReference<Set<String>> ref = myPublicClassNamesCache;
+    Set<String> cache = ref == null ? null : ref.get();
+    if (cache == null) {
+      cache = getFacade().getClassNames(this, allScope());
       synchronized (myPublicClassNamesCacheLock) {
-        myPublicClassNamesCache = classNames;
+        myPublicClassNamesCache = new SoftReference<Set<String>>(cache);
       }
     }
 
-    return myPublicClassNamesCache;
+    return cache;
   }
 
   @NotNull
