@@ -158,9 +158,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     return allClasses;
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result) {
-    final ClassByNameMerger merger = new ClassByNameMerger(parameters, result);
-
+  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
     JavaClassNameCompletionContributor.addAllClasses(parameters,
                                                      true, result.getPrefixMatcher(), new Consumer<LookupElement>() {
       @Override
@@ -170,10 +168,8 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
           classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
 
-        merger.consume(classElement);
+        result.addElement(element);
       }
     });
-
-    merger.finishedClassProcessing();
   }
 }

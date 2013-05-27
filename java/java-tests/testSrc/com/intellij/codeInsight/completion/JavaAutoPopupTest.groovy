@@ -1154,9 +1154,7 @@ class Foo extends Abcdefg <caret>'''
     myFixture.addClass("package bar; public class Abcdefg {}")
     myFixture.configureByText 'a.java', 'class Foo extends <caret>'
     type 'Abcde'
-    assert lookup.items.size() == 1
-    type ' '
-    myFixture.checkResult 'class Foo extends Abcdefg <caret>'
+    assert lookup.items.size() == 2
   }
 
   public void testClassNameInProperties() {
@@ -1200,8 +1198,8 @@ class Foo extends Abcdefg <caret>'''
   public void testAmbiguousClassQualifier() {
     myFixture.addClass("package foo; public class Util<T> { public static void foo() {}; public static final int CONSTANT = 2; }")
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
-    myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
-    type 'Util.'
+    myFixture.configureByText 'a.java', 'class Foo {{ Util<caret> }}'
+    type '.'
     assert myFixture.lookupElementStrings == ['Util.bar', 'Util.CONSTANT', 'Util.foo']
 
     def p = LookupElementPresentation.renderElement(myFixture.lookupElements[1])
