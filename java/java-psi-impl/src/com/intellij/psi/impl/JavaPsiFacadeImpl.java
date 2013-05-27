@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -37,6 +36,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -59,17 +59,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private PsiElementFinder[] myElementFinders; //benign data race
   private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
-  private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
+  private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
   private final Project myProject;
   private final JavaFileManager myFileManager;
-
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      myPackageCache.clear();
-    }
-  });
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManagerImpl psiManager,
@@ -91,7 +83,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           final long now = modificationTracker.getJavaStructureModificationCount();
           if (lastTimeSeen != now) {
             lastTimeSeen = now;
-            myPackageCache.clear();
+            myPackageCache = null;
           }
         }
       });
@@ -185,7 +177,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
-    PsiPackage aPackage = myPackageCache.get(qualifiedName);
+    SoftReference<ConcurrentMap<String, PsiPackage>> ref = myPackageCache;
+    ConcurrentMap<String, PsiPackage> cache = ref == null ? null : ref.get();
+    if (cache == null) {
+      myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = new ConcurrentHashMap<String, PsiPackage>());
+    }
+    
+    PsiPackage aPackage = cache.get(qualifiedName);
     if (aPackage != null) {
       return aPackage;
     }
@@ -193,7 +191,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : filteredFinders()) {
       aPackage = finder.findPackage(qualifiedName);
       if (aPackage != null) {
-        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
+        return ConcurrencyUtil.cacheOrGet(cache, qualifiedName, aPackage);
       }
     }
 
