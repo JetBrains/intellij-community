@@ -16,7 +16,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
@@ -41,10 +41,10 @@ public class AddToIgnoreIfAnnotatedByListQuickFix {
   public static List<InspectionGadgetsFix> build(final PsiModifierListOwner modifierListOwner,
                                                  final List<String> configurationList,
                                                  final List<InspectionGadgetsFix> fixes) {
-    SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(modifierListOwner, new Processor<String>() {
+    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(modifierListOwner, new Processor<String>() {
       @Override
       public boolean process(String qualifiedName) {
-        fixes.add(new DelegatingFix(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
+        fixes.add(new DelegatingFix(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
           InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
           QuickFixBundle.message("fix.add.special.annotation.family"),
           configurationList, qualifiedName, modifierListOwner)));

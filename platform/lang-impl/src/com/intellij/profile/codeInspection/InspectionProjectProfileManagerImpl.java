@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.ui.UIUtil;
@@ -58,24 +56,27 @@ import java.util.concurrent.ConcurrentHashMap;
     @Storage(
       file = StoragePathMacros.PROJECT_FILE
     )
-    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = InspectionProjectProfileManager.ProfileStateSplitter.class)
+    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
     }
 )
-public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
+public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
   private final Map<String, InspectionProfileWrapper>  myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
   private final SeverityRegistrar mySeverityRegistrar;
   private final NamedScopeManager myLocalScopesHolder;
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
   private NamedScopesHolder.ScopeListener myScopeListener;
 
-  public InspectionProjectProfileManager(final Project project, InspectionProfileManager inspectionProfileManager, DependencyValidationManager holder, NamedScopeManager localScopesHolder) {
+  public InspectionProjectProfileManagerImpl(final Project project,
+                                             InspectionProfileManager inspectionProfileManager,
+                                             DependencyValidationManager holder,
+                                             NamedScopeManager localScopesHolder) {
     super(project, inspectionProfileManager, holder);
     myLocalScopesHolder = localScopesHolder;
     mySeverityRegistrar = new SeverityRegistrar();
   }
 
-  public static InspectionProjectProfileManager getInstance(Project project){
-    return project.getComponent(InspectionProjectProfileManager.class);
+  public static InspectionProjectProfileManagerImpl getInstanceImpl(Project project){
+    return (InspectionProjectProfileManagerImpl)project.getComponent(InspectionProjectProfileManager.class);
   }
 
   @Override
@@ -104,20 +105,6 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     catch (InvalidDataException e) {
       LOG.error(e);
     }
-  }
-
-  @NotNull
-  public InspectionProfile getInspectionProfile(){
-    return (InspectionProfile)getProjectProfileImpl();
-  }
-
-  /**
-   * @deprecated  use {@link #getInspectionProfile()} instead
-   */
-  @SuppressWarnings({"UnusedDeclaration"})
-  @NotNull
-  public InspectionProfile getInspectionProfile(PsiElement element){
-    return getInspectionProfile();
   }
 
   public boolean isProfileLoaded() {
@@ -245,11 +232,13 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     myLocalScopesHolder.removeScopeListener(myScopeListener);
   }
 
+  @NotNull
   @Override
   public SeverityRegistrar getSeverityRegistrar() {
     return mySeverityRegistrar;
   }
 
+  @NotNull
   @Override
   public SeverityRegistrar getOwnSeverityRegistrar() {
     return mySeverityRegistrar;

@@ -21,9 +21,12 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import org.jetbrains.annotations.NotNull;
 
 public interface SeverityProvider {
+  @NotNull
   SeverityRegistrar getSeverityRegistrar();
 
+  @NotNull
   SeverityRegistrar getOwnSeverityRegistrar();
 }
