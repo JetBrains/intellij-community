@@ -64,7 +64,7 @@ import com.intellij.packageDependencies.ui.*;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
@@ -308,7 +308,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
           result.add(psiElement);
         }
       }
-      return PsiUtilBase.toPsiElementArray(result);
+      return PsiUtilCore.toPsiElementArray(result);
     }
     return PsiElement.EMPTY_ARRAY;
   }
@@ -394,7 +394,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
             }
           }
         }
-        return psiElements.isEmpty() ? null : PsiUtilBase.toPsiElementArray(psiElements);
+        return psiElements.isEmpty() ? null : PsiUtilCore.toPsiElementArray(psiElements);
       }
     }
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
@@ -880,7 +880,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
-      final PsiElement[] elements = PsiUtilBase.toPsiElementArray(validElements);
+      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {

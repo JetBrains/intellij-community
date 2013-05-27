@@ -26,7 +26,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog;
 import com.intellij.refactoring.typeMigration.ui.MigrationPanel;
@@ -76,7 +76,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     }
     return new PsiElement[]{root};
   }
-  
+
   public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final TypeMigrationRules rules) {
     super(project);
     myRoot = roots;
@@ -106,7 +106,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                 result.add(element);
               }
             }
-            if (editor != null) RefactoringUtil.highlightAllOccurrences(project, PsiUtilBase.toPsiElementArray(result), editor);
+            if (editor != null) RefactoringUtil.highlightAllOccurrences(project, PsiUtilCore.toPsiElementArray(result), editor);
           }
         });
       }

@@ -356,7 +356,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     SelectInTarget selectInTarget = pane.createSelectInTarget();
     if (selectInTarget != null) {
       mySelectInTargets.put(pane.getId(), selectInTarget);
-    }                                   
+    }
     if (isInitialized) {
       doAddUninitializedPanes();
     }
@@ -915,7 +915,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
-      final PsiElement[] elements = PsiUtilBase.toPsiElementArray(validElements);
+      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
@@ -1000,7 +1000,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         final Object paneSpecificData = currentProjectViewPane.getData(dataId);
         if (paneSpecificData != null) return paneSpecificData;
       }
-      
+
       if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         if (currentProjectViewPane == null) return null;
         final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();

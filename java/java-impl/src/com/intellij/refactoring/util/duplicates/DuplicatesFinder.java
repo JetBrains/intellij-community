@@ -634,7 +634,7 @@ public class DuplicatesFinder {
         array.add(child);
       }
     }
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
 }

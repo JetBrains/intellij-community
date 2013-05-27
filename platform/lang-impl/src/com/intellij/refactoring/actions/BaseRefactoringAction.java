@@ -34,7 +34,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
@@ -178,7 +178,7 @@ public abstract class BaseRefactoringAction extends AnAction {
         return;
       }
 
-      boolean isVisible = ContainerUtil.find(languages, myLanguageCondition) != null;      
+      boolean isVisible = ContainerUtil.find(languages, myLanguageCondition) != null;
       if (isVisible) {
         boolean isEnabled = isAvailableOnElementInEditorAndFile(element, editor, file, dataContext);
         if (!isEnabled) {
@@ -255,7 +255,7 @@ public abstract class BaseRefactoringAction extends AnAction {
         filtered.remove(element);
       }
     }
-    return filtered == null ? psiElements : PsiUtilBase.toPsiElementArray(filtered);
+    return filtered == null ? psiElements : PsiUtilCore.toPsiElementArray(filtered);
   }
 
 }

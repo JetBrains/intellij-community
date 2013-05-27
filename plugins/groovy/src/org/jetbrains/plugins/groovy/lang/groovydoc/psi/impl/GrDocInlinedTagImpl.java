@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +83,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
 
   public PsiElement[] getDataElements() {
     final List<PsiElement> list = findChildrenByType(VALUE_BIT_SET);
-    return PsiUtilBase.toPsiElementArray(list);
+    return PsiUtilCore.toPsiElementArray(list);
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
