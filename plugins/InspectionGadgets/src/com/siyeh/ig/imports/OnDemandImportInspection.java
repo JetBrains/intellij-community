@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class OnDemandImportInspection extends BaseInspection {
@@ -50,7 +51,7 @@ public class OnDemandImportInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)parent;
-      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(aClass.getContainingFile())) {
         return;
       }
       if (!file.getClasses()[0].equals(aClass)) {

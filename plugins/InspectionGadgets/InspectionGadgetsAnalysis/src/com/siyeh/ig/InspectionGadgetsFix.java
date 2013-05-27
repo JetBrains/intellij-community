@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,10 +146,6 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     styleManager.reformat(replacementExp);
   }
 
-  private static boolean isInJsp(PsiElement file) {
-    return PsiUtilCore.getTemplateLanguageFile(file) instanceof ServerPageFile;
-  }
-
   protected static void replaceStatementAndShortenClassNames(
     @NotNull PsiStatement statement,
     @NotNull @NonNls String newStatementText)
@@ -158,7 +155,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
       CodeStyleManager.getInstance(project);
     final JavaCodeStyleManager javaStyleManager =
       JavaCodeStyleManager.getInstance(project);
-    if (isInJsp(statement)) {
+    if (FileTypeUtils.isInJsp(statement)) {
       final PsiDocumentManager documentManager =
         PsiDocumentManager.getInstance(project);
       final PsiFile jspFile = PsiUtilCore.getTemplateLanguageFile(statement);

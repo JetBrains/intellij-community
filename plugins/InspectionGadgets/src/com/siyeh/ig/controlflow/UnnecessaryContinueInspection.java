@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -69,7 +70,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
 
     @Override
     public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
         return;
       }
       final PsiStatement continuedStatement = statement.findContinuedStatement();

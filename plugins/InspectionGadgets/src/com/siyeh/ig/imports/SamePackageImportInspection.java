@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SamePackageImportInspection extends BaseInspection {
@@ -58,7 +59,7 @@ public class SamePackageImportInspection extends BaseInspection {
       if (!(parent instanceof PsiJavaFile)) {
         return;
       }
-      if (JspPsiUtil.isInJspFile(importList)) {
+      if (FileTypeUtils.isInJsp(importList)) {
         return;
       }
       final PsiJavaFile javaFile = (PsiJavaFile)parent;

@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +60,7 @@ public class JavaLangImportInspection extends BaseInspection {
       if (!(aClass.getParent() instanceof PsiJavaFile)) {
         return;
       }
-      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(aClass.getContainingFile())) {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();

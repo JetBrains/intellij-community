@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
@@ -24,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +71,7 @@ public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so that it doesn't drill down to inner classes
-      if (JspPsiUtil.isInJspFile(aClass)) {
+      if (FileTypeUtils.isInJsp(aClass)) {
         return;
       }
       final PsiElement parent = aClass.getParent();
