@@ -76,7 +76,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     @NotNull
     private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
       @Override
-      public boolean contains(final VirtualFile file, @NotNull final NamedScopesHolder scopesHolder) {
+      public boolean contains(final VirtualFile file, NamedScopesHolder scopesHolder) {
         return true;
       }
     });
