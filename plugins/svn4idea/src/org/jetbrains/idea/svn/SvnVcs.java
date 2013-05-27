@@ -942,6 +942,15 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
+  public boolean isWcRoot(FilePath filePath) {
+    boolean isWcRoot = false;
+    WorkingCopy wcRoot = myRootsToWorkingCopies.getWcRoot(filePath.getVirtualFile());
+    if (wcRoot != null) {
+      isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getIOFile().getAbsolutePath());
+    }
+    return isWcRoot;
+  }
+
   private static class JavaSVNDebugLogger extends SVNDebugLogAdapter {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
