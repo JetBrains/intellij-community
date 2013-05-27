@@ -123,6 +123,7 @@
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
     <library.type implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibraryType"/>
+    <postStartupActivity implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibrarySynchronizer"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
 
     <intentionAction>
