@@ -235,7 +235,9 @@ class SvnChangeProviderContext implements StatusReceiver {
         myChangelistBuilder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status));
       }
       else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_IGNORED)) {
-        myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
+        if (!myVcs.isWcRoot(filePath)) {
+          myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
+        }
       }
       else if (status.isCopied()) {
         //
