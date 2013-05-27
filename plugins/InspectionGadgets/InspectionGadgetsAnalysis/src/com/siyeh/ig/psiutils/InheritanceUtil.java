@@ -61,6 +61,7 @@ public class InheritanceUtil {
     final SearchScope scope = GlobalSearchScope.allScope(class1.getProject());
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true, true);
     return !search.forEach(new Processor<PsiClass>() {
+      @Override
       public boolean process(PsiClass inheritor) {
         return !inheritor.equals(class2) && !inheritor.isInheritor(class2, true);
       }

@@ -24,6 +24,7 @@ public class PsiElementOrderComparator implements Comparator<PsiElement> {
   private static final PsiElementOrderComparator INSTANCE =
     new PsiElementOrderComparator();
 
+  @Override
   public int compare(PsiElement element1, PsiElement element2) {
     final int offset1 = element1.getTextOffset();
     final int offset2 = element2.getTextOffset();
