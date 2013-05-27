@@ -16,12 +16,9 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,16 +44,6 @@ public abstract class RuntimeConfiguration extends RunConfigurationBase implemen
   @Override
   public RuntimeConfiguration clone() {
     return (RuntimeConfiguration)super.clone();
-  }
-
-  @Override
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;
-  }
-
-  @Override
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;
   }
 
   @Override
