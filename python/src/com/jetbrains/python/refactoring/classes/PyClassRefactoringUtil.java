@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -124,7 +124,7 @@ public class PyClassRefactoringUtil {
     for (PyElement element : elements) {
       final Set<PsiElement> comments = PyUtil.getComments(element);
       if (comments.size() > 0) {
-        PyPsiUtils.removeElements(PsiUtilBase.toPsiElementArray(comments));
+        PyPsiUtils.removeElements(PsiUtilCore.toPsiElementArray(comments));
       }
     }
     PyPsiUtils.removeElements(elements);
