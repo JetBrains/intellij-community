@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="module" module-name="java-analysis-api" />
     <orderEntry type="module" module-name="java-analysis-impl" />
   </component>
 </module>
