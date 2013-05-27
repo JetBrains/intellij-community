@@ -27,11 +27,12 @@ public class NamedPackageSetReference extends PackageSetBase {
 
   @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+    if (holder == null) return false;
     final NamedScope scope = holder.getScope(myName);
     if (scope != null) {
       final PackageSet packageSet = scope.getValue();
       if (packageSet != null) {
-        return packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, holder) : packageSet.contains(getPsiFile(file, holder), holder);
+        return packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, holder) : packageSet.contains(getPsiFile(file, holder.getProject()), holder);
       }
     }
     return false;

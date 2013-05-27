@@ -73,7 +73,11 @@ public class PatternPackageSet extends PatternBasedPackageSet {
 
   @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-    Project project = holder.getProject();
+    return contains(file, holder.getProject(), holder);
+  }
+
+  @Override
+  public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return matchesScope(file, holder.getProject(), fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
   }

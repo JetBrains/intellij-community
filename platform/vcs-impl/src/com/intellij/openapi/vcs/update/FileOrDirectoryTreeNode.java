@@ -139,4 +139,8 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   @Override
   public void dispose() {
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }

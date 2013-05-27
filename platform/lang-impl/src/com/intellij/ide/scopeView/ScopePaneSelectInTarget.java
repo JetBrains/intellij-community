@@ -79,7 +79,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     final VirtualFile virtualFile = context.getVirtualFile();
     if (packageSet != null) {
       final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject));
-      if (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(virtualFile, holder) : packageSet.contains(PackageSetBase.getPsiFile(virtualFile, holder), holder)) {
+      if (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(virtualFile, myProject, holder) : packageSet.contains(PackageSetBase.getPsiFile(virtualFile, myProject), holder)) {
         return true;
       }
     }

@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IntersectionPackageSet extends PackageSetBase {
   private final PackageSet myFirstSet;
@@ -29,8 +31,13 @@ public class IntersectionPackageSet extends PackageSetBase {
 
   @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-    if (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, holder) : myFirstSet.contains(getPsiFile(file, holder), holder)) {
-      if (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, holder) : mySecondSet.contains(getPsiFile(file, holder), holder)) {
+    return contains(file, holder.getProject(), holder);
+  }
+
+  @Override
+  public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+    if (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, project, holder) : myFirstSet.contains(getPsiFile(file, project), holder)) {
+      if (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, project, holder) : mySecondSet.contains(getPsiFile(file, project), holder)) {
         return true;
       }
     }
