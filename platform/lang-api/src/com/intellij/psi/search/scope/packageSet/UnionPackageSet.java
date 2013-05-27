@@ -30,12 +30,12 @@ public class UnionPackageSet extends PackageSetBase {
   }
 
   @Override
-  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
     return contains(file, holder.getProject(), holder);
   }
 
   @Override
-  public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     return (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, project, holder) : myFirstSet.contains(getPsiFile(file, project), holder)) ||
            (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, project, holder) : mySecondSet.contains(getPsiFile(file, project), holder));
   }

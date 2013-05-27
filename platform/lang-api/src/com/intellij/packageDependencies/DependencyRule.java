@@ -52,9 +52,9 @@ public class DependencyRule {
     if (fromSet == null) return false;
 
     DependencyValidationManager holder = DependencyValidationManager.getInstance(file.getProject());
-    return (myDenyRule
+    return myDenyRule
             ? fromSet.contains(file, holder)
-            : new ComplementPackageSet(fromSet).contains(file, holder));
+            : new ComplementPackageSet(fromSet).contains(file, holder);
   }
 
   public String getDisplayText() {
