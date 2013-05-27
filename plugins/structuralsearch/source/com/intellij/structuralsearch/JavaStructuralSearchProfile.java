@@ -13,7 +13,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.JavaCompilingVisitor;
@@ -117,7 +117,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         resultElementsList.add(el);
       }
 
-      result = PsiUtilBase.toPsiElementArray(resultElementsList);
+      result = PsiUtilCore.toPsiElementArray(resultElementsList);
     }
     else {
       result = PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", text).getChildren();
