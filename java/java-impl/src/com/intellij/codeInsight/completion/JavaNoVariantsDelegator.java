@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -49,6 +50,12 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
 
     if (empty) {
       delegate(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
+    } else if (Registry.is("ide.completion.show.all.classes")) {
+      if (parameters.getInvocationCount() <= 1 &&
+          JavaCompletionContributor.mayStartClassName(result) &&
+          JavaCompletionContributor.isClassNamePossible(parameters)) {
+        suggestNonImportedClasses(parameters, result);
+      }
     }
   }
 
