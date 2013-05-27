@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class DesignForExtensionInspection extends BaseInspection {
@@ -46,7 +47,7 @@ public class DesignForExtensionInspection extends BaseInspection {
 
     @Override
     public void visitMethod(PsiMethod method) {
-      if (JspPsiUtil.isInJspFile(method)) {
+      if (FileTypeUtils.isInJsp(method)) {
         // IDEADEV-25538
         return;
       }

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,16 +27,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PackageSetBase implements PackageSet {
   /**
-   * @see PackageSetBase#contains(com.intellij.openapi.vfs.VirtualFile, com.intellij.psi.search.scope.packageSet.NamedScopesHolder)
+   * @see PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)
    */
   @Deprecated
   public abstract boolean contains(VirtualFile file, NamedScopesHolder holder);
-  public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+
+  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     return contains(file, holder);
   }
 
   @Override
-  public boolean contains(PsiFile file, NamedScopesHolder holder) {
+  public boolean contains(@NotNull PsiFile file, NamedScopesHolder holder) {
     return contains(file.getVirtualFile(), file.getProject(), holder);
   }
 
@@ -47,9 +49,9 @@ public abstract class PackageSetBase implements PackageSet {
   public static PsiFile getPsiFile(VirtualFile file, NamedScopesHolder holder) {
     return PsiManager.getInstance(holder.getProject()).findFile(file);
   }
-  
+
   @Nullable
-  public static PsiFile getPsiFile(VirtualFile file, Project project) {
+  public static PsiFile getPsiFile(@NotNull VirtualFile file, @NotNull Project project) {
     return PsiManager.getInstance(project).findFile(file);
   }
 }

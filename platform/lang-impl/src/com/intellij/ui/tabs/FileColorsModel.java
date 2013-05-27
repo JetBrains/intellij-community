@@ -58,6 +58,7 @@ public class FileColorsModel implements Cloneable {
     globalScopesColors = new HashMap<String, String>();
   }
 
+  @NotNull
   private final Project myProject;
 
   FileColorsModel(@NotNull final Project project) {

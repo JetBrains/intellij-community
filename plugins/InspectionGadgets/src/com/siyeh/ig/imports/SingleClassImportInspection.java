@@ -15,10 +15,14 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaFile;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SingleClassImportInspection extends BaseInspection {
@@ -50,7 +54,7 @@ public class SingleClassImportInspection extends BaseInspection {
       if (!(aClass.getParent() instanceof PsiJavaFile)) {
         return;
       }
-      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(aClass.getContainingFile())) {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)aClass.getParent();

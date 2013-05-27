@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ServerPageFile;
+import com.intellij.psi.util.PsiUtilCore;
 
-import java.util.Comparator;
-
-public class PsiElementOrderComparator implements Comparator<PsiElement> {
-
-  private static final PsiElementOrderComparator INSTANCE =
-    new PsiElementOrderComparator();
-
-  @Override
-  public int compare(PsiElement element1, PsiElement element2) {
-    final int offset1 = element1.getTextOffset();
-    final int offset2 = element2.getTextOffset();
-    return offset1 - offset2;
-  }
-
-  public static PsiElementOrderComparator getInstance() {
-    return INSTANCE;
+public class FileTypeUtils {
+  public static boolean isInJsp(PsiElement file) {
+    return PsiUtilCore.getTemplateLanguageFile(file) instanceof ServerPageFile;
   }
 }

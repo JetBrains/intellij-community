@@ -59,7 +59,7 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
     final TestData data = configuration.getPersistantData();
-    data.getPatterns().addAll(classes);
+    data.setPatterns(classes);
     data.TEST_OBJECT = TestType.PATTERN.getType();
     data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
     configuration.setGeneratedName();

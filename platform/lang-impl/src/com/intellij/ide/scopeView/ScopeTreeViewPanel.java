@@ -119,6 +119,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
                                                FunctionUtil.<PsiElement>id());
     }
   };
+  @NotNull
   private final Project myProject;
   private FileTreeModelBuilder myBuilder;
 
@@ -170,7 +171,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private ScopeTreeViewPanel.MyChangesListListener myChangesListListener = new MyChangesListListener();
   protected ActionCallback myActionCallback;
 
-  public ScopeTreeViewPanel(final Project project) {
+  public ScopeTreeViewPanel(@NotNull Project project) {
     super(new BorderLayout());
     myUpdateQueue.setPassThrough(false);  // we don't want passthrough mode, even in unit tests
     myProject = project;

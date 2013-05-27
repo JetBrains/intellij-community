@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -79,7 +80,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
         return;
       }
       if (statement.getReturnValue() != null) {

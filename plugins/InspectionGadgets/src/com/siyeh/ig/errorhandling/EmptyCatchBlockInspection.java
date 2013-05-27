@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +131,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
         return;
       }
       if (m_ignoreTestCases && TestUtils.isInTestCode(statement)) {

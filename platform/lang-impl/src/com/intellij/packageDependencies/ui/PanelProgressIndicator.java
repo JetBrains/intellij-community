@@ -33,7 +33,7 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
   private final MyProgressPanel myProgressPanel;
   private boolean myPaintInQueue;
   private final Consumer<JComponent> myComponentUpdater;
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public PanelProgressIndicator(Consumer<JComponent> componentUpdater) {
     myProgressPanel = new MyProgressPanel();

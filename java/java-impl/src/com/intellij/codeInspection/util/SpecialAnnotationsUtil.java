@@ -179,10 +179,10 @@ public class SpecialAnnotationsUtil {
     };
   }
 
-  public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(final String text,
-                                                                        final String family,
-                                                                        final List<String> targetList,
-                                                                        final String qualifiedName,
+  public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(@NotNull final String text,
+                                                                        @NotNull final String family,
+                                                                        @NotNull final List<String> targetList,
+                                                                        @NotNull final String qualifiedName,
                                                                         final PsiElement context) {
     return new LocalQuickFix() {
       @Override
@@ -204,7 +204,7 @@ public class SpecialAnnotationsUtil {
     };
   }
 
-  private static void doQuickFixInternal(final Project project, final List<String> targetList, final String qualifiedName) {
+  private static void doQuickFixInternal(@NotNull Project project, @NotNull List<String> targetList, @NotNull String qualifiedName) {
     targetList.add(qualifiedName);
     Collections.sort(targetList);
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
@@ -223,7 +223,7 @@ public class SpecialAnnotationsUtil {
     */
   }
 
-  public static void createAddToSpecialAnnotationFixes(final PsiModifierListOwner owner, final Processor<String> processor) {
+  public static void createAddToSpecialAnnotationFixes(@NotNull PsiModifierListOwner owner, @NotNull Processor<String> processor) {
     final PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
       final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
@@ -231,7 +231,7 @@ public class SpecialAnnotationsUtil {
         @NonNls final String name = psiAnnotation.getQualifiedName();
         if (name == null) continue;
         if (name.startsWith("java.") || name.startsWith("javax.") ||
-            (name.startsWith("org.jetbrains.") && AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name)))) continue;
+            name.startsWith("org.jetbrains.") && AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name))) continue;
         if (!processor.process(name)) break;
       }
     }

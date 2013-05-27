@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,27 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.Colored;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-@Colored(color = "e7fadb", darkVariant = "2A3B2C")
-public class TestsScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
-  public TestsScope() {
-    super(NAME, new AbstractPackageSet("test:*..*") {
-
+public class ProjectProductionScope extends NamedScope {
+  public ProjectProductionScope() {
+    super(IdeBundle.message("predefined.scope.production.name"), new AbstractPackageSet("src:*..*") {
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         return contains(file, holder.getProject(), holder);
       }
 
       @Override
-      public boolean contains(VirtualFile file, Project project, @Nullable NamedScopesHolder holder) {
+      public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-        return file != null && index.isInTestSourceContent(file);
+        return file != null
+               && !index.isInTestSourceContent(file)
+               && !index.isInLibraryClasses(file)
+               && !index.isInLibrarySource(file);
       }
     });
   }
