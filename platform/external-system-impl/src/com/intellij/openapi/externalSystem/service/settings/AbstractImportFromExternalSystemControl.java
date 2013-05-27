@@ -19,10 +19,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
+import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -53,31 +50,32 @@ public abstract class AbstractImportFromExternalSystemControl<
   @NotNull private final PaintAwarePanel           myComponent              = new PaintAwarePanel(new GridBagLayout());
   @NotNull private final TextFieldWithBrowseButton myLinkedProjectPathField = new TextFieldWithBrowseButton();
 
-  @NotNull private final  ExternalSettingsControl<ProjectSettings> myProjectSettingsControl;
-  @Nullable private final ExternalSettingsControl<SystemSettings>  mySystemSettingsControl;
+  @NotNull private final  ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
+  @NotNull private final  ProjectSystemId                                myExternalSystemId;
+  @Nullable private final ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
   protected AbstractImportFromExternalSystemControl(@NotNull ProjectSystemId externalSystemId,
                                                     @NotNull SystemSettings systemSettings,
                                                     @NotNull ProjectSettings projectSettings)
   {
+    myExternalSystemId = externalSystemId;
     mySystemSettings = systemSettings;
     myProjectSettings = projectSettings;
     myProjectSettingsControl = createProjectSettingsControl(myProjectSettings);
     mySystemSettingsControl = createSystemSettingsControl(mySystemSettings);
 
-    JLabel linkedProjectPathLabel
-      = new JLabel(ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()));
+    JLabel linkedProjectPathLabel =
+      new JLabel(ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()));
     FileChooserDescriptor fileChooserDescriptor = getLinkedProjectChooserDescriptor();
 
-    myLinkedProjectPathField.addBrowseFolderListener(
-      "",
-      ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()),
-      null,
-      fileChooserDescriptor,
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-      false
-    );
+    myLinkedProjectPathField.addBrowseFolderListener("",
+                                                     ExternalSystemBundle
+                                                       .message("settings.label.select.project", externalSystemId.getReadableName()),
+                                                     null,
+                                                     fileChooserDescriptor,
+                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+                                                     false);
     myLinkedProjectPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
@@ -94,7 +92,7 @@ public abstract class AbstractImportFromExternalSystemControl<
         onLinkedProjectPathChange(myLinkedProjectPathField.getText());
       }
     });
-    
+
     myComponent.add(linkedProjectPathLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     myComponent.add(myLinkedProjectPathField, ExternalSystemUiUtil.getFillLineConstraints(0));
     myProjectSettingsControl.fillUi(myComponent, 0);
@@ -116,7 +114,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    * @return          control for managing given project settings
    */
   @NotNull
-  protected abstract ExternalSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
+  protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
 
   /**
    * Creates a control for managing given system-level settings (if any).
@@ -126,7 +124,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    *                  <code>null</code> if current external system doesn't have system-level settings (only project-level settings)
    */
   @Nullable
-  protected abstract ExternalSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
+  protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
 
   @NotNull
   public JComponent getComponent() {
@@ -134,7 +132,7 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   @NotNull
-  public ExternalSettingsControl<ProjectSettings> getProjectSettingsControl() {
+  public ExternalSystemSettingsControl<ProjectSettings> getProjectSettingsControl() {
     return myProjectSettingsControl;
   }
 
@@ -160,6 +158,9 @@ public abstract class AbstractImportFromExternalSystemControl<
     String linkedProjectPath = myLinkedProjectPathField.getText();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
+    }
+    else {
+      ExternalSystemApiUtil.storeLastUsedExternalProjectPath(linkedProjectPath, myExternalSystemId);
     }
     myProjectSettings.setExternalProjectPath(ExternalSystemApiUtil.normalizePath(linkedProjectPath));
 

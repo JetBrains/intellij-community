@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem;
+package org.jetbrains.plugins.gradle.service.execution;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Denis Zhdanov
- * @since 5/15/13 12:37 PM
+ * @since 23.05.13 17:56
  */
-public interface ExternalSystemUiAware {
-
-  @NotNull
-  String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath);
-
-  @Nullable
-  FileChooserDescriptor getExternalProjectConfigDescriptor();
-
-  @Nullable
-  Icon getProjectIcon();
-
-  @Nullable
-  Icon getTaskIcon();
+public class GradleExternalTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
+  
+  public GradleExternalTaskConfigurationType() {
+    super(GradleConstants.SYSTEM_ID);
+  }
 }

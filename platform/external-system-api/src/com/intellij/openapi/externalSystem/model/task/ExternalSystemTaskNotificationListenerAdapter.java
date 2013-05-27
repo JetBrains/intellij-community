@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ExternalSystemTaskNotificationListenerAdapter implements ExternalSystemTaskNotificationListener {
 
+  @NotNull public static final ExternalSystemTaskNotificationListener NULL_OBJECT = new ExternalSystemTaskNotificationListenerAdapter() { };
+
   @Override
   public void onQueued(@NotNull ExternalSystemTaskId id) {
   }
@@ -18,6 +20,10 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
 
   @Override
   public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+  }
+
+  @Override
+  public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
   }
 
   @Override

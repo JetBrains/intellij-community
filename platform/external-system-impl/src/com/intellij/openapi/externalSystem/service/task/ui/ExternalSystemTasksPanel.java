@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -23,16 +24,21 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.event.MouseEvent;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.*;
 
 /**
  * @author Denis Zhdanov
@@ -45,6 +51,8 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
   @NotNull private final ProjectSystemId              myExternalSystemId;
   @NotNull private final NotificationGroup            myNotificationGroup;
 
+  @Nullable private Producer<ExternalTaskPojo> mySelectedTaskProvider;
+
   public ExternalSystemTasksPanel(@NotNull Project project,
                                   @NotNull ProjectSystemId externalSystemId,
                                   @NotNull NotificationGroup notificationGroup)
@@ -54,20 +62,28 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     myNotificationGroup = notificationGroup;
     myAllTasksModel = new ExternalSystemTasksTreeModel(externalSystemId);
 
-    ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    myAllTasksTree = new ExternalSystemTasksTree(myAllTasksModel, settings.getExpandStates());
+    myAllTasksTree = new ExternalSystemTasksTree(myAllTasksModel, settings.getExpandStates()) {
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        mySelectedTaskProvider = myAllTasksTree;
+        super.processMouseEvent(e);
+      }
+    };
 
     ActionManager actionManager = ActionManager.getInstance();
-    ActionGroup group = (ActionGroup)actionManager.getAction(ExternalSystemConstants.TOOL_WINDOW_TOOLBAR_ACTIONS_GROUP_ID);
-    ActionToolbar toolbar = actionManager.createActionToolbar(ExternalSystemConstants.TOOL_WINDOW_PLACE, group, true);
+    ActionGroup group = (ActionGroup)actionManager.getAction(TOOL_WINDOW_TOOLBAR_ACTIONS_GROUP_ID);
+    ActionToolbar toolbar = actionManager.createActionToolbar(TOOL_WINDOW_PLACE, group, true);
     toolbar.setTargetComponent(this);
     setToolbar(toolbar.getComponent());
 
     setContent(new JBScrollPane(myAllTasksTree));
 
     ExternalSystemUiUtil.apply(settings, myAllTasksModel);
+
+    CustomizationUtil.installPopupHandler(myAllTasksTree, TREE_ACTIONS_GROUP_ID, TREE_PLACE);
   }
 
   @Nullable
@@ -81,6 +97,9 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     }
     else if (ExternalSystemDataKeys.NOTIFICATION_GROUP.is(dataId)) {
       return myNotificationGroup;
+    }
+    else if (ExternalSystemDataKeys.SELECTED_TASK.is(dataId)) {
+      return mySelectedTaskProvider == null ? null : mySelectedTaskProvider.produce();
     }
     return null;
   }

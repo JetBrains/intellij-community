@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeModelEvent;
@@ -32,7 +35,7 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 5/13/13 4:18 PM
  */
-public class ExternalSystemTasksTree extends Tree {
+public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTaskPojo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
@@ -155,4 +158,19 @@ public class ExternalSystemTasksTree extends Tree {
     return buffer.toString();
   }
 
+  @Nullable
+  @Override
+  public ExternalTaskPojo produce() {
+    TreePath selectionPath = getLeadSelectionPath();
+    if (selectionPath == null) {
+      return null;
+    }
+    Object component = selectionPath.getLastPathComponent();
+    if (!(component instanceof ExternalSystemNode)) {
+      return null;
+    }
+
+    Object element = ((ExternalSystemNode)component).getDescriptor().getElement();
+    return element instanceof ExternalTaskPojo ? ((ExternalTaskPojo)element) : null;
+  }
 }

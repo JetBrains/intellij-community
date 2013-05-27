@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.ExternalEntityData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -33,18 +34,22 @@ import java.util.Collection;
 public abstract class AbstractToolWindowService<T extends ExternalEntityData> implements ProjectDataService<T, Void> {
   
   @Override
-  public void importData(@NotNull Collection<DataNode<T>> toImport, @NotNull Project project, boolean synchronous) {
+  public void importData(@NotNull final Collection<DataNode<T>> toImport, @NotNull final Project project, boolean synchronous) {
     if (toImport.isEmpty()) {
       return;
     }
-    ExternalSystemTasksTreeModel model = ExternalSystemUtil.getToolWindowElement(ExternalSystemTasksTreeModel.class,
-                                                                                 project,
-                                                                                 ExternalSystemDataKeys.ALL_TASKS_MODEL,
-                                                                                 toImport.iterator().next().getData().getOwner());
-    if (model != null) {
-      processData(toImport, project, model);
-    }
-    
+    ExternalSystemApiUtil.executeOnEdt(false, new Runnable() {
+      @Override
+      public void run() {
+        ExternalSystemTasksTreeModel model = ExternalSystemUtil.getToolWindowElement(ExternalSystemTasksTreeModel.class,
+                                                                                     project,
+                                                                                     ExternalSystemDataKeys.ALL_TASKS_MODEL,
+                                                                                     toImport.iterator().next().getData().getOwner());
+        if (model != null) {
+          processData(toImport, project, model);
+        }
+      }
+    });
   }
 
   protected abstract void processData(@NotNull Collection<DataNode<T>> nodes,

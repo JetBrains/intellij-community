@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.remote;
 
-import com.intellij.openapi.externalSystem.build.ExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -44,13 +44,14 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
   public void executeTasks(@NotNull final ExternalSystemTaskId id,
                            @NotNull final List<String> taskNames,
                            @NotNull final String projectPath,
-                           @Nullable final S settings) throws RemoteException, ExternalSystemException
+                           @Nullable final S settings,
+                           @Nullable final String vmOptions) throws RemoteException, ExternalSystemException
   {
     execute(id, new Producer<Object>() {
       @Nullable
       @Override
       public Object produce() {
-        myDelegate.executeTasks(id, taskNames, projectPath, settings);
+        myDelegate.executeTasks(id, taskNames, projectPath, settings, vmOptions, getNotificationListener());
         return null;
       }
     });
