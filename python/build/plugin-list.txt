@@ -53,3 +53,4 @@ textmate
 restClient
 puppet
 fileWatcher
+terminal
