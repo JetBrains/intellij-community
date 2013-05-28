@@ -88,6 +88,27 @@ return yylength()-i-1;
 {END_OF_LINE_COMMENT}       { return PyTokenTypes.END_OF_LINE_COMMENT; }
 "\\"                        { return PyTokenTypes.BACKSLASH; }
 
+<YYINITIAL> {
+{SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
+                                 else return PyTokenTypes.SINGLE_QUOTED_STRING; }
+{TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
+                                 else return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+
+{SINGLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
+return PyTokenTypes.DOCSTRING; }
+
+{TRIPLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+return PyTokenTypes.DOCSTRING; }
+
+{SINGLE_QUOTED_STRING}[\ \t]*"\\"  {
+ yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
+ yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
+
+{TRIPLE_QUOTED_STRING}[\ \t]*"\\"  {
+ yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+ yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
+
+}
 
 <YYINITIAL, IN_DOCSTRING_OWNER> {
 {LONGINTEGER}         { return PyTokenTypes.INTEGER_LITERAL; }
@@ -95,8 +116,8 @@ return yylength()-i-1;
 {FLOATNUMBER}         { return PyTokenTypes.FLOAT_LITERAL; }
 {IMAGNUMBER}          { return PyTokenTypes.IMAGINARY_LITERAL; }
 
-{SINGLE_QUOTED_STRING} { if (zzCurrentPos == 0) return PyTokenTypes.DOCSTRING; return PyTokenTypes.SINGLE_QUOTED_STRING; }
-{TRIPLE_QUOTED_STRING} { if (zzCurrentPos == 0) return PyTokenTypes.DOCSTRING; return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+{SINGLE_QUOTED_STRING} { return PyTokenTypes.SINGLE_QUOTED_STRING; }
+{TRIPLE_QUOTED_STRING} { return PyTokenTypes.TRIPLE_QUOTED_STRING; }
 
 "and"                 { return PyTokenTypes.AND_KEYWORD; }
 "assert"              { return PyTokenTypes.ASSERT_KEYWORD; }

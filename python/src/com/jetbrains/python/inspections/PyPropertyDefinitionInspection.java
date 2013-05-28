@@ -264,6 +264,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
     private void checkForSelf(PyParameterList param_list) {
       PyParameter[] parameters = param_list.getParameters();
+      final PyClass cls = PsiTreeUtil.getParentOfType(param_list, PyClass.class);
+      if (cls != null && cls.isSubclass("type")) return;
       if (parameters.length > 0 && ! PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
           parameters[0], PyBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING, null,
