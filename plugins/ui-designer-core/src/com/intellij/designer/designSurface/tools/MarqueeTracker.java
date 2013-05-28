@@ -21,6 +21,7 @@ import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.utils.Cursors;
+import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -146,6 +147,10 @@ public class MarqueeTracker extends InputTool {
     }
 
     myFeedback.setBounds(getSelectionRectangle());
+    if (ApplicationManager.getApplication().isInternal()) {
+      Dimension size = myFeedback.getSize();
+      myArea.setDescription(size.width + " : " + size.height);
+    }
     layer.repaint();
   }
 
