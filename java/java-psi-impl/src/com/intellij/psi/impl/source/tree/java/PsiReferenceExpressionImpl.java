@@ -440,7 +440,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     // optimization: methodCallExpression should resolve to a method
     if (parentIsMethodCall != resolvingToMethod) return false;
 
-    return super.isReferenceTo(element);
+    return element.getManager().areElementsEquivalent(element, advancedResolve(true).getElement());
   }
 
   @Override
