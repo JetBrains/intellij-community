@@ -8,7 +8,8 @@ includeTargets << new File("${projectHome}/python/build/python_common.gant")
 setProperty("contribHome", "${projectHome}/contrib")
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/idea")
-setProperty("ideaHome", "${ideaDir}/jdk16")
+
+setProperty("ideaHome", "${ideaDir}/jdk16") //compiled idea
 
 setProperty("pluginHelp", "${outDir}/help")
 
@@ -19,7 +20,7 @@ setProperty("pluginHome", "${projectHome}/python")
 setProperty("pluginRevision", "${buildNumber}")
 
 setProperty("ideaLib", "${ideaHome}/lib")
-setProperty("ideaPlugins", "${ideaHome}/plugins")
+setProperty("ideaPlugins", "${ideaHome}/plugins") //compiled plugins
 
 
 setProperty("output", "${projectHome}/python/dist")
@@ -259,6 +260,9 @@ target(name: "compile", description: "Compile module python") {
       include(name: "*.jar")
     }
     fileset(dir: "${ideaPlugins}/remote-run/lib") {
+      include(name: "*.jar")
+    }
+    fileset(dir: "${ideaPlugins}/terminal/lib") {
       include(name: "*.jar")
     }
     pathelement(location: restJarName)
