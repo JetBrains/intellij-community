@@ -82,6 +82,11 @@ public class GradleExecutionHelper {
       return;
     }
 
+    int xmx = settings.getDaemonXmx();
+    if (xmx > 0) {
+      operation.setJvmArguments(String.format("-Xmx%dm", xmx));
+    }
+
     listener.onStart(id);
     final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {

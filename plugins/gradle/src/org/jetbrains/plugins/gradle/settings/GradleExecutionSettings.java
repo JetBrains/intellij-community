@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,14 +37,21 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable private final String myGradleHome;
   @Nullable private final String myServiceDirectory;
 
+  private final int myDaemonXmx;
+
   private final boolean myUseWrapper;
 
   @Nullable private String myJavaHome;
 
   public GradleExecutionSettings(@Nullable String gradleHome, @Nullable String serviceDirectory, boolean wrapper) {
+    this(gradleHome, serviceDirectory, wrapper, SystemProperties.getIntProperty("gradle.daemon.xmx.mb", 512));
+  }
+  
+  public GradleExecutionSettings(@Nullable String gradleHome, @Nullable String serviceDirectory, boolean wrapper, int daemonXmx) {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
     myUseWrapper = wrapper;
+    myDaemonXmx = daemonXmx;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
 
@@ -79,6 +87,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     myResolverExtensions.add(className);
   }
 
+  /**
+   * @return    max heap memory limit (in MB) to use for gradle daemon (if any);
+   *            non-positive value as an indication that default gradle value (1024) should be used instead
+   */
+  public int getDaemonXmx() {
+    return myDaemonXmx;
+  }
+
   @Override
   public int hashCode() {
     int result = super.hashCode();
@@ -86,6 +102,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     result = 31 * result + (myServiceDirectory != null ? myServiceDirectory.hashCode() : 0);
     result = 31 * result + (myUseWrapper ? 1 : 0);
     result = 31 * result + (myJavaHome != null ? myJavaHome.hashCode() : 0);
+    result = 31 * result + myDaemonXmx;
     return result;
   }
 
@@ -96,6 +113,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     GradleExecutionSettings that = (GradleExecutionSettings)o;
 
     if (myUseWrapper != that.myUseWrapper) return false;
+    if (myDaemonXmx != that.myDaemonXmx) return false;
     if (myGradleHome != null ? !myGradleHome.equals(that.myGradleHome) : that.myGradleHome != null) return false;
     if (myJavaHome != null ? !myJavaHome.equals(that.myJavaHome) : that.myJavaHome != null) return false;
     if (myServiceDirectory != null ? !myServiceDirectory.equals(that.myServiceDirectory) : that.myServiceDirectory != null) {
