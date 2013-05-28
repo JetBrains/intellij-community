@@ -175,7 +175,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void duringCompletion(CompletionInitializationContext initContext) {
     if (isAutopopupCompletion()) {
-      if (shouldFocusLookup(myParameters)) {
+      if (shouldPreselectFirstSuggestion(myParameters)) {
         if (!CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
           myShowPreview = true;
           myLookup.setFocused(false);
@@ -715,7 +715,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return result[0];
   }
 
-  private static boolean shouldFocusLookup(CompletionParameters parameters) {
+  private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      return true;
+    }
+
     switch (CodeInsightSettings.getInstance().AUTOPOPUP_FOCUS_POLICY) {
       case CodeInsightSettings.ALWAYS:
         return true;

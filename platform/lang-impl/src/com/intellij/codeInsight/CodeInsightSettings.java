@@ -78,7 +78,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTO_POPUP_JAVADOC_INFO = false;
   public int JAVADOC_INFO_DELAY = 1000;
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
-  public int AUTO_LOOKUP_DELAY = 0;
 
   @MagicConstant(intValues = {ALL, NONE, FIRST_LETTER})
   public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER;

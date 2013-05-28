@@ -113,24 +113,17 @@ public class AutoPopupController implements Disposable {
     final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(null, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
-    Runnable request = new Runnable() {
+    CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
       @Override
       public void run() {
-        if (myProject.isDisposed()) return;
-        CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
-          @Override
-          public void run() {
-            if (phase.checkExpired()) return;
+        if (phase.checkExpired()) return;
 
-            PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-            if (file != null && condition != null && !condition.value(file)) return;
+        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+        if (file != null && condition != null && !condition.value(file)) return;
 
-            CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
-          }
-        });
+        CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
       }
-    };
-    addRequest(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    });
   }
 
   @TestOnly
