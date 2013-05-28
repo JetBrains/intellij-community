@@ -172,8 +172,6 @@ public class ChangelistConflictTracker {
         newConflict = true;
       }
     }
-    conflict.timestamp = System.currentTimeMillis();
-    conflict.changelistId = defaultList.getId();
 
     if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
       myFileStatusManager.fileStatusChanged(file);
@@ -222,11 +220,6 @@ public class ChangelistConflictTracker {
     for (Map.Entry<String,Conflict> entry : myConflicts.entrySet()) {
       Element fileElement = new Element("file");
       fileElement.setAttribute("path", entry.getKey());
-      String id = entry.getValue().changelistId;
-      if (id != null) {
-        fileElement.setAttribute("changelist", id);
-      }
-      fileElement.setAttribute("time", Long.toString(entry.getValue().timestamp));
       fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
       to.addContent(fileElement);
     }
@@ -247,13 +240,6 @@ public class ChangelistConflictTracker {
         continue;
       }
       Conflict conflict = new Conflict();
-      conflict.changelistId = element.getAttributeValue("changelist");
-      try {
-        conflict.timestamp = Long.parseLong(element.getAttributeValue("time"));
-      }
-      catch (NumberFormatException e) {
-        // do nothing
-      }
       conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
       myConflicts.put(path, conflict);
     }
@@ -283,8 +269,6 @@ public class ChangelistConflictTracker {
   }
 
   public static class Conflict {
-    long timestamp;
-    String changelistId;
     boolean ignored;
   }
 
