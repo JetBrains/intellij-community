@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.Timings;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author peter
  */
-public class DomIncludesTest extends JavaCodeInsightFixtureTestCase {
+public class DomIncludesTest extends CodeInsightFixtureTestCase {
 
   public void testGetChildrenHonorsIncludes() throws Throwable {
     final MyElement rootElement = createDomFile("a.xml", "<root xmlns:xi=\"http://www.w3.org/2001/XInclude\">" +
@@ -204,7 +204,7 @@ public class DomIncludesTest extends JavaCodeInsightFixtureTestCase {
   private PsiFile createFile(final String fileName, final String fileText) throws IOException {
     final VirtualFile file = myFixture.getTempDirFixture().createFile(fileName);
     VfsUtil.saveText(file, fileText);
-    return getPsiManager().findFile(file);
+    return myFixture.getPsiManager().findFile(file);
   }
 
   private DomManagerImpl getDomManager() {
