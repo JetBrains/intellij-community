@@ -33,6 +33,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.LinkedList;
 
@@ -199,10 +201,22 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       final Class<CompactSyntaxTokenManager> managerClass = CompactSyntaxTokenManager.class;
       LOG.error("Unsupported version of RNGOM in classpath", e,
                 "Actual parameter types: " + Arrays.toString(managerClass.getConstructors()[0].getParameterTypes()),
-                "Location of " + managerClass.getName() + ": " + managerClass.getProtectionDomain().getCodeSource(),
-                "Location of " + CharStream.class.getName() + ": " + CharStream.class.getProtectionDomain().getCodeSource());
+                "Location of " + managerClass.getName() + ": " + getSourceLocation(managerClass),
+                "Location of " + CharStream.class.getName() + ": " + getSourceLocation(CharStream.class));
       throw e;
     }
+  }
+
+  private static String getSourceLocation(Class<?> clazz) {
+    final CodeSource source = clazz.getProtectionDomain().getCodeSource();
+    if (source != null) {
+      final URL location = source.getLocation();
+      if (location != null) {
+        return location.toExternalForm();
+      }
+    }
+    final URL resource = clazz.getClassLoader().getResource(clazz.getName().replace('.', '/') + ".class");
+    return resource != null ? resource.toExternalForm() : "<unknown>";
   }
 
   public static void main(String[] args) throws IOException {
