@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,6 +81,8 @@ public class ToolWindowModuleService extends AbstractToolWindowService<ModuleDat
     }
 
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    settings.setAvailableProjects(data);
+    HashMap<ExternalProjectPojo,Collection<ExternalProjectPojo>> projects = ContainerUtilRt.newHashMap(settings.getAvailableProjects());
+    projects.putAll(data);
+    settings.setAvailableProjects(projects);
   }
 }
