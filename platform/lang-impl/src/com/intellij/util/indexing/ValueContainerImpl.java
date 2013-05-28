@@ -45,32 +45,25 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     final Object input = getInput(value);
 
     if (input == null) {
-      if (myInputIdMapping != null) {
-        if (!(myInputIdMapping instanceof THashMap)) {
-          Object oldMapping = myInputIdMapping;
-          myInputIdMapping = new THashMap<Value, Object>(2);
-          ((THashMap<Value, Object>)myInputIdMapping).put((Value)oldMapping, myInputIdMappingValue);
-          myInputIdMappingValue = null;
-        }
-        ((THashMap<Value, Object>)myInputIdMapping).put(value, inputId);
-      } else {
-        myInputIdMapping = value != null ? value:(Value)myNullValue;
-        myInputIdMappingValue = inputId;
-      }
+      attachFileSetForNewValue(value, inputId);
     }
     else {
       final TIntHashSet idSet;
       if (input instanceof Integer) {
-        idSet = new IdSet(3, 0.98f);
+        idSet = new IdSet(3);
         idSet.add(((Integer)input).intValue());
-        if (!(myInputIdMapping instanceof THashMap)) myInputIdMappingValue = idSet;
-        else ((THashMap<Value, Object>)myInputIdMapping).put(value, idSet);
+        resetFileSetForValue(value, idSet);
       }
       else {
         idSet = (TIntHashSet)input;
       }
       idSet.add(inputId);
     }
+  }
+
+  private void resetFileSetForValue(Value value, Object fileSet) {
+    if (!(myInputIdMapping instanceof THashMap)) myInputIdMappingValue = fileSet;
+    else ((THashMap<Value, Object>)myInputIdMapping).put(value, fileSet);
   }
 
   @Override
@@ -325,6 +318,40 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return container;
   }
 
+  void ensureFileSetCapacityForValue(Value value, int count) {
+    if (count <= 1) return;
+    Object input = getInput(value);
+
+    if (input != null) {
+      if (input instanceof IdSet) {
+        ((IdSet)input).ensureCapacity(count);
+      } else if (input instanceof Integer) {
+        IdSet idSet = new IdSet(count + 1);
+        idSet.add(((Integer)input).intValue());
+        resetFileSetForValue(value, idSet);
+      }
+      return;
+    }
+
+    attachFileSetForNewValue(value, new IdSet(count));
+  }
+
+  private void attachFileSetForNewValue(Value value, Object fileSet) {
+    value = value != null ? value:(Value)myNullValue;
+    if (myInputIdMapping != null) {
+      if (!(myInputIdMapping instanceof THashMap)) {
+        Object oldMapping = myInputIdMapping;
+        myInputIdMapping = new THashMap<Value, Object>(2);
+        ((THashMap<Value, Object>)myInputIdMapping).put((Value)oldMapping, myInputIdMappingValue);
+        myInputIdMappingValue = null;
+      }
+      ((THashMap<Value, Object>)myInputIdMapping).put(value, fileSet);
+    } else {
+      myInputIdMapping = value;
+      myInputIdMappingValue = fileSet;
+    }
+  }
+
   private static class SingleValueIterator implements IntIterator {
     private final int myValue;
     private boolean myValueRead = false;
@@ -403,8 +430,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   private static class IdSet extends TIntHashSet {
 
-    private IdSet(final int initialCapacity, final float loadFactor) {
-      super(initialCapacity, loadFactor);
+    private IdSet(final int initialCapacity) {
+      super(initialCapacity, 0.98f);
     }
 
     @Override
