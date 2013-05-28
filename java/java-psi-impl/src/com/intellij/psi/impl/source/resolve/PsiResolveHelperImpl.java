@@ -398,6 +398,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
               final ConstraintType currentConstraintType = currentConstraint.getSecond();
               if (currentConstraintType == ConstraintType.EQUALS) {
                 substitutionFromBounds = currentSubstitution;
+                if (currentSubstitution == null) {
+                  constraints[i] = FAILED_INFERENCE;
+                }
                 break OtherParameters;
               }
               else if (currentConstraintType == ConstraintType.SUPERTYPE) {
