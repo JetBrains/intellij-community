@@ -86,6 +86,8 @@ public class HgCommitCommand {
 
   private void commitChunkFiles(List<String> chunk) throws VcsException {
     List<String> parameters = new LinkedList<String>();
+    parameters.add("--encoding");
+    parameters.add("UTF-8");
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
     parameters.addAll(chunk);
@@ -97,7 +99,7 @@ public class HgCommitCommand {
     File tempFile = new File(systemDir, TEMP_FILE_NAME);
     
     try {
-      FileUtil.writeToFile(tempFile, myMessage.getBytes(HgEncodingUtil.getDefaultCharset()));
+      FileUtil.writeToFile(tempFile, myMessage.getBytes("UTF-8"));
     } catch (IOException e) {
       throw new VcsException("Couldn't prepare commit message", e);
     }
