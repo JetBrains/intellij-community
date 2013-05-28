@@ -24,7 +24,6 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.lookup.impl.CompletionPreview;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -118,7 +117,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private volatile int myCount;
-  private volatile boolean myShowPreview;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters =
     new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(
       ContainerUtil.<LookupElement>identityStrategy());
@@ -177,15 +175,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (isAutopopupCompletion()) {
       if (shouldPreselectFirstSuggestion(myParameters)) {
         if (!CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
-          myShowPreview = true;
-          myLookup.setFocused(false);
+          myLookup.setFocusDegree(LookupImpl.FocusDegree.SEMI_FOCUSED);
           if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT, getProject())) {
             myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_DOT) +
                                       " to choose the selected (or first) suggestion and insert a dot afterwards");
           }
         } else {
-          myLookup.setFocused(true);
+          myLookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
         }
       }
       else if (FeatureUsageTracker.getInstance()
@@ -346,9 +343,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       if (!myLookup.showLookup()) {
         return false;
-      }
-      if (myShowPreview) {
-        CompletionPreview.installPreview(myLookup);
       }
       justShown = true;
     }

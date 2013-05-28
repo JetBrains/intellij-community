@@ -302,7 +302,7 @@ public class CodeCompletionHandlerBase {
     if (existing != null && existing.isCompletion()) {
       existing.markReused();
       if (!autopopup) {
-        existing.setFocused(true);
+        existing.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
       }
       return existing;
     }
@@ -313,7 +313,7 @@ public class CodeCompletionHandlerBase {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
     }
-    lookup.setFocused(!autopopup);
+    lookup.setFocusDegree(autopopup ? LookupImpl.FocusDegree.UNFOCUSED : LookupImpl.FocusDegree.FOCUSED);
     return lookup;
   }
 

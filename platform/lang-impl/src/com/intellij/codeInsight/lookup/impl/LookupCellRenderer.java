@@ -117,7 +117,7 @@ public class LookupCellRenderer implements ListCellRenderer {
       boolean hasFocus) {
 
 
-    boolean nonFocusedSelection = isSelected && !myLookup.isFocused() && myLookup.isSemiFocused();
+    boolean nonFocusedSelection = isSelected && myLookup.getFocusDegree() == LookupImpl.FocusDegree.SEMI_FOCUSED;
     if (!myLookup.isFocused()) {
       isSelected = false;
     }

@@ -1843,12 +1843,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     putUserData(BUFFER, image);
   }
 
-  private static final Key<Pair<Point, BufferedImage>> CUSTOM_IMAGE = Key.create("CUSTOM_IMAGE");
-
-  public void setCustomImage(Pair<Point, BufferedImage> customImage) {
-    putUserData(CUSTOM_IMAGE, customImage);
-  }
-
   void paint(@NotNull Graphics2D g) {
     Rectangle clip = g.getClipBounds();
 
@@ -1898,11 +1892,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     borderEffect.paintHighlighters(getHighlighter());
     borderEffect.paintHighlighters(docMarkup);
     borderEffect.paintHighlighters(myMarkupModel);
-
-    Pair<Point, BufferedImage> pair = getUserData(CUSTOM_IMAGE);
-    if (pair != null) {
-      g.drawImage(pair.second, pair.first.x, pair.first.y, null);
-    }
 
     paintCaretCursor(g);
 

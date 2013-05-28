@@ -74,8 +74,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   private static void executeUpOrDown(LookupImpl lookup, boolean up) {
     if (!lookup.isFocused()) {
-      boolean semiFocused = lookup.isSemiFocused();
-      lookup.setFocused(true);
+      boolean semiFocused = lookup.getFocusDegree() == LookupImpl.FocusDegree.SEMI_FOCUSED;
+      lookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
       if (!up && !semiFocused) {
         return;
       }
@@ -162,7 +162,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      lookup.setFocused(true);
+      lookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
       ListScrollingUtil.movePageDown(lookup.getList());
     }
   }
@@ -174,7 +174,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      lookup.setFocused(true);
+      lookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
       ListScrollingUtil.movePageUp(lookup.getList());
     }
   }

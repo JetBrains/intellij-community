@@ -321,7 +321,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private static int getItemToSelect(LookupImpl lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
-    if (items.isEmpty() || !lookup.isFocused() && !lookup.isSemiFocused()) {
+    if (items.isEmpty() || lookup.getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED) {
       return 0;
     }
 
