@@ -226,10 +226,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (myOptions.showInstanceInStaticContext && !isQualifiedContext()) {
       return true;
     }
-    if (!(element instanceof PsiClass) && element instanceof PsiModifierListOwner) {
+    if (element instanceof PsiModifierListOwner) {
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
       if (myStatic) {
-        if (!modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
+        if (!(element instanceof PsiClass) && !modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
           // we don't need non static method in static context.
           return false;
         }

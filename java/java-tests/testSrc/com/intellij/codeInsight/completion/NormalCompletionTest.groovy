@@ -1380,4 +1380,19 @@ class Foo extends myClass
 '''
   }
 
+  public void "test don't show static inner class after instance qualifier"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  static class Inner {}
+}
+class Bar {
+  void foo(Foo f) {
+    f.<caret>
+  }
+}  
+"""
+    myFixture.completeBasic()
+    assert !('Inner' in myFixture.lookupElementStrings)
+  }
+
 }
