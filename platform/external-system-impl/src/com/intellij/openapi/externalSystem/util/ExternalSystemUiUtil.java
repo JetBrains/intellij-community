@@ -147,31 +147,35 @@ public class ExternalSystemUiUtil {
   }
 
   public static void showUi(@NotNull Object o, boolean show) {
-    for (Field field : o.getClass().getFields()) {
-      field.setAccessible(true);
-      try {
-        Object v = field.get(o);
-        if (v instanceof JComponent) {
-          ((JComponent)v).setVisible(show);
+    for (Class<?> clazz = o.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
+      for (Field field : clazz.getDeclaredFields()) {
+        field.setAccessible(true);
+        try {
+          Object v = field.get(o);
+          if (v instanceof JComponent) {
+            ((JComponent)v).setVisible(show);
+          }
         }
-      }
-      catch (IllegalAccessException e) {
-        // Ignore
+        catch (IllegalAccessException e) {
+          // Ignore
+        }
       }
     }
   }
 
   public static void disposeUi(@NotNull Object o) {
-    for (Field field : o.getClass().getFields()) {
-      field.setAccessible(true);
-      try {
-        Object v = field.get(o);
-        if (v instanceof JComponent) {
-          field.set(o, null);
+    for (Class<?> clazz = o.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
+      for (Field field : clazz.getDeclaredFields()) {
+        field.setAccessible(true);
+        try {
+          Object v = field.get(o);
+          if (v instanceof JComponent) {
+            field.set(o, null);
+          }
         }
-      }
-      catch (IllegalAccessException e) {
-        // Ignore
+        catch (IllegalAccessException e) {
+          // Ignore
+        }
       }
     }
   }
