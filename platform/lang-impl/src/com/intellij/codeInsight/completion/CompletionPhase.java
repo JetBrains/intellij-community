@@ -25,6 +25,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandAdapter;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.event.*;
@@ -79,6 +82,7 @@ public abstract class CompletionPhase implements Disposable {
     private final Editor myEditor;
     private final Expirable focusStamp;
     private final Project myProject;
+    private boolean ignoreDocumentChanges;
 
     public CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator, Editor editor) {
       super(prevIndicator);
@@ -91,6 +95,29 @@ public abstract class CompletionPhase implements Disposable {
           actionsHappened = true;
         }
       }, this);
+      myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          if (!ignoreDocumentChanges) {
+            actionsHappened = true;
+          }
+        }
+      }, this);
+    }
+
+    public void ignoreCurrentDocumentChange() {
+      ignoreDocumentChanges = true;
+      CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
+        @Override
+        public void commandFinished(CommandEvent event) {
+          CommandProcessor.getInstance().removeCommandListener(this);
+          ignoreDocumentChanges = false;
+        }
+      });
+    }
+
+    public boolean isRestartingCompletion() {
+      return indicator != null;
     }
 
     public boolean checkExpired() {
@@ -106,16 +133,6 @@ public abstract class CompletionPhase implements Disposable {
       }
 
       return false;
-    }
-
-    public boolean restartCompletion() {
-      if (indicator != null) {
-        replaced = true;
-        indicator.scheduleRestart();
-        assert this != CompletionServiceImpl.getCompletionPhase();
-        CompletionServiceImpl.assertPhase(CommittingDocuments.class);
-      }
-      return replaced;
     }
 
     @Override
@@ -156,11 +173,7 @@ public abstract class CompletionPhase implements Disposable {
         @Override
         public void beforeWriteActionStart(Object action) {
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
-            if (indicator.isAutopopupCompletion()) {
-              indicator.closeAndFinish(true);
-            } else {
-              indicator.scheduleRestart();
-            }
+            indicator.scheduleRestart();
           }
         }
       }, this);
