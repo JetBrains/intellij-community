@@ -467,7 +467,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
 
     final PsiClass containingClass = method.getContainingClass();
-    final boolean isRaw = containingClass != null && isRawSubstitutor(containingClass, substitutorForMethod);
+    final boolean isRaw = containingClass != null && isRawSubstitutor(method, substitutorForMethod) && isRawSubstitutor(containingClass, substitutorForMethod);
     if (!areFirstArgumentsApplicable(args, parms, languageLevel, substitutorForMethod, isRaw)) return ApplicabilityLevel.NOT_APPLICABLE;
     if (args.length == parms.length) {
       if (parms.length == 0) return ApplicabilityLevel.FIXED_ARITY;
