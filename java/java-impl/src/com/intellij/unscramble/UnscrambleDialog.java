@@ -214,7 +214,7 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return getButtons()[1]; //ok
+    return getRootPane().getDefaultButton();
   }
 
   private void createLogFileChooser() {

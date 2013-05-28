@@ -991,10 +991,6 @@ public abstract class DialogWrapper {
     return getDimensionServiceKey();
   }
 
-  protected JButton[] getButtons() {
-    return myButtons;
-  }
-
   public int getExitCode() {
     return myExitCode;
   }
