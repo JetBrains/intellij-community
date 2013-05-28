@@ -16,7 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -60,8 +60,8 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
     if (annotatableQualifier == null) {
       return null;
     }
-    return new DelegatingFix(new AddAnnotationFix(
-      AnnotationUtil.NON_NLS, annotatableQualifier));
+    return new DelegatingFix(new AddAnnotationPsiFix(
+      AnnotationUtil.NON_NLS, annotatableQualifier,PsiNameValuePair.EMPTY_ARRAY));
   }
 
   @Override

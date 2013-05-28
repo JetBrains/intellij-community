@@ -16,7 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -66,8 +66,8 @@ public class StringCompareToInspection extends BaseInspection {
         methodExpression);
     if (annotatableQualifier != null) {
       final InspectionGadgetsFix fix = new DelegatingFix(
-        new AddAnnotationFix(AnnotationUtil.NON_NLS,
-                             annotatableQualifier));
+        new AddAnnotationPsiFix(AnnotationUtil.NON_NLS,
+                             annotatableQualifier,PsiNameValuePair.EMPTY_ARRAY));
       result.add(fix);
     }
     final PsiModifierListOwner annotatableArgument =
@@ -75,8 +75,8 @@ public class StringCompareToInspection extends BaseInspection {
         methodCallExpression);
     if (annotatableArgument != null) {
       final InspectionGadgetsFix fix = new DelegatingFix(
-        new AddAnnotationFix(AnnotationUtil.NON_NLS,
-                             annotatableArgument));
+        new AddAnnotationPsiFix(AnnotationUtil.NON_NLS,
+                             annotatableArgument,PsiNameValuePair.EMPTY_ARRAY));
       result.add(fix);
     }
     return result.toArray(new InspectionGadgetsFix[result.size()]);

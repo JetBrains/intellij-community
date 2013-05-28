@@ -16,40 +16,40 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StringEqualsInspection extends BaseInspection {
+public class StringEqualsIgnoreCaseInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getID() {
-    return "CallToStringEquals";
+    return "CallToStringEqualsIgnoreCase";
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
-      "string.equals.call.display.name");
+      "string.equalsignorecase.call.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
-      "string.equals.call.problem.descriptor");
+      "string.equalsignorecase.call.problem.descriptor");
   }
 
   @Override
@@ -61,12 +61,10 @@ public class StringEqualsInspection extends BaseInspection {
     final PsiReferenceExpression methodExpression =
       methodCallExpression.getMethodExpression();
     final PsiModifierListOwner annotatableQualifier =
-      NonNlsUtils.getAnnotatableQualifier(
-        methodExpression);
+      NonNlsUtils.getAnnotatableQualifier(methodExpression);
     if (annotatableQualifier != null) {
       final InspectionGadgetsFix fix =
-        new DelegatingFix(new AddAnnotationFix(
-          AnnotationUtil.NON_NLS, annotatableQualifier));
+        createAddAnnotationFix(annotatableQualifier);
       result.add(fix);
     }
     final PsiModifierListOwner annotatableArgument =
@@ -74,35 +72,47 @@ public class StringEqualsInspection extends BaseInspection {
         methodCallExpression);
     if (annotatableArgument != null) {
       final InspectionGadgetsFix fix =
-        new DelegatingFix(new AddAnnotationFix(
-          AnnotationUtil.NON_NLS, annotatableArgument));
+        createAddAnnotationFix(annotatableArgument);
       result.add(fix);
     }
     return result.toArray(new InspectionGadgetsFix[result.size()]);
   }
 
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringEqualsVisitor();
+  private static DelegatingFix createAddAnnotationFix(PsiModifierListOwner annotatableQualifier) {
+    return new DelegatingFix(new AddAnnotationPsiFix(
+      AnnotationUtil.NON_NLS, annotatableQualifier,PsiNameValuePair.EMPTY_ARRAY));
   }
 
-  private static class StringEqualsVisitor extends BaseInspectionVisitor {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringEqualsIgnoreCaseVisitor();
+  }
+
+  private static class StringEqualsIgnoreCaseVisitor
+    extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(
       @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isEqualsCall(expression)) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(
+        methodName)) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
       }
-      final PsiParameterList paramList = method.getParameterList();
-      final PsiParameter[] parameters = paramList.getParameters();
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 1) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
       final PsiType parameterType = parameters[0].getType();
-      if (!TypeUtils.isJavaLangObject(parameterType)) {
+      if (!TypeUtils.isJavaLangString(parameterType)) {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
@@ -113,8 +123,6 @@ public class StringEqualsInspection extends BaseInspection {
       if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
       final PsiExpression qualifier =
         methodExpression.getQualifierExpression();
       if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
