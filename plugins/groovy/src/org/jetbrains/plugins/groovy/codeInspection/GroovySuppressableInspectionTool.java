@@ -126,7 +126,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     if (modifierList == null) {
       return Collections.emptyList();
     }
-    PsiAnnotation annotation = modifierList.findAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    PsiAnnotation annotation = modifierList.findAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     if (annotation == null) {
       return Collections.emptyList();
     }

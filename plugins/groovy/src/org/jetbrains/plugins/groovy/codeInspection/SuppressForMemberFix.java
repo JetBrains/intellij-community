@@ -19,8 +19,8 @@ package org.jetbrains.plugins.groovy.codeInspection;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
+import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -113,7 +113,7 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   private static void addSuppressAnnotation(final Project project, final GrModifierList modifierList, final String id) throws IncorrectOperationException {
-    PsiAnnotation annotation = modifierList.findAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    PsiAnnotation annotation = modifierList.findAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     final GrExpression toAdd = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"" + id + "\"");
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(null);
@@ -128,7 +128,7 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
       }
     }
     else {
-      modifierList.addAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME).setDeclaredAttributeValue(null, toAdd);
+      modifierList.addAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME).setDeclaredAttributeValue(null, toAdd);
     }
   }
 

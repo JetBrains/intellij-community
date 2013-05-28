@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public interface BatchSuppressManager {
+  String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
+
   class SERVICE {
     public static BatchSuppressManager getInstance() {
       return ServiceManager.getService(BatchSuppressManager.class);

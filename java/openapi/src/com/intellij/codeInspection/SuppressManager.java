@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SuppressManager implements BatchSuppressManager {
-  public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
 
   public static SuppressManager getInstance() {
     return ServiceManager.getService(SuppressManager.class);
