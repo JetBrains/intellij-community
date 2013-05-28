@@ -15,6 +15,8 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Author: dmitrylomov
  */
@@ -25,6 +27,7 @@ public abstract class DoWhile  {
   public DoWhile() {
   }
 
+  @NotNull
   public AsyncFutureResult<Boolean> getResult() {
     if (myResult == null) {
       myExecutor = new SameThreadExecutorWithTrampoline();
@@ -34,6 +37,7 @@ public abstract class DoWhile  {
     return myResult;
   }
 
+  @NotNull
   protected abstract AsyncFuture<Boolean> body();
   protected abstract boolean condition();
 

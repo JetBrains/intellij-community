@@ -16,7 +16,6 @@
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureResult;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -42,7 +41,7 @@ public interface PsiSearchHelper {
       return ServiceManager.getService(project, PsiSearchHelper.class);
     }
   }
-  
+
   /**
    * Searches the specified scope for comments containing the specified identifier.
    *
@@ -50,7 +49,8 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return the array of found comments.
    */
-  @NotNull PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
+  @NotNull
+  PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
    * Processes the specified scope and hands comments containing the specified identifier over to the processor.
@@ -69,7 +69,8 @@ public interface PsiSearchHelper {
    * @param word the word to search.
    * @return the list of files containing the word.
    */
-  @NotNull PsiFile[] findFilesWithPlainTextWords(@NotNull String word);
+  @NotNull
+  PsiFile[] findFilesWithPlainTextWords(@NotNull String word);
 
   /**
    * Passes all occurrences of the specified full-qualified class name in plain text context
@@ -159,6 +160,7 @@ public interface PsiSearchHelper {
 
   boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
 
+  @NotNull
   AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
 
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
@@ -167,6 +169,7 @@ public interface PsiSearchHelper {
                                   short searchContext,
                                   boolean caseSensitive);
 
+  @NotNull
   AsyncFuture<Boolean> processElementsWithWordAsync(
                                        @NotNull TextOccurenceProcessor processor,
                                        @NotNull SearchScope searchScope,
@@ -175,6 +178,7 @@ public interface PsiSearchHelper {
                                        boolean caseSensitive);
 
 
+  @NotNull
   SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                          @NotNull GlobalSearchScope scope,
                                          @Nullable PsiFile fileToIgnoreOccurencesIn,

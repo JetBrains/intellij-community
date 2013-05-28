@@ -16,6 +16,7 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: dmitrylomov
@@ -25,17 +26,20 @@ public abstract class AsyncFutureFactory {
     return ServiceManager.getService(AsyncFutureFactory.class);
   }
 
+  @NotNull
   public static <V> AsyncFuture<V> wrap(V v) {
     final AsyncFutureResult<V> result = getInstance().createAsyncFutureResult();
     result.set(v);
     return result;
   }
 
+  @NotNull
   public static <V> AsyncFuture<V> wrapException(Throwable e) {
     final AsyncFutureResult<V> result = getInstance().createAsyncFutureResult();
     result.setException(e);
     return result;
   }
 
+  @NotNull
   public abstract <V> AsyncFutureResult<V> createAsyncFutureResult();
 }
