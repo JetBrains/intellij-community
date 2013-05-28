@@ -3,4 +3,4 @@ class Foo {
   def bar
 }
 
-new Foo().get<caret>
+new Foo().get
