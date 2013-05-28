@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pass;
@@ -32,6 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
@@ -47,6 +50,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +60,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Set;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   @NonNls private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
@@ -270,7 +275,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
     if (initialTargetDirectory != null && 
         JavaMoveClassesOrPackagesHandler.packageHasMultipleDirectoriesInModule(myProject, initialTargetDirectory)) {
-      initialTargetDirectory = null;
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      final Set<VirtualFile> initialRoots = new HashSet<VirtualFile>();
+      collectSourceRoots(psiElements, fileIndex, initialRoots);
+      if (initialRoots.size() > 1) {
+        initialTargetDirectory = null;
+      }
     }
     ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, initialTargetDirectory,
                                                                new Pass<String>() {
@@ -282,6 +292,20 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     UIUtil.setEnabled(myTargetPanel, getSourceRoots().length > 0 && isMoveToPackage() && !isTargetDirectoryFixed, true);
     validateButtons();
     myHelpID = helpID;
+  }
+
+  private static void collectSourceRoots(PsiElement[] psiElements, ProjectFileIndex fileIndex, Set<VirtualFile> initialRoots) {
+    for (PsiElement element : psiElements) {
+      final VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      if (file != null) {
+        final VirtualFile sourceRootForFile = fileIndex.getSourceRootForFile(file);
+        if (sourceRootForFile != null) {
+          initialRoots.add(sourceRootForFile);
+        }
+      } else if (element instanceof PsiDirectoryContainer) {
+        collectSourceRoots(((PsiDirectoryContainer)element).getDirectories(), fileIndex, initialRoots);
+      }
+    }
   }
 
   protected void doHelpAction() {
