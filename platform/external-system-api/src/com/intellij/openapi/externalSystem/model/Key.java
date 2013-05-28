@@ -65,6 +65,7 @@ public class Key<T> implements Serializable {
 
   @Override
   public String toString() {
-    return myDataClass;
+    int i = myDataClass.lastIndexOf('.');
+    return i > 0 ? myDataClass.substring(i + 1) : myDataClass;
   }
 }
