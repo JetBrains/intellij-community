@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -69,15 +70,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
 
   @Override
   public GrNamedArgument findNamedArgument(@NotNull String label) {
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrNamedArgument) {
-        if (label.equals(((GrNamedArgument)cur).getLabelName())) {
-          return (GrNamedArgument)cur;
-        }
-      }
-    }
-
-    return null;
+    return PsiImplUtil.findNamedArgument(this, label);
   }
 
   @NotNull
