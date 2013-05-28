@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
+ *
  * @author yole
  */
 public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
@@ -33,9 +34,10 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
    * In Python, files in PYTHONPATH are library classes but not library sources, so the check in that method ensures that
    * nothing is found there even when the user selects the "Project and Libraries" scope. Thus, we have to override the
    * isSearchOutsideRootModel() flag for that scope.
-   * 
+   *
    * @return all scope
    */
+  @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
     return new ProjectAndLibrariesScope(myProject) {
@@ -53,6 +55,7 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
    *
    * @return project search scope
    */
+  @NotNull
   @Override
   public GlobalSearchScope buildProjectScope() {
     final FileIndexFacade fileIndex = FileIndexFacade.getInstance(myProject);
