@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -105,6 +106,9 @@ public class CollectClassMembersUtil {
     if (!classes.add(aClass)) {
       return aClass.isInterface() || CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
     }
+
+    if (aClass instanceof ClsClassImpl) return true; //optimization
+
     for (PsiClass psiClass : aClass.getSupers()) {
       if (!processCyclicDependence(psiClass, classes)) {
         return false;
