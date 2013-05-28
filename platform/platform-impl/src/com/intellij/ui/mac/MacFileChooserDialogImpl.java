@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
@@ -25,11 +26,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -271,6 +274,9 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
   @Override
   public void choose(@Nullable final VirtualFile toSelect, @NotNull final Consumer<List<VirtualFile>> callback) {
+
+    ExtensionsInitializer.initialize();
+
     myCallback = callback;
 
     final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
@@ -333,4 +339,22 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   private static ID invoke(@NotNull final ID id, @NotNull final String selector, Object... args) {
     return Foundation.invoke(id, Foundation.createSelector(selector), args);
   }
+
+  /** This class is intended to force extensions initialization on EDT thread (IDEA-107271)
+   */
+  private static class ExtensionsInitializer {
+    private ExtensionsInitializer() {}
+    private static boolean initialized;
+    private static void initialize () {
+      if (initialized) return;
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME);
+        }
+      });
+      initialized = true;
+    }
+  }
+
 }
