@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module-library">
-      <library>
+      <library name="jna">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jna.jar!/" />
         </CLASSES>
@@ -20,7 +20,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="jpty">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/JPty.jar!/" />
         </CLASSES>
@@ -29,7 +29,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="purejavacomm">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/purejavacomm-0.0.16.jar!/" />
         </CLASSES>
@@ -38,7 +38,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="jediterm-pty">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jediterm-pty-0.04.jar!/" />
         </CLASSES>
