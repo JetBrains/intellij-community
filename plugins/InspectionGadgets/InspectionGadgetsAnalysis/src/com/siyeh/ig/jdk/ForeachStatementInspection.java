@@ -18,9 +18,8 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -70,14 +69,14 @@ public class ForeachStatementInspection extends BaseInspection {
       }
       @NonNls final StringBuilder newStatement = new StringBuilder();
       final PsiParameter iterationParameter = statement.getIterationParameter();
-      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+      boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(project).isGenerateFinalLocals();
       if (iteratedValue.getType() instanceof PsiArrayType) {
         final PsiType type = iterationParameter.getType();
         final String index = codeStyleManager.suggestUniqueVariableName("i", statement, true);
         newStatement.append("for(int ").append(index).append(" = 0;");
         newStatement.append(index).append('<').append(iteratedValue.getText()).append(".length;");
         newStatement.append(index).append("++)").append("{ ");
-        if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+        if (generateFinalLocals) {
           newStatement.append("final ");
         }
         newStatement.append(type.getCanonicalText()).append(' ').append(iterationParameter.getName());
@@ -104,7 +103,7 @@ public class ForeachStatementInspection extends BaseInspection {
         final String iterator = codeStyleManager.suggestUniqueVariableName("iterator", statement, true);
         newStatement.append(iterator).append("=").append(iteratorCall.getText()).append(';');
         newStatement.append(iterator).append(".hasNext();){");
-        if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+        if (generateFinalLocals) {
           newStatement.append("final ");
         }
         newStatement.append(typeText).append(' ').append(iterationParameter.getName()).append(" = ").append(iterator).append(".next();");

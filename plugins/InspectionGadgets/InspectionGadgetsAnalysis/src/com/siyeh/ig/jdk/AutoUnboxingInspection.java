@@ -17,7 +17,7 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -345,7 +345,7 @@ public class AutoUnboxingInspection extends BaseInspection {
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile psiFile = holder.getFile();
-    if (psiFile.getLanguage() != StdLanguages.JAVA || !PsiUtil.isLanguageLevel5OrHigher(psiFile)) {
+    if (psiFile.getLanguage() != JavaLanguage.INSTANCE || !PsiUtil.isLanguageLevel5OrHigher(psiFile)) {
       return new PsiElementVisitor() {
       };
     }
