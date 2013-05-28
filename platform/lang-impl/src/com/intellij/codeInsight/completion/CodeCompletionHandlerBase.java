@@ -182,6 +182,7 @@ public class CodeCompletionHandlerBase {
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
       if (!restarted && shouldSkipAutoPopup(editor, psiFile)) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         return;
       }
     } else {
