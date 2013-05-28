@@ -48,7 +48,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile SoftReference<Set<String>> myPublicClassNamesCache;
-  private final Object myPublicClassNamesCacheLock = new Object();
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
@@ -167,9 +166,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     Set<String> cache = ref == null ? null : ref.get();
     if (cache == null) {
       cache = getFacade().getClassNames(this, allScope());
-      synchronized (myPublicClassNamesCacheLock) {
-        myPublicClassNamesCache = new SoftReference<Set<String>>(cache);
-      }
+      myPublicClassNamesCache = new SoftReference<Set<String>>(cache);
     }
 
     return cache;
