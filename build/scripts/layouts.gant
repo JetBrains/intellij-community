@@ -465,6 +465,15 @@ public def layoutCommunityPlugins(String home) {
         module("common-eclipse-util")
       }
     }
+
+    layoutPlugin("terminal") {
+      jar("terminal.jar") {
+        module("terminal")
+      }
+      fileset(dir: "$home/plugins/terminal/lib") {
+        include(name: "*.jar")
+      }
+    }
   }
 }
 
