@@ -73,8 +73,11 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 %state IN_DOCSTRING_OWNER
 %{
 private int getSpaceLength(CharSequence string) {
-int i = Math.max(StringUtil.lastIndexOf(string, '"', 0, string.length()), StringUtil.lastIndexOf(string, '\'', 0, string.length()));
-return yylength()-i-1;
+String string1 = string.toString();
+string1 = StringUtil.trimEnd(string1, "\\");
+string1 = StringUtil.trimEnd(string1, ";");
+final String s = StringUtil.trimTrailing(string1);
+return yylength()-s.length();
 
 }
 %}
