@@ -156,7 +156,11 @@ public abstract class CompletionPhase implements Disposable {
         @Override
         public void beforeWriteActionStart(Object action) {
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
-            indicator.scheduleRestart();
+            if (indicator.isAutopopupCompletion()) {
+              indicator.closeAndFinish(true);
+            } else {
+              indicator.scheduleRestart();
+            }
           }
         }
       }, this);

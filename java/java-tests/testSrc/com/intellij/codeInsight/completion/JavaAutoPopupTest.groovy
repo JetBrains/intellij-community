@@ -1412,5 +1412,13 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'setHorizontalText', 'setText'
   }
 
+  public void "test pressing enter while autopopup is calculating variants should cancel autopopup"() {
+    registerContributor(LongContributor, LoadingOrder.FIRST)
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    myFixture.type('a')
+    joinAutopopup()
+    type '\n'
+    assert !lookup
+  }
 
 }
