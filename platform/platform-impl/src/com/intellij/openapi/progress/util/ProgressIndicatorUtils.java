@@ -35,7 +35,9 @@ public class ProgressIndicatorUtils {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
         @Override
         public void beforeWriteActionStart(Object action) {
-          progress.cancel();
+          if (progress.isRunning()) {
+            progress.cancel();
+          }
         }
       }, builder);
     return progress;
