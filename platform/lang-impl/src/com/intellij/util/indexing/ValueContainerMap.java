@@ -115,6 +115,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
           for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
             final T value = myExternalizer.read(in);
             final int idCount = DataInputOutputUtil.readSINT(in);
+            valueContainer.ensureFileSetCapacityForValue(value, idCount);
             for (int i = 0; i < idCount; i++) {
               final int id = DataInputOutputUtil.readSINT(in);
               valueContainer.addValue(id, value);

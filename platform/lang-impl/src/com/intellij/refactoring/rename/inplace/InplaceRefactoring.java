@@ -412,7 +412,7 @@ public abstract class InplaceRefactoring {
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     if (lookup != null && lookup.getLookupStart() <= (restoreCaretOffset(offset))) {
-      lookup.setFocused(false);
+      lookup.setFocusDegree(LookupImpl.FocusDegree.UNFOCUSED);
       lookup.performGuardedChange(runnable);
     }
     else {

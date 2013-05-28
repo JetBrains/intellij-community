@@ -794,21 +794,19 @@ class Foo {
 
   private void joinSomething(int degree) {
     if (degree == 0) return
-    joinAlarm()
+    joinCommit()
     if (degree == 1) return
     joinCommit()
     if (degree == 2) return
-    joinCommit()
-    if (degree == 3) return
     edt {}
-    if (degree == 4) return
+    if (degree == 3) return
     joinCompletion()
   }
 
   public void testEveryPossibleWayToTypeIf() {
     def src = "class Foo { { int ifa; <caret> } }"
     def result = "class Foo { { int ifa; if <caret> } }"
-    int actions = 5
+    int actions = 4
 
     for (a1 in 0..actions) {
       println "a1 = $a1"
@@ -1243,7 +1241,7 @@ class Foo {
 }
 '''
     type 'File('
-    assert myFixture.file.text.contains('new File()')
+    assert myFixture.editor.document.text.contains('new File()')
   }
 
   public void "test inaccessible class in another package shouldn't prevent choosing by space"() {
@@ -1301,7 +1299,7 @@ class Foo {
     type 'System.out.pr'
     assert lookup.currentItem.lookupString == 'println'
     type '\n2'
-    assert myFixture.file.text.contains('.println();2')
+    assert myFixture.editor.document.text.contains('.println();2')
   }
 
   public void testQuickBackspaceEnter() {
@@ -1322,10 +1320,6 @@ class Foo {
 
   protected void joinAutopopup() {
     myTester.joinAutopopup()
-  }
-
-  protected def joinAlarm() {
-    myTester.joinAlarm()
   }
 
   public void "test new primitive array in Object variable"() {

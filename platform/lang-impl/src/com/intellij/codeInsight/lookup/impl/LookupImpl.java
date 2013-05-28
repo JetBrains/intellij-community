@@ -128,7 +128,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myDisposed = false;
   private boolean myHidden = false;
   private boolean mySelectionTouched;
-  private boolean myFocused = true;
+  private FocusDegree myFocusDegree = FocusDegree.FOCUSED;
   private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
   private final JPanel myIconPanel = new JPanel(new BorderLayout());
   private volatile boolean myCalculating;
@@ -261,20 +261,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myArranger = arranger;
   }
 
+  public FocusDegree getFocusDegree() {
+    return myFocusDegree;
+  }
+
   @Override
   public boolean isFocused() {
-    return myFocused;
+    return getFocusDegree() == FocusDegree.FOCUSED;
   }
 
-  public void setFocused(boolean focused) {
-    if (focused && !isSemiFocused()) {
-      CompletionPreview.installPreview(this);
-    }
-    myFocused = focused;
-  }
-
-  public boolean isSemiFocused() {
-    return CompletionPreview.hasPreview(this);
+  public void setFocusDegree(FocusDegree focusDegree) {
+    myFocusDegree = focusDegree;
   }
 
   public boolean isCalculating() {
@@ -887,7 +884,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
-        setFocused(true);
+        setFocusDegree(FocusDegree.FOCUSED);
         markSelectionTouched();
 
         if (clickCount == 2){
@@ -1031,7 +1028,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public boolean fillInCommonPrefix(boolean explicitlyInvoked) {
     if (explicitlyInvoked) {
-      setFocused(true);
+      setFocusDegree(FocusDegree.FOCUSED);
     }
 
     if (explicitlyInvoked && myCalculating) return false;
@@ -1149,11 +1146,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @Override
   public Editor getEditor() {
     return myEditor;
-  }
-
-  @TestOnly
-  public void setPositionedAbove(boolean positionedAbove) {
-    myPositionedAbove = positionedAbove;
   }
 
   @Override
@@ -1502,4 +1494,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       };
     }
   }
+
+  public enum FocusDegree { FOCUSED, SEMI_FOCUSED, UNFOCUSED }
+
 }

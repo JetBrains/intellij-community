@@ -284,7 +284,7 @@ void foo(File... files) { }
 foo(new <caret>)
 '''
     type 'File('
-    assert myFixture.file.text.contains('new File()')
+    assert myFixture.editor.document.text.contains('new File()')
   }
 
   public void testSecondClosureParameterName() {

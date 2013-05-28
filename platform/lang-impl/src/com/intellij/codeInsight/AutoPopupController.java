@@ -42,9 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 public class AutoPopupController implements Disposable {
   private final Project myProject;
@@ -119,19 +117,14 @@ public class AutoPopupController implements Disposable {
         if (phase.checkExpired()) return;
 
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-        if (file != null && condition != null && !condition.value(file)) return;
+        if (file != null && condition != null && !condition.value(file)) {
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+          return;
+        }
 
         CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
       }
     });
-  }
-
-  @TestOnly
-  public void executePendingRequests() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
-    while (myAlarm.getActiveRequestCount() != 0) {
-      UIUtil.pump();
-    }
   }
 
   private void addRequest(final Runnable request, final int delay) {
