@@ -164,6 +164,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   public void method(Map<Object, Object> args) {
+    if (args == null) return;
+
     parseMethod(args);
     args.put("declarationType", DeclarationType.METHOD);
     myDeclarations.add(args);
@@ -251,6 +253,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   @SuppressWarnings("UnusedDeclaration")
   public void closureInMethod(Map<Object, Object> args) {
+    if (args == null) return;
+
     parseMethod(args);
     final Object method = args.get("method");
     if (method instanceof Map) {
@@ -261,6 +265,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   public void variable(Map<Object, Object> args) {
+    if (args == null) return;
+
     parseVariable(args);
     myDeclarations.add(args);
   }
