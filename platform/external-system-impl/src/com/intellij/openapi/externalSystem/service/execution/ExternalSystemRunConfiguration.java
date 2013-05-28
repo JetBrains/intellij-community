@@ -101,27 +101,7 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
       @Override
       public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         ConsoleView console = new TextConsoleBuilderImpl(getProject()).getConsole();
-        final ProcessHandler processHandler = new ProcessHandler() {
-          @Override
-          protected void destroyProcessImpl() {
-          }
-
-          @Override
-          protected void detachProcessImpl() {
-            notifyProcessDetached();
-          }
-
-          @Override
-          public boolean detachIsDefault() {
-            return true;
-          }
-
-          @Nullable
-          @Override
-          public OutputStream getProcessInput() {
-            return null;
-          }
-        };
+        final MyProcessHandler processHandler = new MyProcessHandler();
         console.attachToProcess(processHandler);
         List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
         for (String taskName : mySettings.getTaskNames()) {
@@ -142,7 +122,7 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
 
               @Override
               public void onEnd(@NotNull ExternalSystemTaskId id) {
-                processHandler.destroyProcess();
+                processHandler.notifyProcessTerminated(0);
               }
             });
           }
@@ -165,5 +145,32 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     //To change body of implemented methods use File | Settings | File Templates.
+  }
+  
+  private static class MyProcessHandler extends ProcessHandler {
+    @Override
+    protected void destroyProcessImpl() {
+    }
+
+    @Override
+    protected void detachProcessImpl() {
+      notifyProcessDetached();
+    }
+
+    @Override
+    public boolean detachIsDefault() {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public OutputStream getProcessInput() {
+      return null;
+    }
+
+    @Override
+    public void notifyProcessTerminated(int exitCode) {
+      super.notifyProcessTerminated(exitCode);
+    }
   }
 }
