@@ -15,79 +15,14 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameterList;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ParametersPerConstructorInspection extends MethodMetricInspection {
-
-  private enum Scope {
-    NONE {
-      @Override
-      String getText() {
-        return InspectionGadgetsBundle.message("none");
-      }
-    },
-    PRIVATE {
-      @Override
-      String getText() {
-        return InspectionGadgetsBundle.message("private");
-      }
-    },
-    PACKAGE_LOCAL {
-      @Override
-      String getText() {
-        return InspectionGadgetsBundle.message("package.local.private");
-      }
-    },
-    PROTECTED {
-      @Override
-      String getText() {
-        return InspectionGadgetsBundle.message("protected.package.local.private");
-      }
-    };
-
-    abstract String getText();
-  }
-
-  @SuppressWarnings("PublicField") public Scope ignoreScope = Scope.NONE;
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "ConstructorWithTooManyParameters";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("parameters.per.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final Integer parameterCount = (Integer)infos[0];
-    return InspectionGadgetsBundle.message("parameters.per.constructor.problem.descriptor", parameterCount);
-  }
-
-  @Override
-  protected int getDefaultLimit() {
-    return 5;
-  }
-
-  @Override
-  protected String getConfigurationLabel() {
-    return InspectionGadgetsBundle.message("parameter.limit.option");
-  }
+public class ParametersPerConstructorInspection extends ParametersPerConstructorInspectionBase {
 
   @Override
   public JComponent createOptionsPanel() {
@@ -135,37 +70,5 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
     layout.setVerticalGroup(vertical);
 
     return panel;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ParametersPerConstructorVisitor();
-  }
-
-  private class ParametersPerConstructorVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      // note: no call to super
-      if (method.getNameIdentifier() == null) {
-        return;
-      }
-      if (!method.isConstructor()) {
-        return;
-      }
-      if (ignoreScope != Scope.NONE) {
-        switch (ignoreScope.ordinal()) {
-          case 3: if (method.hasModifierProperty(PsiModifier.PROTECTED)) return;
-          case 2: if (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return;
-          case 1: if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-        }
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      final int parametersCount = parameterList.getParametersCount();
-      if (parametersCount <= getLimit()) {
-        return;
-      }
-      registerMethodError(method, Integer.valueOf(parametersCount));
-    }
   }
 }
