@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/svnkit.jar!/" />
@@ -24,15 +24,6 @@
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/svnkitsrc.zip!/" />
         </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="trilead-ssh2">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/trilead.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="platform-impl" />
@@ -112,6 +103,9 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" exported="" name="jsch.agentproxy.trilead-ssh2" level="project" />
+    <orderEntry type="library" exported="" name="jsch.agentproxy" level="project" />
+    <orderEntry type="library" exported="" name="trilead-ssh2" level="project" />
   </component>
 </module>
 

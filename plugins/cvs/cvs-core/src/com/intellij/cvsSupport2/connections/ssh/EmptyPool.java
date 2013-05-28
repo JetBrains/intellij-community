@@ -19,9 +19,9 @@ import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.Session;
-import com.trilead.ssh2.StreamGobbler;
+import com.trilead.ssh2_build213.Connection;
+import com.trilead.ssh2_build213.Session;
+import com.trilead.ssh2_build213.StreamGobbler;
 import com.intellij.openapi.components.ServiceManager;
 
 import java.io.InputStream;

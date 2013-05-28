@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="jsch.agentproxy">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.pageant.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.sshagent.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.usocket-jna.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

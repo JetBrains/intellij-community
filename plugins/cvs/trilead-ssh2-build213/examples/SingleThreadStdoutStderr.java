@@ -1,6 +1,6 @@
-import com.trilead.ssh2.ChannelCondition;
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.Session;
+import com.trilead.ssh2_build213.ChannelCondition;
+import com.trilead.ssh2_build213.Connection;
+import com.trilead.ssh2_build213.Session;
 
 import java.io.IOException;
 import java.io.InputStream;

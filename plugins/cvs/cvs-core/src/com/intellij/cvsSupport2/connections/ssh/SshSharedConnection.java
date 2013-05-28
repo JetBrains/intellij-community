@@ -17,8 +17,8 @@ package com.intellij.cvsSupport2.connections.ssh;
 
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Consumer;
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.Session;
+import com.trilead.ssh2_build213.Connection;
+import com.trilead.ssh2_build213.Session;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
