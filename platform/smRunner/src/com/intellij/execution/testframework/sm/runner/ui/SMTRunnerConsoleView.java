@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -25,8 +26,11 @@ import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author: Roman Chernyatchik
@@ -36,6 +40,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   private final RunnerSettings myRunnerSettings;
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   @Nullable private final String mySplitterProperty;
+  private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createEmptyCOWList();
 
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
@@ -121,4 +126,25 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     myResultsViewer.getRoot().addLast(new HyperLink(hyperlinkText, info));
   }
 
+  @Override
+  public void attachToProcess(ProcessHandler processHandler) {
+    super.attachToProcess(processHandler);
+    for (AttachToProcessListener listener : myAttachToProcessListeners) {
+      listener.onAttachToProcess(processHandler);
+    }
+  }
+
+  public void addAttachToProcessListener(@NotNull AttachToProcessListener listener) {
+    myAttachToProcessListeners.add(listener);
+  }
+
+  public void remoteAttachToProcessListener(@NotNull AttachToProcessListener listener) {
+    myAttachToProcessListeners.remove(listener);
+  }
+
+  @Override
+  public void dispose() {
+    myAttachToProcessListeners.clear();
+    super.dispose();
+  }
 }
