@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -89,7 +89,7 @@ public class AllClassesGetter {
             context.setTailOffset(psiReference.getRangeInElement().getEndOffset() + psiReference.getElement().getTextRange().getStartOffset());
             final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
             if (newUnderlying != null) {
-              final PsiElement psiElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newUnderlying);
+              final PsiElement psiElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newUnderlying);
               if (psiElement != null) {
                 for (final PsiReference reference : psiElement.getReferences()) {
                   if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(reference))) {

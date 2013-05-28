@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,8 @@ public class MemberOrderService {
     List<? extends ArrangementEntry> nonArranged = parentEntry.getChildren();
     List<ArrangementEntry> entriesWithNew = new ArrayList<ArrangementEntry>(nonArranged);
     entriesWithNew.add(memberEntry);
-    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, arrangementSettings.getRules());
+    final List<? extends ArrangementMatchRule> rulesByPriority = ArrangementUtil.getRulesSortedByPriority(arrangementSettings);
+    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, arrangementSettings.getRules(), rulesByPriority);
     int i = arranged.indexOf(memberEntry);
     
     if (i <= 0) {

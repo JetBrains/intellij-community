@@ -29,7 +29,7 @@
     <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtilBase"
                         serviceImplementation="com.intellij.codeInsight.TargetElementUtilBase"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
-                        serviceImplementation="com.intellij.profile.codeInspection.InspectionProfileManager"/>
+                        serviceImplementation="com.intellij.profile.codeInspection.InspectionProfileManagerImpl"/>
     <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
     <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
 

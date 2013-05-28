@@ -48,7 +48,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
 
   @Override
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
-    match.changeSignature(myMethod);
+    MatchUtil.changeSignature(match, myMethod);
     final PsiClass containingClass = myMethod.getContainingClass();
     if (isEssentialStaticContextAbsent(match)) {
       PsiUtil.setModifierProperty(myMethod, PsiModifier.STATIC, true);
@@ -159,7 +159,8 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     final PsiElement matchStart = match.getMatchStart();
     String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
     final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
-    final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
+    final String signature = MatchUtil
+      .getChangedSignature(match, myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
     if (signature != null) {
       return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
     }

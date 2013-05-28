@@ -27,15 +27,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
@@ -216,15 +212,17 @@ public class ArrangementEngine {
   /**
    * Arranges (re-orders) given entries according to the given rules.
    *
-   * @param entries  entries to arrange
-   * @param rules    rules to use for arrangement
-   * @param <E>      arrangement entry type
-   * @return         arranged list of the given rules
+   * @param entries            entries to arrange
+   * @param rules              rules to use for arrangement
+   * @param rulesByPriority    rules sorted by priority ('public static' rule will have higher priority than 'public')
+   * @param <E>                arrangement entry type
+   * @return                   arranged list of the given rules
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
-                                                             @NotNull List<? extends ArrangementMatchRule> rules)
+                                                             @NotNull List<? extends ArrangementMatchRule> rules,
+                                                             @NotNull List<? extends ArrangementMatchRule> rulesByPriority)
   {
     List<E> arranged = ContainerUtilRt.newArrayList();
     Set<E> unprocessed = ContainerUtilRt.newLinkedHashSet();
@@ -247,22 +245,28 @@ public class ArrangementEngine {
     }
 
     Set<E> matched = new HashSet<E>();
-    
-    int startIndex;
-    for (ArrangementMatchRule rule : rules) {
+
+    MultiMap<ArrangementMatchRule, E> elementsByRule = new MultiMap<ArrangementMatchRule, E>();
+    for (ArrangementMatchRule rule : rulesByPriority) {
       matched.clear();
-      startIndex = arranged.size();
       for (E entry : unprocessed) {
         if (entry.canBeMatched() && rule.getMatcher().isMatched(entry)) {
-          arranged.add(entry);
+          elementsByRule.putValue(rule, entry);
           matched.add(entry);
         }
       }
       unprocessed.removeAll(matched);
-      
-      // Sort by name if necessary.
-      if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
-        sortByName(arranged, startIndex);
+    }
+
+    for (ArrangementMatchRule rule : rules) {
+      if (elementsByRule.containsKey(rule)) {
+        final Collection<E> arrangedEntries = elementsByRule.get(rule);
+
+        // Sort by name if necessary.
+        if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
+          sortByName((List<E>)arrangedEntries);
+        }
+        arranged.addAll(arrangedEntries);
       }
     }
     arranged.addAll(unprocessed);
@@ -282,20 +286,16 @@ public class ArrangementEngine {
     return arranged;
   }
 
-  private static <E extends ArrangementEntry> void sortByName(@NotNull List<E> entries, int startIndex) {
-    int entriesToSortNumber = entries.size() - startIndex;
-    if (entriesToSortNumber < 2) {
+  private static <E extends ArrangementEntry> void sortByName(@NotNull List<E> entries) {
+    if (entries.size() < 2) {
       return;
     }
-    List<E> buffer = new ArrayList<E>(entriesToSortNumber);
-    List<E> subList = entries.subList(startIndex, entries.size());
-    buffer.addAll(subList);
     final TObjectIntHashMap<E> weights = new TObjectIntHashMap<E>();
     int i = 0;
-    for (E e : buffer) {
+    for (E e : entries) {
       weights.put(e, ++i);
     }
-    ContainerUtil.sort(buffer, new Comparator<E>() {
+    ContainerUtil.sort(entries, new Comparator<E>() {
       @Override
       public int compare(E e1, E e2) {
         String name1 = e1 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e1).getName() : null;
@@ -314,8 +314,6 @@ public class ArrangementEngine {
         }
       }
     });
-    subList.clear();
-    entries.addAll(buffer);
   }
 
   @SuppressWarnings("unchecked")
@@ -335,7 +333,7 @@ public class ArrangementEngine {
         // Split entries to arrange by 'can not be matched' rules.
         // See IDEA-104046 for a problem use-case example.
         if (toArrange.isEmpty()) {
-          arranged.addAll(arrange(toArrange, context.rules));
+          arranged.addAll(arrange(toArrange, context.rules, context.rulesByPriority));
         }
         arranged.add(entry);
         toArrange.clear();
@@ -345,7 +343,7 @@ public class ArrangementEngine {
       }
     }
     if (!toArrange.isEmpty()) {
-      arranged.addAll(arrange(toArrange, context.rules));
+      arranged.addAll(arrange(toArrange, context.rules, context.rulesByPriority));
     }
 
     context.changer.prepare(wrappers, context);
@@ -365,6 +363,7 @@ public class ArrangementEngine {
     @NotNull public final Collection<ArrangementEntryWrapper<E>> wrappers;
     @NotNull public final Document                               document;
     @NotNull public final List<? extends ArrangementMatchRule>   rules;
+    @NotNull public final List<? extends ArrangementMatchRule>   rulesByPriority;
     @NotNull public final CodeStyleSettings                      settings;
     @NotNull public final Changer                                changer;
 
@@ -372,12 +371,14 @@ public class ArrangementEngine {
                     @NotNull Collection<ArrangementEntryWrapper<E>> wrappers,
                     @NotNull Document document,
                     @NotNull List<? extends ArrangementMatchRule> rules,
+                    @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                     @NotNull CodeStyleSettings settings, @NotNull Changer changer)
     {
       this.rearranger = rearranger;
       this.wrappers = wrappers;
       this.document = document;
       this.rules = rules;
+      this.rulesByPriority = rulesByPriority;
       this.settings = settings;
       this.changer = changer;
     }
@@ -412,7 +413,8 @@ public class ArrangementEngine {
       else {
         changer = new DefaultChanger();
       }
-      return new Context<T>(rearranger, wrappers, document, arrangementSettings.getRules(), codeStyleSettings, changer);
+      final List<? extends ArrangementMatchRule> rulesByPriority = ArrangementUtil.getRulesSortedByPriority(arrangementSettings);
+      return new Context<T>(rearranger, wrappers, document, arrangementSettings.getRules(), rulesByPriority, codeStyleSettings, changer);
     }
   }
 

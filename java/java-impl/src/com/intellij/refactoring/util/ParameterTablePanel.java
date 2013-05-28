@@ -59,23 +59,6 @@ public abstract class ParameterTablePanel extends JPanel {
     return myVariableData;
   }
 
-  public static class VariableData {
-    public final PsiVariable variable;
-    public PsiType type;
-    public String name;
-    public boolean passAsParameter;
-
-    public VariableData(PsiVariable var) {
-      variable = var;
-      type = var.getType();
-    }
-
-    public VariableData(PsiVariable var, PsiType type) {
-      variable = var;
-      this.type = SmartTypePointerManager.getInstance(var.getProject()).createSmartTypePointer(type).getType();
-    }
-  }
-
   protected abstract void updateSignature();
 
   protected abstract void doEnterAction();

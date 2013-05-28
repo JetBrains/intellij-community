@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.psi.codeStyle.arrangement.std.StdRulePriorityAwareSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   @Nullable
   @Override
   public ArrangementSettings deserialize(@NotNull Element element) {
-    StdArrangementSettings result = new StdArrangementSettings();
+    StdArrangementSettings result = new StdRulePriorityAwareSettings();
     Element groups = element.getChild(GROUPS_ELEMENT_NAME);
     if (groups != null) {
       for (Object group : groups.getChildren(GROUP_ELEMENT_NAME)) {

@@ -32,7 +32,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -58,10 +58,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final VirtualFileListener vfsListener = new VFSListener();
@@ -472,7 +469,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 psiElements.add(element);
             }
         }
-      return PsiUtilBase.toPsiElementArray(psiElements);
+      return PsiUtilCore.toPsiElementArray(psiElements);
     }
 
     @NotNull

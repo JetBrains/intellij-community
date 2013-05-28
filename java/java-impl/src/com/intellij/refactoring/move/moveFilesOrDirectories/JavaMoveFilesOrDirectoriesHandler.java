@@ -25,7 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -63,7 +63,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     for (PsiElement sourceElement : sourceElements) {
       result.add(sourceElement instanceof PsiClass ? sourceElement.getContainingFile() : sourceElement);
     }
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
                   adjustedElements.add(element);
                 }
               }
-              result.setResult(PsiUtilBase.toPsiElementArray(adjustedElements));
+              result.setResult(PsiUtilCore.toPsiElementArray(adjustedElements));
             }
           }.execute().getResultObject();
         }

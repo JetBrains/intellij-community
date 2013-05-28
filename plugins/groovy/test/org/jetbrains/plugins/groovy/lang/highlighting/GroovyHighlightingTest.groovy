@@ -568,7 +568,7 @@ int method(x, y, z) {
         42
     }
     else if (z) {
-      return <error descr="Cannot assign 'String' to 'int'">'abc'</error>
+      <error descr="Cannot assign 'String' to 'int'">return</error> 'abc'
     }
     else {
       return 43
@@ -1412,4 +1412,18 @@ A.foo = 3 //no error
 ''')
   }
 
+  void testSOEIfExtendsItself() {
+    testHighlighting('''\
+<error descr="Cyclic inheritance involving 'A'"><error descr="Method 'invokeMethod' is not implemented">class A extends A</error></error> {
+  def foo
+}
+
+<error descr="Cyclic inheritance involving 'B'"><error descr="Method 'invokeMethod' is not implemented">class B extends C</error></error> {
+  def foo
+}
+
+<error descr="Cyclic inheritance involving 'C'"><error descr="Method 'invokeMethod' is not implemented">class C extends B</error></error> {
+}
+''')
+  }
 }

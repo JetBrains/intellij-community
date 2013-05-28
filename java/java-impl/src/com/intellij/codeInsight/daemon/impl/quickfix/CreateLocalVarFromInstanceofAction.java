@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -206,7 +206,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       final PsiStatement statementInside = isNegated(instanceOfExpression) ? null : getExpressionStatementInside(file, editor, instanceOfExpression.getOperand());
       PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression, statementInside);
       if (decl == null) return;
-      decl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl);
+      decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
 
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];
       TemplateBuilderImpl builder = new TemplateBuilderImpl(localVariable);

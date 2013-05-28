@@ -32,7 +32,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -358,7 +358,7 @@ class Browser extends JPanel {
     if (refEntity instanceof RefElement){
       PsiElement element = ((RefElement)refEntity).getElement();
       if (element == null) return tool;
-      final InspectionProfileWrapper profileWrapper = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfileWrapper();
+      final InspectionProfileWrapper profileWrapper = InspectionProjectProfileManagerImpl.getInstanceImpl(manager.getProject()).getProfileWrapper();
       if (profileWrapper == null) return tool;
       tool = profileWrapper.getInspectionTool(tool.getShortName(), element);
     }

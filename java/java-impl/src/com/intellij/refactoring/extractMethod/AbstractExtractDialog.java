@@ -23,7 +23,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiModifier;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 
 public abstract class AbstractExtractDialog extends DialogWrapper {
   protected AbstractExtractDialog(Project project) {
@@ -33,7 +33,7 @@ public abstract class AbstractExtractDialog extends DialogWrapper {
 
   public abstract String getChosenMethodName();
 
-  public abstract ParameterTablePanel.VariableData[] getChosenParameters();
+  public abstract VariableData[] getChosenParameters();
 
   @PsiModifier.ModifierConstant
   public abstract String getVisibility();

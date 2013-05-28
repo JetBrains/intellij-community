@@ -314,9 +314,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param context  storage for the project/module settings.
    */
   public void applyProjectSettings(@NotNull WizardContext context) {
-    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
-      return;
-    }
+    
     if (myExternalProjectNode == null) {
       assert false;
       return;

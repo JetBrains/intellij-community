@@ -12,7 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -83,7 +83,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
-    final ArrayList<ParameterTablePanel.VariableData> parametersForFields = new ArrayList<ParameterTablePanel.VariableData>();
+    final ArrayList<VariableData> parametersForFields = new ArrayList<VariableData>();
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(aClass, parametersForFields);
 
     new MakeClassStaticProcessor(
@@ -91,7 +91,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
             aClass,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
-                           new ParameterTablePanel.VariableData[parametersForFields.size()]))).run();
+                           new VariableData[parametersForFields.size()]))).run();
     checkResultByFile(TEST_ROOT + getTestName(false) + "_after.java");
   }
 }

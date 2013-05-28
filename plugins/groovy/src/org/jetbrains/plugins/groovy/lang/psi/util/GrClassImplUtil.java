@@ -308,23 +308,15 @@ public class GrClassImplUtil {
       if (name != null) {
         CandidateInfo fieldInfo = fieldsMap.get(name);
         if (fieldInfo != null) {
-          final PsiField field = (PsiField)fieldInfo.getElement();
-          if (processInstanceMember(processInstanceMethods, field) && !isSameDeclaration(place, field)) { //the same variable declaration
-            final PsiSubstitutor finalSubstitutor =
-              PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, factory,
-                                                      level);
-            if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+          if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, fieldInfo)) {
+            return false;
           }
         }
       }
       else {
         for (CandidateInfo info : fieldsMap.values()) {
-          final PsiField field = (PsiField)info.getElement();
-          if (processInstanceMember(processInstanceMethods, field) && !isSameDeclaration(place, field)) {  //the same variable declaration
-            final PsiSubstitutor finalSubstitutor =
-              PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory,
-                                                      level);
-            if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+          if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, info)) {
+            return false;
           }
         }
       }
@@ -336,14 +328,8 @@ public class GrClassImplUtil {
       if (name == null) {
         for (List<CandidateInfo> list : methodsMap.values()) {
           for (CandidateInfo info : list) {
-            PsiMethod method = (PsiMethod)info.getElement();
-            if (processInstanceMember(processInstanceMethods, method) && !isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
-              final PsiSubstitutor finalSubstitutor =
-                PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory,
-                                                        level);
-              if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
-                return false;
-              }
+            if (!processMethod(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, isPlaceGroovy, info)) {
+              return false;
             }
           }
         }
@@ -352,14 +338,8 @@ public class GrClassImplUtil {
         List<CandidateInfo> byName = methodsMap.get(name);
         if (byName != null) {
           for (CandidateInfo info : byName) {
-            PsiMethod method = (PsiMethod)info.getElement();
-            if (processInstanceMember(processInstanceMethods, method) && !isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
-              final PsiSubstitutor finalSubstitutor =
-                PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory,
-                                                        level);
-              if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
-                return false;
-              }
+            if (!processMethod(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, isPlaceGroovy, info)) {
+              return false;
             }
           }
         }
@@ -384,6 +364,42 @@ public class GrClassImplUtil {
 
 
     return true;
+  }
+
+  private static boolean processField(@NotNull GrTypeDefinition grType,
+                                      @NotNull PsiScopeProcessor processor,
+                                      @NotNull ResolveState state,
+                                      @NotNull PsiElement place,
+                                      boolean processInstanceMethods,
+                                      @NotNull PsiSubstitutor substitutor,
+                                      @NotNull PsiElementFactory factory,
+                                      @NotNull LanguageLevel level, CandidateInfo fieldInfo) {
+    final PsiField field = (PsiField)fieldInfo.getElement();
+    if (!processInstanceMember(processInstanceMethods, field) || isSameDeclaration(place, field)) {
+      return true;
+    }
+    final PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, factory, level);
+
+    return processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor));
+  }
+
+  private static boolean processMethod(@NotNull GrTypeDefinition grType,
+                                       @NotNull PsiScopeProcessor processor,
+                                       @NotNull ResolveState state,
+                                       @NotNull PsiElement place,
+                                       boolean processInstanceMethods,
+                                       @NotNull PsiSubstitutor substitutor,
+                                       @NotNull PsiElementFactory factory,
+                                       @NotNull LanguageLevel level,
+                                       boolean placeGroovy,
+                                       @NotNull CandidateInfo info) {
+    PsiMethod method = (PsiMethod)info.getElement();
+    if (!processInstanceMember(processInstanceMethods, method) || isSameDeclaration(place, method) || !isMethodVisible(placeGroovy, method)) {
+      return true;
+    }
+    final PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory, level);
+
+    return processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor));
   }
 
   private static boolean shouldProcessInstanceMembers(@NotNull GrTypeDefinition grType, @Nullable PsiElement lastParent) {

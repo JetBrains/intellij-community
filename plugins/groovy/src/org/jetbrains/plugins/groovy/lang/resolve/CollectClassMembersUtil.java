@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -86,11 +88,33 @@ public class CollectClassMembersUtil {
     LOG.assertTrue(aClass.isValid());
     Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
     CachedValue<ClassMembers> cachedValue = aClass.getUserData(key);
+    if (isCyclicDependence(aClass)) {
+      includeSynthetic = false;
+    }
     if (cachedValue == null) {
       cachedValue = buildCache(aClass, includeSynthetic);
       aClass.putUserData(key, cachedValue);
     }
     return cachedValue.getValue();
+  }
+
+  private static boolean isCyclicDependence(PsiClass aClass) {
+    return !processCyclicDependence(aClass, ContainerUtil.<PsiClass>newHashSet());
+  }
+
+  private static boolean processCyclicDependence(PsiClass aClass, Set<PsiClass> classes) {
+    if (!classes.add(aClass)) {
+      return aClass.isInterface() || CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
+    }
+
+    if (aClass instanceof ClsClassImpl) return true; //optimization
+
+    for (PsiClass psiClass : aClass.getSupers()) {
+      if (!processCyclicDependence(psiClass, classes)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static Map<String, CandidateInfo> getAllInnerClasses(@NotNull final PsiClass aClass, boolean includeSynthetic) {

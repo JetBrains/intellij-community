@@ -3,7 +3,7 @@ File foo() {
   if (ints.empty) {
     print {return 42}
     for (x in ints) {
-      return <warning descr="Cannot assign 'Integer' to 'File'">43</warning>
+      <warning descr="Cannot assign 'Integer' to 'File'">return</warning> 43
     }
   }
   <warning descr="Cannot assign 'Integer' to 'File'">67</warning>

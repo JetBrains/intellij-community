@@ -27,10 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.DocCommentPolicy;
@@ -76,7 +73,7 @@ public class ExtractSuperClassUtil {
     clearPsiReferenceList(subclass.getExtendsList());
 
     // make original class extend extracted superclass
-    PsiJavaCodeReferenceElement ref = createExtendingReference(superclass, subclass, selectedMemberInfos); 
+    PsiJavaCodeReferenceElement ref = createExtendingReference(superclass, subclass, selectedMemberInfos);
     subclass.getExtendsList().add(ref);
 
     PullUpHelper pullUpHelper = new PullUpHelper(subclass, superclass, selectedMemberInfos,
@@ -185,7 +182,7 @@ public class ExtractSuperClassUtil {
                                                                                                                            .getName()) !=
                                                                                                                        null;
                                                                                                                    }
-                                                                                                                 }, PsiUtilBase
+                                                                                                                 }, PsiUtilCore
       .toPsiElementArray(movedElements));
     final PsiTypeParameterList originalTypeParameterList = superClass.getTypeParameterList();
     assert originalTypeParameterList != null;

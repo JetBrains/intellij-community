@@ -54,7 +54,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
@@ -819,7 +819,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
           if (myEditor != null) {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
-              PsiElement[] exprsToHighlight = PsiUtilBase.toPsiElementArray(array);
+              PsiElement[] exprsToHighlight = PsiUtilCore.toPsiElementArray(array);
               HighlightManager highlightManager = HighlightManager.getInstance(myProject);
               highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight, highlightAttributes(), true, null);
               WindowManager

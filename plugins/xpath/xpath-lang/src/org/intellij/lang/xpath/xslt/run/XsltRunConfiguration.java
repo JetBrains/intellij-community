@@ -25,7 +25,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -39,7 +38,10 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -102,20 +104,12 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         mySuggestedName = null;
     }
 
+    @Override
     public SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
         return new XsltRunSettingsEditor(getProject());
     }
 
-    @SuppressWarnings({ "ConstantConditions" })
-    public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-        return null;  // nothing special here
-    }
-
-    @Nullable
-    public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner programRunner) {
-        return null;  // nothing special here
-    }
-
+    @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment executionEnvironment) throws ExecutionException {
         if (myXsltFile == null) throw new ExecutionException("No XSLT file selected");
         final VirtualFile baseFile = myXsltFile.getFile();
@@ -174,6 +168,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         }
     }
 
+    @Override
     public final RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
         configuration.myParameters = new ArrayList<Pair<String, String>>(myParameters);
@@ -182,6 +177,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return configuration;
     }
 
+    @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
         if (myXsltFile == null) {
             throw new RuntimeConfigurationError("No XSLT File selected");
@@ -216,11 +212,13 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     // return modules to compile before run. Null or empty list to make project
+    @Override
     @NotNull
     public Module[] getModules() {
         return getModule() != null ? new Module[]{ getModule() } : Module.EMPTY_ARRAY;
     }
 
+    @Override
     @SuppressWarnings({ "unchecked" })
     public void readExternal(Element element) throws InvalidDataException {
         super.readExternal(element);
@@ -284,6 +282,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return null;
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
         super.writeExternal(element);
         DefaultJDOMExternalizer.writeExternal(this, element);
@@ -496,10 +495,12 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return module;
     }
 
+    @Override
     public boolean isGeneratedName() {
         return mySuggestedName != null;
     }
 
+    @Override
     public String suggestedName() {
         return mySuggestedName;
     }

@@ -41,7 +41,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
+      <interface-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</interface-class>
+      <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
 
@@ -58,4 +59,4 @@
     </component>
   </module-components>
 </components>
-  
+

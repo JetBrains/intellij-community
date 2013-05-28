@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 
 import java.util.Arrays;
@@ -54,7 +55,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
       myProfileManager.setRootProfile(profileName);
       myProjectProfileManager.setProjectProfile(null);
     }
-    InspectionProfileManager.onProfilesChanged();
+    InspectionProfileManagerImpl.onProfilesChanged();
   }
 
   @Override

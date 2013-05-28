@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -105,7 +105,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MoveMemberViewDescriptor(PsiUtilBase.toPsiElementArray(myMembersToMove));
+    return new MoveMemberViewDescriptor(PsiUtilCore.toPsiElementArray(myMembersToMove));
   }
 
   @NotNull

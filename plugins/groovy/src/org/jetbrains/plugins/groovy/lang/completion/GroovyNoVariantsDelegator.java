@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
@@ -57,6 +58,13 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     if (empty) {
       delegate(parameters, result);
+    } else if (Registry.is("ide.completion.show.all.classes")) {
+      if (parameters.getInvocationCount() <= 1 &&
+          JavaCompletionContributor.mayStartClassName(result) &&
+          GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
+          !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
+        suggestNonImportedClasses(parameters, result);
+      }
     }
   }
 
@@ -73,9 +81,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result) {
-    final ClassByNameMerger merger = new ClassByNameMerger(parameters, result);
-
+  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
     GroovyCompletionContributor.addAllClasses(parameters, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
@@ -84,11 +90,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         if (classElement != null) {
           classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
-        merger.consume(classElement);
+        result.addElement(element);
       }
     }, new InheritorsHolder(parameters.getPosition(), result), result.getPrefixMatcher());
-
-    merger.finishedClassProcessing();
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {

@@ -292,4 +292,11 @@ public class ArrangementUtil {
     }
     return result;
   }
+
+  @NotNull
+  public static List<? extends ArrangementMatchRule> getRulesSortedByPriority(@NotNull ArrangementSettings arrangementSettings) {
+    return arrangementSettings instanceof RulePriorityAwareSettings ?
+           ((RulePriorityAwareSettings)arrangementSettings).getRulesSortedByPriority() :
+           arrangementSettings.getRules();
+  }
 }

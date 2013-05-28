@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -100,7 +100,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     if (classes.isEmpty()) return false;
 
     if (!checkTargetClasses(classes, methodName)) return false;
-    
+
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
         setText(getterOrSetter);
@@ -252,7 +252,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
     builder.setEndVariableAfter(body.getLBrace());
 
-    accessor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(accessor);
+    accessor = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(accessor);
     LOG.assertTrue(accessor != null);
     targetClass = accessor.getContainingClass();
     LOG.assertTrue(targetClass != null);

@@ -119,6 +119,7 @@ public interface PsiReference {
    *
    * @return the array of available identifiers.
    */
+  @SuppressWarnings("JavadocReference")
   @NotNull
   Object[] getVariants();
 

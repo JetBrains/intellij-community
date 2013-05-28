@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -113,7 +113,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     T highest = null;
     int highestTextOffset = Integer.MAX_VALUE;
     for (T element : elements) {
-      final T forcedElem = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
+      final T forcedElem = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
       final int startOffset = forcedElem.getTextOffset();
       if (startOffset < highestTextOffset) {
         highest = forcedElem;

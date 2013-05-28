@@ -19,7 +19,7 @@
  * User: dsl
  * Date: 04.07.2002
  * Time: 13:54:39
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.refactoring.makeStatic;
@@ -30,8 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
@@ -59,7 +58,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
     return null;
   }
 
-  public ParameterTablePanel.VariableData[] getVariableData() {
+  public VariableData[] getVariableData() {
     return null;
   }
 

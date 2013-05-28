@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -246,6 +247,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       if (path != null) {
         markPathRecent(path);
       }
+      SystemDock.updateMenu();
     }
 
     @Override
@@ -261,6 +263,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
           markPathRecent(path);
         }
       }
+      SystemDock.updateMenu();
     }
   }
 

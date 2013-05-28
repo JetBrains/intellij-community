@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.AllClassesGetter;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
@@ -482,7 +482,7 @@ public class GroovyCompletionUtil {
     if (ref instanceof GrReferenceElement && aClass.isValid()) {
       PsiElement newElement = ref.bindToElement(aClass);
       RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
-      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+      CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newElement);
       newStartOffset = marker.getStartOffset();
     }
 

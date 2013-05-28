@@ -19,8 +19,10 @@ import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
@@ -178,7 +180,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   //invoke before run/debug tabs are shown.
-  //Should be overriden to add additional tabs for run/debug toolwindow
+  //Should be overridden to add additional tabs for run/debug toolwindow
   public void createAdditionalTabComponents(AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
   }
 
@@ -281,5 +283,17 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
+    return null;
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
+    return null;
   }
 }

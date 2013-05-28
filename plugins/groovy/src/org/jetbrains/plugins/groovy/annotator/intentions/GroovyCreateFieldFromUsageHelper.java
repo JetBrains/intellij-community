@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
@@ -71,7 +71,7 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
       builder.replaceElement(field.getInitializerGroovy(), new EmptyExpression());
     }
 
-    fieldDecl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(fieldDecl);
+    fieldDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(fieldDecl);
     Template template = builder.buildTemplate();
 
     TextRange range = fieldDecl.getTextRange();
