@@ -1,6 +1,6 @@
 package com.jetbrains.python.refactoring.introduce.parameter;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
@@ -48,7 +48,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     if (function != null && declaration != null) {
       PyParameterList parameterList = function.getParameterList();
       parameterList.addParameter(PyElementGenerator.getInstance(function.getProject()).createParameter(declaration.getText()));
-      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
+      CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
       return parameterList.findParameterByName(declaration.getTargets()[0].getText());
     }
     return null;

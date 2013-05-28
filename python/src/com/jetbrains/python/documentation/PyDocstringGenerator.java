@@ -4,7 +4,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -368,9 +368,9 @@ public class PyDocstringGenerator {
       PyExpression str = elementGenerator.createDocstring(replacementToOffset.getFirst()).getExpression();
       myDocStringExpression.replace(str);
       if (myFunction != null) {
-        myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
+        myFunction = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myFunction);
       }
-      PyDocStringOwner owner = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
+      PyDocStringOwner owner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
       if (owner != null) {
         myDocStringOwner = owner;
       }
@@ -402,7 +402,7 @@ public class PyDocstringGenerator {
         }
       }
 
-      myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
+      myFunction = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myFunction);
       myDocStringExpression = myFunction.getDocStringExpression();
     }
   }

@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -45,7 +45,7 @@ public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
     if (function != null) {
       final PyParameterList parameterList = function.getParameterList();
       parameterList.addParameter(parameter);
-      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(parameterList);
+      CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(parameterList);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
       builder.replaceRange(TextRange.create(parameter.getTextLength() - 4, parameter.getTextLength()), "None");
       builder.run();

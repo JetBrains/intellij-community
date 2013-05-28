@@ -1,7 +1,7 @@
 package com.jetbrains.python.refactoring.surround.surrounders.expressions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -34,7 +34,7 @@ public class PyWithParenthesesSurrounder extends PyExpressionSurrounder {
     assert expression != null;
     expression.replace(element);
     element = (PyExpression) element.replace(parenthesesExpression);
-    element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
+    element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
     return element.getTextRange();
   }
 }

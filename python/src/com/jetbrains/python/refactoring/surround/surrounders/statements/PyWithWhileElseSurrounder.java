@@ -1,6 +1,6 @@
 package com.jetbrains.python.refactoring.surround.surrounders.statements;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +31,7 @@ public class PyWithWhileElseSurrounder extends PyStatementSurrounder {
     whileStatement = (PyWhileStatement) parent.addBefore(whileStatement, elements[0]);
     parent.deleteChildRange(elements[0], elements[elements.length - 1]);
 
-    whileStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(whileStatement);
+    whileStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(whileStatement);
     if (whileStatement == null) {
       return null;
     }
