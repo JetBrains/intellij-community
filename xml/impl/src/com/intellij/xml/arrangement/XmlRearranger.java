@@ -34,7 +34,7 @@ public class XmlRearranger
   private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES = ContainerUtilRt.newLinkedHashSet(XML_TAG, XML_ATTRIBUTE); 
   private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<StdArrangementMatchRule>();
 
-  private static final StdArrangementSettings DEFAULT_SETTINGS = new StdArrangementSettings(
+  private static final StdArrangementSettings DEFAULT_SETTINGS = new StdRulePriorityAwareSettings(
     Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
 
   @Nullable

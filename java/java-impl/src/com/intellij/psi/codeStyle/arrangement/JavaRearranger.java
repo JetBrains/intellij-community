@@ -292,7 +292,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     and(matchRules, CLASS, STATIC);
     and(matchRules, CLASS);
 
-    return new StdArrangementSettings(groupingRules, matchRules);
+    return new StdRulePriorityAwareSettings(groupingRules, matchRules);
   }
 
   @Nullable

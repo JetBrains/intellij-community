@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.std.StdRulePriorityAwareSettings;
 import org.jdom.Element;
 import org.junit.Test;
 
@@ -36,7 +37,7 @@ public class ArrangementSettingsSerializationTest {
 
   @Test
   public void all() {
-    StdArrangementSettings settings = new StdArrangementSettings();
+    StdArrangementSettings settings = new StdRulePriorityAwareSettings();
     settings.addGrouping(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
     ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(FIELD);
     settings.addRule(new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), BY_NAME));

@@ -34,10 +34,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
@@ -116,12 +113,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   @Override
   public void apply(CodeStyleSettings settings) {
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
-    commonSettings.setArrangementSettings(new StdArrangementSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules()));
+    commonSettings.setArrangementSettings(new StdRulePriorityAwareSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules()));
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    StdArrangementSettings s = new StdArrangementSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules());
+    StdArrangementSettings s = new StdRulePriorityAwareSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules());
     return !Comparing.equal(getSettings(settings), s);
   }
 
