@@ -165,7 +165,8 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     return allClasses;
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
+  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet _result) {
+    final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
     JavaClassNameCompletionContributor.addAllClasses(parameters,
                                                      true, result.getPrefixMatcher(), new Consumer<LookupElement>() {
       @Override
