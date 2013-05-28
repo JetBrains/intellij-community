@@ -15,4 +15,4 @@
  */
 def a = 5
 
-List<? extends Abc> l = <caret>a
+List<? extends Abc> <caret>l = a

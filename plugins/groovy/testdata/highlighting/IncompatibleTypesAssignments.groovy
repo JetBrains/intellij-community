@@ -1,6 +1,6 @@
 class X{
   int method1(Date date) {
-    return <warning descr="Cannot assign 'Date' to 'int'">date</warning>;
+    <warning descr="Cannot assign 'Date' to 'int'">return</warning> date;
   }
 
   int method2(Date date) {
@@ -8,8 +8,8 @@ class X{
   }
 }
 
-X x=<warning descr="Cannot assign 'Date' to 'X'">new Date()</warning>;
-x=<warning descr="Cannot assign 'Date' to 'X'">new Date()</warning>;
+X <warning descr="Cannot assign 'Date' to 'X'">x</warning>=new Date();
+<warning descr="Cannot assign 'Date' to 'X'">x</warning>=new Date();
 
 class Y<T> {
   T y;
@@ -20,5 +20,5 @@ y.y="abc";
 String s=y.y;
 print y;
 
-int xxx = <warning descr="Cannot assign 'null' to 'int'">null</warning>
-char ccc = <warning descr="Cannot assign 'null' to 'char'">null</warning>
+int <warning descr="Cannot assign 'null' to 'int'">xxx</warning> = null
+char <warning descr="Cannot assign 'null' to 'char'">ccc</warning> = null

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil
@@ -10,6 +25,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
@@ -22,8 +38,6 @@ import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.Unassigned
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.*
-
 /**
  * @author peter
  */
@@ -74,7 +88,7 @@ Y y = <warning descr="Constructor 'Y' in 'Y' cannot be applied to '(['a':java.la
 def x = new Object() {
   def foo() {
     HashMap<String, File> m1 = ['a':['b']]
-    HashMap<String, File> m2 = <warning descr="Cannot assign 'File' to 'HashMap<String, File>'">new File('aaa')</warning>
+    HashMap<String, File> <warning descr="Cannot assign 'File' to 'HashMap<String, File>'">m2</warning> = new File('aaa')
   }
 }
 """
@@ -181,10 +195,10 @@ public interface Action {
 """
 
     testAssignability """
-Foo f = <warning descr="Cannot assign 'Closure' to 'Foo'">{ println it }</warning>
+Foo <warning descr="Cannot assign 'Closure' to 'Foo'">f</warning> = { println it }
 Function1<String, Object> f1 = { println it }
 Function1<String, Object> f2 = { x=42 -> println x }
-Function1<String, Object> f3 = <warning descr="Cannot assign 'Closure' to 'Function1<String, Object>'">{ int x -> println x }</warning>
+Function1<String, Object> <warning descr="Cannot assign 'Closure' to 'Function1<String, Object>'">f3</warning> = { int x -> println x }
 Runnable r = { println it }
 Action a = { println it }
 Action a1 = { a2 = 2 -> println a2 }

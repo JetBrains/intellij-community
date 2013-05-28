@@ -568,7 +568,7 @@ int method(x, y, z) {
         42
     }
     else if (z) {
-      return <error descr="Cannot assign 'String' to 'int'">'abc'</error>
+      <error descr="Cannot assign 'String' to 'int'">return</error> 'abc'
     }
     else {
       return 43
