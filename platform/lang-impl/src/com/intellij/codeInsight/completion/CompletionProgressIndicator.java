@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
@@ -422,9 +421,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionServiceImpl
       .assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class,
                    CompletionPhase.CommittingDocuments.class);
-    if (CompletionServiceImpl.getCompletionPhase() instanceof CompletionPhase.CommittingDocuments) {
-      LOG.assertTrue(CompletionServiceImpl.getCompletionPhase().indicator != null, CompletionServiceImpl.getCompletionPhase());
-      ((CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase()).replaced = true;
+    CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
+    if (oldPhase instanceof CompletionPhase.CommittingDocuments) {
+      LOG.assertTrue(((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion(), oldPhase);
+      ((CompletionPhase.CommittingDocuments)oldPhase).replaced = true;
     }
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     if (disposeOffsetMap) {
@@ -624,15 +624,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (this != current) {
       LOG.error(current + "!=" + this);
-    }
-
-    if (isAutopopupCompletion() && !myLookup.isShown()) {
-      if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() == this) {
-        closeAndFinish(true);
-      }
-
-      AutoPopupController.getInstance(getProject()).scheduleAutoPopup(myEditor, null);
-      return;
     }
 
     hideAutopopupIfMeaningless();
