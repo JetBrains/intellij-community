@@ -38,7 +38,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     private final SearchRequestCollector myOptimizer;
     private final boolean isSharedOptimizer;
 
-    public SearchParameters(PsiMethod method, SearchScope scope, boolean strictSignatureSearch, @Nullable SearchRequestCollector optimizer) {
+    public SearchParameters(@NotNull PsiMethod method, @NotNull SearchScope scope, boolean strictSignatureSearch, @Nullable SearchRequestCollector optimizer) {
       myMethod = method;
       myScope = scope;
       myStrictSignatureSearch = strictSignatureSearch;
@@ -46,10 +46,11 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       myOptimizer = optimizer != null ? optimizer : new SearchRequestCollector(new SearchSession());
     }
 
-    public SearchParameters(final PsiMethod aClass, SearchScope scope, final boolean strict) {
-      this(aClass, scope, strict, null);
+    public SearchParameters(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean strict) {
+      this(method, scope, strict, null);
     }
 
+    @NotNull
     public PsiMethod getMethod() {
       return myMethod;
     }
@@ -62,6 +63,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       return myOptimizer;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -69,7 +71,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
   private MethodReferencesSearch() {}
 
-  public static Query<PsiReference> search(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
+  public static Query<PsiReference> search(@NotNull PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
     return search(new SearchParameters(method, scope, strictSignatureSearch));
   }
 

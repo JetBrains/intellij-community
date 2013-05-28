@@ -57,7 +57,7 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  public FindUsagesOptions(SearchScope searchScope) {
+  public FindUsagesOptions(@NotNull SearchScope searchScope) {
     this.searchScope = searchScope;
   }
 

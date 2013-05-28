@@ -39,21 +39,25 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     myLibrariesScope = new CoreLibrariesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildLibrariesScope() {
     return myLibrariesScope;
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
     return new EverythingGlobalScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildProjectScope() {
     return new ProjectScopeImpl(myProject, myFileIndexFacade);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildContentScope() {
     return new ContentSearchScope(myProject, myFileIndexFacade);

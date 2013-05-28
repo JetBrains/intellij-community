@@ -35,6 +35,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildLibrariesScope() {
     return new ProjectAndLibrariesScope(myProject) {
@@ -50,6 +51,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     };
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
@@ -64,6 +66,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     return new ProjectAndLibrariesScope(myProject, searchOutsideRootModel);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildProjectScope() {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
@@ -75,11 +78,10 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         }
       };
     }
-    else {
-      return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
-    }
+    return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildContentScope() {
     return new CoreProjectScopeBuilder.ContentSearchScope(myProject, FileIndexFacade.getInstance(myProject));
