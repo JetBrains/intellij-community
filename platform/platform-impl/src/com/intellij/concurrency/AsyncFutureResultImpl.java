@@ -16,6 +16,7 @@
 package com.intellij.concurrency;
 
 import com.google.common.util.concurrent.SettableFuture;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -33,16 +34,18 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   }
 
   @Override
-  public void addConsumer(Executor executor, final ResultConsumer<V> consumer) {
+  public void addConsumer(@NotNull Executor executor, @NotNull final ResultConsumer<V> consumer) {
     myFuture.addListener(new Runnable() {
       @Override
       public void run() {
         try {
           final V result = myFuture.get();
           consumer.onSuccess(result);
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
           consumer.onFailure(e.getCause());
-        } catch (Throwable throwable) {
+        }
+        catch (Throwable throwable) {
           consumer.onFailure(throwable);
         }
       }
@@ -70,7 +73,7 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   }
 
   @Override
-  public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public V get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     return myFuture.get(timeout, unit);
   }
 
@@ -80,7 +83,7 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   }
 
   @Override
-  public void setException(Throwable t) {
+  public void setException(@NotNull Throwable t) {
     myFuture.setException(t);
   }
 }

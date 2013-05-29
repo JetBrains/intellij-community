@@ -130,7 +130,8 @@ public class JobLauncherImpl extends JobLauncher {
     try {
       final boolean result = invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
       asyncFutureResult.set(result);
-    } catch (Throwable t) {
+    }
+    catch (Throwable t) {
       asyncFutureResult.setException(t);
     }
     return asyncFutureResult;

@@ -215,12 +215,12 @@ public class MantisRepository extends BaseRepositoryImpl {
     final MantisConnectPortType soap = createSoap();
     myProjects = new ArrayList<MantisProject>();
     ProjectData[] projectDatas = soap.mc_projects_get_user_accessible(getUsername(), getPassword());
-    List<MantisProject> projects = ContainerUtil.map(projectDatas, new Function<ProjectData, MantisProject>() {
+    List<MantisProject> projects = new ArrayList<MantisProject>(ContainerUtil.map(projectDatas, new Function<ProjectData, MantisProject>() {
       @Override
       public MantisProject fun(final ProjectData data) {
         return new MantisProject(data.getId().intValue(), data.getName());
       }
-    });
+    }));
     if (allProjectsAvailable(soap)){
       projects.add(0, MantisProject.ALL_PROJECTS);
     }

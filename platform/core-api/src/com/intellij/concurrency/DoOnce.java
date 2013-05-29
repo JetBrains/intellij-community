@@ -15,18 +15,20 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Executes given runnable exactly once.
- *
+ * <p/>
  * Author: dmitrylomov
  */
 public class DoOnce {
   private Runnable myRunnable;
   private final AtomicBoolean myAlreadyRun;
 
-  public DoOnce(Runnable runnable) {
+  public DoOnce(@NotNull Runnable runnable) {
     myRunnable = runnable;
     myAlreadyRun = new AtomicBoolean(false);
   }
@@ -35,7 +37,8 @@ public class DoOnce {
     if (myAlreadyRun.compareAndSet(false, true)) {
       try {
         myRunnable.run();
-      } finally {
+      }
+      finally {
         myRunnable = null; // do not leak runnable
       }
     }

@@ -14,6 +14,14 @@ public class TabCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile("MethodLookup3_After.java");
   }
 
+  public void _testMethodCallBeforeAnnotation() {
+    String name = getTestName(false);
+    myFixture.configureByFile(name + ".java");
+    myFixture.completeBasic();
+    myFixture.type("tos\t");
+    checkResultByFile(name + "_After.java");
+  }
+
   public void testReplaceThisWithSuper() throws Throwable {
     configureByFile("ReplaceThisWithSuper.java");
     checkResultByFile("ReplaceThisWithSuper_After.java");

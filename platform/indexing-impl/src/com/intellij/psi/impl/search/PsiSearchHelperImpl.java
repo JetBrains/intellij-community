@@ -221,81 +221,82 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                         @NotNull final Processor<PsiElement> psiRootProcessor,
                                                         final ProgressIndicator progress) {
     myManager.startBatchFilesProcessingMode();
-      final AtomicInteger counter = new AtomicInteger(0);
-      final AtomicBoolean canceled = new AtomicBoolean(false);
-      final AtomicBoolean pceThrown = new AtomicBoolean(false);
+    final AtomicInteger counter = new AtomicInteger(0);
+    final AtomicBoolean canceled = new AtomicBoolean(false);
+    final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
-      final int size = files.size();
-      AsyncFuture<Boolean>
-        completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgressAsync(files, progress, false, new Processor<VirtualFile>() {
-        @Override
-        public boolean process(final VirtualFile vfile) {
-          final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+    final int size = files.size();
+    AsyncFuture<Boolean>
+      completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgressAsync(files, progress, false, new Processor<VirtualFile>() {
+      @Override
+      public boolean process(final VirtualFile vfile) {
+        final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return vfile.isValid() ? myManager.findFile(vfile) : null;
+          }
+        });
+        if (file != null && !(file instanceof PsiBinaryFile)) {
+          file.getViewProvider().getContents(); // load contents outside readaction
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
-            public PsiFile compute() {
-              return vfile.isValid() ? myManager.findFile(vfile) : null;
+            public void run() {
+              try {
+                if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
+                List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
+                Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
+                for (PsiElement psiRoot : psiRoots) {
+                  if (progress != null) progress.checkCanceled();
+                  assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +
+                                           "; ViewProvider: " + file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
+                  if (!processed.add(psiRoot)) continue;
+                  if (!psiRoot.isValid()) continue;
+                  if (!psiRootProcessor.process(psiRoot)) {
+                    canceled.set(true);
+                    return;
+                  }
+                }
+                myManager.dropResolveCaches();
+              }
+              catch (ProcessCanceledException e) {
+                canceled.set(true);
+                pceThrown.set(true);
+              }
             }
           });
-          if (file != null && !(file instanceof PsiBinaryFile)) {
-            file.getViewProvider().getContents(); // load contents outside readaction
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
-                  List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
-                  Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
-                  for (PsiElement psiRoot : psiRoots) {
-                    if (progress != null) progress.checkCanceled();
-                    assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +
-                                             "; ViewProvider: " + file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
-                    if (!processed.add(psiRoot)) continue;
-                    if (!psiRoot.isValid()) continue;
-                    if (!psiRootProcessor.process(psiRoot)) {
-                      canceled.set(true);
-                      return;
-                    }
-                  }
-                  myManager.dropResolveCaches();
-                }
-                catch (ProcessCanceledException e) {
-                  canceled.set(true);
-                  pceThrown.set(true);
-                }
-              }
-            });
-          }
-          if (progress != null && progress.isRunning()) {
-            double fraction = (double)counter.incrementAndGet() / size;
-            progress.setFraction(fraction);
-          }
-          return !canceled.get();
         }
-      });
-
-      final AsyncFutureResult<Boolean> ourResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-      completed.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(ourResult) {
-        @Override
-        public void onSuccess(Boolean value) {
-          if (pceThrown.get())
-            ourResult.setException(new ProcessCanceledException());
-          else
-            ourResult.set(value);
+        if (progress != null && progress.isRunning()) {
+          double fraction = (double)counter.incrementAndGet() / size;
+          progress.setFraction(fraction);
         }
+        return !canceled.get();
+      }
+    });
 
-        @Override
-        public void onFailure(Throwable t) {
-          ourResult.setException(t);
+    final AsyncFutureResult<Boolean> ourResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+    completed.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(ourResult) {
+      @Override
+      public void onSuccess(Boolean value) {
+        if (pceThrown.get()) {
+          ourResult.setException(new ProcessCanceledException());
         }
-      });
-
-
-      return new FinallyFuture<Boolean>(ourResult, new Runnable() {
-        @Override
-        public void run() {
-          myManager.finishBatchFilesProcessingMode();
+        else {
+          ourResult.set(value);
         }
-      });
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        ourResult.setException(t);
+      }
+    });
+
+    return new FinallyFuture<Boolean>(ourResult, new Runnable() {
+      @Override
+      public void run() {
+        myManager.finishBatchFilesProcessingMode();
+      }
+    });
   }
 
   @NotNull
@@ -597,7 +598,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private AsyncFuture<Boolean> processGlobalRequestsOptimizedAsync(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
-                                                 final ProgressIndicator progress) {
+                                                                   final ProgressIndicator progress) {
     if (singles.isEmpty()) {
       return AsyncFutureFactory.wrap(true);
     }

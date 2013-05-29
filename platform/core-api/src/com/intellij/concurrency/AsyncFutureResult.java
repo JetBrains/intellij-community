@@ -15,10 +15,12 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Author: dmitrylomov
  */
 public interface AsyncFutureResult<V> extends AsyncFuture<V> {
   void set(V value);
-  void setException(Throwable t);
+  void setException(@NotNull Throwable t);
 }

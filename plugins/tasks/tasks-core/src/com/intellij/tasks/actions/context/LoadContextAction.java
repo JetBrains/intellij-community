@@ -58,29 +58,29 @@ public class LoadContextAction extends BaseTaskAction {
     DefaultActionGroup group = new DefaultActionGroup();
     final WorkingContextManager manager = WorkingContextManager.getInstance(project);
     List<ContextInfo> history = manager.getContextHistory();
-    List<ContextHolder> infos = ContainerUtil.map2List(history, new Function<ContextInfo, ContextHolder>() {
+    List<ContextHolder> infos = new ArrayList<ContextHolder>(ContainerUtil.map2List(history, new Function<ContextInfo, ContextHolder>() {
       public ContextHolder fun(final ContextInfo info) {
         return new ContextHolder() {
-        @Override
-        void load(final boolean clear) {
-          LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
-          UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
-        }
+          @Override
+          void load(final boolean clear) {
+            LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
+            UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
+          }
 
-        @Override
-        void remove() {
-          manager.removeContext(info.name);
-        }
+          @Override
+          void remove() {
+            manager.removeContext(info.name);
+          }
 
-        @Override
-        Date getDate() {
-          return new Date(info.date);
-        }
+          @Override
+          Date getDate() {
+            return new Date(info.date);
+          }
 
-        @Override
-        String getComment() {
-          return info.comment;
-        }
+          @Override
+          String getComment() {
+            return info.comment;
+          }
 
           @Override
           Icon getIcon() {
@@ -88,7 +88,7 @@ public class LoadContextAction extends BaseTaskAction {
           }
         };
       }
-    });
+    }));
     final TaskManager taskManager = TaskManager.getManager(project);
     List<LocalTask> tasks = taskManager.getLocalTasks();
     infos.addAll(ContainerUtil.mapNotNull(tasks, new NullableFunction<LocalTask, ContextHolder>() {
@@ -131,7 +131,7 @@ public class LoadContextAction extends BaseTaskAction {
         return o2.getDate().compareTo(o1.getDate());
       }
     });
-    
+
     final Ref<Boolean> shiftPressed = Ref.create(false);
     boolean today = true;
     Calendar now = Calendar.getInstance();
@@ -166,7 +166,7 @@ public class LoadContextAction extends BaseTaskAction {
     });
     popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        popup.handleSelect(true);        
+        popup.handleSelect(true);
       }
     });
     popup.addPopupListener(new JBPopupAdapter() {

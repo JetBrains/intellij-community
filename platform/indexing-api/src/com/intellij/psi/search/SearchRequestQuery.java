@@ -14,11 +14,12 @@ public class SearchRequestQuery extends AbstractQuery<PsiReference> {
   private final Project myProject;
   private final SearchRequestCollector myRequests;
 
-  public SearchRequestQuery(Project project, SearchRequestCollector requests) {
+  public SearchRequestQuery(@NotNull Project project, @NotNull SearchRequestCollector requests) {
     myProject = project;
     myRequests = requests;
   }
 
+  @NotNull
   @Override
   protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<PsiReference> consumer) {
     return PsiSearchHelper.SERVICE.getInstance(myProject).processRequestsAsync(myRequests, consumer);
