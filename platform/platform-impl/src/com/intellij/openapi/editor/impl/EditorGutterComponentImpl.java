@@ -37,6 +37,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
@@ -107,7 +108,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       installDnD();
     }
     setOpaque(true);
-    if (Registry.is("editor.distraction.free.mode")) {
+    if (isDestructionFreeMode()) {
       editor.getComponent().addComponentListener(new ComponentAdapter(){
         @Override
         public void componentResized(ComponentEvent event) {
@@ -272,7 +273,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (w == 0) return;
 
-    final Color background = Registry.is("editor.distraction.free.mode") ? myEditor.getBackgroundColor() : getBackground();
+    final Color background = isDestructionFreeMode() ? myEditor.getBackgroundColor() : getBackground();
     paintBackground(g, clip, getAnnotationsAreaOffset(), w, background);
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
@@ -312,7 +313,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       x += myTextAnnotationGutterSizes.get(i);
     }
 
-    UIUtil.drawVDottedLine((Graphics2D)g, getAnnotationsAreaOffset() + w - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
+    if (!isDestructionFreeMode()) {
+      UIUtil.drawVDottedLine((Graphics2D)g, getAnnotationsAreaOffset() + w - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
+    }
   }
 
   private void paintFoldingTree(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
@@ -373,10 +376,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public Color getBackground() {
     if (myBackgroundColor == null) {
-      Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
+      boolean distractionMode = isDestructionFreeMode();
+      Color color = distractionMode ? colorsScheme.getDefaultBackground() : colorsScheme.getColor(EditorColors.GUTTER_BACKGROUND);
       myBackgroundColor = color == null ? new Color(0xF0F0F0) : color;
     }
     return myBackgroundColor;
+  }
+
+  private boolean isDestructionFreeMode() {
+    return Registry.is("editor.distraction.free.mode");
   }
 
   private void doPaintLineNumbers(Graphics g, Rectangle clip) {
@@ -548,7 +557,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       myTextAnnotationGuttersSize += gutterSize;
     }
 
-    if (myEditor.getComponent().isShowing() && Registry.is("editor.distraction.free.mode") && !isMirrored()) {
+    if (myEditor.getComponent().isShowing() && isDestructionFreeMode() && !isMirrored()) {
       centerEditorByAnnotationArea();
     }
   }
