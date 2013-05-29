@@ -253,6 +253,12 @@ def with5(@<warning descr="@Target is unused">DelegatesTo.Target</warning>() Obj
     arg.delegate = target
     arg()
 }
+
+def with6(@<warning descr="@Target is unused">DelegatesTo.Target</warning>() Object target, @DelegatesTo(String) Closure arg) {
+    arg.delegate = target
+    arg()
+}
+
 ''', DelegatesToInspection)
   }
 }
