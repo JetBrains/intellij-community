@@ -219,7 +219,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
           rebuildList();
         }
       }
-    }, myParentDisposable);
+    }/*, myParentDisposable*/); // TODO
 
     moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
     toolBarGroup.add(moveAction);
