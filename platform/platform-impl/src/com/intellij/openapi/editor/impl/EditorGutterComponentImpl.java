@@ -49,10 +49,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NullableFunction;
@@ -563,14 +565,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void centerEditorByAnnotationArea() {
-    EditorSettings settings = myEditor.getSettings();
-    int editorLocation = (int)myEditor.getComponent().getLocationOnScreen().getX();
-    int rightMargin = settings.getRightMargin(myEditor.getProject());
-    int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocation;
+    IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myEditor.getProject());
 
-    int width = (int)WindowManager.getInstance().getIdeFrame(myEditor.getProject()).getComponent().getSize().getWidth();
-    if (rightMarginX < width && editorLocation < width - rightMarginX) {
-      myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX - editorLocation)/2 - myIconsAreaWidth - 10);
+    RelativePoint point = new RelativePoint(myEditor.getComponent(), new Point(0, 0));
+    Point editorLocationInWindow = point.getPoint(ideFrame.getComponent());
+
+    int editorLocationX = (int)editorLocationInWindow.getX();
+    EditorSettings settings = myEditor.getSettings();
+    int rightMargin = settings.getRightMargin(myEditor.getProject());
+    int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;
+
+    int width = (int)ideFrame.getComponent().getSize().getWidth();
+    if (rightMarginX < width && editorLocationX < width - rightMarginX) {
+      myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX - editorLocationX)/2 - myIconsAreaWidth - 10);
     }
   }
 
