@@ -58,8 +58,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
       WebBrowserUrlProvider provider = getProvider(psiElement);
       if (provider != null) {
         try {
-          // I (develar) don't want to change API right now, so, just wrap result
-          return Urls.newFromIdea(provider.getUrl(psiElement, psiFile, virtualFile));
+          return provider.getUrl(psiElement, psiFile, virtualFile);
         }
         catch (WebBrowserUrlProvider.BrowserException e) {
           if (!HtmlUtil.isHtmlFile(psiFile)) {
@@ -71,29 +70,30 @@ public class WebBrowserServiceImpl extends WebBrowserService {
     return Urls.newFromVirtualFile(virtualFile);
   }
 
+  @Override
   @Nullable
   public Url getUrlToOpen(@NotNull PsiElement psiElement) {
     try {
       return getUrlToOpen(psiElement, false);
     }
-    catch (WebBrowserUrlProvider.BrowserException e) {
+    catch (WebBrowserUrlProvider.BrowserException ignored) {
       return null;
     }
   }
 
   @Nullable
   public static WebBrowserUrlProvider getProvider(@Nullable PsiElement element) {
-    if (element == null) {
+    PsiFile psiFile = element == null ? null : element.getContainingFile();
+    if (psiFile == null) {
       return null;
     }
 
-    final List<WebBrowserUrlProvider> allProviders = Arrays.asList(WebBrowserUrlProvider.EP_NAME.getExtensions());
+    List<WebBrowserUrlProvider> allProviders = Arrays.asList(WebBrowserUrlProvider.EP_NAME.getExtensions());
     for (WebBrowserUrlProvider urlProvider : DumbService.getInstance(element.getProject()).filterByDumbAwareness(allProviders)) {
-      if (urlProvider.canHandleElement(element)) {
+      if (urlProvider.canHandleElement(element, psiFile)) {
         return urlProvider;
       }
     }
-
     return null;
   }
 }

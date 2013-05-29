@@ -23,6 +23,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.beanProperties.BeanProperty;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RenameRefactoring;
@@ -65,6 +68,15 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     if (setter != null) {
       final String setterName = PropertyUtil.suggestSetterName(newName);
       rename.addElement(setter, setterName);
+
+      final PsiParameter[] setterParameters = setter.getParameterList().getParameters();
+      if (setterParameters.length == 1) {
+        final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(psiElement.getProject());
+        final String suggestedParameterName = manager.propertyNameToVariableName(property.getName(), VariableKind.PARAMETER);
+        if (suggestedParameterName.equals(setterParameters[0].getName())) {
+          rename.addElement(setterParameters[0], manager.propertyNameToVariableName(newName, VariableKind.PARAMETER));
+        }
+      }
     }
 
     final PsiMethod getter = property.getGetter();

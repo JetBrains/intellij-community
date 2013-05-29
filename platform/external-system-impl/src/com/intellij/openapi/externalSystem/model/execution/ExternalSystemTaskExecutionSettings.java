@@ -71,8 +71,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   }
 
   public void setTaskNames(List<String> taskNames) {
-    myTaskNames.clear();
-    myTaskNames.addAll(taskNames);
+    myTaskNames = taskNames;
   }
 
   @Override

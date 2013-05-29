@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -30,11 +29,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.Consumer;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
@@ -94,52 +92,15 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myTasksLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.tasks"));
     myTasksTextField = new JBTextField(ExternalSystemConstants.TEXT_FIELD_WIDTH_IN_COLUMNS);
     canvas.add(myTasksLabel, ExternalSystemUiUtil.getLabelConstraints(0));
-    canvas.add(myTasksTextField, ExternalSystemUiUtil.getFillLineConstraints(0));
+    GridBag c = ExternalSystemUiUtil.getFillLineConstraints(0);
+    c.insets.right = myProjectPathField.getButton().getPreferredSize().width + 8 /* street magic, sorry */;
+    canvas.add(myTasksTextField, c);
 
     myVmOptionsLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.vmoptions"));
     myVmOptionsEditor = new RawCommandLineEditor();
     myVmOptionsEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.caption.vmoptions"));
     canvas.add(myVmOptionsLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     canvas.add(myVmOptionsEditor, ExternalSystemUiUtil.getFillLineConstraints(0));
-    
-    canvas.setPaintCallback(new Consumer<Graphics>() {
-      
-      @Nullable private Dimension myDimension;
-      @Nullable private Dimension myBounds;
-      private boolean myBorderReset;
-      
-      @Override
-      public void consume(Graphics graphics) {
-        if (!myBorderReset) {
-          Editor editor = myProjectPathField.getChildComponent().getEditor();
-          if (editor != null) {
-            myBorderReset = true;
-            editor.setBorder(null);
-          }
-        }
-        Dimension size = myVmOptionsEditor.getTextField().getPreferredSize();
-        Rectangle bounds = myVmOptionsEditor.getTextField().getBounds();
-        if (!size.equals(myDimension)) {
-          myDimension = size;
-        }
-        if (myBounds == null || myBounds.width != bounds.width || myBounds.height == bounds.height) {
-          myBounds = bounds.getSize();
-        }
-        
-        applyDimension(myProjectPathField.getChildComponent(), false);
-        applyDimension(myTasksTextField, true);
-      }
-
-      private void applyDimension(@NotNull JComponent component, boolean processBounds) {
-        Rectangle bounds = component.getBounds();
-        if (bounds != null && myBounds != null && (bounds.width != myBounds.width || bounds.height != myBounds.height)) {
-          component.setPreferredSize(myDimension);
-          if (processBounds) {
-            component.setBounds(bounds.x, bounds.y, myBounds.width, myBounds.height);
-          }
-        }
-      }
-    });
   }
 
   @Override

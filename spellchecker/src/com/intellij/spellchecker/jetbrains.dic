@@ -3,12 +3,14 @@ aggregator
 ajax
 alloc
 anyschema
+aopalliance
 appender
 archivelog
 args
 arial
 arity
 asensitive
+aspectj
 attr
 attlist
 auth
@@ -50,6 +52,7 @@ capath
 captcha
 ccflags
 cdata
+cglib
 changelist
 charset
 checkbox
@@ -133,6 +136,7 @@ foreach
 formatter
 freelist
 freelists
+freemarker
 freepools
 frontend
 ftlvariable
@@ -140,6 +144,7 @@ fulltext
 func
 fxml
 gdata
+gemfire
 geocode
 geometrycollection
 getters
@@ -247,6 +252,7 @@ minvalue
 miny
 mixin
 mlslabel
+mongodb
 monospaced
 multi
 multilinestring
@@ -356,6 +362,7 @@ rebase
 rebased
 rebasing
 rect
+redis
 redistributions
 refactor
 refactored
@@ -401,6 +408,7 @@ serializers
 servererror
 servlet
 servlets
+sftp
 shader
 significand
 significands
@@ -457,6 +465,7 @@ tokenize
 tokenizer
 tooltip
 tooltips
+toplink
 trebuchet
 twitter
 typedef

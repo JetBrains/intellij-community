@@ -33,17 +33,13 @@ public abstract class WebBrowserUrlProvider {
       super(message);
     }
   }
-
-  @NotNull
-  /**
-   * URL must not be encoded (space as is)
-   */
-  public abstract String getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
-
   /**
    * Invariant: element has not null containing psi file with not null virtual file
    */
-  public abstract boolean canHandleElement(@NotNull final PsiElement element);
+  public abstract boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile);
+
+  @NotNull
+  public abstract Url getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
 
   @Nullable
   public String getOpenInBrowserActionText(@NotNull PsiFile file) {

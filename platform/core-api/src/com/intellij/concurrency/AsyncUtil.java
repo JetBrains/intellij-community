@@ -15,6 +15,8 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -22,7 +24,7 @@ import java.util.concurrent.Future;
  * Author: dmitrylomov
  */
 public class AsyncUtil {
-  public static <V> V get(Future<V> result) {
+  public static <V> V get(@NotNull Future<V> result) {
     try {
       return result.get();
     }
@@ -30,11 +32,12 @@ public class AsyncUtil {
       throw new Error(e);
     }
     catch (ExecutionException e) {
-      if (e.getCause() instanceof RuntimeException)
-        throw (RuntimeException) e.getCause();
-      else
+      if (e.getCause() instanceof RuntimeException) {
+        throw (RuntimeException)e.getCause();
+      }
+      else {
         throw new Error(e);
+      }
     }
-
   }
 }

@@ -94,6 +94,7 @@ public class URLUtil {
     final ZipEntry zipEntry = zipFile.getEntry(resource);
     if (zipEntry == null) throw new FileNotFoundException("Entry " + resource + " not found in " + file);
     return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
+        @Override
         public void close() throws IOException {
           super.close();
           zipFile.close();

@@ -414,6 +414,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final Collection<TaskData> rootProjectTasks = ContainerUtilRt.newArrayList();
     final DomainObjectSet<? extends IdeaModule> modules = project.getModules();
     for (IdeaModule module : modules) {
+      String moduleConfigPath = GradleUtil.getConfigPath(module.getGradleProject(), rootProjectPath);
       for (GradleTask task : module.getGradleProject().getTasks()) {
         String name = task.getName();
         if (name == null || name.trim().isEmpty()) {
@@ -425,7 +426,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           continue;
         }
 
-        String moduleConfigPath = GradleUtil.getConfigPath(module.getGradleProject(), rootProjectPath);
         TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, name, moduleConfigPath, task.getDescription());
         
         if (rootProjectPath.equals(moduleConfigPath)) {

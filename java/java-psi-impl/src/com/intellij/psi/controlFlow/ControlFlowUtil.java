@@ -405,6 +405,14 @@ public class ControlFlowUtil {
       if (parent instanceof PsiClass) {
         final PsiClass clss = (PsiClass)parent;
         if (PsiTreeUtil.isAncestor(targetClassMember, clss, false)) return false;
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+        while (containingClass != null) {
+          if (containingClass.isInheritor(clss, true) &&
+              PsiTreeUtil.isAncestor(targetClassMember, containingClass, false)) {
+            return false;
+          }
+          containingClass = containingClass.getContainingClass();
+        }
       }
     }
 

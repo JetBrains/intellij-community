@@ -18,11 +18,13 @@ import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -103,7 +105,7 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
         ConsoleView console = new TextConsoleBuilderImpl(getProject()).getConsole();
         final MyProcessHandler processHandler = new MyProcessHandler();
         console.attachToProcess(processHandler);
-        List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
+        final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
         for (String taskName : mySettings.getTaskNames()) {
           tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
         }
@@ -114,9 +116,18 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
+            String greeting = ExternalSystemBundle.message("run.text.starting", StringUtil.join(mySettings.getTaskNames(), " "));
+            processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
             task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
+              
+              private boolean myResetGreeting = true;
+              
               @Override
               public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+                if (myResetGreeting) {
+                  processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
+                  myResetGreeting = false;
+                }
                 processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
               }
 

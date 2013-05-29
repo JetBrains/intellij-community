@@ -21,6 +21,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
@@ -626,6 +627,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   @Override
   public void addFocusListener(@NotNull final FocusChangeListener listener) {
     myDelegate.addFocusListener(listener);
+  }
+
+  @Override
+  public void addFocusListener(@NotNull FocusChangeListener listener, Disposable parentDisposable) {
+    myDelegate.addFocusListener(listener, parentDisposable);
   }
 
   @Override

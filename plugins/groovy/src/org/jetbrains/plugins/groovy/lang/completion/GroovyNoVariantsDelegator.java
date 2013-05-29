@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -48,9 +49,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(result.runRemainingContributors(parameters, true)) ||
-                          suggestMetaAnnotations(parameters);
+  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+    LinkedHashSet<CompletionResult> plainResults = result.runRemainingContributors(parameters, true);
+    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(plainResults) || suggestMetaAnnotations(parameters);
 
     if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();
@@ -58,11 +59,15 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     if (empty) {
       delegate(parameters, result);
-    } else if (Registry.is("ide.completion.show.all.classes")) {
+    } else if (Registry.is("ide.completion.show.all.classes") || Registry.is("ide.completion.show.better.matching.classes")) {
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
+        if (Registry.is("ide.completion.show.better.matching.classes")) {
+          result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
+        }
+
         suggestNonImportedClasses(parameters, result);
       }
     }

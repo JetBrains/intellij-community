@@ -540,4 +540,15 @@ class Foo {
     }
   }
 
+  public void "test expand current live template on no suggestions in lookup"() {
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    myFixture.completeBasic()
+    assert myFixture.lookup
+    myFixture.type("sout")
+    assert myFixture.lookup
+    assert myFixture.lookupElementStrings == []
+    myFixture.type('\t')
+    myFixture.checkResult "class Foo {{\n    System.out.println(<caret>); }}"
+  }
+
 }

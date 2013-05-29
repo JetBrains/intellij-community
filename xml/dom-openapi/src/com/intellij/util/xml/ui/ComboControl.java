@@ -95,11 +95,12 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
           };
           final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
           final Collection<Object> variants = resolvingConverter.getVariants(context);
-          final List<Pair<String, Icon>> all = ContainerUtil.map(variants, new Function<Object, Pair<String, Icon>>() {
-            public Pair<String, Icon> fun(final Object s) {
-              return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-            }
-          });
+          final List<Pair<String, Icon>> all =
+            new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, new Function<Object, Pair<String, Icon>>() {
+              public Pair<String, Icon> fun(final Object s) {
+                return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
+              }
+            }));
           all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
             public Object fun(final Object s) {
               return new Pair(s, null);
