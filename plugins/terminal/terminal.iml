@@ -31,10 +31,12 @@
     <orderEntry type="module-library">
       <library name="purejavacomm">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/purejavacomm-0.0.16.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/purejavacomm.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/purejavacomm-src.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
