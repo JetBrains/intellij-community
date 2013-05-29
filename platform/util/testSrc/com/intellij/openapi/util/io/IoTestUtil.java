@@ -237,7 +237,12 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestFile(@NotNull String name) throws IOException {
-    return createTestFile(new File(FileUtil.getTempDirectory()), name, null);
+    return createTestFile(name, null);
+  }
+
+  @NotNull
+  public static File createTestFile(@NotNull String name, @Nullable String content) throws IOException {
+    return createTestFile(new File(FileUtil.getTempDirectory()), name, content);
   }
 
   @NotNull
@@ -247,6 +252,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestFile(@NotNull File parent, @NotNull String name, @Nullable String content) throws IOException {
+    assertTrue(parent.getPath(), parent.isDirectory() || parent.mkdirs());
     File file = new File(parent, name);
     assertTrue(file.getPath(), file.createNewFile());
     if (content != null) {
