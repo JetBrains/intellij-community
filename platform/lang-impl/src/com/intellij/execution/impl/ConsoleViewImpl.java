@@ -875,7 +875,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           highlightUserTokens();
         }
       }
-    });
+    }, this);
 
     editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
     editor.setHighlighter(createHighlighter());
