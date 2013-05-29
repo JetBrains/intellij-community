@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.formatter;
+package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.formatting.*;
@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessorBasic;

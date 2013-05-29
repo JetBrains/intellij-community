@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.formatter;
+package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
@@ -34,6 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.formatter.AlignmentProvider;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.formatter;
+package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 
 import java.util.ArrayList;
 import java.util.List;

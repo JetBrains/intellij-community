@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-class AlignmentProvider {
+public class AlignmentProvider {
   private final Map<PsiElement, Set<PsiElement>> myTree = new HashMap<PsiElement, Set<PsiElement>>();
   private final Map<Set<PsiElement>, Alignment> myAlignments = new HashMap<Set<PsiElement>, Alignment>();
   private final Map<Set<PsiElement>, Boolean> myAllowBackwardShift = new HashMap<Set<PsiElement>, Boolean>();
@@ -175,18 +175,18 @@ class AlignmentProvider {
    *
    * @author Max Medvedev
    */
-  class Aligner {
+  public class Aligner {
     private PsiElement myRef = null;
     private boolean allowBackwardShift = true;
     @NotNull
     private final Alignment.Anchor myAnchor;
 
-    Aligner(boolean allowBackwardShift, @NotNull Alignment.Anchor anchor) {
+    private Aligner(boolean allowBackwardShift, @NotNull Alignment.Anchor anchor) {
       this.allowBackwardShift = allowBackwardShift;
       myAnchor = anchor;
     }
 
-    void append(@Nullable PsiElement element) {
+    public void append(@Nullable PsiElement element) {
       if (element == null) return;
 
       if (myRef == null) {
