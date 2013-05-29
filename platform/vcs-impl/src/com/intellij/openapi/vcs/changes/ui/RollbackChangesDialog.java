@@ -104,7 +104,7 @@ public class RollbackChangesDialog extends DialogWrapper {
         }
       }
     };
-    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, myListChangeListener, myListChangeListener);
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
 
     myOperationName = operationNameByChanges(project, changes);
     setOKButtonText(myOperationName);
