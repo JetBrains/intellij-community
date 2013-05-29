@@ -249,10 +249,12 @@ public class HtmlUtil {
       if (customName.length() == 0) continue;
 
       descriptors[index++] = new XmlAttributeDescriptorImpl() {
+        @Override
         public String getName(PsiElement context) {
           return customName;
         }
 
+        @Override
         public String getName() {
           return customName;
         }
@@ -275,14 +277,17 @@ public class HtmlUtil {
       if (tagName.length() == 0) continue;
 
       descriptors[index++] = new XmlElementDescriptorImpl(context instanceof XmlTag ? (XmlTag)context : null) {
+        @Override
         public String getName(PsiElement context) {
           return tagName;
         }
 
+        @Override
         public String getDefaultName() {
           return tagName;
         }
 
+        @Override
         public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
           return true;
         }
@@ -340,10 +345,12 @@ public class HtmlUtil {
       descriptors = ArrayUtil.append(
         descriptors,
         new XmlAttributeDescriptorImpl() {
+          @Override
           public String getName(PsiElement context) {
             return JSFC;
           }
 
+          @Override
           public String getName() {
             return JSFC;
           }
@@ -454,6 +461,7 @@ public class HtmlUtil {
   public static void processInjectedContent(final XmlTag element,
                                             @NotNull final Processor<XmlTag> tagProcessor) {
     final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         if (injectedPsi instanceof XmlFile) {
           final XmlDocument injectedDocument = ((XmlFile)injectedPsi).getDocument();
@@ -508,12 +516,14 @@ public class HtmlUtil {
         @NonNls final Set<String> inTag = new THashSet<String>();
         boolean metHttpEquiv = false;
 
+        @Override
         public void doctype(@Nullable final CharSequence publicId,
                             @Nullable final CharSequence systemId,
                             final int startOffset,
                             final int endOffset) {
         }
 
+        @Override
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
                                         final int headerEndOffset) {
           @NonNls String name = localName.toString().toLowerCase();
@@ -526,6 +536,7 @@ public class HtmlUtil {
           throw TerminateException.INSTANCE;
         }
 
+        @Override
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
           @NonNls final String name = localName.toString().toLowerCase();
           if ("meta".equals(name) && metHttpEquiv && contentAttributeValue != null) {
@@ -548,6 +559,7 @@ public class HtmlUtil {
 
         private String contentAttributeValue;
 
+        @Override
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
           @NonNls final String name = localName.toString().toLowerCase();
           if (inTag.contains("meta")) {
@@ -561,20 +573,23 @@ public class HtmlUtil {
           }
         }
 
+        @Override
         public void textElement(final CharSequence display, final CharSequence physical, final int startoffset, final int endoffset) {
         }
 
+        @Override
         public void entityRef(final CharSequence ref, final int startOffset, final int endOffset) {
         }
 
+        @Override
         public void error(String message, int startOffset, int endOffset) {
         }
       });
     }
-    catch (TerminateException e) {
+    catch (TerminateException ignored) {
       //ignore
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       // some weird things can happen, like unbalanaced tree
     }
 
