@@ -466,12 +466,12 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
-    pluginDir("terminal") {
-      dir("lib") {
-        jar("terminal.jar") {
-          module("terminal")
-        }
-        fileset(dir: "${home}/plugins/terminal/lib", excludes: "**/*.zip")
+    layoutPlugin("terminal") {
+      jar("terminal.jar") {
+        module("terminal")
+      }
+      fileset(dir: "$home/plugins/terminal/lib") {
+        include(name: "*.jar")
       }
     }
   }
