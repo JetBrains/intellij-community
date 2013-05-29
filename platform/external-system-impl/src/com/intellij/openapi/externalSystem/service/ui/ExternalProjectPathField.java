@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
@@ -25,9 +26,13 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.serialization.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextAccessor;
 import com.intellij.util.Consumer;
@@ -47,6 +52,8 @@ import java.util.Map;
  */
 public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
 
+  @NotNull private static final String PROJECT_FILE_TO_START_WITH_KEY = "external.system.task.project.file.to.start";
+
   @NotNull private final Project         myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
 
@@ -55,7 +62,14 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
                                   @NotNull FileChooserDescriptor descriptor,
                                   @NotNull String fileChooserTitle)
   {
-    super(createTextField(project, externalSystemId), createBrowseListener(descriptor, fileChooserTitle));
+    super(createTextField(project, externalSystemId), new MyBrowseListener(descriptor, fileChooserTitle, project));
+    ActionListener[] listeners = getButton().getActionListeners();
+    for (ActionListener listener : listeners) {
+      if (listener instanceof MyBrowseListener) {
+        ((MyBrowseListener)listener).setPathField(getChildComponent());
+        break;
+      }
+    }
     myProject = project;
     myExternalSystemId = externalSystemId;
   }
@@ -106,23 +120,6 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
     return result;
   }
   
-  @NotNull
-  private static ActionListener createBrowseListener(@NotNull final FileChooserDescriptor descriptor,
-                                                     final @NotNull String fileChooserTitle)
-  {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        descriptor.setTitle(fileChooserTitle);
-        // TODO den implement
-        //VirtualFile file = FileChooser.chooseFile(descriptor, get, null);
-        //if (file != null) {
-        //  setWorkingDirectory(file.getPresentableUrl());
-        //}
-      }
-    };
-  }
-
   @Override
   public void setText(final String text) {
     getChildComponent().setText(text);
@@ -179,5 +176,48 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
   @Override
   public String getText() {
     return getChildComponent().getText();
+  }
+  
+  private static class MyBrowseListener implements ActionListener {
+    
+    @NotNull private final FileChooserDescriptor myDescriptor;
+    @NotNull private final Project myProject;
+    private EditorTextField myPathField;
+    
+    MyBrowseListener(@NotNull final FileChooserDescriptor descriptor,
+                     @NotNull final String fileChooserTitle,
+                     @NotNull final Project project)
+    {
+      descriptor.setTitle(fileChooserTitle);
+      myDescriptor = descriptor;
+      myProject = project;
+    }
+
+    private void setPathField(@NotNull EditorTextField pathField) {
+      myPathField = pathField;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (myPathField == null) {
+        assert false;
+        return;
+      }
+      PropertiesComponent component = PropertiesComponent.getInstance(myProject);
+      String pathToStart = myPathField.getText();
+      if (StringUtil.isEmpty(pathToStart)) {
+        pathToStart = component.getValue(PROJECT_FILE_TO_START_WITH_KEY);
+      }
+      VirtualFile fileToStart = null;
+      if (!StringUtil.isEmpty(pathToStart)) {
+        fileToStart = LocalFileSystem.getInstance().findFileByPath(pathToStart);
+      }
+      VirtualFile file = FileChooser.chooseFile(myDescriptor, myProject, fileToStart);
+      if (file != null) {
+        String path = ExternalSystemApiUtil.getLocalFileSystemPath(file);
+        myPathField.setText(path);
+        component.setValue(PROJECT_FILE_TO_START_WITH_KEY, path);
+      }
+    }
   }
 }
