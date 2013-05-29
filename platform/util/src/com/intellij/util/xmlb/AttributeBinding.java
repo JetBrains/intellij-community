@@ -32,6 +32,7 @@ public class AttributeBinding implements Binding {
     myAttribute = attribute;
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     final Object v = myAccessor.read(o);
     final Object node = myBinding.serialize(v, context, filter);
@@ -39,6 +40,7 @@ public class AttributeBinding implements Binding {
     return new org.jdom.Attribute(myAttribute.value(), ((Content)node).getValue());
   }
 
+  @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object... nodes) {
     assert nodes.length == 1;
@@ -52,14 +54,17 @@ public class AttributeBinding implements Binding {
     return context;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     return node instanceof org.jdom.Attribute && ((org.jdom.Attribute)node).getName().equals(myAttribute.value());
   }
 
+  @Override
   public Class getBoundNodeType() {
     return org.jdom.Attribute.class;
   }
 
+  @Override
   public void init() {
     myBinding = XmlSerializerImpl.getBinding(myAccessor);
     if (!Text.class.isAssignableFrom(myBinding.getBoundNodeType())) {
