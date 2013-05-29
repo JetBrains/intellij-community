@@ -342,7 +342,7 @@ public class PyUtil {
    * @param backwards   true to erase prev siblings, false to erase next siblings.
    * @return true       if a comma was found and removed.
    */
-  private static boolean eraseWhitespaceAndComma(ASTNode parent_node, PsiElement item, boolean backwards) {
+  public static boolean eraseWhitespaceAndComma(ASTNode parent_node, PsiElement item, boolean backwards) {
     // we operate on AST, PSI won't let us delete whitespace easily.
     boolean is_comma;
     boolean got_comma = false;
@@ -673,25 +673,9 @@ public class PyUtil {
       element.replace(expression);
     }
     else {
-      final PsiReference reference = qualifier.getReference();
-      if (reference != null) {
-        final PsiElement resolved = reference.resolve();
-        if (resolved instanceof PyTargetExpression) {
-          final PsiElement parent = resolved.getParent();
-          if (parent instanceof PyAssignmentStatement) {
-            final PyExpression value = ((PyAssignmentStatement)parent).getAssignedValue();
-            if (value instanceof PyCallExpression) {
-              final PyExpression callee = ((PyCallExpression)value).getCallee();
-              if (callee instanceof PyReferenceExpression) {
-                final PyExpression calleeQualifier = ((PyReferenceExpression)callee).getQualifier();
-                if (calleeQualifier != null) {
-                  value.replace(calleeQualifier);
-                }
-              }
-            }
-          }
-        }
-      }
+      final PsiElement dot = qualifier.getNextSibling();
+      if (dot != null) dot.delete();
+      qualifier.delete();
     }
   }
 

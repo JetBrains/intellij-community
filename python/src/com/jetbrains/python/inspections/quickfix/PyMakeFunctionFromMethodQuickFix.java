@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
@@ -55,8 +56,64 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement instanceof PyReferenceExpression) {
-        PyUtil.removeQualifier((PyReferenceExpression)usageElement);
+        updateUsage((PyReferenceExpression)usageElement);
       }
+    }
+  }
+
+  private static void updateUsage(@NotNull final PyReferenceExpression element) {
+    final PyExpression qualifier = element.getQualifier();
+    if (qualifier == null) return;
+
+    if (qualifier instanceof PyCallExpression) {              // remove qualifier foo.A().m()
+      PyUtil.removeQualifier(element);
+    }
+    else {
+      final PsiReference reference = qualifier.getReference();
+      if (reference == null) return;
+
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PyTargetExpression) {  // qualifier came from assignment  a = A(); a.m()
+        updateAssignment(element, resolved);
+      }
+      else if (resolved instanceof PyClass) {     //call with first instance argument A.m(A())
+        final PsiElement dot = qualifier.getNextSibling();
+        if (dot != null) dot.delete();
+        qualifier.delete();
+        updateArgumentList(element);
+      }
+    }
+  }
+
+  private static void updateAssignment(PyReferenceExpression element, @NotNull final PsiElement resolved) {
+    final PsiElement parent = resolved.getParent();
+    if (parent instanceof PyAssignmentStatement) {
+      final PyExpression value = ((PyAssignmentStatement)parent).getAssignedValue();
+      if (value instanceof PyCallExpression) {
+        final PyExpression callee = ((PyCallExpression)value).getCallee();
+        if (callee instanceof PyReferenceExpression) {
+          final PyExpression calleeQualifier = ((PyReferenceExpression)callee).getQualifier();
+          if (calleeQualifier != null) {
+            value.replace(calleeQualifier);
+          }
+          else {
+            PyUtil.removeQualifier(element);
+          }
+        }
+      }
+    }
+  }
+
+  private static void updateArgumentList(@NotNull final PyReferenceExpression element) {
+    final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
+    if (callExpression == null) return;
+    PyArgumentList argumentList = callExpression.getArgumentList();
+    if (argumentList == null) return;
+    final PyExpression[] arguments = argumentList.getArguments();
+    if (arguments.length > 0) {
+      final PyExpression argument = arguments[0];
+      PyUtil.eraseWhitespaceAndComma(argument.getParent().getNode(), argument, false);
+      argument.delete();
     }
   }
 }
