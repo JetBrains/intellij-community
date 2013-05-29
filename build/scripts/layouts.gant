@@ -230,8 +230,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 }
 
 public def layoutCommunityPlugins(String home) {
-  if (isDefined("androidPluginHome")) {
-    layoutAndroid(p("androidPluginHome"))
+  layoutCommunityPlugins(home, null)
+}
+
+public def layoutCommunityPlugins(String home, String androidPluginHome) {
+  if (androidPluginHome != null) {
+    layoutAndroid(androidPluginHome)
   }
 
   dir("plugins") {
