@@ -83,17 +83,17 @@ public class WebBrowserServiceImpl extends WebBrowserService {
 
   @Nullable
   public static WebBrowserUrlProvider getProvider(@Nullable PsiElement element) {
-    if (element == null) {
+    PsiFile psiFile = element == null ? null : element.getContainingFile();
+    if (psiFile == null) {
       return null;
     }
 
-    final List<WebBrowserUrlProvider> allProviders = Arrays.asList(WebBrowserUrlProvider.EP_NAME.getExtensions());
+    List<WebBrowserUrlProvider> allProviders = Arrays.asList(WebBrowserUrlProvider.EP_NAME.getExtensions());
     for (WebBrowserUrlProvider urlProvider : DumbService.getInstance(element.getProject()).filterByDumbAwareness(allProviders)) {
-      if (urlProvider.canHandleElement(element)) {
+      if (urlProvider.canHandleElement(element, psiFile)) {
         return urlProvider;
       }
     }
-
     return null;
   }
 }
