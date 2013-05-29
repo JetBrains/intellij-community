@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.plugins;
 
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
@@ -50,6 +52,11 @@ public class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", appInfo.getPluginManagerUrl()));
     }
 
+    File pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
+    if (pluginListFile.length() > 0) {
+      url = url + "&crc32=" + Files.hash(pluginListFile, Hashing.crc32()).toString();
+    }
+
     HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(url);
     connection.setRequestProperty("Accept-Encoding", "gzip");
 
@@ -61,6 +68,10 @@ public class RepositoryHelper {
     try {
       if (indicator != null) {
         indicator.checkCanceled();
+      }
+
+      if (connection.getResponseCode() == 304) {
+        return loadPluginList(pluginListFile);
       }
 
       String encoding = connection.getContentEncoding();
@@ -103,9 +114,13 @@ public class RepositoryHelper {
       os.close();
     }
 
+    return loadPluginList(temp);
+  }
+
+  private static List<IdeaPluginDescriptor> loadPluginList(File file) throws Exception {
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     RepositoryContentHandler handler = new RepositoryContentHandler();
-    parser.parse(temp, handler);
+    parser.parse(file, handler);
     return handler.getPluginsList();
   }
 
