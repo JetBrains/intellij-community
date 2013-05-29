@@ -531,7 +531,7 @@ public interface Test {
     @Override
     void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
       result.runRemainingContributors(parameters, true)
-      Thread.sleep 1000
+      Thread.sleep 500
     }
   }
 
@@ -809,7 +809,6 @@ class Foo {
     int actions = 4
 
     for (a1 in 0..actions) {
-      println "a1 = $a1"
       for (a2 in 0..actions) {
         myFixture.configureByText("$a1 $a2 .java", src)
         myFixture.type 'i'
@@ -1417,8 +1416,28 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     myFixture.type('a')
     joinAutopopup()
-    type '\n'
+    type('\n')
     assert !lookup
+  }
+
+  public void "test pressing enter and a letter while autopopup is calculating variants should restart autopopup"() {
+    registerContributor(LongContributor, LoadingOrder.FIRST)
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    myFixture.type('a')
+    joinAutopopup()
+    myFixture.type('\na')
+    joinCompletion()
+    assert lookup
+  }
+
+  public void "test a random write action shouldn't cancel autopopup"() {
+    registerContributor(LongContributor, LoadingOrder.FIRST)
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    myFixture.type('a')
+    joinAutopopup()
+    edt { ApplicationManager.application.runWriteAction {} }
+    joinCompletion()
+    assert lookup
   }
 
 }

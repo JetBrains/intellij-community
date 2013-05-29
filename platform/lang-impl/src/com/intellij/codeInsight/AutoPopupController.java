@@ -110,6 +110,7 @@ public class AutoPopupController implements Disposable {
 
     final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(null, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
+    phase.ignoreCurrentDocumentChange();
 
     CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
       @Override

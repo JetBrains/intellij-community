@@ -50,7 +50,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
 
-    if (oldPhase instanceof CompletionPhase.CommittingDocuments && ((CompletionPhase.CommittingDocuments)oldPhase).restartCompletion()) {
+    if (oldPhase instanceof CompletionPhase.CommittingDocuments && ((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion()) {
+      ((CompletionPhase.CommittingDocuments)oldPhase).ignoreCurrentDocumentChange();
       return Result.STOP;
     }
 
