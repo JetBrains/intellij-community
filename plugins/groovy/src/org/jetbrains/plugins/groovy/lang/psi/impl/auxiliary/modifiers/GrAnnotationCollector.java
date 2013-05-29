@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class GrAnnotationCollector {
+  @NotNull
   public static GrAnnotation[] getResolvedAnnotations(@NotNull GrModifierList modifierList) {
     final GrAnnotation[] rawAnnotations = modifierList.getRawAnnotations();
 
@@ -56,7 +57,7 @@ public class GrAnnotationCollector {
     return result.toArray(new GrAnnotation[result.size()]);
   }
 
-  private static boolean hasAliases(GrAnnotation[] rawAnnotations) {
+  private static boolean hasAliases(@NotNull GrAnnotation[] rawAnnotations) {
     for (GrAnnotation annotation : rawAnnotations) {
       final GrAnnotation annotationCollector = findAnnotationCollector(annotation);
       if (annotationCollector != null) {
@@ -74,6 +75,7 @@ public class GrAnnotationCollector {
    * @param annotationCollector @AnnotationCollector annotation used in alias declaration
    * @return set of used arguments of alias annotation
    */
+  @NotNull
   public static Set<String> collectAnnotations(@NotNull List<GrAnnotation> list,
                                                @NotNull GrAnnotation alias,
                                                @NotNull GrAnnotation annotationCollector) {
@@ -122,8 +124,8 @@ public class GrAnnotationCollector {
     return allUsedAttrs;
   }
 
-  private static void collectAliasedAnnotationsFromAnnotationCollectorAnnotations(GrModifierList modifierList,
-                                                                                  HashMap<String, Map<String, GrAnnotationNameValuePair>> annotations) {
+  private static void collectAliasedAnnotationsFromAnnotationCollectorAnnotations(@NotNull GrModifierList modifierList,
+                                                                                  @NotNull HashMap<String, Map<String, GrAnnotationNameValuePair>> annotations) {
     for (GrAnnotation annotation : modifierList.getRawAnnotations()) {
       final String qname = annotation.getQualifiedName();
 
@@ -146,8 +148,8 @@ public class GrAnnotationCollector {
 
   }
 
-  private static void collectAliasedAnnotationsFromAnnotationCollectorValueAttribute(GrAnnotation annotationCollector,
-                                                                                     HashMap<String, Map<String, GrAnnotationNameValuePair>> annotations) {
+  private static void collectAliasedAnnotationsFromAnnotationCollectorValueAttribute(@NotNull GrAnnotation annotationCollector,
+                                                                                     @NotNull HashMap<String, Map<String, GrAnnotationNameValuePair>> annotations) {
     final PsiAnnotationMemberValue annotationsFromValue = annotationCollector.findAttributeValue("value");
 
     if (annotationsFromValue instanceof GrAnnotationArrayInitializer) {
@@ -163,7 +165,7 @@ public class GrAnnotationCollector {
   }
 
   @Nullable
-  public static GrAnnotation findAnnotationCollector(PsiClass clazz) {
+  public static GrAnnotation findAnnotationCollector(@Nullable PsiClass clazz) {
     if (clazz instanceof GrTypeDefinition) {
       final GrModifierList modifierList = ((GrTypeDefinition)clazz).getModifierList();
       if (modifierList != null) {
