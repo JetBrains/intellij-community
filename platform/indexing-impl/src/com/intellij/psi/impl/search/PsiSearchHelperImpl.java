@@ -597,7 +597,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private AsyncFuture<Boolean> processGlobalRequestsOptimizedAsync(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
-                                                 final ProgressIndicator progress) {
+                                                                   final ProgressIndicator progress) {
     if (singles.isEmpty()) {
       return AsyncFutureFactory.wrap(true);
     }
