@@ -32,4 +32,12 @@ public class PyMakeMethodStaticQuickFixTest extends PyQuickFixTestCase {
     doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
+  public void testUsage() {
+    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+  }
+
+  public void testUsageImport() {
+    doMultifilesTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"), new String[]{"test.py"});
+  }
+
 }

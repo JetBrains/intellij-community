@@ -1,6 +1,5 @@
 package com.jetbrains.python.quickFixes;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.PyMethodMayBeStaticInspection;
 
@@ -46,21 +45,10 @@ public class PyMakeFunctionFromMethodQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testUsageImport() {
-    doTest();
+    doMultifilesTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.function"), new String[]{"test.py"});
   }
 
   public void testUsageImport1() {
-    doTest();
-  }
-
-
-  protected void doTest() {
-    final String testFileName = getTestName(true);
-    myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
-    myFixture.configureByFiles("test.py", testFileName + ".py");
-    final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("QFIX.NAME.make.function"));
-    assertNotNull(intentionAction);
-    myFixture.launchAction(intentionAction);
-    myFixture.checkResultByFile(testFileName + ".py", testFileName + "_after.py", true);
+    doMultifilesTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.function"), new String[]{"test.py"});
   }
 }
