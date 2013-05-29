@@ -75,8 +75,9 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
       return new MyResult(request, DiffPresentationReturnValue.useRequest);
 
     } else {
-      if (myFile.getFileType().isBinary()) {
-        final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, new FilePathImpl(myFile), context);
+      FilePathImpl filePath = new FilePathImpl(myFile);
+      if (filePath.getFileType().isBinary()) {
+        final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, filePath, context);
         if (! nowItIsText) {
           return createErrorResult();
         }

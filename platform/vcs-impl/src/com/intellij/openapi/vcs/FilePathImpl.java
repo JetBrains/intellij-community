@@ -131,7 +131,7 @@ public class FilePathImpl implements FilePath {
       return myFile.equals(((FilePath)o).getIOFile());
     }
   }
-  
+
   private static boolean isSpecialName(final String name) {
     return ".".equals(name) || "..".equals(name);
   }
@@ -214,6 +214,9 @@ public class FilePathImpl implements FilePath {
     if (myVirtualFile != null && !myVirtualFile.isValid()) {
       myVirtualFile = null;
     }
+    if (myVirtualFile == null) {
+      refresh();
+    }
     detectFileType();
     return myVirtualFile;
   }
@@ -251,10 +254,11 @@ public class FilePathImpl implements FilePath {
   @Override
   @Nullable
   public Document getDocument() {
-    if (myVirtualFile == null || myVirtualFile.getFileType().isBinary()) {
+    VirtualFile virtualFile = getVirtualFile();
+    if (virtualFile == null || virtualFile.getFileType().isBinary()) {
       return null;
     }
-    return FileDocumentManager.getInstance().getDocument(myVirtualFile);
+    return FileDocumentManager.getInstance().getDocument(virtualFile);
   }
 
   @Override
@@ -290,7 +294,8 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public FileType getFileType() {
-    return myVirtualFile != null ? myVirtualFile.getFileType() : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
+    VirtualFile virtualFile = getVirtualFile();
+    return virtualFile != null ? virtualFile.getFileType() : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
   }
 
   public static FilePathImpl create(VirtualFile file) {
