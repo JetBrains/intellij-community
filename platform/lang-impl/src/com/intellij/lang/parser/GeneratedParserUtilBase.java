@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.LimitedPool;
 import gnu.trove.THashSet;
@@ -86,6 +87,17 @@ public class GeneratedParserUtilBase {
     return frame == null || frame.errorReportedAt <= builder_.getCurrentOffset();
   }
 
+  public static TokenSet create_token_set_(IElementType... tokenTypes_) {
+    return TokenSet.create(tokenTypes_);
+  }
+
+  public static boolean type_extends_impl_(TokenSet[] extendsSet_, IElementType child_, IElementType parent_) {
+    for (TokenSet set : extendsSet_) {
+      if (set.contains(child_) && set.contains(parent_)) return true;
+    }
+    return false;
+  }
+
   public static boolean consumeTokens(PsiBuilder builder_, int pin_, IElementType... tokens_) {
     ErrorState state = ErrorState.get(builder_);
     if (state.completionState != null && state.predicateSign) {
@@ -105,6 +117,18 @@ public class GeneratedParserUtilBase {
     }
     state.completionState = completionState;
     return pinned_ || result_;
+  }
+
+  public static boolean parseTokens(PsiBuilder builder_, int pin_, IElementType... tokens_) {
+    PsiBuilder.Marker marker_ = builder_.mark();
+    boolean result_ = consumeTokens(builder_, pin_, tokens_);
+    if (!result_) {
+      marker_.rollbackTo();
+    }
+    else {
+      marker_.drop();
+    }
+    return result_;
   }
 
   public static boolean consumeToken(PsiBuilder builder_, IElementType token) {
