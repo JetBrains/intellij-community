@@ -1,9 +1,9 @@
 <idea-plugin version="2">
-  <actions>
-    <action id="org.jetbrains.plugins.terminal.RunLocalTerminalAction"
-            class="org.jetbrains.plugins.terminal.RunLocalTerminalAction"
-            text="Open Terminal..." description="Open terminal locally">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-  </actions>
+  <!--<actions>-->
+    <!--<action id="org.jetbrains.plugins.terminal.RunLocalTerminalAction"-->
+            <!--class="org.jetbrains.plugins.terminal.RunLocalTerminalAction"-->
+            <!--text="Open Terminal..." description="Open terminal locally">-->
+      <!--<add-to-group group-id="ToolsMenu" anchor="last"/>-->
+    <!--</action>-->
+  <!--</actions>-->
 </idea-plugin>
