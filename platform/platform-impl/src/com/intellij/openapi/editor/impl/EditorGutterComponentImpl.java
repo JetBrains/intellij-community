@@ -570,9 +570,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     RelativePoint point = new RelativePoint(myEditor.getComponent(), new Point(0, 0));
     Point editorLocationInWindow = point.getPoint(ideFrame.getComponent());
 
-    int editorLocationX = (int)editorLocationInWindow.getX();
     EditorSettings settings = myEditor.getSettings();
     int rightMargin = settings.getRightMargin(myEditor.getProject());
+    if (rightMargin <= 0) return;
+
+    int editorLocationX = (int)editorLocationInWindow.getX();
     int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;
 
     int width = (int)ideFrame.getComponent().getSize().getWidth();
