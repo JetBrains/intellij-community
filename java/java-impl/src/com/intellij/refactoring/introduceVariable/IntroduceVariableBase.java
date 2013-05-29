@@ -125,7 +125,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
 
       if (!selectionModel.hasSelection()) {
-        final List<PsiExpression> expressions = collectExpressions(file, editor, offset, statementsInRange);
+        final List<PsiExpression> expressions = collectExpressions(file, editor, offset);
         if (expressions.isEmpty()) {
           selectionModel.selectLineAtCaret();
         } else if (expressions.size() == 1) {
@@ -162,7 +162,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit(PREFER_STATEMENTS_OPTION, "false")).booleanValue() || Registry.is(PREFER_STATEMENTS_OPTION, false);
   }
 
-  public static List<PsiExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, final PsiElement... statementsInRange) {
+  public static List<PsiExpression> collectExpressions(final PsiFile file,
+                                                       final Editor editor,
+                                                       final int offset) {
+    return collectExpressions(file, editor, offset, false);
+  }
+
+  public static List<PsiExpression> collectExpressions(final PsiFile file,
+                                                       final Editor editor,
+                                                       final int offset,
+                                                       boolean acceptVoid) {
     Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
@@ -196,7 +205,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }*/
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
-      if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
+      if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && 
+          (acceptVoid || expression.getType() != PsiType.VOID)) {
         if (expression instanceof PsiMethodReferenceExpression) {
           expressions.add(expression);
         }

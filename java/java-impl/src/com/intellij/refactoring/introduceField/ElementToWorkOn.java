@@ -99,7 +99,7 @@ public class ElementToWorkOn {
         }
 
         if (!editor.getSelectionModel().hasSelection()){
-          final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
+          final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset);
           for (Iterator<PsiExpression> iterator = expressions.iterator(); iterator.hasNext(); ) {
             PsiExpression expression = iterator.next();
             if (!processor.accept(new ElementToWorkOn(null, expression))) {
