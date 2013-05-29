@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.Reflection;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -308,87 +307,32 @@ public class ReflectionUtil {
     }
   }
 
-  /**
-   * @see com.intellij.ide.plugins.PluginManager#initPlugins(com.intellij.ide.StartupProgress)
-   */
-  @SuppressWarnings("JavadocReference")
-  static volatile Function<String, ClassLoader> PLUGIN_CLASS_LOADER_DETECTOR = FunctionUtil.nullConstant();
 
-
-  private static final Method Reflection_getCallerClass_int;
-  static {
-    Method getCallerClass = null;
-    try {
-      getCallerClass = Reflection.class.getDeclaredMethod("getCallerClass", int.class);
+  private static class MySecurityManager extends SecurityManager {
+    private static final MySecurityManager INSTANCE = new MySecurityManager();
+    public Class[] getStack() {
+      return getClassContext();
     }
-    catch (NoSuchMethodException ignored) {
-    }
-    Reflection_getCallerClass_int = getCallerClass;
   }
 
   /**
    * Returns the class this method was called 'framesToSkip' frames up the caller hierarchy.
-   * JDK used to have {@link sun.reflect.Reflection#getCallerClass(int)} until jdk 1.8 build 87.
-   * So we have to resort to slow stack unwinding.
    *
    * NOTE:
    * <b>Extremely expensive!
    * Please consider not using it.
    * These aren't the droids you're looking for!</b>
    */
-  @SuppressWarnings("JavadocReference")
   @Nullable
   public static Class findCallerClass(int framesToSkip) {
-    if (Reflection_getCallerClass_int != null) {
-      try {
-        return (Class)Reflection_getCallerClass_int.invoke(null, framesToSkip + 1);
-      }
-      catch (Exception ignored) {
-      }
-    }
-    assert framesToSkip > 0 : framesToSkip;
-    int frames = framesToSkip;
-
-    StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-    String className = null;
-    for (int i = 1; i <= frames; i++) {
-      if (i >= stackTrace.length) {
-        break;
-      }
-      StackTraceElement element = stackTrace[i];
-      className = element.getClassName();
-      if (className.equals("java.lang.reflect.Method") ||
-          className.equals("sun.reflect.NativeMethodAccessorImpl") ||
-          className.equals("sun.reflect.DelegatingMethodAccessorImpl")) {
-        frames++;
-        continue;
-      }
-      if (i == frames) {
-        break;
-      }
-    }
-
-    if (className == null) {
-      // some plugins incorrectly expect not-null class too far up the caller chain,
-      // so provide some not-null class for them
-      className = ReflectionUtil.class.getName();
-    }
-
     try {
-      return Class.forName(className);
+      Class[] stack = MySecurityManager.INSTANCE.getStack();
+      int indexFromTop = 1 + framesToSkip;
+      return stack.length > indexFromTop ? stack[indexFromTop] : null;
     }
-    catch (ClassNotFoundException ignored) {
+    catch (Exception e) {
+      LOG.warn(e);
+      return null;
     }
-    ClassLoader pluginClassLoader = PLUGIN_CLASS_LOADER_DETECTOR.fun(className);
-    if (pluginClassLoader != null) {
-      try {
-        return Class.forName(className, false, pluginClassLoader);
-      }
-      catch (ClassNotFoundException ignored) {
-      }
-    }
-    LOG.error("Could not load class '" + className + "' using classLoader " + ReflectionUtil.class.getClassLoader() + "." +
-              (stackTrace[1].getClassName().equals("com.intellij.openapi.util.IconLoader") ? " Use getIcon(String, Class) instead." : ""));
-    return null;
   }
 }
