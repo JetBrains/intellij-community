@@ -150,7 +150,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       if (ignoreDueToSettings(project, problem)) continue;
       final int line = problem.myLine - 1;
       final int column = problem.myColumn - 1;
-      int offset = document != null ? document.getLineStartOffset(line) + column : StringUtil.lineColToOffset(text, line, column);
+      int offset;
+      if (document != null) {
+        offset = line >= document.getLineCount() ? document.getTextLength()-1 : document.getLineStartOffset(line) + column;
+      }
+      else {
+        offset = StringUtil.lineColToOffset(text, line, column);
+      }
       PsiElement problemElement = file.findElementAt(offset);
       if (!(problemElement instanceof PsiWhiteSpace) && !(problem.myCode.startsWith("E3"))) {
         final PsiElement elementAfter = file.findElementAt(offset + 1);

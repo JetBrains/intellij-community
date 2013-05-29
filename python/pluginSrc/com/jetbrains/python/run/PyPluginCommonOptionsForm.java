@@ -1,5 +1,6 @@
 package com.jetbrains.python.run;
 
+import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
 import com.intellij.ide.util.PropertiesComponent;
@@ -62,7 +63,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     Collections.sort(validModules, new ModulesAlphaComparator());
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
-    myModuleComboBox.setRenderer(new PyModuleRenderer());
+    myModuleComboBox.setRenderer(new ModuleListCellRenderer());
 
     myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
