@@ -84,9 +84,6 @@ public abstract class ChooseItemAction extends EditorAction {
         return false;
       }
       if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
-        if (lookup.isFocused()) {
-          return true;
-        }
         return !lookup.getItems().isEmpty();
       }
 
