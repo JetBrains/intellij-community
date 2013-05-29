@@ -4269,6 +4269,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
+  public void addFocusListener(@NotNull FocusChangeListener listener, Disposable parentDisposable) {
+    ContainerUtil.add(listener, myFocusListeners, parentDisposable);
+  }
+
+  @Override
   @Nullable
   public Project getProject() {
     return myProject;

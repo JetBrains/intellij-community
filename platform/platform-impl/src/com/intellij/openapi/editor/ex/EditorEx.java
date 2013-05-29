@@ -19,6 +19,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -105,6 +106,8 @@ public interface EditorEx extends Editor {
   boolean setCaretEnabled(boolean enabled);
 
   void addFocusListener(@NotNull FocusChangeListener listener);
+  
+  void addFocusListener(@NotNull FocusChangeListener listener, Disposable parentDisposable);
 
   void setOneLineMode(boolean b);
 

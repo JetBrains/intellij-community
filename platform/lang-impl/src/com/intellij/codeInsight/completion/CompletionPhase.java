@@ -31,6 +31,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -177,6 +179,19 @@ public abstract class CompletionPhase implements Disposable {
           }
         }
       }, this);
+      if (indicator.isAutopopupCompletion()) {
+        // lookup is not visible, we have to check ourselves if editor retains focus 
+        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
+          @Override
+          public void focusGained(Editor editor) {
+          }
+  
+          @Override
+          public void focusLost(Editor editor) {
+            indicator.closeAndFinish(true);
+          }
+        }, this);
+      }
     }
 
     @Override
