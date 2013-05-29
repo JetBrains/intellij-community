@@ -16,12 +16,10 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +42,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
@@ -75,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
+  @NonNls public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
   public static final String RECENT_FILES_KEY = "file.chooser.recent.files";
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
@@ -292,7 +290,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     final JPanel toolbarPanel = new JPanel(new BorderLayout());
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.CENTER);
 
-    myTextFieldAction = new TextFieldAction();
+    myTextFieldAction = new TextFieldAction() {
+      public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
+        toggleShowTextField();
+      }
+    };
     toolbarPanel.add(myTextFieldAction, BorderLayout.EAST);
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
@@ -474,11 +476,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<String, LocalFileSystem.WatchRequest>();
 
   private static boolean isToShowTextField() {
-    return PropertiesComponent.getInstance().getBoolean("FileChooser.ShowPath", true);
+    return PropertiesComponent.getInstance().getBoolean(FILE_CHOOSER_SHOW_PATH_PROPERTY, true);
   }
 
   private static void setToShowTextField(boolean toShowTextField) {
-    PropertiesComponent.getInstance().setValue("FileChooser.ShowPath", Boolean.toString(toShowTextField));
+    PropertiesComponent.getInstance().setValue(FILE_CHOOSER_SHOW_PATH_PROPERTY, Boolean.toString(toShowTextField));
   }
 
   private final class FileTreeExpansionListener implements TreeExpansionListener {
@@ -576,34 +578,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myNorthPanel.repaint();
   }
 
-
-  private class TextFieldAction extends LinkLabel implements LinkListener {
-    public TextFieldAction() {
-      super("", null);
-      setListener(this, null);
-      update();
-    }
-
-    protected void onSetActive(final boolean active) {
-      final String tooltip = AnAction
-        .createTooltipText(ActionsBundle.message("action.FileChooser.TogglePathShowing.text"),
-                           ActionManager.getInstance().getAction("FileChooser.TogglePathShowing"));
-      setToolTipText(tooltip);
-    }
-
-    protected String getStatusBarText() {
-      return ActionsBundle.message("action.FileChooser.TogglePathShowing.text");
-    }
-
-    public void update() {
-      setVisible(true);
-      setText(isToShowTextField() ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
-    }
-
-    public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
-      toggleShowTextField();
-    }
-  }
 
   private void updatePathFromTree(final List<VirtualFile> selection, boolean now) {
     if (!isToShowTextField() || myTreeIsUpdating) return;

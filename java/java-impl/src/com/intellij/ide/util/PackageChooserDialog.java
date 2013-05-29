@@ -22,6 +22,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.fileChooser.ex.TextFieldAction;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -35,9 +40,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
@@ -66,6 +72,9 @@ public class PackageChooserDialog extends PackageChooser {
   private final Project myProject;
   private final String myTitle;
   private Module myModule;
+  private EditorTextField myPathEditor;
+
+  private Alarm myAlarm = new Alarm(getDisposable()); 
 
   public PackageChooserDialog(String title, @NotNull Module module) {
     super(module.getProject(), true);
@@ -147,19 +156,69 @@ public class PackageChooserDialog extends PackageChooser {
         else {
           setTitle(myTitle);
         }
+        updatePathFromTree();
       }
     });
 
     panel.add(scrollPane, BorderLayout.CENTER);
     DefaultActionGroup group = createActionGroup(myTree);
 
+    final JPanel northPanel = new JPanel(new BorderLayout());
+    panel.add(northPanel, BorderLayout.NORTH);
     ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    panel.add(toolBar.getComponent(), BorderLayout.NORTH);
-    toolBar.getComponent().setAlignmentX(JComponent.LEFT_ALIGNMENT);
-
+    northPanel.add(toolBar.getComponent(), BorderLayout.WEST);
+    setupPathComponent(northPanel);
     return panel;
   }
 
+  private void setupPathComponent(final JPanel northPanel) {
+    northPanel.add(new TextFieldAction() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        toggleShowPathComponent(northPanel, this);
+      }
+    }, BorderLayout.EAST);
+    myPathEditor = new EditorTextField(JavaReferenceEditorUtil.createDocument("", myProject, false), myProject, StdFileTypes.JAVA);
+    myPathEditor.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            updateTreeFromPath();
+          }
+        }, 300);
+      }
+    });
+    myPathEditor.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
+    northPanel.add(myPathEditor, BorderLayout.SOUTH);
+  }
+
+  private void toggleShowPathComponent(JPanel northPanel, TextFieldAction fieldAction) {
+    boolean toShowTextField = !isPathShowing();
+    PropertiesComponent.getInstance().setValue(FileChooserDialogImpl.FILE_CHOOSER_SHOW_PATH_PROPERTY, Boolean.toString(toShowTextField));
+    myPathEditor.setVisible(toShowTextField);
+    fieldAction.update();
+    northPanel.revalidate();
+    northPanel.repaint();
+    updatePathFromTree();
+  }
+
+  private static boolean isPathShowing() {
+    return PropertiesComponent.getInstance().getBoolean(FileChooserDialogImpl.FILE_CHOOSER_SHOW_PATH_PROPERTY, true);
+  }
+
+  private void updatePathFromTree() {
+    if (!isPathShowing()) return;
+    final PsiPackage selection = getTreeSelection();
+    myPathEditor.setText(selection != null ? selection.getQualifiedName() : "");
+  }
+
+  private void updateTreeFromPath() {
+    selectPackage(myPathEditor.getText().trim());
+  }
+  
   private DefaultActionGroup createActionGroup(JComponent component) {
     final DefaultActionGroup group = new DefaultActionGroup();
     final DefaultActionGroup temp = new DefaultActionGroup();
