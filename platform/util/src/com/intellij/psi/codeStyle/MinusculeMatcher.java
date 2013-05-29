@@ -248,8 +248,12 @@ public class MinusculeMatcher implements Matcher {
 
     if (patternIndex == myPattern.length) {
       boolean space = isPatternChar(patternIndex - 1, ' ');
-      // the trailing space should match if the pattern ends with the last name part, or only its first hump character
+      // the trailing space should match if the pattern ends with the last word part, or only its first hump character
       if (space && nameIndex != name.length() && (patternIndex < 2 || !NameUtil.isWordStart(myPattern[patternIndex - 2]))) {
+        int spaceIndex = name.indexOf(' ', nameIndex);
+        if (spaceIndex >= 0) {
+          return FList.<TextRange>emptyList().prepend(TextRange.from(spaceIndex, 1));
+        }
         return null;
       }
       return FList.emptyList();
@@ -358,7 +362,11 @@ public class MinusculeMatcher implements Matcher {
           }
           // at least three consecutive uppercase letters shouldn't match lowercase
           if (myHasHumps && i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
-            return null;
+            // but if there's a lowercase after them, it can match (in case shift was released a bit later)
+            if (nameIndex + i + 1 == name.length() ||
+                patternIndex + i + 1 < myPattern.length && !isLowerCase[patternIndex + i + 1]) {
+              return null;
+            }
           }
         }
       }
@@ -373,7 +381,7 @@ public class MinusculeMatcher implements Matcher {
 
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
-    while (i >= minFragment) {
+    while (i >= minFragment || isWildcard(patternIndex + i)) {
       FList<TextRange> ranges = isWildcard(patternIndex + i) ?
                                 matchWildcards(name, patternIndex + i, nameIndex + i, matchingState) :
                                 matchSkippingWords(name, patternIndex + i, nameIndex + i, false, matchingState);
