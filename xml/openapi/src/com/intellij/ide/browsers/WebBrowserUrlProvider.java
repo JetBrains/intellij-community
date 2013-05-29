@@ -35,10 +35,7 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @NotNull
-  /**
-   * URL must not be encoded (space as is)
-   */
-  public abstract String getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
+  public abstract Url getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
 
   /**
    * Invariant: element has not null containing psi file with not null virtual file
