@@ -24,6 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.GrLabelBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
@@ -87,6 +88,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
         return Indent.getNormalIndent();
       }
     }
+    if (parentBlock instanceof GrLabelBlock) {
+      return myChildType == LABELED_STATEMENT
+             ? Indent.getNoneIndent()
+             : Indent.getLabelIndent();
+
+    }
 
     if (GSTRING_TOKENS_INNER.contains(myChildType)) {
       return Indent.getAbsoluteNoneIndent();
@@ -138,11 +145,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       if (indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE) {
         myResult = Indent.getAbsoluteLabelIndent();
       }
-      else {
+    }
+    else {
+      if (myBlock.getContext().getGroovySettings().INDENT_LABEL_BLOCKS) {
         myResult = Indent.getLabelIndent();
       }
     }
-
   }
 
   @Override

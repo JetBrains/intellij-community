@@ -205,6 +205,18 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   @Override
+  public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
+    if (myType1 == mCOLON) {
+      if (myGroovySettings.INDENT_LABEL_BLOCKS) {
+        createLF(true);
+      }
+      else {
+        createSpaceInCode(true);
+      }
+    }
+  }
+
+  @Override
   public void visitAnnotation(GrAnnotation annotation) {
     if (myType2 == ANNOTATION_ARGUMENTS) {
       createSpaceInCode(mySettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST);

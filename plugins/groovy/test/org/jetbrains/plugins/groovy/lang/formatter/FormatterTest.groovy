@@ -711,6 +711,30 @@ print abc ?:
 '''
   }
 
+  void testLabelsInBasicMode() {
+    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
+
+    checkFormatting('''\
+abc:foo()
+bar()
+''', '''\
+abc: foo()
+bar()
+''')
+  }
+
+  void testLabels() {
+    checkFormatting('''\
+abc:foo()
+bar()
+''', '''\
+abc:
+  foo()
+  bar()
+''')
+  }
+
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

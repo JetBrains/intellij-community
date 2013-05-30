@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.GrLabelBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.MethodCallWithoutQualifierBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -227,6 +228,7 @@ public abstract class GroovySpacingProcessorBasic {
   private static boolean mirrorsAst(GroovyBlock block) {
     return block.getNode().getTextRange().equals(block.getTextRange()) ||
            block instanceof MethodCallWithoutQualifierBlock ||
-           block instanceof ClosureBodyBlock;
+           block instanceof ClosureBodyBlock ||
+           block instanceof GrLabelBlock;
   }
 }

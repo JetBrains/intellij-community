@@ -52,7 +52,7 @@ public class ClosureBodyBlock extends GroovyBlock {
       GroovyBlockGenerator generator = new GroovyBlockGenerator(this);
       List<ASTNode> children = GroovyBlockGenerator.getClosureBodyVisibleChildren(myNode.getTreeParent());
 
-      mySubBlocks = generator.generateSubBlockForCodeBlocks(false, children);
+      mySubBlocks = generator.generateSubBlockForCodeBlocks(false, children, myContext.getGroovySettings().INDENT_LABEL_BLOCKS);
 
       //at least -> exists
       assert !mySubBlocks.isEmpty();
