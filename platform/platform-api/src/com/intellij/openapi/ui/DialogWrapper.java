@@ -34,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
@@ -219,9 +220,22 @@ public abstract class DialogWrapper {
     this((Project)null, canBeParent);
   }
 
+  /** Typically, we should set a parent explicitly. Use WindowManager#suggestParentWindow
+   *  method to find out the best parent for your dialog. Exceptions are cases
+   *  when we do not have a project to figure out which window
+   *  is more suitable as an owner for the dialog.
+   *
+   * @param canBeParent
+   * @param applicationModalIfPossible
+   */
+  @Deprecated
   protected DialogWrapper(boolean canBeParent, boolean applicationModalIfPossible) {
+    this(null, canBeParent, applicationModalIfPossible);
+  }
+
+  protected DialogWrapper(Project project, boolean canBeParent, boolean applicationModalIfPossible) {
     ensureEventDispatchThread();
-    myPeer = createPeer(canBeParent, applicationModalIfPossible);
+    myPeer = createPeer(WindowManager.getInstance().suggestParentWindow(project), canBeParent, applicationModalIfPossible);
     createDefaultActions();
   }
 
@@ -694,8 +708,13 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
 
+  @Deprecated
   protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
-    return DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, applicationModalIfPossible);
+    return createPeer(null, canBeParent, applicationModalIfPossible);
+  }
+
+  protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, applicationModalIfPossible);
   }
 
   protected DialogWrapperPeer createPeer(@Nullable final Project project, final boolean canBeParent) {
