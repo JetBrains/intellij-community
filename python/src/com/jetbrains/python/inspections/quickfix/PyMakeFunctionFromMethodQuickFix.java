@@ -1,19 +1,24 @@
 package com.jetbrains.python.inspections.quickfix;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,29 +49,35 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
     PyUtil.deleteParameter(problemFunction, 0);
 
-    final PsiElement copy = problemFunction.copy();
+    PsiElement copy = problemFunction.copy();
     final PyStatementList classStatementList = containingClass.getStatementList();
     classStatementList.deleteChildRange(problemFunction, problemFunction);
     if (classStatementList.getStatements().length < 1) {
       classStatementList.add(PyElementGenerator.getInstance(project).createPassStatement());
     }
     final PsiFile file = containingClass.getContainingFile();
-    file.addAfter(copy, containingClass);
+    copy = file.addAfter(copy, containingClass);
 
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement instanceof PyReferenceExpression) {
-        updateUsage((PyReferenceExpression)usageElement);
+        final PsiFile usageFile = usageElement.getContainingFile();
+        updateUsage(copy, (PyReferenceExpression)usageElement, usageFile, !usageFile.equals(file));
       }
     }
   }
 
-  private static void updateUsage(@NotNull final PyReferenceExpression element) {
+  private static void updateUsage(@NotNull final PsiElement finalElement, @NotNull final PyReferenceExpression element,
+                                  @NotNull final PsiFile usageFile, boolean addImport) {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier == null) return;
 
-    if (qualifier instanceof PyCallExpression) {              // remove qualifier foo.A().m()
+    if (qualifier instanceof PyCallExpression) {              // remove qualifier A().m()
+      if (addImport)
+        AddImportHelper.addImport((PsiNamedElement)finalElement, usageFile, element);
+
       PyUtil.removeQualifier(element);
+      removeFormerImport(usageFile, addImport);
     }
     else {
       final PsiReference reference = qualifier.getReference();
@@ -82,6 +93,24 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
         qualifier.delete();
         updateArgumentList(element);
       }
+    }
+  }
+
+  private static void removeFormerImport(@NotNull final PsiFile usageFile, boolean addImport) {
+    if (usageFile instanceof PyFile && addImport) {
+      final LocalInspectionToolSession session = new LocalInspectionToolSession(usageFile, 0, usageFile.getTextLength());
+      final PyUnresolvedReferencesInspection.Visitor visitor = new PyUnresolvedReferencesInspection.Visitor(null,
+                                                                                                            session,
+                                                                                                            Collections.<String>emptyList());
+      usageFile.accept(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyElement(PyElement node) {
+          super.visitPyElement(node);
+          node.accept(visitor);
+        }
+      });
+
+      visitor.optimizeImports();
     }
   }
 
