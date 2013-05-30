@@ -140,4 +140,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   public Runnable enableSearch(String option) {
     return null;
   }
+
+  @NotNull
+  protected final Project getProject() {
+    return myProject;
+  }
 }
