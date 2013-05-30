@@ -70,7 +70,7 @@ public class RepositoryHelper {
         indicator.checkCanceled();
       }
 
-      if (connection.getResponseCode() == 304) {
+      if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
         return loadPluginList(pluginListFile);
       }
 
