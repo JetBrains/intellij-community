@@ -26,12 +26,13 @@ import java.util.Map;
  * @author yole
  */
 public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurable> implements SearchableConfigurable {
+  @NotNull
   private final Project myProject;
   private final String myDisplayName;
   private final String myHelpTopic;
   private final Map<Module, T> myModuleConfigurables = new HashMap<Module, T>();
 
-  public ModuleAwareProjectConfigurable(Project project, String displayName, String helpTopic) {
+  public ModuleAwareProjectConfigurable(@NotNull Project project, String displayName, String helpTopic) {
     myProject = project;
     myDisplayName = displayName;
     myHelpTopic = helpTopic;
