@@ -4029,7 +4029,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myDragOnGutterSelectionStartLine = - 1;
     }
-    
+
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
 
     int x = e.getX();
@@ -4269,7 +4269,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void addFocusListener(@NotNull FocusChangeListener listener, Disposable parentDisposable) {
+  public void addFocusListener(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
     ContainerUtil.add(listener, myFocusListeners, parentDisposable);
   }
 
@@ -5352,7 +5352,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myDragOnGutterSelectionStartLine = yPositionToLogicalLine(e.getY());
       }
-      
+
       // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
       // But this trigger is always consumed by popup handler. In that case we have to
       // also move caret.
@@ -5504,7 +5504,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final int oldStart = mySelectionModel.getSelectionStart();
       final int oldEnd = mySelectionModel.getSelectionEnd();
-      
+
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
