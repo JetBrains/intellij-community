@@ -209,7 +209,10 @@ public class PyExtractMethodUtil {
       scope.add(owner);
       final PyClass containingClass = ((PyFunction)owner).getContainingClass();
       if (containingClass != null) {
-        Collections.addAll(scope, containingClass.getMethods());
+        for (PyFunction function : containingClass.getMethods()) {
+          if (!function.equals(owner) && !function.equals(generatedMethod))
+            scope.add(function);
+        }
       }
     }
     final List<Pair<PsiElement, PsiElement>> duplicates = finder.findDuplicates(scope, generatedMethod);
