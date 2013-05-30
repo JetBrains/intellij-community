@@ -68,6 +68,7 @@ typedef struct {
 
 static array* roots = NULL;
 
+static int log_level = 0;
 static bool self_test = false;
 
 static void init_log();
@@ -159,7 +160,7 @@ static void init_log() {
   char ident[32];
   snprintf(ident, sizeof(ident), "fsnotifier[%d]", getpid());
   openlog(ident, 0, LOG_USER);
-  setlogmask(LOG_UPTO(level));
+  log_level = level;
 }
 
 
@@ -177,8 +178,11 @@ void message(MSG id) {
 
 
 void userlog(int priority, const char* format, ...) {
-  va_list ap;
+  if (priority > log_level) {
+    return;
+  }
 
+  va_list ap;
   va_start(ap, format);
   vsyslog(priority, format, ap);
   va_end(ap);
