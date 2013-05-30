@@ -25,6 +25,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
 
   public void afterSuiteChosen() {
     final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
+    if (suitesBundle == null) return;
     final CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
     if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getState()) != null) {
       viewManager.createToolWindow(CoverageViewManager.getDisplayName(suitesBundle), shouldActivate(suitesBundle));

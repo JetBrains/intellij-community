@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -22,7 +23,7 @@ class CoverageTableModel extends AbstractTableModel implements AbstractListBuild
 
   final List myElements = new ArrayList();
 
-  public CoverageTableModel(CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean, Project project) {
+  public CoverageTableModel(@NotNull CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean, Project project) {
     final CoverageEngine coverageEngine = suitesBundle.getCoverageEngine();
     COLUMN_INFOS = coverageEngine.createCoverageViewExtension(project, suitesBundle, stateBean).createColumnInfos();
   }
