@@ -42,7 +42,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
   private static void replacePrint(PsiElement expression, PyElementGenerator elementGenerator) {
     StringBuilder stringBuilder = new StringBuilder("print (");
 
-    PsiElement whiteSpace = expression.getParent().getNextSibling();
+    PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
     PsiElement next = null;
     if (whiteSpace instanceof PsiWhiteSpace) {
       if (!whiteSpace.getText().contains("\n"))
