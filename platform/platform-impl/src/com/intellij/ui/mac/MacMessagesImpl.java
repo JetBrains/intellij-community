@@ -290,9 +290,9 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
-
   private static Window findDocumentRoot (final Component c) {
-    Window w = SunToolkit.getContainingWindow(c);
+    if (c == null) return null;
+    Window w = (c instanceof Window) ? (Window)c : SunToolkit.getContainingWindow(c);
     synchronized (c.getTreeLock()) {
       while (w.getOwner() != null) {
         w = w.getOwner();
@@ -320,14 +320,14 @@ public class MacMessagesImpl extends MacMessages {
                                final int focusedOptionIndex, @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
 
 
-    Window documentRoot = getDocumetnRootFromWindow(window);
-    String documentRootTitle;
+    Window foremostWindow = getForemostWindow(window);
+    String foremostWindowTitle = getWindowTitle(foremostWindow);
 
-    documentRootTitle = getdocumentRootTitle(documentRoot);
+    Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    final ID focusedWindow = MacUtil.findWindowForTitle(documentRootTitle);
+    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
 
-    if (focusedWindow != null) {
+    if (foremostWindow != null) {
 
       final FocusTrackback[] focusTrackback = {new FocusTrackback(new Object(), documentRoot, true)};
 
@@ -345,7 +345,7 @@ public class MacMessagesImpl extends MacMessages {
       final ID paramsArray = invoke("NSArray", "arrayWithObjects:", nsString(title),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
                                     nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")),
-                                    focusedWindow, nsString(""), nsString(errorStyle ? "error" : "-1"),
+                                    nativeFocusedWindow, nsString(""), nsString(errorStyle ? "error" : "-1"),
                                     nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
                                              ? "-1"
@@ -364,7 +364,7 @@ public class MacMessagesImpl extends MacMessages {
         }
       });
 
-      startModal(documentRoot, focusedWindow);
+      startModal(documentRoot, nativeFocusedWindow);
 
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
 
@@ -384,26 +384,23 @@ public class MacMessagesImpl extends MacMessages {
       }
       return convertReturnCodeFromNativeMessageDialog(documentRoot);
     }
-
     return -1;
-
-
   }
 
   private static int convertReturnCodeFromNativeMessageDialog(Window documentRoot) {
     return resultsFromDocumentRoot.remove(documentRoot) - 1000;
   }
 
-  private static String getdocumentRootTitle(Window documentRoot) {
-    String documentRootTitle;
+  private static String getWindowTitle(Window documentRoot) {
+    String windowTitle;
     if (documentRoot instanceof Frame) {
-      documentRootTitle = ((Frame)documentRoot).getTitle();
+      windowTitle = ((Frame)documentRoot).getTitle();
     } else if (documentRoot instanceof Dialog) {
-      documentRootTitle = ((Dialog)documentRoot).getTitle();
+      windowTitle = ((Dialog)documentRoot).getTitle();
     } else {
       throw new RuntimeException("The window is not a frame and not a dialog!");
     }
-    return documentRootTitle;
+    return windowTitle;
   }
 
   public static int showAlertDialog(final String title,
@@ -415,15 +412,17 @@ public class MacMessagesImpl extends MacMessages {
                                     final boolean errorStyle,
                                     @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
 
-    Window documentRoot = getDocumetnRootFromWindow(window);
-    String documentRootTitle = getdocumentRootTitle(documentRoot);
+    Window foremostWindow = getForemostWindow(window);
+    String foremostWindowTitle = getWindowTitle(foremostWindow);
 
-    final ID focusedWindow = MacUtil.findWindowForTitle(documentRootTitle);
+    Window documentRoot = getDocumentRootFromWindow(foremostWindow);
+
+    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
 
     ID pool = invoke("NSAutoreleasePool", "new");
     try {
 
-      final ID delegate = invoke(Foundation.getObjcClass("NSAlertDelegate_"), "new");
+      final ID delegate = invoke(getObjcClass("NSAlertDelegate_"), "new");
       cfRetain(delegate);
 
       final ID paramsArray = invoke("NSArray", "arrayWithObjects:", nsString(title), nsString(UIUtil.removeMnemonic(defaultText)),
@@ -431,7 +430,7 @@ public class MacMessagesImpl extends MacMessages {
                                     nsString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
                                     nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")),
-                                    focusedWindow, nsString(""), nsString(errorStyle ? "error" : "-1"),
+                                    nativeFocusedWindow, nsString(""), nsString(errorStyle ? "error" : "-1"),
                                     nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
                                              ? "-1"
@@ -442,16 +441,14 @@ public class MacMessagesImpl extends MacMessages {
 
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
 
-
-
       runOrPostponeForWindow(documentRoot, new Runnable() {
         @Override
         public void run() {
           invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-                 Foundation.createSelector("showSheet:"), paramsArray, false);
+                 createSelector("showSheet:"), paramsArray, false);
         }
       });
-      startModal(documentRoot, focusedWindow);
+      startModal(documentRoot, nativeFocusedWindow);
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
 
     }
@@ -527,23 +524,46 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
-  private static Window getDocumetnRootFromWindow(Window window) {
-
-    if (window == null) {
-      Window _window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (_window == null) {
-        Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
-        if (focusOwner != null) {
-          _window = SwingUtilities.getWindowAncestor(focusOwner);
-        }
-
+  private static Window getForemostWindow(final Window window) {
+    Window _window = null;
+    Component focusOwner = null;
+    if (window != null) {
+      focusOwner = window.getMostRecentFocusOwner();
+      if (focusOwner != null) {
+        _window = SwingUtilities.getWindowAncestor(focusOwner);
         if (_window == null) {
-          _window = WindowManager.getInstance().findVisibleFrame();
+          // The document root window does not have focused or recently focused descendants
+          // Let's check that the document root window does not have
+          // owned windows
+          // todo: find a window blocker
         }
       }
-      window = _window;
     }
 
+    if (_window == null) {
+      focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+      if (focusOwner != null) {
+        _window = SwingUtilities.getWindowAncestor(focusOwner);
+      }
+    }
+
+    if (_window == null) {
+      focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      if (focusOwner != null) {
+        _window = SwingUtilities.getWindowAncestor(focusOwner);
+      }
+    }
+
+    if (_window == null) {
+      _window = WindowManager.getInstance().findVisibleFrame();
+    }
+    return _window;
+  }
+
+  /**
+   * Document root is intended to queue messages per a document root
+   */
+  private static Window getDocumentRootFromWindow(Window window) {
     return findDocumentRoot(window);
   }
 
