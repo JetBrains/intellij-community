@@ -34,9 +34,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -263,7 +263,7 @@ public class TestPackage extends TestObject {
     final MySearchForTestsTask task =
       new MySearchForTestsTask(classFilter, isJunit4, classes, callback);
     mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
-    ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
     return task;
   }
 
