@@ -30,10 +30,12 @@ public class PyDuplicatesFinder {
     } while (sibling != null);
   }
 
-  public List<Pair<PsiElement, PsiElement>> findDuplicates(@Nullable final PsiElement scope, @NotNull final PyFunction generatedMethod) {
+  public List<Pair<PsiElement, PsiElement>> findDuplicates(@Nullable final List<PsiElement> scope, @NotNull final PyFunction generatedMethod) {
     final ArrayList<Pair<PsiElement, PsiElement>> result = new ArrayList<Pair<PsiElement, PsiElement>>();
     if (scope != null) {
-      findPatternOccurrences(result, scope, generatedMethod);
+      for (PsiElement element : scope) {
+        findPatternOccurrences(result, element, generatedMethod);
+      }
     }
     return result;
   }

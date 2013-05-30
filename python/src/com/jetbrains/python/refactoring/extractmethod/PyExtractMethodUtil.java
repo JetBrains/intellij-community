@@ -204,10 +204,15 @@ public class PyExtractMethodUtil {
                                         @NotNull final Editor editor) {
     ScopeOwner owner = ScopeUtil.getScopeOwner(callElement);
     if (owner instanceof PsiFile) return;
-    if (owner instanceof PyFunction && ((PyFunction)owner).getContainingClass() != null) {
-      owner = ((PyFunction)owner).getContainingClass();
+    List<PsiElement> scope = new ArrayList<PsiElement>();
+    if (owner instanceof PyFunction) {
+      scope.add(owner);
+      final PyClass containingClass = ((PyFunction)owner).getContainingClass();
+      if (containingClass != null) {
+        Collections.addAll(scope, containingClass.getMethods());
+      }
     }
-    final List<Pair<PsiElement, PsiElement>> duplicates = finder.findDuplicates(owner, generatedMethod);
+    final List<Pair<PsiElement, PsiElement>> duplicates = finder.findDuplicates(scope, generatedMethod);
 
     if (duplicates.size() > 0) {
       final String message = RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
