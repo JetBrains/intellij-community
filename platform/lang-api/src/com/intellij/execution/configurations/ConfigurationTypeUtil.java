@@ -17,6 +17,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.extensions.Extensions;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -37,5 +38,9 @@ public class ConfigurationTypeUtil {
     }
     assert false : Arrays.toString(types) + " loader: " + configurationTypeClass.getClassLoader();
     return null;
+  }
+
+  public static boolean equals(@NotNull ConfigurationType type1, @NotNull ConfigurationType type2) {
+    return type1.getId().equals(type2.getId());
   }
 }
