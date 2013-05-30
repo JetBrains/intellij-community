@@ -96,7 +96,7 @@ public class TreeTableTree extends Tree {
 
   public void setVisibleRow(int row) {
     myVisibleRow  = row;
-    setPreferredSize(new Dimension(getPreferredSize().height, getRowBounds(myVisibleRow).width));
+    setPreferredSize(new Dimension(getRowBounds(myVisibleRow).width, getPreferredSize().height));
   }
 
   public void _processKeyEvent(KeyEvent e){
