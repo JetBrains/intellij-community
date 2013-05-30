@@ -384,7 +384,7 @@ bool process_inotify_input() {
       continue;
     }
     if (event->mask & IN_Q_OVERFLOW) {
-      userlog(LOG_ERR, "event queue overflow");
+      userlog(LOG_INFO, "event queue overflow");
       continue;
     }
 
