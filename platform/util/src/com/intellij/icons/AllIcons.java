@@ -491,8 +491,6 @@ public class AllIcons {
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.png"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
-    public static final Icon Widescreen_off = IconLoader.getIcon("/general/widescreen_off.png"); // 16x16
-    public static final Icon Widescreen_on = IconLoader.getIcon("/general/widescreen_on.png"); // 16x16
 
   }
   
