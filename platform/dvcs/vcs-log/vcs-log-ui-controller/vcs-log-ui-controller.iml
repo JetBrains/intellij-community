@@ -7,14 +7,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="graph" />
-    <orderEntry type="module" module-name="printmodel" />
-    <orderEntry type="module" module-name="log_data" />
-    <orderEntry type="module" module-name="common" />
-    <orderEntry type="module" module-name="refs" />
-    <orderEntry type="module" module-name="graph_model" />
-    <orderEntry type="module" module-name="data_model" exported="" />
-    <orderEntry type="module" module-name="git_reader" />
+    <orderEntry type="module" module-name="vcs-log-graph" />
+    <orderEntry type="module" module-name="vcs-log-print-model" />
+    <orderEntry type="module" module-name="vcs-log-data" />
+    <orderEntry type="module" module-name="vcs-log-common" />
+    <orderEntry type="module" module-name="vcs-log-refs" />
+    <orderEntry type="module" module-name="vcs-log-graph-model" />
+    <orderEntry type="module" module-name="vcs-log-data-model" exported="" />
+    <orderEntry type="module" module-name="git-log-reader" />
     <orderEntry type="library" name="swingx-1.6.1" level="project" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="swingx" level="project" />

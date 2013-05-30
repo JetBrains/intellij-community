@@ -69,12 +69,12 @@
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="cucumber-test-runner" scope="RUNTIME" />
-    <orderEntry type="module" module-name="ui_controller" />
-    <orderEntry type="module" module-name="swing_ui" />
-    <orderEntry type="module" module-name="common" />
-    <orderEntry type="module" module-name="log_data" />
-    <orderEntry type="module" module-name="graph" />
-    <orderEntry type="module" module-name="data_model" />
+    <orderEntry type="module" module-name="vcs-log-ui-controller" />
+    <orderEntry type="module" module-name="vcs-log-swing-ui" />
+    <orderEntry type="module" module-name="vcs-log-common" />
+    <orderEntry type="module" module-name="vcs-log-data" />
+    <orderEntry type="module" module-name="vcs-log-graph" />
+    <orderEntry type="module" module-name="vcs-log-data-model" />
   </component>
 </module>
 

@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="vcs-log-graph" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -17,7 +18,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="graph" exported="" />
+    <orderEntry type="module" module-name="vcs-log-common" />
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
@@ -27,9 +28,9 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="common" />
-    <orderEntry type="module" module-name="log_data" />
-    <orderEntry type="module" module-name="refs" />
+    <orderEntry type="module" module-name="vcs-log-data" />
+    <orderEntry type="module" module-name="vcs-log-graph-model" />
+    <orderEntry type="module" module-name="vcs-log-refs" scope="TEST" />
   </component>
 </module>
 
