@@ -1,4 +1,0 @@
-GitAlk
-======
-
-GUI for git
