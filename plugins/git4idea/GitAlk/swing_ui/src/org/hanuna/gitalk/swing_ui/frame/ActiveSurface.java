@@ -1,0 +1,42 @@
+package org.hanuna.gitalk.swing_ui.frame;
+
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
+import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.refs.Ref;
+import org.hanuna.gitalk.ui.UI_Controller;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+
+/**
+ * Graph + the panel with branch labels above it.
+ *
+ * @author Kirill Likhodedov
+ */
+public class ActiveSurface extends JPanel {
+
+  private final UI_GraphTable graphTable;
+  private final BranchesPanel myBranchesPanel;
+
+  ActiveSurface(UI_Controller ui_controller) {
+    this.graphTable = new UI_GraphTable(ui_controller);
+    myBranchesPanel = new BranchesPanel(ui_controller);
+    packTables();
+  }
+
+  public UI_GraphTable getGraphTable() {
+    return graphTable;
+  }
+
+  private void packTables() {
+    setLayout(new BorderLayout());
+    add(myBranchesPanel, BorderLayout.NORTH);
+    add(new JScrollPane(graphTable), BorderLayout.CENTER);
+  }
+
+  public BranchesPanel getBranchesPanel() {
+    return myBranchesPanel;
+  }
+}

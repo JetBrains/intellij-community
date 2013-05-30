@@ -16,6 +16,10 @@
     <orderEntry type="module" module-name="data_model" exported="" />
     <orderEntry type="module" module-name="git_reader" />
     <orderEntry type="library" name="swingx-1.6.1" level="project" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="library" name="swingx" level="project" />
+    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="platform-impl" />
   </component>
 </module>
 

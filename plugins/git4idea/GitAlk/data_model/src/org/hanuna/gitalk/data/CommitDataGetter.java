@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface CommitDataGetter {
 
-    // this method support pre-load beside nodes
-    @NotNull
-    public CommitData getCommitData(@NotNull Node node);
+  // this method support pre-load beside nodes
+  @NotNull
+  public CommitData getCommitData(@NotNull Node node);
 
-    @NotNull
-    public CommitData getCommitData(@NotNull Hash commitHash);
+  @NotNull
+  public CommitData getCommitData(@NotNull Hash commitHash);
 }

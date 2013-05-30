@@ -15,17 +15,17 @@ import java.util.List;
  */
 public interface GraphModel {
 
-    @NotNull
-    public Graph getGraph();
+  @NotNull
+  public Graph getGraph();
 
-    public void appendCommitsToGraph(@NotNull List<CommitParents> commitParentses);
+  public void appendCommitsToGraph(@NotNull List<CommitParents> commitParentses);
 
-    public void setVisibleBranchesNodes(@NotNull Function<Node, Boolean> isStartedNode);
+  public void setVisibleBranchesNodes(@NotNull Function<Node, Boolean> isStartedNode);
 
-    @NotNull
-    public FragmentManager getFragmentManager();
+  @NotNull
+  public FragmentManager getFragmentManager();
 
-    public void addUpdateListener(@NotNull Executor<UpdateRequest> listener);
+  public void addUpdateListener(@NotNull Executor<UpdateRequest> listener);
 
-    public void removeAllListeners();
+  public void removeAllListeners();
 }

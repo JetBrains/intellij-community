@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.log.commit;
 
+import git4idea.history.browser.GitCommit;
 import org.hanuna.gitalk.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
@@ -7,34 +8,39 @@ import org.jetbrains.annotations.NotNull;
  * @author erokhins
  */
 public class CommitData {
-    private final Hash commitHash;
-    private final String message;
-    private final String author;
-    private final long timeStamp;
 
-    public CommitData(Hash commitHash, @NotNull String message, @NotNull String author, long timeStamp) {
-        this.commitHash = commitHash;
-        this.message = message;
-        this.author = author;
-        this.timeStamp = timeStamp;
-    }
+  private final GitCommit myCommit;
+  private final Hash hash;
 
-    public Hash getCommitHash() {
-        return commitHash;
-    }
+  public CommitData(GitCommit commit) {
+    myCommit = commit;
+    hash = Hash.build(myCommit.getShortHash().getString());
+  }
 
-    @NotNull
-    public String getMessage() {
-        return message;
-    }
+  public CommitData(GitCommit commit, Hash hash) {
+    myCommit = commit;
+    this.hash = hash;
+  }
 
-    @NotNull
-    public String getAuthor() {
-        return author;
-    }
+  public Hash getCommitHash() {
+    return hash;
+  }
 
-    public long getTimeStamp() {
-        return timeStamp;
-    }
+  @NotNull
+  public String getMessage() {
+    return myCommit.getDescription();
+  }
 
+  @NotNull
+  public String getAuthor() {
+    return myCommit.getAuthor();
+  }
+
+  public long getTimeStamp() {
+    return myCommit.getAuthorTime();
+  }
+
+  public GitCommit getFullCommit() {
+    return myCommit;
+  }
 }

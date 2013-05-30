@@ -10,15 +10,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface DataPack {
 
-    public CommitDataGetter getCommitDataGetter();
+  public CommitDataGetter getCommitDataGetter();
 
-    @NotNull
-    public RefsModel getRefsModel();
+  @NotNull
+  public RefsModel getRefsModel();
 
-    @NotNull
-    public GraphModel getGraphModel();
+  @NotNull
+  public GraphModel getGraphModel();
 
-    @NotNull
-    public GraphPrintCellModel getPrintCellModel();
+  @NotNull
+  public GraphPrintCellModel getPrintCellModel();
 
 }

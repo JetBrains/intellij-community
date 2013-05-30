@@ -9,20 +9,20 @@ import java.util.List;
  */
 public class CommitCell {
 
-    private final String text;
-    private final List<Ref> refsToThisCommit;
+  private final String text;
+  private final List<Ref> refsToThisCommit;
 
-    public CommitCell(String text, List<Ref> refsToThisCommit) {
-        this.text = text;
-        this.refsToThisCommit = refsToThisCommit;
-    }
+  public CommitCell(String text, List<Ref> refsToThisCommit) {
+    this.text = text;
+    this.refsToThisCommit = refsToThisCommit;
+  }
 
-    public String getText() {
-        return text;
-    }
+  public String getText() {
+    return text;
+  }
 
-    public List<Ref> getRefsToThisCommit() {
-        return refsToThisCommit;
-    }
+  public List<Ref> getRefsToThisCommit() {
+    return refsToThisCommit;
+  }
 
 }

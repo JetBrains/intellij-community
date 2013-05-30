@@ -42,7 +42,7 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  *
  * @author Kirill Likhodedov
  */
-class GitSmartOperationDialog extends DialogWrapper {
+public class GitSmartOperationDialog extends DialogWrapper {
 
   public static final int SMART_EXIT_CODE = OK_EXIT_CODE;
   public static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;

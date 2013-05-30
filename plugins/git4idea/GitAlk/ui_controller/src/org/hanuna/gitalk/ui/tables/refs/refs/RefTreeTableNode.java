@@ -11,103 +11,106 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RefTreeTableNode extends AbstractMutableTreeTableNode {
 
-    @Nullable
-    private final Ref ref;
+  @Nullable
+  private final Ref ref;
 
-    @Nullable
-    private final String text;
+  @Nullable
+  private final String text;
 
-    // notNull if isRefNode()
-    @Nullable
-    private final CommitSelectManager selectManager;
+  // notNull if isRefNode()
+  @Nullable
+  private final CommitSelectManager selectManager;
 
-    private RefTreeTableNode(@Nullable Ref ref, @Nullable String text, @Nullable CommitSelectManager selectManager) {
-        this.ref = ref;
-        this.text = text;
-        this.selectManager = selectManager;
+  private RefTreeTableNode(@Nullable Ref ref, @Nullable String text, @Nullable CommitSelectManager selectManager) {
+    this.ref = ref;
+    this.text = text;
+    this.selectManager = selectManager;
+  }
+
+  public RefTreeTableNode(@NotNull Ref ref, @NotNull CommitSelectManager selectManager) {
+    this(ref, null, selectManager);
+  }
+
+  public RefTreeTableNode(@NotNull String text) {
+    this(null, text, null);
+  }
+
+  public boolean isRefNode() {
+    return ref != null;
+  }
+
+  @Nullable
+  public Ref getRef() {
+    return ref;
+  }
+
+  @Nullable
+  public String getText() {
+    return text;
+  }
+
+  private boolean isSelectNode() {
+    if (isRefNode()) {
+      return selectManager.isSelect(ref.getCommitHash());
     }
-
-    public RefTreeTableNode(@NotNull Ref ref, @NotNull CommitSelectManager selectManager) {
-        this(ref, null, selectManager);
+    else {
+      boolean select = true;
+      for (RefTreeTableNode children : new IterableEnumeration<MutableTreeTableNode, RefTreeTableNode>(children())) {
+        if (!children.isSelectNode()) {
+          select = false;
+        }
+      }
+      return select;
     }
+  }
 
-    public RefTreeTableNode(@NotNull String text) {
-        this(null, text, null);
+  private void setSelect(boolean select) {
+    if (isRefNode()) {
+      selectManager.setSelectCommit(ref.getCommitHash(), select);
     }
-
-    public boolean isRefNode() {
-        return ref != null;
+    else {
+      for (RefTreeTableNode children : new IterableEnumeration<MutableTreeTableNode, RefTreeTableNode>(children())) {
+        children.setSelect(select);
+      }
     }
+  }
 
-    @Nullable
-    public Ref getRef() {
-        return ref;
-    }
-
-    @Nullable
-    public String getText() {
-        return text;
-    }
-
-    private boolean isSelectNode() {
+  @Override
+  public Object getValueAt(int column) {
+    switch (column) {
+      case 0:
+        return isSelectNode();
+      case 1:
         if (isRefNode()) {
-            return selectManager.isSelect(ref.getCommitHash());
-        } else {
-            boolean select = true;
-            for (RefTreeTableNode children : new IterableEnumeration<RefTreeTableNode, MutableTreeTableNode>(children())) {
-                if (!children.isSelectNode()) {
-                    select = false;
-                }
-            }
-            return select;
+          return ref;
         }
-    }
-
-    private void setSelect(boolean select) {
-        if (isRefNode()) {
-            selectManager.setSelectCommit(ref.getCommitHash(), select);
-        } else {
-            for (RefTreeTableNode children : new IterableEnumeration<RefTreeTableNode, MutableTreeTableNode>(children())) {
-                children.setSelect(select);
-            }
+        else {
+          return text;
         }
+      default:
+        throw new IllegalArgumentException("bad column number: " + column);
     }
+  }
 
-    @Override
-    public Object getValueAt(int column) {
-        switch (column) {
-            case 0:
-                return isSelectNode();
-            case 1:
-                if (isRefNode()) {
-                    return ref;
-                } else {
-                    return text;
-                }
-            default:
-                throw new IllegalArgumentException("bad column number: " + column);
-        }
-    }
-
-    @Override
-    public int getColumnCount() {
-        return 2;
-    }
+  @Override
+  public int getColumnCount() {
+    return 2;
+  }
 
 
-    @Override
-    public void setValueAt(Object aValue, int column) {
-        if (column != 0) {
-            throw new IllegalArgumentException("Not allow change column: " + column);
-        }
-        setSelect((Boolean) aValue);
+  @Override
+  public void setValueAt(Object aValue, int column) {
+    if (column != 0) {
+      throw new IllegalArgumentException("Not allow change column: " + column);
     }
+    setSelect((Boolean)aValue);
+  }
 
-    @Override
-    public String toString() {
-        return "RefTreeTableNode{" +
-                "ref=" + ref +
-                ", text='" + text + '\'' +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "RefTreeTableNode{" +
+           "ref=" + ref +
+           ", text='" + text + '\'' +
+           '}';
+  }
 }

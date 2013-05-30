@@ -9,8 +9,8 @@ import java.util.List;
  */
 public interface NodeRow {
 
-    @NotNull
-    public List<Node> getNodes();
+  @NotNull
+  public List<Node> getNodes();
 
-    public int getRowIndex();
+  public int getRowIndex();
 }

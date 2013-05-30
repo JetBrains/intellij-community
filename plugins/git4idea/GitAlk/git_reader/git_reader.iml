@@ -11,6 +11,10 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="log_data" />
     <orderEntry type="module" module-name="refs" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="core-api" />
+    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="vcs-impl" />
   </component>
 </module>
 

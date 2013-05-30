@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Kirill Likhodedov
@@ -56,6 +58,9 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   @NotNull private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
   @NotNull private volatile Collection<GitRemote> myRemotes = Collections.emptyList();
   @NotNull private volatile Collection<GitBranchTrackInfo> myBranchTrackInfos;
+
+  @NotNull private final Alarm myAlarm;
+  private static final long WAIT_BEFORE_SCAN = TimeUnit.MILLISECONDS.toMillis(100);
 
   /**
    * Get the GitRepository instance from the {@link GitRepositoryManager}.
@@ -82,6 +87,8 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     } else {
       myUntrackedFilesHolder = null;
     }
+
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     update();
   }
 
@@ -228,7 +235,13 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   }
 
   protected void notifyListeners() {
-    myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
+    myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        myNotifier.add(STUB_OBJECT);
+      }
+    }, WAIT_BEFORE_SCAN);
   }
 
   private static class NotificationConsumer implements Consumer<Object> {

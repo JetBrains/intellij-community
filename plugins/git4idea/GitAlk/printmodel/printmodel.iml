@@ -30,6 +30,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="log_data" />
     <orderEntry type="module" module-name="graph_model" />
+    <orderEntry type="module" module-name="refs" scope="TEST" />
   </component>
 </module>
 

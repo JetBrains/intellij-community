@@ -1,162 +1,170 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
-import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.swing_ui.UI_Utilities;
+import com.intellij.icons.AllIcons;
+import com.intellij.util.ui.UIUtil;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryChangeListener;
+import org.hanuna.gitalk.swing_ui.GitLogIcons;
 import org.hanuna.gitalk.ui.UI_Controller;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
  * @author erokhins
  */
-public class MainFrame extends JFrame {
-    private final UI_Controller ui_controller;
-    private final UI_GraphTable graphTable;
-    private final UI_RefTable refTable;
+public class MainFrame {
+  private final UI_Controller ui_controller;
 
-    private final JPanel topPanel = new JPanel();
-    private final JPanel tablePanel = new JPanel();
-    private final JPanel mainPanel = new JPanel();
+  private final JPanel myToolbar = new JPanel();
+  private final JPanel mainPanel = new JPanel();
 
+  private final JButton myAbortButton = new JButton("Abort Rebase");
+  private final JButton myContinueButton = new JButton("Continue Rebase");
 
-    public MainFrame(final UI_Controller ui_controller) {
-        this.ui_controller = ui_controller;
-        this.graphTable = new UI_GraphTable(ui_controller);
-        this.refTable = new UI_RefTable(ui_controller.getRefsTreeTableModel(), ui_controller.getRefTreeModel());
-        packElements();
-    }
-
-    public UI_GraphTable getGraphTable() {
-        return graphTable;
-    }
+  private final ActiveSurface myActiveSurface;
 
 
-    private void packTables() {
-        JScrollPane graphScroll = new JScrollPane(graphTable);
-        tablePanel.setLayout(new BoxLayout(tablePanel, BoxLayout.X_AXIS));
-        tablePanel.add(graphScroll);
+  public MainFrame(final UI_Controller ui_controller) {
+    this.ui_controller = ui_controller;
+    myActiveSurface = new ActiveSurface(ui_controller);
+    packMainPanel();
 
-        JScrollPane branchScroll = new JScrollPane(refTable);
-        refTable.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int row = refTable.getSelectedRow();
-                    Hash commitCash = refTable.getCommitHashInRow(row);
-                    if (commitCash != null) {
-                        refTable.setValueAt(true, row, 0);
-                        ui_controller.updateVisibleBranches();
-                        ui_controller.jumpToCommit(commitCash);
-                    }
-                } else {
-                    ui_controller.updateVisibleBranches();
-                }
-            }
-        });
-        refTable.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (refTable.keyPressed(e)) {
-                    ui_controller.updateVisibleBranches();
-                    refTable.updateUI();
-                }
-            }
+    ui_controller.getProject().getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+      @Override
+      public void repositoryChanged(@NotNull final GitRepository repository) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            updateToolbar(repository);
+          }
         });
 
-        tablePanel.add(branchScroll);
-    }
+      }
+    });
+  }
 
-    private void packTopGraphPanel() {
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
-        topPanel.setMaximumSize(new Dimension(10000, 10));
+  private void updateToolbar(GitRepository repository) {
+    boolean rebasing = repository.getState() == GitRepository.State.REBASING;
+    myAbortButton.setVisible(rebasing);
+    myContinueButton.setVisible(rebasing);
+  }
 
-        JButton hideButton = new JButton("Hide");
-        hideButton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                ui_controller.hideAll();
-            }
-        });
-        topPanel.add(hideButton);
+  public UI_GraphTable getGraphTable() {
+    return myActiveSurface.getGraphTable();
+  }
 
-        JButton showButton = new JButton("Show");
-        showButton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                ui_controller.showAll();
-            }
-        });
-        topPanel.add(showButton);
+  private void packToolbar() {
+    myToolbar.setLayout(new BoxLayout(myToolbar, BoxLayout.LINE_AXIS));
+    myToolbar.setMaximumSize(new Dimension(10000, 10));
 
+    Action hide = new AbstractAction("", GitLogIcons.SPIDER) {
+      {
+        putValue(SHORT_DESCRIPTION, "Collapse linear branches");
+      }
 
-        final JCheckBox visibleLongEdges = new JCheckBox("Show full patch", false);
-        visibleLongEdges.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
-            }
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.hideAll();
+      }
+    };
+    myToolbar.add(new JButton(hide));
 
+    Action show = new AbstractAction("", GitLogIcons.WEB) {
+      {
+        putValue(SHORT_DESCRIPTION, "Expand all branches");
+      }
 
-        });
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.showAll();
+      }
+    };
+    myToolbar.add(new JButton(show));
 
-        topPanel.add(visibleLongEdges);
+    Action refresh = new AbstractAction("", AllIcons.Actions.Refresh) {
+      {
+        putValue(SHORT_DESCRIPTION, "Refresh");
+      }
 
-        topPanel.add(Box.createHorizontalGlue());
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.refresh(false);
+      }
+    };
+    myToolbar.add(new JButton(refresh));
 
-        JButton expand = new JButton("Expand");
-        expand.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                refTable.expandAll();
-            }
-        });
-        topPanel.add(expand);
+    Action apply = new AbstractAction("", GitLogIcons.APPLY) {
+      {
+        putValue(SHORT_DESCRIPTION, "Apply interactive rebase");
+      }
 
-        JButton collapse = new JButton("Collapse");
-        collapse.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                refTable.collapseAll();
-            }
-        });
-        topPanel.add(collapse);
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.applyInteractiveRebase();
+      }
+    };
+    myToolbar.add(new JButton(apply));
 
-    }
+    Action cancel = new AbstractAction("", GitLogIcons.CANCEL) {
+      {
+        putValue(SHORT_DESCRIPTION, "Cancel interactive rebase");
+      }
 
-    private void packMainPanel() {
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.cancelInteractiveRebase();
+      }
+    };
+    myToolbar.add(new JButton(cancel));
 
-        packTopGraphPanel();
-        mainPanel.add(topPanel);
-        mainPanel.add(tablePanel);
+    final JCheckBox visibleLongEdges = new JCheckBox("Show full patch", false);
+    visibleLongEdges.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
+      }
+    });
+    myToolbar.add(visibleLongEdges);
 
+    myAbortButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.getGitActionHandler().abortRebase();
+      }
+    });
+    myToolbar.add(myAbortButton);
 
-        setContentPane(mainPanel);
-        pack();
-    }
+    myContinueButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui_controller.getGitActionHandler().continueRebase();
+      }
+    });
+    myToolbar.add(myContinueButton);
 
-    private void packElements() {
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setTitle("GitAlk");
+    myToolbar.add(Box.createHorizontalGlue());
+  }
 
-        packTables();
-        packMainPanel();
+  private void packMainPanel() {
+    mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        int height = screenDimension.height * 4 / 5;
-        int width = screenDimension.width * 3 / 4;
+    packToolbar();
+    mainPanel.add(myToolbar);
+    mainPanel.add(myActiveSurface);
+  }
 
-        setSize(new Dimension(width, height));
-        UI_Utilities.setCenterLocation(this);
-    }
+  public JPanel getMainComponent() {
+    return mainPanel;
+  }
 
-    public void showUi() {
-        setVisible(true);
-    }
-
+  public void refresh() {
+    myActiveSurface.getBranchesPanel().rebuild();
+    updateToolbar(ui_controller.getRepository());
+  }
 }

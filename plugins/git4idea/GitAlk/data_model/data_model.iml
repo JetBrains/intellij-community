@@ -13,6 +13,8 @@
     <orderEntry type="module" module-name="graph_model" />
     <orderEntry type="module" module-name="printmodel" />
     <orderEntry type="module" module-name="git_reader" />
+    <orderEntry type="module" module-name="core-api" />
+    <orderEntry type="module" module-name="ui_controller" />
   </component>
 </module>
 

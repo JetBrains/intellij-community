@@ -11,15 +11,29 @@ import java.util.List;
  */
 public class GraphCommitCell extends CommitCell {
 
-    private final GraphPrintCell row;
+  public enum Kind {
+    NORMAL,
+    PICK,
+    FIXUP,
+    REWORD,
+    APPLIED
+  }
 
-    public GraphCommitCell(GraphPrintCell row, String text, List<Ref> refsToThisCommit) {
-        super(text, refsToThisCommit);
-        this.row = row;
-    }
+  private final GraphPrintCell row;
+  private final Kind kind;
 
-    public GraphPrintCell getPrintCell() {
-        return row;
-    }
+  public GraphCommitCell(GraphPrintCell row, Kind kind, String text, List<Ref> refsToThisCommit) {
+    super(text, refsToThisCommit);
+    this.kind = kind;
+    this.row = row;
+  }
 
+  public GraphPrintCell getPrintCell() {
+    return row;
+  }
+
+
+  public Kind getKind() {
+    return kind;
+  }
 }

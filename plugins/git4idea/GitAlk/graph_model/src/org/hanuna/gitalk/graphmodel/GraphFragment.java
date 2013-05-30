@@ -10,12 +10,12 @@ import java.util.Collection;
  */
 public interface GraphFragment {
 
-    @NotNull
-    public Node getUpNode();
+  @NotNull
+  public Node getUpNode();
 
-    @NotNull
-    public Node getDownNode();
+  @NotNull
+  public Node getDownNode();
 
-    @NotNull
-    public Collection<Node> getIntermediateNodes();
+  @NotNull
+  public Collection<Node> getIntermediateNodes();
 }

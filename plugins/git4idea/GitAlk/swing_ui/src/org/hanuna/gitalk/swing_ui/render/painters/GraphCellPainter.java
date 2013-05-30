@@ -12,12 +12,12 @@ import java.awt.*;
  */
 public interface GraphCellPainter {
 
-    public void draw(Graphics2D g2, GraphPrintCell row);
+  public void draw(Graphics2D g2, GraphPrintCell row);
 
-    @Nullable
-    public GraphElement mouseOver(GraphPrintCell row, int x, int y);
+  @Nullable
+  public GraphElement mouseOver(GraphPrintCell row, int x, int y);
 
-    @Nullable
-    public SpecialPrintElement mouseOverArrow(GraphPrintCell row, int x, int y);
+  @Nullable
+  public SpecialPrintElement mouseOverArrow(GraphPrintCell row, int x, int y);
 }
 

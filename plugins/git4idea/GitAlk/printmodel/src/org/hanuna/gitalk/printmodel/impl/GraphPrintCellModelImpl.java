@@ -12,62 +12,70 @@ import java.util.List;
  * @author erokhins
  */
 public class GraphPrintCellModelImpl implements GraphPrintCellModel {
-    private final LayoutModel layoutModel;
-    private final SelectController selectController;
-    private boolean hideLongEdges = true;
+  private final LayoutModel layoutModel;
+  private final SelectController selectController;
+  private boolean hideLongEdges = true;
+  private final CommitSelectController commitSelectController;
 
-    public GraphPrintCellModelImpl(Graph graph) {
-        this.layoutModel = new LayoutModel(graph);
-        this.selectController = new SelectController();
-    }
+  public GraphPrintCellModelImpl(Graph graph) {
+    this.layoutModel = new LayoutModel(graph);
+    this.selectController = new SelectController();
+    this.commitSelectController = new CommitSelectController();
+  }
 
-    private List<ShortEdge> getUpEdges(int rowIndex) {
-        PrePrintCellModel prevPreModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex - 1, selectController);
-        return prevPreModel.downShortEdges();
-    }
+  private List<ShortEdge> getUpEdges(int rowIndex) {
+    PrePrintCellModel prevPreModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex - 1, selectController,
+                                                           commitSelectController);
+    return prevPreModel.downShortEdges();
+  }
 
-    public void recalculate(@NotNull UpdateRequest updateRequest) {
-        layoutModel.recalculate(updateRequest);
-    }
+  public void recalculate(@NotNull UpdateRequest updateRequest) {
+    layoutModel.recalculate(updateRequest);
+  }
 
-    @Override
-    public void setLongEdgeVisibility(boolean visibility) {
-        hideLongEdges = !visibility;
-    }
+  @Override
+  public void setLongEdgeVisibility(boolean visibility) {
+    hideLongEdges = !visibility;
+  }
 
-    @NotNull
-    public SelectController getSelectController() {
-        return selectController;
-    }
+  @NotNull
+  public SelectController getSelectController() {
+    return selectController;
+  }
 
-    @NotNull
-    public GraphPrintCell getGraphPrintCell(final int rowIndex) {
-        final PrePrintCellModel prePrintCellModel =
-                new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex, selectController);
+  @NotNull
+  public CommitSelectController getCommitSelectController() {
+    return commitSelectController;
+  }
 
-        return new GraphPrintCell() {
-            @Override
-            public int countCell() {
-                return prePrintCellModel.getCountCells();
-            }
+  @NotNull
+  public GraphPrintCell getGraphPrintCell(final int rowIndex) {
+    final PrePrintCellModel prePrintCellModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex, selectController,
+                                                                      commitSelectController);
 
-            @NotNull
-            @Override
-            public List<ShortEdge> getUpEdges() {
-                return GraphPrintCellModelImpl.this.getUpEdges(rowIndex);
-            }
+    return new GraphPrintCell() {
+      @Override
+      public int countCell() {
+        return prePrintCellModel.getCountCells();
+      }
 
-            @NotNull
-            @Override
-            public List<ShortEdge> getDownEdges() {
-                return prePrintCellModel.downShortEdges();
-            }
+      @NotNull
+      @Override
+      public List<ShortEdge> getUpEdges() {
+        return GraphPrintCellModelImpl.this.getUpEdges(rowIndex);
+      }
 
-            @NotNull
-            @Override
-            public List<SpecialPrintElement> getSpecialPrintElements() {
-                return prePrintCellModel.getSpecialPrintElements();
-            }
-        };
-    }
+      @NotNull
+      @Override
+      public List<ShortEdge> getDownEdges() {
+        return prePrintCellModel.downShortEdges();
+      }
+
+      @NotNull
+      @Override
+      public List<SpecialPrintElement> getSpecialPrintElements() {
+        return prePrintCellModel.getSpecialPrintElements();
+      }
+    };
+  }
 }

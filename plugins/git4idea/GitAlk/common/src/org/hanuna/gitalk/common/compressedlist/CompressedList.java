@@ -9,9 +9,9 @@ import java.util.List;
  */
 public interface CompressedList<T> {
 
-    // unmodifiableList
-    @NotNull
-    public List<T> getList();
+  // unmodifiableList
+  @NotNull
+  public List<T> getList();
 
-    public void recalculate(@NotNull UpdateRequest updateRequest);
+  public void recalculate(@NotNull UpdateRequest updateRequest);
 }

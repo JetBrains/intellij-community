@@ -2,9 +2,7 @@ package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -13,11 +11,11 @@ import java.util.List;
  */
 public interface GraphDecorator {
 
-    public boolean isVisibleNode(@NotNull Node node);
+  public boolean isVisibleNode(@NotNull Node node);
 
-    @NotNull
-    public List<Edge> getDownEdges(@NotNull Node node, @NotNull List<Edge> innerDownEdges);
+  @NotNull
+  public List<Edge> getDownEdges(@NotNull Node node, @NotNull List<Edge> innerDownEdges);
 
-    @NotNull
-    public List<Edge> getUpEdges(@NotNull Node node, @NotNull List<Edge> innerUpEdges);
+  @NotNull
+  public List<Edge> getUpEdges(@NotNull Node node, @NotNull List<Edge> innerUpEdges);
 }
