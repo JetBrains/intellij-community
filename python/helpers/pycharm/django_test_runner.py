@@ -4,14 +4,13 @@ from tcunittest import TeamcityTestRunner
 from tcmessages import TeamcityServiceMessages
 
 from pycharm_run_utils import adjust_django_sys_path
-from django.test.simple import settings
+from django.conf import settings
 
 if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
     from nose_utils import TeamcityNoseRunner
 
 adjust_django_sys_path()
 
-from django.test.simple import build_suite, build_test, get_app, get_apps, setup_test_environment, teardown_test_environment
 from django.test.testcases import TestCase
 from django import VERSION
 try:
@@ -138,6 +137,36 @@ def reorder_suite(suite, classes):
   return bins[0]
 
 
+def run_the_old_way(extra_tests, kwargs, test_labels, verbosity):
+    from django.test.simple import build_suite, build_test, get_app, get_apps, \
+        setup_test_environment, teardown_test_environment
+
+    setup_test_environment()
+    settings.DEBUG = False
+    suite = unittest.TestSuite()
+    if test_labels:
+        for label in test_labels:
+            if '.' in label:
+                suite.addTest(build_test(label))
+            else:
+                app = get_app(label)
+                suite.addTest(build_suite(app))
+    else:
+        for app in get_apps():
+            suite.addTest(build_suite(app))
+    for test in extra_tests:
+        suite.addTest(test)
+    suite = reorder_suite(suite, (TestCase,))
+    old_name = settings.DATABASE_NAME
+    from django.db import connection
+
+    connection.creation.create_test_db(verbosity, autoclobber=False)
+    result = DjangoTeamcityTestRunner().run(suite, **kwargs)
+    connection.creation.destroy_test_db(old_name, verbosity)
+    teardown_test_environment()
+    return len(result.failures) + len(result.errors)
+
+
 def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[],
               **kwargs):
   """
@@ -163,35 +192,4 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[],
     return DjangoTeamcityTestRunner().run_tests(test_labels,
       extra_tests=extra_tests, **kwargs)
 
-  setup_test_environment()
-
-  settings.DEBUG = False
-  suite = unittest.TestSuite()
-
-  if test_labels:
-    for label in test_labels:
-      if '.' in label:
-        suite.addTest(build_test(label))
-      else:
-        app = get_app(label)
-        suite.addTest(build_suite(app))
-  else:
-    for app in get_apps():
-      suite.addTest(build_suite(app))
-
-  for test in extra_tests:
-    suite.addTest(test)
-
-  suite = reorder_suite(suite, (TestCase,))
-
-  old_name = settings.DATABASE_NAME
-  from django.db import connection
-
-  connection.creation.create_test_db(verbosity, autoclobber=False)
-
-  result = DjangoTeamcityTestRunner().run(suite, **kwargs)
-  connection.creation.destroy_test_db(old_name, verbosity)
-
-  teardown_test_environment()
-
-  return len(result.failures) + len(result.errors)
+  return run_the_old_way(extra_tests, kwargs, test_labels, verbosity)
