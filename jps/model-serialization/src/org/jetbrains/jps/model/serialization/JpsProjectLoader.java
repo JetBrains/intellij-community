@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -119,14 +120,21 @@ public class JpsProjectLoader extends JpsLoaderBase {
       }
     }
     loadModules(loadRootElement(new File(dir, "modules.xml")), projectSdkType);
+
+    Runnable timingLog = TimingLog.startActivity("loading project libraries");
     for (File libraryFile : listXmlFiles(new File(dir, "libraries"))) {
       loadProjectLibraries(loadRootElement(libraryFile));
     }
+    timingLog.run();
+
+    Runnable artifactsTimingLog = TimingLog.startActivity("loading artifacts");
     for (File artifactFile : listXmlFiles(new File(dir, "artifacts"))) {
       loadArtifacts(loadRootElement(artifactFile));
     }
+    artifactsTimingLog.run();
 
     if (hasRunConfigurationSerializers()) {
+      Runnable runConfTimingLog = TimingLog.startActivity("loading artifacts");
       for (File configurationFile : listXmlFiles(new File(dir, "runConfigurations"))) {
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, loadRootElement(configurationFile));
       }
@@ -135,6 +143,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         Element runManager = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "RunManager");
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, runManager);
       }
+      runConfTimingLog.run();
     }
   }
 
@@ -212,6 +221,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadModules(Element root, final @Nullable JpsSdkType<?> projectSdkType) {
+    Runnable timingLog = TimingLog.startActivity("loading modules");
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
@@ -253,6 +263,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+    timingLog.run();
   }
 
   @Nullable
