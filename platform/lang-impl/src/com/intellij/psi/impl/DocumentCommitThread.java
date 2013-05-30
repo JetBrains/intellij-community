@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -128,7 +127,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   private void doQueue(Project project, Document document, Object reason) {
     synchronized (documentsToCommit) {
-      ProgressIndicatorEx indicator = new DaemonProgressIndicator();
+      ProgressIndicator indicator = new DaemonProgressIndicator();
       CommitTask newTask = new CommitTask(document, project, indicator, reason);
 
       markRemovedFromDocsToCommit(newTask);
@@ -273,7 +272,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
           log("Abandon and proceed to next",task, false);
           return;
         }
-        
+
         if (task.removed) {
           return; // document has been marked as removed, e.g. by synchronous commit
         }
