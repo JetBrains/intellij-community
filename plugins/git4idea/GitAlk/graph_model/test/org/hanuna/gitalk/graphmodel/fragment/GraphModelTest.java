@@ -8,11 +8,13 @@ import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.impl.GraphModelImpl;
+import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,7 +35,7 @@ public class GraphModelTest {
     @NotNull
     public GraphModel buildGraphModel(@NotNull String inputGraph) {
         MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
-        return new GraphModelImpl(graph);
+        return new GraphModelImpl(graph, Collections.<Ref>emptyList());
     }
 
 
