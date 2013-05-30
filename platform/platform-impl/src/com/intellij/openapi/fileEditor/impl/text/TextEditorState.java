@@ -27,16 +27,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class TextEditorState implements FileEditorState {
 
-  public int              LINE;
-  public int              COLUMN;
-  public float            VERTICAL_SCROLL_PROPORTION;
-  public int              SELECTION_START;
-  public int              SELECTION_END;
+  public int   LINE;
+  public int   COLUMN;
+  public float VERTICAL_SCROLL_PROPORTION;
+  public int   SELECTION_START;
+  public int   SELECTION_END;
+  public int   VERTICAL_SCROLL_OFFSET;
+  public int   MAX_VERTICAL_SCROLL_OFFSET;
+
   /**
    * State which describes how editor is folded.
    * This field can be <code>null</code>.
    */
-  private CodeFoldingState myFoldingState;
+  private           CodeFoldingState           myFoldingState;
   @Nullable private Producer<CodeFoldingState> myDelayedFoldInfoProducer;
 
   private static final int MIN_CHANGE_DISTANCE = 4;
@@ -84,6 +87,8 @@ public final class TextEditorState implements FileEditorState {
     if (COLUMN != textEditorState.COLUMN) return false;
     if (LINE != textEditorState.LINE) return false;
     if (VERTICAL_SCROLL_PROPORTION != textEditorState.VERTICAL_SCROLL_PROPORTION) return false;
+    if (VERTICAL_SCROLL_OFFSET != textEditorState.VERTICAL_SCROLL_OFFSET) return false;
+    if (MAX_VERTICAL_SCROLL_OFFSET != textEditorState.MAX_VERTICAL_SCROLL_OFFSET) return false;
     if (SELECTION_START != textEditorState.SELECTION_START) return false;
     if (SELECTION_END != textEditorState.SELECTION_END) return false;
     CodeFoldingState localFoldingState = getFoldingState();
