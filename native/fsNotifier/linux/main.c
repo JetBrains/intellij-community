@@ -217,23 +217,24 @@ static void main_loop() {
   int nfds = (inotify_fd > input_fd ? inotify_fd : input_fd) + 1;
   fd_set rfds;
   struct timeval timeout;
-  bool go_on = true;
 
-  while (go_on) {
+  while (true) {
     FD_ZERO(&rfds);
     FD_SET(input_fd, &rfds);
     FD_SET(inotify_fd, &rfds);
     timeout = (struct timeval){MISSING_ROOT_TIMEOUT, 0};
 
     if (select(nfds, &rfds, NULL, NULL, &timeout) < 0) {
-      userlog(LOG_ERR, "select: %s", strerror(errno));
-      go_on = false;
+      if (errno != EINTR) {
+        userlog(LOG_ERR, "select: %s", strerror(errno));
+        break;
+      }
     }
     else if (FD_ISSET(input_fd, &rfds)) {
-      go_on = read_input();
+      if (!read_input()) break;
     }
     else if (FD_ISSET(inotify_fd, &rfds)) {
-      go_on = process_inotify_input();
+      if (!process_inotify_input()) break;
     }
     else {
       check_missing_roots();
