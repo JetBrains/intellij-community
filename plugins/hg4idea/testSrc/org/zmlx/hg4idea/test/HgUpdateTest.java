@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +40,7 @@ import static org.testng.Assert.*;
 public class HgUpdateTest extends HgCollaborativeTest {
 
   private VirtualFile projectRepoVirtualFile;
+  private VirtualFile remoteRepoVirtualFile;
   private File projectRepo;
   private File remoteRepo;
 
@@ -47,6 +49,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
   protected void setUp(Method testMethod) throws Exception {
     super.setUp(testMethod);
     projectRepoVirtualFile = myRepo.getDir();
+    remoteRepoVirtualFile = myParentRepo.getDir();
     projectRepo = new File(myRepo.getDir().getPath());
     remoteRepo = new File(myParentRepo.getDir().getPath());
   }
@@ -195,27 +198,65 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
   @Test
   public void updateShouldMergeButNotCommitWithConflicts() throws Exception{
+
+    // Puts a single file into the remote repo. After this, the remote repo has history like:
+    //  0:43a0c011b027
     changeFile_A_AndCommitInRemoteRepository();
 
-    VirtualFile commonFile = projectRepoVirtualFile.findChild("com").findChild("a.txt");
-    assertNotNull(commonFile);
-    
-    editFileInCommand(myProject, commonFile, "conflicting content");
+    // Now update the project repo from the remote. Otherwise, there won't be any commits in the project
+    //  repo, and so hg will claim the two to be unrelated. See http://stackoverflow.com/questions/7313178/mercurial-error-repository-is-unrelated.
+    //  After this, the project repo will have a history that is identical to the remote repo:
+    //  0:43a0c011b027
+    runHg(projectRepo, "pull", "-u");
+
+    // If we don't force the VFS to refresh, it won't find the files.
+    refreshVfs();
+
+    VirtualFile remoteCommonFile = remoteRepoVirtualFile.findChild("com").findChild("a.txt");
+    assertNotNull(remoteCommonFile);
+
+    VirtualFile projectCommonFile = projectRepoVirtualFile.findChild("com").findChild("a.txt");
+    assertNotNull(projectCommonFile);
+
+    // Make a change to the remote repo. After this, the remote repo will have history like:
+    //  0:43a0c011b027
+    //  1:762c0f6faa08
+    editFileInCommand(myProject, remoteCommonFile, "made a change");
+    runHg(remoteRepo, "commit", "-m", "updating history in remote repository");
+
+    // Make a conflicting change to the project repo. After this, the project repo will have history like:
+    //  0:43a0c011b027
+    //  1:4292ea1cdcfb
+    editFileInCommand(myProject, projectCommonFile, "conflicting content");
     runHg(projectRepo, "commit", "-m", "adding conflicting history to local repository");
     
     PreUpdateInformation preUpdateInformation = new PreUpdateInformation().getPreUpdateInformation();
     HgRevisionNumber incomingHead = preUpdateInformation.getIncomingHead();
     HgRevisionNumber headBeforeUpdate = preUpdateInformation.getHeadBeforeUpdate();
 
+    // Update the project repo, which WILL cause a conflict. After this, the project repo will have
+    //  a modified file (which, if this were real, would need to be resolved and then committed), and
+    //  the history will be like:
+    //  0:43a0c011b027
+    //  1:4292ea1cdcfb
+    //  2:762c0f6faa08
     List<VcsException> warnings = updateThroughPlugin();
     assertFalse(warnings.isEmpty());
     assertTrue(warnings.get(warnings.size()-1).getMessage().contains("conflicts"));
     assertTrue(warnings.get(warnings.size()-1).getMessage().contains("commit"));
 
-    List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile);
-    assertEquals(parents.size(), 2);
-    assertTrue(parents.contains(incomingHead));
-    assertTrue(parents.contains(headBeforeUpdate));
+    Pair<HgRevisionNumber, HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile);
+    assertNotNull(parents.first);
+    assertNotNull(parents.second);
+
+    // Compare the changeset, but NOT the revision, because the revision will be the same on both.
+    //  See the running commentary above; prior to the update, both the project and remote repositories
+    //  will have history that includes revision 0 and 1. However, revision 1 in the project repo
+    //  is NOT the same as revision 1 in the remote repo. So in checking the parents, they ought to be:
+    //    a) the changeset that was the head, prior to the update [4292ea1cdcfb]
+    //    b) the changeset which was the head in the remote repo [762c0f6faa08]
+    assertTrue(parents.first.getChangeset().equals(headBeforeUpdate.getChangeset()));
+    assertTrue(parents.second.getChangeset().equals(incomingHead.getChangeset()));
   }
 
   @Test
@@ -225,7 +266,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     //generate some extra local history
     createAndCommitNewFileInLocalRepository();
 
-    HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile).get(0);
+    HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile).first;
 
     editFileInCommand(myProject, projectRepoVirtualFile.findFileByRelativePath("com/a.txt"), "modified file contents");
 
@@ -234,10 +275,10 @@ public class HgUpdateTest extends HgCollaborativeTest {
     assertEquals( new HgHeadsCommand( myProject, projectRepoVirtualFile ).execute().size(), 2,
                   "Remote head should have been pulled in" );
 
-    assertEquals( new HgWorkingCopyRevisionsCommand( myProject ).parents( projectRepoVirtualFile ).size(), 1,
+    assertNull( new HgWorkingCopyRevisionsCommand( myProject ).parents( projectRepoVirtualFile ).second,
                   "No merge should have been attempted" );
 
-    assertEquals( new HgWorkingCopyRevisionsCommand( myProject ).parents( projectRepoVirtualFile ).get(0), parentBeforeUpdate,
+    assertEquals( new HgWorkingCopyRevisionsCommand( myProject ).parents( projectRepoVirtualFile ).first, parentBeforeUpdate,
                   "No merge should have been attempted" );
   }
 
@@ -266,6 +307,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
   private void changeFile_A_AndCommitInRemoteRepository() throws IOException {
     fillFile(remoteRepo, new String[]{"com", "a.txt"}, "update file contents");
+    runHg(remoteRepo, "add");
     runHg(remoteRepo, "commit", "-m", "Adding history to remote repository");
 
     assertEquals( determineNumberOfIncomingChanges( projectRepo ), 1,

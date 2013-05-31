@@ -48,13 +48,13 @@ public class HgWorkingCopyRevisionsCommand {
   /**
    * Current repository revision(s).
    * @param repo repository to work on.
-   * @return List of parent's revision numbers.
-   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
-   * TODO: return Pair
+   * @return One or two (in case of a merge commit) parents of the given revision. Or even zero in case of a fresh repository.
+   *         So one should check pair elements for null.
+   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vcs.FilePath, org.zmlx.hg4idea.HgRevisionNumber)
    */
   @NotNull
-  public List<HgRevisionNumber> parents(@NotNull VirtualFile repo) {
-    return getRevisions(repo, "parents", null, null, true);
+  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo) {
+    return parents(repo, (FilePath)null, null);
   }
 
   /**
@@ -108,13 +108,13 @@ public class HgWorkingCopyRevisionsCommand {
 
   @Nullable
   public HgRevisionNumber firstParent(@NotNull VirtualFile repo) {
-    List<HgRevisionNumber> parents = parents(repo);
-    if (parents.isEmpty()) {
+    Pair<HgRevisionNumber, HgRevisionNumber> parents = parents(repo);
+    if (null == parents.first) {
       //this is possible when we have a freshly initialized mercurial repository
       return HgRevisionNumber.NULL_REVISION_NUMBER;
     }
     else {
-      return parents.get(0);
+      return parents.first;
     }
   }
 

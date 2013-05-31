@@ -316,7 +316,7 @@ public abstract class HgUtil {
    * @return True if merge operation is in progress, false if there is no merge operation.
    */
   public static boolean isMergeInProgress(@NotNull Project project, VirtualFile repository) {
-    return new HgWorkingCopyRevisionsCommand(project).parents(repository).size() > 1;
+    return new HgWorkingCopyRevisionsCommand(project).parents(repository).second != null;
   }
   /**
    * Groups the given files by their Mercurial repositories and returns the map of relative paths to files for each repository.

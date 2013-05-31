@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -30,8 +31,6 @@ import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class HgCurrentBranchStatusUpdater implements HgUpdater {
@@ -67,7 +66,7 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
     });
 
     if (textEditor.get() == null) {
-      handleUpdate(project, null, Collections.<HgRevisionNumber>emptyList());
+      handleUpdate(project, null, Pair.<HgRevisionNumber, HgRevisionNumber>create(null, null));
     }
     else {
       if (project.isDisposed()) {
@@ -83,7 +82,7 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
           public void run() {
             HgTagBranchCommand hgTagBranchCommand = new HgTagBranchCommand(project, repo);
             final String branch = hgTagBranchCommand.getCurrentBranch();
-            final List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo);
+            final Pair<HgRevisionNumber, HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -97,7 +96,7 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
   }
 
 
-  private void handleUpdate(Project project, @Nullable String branch, List<HgRevisionNumber> parents) {
+  private void handleUpdate(Project project, @Nullable String branch, Pair<HgRevisionNumber, HgRevisionNumber> parents) {
 
     currentBranchStatus.updateFor(branch, parents);
 
