@@ -112,9 +112,9 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
   public void testAlignMultipleVariables() throws Throwable { doTest(); }
 
-  public void testSpockTable() throws Throwable { doTest(); }
-  public void testSpockTableComments() throws Throwable { doTest(); }
-  public void testSpockTableWithStringComment() throws Throwable { doTest(); }
+  public void testSpockTable() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
+  public void testSpockTableComments() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
+  public void testSpockTableWithStringComment() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
 
   public void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false;
@@ -728,9 +728,8 @@ bar()
 abc:foo()
 bar()
 ''', '''\
-abc:
-  foo()
-  bar()
+abc: foo()
+bar()
 ''')
   }
 

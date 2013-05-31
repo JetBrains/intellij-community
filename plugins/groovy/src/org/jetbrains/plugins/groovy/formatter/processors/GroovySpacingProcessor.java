@@ -207,7 +207,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
     if (myType1 == mCOLON) {
-      if (myGroovySettings.INDENT_LABEL_BLOCKS) {
+      if (GroovyIndentProcessor.indentLabelBlock(labeledStatement, myGroovySettings)) {
         createLF(true);
       }
       else {

@@ -242,7 +242,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile || classLevel) {
-      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode), myContext.getGroovySettings().INDENT_LABEL_BLOCKS);
+      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode), GroovyIndentProcessor.indentLabelBlock(blockPsi, myContext.getGroovySettings()));
     }
 
     if (blockPsi instanceof GrMethod) {

@@ -34,7 +34,7 @@ import javax.swing.*;
  */
 public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
 
-  public static final String NONE = "None";
+  public static final String IN_SPOCK_ONLY = "In Spock only";
   public static final String ABSOLUTE = "Absolute";
   public static final String RELATIVE = "Relative";
 
@@ -300,7 +300,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
         myStyleLabel = new JBLabel("Label indent style:");
 
-        myLabelIndentStyle = new JComboBox(new Object[] {NONE, ABSOLUTE, RELATIVE});
+        myLabelIndentStyle = new JComboBox(new Object[] {IN_SPOCK_ONLY, ABSOLUTE, RELATIVE});
         add(myStyleLabel, myLabelIndentStyle);
       }
 
@@ -320,7 +320,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
           return !RELATIVE.equals(myLabelIndentStyle.getSelectedItem());
         }
         else {
-          return !NONE.equals(myLabelIndentStyle.getSelectedItem());
+          return !IN_SPOCK_ONLY.equals(myLabelIndentStyle.getSelectedItem());
         }
       }
 
@@ -342,7 +342,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
           myLabelIndentStyle.setSelectedItem(RELATIVE);
         }
         else {
-          myLabelIndentStyle.setSelectedItem(NONE);
+          myLabelIndentStyle.setSelectedItem(IN_SPOCK_ONLY);
         }
       }
 
@@ -372,16 +372,21 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "  return Math.max(arg,\n" +
     "      0)\n" +
     "}\n\n" +
-    "def \"length of Spock's and his friends' names\"() {\n" +
-    "  expect:\n" +
-    "  name.size() == length\n" +
+    "class HelloSpock extends spock.lang.Specification {\n" +
+    "  def \"length of Spock's and his friends' names\"() {\n" +
+    "    expect:\n" +
+    "    name.size() == length\n" +
     "\n" +
-    "  where: \"something\"\n" +
-    "  name || length\n" +
-    "  \"Kirk\" || 4\n" +
-    "  \"Scotty\" || 6\n" +
-    "}\n  \n" +
-    "}";
+    "    where:\n" +
+    "    name | length | foo\n" +
+    "    \"Spock\" | 5\n" +
+    "    \"Kirk\" | 4 | xxx | yyy\n" +
+    "    \"Scotty\" | 6 |dddddddddd | fff\n" +
+    "\n" +
+    "    //aaa\n" +
+    "    a | b | c\n" +
+    "  }\n" +
+    "}\n";
   
   private final static String SPACING_SAMPLE =
     "class Foo {\n" +
