@@ -240,7 +240,7 @@ public class XPathEvalAction extends XPathAction {
                         Messages.showInfoMessage(project, "Expression produced " + list.size() + " " + s, "XPath Result");
                     }
                 } else {
-                    return Messages.showOkCancelDialog(project, "Sorry, your expression did not return any result", "XPath Result", 
+                    return Messages.showOkCancelDialog(project, "Sorry, your expression did not return any result", "XPath Result",
                                                        "OK", "Edit Expression", Messages.getInformationIcon()) == 1;
                 }
             } else if (result instanceof String) {
@@ -500,7 +500,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
         @Override
-        public void generate(final Processor<Usage> processor) {
+        public void generate(@NotNull final Processor<Usage> processor) {
             Runnable runnable = new Runnable() {
                 @Override
                 @SuppressWarnings({"unchecked"})

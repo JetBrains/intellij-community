@@ -531,7 +531,7 @@ public class ReplaceInProjectManager {
       return new UsageSearcher() {
 
         @Override
-        public void generate(final Processor<Usage> processor) {
+        public void generate(@NotNull final Processor<Usage> processor) {
           try {
             myIsFindInProgress = true;
 
