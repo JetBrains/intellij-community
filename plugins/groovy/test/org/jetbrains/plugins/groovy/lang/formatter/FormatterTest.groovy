@@ -109,13 +109,16 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testWhileCStyle() throws Throwable { doTest(); }
   public void testFields() throws Throwable { doTest(); }
 
-  public void testClosureAfterLineComment() throws Throwable { doTest(); }
+  public void testClosureAfterLineComment() throws Throwable {
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    doTest();
+  }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
   public void testAlignMultipleVariables() throws Throwable { doTest(); }
 
-  public void testSpockTable() throws Throwable { doTest(); }
-  public void testSpockTableComments() throws Throwable { doTest(); }
-  public void testSpockTableWithStringComment() throws Throwable { doTest(); }
+  public void testSpockTable() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
+  public void testSpockTableComments() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
+  public void testSpockTableWithStringComment() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
 
   public void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false;
@@ -204,8 +207,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
   }
 
   public void doTest() {
-    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
-    checkFormatting(data.get(0), StringUtil.trimEnd(data.get(1), "\n"));
+    def (String before, String after) = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
+    checkFormatting(before, StringUtil.trimEnd(after, "\n"));
   }
 
   public void testJavadocLink() throws Throwable {
@@ -257,6 +260,19 @@ public class FormatterTest extends GroovyFormatterTestCase {
   void testAnnotationArgs2() { doTest() }
 
   void testImplementsList() { doTest() }
+
+
+  void testGdocAsterisks() {
+    checkFormatting('''\
+/*****
+*
+*****/
+''', '''\
+/*****
+ *
+ *****/
+''')
+  }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);

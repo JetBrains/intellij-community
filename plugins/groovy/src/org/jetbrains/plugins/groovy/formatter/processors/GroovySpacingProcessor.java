@@ -69,6 +69,9 @@ import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.*;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mCOMMA;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mELVIS;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mGDOC_COMMENT_DATA;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mGDOC_COMMENT_END;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mGDOC_COMMENT_START;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mQUESTION;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mSEMI;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_ASTERISKS;
@@ -583,6 +586,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
         myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
     }
+
+    if (myType1 == mGDOC_COMMENT_START && myType2 == mGDOC_COMMENT_DATA ||
+        myType1 == mGDOC_COMMENT_DATA &&  myType2 == mGDOC_COMMENT_END ||
+        myType1 == mGDOC_ASTERISKS &&     myType2 == mGDOC_COMMENT_END) {
+      createLazySpace();
+    }
+  }
+
+  private void createLazySpace() {
+    myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   public void visitDocTag(GrDocTag docTag) {

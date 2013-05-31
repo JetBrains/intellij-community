@@ -89,11 +89,6 @@ public abstract class GroovySpacingProcessorBasic {
       return createDependentSpacingForClosure(settings, groovySettings, (GrClosableBlock)left.getParent(), false);
     }
 
-    if (leftType == mGDOC_COMMENT_START && rightType == mGDOC_COMMENT_DATA ||
-        leftType == mGDOC_COMMENT_DATA && rightType == mGDOC_COMMENT_END) {
-      return LAZY_SPACING;
-    }
-
     if (leftType == GROOVY_DOC_COMMENT) {
       return COMMON_SPACING_WITH_NL;
     }
