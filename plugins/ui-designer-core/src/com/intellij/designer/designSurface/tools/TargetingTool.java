@@ -149,7 +149,7 @@ public abstract class TargetingTool extends InputTool {
     public boolean resultFilter(RadComponent target) {
       updateContext(target);
 
-      if (myTarget == target) {
+      if (myTarget == target && myOperation != null) {
         return true;
       }
 
