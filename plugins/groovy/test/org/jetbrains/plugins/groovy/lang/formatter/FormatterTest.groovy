@@ -733,6 +733,18 @@ bar()
 ''')
   }
 
+  void testGdocAsterisks() {
+    checkFormatting('''\
+/*****
+*
+*****/
+''', '''\
+/*****
+ *
+ *****/
+''')
+  }
+
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
