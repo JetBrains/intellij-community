@@ -38,6 +38,11 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
     hideLongEdges = !visibility;
   }
 
+  @Override
+  public boolean areLongEdgesHidden() {
+    return hideLongEdges;
+  }
+
   @NotNull
   public SelectController getSelectController() {
     return selectController;

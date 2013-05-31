@@ -404,6 +404,11 @@ public class UI_ControllerImpl implements UI_Controller {
   }
 
   @Override
+  public boolean areLongEdgesHidden() {
+    return dataPack.getPrintCellModel().areLongEdgesHidden();
+  }
+
+  @Override
   public void jumpToCommit(Hash commitHash) {
     int row = dataPackUtils.getRowByHash(commitHash);
     if (row != -1) {

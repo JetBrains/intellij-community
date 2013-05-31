@@ -78,4 +78,6 @@ public interface UI_Controller {
   void cancelInteractiveRebase();
 
   boolean isInteractiveRebaseInProgress();
+
+  boolean areLongEdgesHidden();
 }

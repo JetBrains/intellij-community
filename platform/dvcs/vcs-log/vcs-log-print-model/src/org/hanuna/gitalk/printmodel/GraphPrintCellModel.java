@@ -20,4 +20,6 @@ public interface GraphPrintCellModel {
   public void recalculate(@NotNull UpdateRequest updateRequest);
 
   public void setLongEdgeVisibility(boolean visibility);
+
+  boolean areLongEdgesHidden();
 }
