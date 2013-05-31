@@ -61,7 +61,7 @@ public class VcsLogManager extends AbstractProjectComponent {
         Content vcsLogContentPane = new ContentImpl(mySwingUi.getMainFrame().getMainComponent(), "VCS LOG", true);
         ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
         changesView.addContent(vcsLogContentPane);
-
+        changesView.selectContent("VCS LOG");
       }
     });
 
