@@ -19,6 +19,8 @@ package com.intellij.execution;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -42,41 +44,48 @@ public class ConfigurationUtil {
     final PsiManager manager = testClassFilter.getPsiManager();
 
     final Project project = manager.getProject();
-    GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
-    final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
-    ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(@NotNull final PsiClass aClass) {
-        if (testClassFilter.isAccepted(aClass)) found.add(aClass);
-        return true;
+    try {
+      GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
+      final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
+      ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+        public boolean execute(@NotNull final PsiClass aClass) {
+          if (testClassFilter.isAccepted(aClass)) found.add(aClass);
+          return true;
+        }
+      }));
+
+      // classes having suite() method
+      final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiMethod[]>() {
+            public PsiMethod[] compute() {
+              return PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
+            }
+          }
+      );
+      for (final PsiMethod method : suiteMethods) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) return;
+            if (containingClass instanceof PsiAnonymousClass) return;
+            if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+            if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return;
+            if (JUnitUtil.isSuiteMethod(method) && testClassFilter.isAccepted(containingClass)) {
+              found.add(containingClass);
+            }
+          }
+        });
       }
-    }));
 
-    // classes having suite() method
-    final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiMethod[]>() {
-          public PsiMethod[] compute() {
-            return PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
-          }
-        }
-    );
-    for (final PsiMethod method : suiteMethods) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final PsiClass containingClass = method.getContainingClass();
-          if (containingClass == null) return;
-          if (containingClass instanceof PsiAnonymousClass) return;
-          if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
-          if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return;
-          if (JUnitUtil.isSuiteMethod(method) && testClassFilter.isAccepted(containingClass)) {
-            found.add(containingClass);
-          }
-        }
-      });
+      boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.Test", true);
+      hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.runner.RunWith", false);
+      return hasJunit4;
     }
-
-    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.Test", true);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.runner.RunWith", false);
-    return hasJunit4;
+    catch (IndexNotReadyException e) {
+      found.clear();
+      DumbService.getInstance(project).waitForSmartMode();
+      return findAllTestClasses(testClassFilter, found);
+    }
   }
 
   private static boolean addAnnotatedMethodsAnSubclasses(final PsiManager manager, final GlobalSearchScope scope, final TestClassFilter testClassFilter,

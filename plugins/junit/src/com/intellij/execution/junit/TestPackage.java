@@ -367,11 +367,6 @@ public class TestPackage extends TestObject {
     public void onCancel() {
       finish();
     }
-
-    @Override
-    public DumbModeAction getDumbModeAction() {
-      return DumbModeAction.WAIT;
-    }
   }
   private class MySearchForTestsTask extends SearchForTestsTask {
     private final TestClassFilter myClassFilter;

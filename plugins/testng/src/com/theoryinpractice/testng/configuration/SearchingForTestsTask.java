@@ -30,6 +30,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -90,7 +92,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     try {
       mySocket = myServerSocket.accept();
       try {
-        fillTestObjects(myClasses);
+        findAllTests();
       }
       catch (CantRunException e) {
         logCantRunException(e);
@@ -101,6 +103,17 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     }
     catch (Throwable e) {
       LOG.error(e);
+    }
+  }
+
+  private void findAllTests() throws CantRunException {
+    try {
+      fillTestObjects(myClasses);
+    }
+    catch (IndexNotReadyException e) {
+      myClasses.clear();
+      DumbService.getInstance(myProject).waitForSmartMode();
+      findAllTests();
     }
   }
 
@@ -115,11 +128,6 @@ public class SearchingForTestsTask extends Task.Backgroundable {
   @Override
   public void onCancel() {
     finish();
-  }
-
-  @Override
-  public DumbModeAction getDumbModeAction() {
-    return DumbModeAction.WAIT;
   }
 
   public void finish() {
