@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.LogicalPosition
@@ -1393,6 +1394,16 @@ class Bar {
 """
     myFixture.completeBasic()
     assert !('Inner' in myFixture.lookupElementStrings)
+  }
+
+  public void "test show static member after instance qualifier when nothing matches"() {
+    myFixture.configureByText "a.java", "class Foo{{ \"\".<caret> }}"
+    myFixture.completeBasic()
+    assert !('valueOf' in myFixture.lookupElementStrings)
+    ((LookupImpl)myFixture.lookup).hide()
+    myFixture.type 'val'
+    myFixture.completeBasic()
+    assert ('valueOf' in myFixture.lookupElementStrings)
   }
 
 }
