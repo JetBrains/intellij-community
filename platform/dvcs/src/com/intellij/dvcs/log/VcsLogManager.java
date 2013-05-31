@@ -56,7 +56,6 @@ public class VcsLogManager extends AbstractProjectComponent {
         UI_ControllerImpl myUiController = new UI_ControllerImpl(myProject, logProvider, root);
         Swing_UI mySwingUi = new Swing_UI(myUiController);
         myUiController.addControllerListener(mySwingUi.getControllerListener());
-        myUiController.setDragDropListener(mySwingUi.getDragDropListener());
         myUiController.init(false, false);
 
         Content vcsLogContentPane = new ContentImpl(mySwingUi.getMainFrame().getMainComponent(), "VCS LOG", true);
@@ -67,15 +66,7 @@ public class VcsLogManager extends AbstractProjectComponent {
     });
 
     /*
-            myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-        ((GitRepositoryManagerImpl)myRepositoryManager).updateRepositoriesCollection();
-        myRepository = myRepositoryManager.getRepositories().get(0);
-
-        myUiController = new UI_ControllerImpl(myProject, );
-        mySwingUi = new Swing_UI(myUiController);
-        myUiController.addControllerListener(mySwingUi.getControllerListener());
-        myUiController.setDragDropListener(mySwingUi.getDragDropListener());
-        myUiController.init(false, false);
+    TODO refresh on repo changes
 
         myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
           @Override
@@ -83,12 +74,6 @@ public class VcsLogManager extends AbstractProjectComponent {
             myUiController.refresh(false);
           }
         });
-
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow("Git Log");
-        if (toolWindow != null && toolWindow.isActive()) {
-          toolWindow.activate(null);
-        }
-
      */
   }
 

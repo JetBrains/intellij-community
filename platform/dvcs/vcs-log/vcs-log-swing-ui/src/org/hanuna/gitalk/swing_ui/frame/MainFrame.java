@@ -105,7 +105,8 @@ public class MainFrame {
         ui_controller.applyInteractiveRebase();
       }
     };
-    myToolbar.add(new JButton(apply));
+    JButton applyButton = new JButton(apply);
+    myToolbar.add(applyButton);
 
     Action cancel = new AbstractAction("", GitLogIcons.CANCEL) {
       {
@@ -117,7 +118,8 @@ public class MainFrame {
         ui_controller.cancelInteractiveRebase();
       }
     };
-    myToolbar.add(new JButton(cancel));
+    JButton cancelButton = new JButton(cancel);
+    myToolbar.add(cancelButton);
 
     final JCheckBox visibleLongEdges = new JCheckBox("Show full patch", false);
     visibleLongEdges.addMouseListener(new MouseAdapter() {
@@ -145,6 +147,12 @@ public class MainFrame {
     myToolbar.add(myContinueButton);
 
     myToolbar.add(Box.createHorizontalGlue());
+
+    // disabling interactivity
+    myContinueButton.setVisible(false);
+    myAbortButton.setVisible(false);
+    applyButton.setVisible(false);
+    cancelButton.setVisible(false);
   }
 
   private void packMainPanel() {
