@@ -2,7 +2,4 @@ class A{
   static A() <caret>
 }
 -----
-class
-enum
-interface
 throws

@@ -20,7 +20,14 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(})('}')
   PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiErrorElement:Unexpected symbol
     PsiElement(.)('.')
-    PsiElement(identifier)('getClass')
-    PsiElement(()('(')
-    PsiElement())(')')
+  PsiErrorElement:';' or new line expected
+    <empty list>
+  Method call
+    Reference expression
+      PsiElement(identifier)('getClass')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

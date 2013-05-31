@@ -11,5 +11,8 @@ Groovy script
     Variable
       PsiElement(identifier)('i')
   PsiErrorElement:';' or new line expected
+    <empty list>
+  Unary expression
     PsiElement(+)('+')
-    PsiElement(identifier)('i')
+    Reference expression
+      PsiElement(identifier)('i')

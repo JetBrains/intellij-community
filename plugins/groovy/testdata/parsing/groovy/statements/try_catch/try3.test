@@ -32,8 +32,10 @@ Groovy script
     Parameter list
       <empty list>
     PsiElement(})('}')
-  PsiWhiteSpace('\n')
   PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiWhiteSpace('\n')
+  PsiErrorElement:'finally' without 'try'
     PsiElement(finally)('finally')
   Closable block
     PsiElement({)('{')

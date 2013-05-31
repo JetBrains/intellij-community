@@ -25,5 +25,5 @@ Groovy script
       PsiElement(new line)('\n  ')
       PsiElement(})('}')
   PsiElement(new line)('\n')
-  PsiErrorElement:';' or new line expected
+  PsiErrorElement:Unexpected symbol
     PsiElement(})('}')

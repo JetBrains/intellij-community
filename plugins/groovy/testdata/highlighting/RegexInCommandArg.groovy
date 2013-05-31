@@ -1,2 +1,2 @@
-print <error descr="';' or new line expected">$/abc/$</error>
-print <error descr="';' or new line expected">$/a$bc/$</error>
+print<error descr="';' or new line expected"> </error><error descr="Unexpected symbol">$</error><error descr="';' or new line expected"><error descr="Unexpected symbol">/</error></error><error descr="';' or new line expected">a</error>bc/$
+print<error descr="';' or new line expected"> </error><error descr="Unexpected symbol">$</error><error descr="';' or new line expected"><error descr="Unexpected symbol">/</error></error><error descr="';' or new line expected">a</error>$bc/$
