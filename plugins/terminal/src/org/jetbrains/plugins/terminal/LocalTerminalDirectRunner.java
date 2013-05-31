@@ -49,6 +49,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
       @Override
       public boolean detachIsDefault() {
+        return false;
+      }
+
+      @Override
+      public boolean isSilentlyDestroyOnClose() {
         return true;
       }
 
