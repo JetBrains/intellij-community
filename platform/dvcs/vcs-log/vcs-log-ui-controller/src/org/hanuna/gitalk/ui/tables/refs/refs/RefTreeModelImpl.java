@@ -2,7 +2,7 @@ package org.hanuna.gitalk.ui.tables.refs.refs;
 
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.refs.RefsModel;
+import org.hanuna.gitalk.data.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;

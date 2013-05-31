@@ -30,7 +30,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="vcs-log-data" />
     <orderEntry type="module" module-name="vcs-log-graph-model" />
-    <orderEntry type="module" module-name="vcs-log-refs" scope="TEST" />
     <orderEntry type="module" module-name="vcs-log-api" scope="TEST" />
   </component>
 </module>

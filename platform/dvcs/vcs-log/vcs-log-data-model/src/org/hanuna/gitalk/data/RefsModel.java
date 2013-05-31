@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.refs;
+package org.hanuna.gitalk.data;
 
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;

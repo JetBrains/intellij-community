@@ -2,7 +2,6 @@ package org.hanuna.gitalk.data;
 
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
-import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 /**

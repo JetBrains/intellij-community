@@ -22,7 +22,7 @@ import org.hanuna.gitalk.graphmodel.impl.GraphModelImpl;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
 import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.refs.RefsModel;
+import org.hanuna.gitalk.data.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

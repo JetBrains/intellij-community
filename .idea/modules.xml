@@ -157,7 +157,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-graph/vcs-log-graph.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-graph/vcs-log-graph.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-graph-model/vcs-log-graph-model.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-graph-model/vcs-log-graph-model.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-print-model/vcs-log-print-model.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-print-model/vcs-log-print-model.iml" group="platform/dvcs/vcs-log" />
-      <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-refs/vcs-log-refs.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-refs/vcs-log-refs.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-swing-ui/vcs-log-swing-ui.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-swing-ui/vcs-log-swing-ui.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-ui-controller/vcs-log-ui-controller.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-ui-controller/vcs-log-ui-controller.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" filepath="$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" group="platform" />
