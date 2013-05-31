@@ -5,15 +5,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import icons.TerminalIcons;
 
 import java.nio.charset.Charset;
 
 /**
  * @author traff
  */
-public class RunLocalTerminalAction extends AnAction implements DumbAware {
-  public RunLocalTerminalAction() {
-    super();
+public class OpenLocalTerminalAction extends AnAction implements DumbAware {
+  public OpenLocalTerminalAction() {
+    super("Open Terminal...", null, TerminalIcons.OpenTerminal);
   }
 
   @Override
