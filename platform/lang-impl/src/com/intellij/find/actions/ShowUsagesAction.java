@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -302,11 +303,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     Processor<Usage> collect = new Processor<Usage>() {
       private final UsageTarget[] myUsageTarget = {new PsiElement2UsageTargetAdapter(handler.getPsiElement())};
       @Override
-      public boolean process(@NotNull Usage usage) {
+      public boolean process(@NotNull final Usage usage) {
         synchronized (usages) {
           if (visibleNodes.size() >= maxUsages) return false;
           if(UsageViewManager.isSelfUsage(usage, myUsageTarget)) return true;
-          UsageNode node = usageView.doAppendUsage(usage);
+          UsageNode node = ApplicationManager.getApplication().runReadAction(new Computable<UsageNode>() {
+            public UsageNode compute() {
+              return usageView.doAppendUsage(usage);
+            }
+          });
           usages.add(usage);
           if (node != null) {
             visibleNodes.add(node);

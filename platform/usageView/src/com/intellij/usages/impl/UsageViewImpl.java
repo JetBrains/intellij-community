@@ -28,6 +28,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.FindUsagesIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -73,8 +74,6 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -257,9 +256,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   protected boolean searchHasBeenCancelled() {
     return false;
   }
-  
+
   protected void setCurrentSearchCancelled(boolean flag){}
-  
+
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
     disposeUsageContextPanels();
@@ -750,14 +749,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void doReRun() {
-    final AtomicInteger tooManyUsages = new AtomicInteger();
-    final CountDownLatch waitWhileUserClick = new CountDownLatch(1);
     final AtomicInteger usageCountWithoutDefinition = new AtomicInteger(0);
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
+    final Project project = myProject;
+    final FindUsagesIndicator findUsagesIndicator = new FindUsagesIndicator();
+    Task.Backgroundable task = new Task.Backgroundable(project, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         setSearchInProgress(true);
-        final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(myProject);
+
         setCurrentSearchCancelled(false);
 
         myChangesDetected = false;
@@ -766,32 +765,30 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           @Override
           public boolean process(final Usage usage) {
             if (searchHasBeenCancelled()) return false;
-            if (tooManyUsages.get() == 1) {
-              try {
-                waitWhileUserClick.await(1, TimeUnit.SECONDS);
-              }
-              catch (InterruptedException ignored) {
-              }
-            }
 
             boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
 
             if (incrementCounter) {
               final int usageCount = usageCountWithoutDefinition.incrementAndGet();
-              if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
-                ((UsageViewManagerImpl)usageViewManager)
-                  .showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get(), UsageViewImpl.this);
+              if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
+                if (findUsagesIndicator.switchTooManyUsagesStatus()) {
+                  UsageViewManagerImpl.showTooManyUsagesWarning(project, findUsagesIndicator, usageCountWithoutDefinition.get(), UsageViewImpl.this);
+                }
               }
-              appendUsage(usage);
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
+                  appendUsage(usage);
+                }
+              });
             }
-            ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-            return indicator == null || !indicator.isCanceled();
+            return !findUsagesIndicator.isCanceled();
           }
         });
         drainQueuedUsageNodes();
         setSearchInProgress(false);
       }
-    });
+    };
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, findUsagesIndicator);
   }
 
   private void reset() {

@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.util.FindUsagesIndicator;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -202,8 +203,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final AsyncFuture<Boolean> result = processPsiFileRootsAsync(fileSet, new Processor<PsiElement>() {
       @Override
-      public boolean process(PsiElement psiRoot) {
-        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, true, progress);
+      public boolean process(final PsiElement psiRoot) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            return LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, true, progress);
+          }
+        });
       }
     }, progress);
     return new FinallyFuture<Boolean>(result, new Runnable() {
@@ -238,32 +243,37 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         });
         if (file != null && !(file instanceof PsiBinaryFile)) {
           file.getViewProvider().getContents(); // load contents outside readaction
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
-                List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
-                Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
-                for (PsiElement psiRoot : psiRoots) {
-                  if (progress != null) progress.checkCanceled();
-                  assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +
-                                           "; ViewProvider: " + file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
-                  if (!processed.add(psiRoot)) continue;
-                  if (!psiRoot.isValid()) continue;
-                  if (!psiRootProcessor.process(psiRoot)) {
-                    canceled.set(true);
-                    return;
-                  }
-                }
-                myManager.dropResolveCaches();
+          try {
+            if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
+            List<PsiFile> psiRoots = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
+              public List<PsiFile> compute() {
+                return file.getViewProvider().getAllFiles();
               }
-              catch (ProcessCanceledException e) {
+            });
+            Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
+            for (final PsiElement psiRoot : psiRoots) {
+              if (progress != null) progress.checkCanceled();
+              assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +
+                                       "; ViewProvider: " + file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
+              if (!processed.add(psiRoot)) continue;
+              if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+                public Boolean compute() {
+                  return psiRoot.isValid();
+                }
+              })) {
+                continue;
+              }
+              if (!psiRootProcessor.process(psiRoot)) {
                 canceled.set(true);
-                pceThrown.set(true);
+                break;
               }
             }
-          });
+            myManager.dropResolveCaches();
+          }
+          catch (ProcessCanceledException e) {
+            canceled.set(true);
+            pceThrown.set(true);
+          }
         }
         if (progress != null && progress.isRunning()) {
           double fraction = (double)counter.incrementAndGet() / size;
@@ -396,6 +406,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
 
     final StringSearcher searcher = new StringSearcher(qName, true, true, false);
+    final int patternLength = searcher.getPattern().length();
 
     if (progress != null) {
       progress.pushState();
@@ -417,25 +428,32 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final PsiFile psiFile = files[i];
       if (psiFile instanceof PsiBinaryFile) continue;
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          CharSequence text = psiFile.getViewProvider().getContents();
-          final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
-          for (int index = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress); index >= 0;) {
-            PsiReference referenceAt = psiFile.findReferenceAt(index);
-            if (referenceAt == null || useScope == null ||
-                !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile)) {
-              if (!processor.process(psiFile, index, index + searcher.getPattern().length())) {
-                cancelled.set(Boolean.TRUE);
-                return;
-              }
-            }
-
-            index = LowLevelSearchUtil.searchWord(text, textArray, index + searcher.getPattern().length(), text.length(), searcher, progress);
-          }
+      final CharSequence text = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
+        public CharSequence compute() {
+          return psiFile.getViewProvider().getContents();
         }
       });
+      final char[] textArray = ApplicationManager.getApplication().runReadAction(new Computable<char[]>() {
+        public char[] compute() {
+          return CharArrayUtil.fromSequenceWithoutCopying(text);
+        }
+      });
+      for (int index = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress); index >= 0;) {
+        final int finalIndex = index;
+        boolean isReferenceOK = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            PsiReference referenceAt = psiFile.findReferenceAt(finalIndex);
+            return referenceAt == null || useScope == null ||
+                   !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
+          }
+        });
+        if (isReferenceOK && !processor.process(psiFile, index, index + patternLength)) {
+          cancelled.set(Boolean.TRUE);
+          break;
+        }
+
+        index = LowLevelSearchUtil.searchWord(text, textArray, index + patternLength, text.length(), searcher, progress);
+      }
       if (cancelled.get()) break;
       if (progress != null) {
         progress.setFraction((double)(i + 1) / files.length);
@@ -636,12 +654,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final AsyncFuture<Boolean> result =
       processPsiFileRootsAsync(new ArrayList<VirtualFile>(candidateFiles.keySet()), new Processor<PsiElement>() {
         @Override
-        public boolean process(PsiElement psiRoot) {
-          final VirtualFile vfile = psiRoot.getContainingFile().getVirtualFile();
+        public boolean process(final PsiElement psiRoot) {
+          if (progress instanceof FindUsagesIndicator) {
+            ((FindUsagesIndicator)progress).pauseProcessingIfTooManyUsages();
+          }
+          final VirtualFile vfile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+            public VirtualFile compute() {
+              return psiRoot.getContainingFile().getVirtualFile();
+            }
+          });
           for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
-            StringSearcher searcher = searchers.get(singleRequest);
-            TextOccurenceProcessor adapted = adaptProcessor(singleRequest.request, singleRequest.refProcessor);
-            if (!LowLevelSearchUtil.processElementsContainingWordInElement(adapted, psiRoot, searcher, true, progress)) {
+            final StringSearcher searcher = searchers.get(singleRequest);
+            final TextOccurenceProcessor adapted = adaptProcessor(singleRequest.request, singleRequest.refProcessor);
+            if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+              public Boolean compute() {
+                return LowLevelSearchUtil.processElementsContainingWordInElement(adapted, psiRoot, searcher, true, progress);
+              }
+            })) {
               return false;
             }
           }
