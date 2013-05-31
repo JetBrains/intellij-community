@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
@@ -24,15 +25,20 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitVcsCommit;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.git.reader.RefReader;
 import org.hanuna.gitalk.log.commit.parents.SimpleCommitParents;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,10 +46,14 @@ import java.util.List;
  */
 public class GitLogProvider implements VcsLogProvider {
 
-  private final Project myProject;
+  private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
 
-  public GitLogProvider(@NotNull Project project) {
+  private final Project myProject;
+  @NotNull private final GitRepositoryManager myRepositoryManager;
+
+  public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
+    myRepositoryManager = repositoryManager;
   }
 
   @NotNull
@@ -84,6 +94,26 @@ public class GitLogProvider implements VcsLogProvider {
 
   @Override
   public Collection<? extends Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException {
-    return new RefReader(myProject, false).readAllRefs(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root);
+      return Collections.emptyList();
+    }
+
+    // TODO tags
+    Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
+    Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
+    Collection<Ref> refs = new ArrayList<Ref>(localBranches.size() + remoteBranches.size());
+    for (GitLocalBranch localBranch : localBranches) {
+      refs.add(new Ref(Hash.build(localBranch.getHash()), localBranch.getName(), Ref.RefType.LOCAL_BRANCH));
+    }
+    for (GitRemoteBranch remoteBranch : remoteBranches) {
+      refs.add(new Ref(Hash.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(), Ref.RefType.REMOTE_BRANCH));
+    }
+    String currentRevision = repository.getCurrentRevision();
+    if (currentRevision != null) { // null => fresh repository
+      refs.add(new Ref(Hash.build(currentRevision), "HEAD", Ref.RefType.HEAD));
+    }
+    return refs;
   }
 }

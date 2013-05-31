@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,6 +67,15 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       GitRootScanner.start(myProject);
     }
+
+    // TODO hack for GitLogProvider to be able to get actual refs data when requested from VcsLogManager in a post-startup activity
+    // need to come up with a right fix for it.
+    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        updateRepositoriesCollection();
+      }
+    });
   }
 
   @Override
@@ -168,7 +178,6 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     }
   }
 
-  // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
   public void updateRepositoriesCollection() {
     Map<VirtualFile, GitRepository> repositories;
     try {
