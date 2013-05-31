@@ -79,6 +79,18 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
     myExtender = new Extender(project, this, additionalActions);
+
+    ActionManager actionManager = ActionManager.getInstance();
+    final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
+    actionManager.addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (moveAction.equals(action)) {
+          rebuildList();
+        }
+      }
+    }, myParentDisposable);
+
   }
 
   @Override
@@ -212,15 +224,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
     ActionManager actionManager = ActionManager.getInstance();
     final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
-    actionManager.addAnActionListener(new AnActionListener.Adapter() {
-      @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (moveAction.equals(action)) {
-          rebuildList();
-        }
-      }
-    }/*, myParentDisposable*/); // TODO
-
     moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
     toolBarGroup.add(moveAction);
   }
