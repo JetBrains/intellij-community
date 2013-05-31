@@ -44,6 +44,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     myScrollOffset += units;
     if (myLastSingRowLayout != null) {
       clampScrollOffsetToBounds(myLastSingRowLayout);
+      doScrollSelectionInView(myLastSingRowLayout);
     }
   }
 
