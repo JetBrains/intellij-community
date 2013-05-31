@@ -11,7 +11,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
  * @since 24.05.13
  */
 class SuppressWarningSuggester extends FeatureSuggester {
-  val POPUP_MESSAGE = "Why no to use quickfix for inspection to suppress it (Alt + Enter)"
+  val POPUP_MESSAGE = "Why not use quickfix for inspection to suppress it? (Alt + Enter)"
 
   def getSuggestion(actions: List[UserAction], anActions: List[UserAnAction]): Suggestion = {
     val name = CommandProcessor.getInstance().getCurrentCommandName

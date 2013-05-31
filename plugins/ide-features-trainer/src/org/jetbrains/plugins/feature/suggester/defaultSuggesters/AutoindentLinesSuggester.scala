@@ -10,7 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
  * @since 25.05.13
  */
 class AutoindentLinesSuggester extends FeatureSuggester {
-  val POPUP_MESSAGE = "Why not to use autoindent feature (Ctrl + Shift + I)"
+  val POPUP_MESSAGE = "Why not use the Auto-Indent feature? (Ctrl + Shift + I)"
 
   def getSuggestion(actions: List[UserAction], anActions: List[UserAnAction]): Suggestion = {
     val command = CommandProcessor.getInstance.getCurrentCommand

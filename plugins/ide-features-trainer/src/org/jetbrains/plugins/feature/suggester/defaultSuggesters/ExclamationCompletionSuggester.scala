@@ -15,7 +15,7 @@ import scala.Some
  * @since 23.05.13
  */
 class ExclamationCompletionSuggester extends FeatureSuggester {
-  val POPUP_MESSAGE = "Why no to finish completion by '!' character"
+  val POPUP_MESSAGE = "You can also finish code completion with '!' character"
   val DESCRIPTOR_ID = "editing.completion.finishByDotEtc"
 
   private case class PossibleExclaimingExpression(action: UserAction, expressionText: String, startOffset: Int)

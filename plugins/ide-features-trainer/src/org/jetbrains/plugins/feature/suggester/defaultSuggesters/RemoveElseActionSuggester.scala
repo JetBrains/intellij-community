@@ -14,7 +14,7 @@ import scala.Some
  * @since 24.05.13
  */
 class RemoveElseActionSuggester extends FeatureSuggester {
-  val REMOVE_ELSE_POPUP = "Why not to use Remove Else action (Ctrl + Shift + Delete)"
+  val REMOVE_ELSE_POPUP = "Why not use the Remove Else action? (Ctrl + Shift + Delete)"
 
   private var waitForElseRemoving: Option[PsiIfStatement] = None
 

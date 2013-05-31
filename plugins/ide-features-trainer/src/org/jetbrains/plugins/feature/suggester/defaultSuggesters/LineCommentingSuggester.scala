@@ -16,8 +16,8 @@ import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 class LineCommentingSuggester extends FeatureSuggester {
   import SuggestingUtil._
 
-  val POPUP_MESSAGE = "Why no to use line commenting feature (Ctrl + Slash)"
-  val UNCOMMENTING_POPUP_MESSAGE = "Why no to use line uncommenting feature (Ctrl + Slash)"
+  val POPUP_MESSAGE = "Try the Comment Line feature to do it faster (Ctrl + /)"
+  val UNCOMMENTING_POPUP_MESSAGE = "Why not use the Uncomment Line feature? (Ctrl + /)"
   val DESCRIPTOR_ID = "codeassists.comment.line"
 
   private var uncommentingActionStart: Option[UserAction] = None

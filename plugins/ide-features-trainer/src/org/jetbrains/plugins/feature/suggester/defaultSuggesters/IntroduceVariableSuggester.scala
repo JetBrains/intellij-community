@@ -15,7 +15,7 @@ import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
  * @since 24.05.13
  */
 class IntroduceVariableSuggester extends FeatureSuggester {
-  val POPUP_MESSAGE = "Why not to use Introduce Variable refactoring (Ctrl + Alt + V)"
+  val POPUP_MESSAGE = "Why not use the Extract Variable refactoring? (Ctrl + Alt + V)"
   val DESCRIPTOR_ID = "refactoring.introduceVariable"
 
   private case class Expr(exprText: String, method: PsiMethod)
