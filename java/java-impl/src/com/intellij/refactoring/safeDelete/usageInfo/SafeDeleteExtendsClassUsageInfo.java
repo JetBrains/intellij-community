@@ -50,7 +50,7 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     final PsiReferenceList extendingImplementsList = myExtendingClass.getImplementsList();
     if (extendsList != null) {
       final PsiClassType[] referenceTypes = extendsList.getReferencedTypes();
-      final PsiReferenceList listToAddExtends = refClass.isInterface() == myExtendingClass.isInterface() ? myExtendingClass.getExtendsList() : extendingImplementsList;
+      final PsiReferenceList listToAddExtends = refClass.isInterface() == myExtendingClass.isInterface() || myExtendingClass instanceof PsiTypeParameter ? myExtendingClass.getExtendsList() : extendingImplementsList;
       final PsiClassType[] existingRefTypes = listToAddExtends.getReferencedTypes();
       for (PsiClassType referenceType : referenceTypes) {
         if (ArrayUtilRt.find(existingRefTypes, referenceType) > -1) continue;
