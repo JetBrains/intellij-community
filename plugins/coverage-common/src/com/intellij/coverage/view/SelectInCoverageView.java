@@ -27,8 +27,10 @@ public class SelectInCoverageView implements  SelectInTarget {
     final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (suitesBundle != null) {
       final CoverageView coverageView = CoverageViewManager.getInstance(myProject).getToolwindow(suitesBundle);
-      final VirtualFile file = context.getVirtualFile();
-      return !file.isDirectory() && coverageView.canSelect(file);
+      if (coverageView != null) {
+        final VirtualFile file = context.getVirtualFile();
+        return !file.isDirectory() && coverageView.canSelect(file);
+      }
     }
     return false;
   }
