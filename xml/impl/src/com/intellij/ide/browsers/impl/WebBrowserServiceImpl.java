@@ -64,7 +64,10 @@ public class WebBrowserServiceImpl extends WebBrowserService {
         }
 
         try {
-          return provider.first.getUrl(psiElement, psiFile, virtualFile);
+          Url url = provider.first.getUrl(psiElement, psiFile, virtualFile);
+          if (url != null) {
+            return url;
+          }
         }
         catch (WebBrowserUrlProvider.BrowserException e) {
           if (!HtmlUtil.isHtmlFile(psiFile)) {
