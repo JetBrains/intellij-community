@@ -37,7 +37,7 @@ public class PyTestFinder implements TestFinder {
     if (source == null) return Collections.emptySet();
 
     String sourceName = source.getName();
-
+    if (sourceName == null) return Collections.emptySet();
     List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
 
     if (source instanceof PyClass) {
