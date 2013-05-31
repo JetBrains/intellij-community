@@ -87,8 +87,6 @@ public final class TextEditorState implements FileEditorState {
     if (COLUMN != textEditorState.COLUMN) return false;
     if (LINE != textEditorState.LINE) return false;
     if (VERTICAL_SCROLL_PROPORTION != textEditorState.VERTICAL_SCROLL_PROPORTION) return false;
-    if (VERTICAL_SCROLL_OFFSET != textEditorState.VERTICAL_SCROLL_OFFSET) return false;
-    if (MAX_VERTICAL_SCROLL_OFFSET != textEditorState.MAX_VERTICAL_SCROLL_OFFSET) return false;
     if (SELECTION_START != textEditorState.SELECTION_START) return false;
     if (SELECTION_END != textEditorState.SELECTION_END) return false;
     CodeFoldingState localFoldingState = getFoldingState();
