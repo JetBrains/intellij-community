@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -386,7 +387,13 @@ public class TestPackage extends TestObject {
     public void run(@NotNull ProgressIndicator indicator) {
       try {
         mySocket = myServerSocket.accept();
-        myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
+        DumbService.getInstance(myProject).repeatUntilPassesInSmartMode(new Runnable() {
+          @Override
+          public void run() {
+            myClasses.clear();
+            myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
+          }
+        });
         myFoundTests = !myClasses.isEmpty();
       }
       catch (IOException e) {
