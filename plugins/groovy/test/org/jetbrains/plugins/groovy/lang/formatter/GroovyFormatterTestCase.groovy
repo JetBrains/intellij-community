@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 /**
  * @author peter
  */
@@ -53,6 +54,10 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
   
   protected CommonCodeStyleSettings getGroovySettings() {
     return myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+  }
+
+  protected GroovyCodeStyleSettings getGroovyCustomSettings() {
+    return myTempSettings.getCustomSettings(GroovyCodeStyleSettings)
   }
 
   protected void setSettings(Project project) {

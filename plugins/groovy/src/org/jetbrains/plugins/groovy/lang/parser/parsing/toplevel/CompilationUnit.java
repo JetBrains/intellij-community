@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,32 +39,15 @@ public class CompilationUnit implements GroovyElementTypes {
     if (!PackageDefinition.parse(builder, parser)) {
       parser.parseStatementWithImports(builder);
     }
-    cleanAfterError(builder);
 
-    while (Separators.parse(builder) || builder.getTokenType() == mLCURLY) {
-      parser.parseStatementWithImports(builder);
-      cleanAfterError(builder);
+    while (!builder.eof()) {
+      if (!Separators.parse(builder)) {
+        builder.error(GroovyBundle.message("separator.expected"));
+      }
+      if (builder.eof()) break;
+      if (!parser.parseStatementWithImports(builder)) {
+        ParserUtils.wrapError(builder, GroovyBundle.message("unexpected.symbol"));
+      }
     }
   }
-
-  /**
-   * Marks some trash after statement parsing as error
-   *
-   * @param builder PsiBuilder
-   */
-  private static void cleanAfterError(PsiBuilder builder) {
-    int i = 0;
-    PsiBuilder.Marker em = builder.mark();
-    while (!builder.eof() && mNLS != builder.getTokenType() && mSEMI != builder.getTokenType() && mLCURLY != builder.getTokenType()) {
-      builder.advanceLexer();
-      i++;
-    }
-    if (i > 0) {
-      em.error(GroovyBundle.message("separator.expected"));
-    }
-    else {
-      em.drop();
-    }
-  }
-
 }

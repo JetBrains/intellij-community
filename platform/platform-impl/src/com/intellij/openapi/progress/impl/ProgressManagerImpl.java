@@ -379,14 +379,15 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     else {
       progressIndicator = new BackgroundableProcessIndicator(task);
     }
-    runProcessWithProgressAsynchronously(task, progressIndicator);
-  }
-
-  public static void runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task, @NotNull final ProgressIndicator progressIndicator) {
     runProcessWithProgressAsynchronously(task, progressIndicator, null);
   }
 
-  public static void runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task, @NotNull final ProgressIndicator progressIndicator,
+  public void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator) {
+    runProcessWithProgressAsynchronously(task, progressIndicator, null);
+  }
+
+  public static void runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
+                                                          @NotNull final ProgressIndicator progressIndicator,
                                                           @Nullable final Runnable continuation) {
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
@@ -416,7 +417,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
             }
           }, ModalityState.NON_MODAL);
         }
-        else if (!canceled) {
+        else {
           final Task.NotificationInfo notificationInfo = task.notifyFinished();
           if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();

@@ -127,6 +127,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("Super");
   }
 
+  public void testInterfaceAsTypeParameterBound() throws Exception {
+    doSingleFileTest();   
+  }
+
   public void testLocalVariableSideEffect() throws Exception {
     myDoCompare = false;
     try {

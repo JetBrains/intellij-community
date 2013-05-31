@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,16 +144,9 @@ public class GroovyParser implements PsiParser {
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"));
 
-    PsiBuilder.Marker warn = builder.mark();
-    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-    if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
-      warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
+    if (!parseBranch(builder)) {
       ifStmtMarker.done(IF_STATEMENT);
       return true;
-    }
-    else {
-      warn.drop();
     }
 
     PsiBuilder.Marker rb = builder.mark();
@@ -162,16 +155,7 @@ public class GroovyParser implements PsiParser {
       rb.drop();
       ParserUtils.getToken(builder, GroovyTokenTypes.kELSE);
 
-      warn = builder.mark();
-      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-
-      if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
-        warn.rollbackTo();
-        builder.error(GroovyBundle.message("expression.expected"));
-      }
-      else {
-        warn.drop();
-      }
+      parseBranch(builder);
     }
     else {
       rb.rollbackTo();
@@ -219,18 +203,24 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
+    parseBranch(builder);
+    marker.done(WHILE_STATEMENT);
+    return true;
+  }
+
+  private boolean parseBranch(@NotNull PsiBuilder builder) {
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
-    } else {
-      warn.drop();
+      return false;
     }
-
-    marker.done(WHILE_STATEMENT);
-    return true;
+    else {
+      warn.drop();
+      return true;
+    }
   }
 
   public void parseBlockBody(PsiBuilder builder) {

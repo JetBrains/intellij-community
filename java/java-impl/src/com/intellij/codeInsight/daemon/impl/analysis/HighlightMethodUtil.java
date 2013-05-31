@@ -326,6 +326,9 @@ public class HighlightMethodUtil {
     if (resolved instanceof PsiMethod && resolveResult.isValidResult()) {
       TextRange fixRange = getFixRange(methodCall);
       highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
+      if (highlightInfo == null && !LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)resolved, methodCall.getMethodExpression())) {
+        highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip("Static method may be invoked on containing interface class only").range(fixRange).create();
+      }
     }
     else {
       PsiMethod resolvedMethod = null;

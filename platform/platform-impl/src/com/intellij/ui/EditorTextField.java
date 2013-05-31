@@ -473,6 +473,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     settings.setAdditionalLinesCount(0);
     settings.setAdditionalColumnsCount(1);
     settings.setRightMarginShown(false);
+    settings.setRightMargin(-1);
     settings.setFoldingOutlineShown(false);
     settings.setLineNumbersShown(false);
     settings.setLineMarkerAreaShown(false);

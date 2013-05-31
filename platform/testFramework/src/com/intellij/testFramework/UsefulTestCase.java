@@ -41,12 +41,12 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import junit.framework.Assert;
-import junit.framework.AssertionFailedError;
-import junit.framework.TestCase;
+import junit.framework.*;
+import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +62,7 @@ import java.lang.reflect.Modifier;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -837,5 +838,26 @@ public abstract class UsefulTestCase extends TestCase {
       }
     });
     file.refresh(false, true);
+  }
+
+  public static @NotNull Test filteredSuite(@RegExp String regexp, @NotNull Test test) {
+    final Pattern pattern = Pattern.compile(regexp);
+    final TestSuite testSuite = new TestSuite();
+    new Processor<Test>() {
+
+      @Override
+      public boolean process(Test test) {
+        if (test instanceof TestSuite) {
+          for (int i = 0, len = ((TestSuite)test).testCount(); i < len; i++) {
+            process(((TestSuite)test).testAt(i));
+          }
+        }
+        else if (pattern.matcher(test.toString()).find()) {
+          testSuite.addTest(test);
+        }
+        return false;
+      }
+    }.process(test);
+    return testSuite;
   }
 }

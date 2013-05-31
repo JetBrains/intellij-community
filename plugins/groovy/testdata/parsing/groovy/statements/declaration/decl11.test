@@ -34,8 +34,15 @@ Groovy script
     Throw clause
       <empty list>
   PsiErrorElement:';' or new line expected
+    <empty list>
+  Reference expression
     PsiElement(identifier)('other')
+  PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiErrorElement:Unexpected symbol
     PsiElement())(')')
+  PsiErrorElement:';' or new line expected
+    <empty list>
   PsiWhiteSpace(' ')
   Closable block
     PsiElement({)('{')

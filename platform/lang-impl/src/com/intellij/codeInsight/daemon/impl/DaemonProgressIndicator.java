@@ -16,7 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.util.TraceableDisposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * @author cdr
  */
-public class DaemonProgressIndicator extends ProgressIndicatorBase {
+public class DaemonProgressIndicator extends AbstractProgressIndicatorBase {
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug ? new Throwable() : null);
 
@@ -58,7 +58,6 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
   public void start() {
     assert !isCanceled() : "canceled";
     assert !isRunning() : "running";
-    assert !wasStarted() : "was started";
     super.start();
   }
 

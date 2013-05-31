@@ -39,6 +39,11 @@ public abstract class DialogWrapperPeerFactory {
 
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent);
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent);
+
+  /** @see DialogWrapper#DialogWrapper(boolean, boolean)
+   */
+  @Deprecated
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent, boolean applicationModalIfPossible);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, Window owner, boolean canBeParent, boolean applicationModalIfPossible);
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent);
 }

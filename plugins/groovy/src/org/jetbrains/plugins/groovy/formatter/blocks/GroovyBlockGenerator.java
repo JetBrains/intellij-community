@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.formatter;
+package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
@@ -34,6 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.formatter.AlignmentProvider;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -240,7 +242,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile || classLevel) {
-      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode));
+      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode), GroovyIndentProcessor.indentLabelBlock(blockPsi, myContext.getGroovySettings()));
     }
 
     if (blockPsi instanceof GrMethod) {
@@ -322,13 +324,32 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return wrap;
   }
 
-  public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children) {
+  public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children, final boolean indentLabelBlocks) {
 
     calculateAlignments(children, classLevel);
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
 
-    for (ASTNode childNode : children) {
-      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+    if (indentLabelBlocks) {
+      for (int i = 0; i < children.size(); i++) {
+        ASTNode childNode = children.get(i);
+        if (childNode.getElementType() == LABELED_STATEMENT) {
+          int j = i;
+          do {
+            i++;
+          }
+          while (i < children.size() && children.get(i).getElementType() != LABELED_STATEMENT && children.get(i).getElementType() != mRCURLY);
+          subBlocks.add(new GrLabelBlock(childNode, children.subList(j, i), classLevel, getIndent(childNode), getChildWrap(childNode), myContext));
+          i--;
+        }
+        else {
+          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+        }
+      }
+    }
+    else {
+      for (ASTNode childNode : children) {
+        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+      }
     }
     return subBlocks;
   }

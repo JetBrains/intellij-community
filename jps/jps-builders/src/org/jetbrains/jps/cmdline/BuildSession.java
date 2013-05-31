@@ -33,6 +33,7 @@ import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.TargetTypeRegistry;
+import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
@@ -194,12 +195,14 @@ final class BuildSession implements Runnable, CanceledStatus {
     final BuildFSState fsState = new BuildFSState(false);
     try {
       final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+      TimingLog.LOG.debug("Project descriptor loaded");
       myProjectDescriptor = pd;
       if (fsStateStream != null) {
         try {
           try {
             fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
             applyFSEvent(pd, myInitialFSDelta, false);
+            TimingLog.LOG.debug("FS Delta loaded");
           }
           finally {
             fsStateStream.close();
@@ -218,6 +221,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       myEventsProcessor.startProcessing();
 
       myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, myBuildType, myScopes, false);
+      TimingLog.LOG.debug("Build finished");
     }
     finally {
       saveData(fsState, dataStorageRoot);

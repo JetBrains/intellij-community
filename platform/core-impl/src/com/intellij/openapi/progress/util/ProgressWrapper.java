@@ -26,7 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ProgressWrapper extends ProgressIndicatorBase {
+public class ProgressWrapper extends AbstractProgressIndicatorBase {
   private final ProgressIndicator myOriginal;
 
   private ProgressWrapper(@NotNull ProgressIndicator original) {
@@ -37,6 +37,7 @@ public class ProgressWrapper extends ProgressIndicatorBase {
     return myOriginal.isCanceled();
   }
 
+  @NotNull
   public ProgressIndicator getOriginalProgressIndicator() {
     return myOriginal;
   }

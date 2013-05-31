@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -67,7 +69,12 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         }
 
         if (fileInRoots(file)) {
-          PsiClass[] classes = classOwner.getClasses();
+          PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+            @Override
+            public PsiClass[] compute() {
+              return classOwner.getClasses();
+            }
+          });
           if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) &&
               (file == null || file.getNameWithoutExtension().equals(classes[0].getName()))) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1));

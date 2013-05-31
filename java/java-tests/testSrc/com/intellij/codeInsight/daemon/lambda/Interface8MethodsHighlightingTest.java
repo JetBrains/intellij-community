@@ -30,6 +30,7 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   public void testStaticMethodsInFunctionalInterface() { doTest(false, false); }
   public void testCyclicSubstitutor() { doTest(false, false); }
   public void testThisAccessibility() { doTest(false, false); }
+  public void testStaticMethodCalls() { doTest(false, false); }
 
   private void doTest() {
     doTest(false, false);

@@ -18,13 +18,18 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
-import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.GrLabelBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
@@ -53,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.spock.SpockUtils;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
@@ -86,6 +92,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       else if (myChildType != mLCURLY && myChildType != mRCURLY) {
         return Indent.getNormalIndent();
       }
+    }
+    if (parentBlock instanceof GrLabelBlock) {
+      return myChildType == LABELED_STATEMENT
+             ? Indent.getNoneIndent()
+             : Indent.getLabelIndent();
+
     }
 
     if (GSTRING_TOKENS_INNER.contains(myChildType)) {
@@ -138,11 +150,33 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       if (indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE) {
         myResult = Indent.getAbsoluteLabelIndent();
       }
-      else {
+    }
+    else {
+      if (indentLabelBlock(myChild, myBlock.getContext().getGroovySettings())) {
         myResult = Indent.getLabelIndent();
       }
     }
+  }
 
+  public static boolean indentLabelBlock(@NotNull PsiElement place, final GroovyCodeStyleSettings settings) {
+    if (settings.INDENT_LABEL_BLOCKS) {
+      return true;
+    }
+
+    final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
+    if (clazz == null) return false;
+    if (InheritanceUtil.isInheritor(clazz, SpockUtils.SPEC_CLASS_NAME)) {
+      return true;
+    }
+
+    final PsiClassType[] supers = clazz.getSuperTypes();
+    for (PsiClassType aSuper : supers) {
+      if (aSuper.equalsToText(SpockUtils.SPEC_CLASS_NAME)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override

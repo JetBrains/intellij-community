@@ -44,6 +44,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -106,7 +107,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     final Editor editor = getEditor(dataContext);
 
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    boolean isInvokedFromEditor = editor != null && element == null;
+    boolean isInvokedFromEditor = PlatformDataKeys.EDITOR.getData(dataContext) != null;
     element = getElement(project, file, editor, element);
 
     if (element == null && file == null) return;

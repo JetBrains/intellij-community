@@ -324,6 +324,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
     else {
       showMessage(session != null? session.getStateDescription() : DebuggerBundle.message("status.debug.stopped"));
+      if (session == null || session.isStopped()) {
+        getNodeFactory().clearHistory(); // save memory by clearing references on JDI objects
+      }
     }
   }
 

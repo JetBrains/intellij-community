@@ -437,7 +437,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
           PsiElement(})('}')
       PsiErrorElement:',' or ']' expected
         <empty list>
-  PsiErrorElement:';' or new line expected
+  PsiErrorElement:Unexpected symbol
     PsiElement(})('}')"""
   }
 

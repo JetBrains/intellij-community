@@ -261,7 +261,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = browser;
       myBrowserExtender = browser;
     } else {
-      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, changes, initialSelection, true, true,
+      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), initialSelection, true, true,
                                                                         new Runnable() {
                                                                           public void run() {
                                                                             updateWarning();

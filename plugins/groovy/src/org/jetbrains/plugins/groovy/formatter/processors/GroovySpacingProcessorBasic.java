@@ -26,10 +26,11 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
-import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
-import org.jetbrains.plugins.groovy.formatter.MethodCallWithoutQualifierBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.GrLabelBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.MethodCallWithoutQualifierBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
@@ -84,11 +85,6 @@ public abstract class GroovySpacingProcessorBasic {
 
     if (child1 instanceof ClosureBodyBlock) {
       return createDependentSpacingForClosure(settings, groovySettings, (GrClosableBlock)left.getParent(), false);
-    }
-
-    if (leftType == mGDOC_COMMENT_START && rightType == mGDOC_COMMENT_DATA ||
-        leftType == mGDOC_COMMENT_DATA && rightType == mGDOC_COMMENT_END) {
-      return LAZY_SPACING;
     }
 
     if (leftType == GROOVY_DOC_COMMENT) {
@@ -227,6 +223,7 @@ public abstract class GroovySpacingProcessorBasic {
   private static boolean mirrorsAst(GroovyBlock block) {
     return block.getNode().getTextRange().equals(block.getTextRange()) ||
            block instanceof MethodCallWithoutQualifierBlock ||
-           block instanceof ClosureBodyBlock;
+           block instanceof ClosureBodyBlock ||
+           block instanceof GrLabelBlock;
   }
 }

@@ -64,11 +64,10 @@ public class FileProcessingCompilerAdapterTask implements CompileTask{
       final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
       final Ref<IOException> ex = new Ref<IOException>(null);
 
-      DumbService.getInstance(project).waitForSmartMode();
 
       final FileProcessingCompilerStateCache cache = CompilerCacheManager.getInstance(project).getFileProcessingCompilerCache(myCompiler);
       final boolean isMake = context.isMake();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      DumbService.getInstance(project).runReadActionInSmartMode(new Runnable() {
         public void run() {
           try {
             for (FileProcessingCompiler.ProcessingItem item : items) {

@@ -11,6 +11,8 @@ public abstract class CustomPortServerManager {
 
   public interface CustomPortService {
     boolean rebind();
+
+    boolean isBound();
   }
 
   public abstract int getPort();

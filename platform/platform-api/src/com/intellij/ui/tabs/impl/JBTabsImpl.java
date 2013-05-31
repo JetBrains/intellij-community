@@ -557,18 +557,10 @@ public class JBTabsImpl extends JComponent
       return;
     }
     mySingleRowLayout.myMorePopup = new JBPopupMenu();
-    float grayPercent = 0.9f;
     for (final TabInfo each : myVisibleInfos) {
+      if (!mySingleRowLayout.isTabHidden(each)) continue;
       final JMenuItem item = new JBCheckboxMenuItem(each.getText(), getSelectedInfo() == each);
       item.setIcon(each.getIcon());
-      Color color = UIManager.getColor("MenuItem.background");
-      if (color != null) {
-        if (mySingleRowLayout.isTabHidden(each)) {
-          color = new Color((int) (color.getRed() * grayPercent), (int) (color.getGreen() * grayPercent), (int) (color.getBlue() * grayPercent));
-        }
-        item.setBackground(color);
-      }
-
       mySingleRowLayout.myMorePopup.add(item);
       item.addActionListener(new ActionListener() {
         @Override

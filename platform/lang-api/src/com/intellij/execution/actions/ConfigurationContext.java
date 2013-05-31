@@ -21,6 +21,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
@@ -188,9 +189,24 @@ public class ConfigurationContext {
     return DataManager.getInstance().getDataContext(myContextComponent);
   }
 
+  /**
+   * Returns original {@link RuntimeConfiguration} from this context.
+   * For example, it could be some test framework runtime configuration that had been launched
+   * and that had brought a result test tree on which a right-click action was performed.
+   *
+   * @param type {@link ConfigurationType} instance to filter original runtime configuration by its type
+   * @return {@link RuntimeConfiguration} instance, it could be null
+   */
   @Nullable
-  public RuntimeConfiguration getOriginalConfiguration(final ConfigurationType type) {
-    return myRuntimeConfiguration != null && Comparing.strEqual(type.getId(), myRuntimeConfiguration.getType().getId()) ? myRuntimeConfiguration : null;
+  public RuntimeConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
+    if (type == null) {
+      return myRuntimeConfiguration;
+    }
+    if (myRuntimeConfiguration != null
+        && ConfigurationTypeUtil.equals(myRuntimeConfiguration.getType(), type)) {
+      return myRuntimeConfiguration;
+    }
+    return null;
   }
 
   @Nullable

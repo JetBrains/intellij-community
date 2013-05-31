@@ -172,7 +172,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     if (master == null) {
       addWidget(new ToolWindowsWidget(), Position.LEFT);
-      addWidget(new ToolWindowsLayoutWidget(), Position.LEFT);
     }
   }
 
@@ -877,103 +876,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     @Override
     public String ID() {
       return "ToolWindows Widget";
-    }
-
-    @Override
-    public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-      return null;
-    }
-
-    @Override
-    public void install(@NotNull StatusBar statusBar) {
-      myStatusBar = statusBar;
-      updateIcon();
-    }
-
-    @Override
-    public void dispose() {
-      Disposer.dispose(this);
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", this);
-      myStatusBar = null;
-    }
-  }
-
-  private static class ToolWindowsLayoutWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
-                                                                   UISettingsListener, PropertyChangeListener {
-
-    private StatusBar myStatusBar;
-
-    private ToolWindowsLayoutWidget() {
-      new BaseButtonBehavior(this, TimedDeadzone.NULL) {
-        @Override
-        protected void execute(MouseEvent e) {
-          performAction();
-        }
-      }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
-
-      UISettings.getInstance().addUISettingsListener(this, this);
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", this);
-      setToolTipText("Click to switch layout (widescreen / normal)");
-    }
-
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-      updateIcon();
-    }
-
-    @Override
-    public void uiSettingsChanged(UISettings source) {
-      updateIcon();
-    }
-
-    private void performAction() {
-      if (isActive()) {
-        UISettings.getInstance().WIDESCREEN_SUPPORT = !UISettings.getInstance().WIDESCREEN_SUPPORT;
-        UISettings.getInstance().fireUISettingsChanged();
-      }
-    }
-
-    private void updateIcon() {
-      if (isActive()) {
-        setToolTipText("Click to switch layout (widescreen / normal)");
-        boolean changes = false;
-
-        if (!isVisible()) {
-          setVisible(true);
-          changes = true;
-        }
-
-        Icon icon = UISettings.getInstance().WIDESCREEN_SUPPORT ? AllIcons.General.Widescreen_off : AllIcons.General.Widescreen_on;
-        if (icon != getIcon()) {
-          setIcon(icon);
-          changes = true;
-        }
-
-        if (changes) {
-          revalidate();
-          repaint();
-        }
-      }
-      else {
-        setVisible(false);
-        setToolTipText(null);
-      }
-    }
-
-    private boolean isActive() {
-      return myStatusBar != null && myStatusBar.getFrame() != null && myStatusBar.getFrame().getProject() != null && Registry.is("ide.windowSystem.showTooWindowButtonsSwitcher");
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public String ID() {
-      return "ToolWindows Layout Widget";
     }
 
     @Override

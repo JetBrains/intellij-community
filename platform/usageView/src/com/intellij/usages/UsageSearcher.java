@@ -16,9 +16,14 @@
 package com.intellij.usages;
 
 import com.intellij.util.Generator;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
-public interface UsageSearcher extends Generator<Usage>{
+public interface UsageSearcher extends Generator<Usage> {
+  // hands all found usages to the processor
+  // not guaranteed to be in read action, not guaranteed in the same thread
+  void generate(@NotNull Processor<Usage> processor);
 }

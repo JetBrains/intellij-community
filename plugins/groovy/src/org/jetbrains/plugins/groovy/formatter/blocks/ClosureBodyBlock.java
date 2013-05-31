@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.formatter;
+package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.Block;
 import com.intellij.formatting.ChildAttributes;
@@ -23,6 +23,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 
 import java.util.List;
 
@@ -51,7 +53,7 @@ public class ClosureBodyBlock extends GroovyBlock {
       GroovyBlockGenerator generator = new GroovyBlockGenerator(this);
       List<ASTNode> children = GroovyBlockGenerator.getClosureBodyVisibleChildren(myNode.getTreeParent());
 
-      mySubBlocks = generator.generateSubBlockForCodeBlocks(false, children);
+      mySubBlocks = generator.generateSubBlockForCodeBlocks(false, children, GroovyIndentProcessor.indentLabelBlock(myNode.getPsi(), myContext.getGroovySettings()));
 
       //at least -> exists
       assert !mySubBlocks.isEmpty();

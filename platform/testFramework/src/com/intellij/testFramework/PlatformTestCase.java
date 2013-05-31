@@ -150,7 +150,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (resource == null) {
       resource = PlatformTestCase.class.getClassLoader().getResource("idea/IdeaApplicationInfo.xml");
       if (resource == null) {
-        setPlatformPrefix("PlatformLangXml");
+        resource = PlatformTestCase.class.getClassLoader().getResource("META-INF/UltimateLangXmlPlugin.xml");
+        if (resource == null) {
+          setPlatformPrefix("PlatformLangXml");
+        }
+        else {
+          setPlatformPrefix("UltimateLangXml");
+        }
       }
       else {
         setPlatformPrefix("Idea");

@@ -17,6 +17,7 @@ package com.intellij.reference;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 
 /**
@@ -46,7 +47,7 @@ public class SoftReference<T> extends java.lang.ref.SoftReference<T> {
   //}
 
   @Nullable
-  public static <T> T dereference(@Nullable java.lang.ref.SoftReference<T> ref) {
+  public static <T> T dereference(@Nullable Reference<T> ref) {
     return ref != null ? ref.get() : null;
   }
 }

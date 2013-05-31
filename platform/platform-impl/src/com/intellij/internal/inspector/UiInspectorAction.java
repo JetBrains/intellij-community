@@ -263,9 +263,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
         Component component = componentNode.getOwnComponent();
-        String name = component.getClass().getSimpleName();
-        if (name.length() == 0) {
-          name = component.getClass().getSuperclass().getSimpleName();
+        String name = component.getName();
+        if (StringUtil.isEmpty(name)) {
+          name = component.getClass().getSimpleName();
+          if (name.isEmpty()) {
+            name = component.getClass().getSuperclass().getSimpleName();
+          }
         }
         
         if (!selected) {

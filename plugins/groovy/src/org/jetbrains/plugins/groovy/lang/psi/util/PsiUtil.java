@@ -744,14 +744,21 @@ public class PsiUtil {
 
 
   @Nullable
-  public static PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward) {
-    return skipSet(elem, forward, TokenSets.WHITE_SPACES_OR_COMMENTS);
+  public static PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward, boolean skipNLs) {
+    return skipSet(elem, forward, TokenSets.WHITE_SPACES_OR_COMMENTS, skipNLs);
   }
 
-  private static PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set) {
+
+  @Nullable
+  public static PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward) {
+    return skipSet(elem, forward, TokenSets.WHITE_SPACES_OR_COMMENTS, true);
+  }
+
+  private static PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set, boolean skipNLs) {
     while (elem != null &&
            elem.getNode() != null &&
-           set.contains(elem.getNode().getElementType())) {
+           set.contains(elem.getNode().getElementType()) &&
+           (skipNLs || elem.getText().indexOf('\n') == -1)) {
       if (forward) {
         elem = elem.getNextSibling();
       }
@@ -764,7 +771,7 @@ public class PsiUtil {
 
   @Nullable
   public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
-    return skipSet(elem, forward, TokenSets.WHITE_SPACES_SET);
+    return skipSet(elem, forward, TokenSets.WHITE_SPACES_SET, true);
   }
 
 

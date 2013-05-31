@@ -627,7 +627,7 @@
                      implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
     <localInspection language="JAVA" shortName="SuperClassHasFrequentlyUsedInheritors"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
                      displayName="Class may extend a commonly used base class instead of implementing interface"/>
 

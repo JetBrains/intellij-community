@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -75,6 +74,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
     }
     else {
       final JList list = new JBList(VfsUtilCore.toVirtualFileArray(files));
+      //noinspection unchecked
       list.setCellRenderer(new ColoredListCellRenderer() {
         @Override
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {

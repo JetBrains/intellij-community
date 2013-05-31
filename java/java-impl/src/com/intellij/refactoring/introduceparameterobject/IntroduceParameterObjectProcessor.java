@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -40,6 +41,7 @@ import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -312,6 +314,16 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       for (PsiDocTag paramTag : paramTags) {
         final PsiElement[] dataElements = paramTag.getDataElements();
         if (dataElements.length > 0) {
+          if (dataElements[0] instanceof PsiDocParamRef) {
+            final PsiReference reference = dataElements[0].getReference();
+            if (reference != null) {
+              final PsiElement resolve = reference.resolve();
+              if (resolve instanceof PsiParameter) {
+                final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)resolve);
+                if (ArrayUtil.find(paramsToMerge, parameterIndex) < 0) continue;
+              }
+            }
+          }
           mergedTags.add((PsiDocTag)paramTag.copy());
         }
       }

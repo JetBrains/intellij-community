@@ -91,6 +91,15 @@ public class GroovyCompletionData {
       return;
     }
 
+    final String[] extendsImplements = addExtendsImplements(position);
+    for (String keyword : extendsImplements) {
+      result.addElement(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+    if (extendsImplements.length > 0) {
+      return;
+    }
+
+
     if (parent instanceof GrExpression && parent.getParent() instanceof GrAnnotationNameValuePair) {
       addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL);
       return;
@@ -101,6 +110,11 @@ public class GroovyCompletionData {
     }
 
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
+      if (afterAbstractMethod(position, false, true)) {
+        result.addElement(keyword(PsiKeyword.THROWS, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        if (afterAbstractMethod(position, false, false)) return;
+      }
+
       if (suggestPackage(position)) {
         result.addElement(keyword(PsiKeyword.PACKAGE, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
@@ -109,9 +123,6 @@ public class GroovyCompletionData {
       }
 
       addTypeDefinitionKeywords(result, position);
-      for (String keyword : addExtendsImplements(position)) {
-        result.addElement(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
-      }
 
       if (isAfterAnnotationMethodIdentifier(position)) {
         result.addElement(keyword(PsiKeyword.DEFAULT, TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -132,9 +143,6 @@ public class GroovyCompletionData {
       }
       if (isInfixOperatorPosition(position)) {
         addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
-      }
-      if (afterAbstractMethod(position, false)) {
-        result.addElement(keyword(PsiKeyword.THROWS, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
       if (suggestPrimitiveTypes(position)) {
         final boolean addSpace = !IN_CAST_TYPE_ELEMENT.accepts(position) && !GroovySmartCompletionContributor.AFTER_NEW.accepts(position) && !isInExpression(position);
@@ -231,7 +239,7 @@ public class GroovyCompletionData {
       elem = PsiUtil.skipWhitespacesAndComments(context.getPrevSibling(), false);
     }
     else {
-      elem = PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false);
+      elem = PsiUtil.skipWhitespacesAndComments(PsiTreeUtil.prevLeaf(elem), false);
     }
 
     ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition;
@@ -381,7 +389,7 @@ public class GroovyCompletionData {
   public static boolean suggestClassInterfaceEnum(PsiElement context) {
     PsiElement nextNonSpace = PsiUtil.getNextNonSpace(context);
     if (nextNonSpace instanceof PsiErrorElement) nextNonSpace = PsiUtil.getNextNonSpace(nextNonSpace);
-    if (afterAbstractMethod(context, true) && nextNonSpace != null && nextNonSpace.getText().startsWith("{") || addExtendsImplements(context).length > 0) {
+    if (afterAbstractMethod(context, true, false) && nextNonSpace != null && nextNonSpace.getText().startsWith("{") || addExtendsImplements(context).length > 0) {
       return false;
     }
 
@@ -557,20 +565,20 @@ public class GroovyCompletionData {
     return false;
   }
 
-  private static boolean afterAbstractMethod(PsiElement context, boolean acceptAnnotationMethods) {
-    PsiElement candidate = null;
+  private static boolean afterAbstractMethod(PsiElement context, boolean acceptAnnotationMethods, boolean skipNLs) {
+    PsiElement candidate;
     if (isInTypeDefinitionBody(context)) {
       PsiElement run = context;
       while(!(run.getParent() instanceof GrTypeDefinitionBody)) {
         run = run.getParent();
         assert run != null;
       }
-      candidate = PsiUtil.skipWhitespacesAndComments(run.getPrevSibling(), false);
-      if (candidate instanceof PsiErrorElement) candidate = candidate.getPrevSibling();
+      candidate = PsiUtil.skipWhitespacesAndComments(run.getPrevSibling(), false, skipNLs);
     }
-    else if (context.getParent() instanceof PsiErrorElement) {
-     candidate = context.getParent().getPrevSibling();
+    else {
+     candidate = PsiTreeUtil.prevLeaf(context);
     }
+    if (candidate instanceof PsiErrorElement) candidate = candidate.getPrevSibling();
 
     return candidate instanceof GrMethod &&
            ((GrMethod)candidate).getBlock() == null &&

@@ -151,7 +151,7 @@ public class LambdaUtil {
       }
       return false;
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(leftType));
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass instanceof PsiAnonymousClass) {
       return isAcceptable(lambdaExpression, ((PsiAnonymousClass)psiClass).getBaseClassType(), checkReturnType);
@@ -789,6 +789,18 @@ public class LambdaUtil {
     return null;
   }
 
+  public static boolean isValidQualifier4InterfaceStaticMethodCall(@NotNull PsiMethod method, @NotNull PsiReferenceExpression methodReferenceExpression) {
+    if (PsiUtil.isLanguageLevel8OrHigher(methodReferenceExpression)) {
+      final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
+        return qualifierExpression == null && PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true)||
+               qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass;
+      }
+    }
+    return true;
+  }
+  
   static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;

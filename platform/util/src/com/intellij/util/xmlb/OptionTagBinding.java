@@ -59,6 +59,7 @@ class OptionTagBinding implements Binding {
     }
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Element targetElement = new Element(myTagName);
     Object value = accessor.read(o);
@@ -81,6 +82,7 @@ class OptionTagBinding implements Binding {
     return targetElement;
   }
 
+  @Override
   public Object deserialize(Object o, @NotNull Object... nodes) {
     if (nodes.length > 1) {
       LOG.info("Duplicate options for " + o + " will be ignored");
@@ -115,6 +117,7 @@ class OptionTagBinding implements Binding {
     return o;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     if (!(node instanceof Element)) return false;
     Element e = (Element)node;
@@ -123,10 +126,12 @@ class OptionTagBinding implements Binding {
     return name != null && name.equals(myName);
   }
 
+  @Override
   public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
 
+  @Override
   public void init() {
   }
 

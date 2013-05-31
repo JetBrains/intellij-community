@@ -28,10 +28,6 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JUnitConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
-  public static final RuntimeConfigurationProducer[] PROTOTYPES = new RuntimeConfigurationProducer[]{
-        new AllInPackageConfigurationProducer(),
-        new TestMethodConfigurationProducer(),
-        new TestClassConfigurationProducer()};
 
   public JUnitConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());

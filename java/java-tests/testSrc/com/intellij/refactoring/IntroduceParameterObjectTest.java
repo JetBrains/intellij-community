@@ -149,6 +149,24 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     });
   }
 
+  public void testCopyJavadoc1() throws Exception {
+    doTest(false, true, new Function<PsiMethod, VariableData[]>() {
+      @Override
+      public VariableData[] fun(PsiMethod method) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+
+        final VariableData[] datas = new VariableData[parameters.length - 1];
+        for (int i = 0; i < parameters.length - 1; i++) {
+          PsiParameter parameter = parameters[i];
+          datas[i] = new VariableData(parameter);
+          datas[i].name = parameter.getName();
+          datas[i].passAsParameter = true;
+        }
+        return datas;
+      }
+    });
+  }
+
   public void testTypeParametersWithChosenSubtype() throws Exception {
     doTest(false, true, new Function<PsiMethod, VariableData[]>() {
       @Override

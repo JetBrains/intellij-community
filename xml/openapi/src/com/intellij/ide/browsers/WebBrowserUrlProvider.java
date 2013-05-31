@@ -16,6 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,12 +34,30 @@ public abstract class WebBrowserUrlProvider {
       super(message);
     }
   }
-  /**
-   * Invariant: element has not null containing psi file with not null virtual file
-   */
-  public abstract boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile);
 
-  @NotNull
+  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, Ref<Url> result) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) {
+      return false;
+    }
+
+    Url url;
+    try {
+      url = getUrl(element, psiFile, file);
+    }
+    catch (BrowserException ignored) {
+      return false;
+    }
+
+    if (url == null) {
+      return false;
+    }
+
+    result.set(url);
+    return true;
+  }
+
+  @Nullable
   public abstract Url getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
 
   @Nullable

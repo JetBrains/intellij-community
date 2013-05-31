@@ -43,6 +43,23 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   public void scroll(int units) {
     myScrollOffset += units;
     if (myLastSingRowLayout != null) {
+      int offset = -myScrollOffset;
+      for (TabInfo info : myLastSingRowLayout.myVisibleInfos) {
+        final int length = getRequiredLength(info);
+        if (info == myTabs.getSelectedInfo()) {
+          if (offset < 0) {
+            myScrollOffset+=offset;
+          }
+          else {
+            final int maxLength = myLastSingRowLayout.toFitLength - getStrategy().getMoreRectAxisSize();
+            if (offset + length > maxLength) {
+              myScrollOffset+=offset + length - maxLength;
+            }
+          }
+          break;
+        }
+        offset += length;
+      }
       clampScrollOffsetToBounds(myLastSingRowLayout);
     }
   }

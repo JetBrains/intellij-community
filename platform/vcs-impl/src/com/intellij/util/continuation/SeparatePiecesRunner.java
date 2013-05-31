@@ -19,8 +19,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -89,7 +89,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
         else {
           setIndicator(new BackgroundableProcessIndicator(task));
         }
-        ProgressManagerImpl.runProcessWithProgressAsynchronously(task, getIndicator());
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, getIndicator());
         return;
       }
     }

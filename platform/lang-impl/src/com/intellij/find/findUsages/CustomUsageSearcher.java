@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.usages.Usage;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author gregsh
@@ -27,5 +28,5 @@ import com.intellij.util.Processor;
 public abstract class CustomUsageSearcher {
   public static final ExtensionPointName<CustomUsageSearcher> EP_NAME = ExtensionPointName.create("com.intellij.customUsageSearcher");
 
-  public abstract void processElementUsages(final PsiElement element, final Processor<Usage> processor, final FindUsagesOptions options);
+  public abstract void processElementUsages(@NotNull PsiElement element, @NotNull Processor<Usage> processor, @NotNull FindUsagesOptions options);
 }

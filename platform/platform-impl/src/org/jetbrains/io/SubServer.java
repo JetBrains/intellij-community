@@ -37,6 +37,11 @@ public class SubServer implements CustomPortServerManager.CustomPortService, Dis
     }
   }
 
+  @Override
+  public boolean isBound() {
+    return !openChannels.isEmpty();
+  }
+
   private void stop() {
     // todo should we call releaseExternalResources? We use only 1 boss&worker thread
     openChannels.close().awaitUninterruptibly();

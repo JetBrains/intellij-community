@@ -29,7 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -90,7 +90,20 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     try {
       mySocket = myServerSocket.accept();
       try {
-        fillTestObjects(myClasses);
+        final CantRunException[] ex = new CantRunException[1];
+        DumbService.getInstance(myProject).repeatUntilPassesInSmartMode(new Runnable() {
+          @Override
+          public void run() {
+            myClasses.clear();
+            try {
+              fillTestObjects(myClasses);
+            }
+            catch (CantRunException e) {
+              ex[0] = e;
+            }
+          }
+        });
+        if (ex[0] != null) throw ex[0];
       }
       catch (CantRunException e) {
         logCantRunException(e);
@@ -115,11 +128,6 @@ public class SearchingForTestsTask extends Task.Backgroundable {
   @Override
   public void onCancel() {
     finish();
-  }
-
-  @Override
-  public DumbModeAction getDumbModeAction() {
-    return DumbModeAction.WAIT;
   }
 
   public void finish() {

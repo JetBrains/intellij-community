@@ -29,9 +29,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -112,7 +112,7 @@ public class TestsPattern extends TestPackage {
         }
       };
       mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
-      ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
       return task;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author ilyas
  */
 public class SwitchStatement implements GroovyElementTypes {
+
+  public static final TokenSet SKIP_SET = TokenSet.create(kCASE, kDEFAULT, mRCURLY);
 
   public static void parseSwitch(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
@@ -70,7 +72,7 @@ public class SwitchStatement implements GroovyElementTypes {
     while (!ParserUtils.getToken(builder, mRCURLY)) {
       if (builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT) {
         builder.error("case, default or } expected");
-        ParserUtils.skipCountingBraces(builder, TokenSet.create(kCASE, kDEFAULT, mRCURLY));
+        ParserUtils.skipCountingBraces(builder, SKIP_SET);
         if (builder.eof() || ParserUtils.getToken(builder, mRCURLY)) {
           return;
         }

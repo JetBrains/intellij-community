@@ -1,6 +1,4 @@
-<caret>package a.b.c
-
-import org.*
+<caret>import org.*
 
 class A {
   def foo() {
