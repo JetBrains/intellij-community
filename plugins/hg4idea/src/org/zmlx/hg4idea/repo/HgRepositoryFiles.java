@@ -30,22 +30,26 @@ import java.util.Collection;
  */
 public class HgRepositoryFiles {
 
-  public static final String BRANCHHEADS = "cache/branchheads";
+  public static final String BRANCHHEADS = "cache/branchheads";  // can be branchheads or branchheads-served after approx 2.5,
+  // so check for starting branchheads
+  public static final String BRANCHEADSDIR = "cache";
   public static final String MERGE = "merge";
   public static final String BRANCH = "branch";
 
 
-  private final String myBranchHeadsPath;
-  private final String myMergePath;
-  private final String myBranchPath;
+  @NotNull private final String myBranchHeadsPath;
+  @NotNull private final String myBranchHeadsDirPath;
+  @NotNull private final String myMergePath;
+  @NotNull private final String myBranchPath;
 
-
+  @NotNull
   public static HgRepositoryFiles getInstance(@NotNull VirtualFile hgDir) {
     return new HgRepositoryFiles(hgDir);
   }
 
   private HgRepositoryFiles(@NotNull VirtualFile hgDir) {
     myBranchHeadsPath = hgDir.getPath() + slash(BRANCHHEADS);
+    myBranchHeadsDirPath = hgDir.getPath() + slash(BRANCHEADSDIR);
     myBranchPath = hgDir.getPath() + slash(BRANCH);
     myMergePath = hgDir.getPath() + slash(MERGE);
   }
@@ -63,13 +67,14 @@ public class HgRepositoryFiles {
     return Arrays.asList(slash(BRANCHHEADS), slash(MERGE));
   }
 
-  public String getBranchHeadsPath() {
-    return myBranchHeadsPath;
+  @NotNull
+  public String getBranchHeadsDirPath() {
+    return myBranchHeadsDirPath;
   }
 
 
   public boolean isbranchHeadsFile(String filePath) {
-    return filePath.equals(myBranchHeadsPath);
+    return filePath.startsWith(myBranchHeadsPath);
   }
 
   public boolean isBranchFile(String filePath) {

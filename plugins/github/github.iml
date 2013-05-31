@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="dvcs" />
   </component>
 </module>
 

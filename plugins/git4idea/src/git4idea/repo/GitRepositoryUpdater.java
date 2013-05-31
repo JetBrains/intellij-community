@@ -15,16 +15,14 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
@@ -39,26 +37,26 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 final class GitRepositoryUpdater implements Disposable, BulkFileListener {
-  private final GitRepositoryFiles myRepositoryFiles;
-  private final MessageBusConnection myMessageBusConnection;
-  private final QueueProcessor<Object> myUpdateQueue;
-  private final Object DUMMY_UPDATE_OBJECT = new Object();
-  private final VirtualFile myRemotesDir;
-  private final VirtualFile myHeadsDir;
-  private final LocalFileSystem.WatchRequest myWatchRequest;
+  @NotNull private final GitRepositoryFiles myRepositoryFiles;
+  @Nullable private final MessageBusConnection myMessageBusConnection;
+  @NotNull private final QueueProcessor<Object> myUpdateQueue;
+  @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
+  @Nullable private final VirtualFile myRemotesDir;
+  @Nullable private final VirtualFile myHeadsDir;
+  @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
 
 
-  GitRepositoryUpdater(GitRepository repository) {
+  GitRepositoryUpdater(@NotNull GitRepository repository) {
     VirtualFile gitDir = repository.getGitDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
 
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
-    visitGitDirVfs(gitDir);
+    RepositoryUtil.visitVcsDirVfs(gitDir, GitRepositoryFiles.getSubDirRelativePaths());
     myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
 
     Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<Object>(new Updater(repository), project.getDisposed());
+    myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
     if (!project.isDisposed()) {
       myMessageBusConnection = project.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -68,26 +66,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     }
   }
 
-  private static void visitGitDirVfs(@NotNull VirtualFile gitDir) {
-    gitDir.getChildren();
-    for (String subdir : GitRepositoryFiles.getSubDirRelativePaths()) {
-      VirtualFile dir = gitDir.findFileByRelativePath(subdir);
-      // process recursively, because we need to visit all branches under refs/heads and refs/remotes
-      visitAllChildrenRecursively(dir);
-    }
-  }
 
-  private static void visitAllChildrenRecursively(@Nullable VirtualFile dir) {
-    if (dir == null) {
-      return;
-    }
-    VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile virtualFile) {
-        return true;
-      }
-    });
-  }
 
   @Override
   public void dispose() {
@@ -125,12 +104,12 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
         headChanged = true;
       } else if (myRepositoryFiles.isBranchFile(filePath)) {
         // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
-        branchFileChanged = true;   
-        visitAllChildrenRecursively(myHeadsDir);
+        branchFileChanged = true;
+        RepositoryUtil.visitAllChildrenRecursively(myHeadsDir);
       } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
         // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
         branchFileChanged = true;
-        visitAllChildrenRecursively(myRemotesDir);
+        RepositoryUtil.visitAllChildrenRecursively(myRemotesDir);
       } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
       } else if (myRepositoryFiles.isRebaseFile(filePath)) {
@@ -145,16 +124,4 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     }
   }
 
-  private static class Updater implements Consumer<Object> {
-    private final GitRepository myRepository;
-
-    public Updater(GitRepository repository) {
-      myRepository = repository;
-    }
-
-    @Override
-    public void consume(Object dummy) {
-      myRepository.update();
-    }
-  }
 }

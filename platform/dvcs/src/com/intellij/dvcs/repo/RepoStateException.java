@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.repo;
+package com.intellij.dvcs.repo;
 
 /**
  * @author Nadya Zabrodina
  */
-public class HgRepoStateException extends RuntimeException {
+public class RepoStateException extends RuntimeException {
 
-  public HgRepoStateException(String message) {
+  public RepoStateException(String message) {
     super(message);
   }
 
-  public HgRepoStateException(String message, Throwable cause) {
+  public RepoStateException(String message, Throwable cause) {
     super(message, cause);
   }
 }

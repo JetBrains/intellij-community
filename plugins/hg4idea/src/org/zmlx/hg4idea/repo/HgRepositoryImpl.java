@@ -16,16 +16,13 @@
 
 package org.zmlx.hg4idea.repo;
 
+import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -37,45 +34,29 @@ import java.util.List;
  * @author Nadya Zabrodina
  */
 
-public class HgRepositoryImpl implements HgRepository, Disposable {
+public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
-  private static final Object STUB_OBJECT = new Object();
+  @NotNull private final HgRepositoryReader myReader;
+  @NotNull private final VirtualFile myHgDir;
 
-  private final Project myProject;
-  private final VirtualFile myRootDir;
-  private final HgRepositoryReader myReader;
-  private final VirtualFile myHgDir;
-  private final QueueProcessor<Object> myNotifier;
-
-  @NotNull private volatile State myState =  State.NORMAL;
-  @Nullable private volatile String myCurrentRevision = null;
   @NotNull private volatile String myCurrentBranch = DEFAULT_BRANCH;
   @NotNull private volatile List<String> myBranches = Collections.emptyList();
+  private boolean myIsFresh = true;
 
 
-  /*
-     * Get the HgRepository instance from the {@link HgRepositoryManager}.
-     * If you need to have an instance of HgRepository for a repository outside the project, use
-     * {@link #getLightInstance(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project, PlatformFacade, com.intellij.openapi.Disposable)}.
-
-   */
+  @SuppressWarnings("ConstantConditions")
   protected HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project,
                              @NotNull Disposable parentDisposable) {
-    myRootDir = rootDir;
-    myProject = project;
-    Disposer.register(parentDisposable, this);
-
-    myHgDir = myRootDir.findChild(HgUtil.DOT_HG);
+    super(project, rootDir, parentDisposable);
+    myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
-
+    myState = State.NORMAL;
+    myCurrentRevision = null;
     myReader = new HgRepositoryReader(VfsUtilCore.virtualToIoFile(myHgDir));
-
-    MessageBus messageBus = project.getMessageBus();
-    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, messageBus, this), myProject.getDisposed());
     update();
   }
 
-
+  @NotNull
   public static HgRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project,
                                              @NotNull Disposable parentDisposable) {
     HgRepositoryImpl repository = new HgRepositoryImpl(root, project, parentDisposable);
@@ -88,46 +69,10 @@ public class HgRepositoryImpl implements HgRepository, Disposable {
     Disposer.register(this, updater);
   }
 
-  @Override
-  public void dispose() {
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile getRoot() {
-    return myRootDir;
-  }
-
   @NotNull
   @Override
   public VirtualFile getHgDir() {
     return myHgDir;
-  }
-
-
-  @Override
-  @NotNull
-  public String getPresentableUrl() {
-    return getRoot().getPresentableUrl();
-  }
-
-  @Override
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
-
-  @Override
-  @NotNull
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  @Nullable
-  public String getCurrentRevision() {
-    return myCurrentRevision;
   }
 
   @Override
@@ -146,70 +91,30 @@ public class HgRepositoryImpl implements HgRepository, Disposable {
 
   @Override
   public boolean isFresh() {
-    return !myReader.headExist();
+    return myIsFresh;
   }
 
   @Override
   public void update() {
     readRepository();
-    notifyListeners();
+    if (!Disposer.isDisposed(getProject())) {
+      getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
+    }
+  }
+
+  @Override
+  public String toLogString() {
+    return String.format("HgRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",
+                         myCurrentBranch, myCurrentRevision, myState, getRoot());
   }
 
   private void readRepository() {
+     myIsFresh = myIsFresh && myReader.checkIsFresh(); //if repository not fresh  - it will be not fresh all time
     if (!isFresh()) {
       myState = myReader.readState();
       myCurrentRevision = myReader.readCurrentRevision();
       myCurrentBranch = myReader.readCurrentBranch();
       myBranches = myReader.readBranches();
     }
-  }
-
-  protected void notifyListeners() {
-    myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
-  }
-
-  private static class NotificationConsumer implements Consumer<Object> {
-
-    private final Project myProject;
-    private final MessageBus myMessageBus;
-    private final HgRepository myRepository;
-
-    NotificationConsumer(Project project, MessageBus messageBus, HgRepository repository) {
-      myProject = project;
-      myMessageBus = messageBus;
-      myRepository = repository;
-    }
-
-    @Override
-    public void consume(Object o) {
-      if (!Disposer.isDisposed(myProject)) {
-        myMessageBus.syncPublisher(HgVcs.STATUS_TOPIC).update(myProject, myRepository.getRoot());
-      }
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getPresentableUrl();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    HgRepositoryImpl that = (HgRepositoryImpl)o;
-
-    if (!myProject.equals(that.myProject)) return false;
-    if (!myRootDir.equals(that.myRootDir)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myProject.hashCode();
-    result = 31 * result + (myRootDir.hashCode());
-    return result;
   }
 }
