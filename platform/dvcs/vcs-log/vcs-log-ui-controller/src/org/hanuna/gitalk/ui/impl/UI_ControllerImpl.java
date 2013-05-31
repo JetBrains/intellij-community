@@ -6,10 +6,13 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Function;
@@ -27,11 +30,9 @@ import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
-import com.intellij.vcs.log.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.SelectController;
-import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.ui.ControllerListener;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -119,8 +119,13 @@ public class UI_ControllerImpl implements UI_Controller {
     @Override
     public CommitData get(@NotNull Hash key) {
       // TODO
-      return myLogProvider.readCommitsData(myRoot, Collections.singletonList(key.toStrHash())).get(0);
+      try {
+        return myLogProvider.readCommitsData(myRoot, Collections.singletonList(key.toStrHash())).get(0);
       }
+      catch (VcsException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }, 5000);
 
   public UI_ControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
@@ -142,7 +147,12 @@ public class UI_ControllerImpl implements UI_Controller {
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        preloadCommitDetails();
+        try {
+          preloadCommitDetails();
+        }
+        catch (VcsException e) {
+          throw new RuntimeException(e);
+        }
       }
     });
 
@@ -167,7 +177,7 @@ public class UI_ControllerImpl implements UI_Controller {
           dataInit();
           events.setState(ControllerListener.State.USUAL);
         }
-        catch (IOException e) {
+        catch (VcsException e) {
           events.setState(ControllerListener.State.ERROR);
           events.setErrorMessage(e.getMessage());
         }
@@ -211,7 +221,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   }
 
-  private void preloadCommitDetails() {
+  private void preloadCommitDetails() throws VcsException {
     if (myCommitDetailsPreloaded) {
       return;
     }
@@ -348,7 +358,7 @@ public class UI_ControllerImpl implements UI_Controller {
           events.runUpdateUI();
 
         }
-        catch (IOException e) {
+        catch (VcsException e) {
           events.setState(ControllerListener.State.ERROR);
           events.setErrorMessage(e.getMessage());
         }

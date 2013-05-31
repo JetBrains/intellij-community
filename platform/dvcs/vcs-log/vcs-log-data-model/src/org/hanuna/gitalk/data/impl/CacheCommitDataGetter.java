@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,7 +46,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
 
   @NotNull
   @Override
-  public CommitData getCommitData(@NotNull Node node) {
+  public CommitData getCommitData(@NotNull Node node) throws VcsException {
     Hash hash = node.getCommitHash();
     if (FakeCommitParents.isFake(hash)) {
       Hash originalHash = FakeCommitParents.getOriginal(hash);
@@ -79,7 +80,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     return null;
   }
 
-  private void runLoadAroundCommitData(@NotNull Node node) {
+  private void runLoadAroundCommitData(@NotNull Node node) throws VcsException {
     int rowIndex = node.getRowIndex();
     List<Node> nodes = new ArrayList<Node>();
     for (int i = rowIndex - UP_PRELOAD_COUNT; i < rowIndex + DOWN_PRELOAD_COUNT; i++) {
@@ -91,7 +92,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     preLoadCommitData(nodes);
   }
 
-  private void preLoadCommitData(@NotNull List<Node> nodes) {
+  private void preLoadCommitData(@NotNull List<Node> nodes) throws VcsException {
     List<String> hashes = ContainerUtil.map(nodes, new Function<Node, String>() {
       @Override
       public String fun(Node node) {
@@ -106,7 +107,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   }
 
 
-  public void initiallyPreloadCommitDetails() {
+  public void initiallyPreloadCommitDetails() throws VcsException {
     List<Node> nodes = new ArrayList<Node>();
     for (int i = 0; i < VcsLogProvider.COMMIT_BLOCK_SIZE; i++) {
       Node commitNode = getCommitNodeInRow(i);

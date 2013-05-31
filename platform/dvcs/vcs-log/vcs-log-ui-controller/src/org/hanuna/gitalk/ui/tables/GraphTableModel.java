@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.tables;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
@@ -48,7 +49,12 @@ public class GraphTableModel extends AbstractTableModel {
       data = null;
     }
     else {
-      data = dataPack.getCommitDataGetter().getCommitData(commitNode);
+      try {
+        data = dataPack.getCommitDataGetter().getCommitData(commitNode);
+      }
+      catch (VcsException e) {
+        throw new RuntimeException(e);
+      }
     }
     switch (columnIndex) {
       case 0:

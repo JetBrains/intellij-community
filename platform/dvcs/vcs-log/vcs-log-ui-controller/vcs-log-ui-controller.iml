@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="vcs-log-graph-model" />
     <orderEntry type="module" module-name="vcs-log-data-model" exported="" />
     <orderEntry type="module" module-name="vcs-log-api" />
+    <orderEntry type="module" module-name="vcs-api" />
   </component>
 </module>
 

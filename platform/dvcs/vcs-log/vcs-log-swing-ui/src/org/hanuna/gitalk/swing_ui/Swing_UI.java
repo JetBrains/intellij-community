@@ -3,6 +3,7 @@ package org.hanuna.gitalk.swing_ui;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
@@ -314,7 +315,13 @@ public class Swing_UI {
     private CharSequence renderCommits(List<Node> commitsBeingDragged) {
       if (commitsBeingDragged.size() == 1) {
         Node node = commitsBeingDragged.get(0);
-        String message = ui_controller.getDataPack().getCommitDataGetter().getCommitData(node).getMessage();
+        String message = null;
+        try {
+          message = ui_controller.getDataPack().getCommitDataGetter().getCommitData(node).getMessage();
+        }
+        catch (VcsException e) {
+          throw new RuntimeException(e);
+        }
         return "\"" + message + "\"";
       }
 

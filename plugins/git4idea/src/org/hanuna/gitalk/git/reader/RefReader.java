@@ -1,11 +1,12 @@
 package org.hanuna.gitalk.git.reader;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.git.reader.util.GitProcessFactory;
 import org.hanuna.gitalk.git.reader.util.ProcessOutputReader;
-import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.refs.RefParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,13 +50,19 @@ public class RefReader {
   }
 
   @NotNull
-  public List<Ref> readAllRefs(VirtualFile root) throws IOException {
+  public List<Ref> readAllRefs(VirtualFile root) throws VcsException {
     if (myReusePreviousGitOutput && ourPreviousOutput != null) {
       return ourPreviousOutput;
     }
 
-    Process process = GitProcessFactory.getInstance(myProject).refs(root);
-    outputReader.startRead(process);
+    Process process = null;
+    try {
+      process = GitProcessFactory.getInstance().refs(root);
+      outputReader.startRead(process);
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
     List<Ref> refs1 = refs;
     ourPreviousOutput = refs1;
     return refs1;

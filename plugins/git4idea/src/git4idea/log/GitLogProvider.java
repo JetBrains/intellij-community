@@ -16,18 +16,22 @@
 package git4idea.log;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.vcs.log.CommitData;
-import com.intellij.vcs.log.CommitParents;
-import com.intellij.vcs.log.VcsLogProvider;
-import org.hanuna.gitalk.git.reader.CommitDataReader;
-import org.hanuna.gitalk.git.reader.CommitParentsReader;
+import com.intellij.util.Function;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.*;
+import git4idea.GitVcsCommit;
+import git4idea.history.GitHistoryUtils;
+import git4idea.history.browser.GitCommit;
+import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.git.reader.RefReader;
-import com.intellij.vcs.log.Ref;
+import org.hanuna.gitalk.log.commit.parents.SimpleCommitParents;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -44,18 +48,42 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<CommitParents> readNextBlock(@NotNull VirtualFile root, @NotNull Consumer<String> statusUpdater) throws IOException {
-    return new CommitParentsReader(myProject, root, false).readNextBlock(statusUpdater);
+  public List<CommitParents> readNextBlock(@NotNull VirtualFile root, @NotNull Consumer<String> statusUpdater) throws VcsException {
+    // TODO either don't query details here, or save them right away
+    List<GitCommit> history = GitHistoryUtils.history(myProject, root);
+    return ContainerUtil.map(history, new Function<GitCommit, CommitParents>() {
+      @Override
+      public CommitParents fun(GitCommit gitCommit) {
+        return new SimpleCommitParents(Hash.build(gitCommit.getHash().getValue()),
+                                       ContainerUtil.map(gitCommit.getParentsHashes(), new Function<String, Hash>() {
+                                         @Override
+                                         public Hash fun(String s) {
+                                           return Hash.build(s);
+                                         }
+                                       }));
+      }
+    });
   }
 
   @NotNull
   @Override
-  public List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) {
-    return CommitDataReader.readCommitsData(myProject, hashes, root);
+  public List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+    List<GitCommit> gitCommits;
+    MyTimer timer = new MyTimer();
+    timer.clear();
+    gitCommits = GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(root), null, hashes);
+    System.out.println("Details loading took " + timer.get() + "ms for " + hashes.size() + " hashes");
+
+    List<CommitData> result = new SmartList<CommitData>();
+    for (GitCommit gitCommit : gitCommits) {
+      VcsCommit commit = new GitVcsCommit(gitCommit);
+      result.add(new CommitData(commit, Hash.build(commit.getHash())));
+    }
+    return result;
   }
 
   @Override
-  public Collection<? extends Ref> readAllRefs(@NotNull VirtualFile root) throws IOException {
+  public Collection<? extends Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     return new RefReader(myProject, false).readAllRefs(root);
   }
 }

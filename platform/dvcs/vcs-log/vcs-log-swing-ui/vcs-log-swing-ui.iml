@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="vcs-log-ui-controller" />
     <orderEntry type="module" module-name="vcs-log-print-model" />
     <orderEntry type="module" module-name="vcs-log-api" />
+    <orderEntry type="module" module-name="vcs-api" />
   </component>
 </module>
 

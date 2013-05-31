@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,14 @@ import java.util.Map;
  *         </code>
  */
 public final class Hash {
+
+  private static final Comparator<Hash> DEBUG_COMPARATOR = new Comparator<Hash>() {
+    @Override
+    public int compare(Hash o1, Hash o2) {
+      return o1.toStrHash().compareTo(o2.toStrHash());
+    }
+  };
+
   private static final int CAPABILITY = 5000;
   private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>(CAPABILITY);
 

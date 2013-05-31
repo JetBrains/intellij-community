@@ -120,12 +120,6 @@ class GitLogRecord {
     return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
   }
 
-  String[] getParentsShortHashes() {
-    final String parents = lookup(SHORT_PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return parents.split(" ");
-  }
-
   String[] getParentsHashes() {
     final String parents = lookup(PARENTS);
     if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -191,9 +185,9 @@ class GitLogRecord {
   }
 
   private List<GitRevisionNumber> prepareParentRevisions() {
-    final String[] parentsShortHashes = getParentsShortHashes();
-    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsShortHashes.length);
-    for (String parentsShortHash : parentsShortHashes) {
+    final String[] parentsHashes = getParentsHashes();
+    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsHashes.length);
+    for (String parentsShortHash : parentsHashes) {
       parents.add(AbstractHash.create(parentsShortHash));
     }
 

@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.*;
@@ -9,7 +10,6 @@ import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +35,8 @@ public class DataLoaderImpl implements DataLoader {
   }
 
   @Override
-  public void readNextPart(@NotNull Consumer<String> statusUpdater, @NotNull FakeCommitsInfo fakeCommits, @NotNull VirtualFile root) throws IOException {
+  public void readNextPart(@NotNull Consumer<String> statusUpdater, @NotNull FakeCommitsInfo fakeCommits, @NotNull VirtualFile root)
+    throws VcsException {
     switch (state) {
       case ALL_LOG_READER:
         throw new IllegalStateException("data was read");

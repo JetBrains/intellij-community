@@ -1,10 +1,10 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,7 +21,7 @@ public interface VcsLogProvider {
    * @return empty list, if all commits was readied
    */
   @NotNull
-  List<CommitParents> readNextBlock(@NotNull VirtualFile root, @NotNull Consumer<String> statusUpdater) throws IOException;
+  List<CommitParents> readNextBlock(@NotNull VirtualFile root, @NotNull Consumer<String> statusUpdater) throws VcsException;
 
   /**
    * Read details of the given commits from the VCS
@@ -31,7 +31,7 @@ public interface VcsLogProvider {
    * @return
    */
   @NotNull
-  List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes);
+  List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
-  Collection<? extends Ref> readAllRefs(@NotNull VirtualFile root) throws IOException;
+  Collection<? extends Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 }
