@@ -19,7 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +42,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class DumbService {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbService");
 
   /**
    * @see com.intellij.openapi.project.Project#getMessageBus()
@@ -62,6 +66,47 @@ public abstract class DumbService {
   public abstract void runWhenSmart(Runnable runnable);
 
   public abstract void waitForSmartMode();
+  
+  public <T> T runReadActionInSmartMode(final Computable<T> r) {
+    final Ref<T> result = new Ref<T>();
+    runReadActionInSmartMode(new Runnable() {
+      @Override
+      public void run() {
+        result.set(r.compute());
+      }
+    });
+    return result.get();
+  }
+  
+  public void runReadActionInSmartMode(final Runnable r) {
+    while (true) {
+      waitForSmartMode();
+      boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          if (isDumb()) {
+            return false;
+          }
+          r.run();
+          return true;
+        }
+      });
+      if (success) break;
+    }
+  }
+
+  public void repeatUntilPassesInSmartMode(final Runnable r) {
+    while (true) {
+      waitForSmartMode();
+      try {
+        r.run();
+        return;
+      }
+      catch (IndexNotReadyException e) {
+        LOG.info(e);
+      }
+    }
+  }
 
   /**
    * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode
