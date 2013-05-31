@@ -37,6 +37,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase {
     return myOriginal.isCanceled();
   }
 
+  @NotNull
   public ProgressIndicator getOriginalProgressIndicator() {
     return myOriginal;
   }
