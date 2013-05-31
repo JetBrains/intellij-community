@@ -567,7 +567,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         public UsageSearcher create() {
           return new UsageSearcher() {
             @Override
-            public void generate(final Processor<Usage> processor) {
+            public void generate(@NotNull final Processor<Usage> processor) {
               context.getCommand().findUsages(processor);
             }
           };
