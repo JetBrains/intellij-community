@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.commit;
 
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.junit.Assert;
 import org.junit.Test;
 

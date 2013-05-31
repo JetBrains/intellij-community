@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.swing_ui;
 
-import org.hanuna.gitalk.refs.Ref;
+
+import com.intellij.vcs.log.Ref;
 
 public interface RefAction {
   void perform(Ref ref);

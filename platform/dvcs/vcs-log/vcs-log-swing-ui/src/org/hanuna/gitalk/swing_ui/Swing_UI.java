@@ -5,10 +5,11 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
 import org.hanuna.gitalk.swing_ui.frame.ProgressFrame;
@@ -190,7 +191,7 @@ public class Swing_UI {
         showRefPopup(localRefs.isEmpty() ? getLocalRefsAbove(commit) : localRefs, e.getComponent(), new RefAction() {
               @Override
               public void perform(Ref ref) {
-                ui_controller.getGitActionHandler().cherryPick(ref, commitsBeingDragged, ui_controller.getCallback());
+                ui_controller.getVcsLogActionHandler().cherryPick(ref, commitsBeingDragged, ui_controller.getCallback());
               }
             });
       }
@@ -208,7 +209,7 @@ public class Swing_UI {
         showRefPopup(getLocalRefs(commitsBeingDragged.get(0).getCommitHash()), e.getComponent(), new RefAction() {
               @Override
               public void perform(Ref ref) {
-                ui_controller.getGitActionHandler().rebase(commit, ref, ui_controller.getCallback());
+                ui_controller.getVcsLogActionHandler().rebase(commit, ref, ui_controller.getCallback());
               }
             });
       }
@@ -580,7 +581,7 @@ public class Swing_UI {
 
     @Override
     public void setState(@NotNull final State state) {
-      SwingUtilities.invokeLater(new Runnable() {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
           Swing_UI.this.setState(state);

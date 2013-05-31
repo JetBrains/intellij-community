@@ -150,6 +150,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/util-rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/util-rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" filepath="$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-api/vcs-log-api.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-api/vcs-log-api.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-common/vcs-log-common.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-common/vcs-log-common.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-data/vcs-log-data.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-data/vcs-log-data.iml" group="platform/dvcs/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-data-model/vcs-log-data-model.iml" filepath="$PROJECT_DIR$/platform/dvcs/vcs-log/vcs-log-data-model/vcs-log-data-model.iml" group="platform/dvcs/vcs-log" />

@@ -1,13 +1,13 @@
 package org.hanuna.gitalk.data;
 
 import com.intellij.util.containers.Predicate;
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

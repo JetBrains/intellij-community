@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.graph.mutable;
 
-import org.hanuna.gitalk.log.commit.CommitParents;
+import com.intellij.vcs.log.CommitParents;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.junit.Test;
 
 import java.util.Collections;

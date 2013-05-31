@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="vcs-log-common" />
     <orderEntry type="module" module-name="vcs-log-data" />
     <orderEntry type="module" module-name="vcs-log-refs" />
+    <orderEntry type="module" module-name="vcs-log-api" />
   </component>
 </module>
 

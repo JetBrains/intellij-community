@@ -9,8 +9,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="vcs-log-ui-controller" />
-    <orderEntry type="module" module-name="vcs-log-print-model" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -20,16 +18,17 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="vcs-log-common" />
-    <orderEntry type="module" module-name="vcs-log-refs" />
-    <orderEntry type="module" module-name="vcs-log-graph" />
-    <orderEntry type="library" name="swingx-1.6.1" level="project" />
     <orderEntry type="library" name="swingx" level="project" />
-    <orderEntry type="module" module-name="git4idea" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="vcs-log-common" />
+    <orderEntry type="module" module-name="vcs-log-refs" />
+    <orderEntry type="module" module-name="vcs-log-graph" />
     <orderEntry type="module" module-name="vcs-log-data" />
+    <orderEntry type="module" module-name="vcs-log-ui-controller" />
+    <orderEntry type="module" module-name="vcs-log-print-model" />
+    <orderEntry type="module" module-name="vcs-log-api" />
   </component>
 </module>
 

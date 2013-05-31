@@ -82,7 +82,7 @@ public class ProcessOutputReader {
 
   }
 
-  public void startRead(@NotNull Process process) throws IOException, GitException {
+  public void startRead(@NotNull Process process) throws IOException {
     ErrorListener errorListener = new ErrorListener(process.getErrorStream());
     errorListener.start();
 

@@ -1,13 +1,13 @@
 package org.hanuna.gitalk.ui.tables;
 
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.CommitData;
+import com.intellij.vcs.log.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.swing_ui.render.PositionUtil;
 import org.hanuna.gitalk.ui.impl.DateConverter;
 import org.jetbrains.annotations.NotNull;

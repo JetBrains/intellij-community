@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
-import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.swing_ui.render.Print_Parameters;
 import org.hanuna.gitalk.swing_ui.render.RefTreeCellRender;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;

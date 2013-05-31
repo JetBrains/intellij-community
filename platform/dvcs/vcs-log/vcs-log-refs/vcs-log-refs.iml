@@ -8,7 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="vcs-log-data" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -27,7 +26,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="vcs-log-common" />
+    <orderEntry type="module" module-name="vcs-log-api" />
   </component>
 </module>
 

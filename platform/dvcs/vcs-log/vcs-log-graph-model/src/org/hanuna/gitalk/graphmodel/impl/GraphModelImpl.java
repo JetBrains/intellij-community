@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
+import com.intellij.vcs.log.CommitParents;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
@@ -10,9 +11,8 @@ import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.fragment.FragmentManagerImpl;
-import org.hanuna.gitalk.log.commit.CommitParents;
+import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.hanuna.gitalk.refs.Ref;
 
 import java.util.ArrayList;
 import java.util.List;

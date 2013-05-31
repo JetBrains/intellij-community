@@ -1,12 +1,12 @@
 package org.hanuna.gitalk.graph;
 
+import com.intellij.vcs.log.CommitParents;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
-import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.commit.parents;
 
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.Nullable;
 
 public class RebaseCommand {

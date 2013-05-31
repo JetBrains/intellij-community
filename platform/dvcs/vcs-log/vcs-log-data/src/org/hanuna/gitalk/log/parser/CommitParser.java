@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.log.commit.CommitData;
-import org.hanuna.gitalk.log.commit.CommitParents;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.CommitData;
+import com.intellij.vcs.log.CommitParents;
 import org.hanuna.gitalk.log.commit.parents.SimpleCommitParents;
 import org.hanuna.gitalk.log.commit.parents.TimestampCommitParents;
 import org.jetbrains.annotations.NotNull;

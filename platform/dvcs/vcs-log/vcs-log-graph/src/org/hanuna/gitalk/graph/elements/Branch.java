@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graph.elements;
 
-import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

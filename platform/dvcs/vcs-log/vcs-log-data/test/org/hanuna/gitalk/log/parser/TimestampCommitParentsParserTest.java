@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.log.commit.parents.TimestampCommitParents;
 import org.junit.Test;
 

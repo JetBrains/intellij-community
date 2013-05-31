@@ -75,6 +75,7 @@
     <orderEntry type="module" module-name="vcs-log-data" />
     <orderEntry type="module" module-name="vcs-log-graph" />
     <orderEntry type="module" module-name="vcs-log-data-model" />
+    <orderEntry type="module" module-name="vcs-log-api" />
   </component>
 </module>
 

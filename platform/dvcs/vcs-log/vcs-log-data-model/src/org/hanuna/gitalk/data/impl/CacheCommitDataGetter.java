@@ -1,17 +1,18 @@
 package org.hanuna.gitalk.data.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.CommitData;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
-import org.hanuna.gitalk.git.reader.CommitDataReader;
-import org.hanuna.gitalk.git.reader.CommitParentsReader;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
-import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +30,17 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   private final DataPack dataPack;
 
   private final CacheGet<Hash, CommitData> cache;
+  private final VcsLogProvider myLogProvider;
   private Project myProject;
+  private VirtualFile myRoot;
 
-  public CacheCommitDataGetter(Project project, DataPack dataPack, CacheGet<Hash, CommitData> commitDataCache) {
+  public CacheCommitDataGetter(Project project, DataPack dataPack, CacheGet<Hash, CommitData> commitDataCache,
+                               @NotNull VcsLogProvider logProvider, VirtualFile root) {
     myProject = project;
     this.dataPack = dataPack;
     cache = commitDataCache;
+    myLogProvider = logProvider;
+    myRoot = root;
   }
 
   @NotNull
@@ -86,13 +92,13 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   }
 
   private void preLoadCommitData(@NotNull List<Node> nodes) {
-    List<String> hashes = ContainerUtil.map(nodes, new com.intellij.util.Function<Node, String>() {
+    List<String> hashes = ContainerUtil.map(nodes, new Function<Node, String>() {
       @Override
       public String fun(Node node) {
         return FakeCommitParents.getOriginal(node.getCommitHash()).toStrHash();
       }
     });
-    List<CommitData> commitDataList = CommitDataReader.readCommitsData(myProject, hashes);
+    List<CommitData> commitDataList = myLogProvider.readCommitsData(myRoot, hashes);
 
     for (CommitData commitData : commitDataList) {
       cache.addToCache(commitData.getCommitHash(), commitData);
@@ -102,7 +108,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
 
   public void initiallyPreloadCommitDetails() {
     List<Node> nodes = new ArrayList<Node>();
-    for (int i = 0; i < CommitParentsReader.COMMIT_BLOCK_SIZE; i++) {
+    for (int i = 0; i < VcsLogProvider.COMMIT_BLOCK_SIZE; i++) {
       Node commitNode = getCommitNodeInRow(i);
       if (commitNode != null) {
         nodes.add(commitNode);

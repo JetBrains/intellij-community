@@ -1,12 +1,8 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.util.ui.UIUtil;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryChangeListener;
 import org.hanuna.gitalk.swing_ui.GitLogIcons;
 import org.hanuna.gitalk.ui.UI_Controller;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,25 +31,25 @@ public class MainFrame {
     myActiveSurface = new ActiveSurface(ui_controller);
     packMainPanel();
 
-    ui_controller.getProject().getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
-      @Override
-      public void repositoryChanged(@NotNull final GitRepository repository) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            updateToolbar(repository);
-          }
-        });
-
-      }
-    });
+    //ui_controller.getProject().getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+    //  @Override
+    //  public void repositoryChanged(@NotNull final GitRepository repository) {
+    //    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    //      @Override
+    //      public void run() {
+    //        updateToolbar(repository);
+    //      }
+    //    });
+    //
+    //  }
+    //});
   }
 
-  private void updateToolbar(GitRepository repository) {
-    boolean rebasing = repository.getState() == GitRepository.State.REBASING;
-    myAbortButton.setVisible(rebasing);
-    myContinueButton.setVisible(rebasing);
-  }
+  //private void updateToolbar(GitRepository repository) {
+  //  boolean rebasing = repository.getState() == GitRepository.State.REBASING;
+  //  myAbortButton.setVisible(rebasing);
+  //  myContinueButton.setVisible(rebasing);
+  //}
 
   public UI_GraphTable getGraphTable() {
     return myActiveSurface.getGraphTable();
@@ -135,7 +131,7 @@ public class MainFrame {
     myAbortButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ui_controller.getGitActionHandler().abortRebase();
+        ui_controller.getVcsLogActionHandler().abortRebase();
       }
     });
     myToolbar.add(myAbortButton);
@@ -143,7 +139,7 @@ public class MainFrame {
     myContinueButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ui_controller.getGitActionHandler().continueRebase();
+        ui_controller.getVcsLogActionHandler().continueRebase();
       }
     });
     myToolbar.add(myContinueButton);
@@ -165,6 +161,6 @@ public class MainFrame {
 
   public void refresh() {
     myActiveSurface.getBranchesPanel().rebuild();
-    updateToolbar(ui_controller.getRepository());
+    //updateToolbar(ui_controller.getRepository());
   }
 }

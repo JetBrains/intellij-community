@@ -7,6 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="vcs-log-graph" />
     <orderEntry type="module" module-name="vcs-log-print-model" />
     <orderEntry type="module" module-name="vcs-log-data" />
@@ -14,12 +17,7 @@
     <orderEntry type="module" module-name="vcs-log-refs" />
     <orderEntry type="module" module-name="vcs-log-graph-model" />
     <orderEntry type="module" module-name="vcs-log-data-model" exported="" />
-    <orderEntry type="module" module-name="git-log-reader" />
-    <orderEntry type="library" name="swingx-1.6.1" level="project" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="library" name="swingx" level="project" />
-    <orderEntry type="module" module-name="git4idea" />
-    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="vcs-log-api" />
   </component>
 </module>
 

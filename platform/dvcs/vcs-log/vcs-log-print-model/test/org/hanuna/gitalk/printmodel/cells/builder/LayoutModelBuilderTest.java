@@ -1,10 +1,10 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
+import com.intellij.vcs.log.CommitParents;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
-import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.junit.Test;
 
 import java.io.IOException;

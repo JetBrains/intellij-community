@@ -1,6 +1,5 @@
-package org.hanuna.gitalk.log.commit;
+package com.intellij.vcs.log;
 
-import org.hanuna.gitalk.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

@@ -1,20 +1,17 @@
 package org.hanuna.gitalk.ui.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import git4idea.repo.GitRepository;
-import gitlog.GitActionHandlerImpl;
-import gitlog.GitLogComponent;
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
@@ -24,19 +21,17 @@ import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.impl.CacheCommitDataGetter;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
 import org.hanuna.gitalk.data.impl.FakeCommitsInfo;
-import org.hanuna.gitalk.data.rebase.GitActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
-import org.hanuna.gitalk.git.reader.CommitDataReader;
-import org.hanuna.gitalk.git.reader.util.GitException;
+import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
-import org.hanuna.gitalk.log.commit.CommitData;
+import com.intellij.vcs.log.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.SelectController;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.ui.ControllerListener;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
@@ -68,14 +63,16 @@ public class UI_ControllerImpl implements UI_Controller {
   private RefTreeModel refTreeModel;
 
   private GraphTableModel graphTableModel;
+  private VcsLogProvider myLogProvider;
+  @NotNull private final VirtualFile myRoot;
 
   private GraphElement prevGraphElement = null;
   private Set<Hash> prevSelectionBranches;
   private List<Ref> myRefs;
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
-  private GitActionHandler myGitActionHandler;
-  private final GitActionHandler.Callback myCallback = new Callback();
+  private VcsLogActionHandler myVcsLogActionHandler = VcsLogActionHandler.DO_NOTHING;
+  private final VcsLogActionHandler.Callback myCallback = new Callback();
 
   private final MyInteractiveRebaseBuilder rebaseDelegate = new MyInteractiveRebaseBuilder();
   private InteractiveRebaseBuilder myInteractiveRebaseBuilder = new InteractiveRebaseBuilder() {
@@ -121,13 +118,15 @@ public class UI_ControllerImpl implements UI_Controller {
     @NotNull
     @Override
     public CommitData get(@NotNull Hash key) {
-      return CommitDataReader.readCommitData(myProject, key.toStrHash());
+      // TODO
+      return myLogProvider.readCommitsData(myRoot, Collections.singletonList(key.toStrHash())).get(0);
       }
   }, 5000);
 
-  public UI_ControllerImpl(Project project) {
+  public UI_ControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
-    myGitActionHandler = new GitActionHandlerImpl(myProject, this);
+    myLogProvider = logProvider;
+    myRoot = root;
     myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading...");
   }
 
@@ -149,35 +148,26 @@ public class UI_ControllerImpl implements UI_Controller {
 
   }
 
-  public void init(final boolean readAllLog, boolean inBackground, final boolean reusePreviousGitOutput) {
+  public void init(boolean inBackground, final boolean reusePreviousGitOutput) {
     final Consumer<ProgressIndicator> doInit = new Consumer<ProgressIndicator>() {
       @Override
       public void consume(final ProgressIndicator indicator) {
         events.setState(ControllerListener.State.PROGRESS);
-        dataLoader = new DataLoaderImpl(myProject, reusePreviousGitOutput, commitDataCache);
-        Executor<String> statusUpdater = new Executor<String>() {
+        dataLoader = new DataLoaderImpl(myProject, reusePreviousGitOutput, commitDataCache, myLogProvider);
+        Consumer<String> statusUpdater = new Consumer<String>() {
           @Override
-          public void execute(String key) {
+          public void consume(String key) {
             events.setUpdateProgressMessage(key);
             indicator.setText(key);
           }
         };
 
         try {
-          if (readAllLog) {
-            dataLoader.readAllLog(statusUpdater);
-          }
-          else {
-            dataLoader.readNextPart(statusUpdater, rebaseDelegate.getFakeCommitsInfo());
-          }
+          dataLoader.readNextPart(statusUpdater, rebaseDelegate.getFakeCommitsInfo(), myRoot);
           dataInit();
           events.setState(ControllerListener.State.USUAL);
         }
         catch (IOException e) {
-          events.setState(ControllerListener.State.ERROR);
-          events.setErrorMessage(e.getMessage());
-        }
-        catch (GitException e) {
           events.setState(ControllerListener.State.ERROR);
           events.setErrorMessage(e.getMessage());
         }
@@ -346,12 +336,12 @@ public class UI_ControllerImpl implements UI_Controller {
         try {
           events.setState(ControllerListener.State.PROGRESS);
 
-          dataLoader.readNextPart(new Executor<String>() {
+          dataLoader.readNextPart(new Consumer<String>() {
             @Override
-            public void execute(String key) {
+            public void consume(String key) {
               events.setUpdateProgressMessage(key);
             }
-          }, rebaseDelegate.getFakeCommitsInfo());
+          }, rebaseDelegate.getFakeCommitsInfo(), myRoot);
 
 
           events.setState(ControllerListener.State.USUAL);
@@ -359,10 +349,6 @@ public class UI_ControllerImpl implements UI_Controller {
 
         }
         catch (IOException e) {
-          events.setState(ControllerListener.State.ERROR);
-          events.setErrorMessage(e.getMessage());
-        }
-        catch (GitException e) {
           events.setState(ControllerListener.State.ERROR);
           events.setErrorMessage(e.getMessage());
         }
@@ -438,12 +424,12 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @NotNull
   @Override
-  public GitActionHandler getGitActionHandler() {
-    return myGitActionHandler;
+  public VcsLogActionHandler getVcsLogActionHandler() {
+    return myVcsLogActionHandler;
   }
 
-  public void setGitActionHandler(@NotNull GitActionHandler gitActionHandler) {
-    myGitActionHandler = gitActionHandler;
+  public void setVcsLogActionHandler(@NotNull VcsLogActionHandler vcsLogActionHandler) {
+    myVcsLogActionHandler = vcsLogActionHandler;
   }
 
   @Override
@@ -463,7 +449,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @Override
   public void refresh(boolean reusePreviousGitOutput) {
-    init(false, true, reusePreviousGitOutput);
+    init(true, reusePreviousGitOutput);
   }
 
   public void updateUI() {
@@ -475,7 +461,7 @@ public class UI_ControllerImpl implements UI_Controller {
     if (rebaseDelegate.resultRef == null) {
       return;
     }
-    getGitActionHandler().interactiveRebase(rebaseDelegate.subjectRef, rebaseDelegate.branchBase, getCallback(),
+    getVcsLogActionHandler().interactiveRebase(rebaseDelegate.subjectRef, rebaseDelegate.branchBase, getCallback(),
                                             rebaseDelegate.getRebaseCommands());
     cancelInteractiveRebase();
   }
@@ -487,13 +473,8 @@ public class UI_ControllerImpl implements UI_Controller {
   }
 
   @Override
-  public GitActionHandler.Callback getCallback() {
+  public VcsLogActionHandler.Callback getCallback() {
     return myCallback;
-  }
-
-  @Override
-  public GitRepository getRepository() {
-    return ServiceManager.getService(myProject, GitLogComponent.class).getRepository();
   }
 
   @Override
@@ -702,7 +683,7 @@ public class UI_ControllerImpl implements UI_Controller {
     }
   }
 
-  private class Callback implements GitActionHandler.Callback {
+  private class Callback implements VcsLogActionHandler.Callback {
     @Override
     public void disableModifications() {
 

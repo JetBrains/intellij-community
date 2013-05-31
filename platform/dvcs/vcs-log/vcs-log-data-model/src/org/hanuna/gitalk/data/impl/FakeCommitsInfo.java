@@ -2,7 +2,7 @@ package org.hanuna.gitalk.data.impl;
 
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 
 import java.util.List;
 

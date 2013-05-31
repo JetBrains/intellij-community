@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.refs;
 
+import com.intellij.vcs.log.Ref;
 import org.junit.Test;
 
 import java.util.List;

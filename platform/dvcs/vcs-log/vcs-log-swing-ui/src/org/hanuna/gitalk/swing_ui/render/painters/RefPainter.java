@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swing_ui.render.painters;
 
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

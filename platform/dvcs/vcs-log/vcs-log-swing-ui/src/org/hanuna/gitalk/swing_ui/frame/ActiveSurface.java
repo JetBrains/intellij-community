@@ -1,14 +1,9 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
-import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.ui.UI_Controller;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 /**
  * Graph + the panel with branch labels above it.

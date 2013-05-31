@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.log.commit.CommitParents;
+import com.intellij.vcs.log.CommitParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;

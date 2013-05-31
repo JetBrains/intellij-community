@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="vcs-log-common" />
-    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="vcs-log-api" />
   </component>
 </module>
 

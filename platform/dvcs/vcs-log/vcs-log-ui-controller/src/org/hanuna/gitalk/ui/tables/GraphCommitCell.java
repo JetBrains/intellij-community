@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.ui.tables;
 
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 
 import java.util.List;
 

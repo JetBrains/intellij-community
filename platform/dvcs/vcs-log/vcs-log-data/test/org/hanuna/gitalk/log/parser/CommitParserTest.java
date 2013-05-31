@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.log.commit.CommitParents;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.CommitParents;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;

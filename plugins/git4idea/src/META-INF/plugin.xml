@@ -84,11 +84,6 @@
       <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
       <implementation-class>git4idea.repo.GitRepositoryManagerImpl</implementation-class>
     </component>
-
-    <component>
-      <interface-class>gitlog.GitLogComponent</interface-class>
-      <implementation-class>gitlog.GitLogComponent</implementation-class>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -98,7 +93,7 @@
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
-
+    <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
 
     <projectService
@@ -171,10 +166,6 @@
 
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
-
-    <toolWindow factoryClass="gitlog.GitLogToolWindowFactory" id="Git Log" anchor="bottom" canCloseContents="true"
-        icon="/icons/gitlog.png" />
-
   </extensions>
 
   <extensionPoints>

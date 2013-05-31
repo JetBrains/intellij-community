@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.ui;
 
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
 /**

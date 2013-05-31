@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commit;
+package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,14 +1,13 @@
 package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.project.Project;
-import git4idea.repo.GitRepository;
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
-import org.hanuna.gitalk.data.rebase.GitActionHandler;
+import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.graph.elements.GraphElement;
-import org.hanuna.gitalk.refs.Ref;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +61,7 @@ public interface UI_Controller {
   InteractiveRebaseBuilder getInteractiveRebaseBuilder();
 
   @NotNull
-  GitActionHandler getGitActionHandler();
+  VcsLogActionHandler getVcsLogActionHandler();
 
   DataPack getDataPack();
 
@@ -74,11 +73,9 @@ public interface UI_Controller {
 
   void applyInteractiveRebase();
 
-  GitActionHandler.Callback getCallback();
+  VcsLogActionHandler.Callback getCallback();
 
   void cancelInteractiveRebase();
-
-  GitRepository getRepository();
 
   boolean isInteractiveRebaseInProgress();
 }

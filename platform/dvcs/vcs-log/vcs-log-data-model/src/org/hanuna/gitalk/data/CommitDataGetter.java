@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.data;
 
-import org.hanuna.gitalk.commit.Hash;
+import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.CommitData;
+import com.intellij.vcs.log.CommitData;
 import org.jetbrains.annotations.NotNull;
 
 /**

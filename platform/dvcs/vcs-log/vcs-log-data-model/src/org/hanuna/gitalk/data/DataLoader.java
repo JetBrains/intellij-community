@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.data;
 
-import org.hanuna.gitalk.common.Executor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.hanuna.gitalk.data.impl.FakeCommitsInfo;
-import org.hanuna.gitalk.git.reader.util.GitException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -12,10 +12,8 @@ import java.io.IOException;
  */
 public interface DataLoader {
 
-  public void readAllLog(@NotNull Executor<String> statusUpdater) throws IOException, GitException;
-
-  public void readNextPart(@NotNull Executor<String> statusUpdater, @NotNull FakeCommitsInfo fakeCommits) throws IOException, GitException;
+  void readNextPart(@NotNull Consumer<String> statusUpdater, @NotNull FakeCommitsInfo fakeCommits, VirtualFile root) throws IOException;
 
   @NotNull
-  public DataPack getDataPack();
+  DataPack getDataPack();
 }
