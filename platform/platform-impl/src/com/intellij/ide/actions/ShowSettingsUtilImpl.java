@@ -26,6 +26,7 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
+import com.intellij.openapi.options.newEditor.PreferencesDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -64,7 +65,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
       new OptionsEditorDialog(project, group, toSelect, true).show();
     } else {
-      new OptionsEditorDialog(project, group, toSelect).show();
+      if (Registry.is("ide.new.preferences")) {
+        new PreferencesDialog(project, group).show();
+      } else {
+        new OptionsEditorDialog(project, group, toSelect).show();
+      }
     }
   }
 
