@@ -87,6 +87,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testConditionalInferenceFromOppositePart() { doTest(); }
   public void testDeclaredTypeParameterBoundsAndUnboundedWildcard() { doTest(); }
   public void testConflictResolution() throws Exception {doTest();}
+  public void testIDEA108195() throws Exception {doTest();}
 
   private void doTest() {
     doTest(false);
