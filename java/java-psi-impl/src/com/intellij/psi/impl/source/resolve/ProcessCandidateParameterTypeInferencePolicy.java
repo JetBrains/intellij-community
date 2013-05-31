@@ -56,6 +56,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
       final JavaResolveResult[] results = getResults(contextCall, i);
       final PsiType innerReturnType = owner.getReturnType();
       for (final JavaResolveResult result : results) {
+        if (result == null) continue;
         final PsiSubstitutor substitutor = getSubstitutor(contextCall, expressions, i, result);
         final Pair<PsiType, ConstraintType> constraint = inferConstraint(typeParameter, innerMethodCall, i, innerReturnType, result, substitutor);
         if (constraint != null) return constraint;
