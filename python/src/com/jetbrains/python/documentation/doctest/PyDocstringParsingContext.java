@@ -6,7 +6,6 @@ import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
-import com.jetbrains.python.parsing.ParsingScope;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
@@ -53,26 +52,13 @@ public class PyDocstringParsingContext extends ParsingContext {
                                           @Nullable FUTURE futureFlag) {
       super(context, futureFlag);
     }
-    @Override
-    public void parseStatement(ParsingScope scope) {
-      IElementType type = myBuilder.getTokenType();
-      if (type == PyDocstringTokenTypes.WELCOME) { // >>> case
-        myBuilder.advanceLexer();
-        while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK || myBuilder.getTokenType() == PyDocstringTokenTypes.WELCOME) {
-          myBuilder.advanceLexer();
-        }
-        if (myBuilder.getTokenType() == PyTokenTypes.INDENT)
-          myBuilder.advanceLexer();
-      }
-      super.parseStatement(scope);
-    }
 
     @Override
     public IElementType filter(IElementType source, int start, int end, CharSequence text) {
       if (source == PyTokenTypes.DOT && CharArrayUtil.regionMatches(text, start, end, "..."))
         return PyDocstringTokenTypes.DOTS;
       if (source == PyTokenTypes.GTGT && CharArrayUtil.regionMatches(text, start, end, ">>>"))
-        return PyDocstringTokenTypes.WELCOME;
+        return PyTokenTypes.SPACE;
       return super.filter(source, start, end, text);
     }
   }
