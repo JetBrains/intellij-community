@@ -33,6 +33,6 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
   }
 
   public static void setupRemoteCredentialsAndRunTerminal(final Project project) {
-    new LocalTerminalDirectRunner(project, Charset.defaultCharset(), "/bin/bash", new String[]{"/bin/bash"}).run();
+    new LocalTerminalDirectRunner(project, Charset.defaultCharset(), "/bin/bash").run();
   }
 }

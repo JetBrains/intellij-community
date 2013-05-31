@@ -2,6 +2,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.HashMap;
 import com.jediterm.emulator.TtyConnector;
 import com.jediterm.pty.PtyProcess;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -18,18 +20,18 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private final Charset myDefaultCharset;
   private final String myCommand;
-  private final String[] myArguments;
 
-  public LocalTerminalDirectRunner(Project project, Charset charset, String command, String[] arguments) {
+  public LocalTerminalDirectRunner(Project project, Charset charset, String command) {
     super(project);
     myDefaultCharset = charset;
     myCommand = command;
-    myArguments = arguments;
   }
 
   @Override
   protected PtyProcess createProcess() throws ExecutionException {
-    return new PtyProcess(myCommand, myArguments);
+    Map<String, String> envs = new HashMap<String, String>(System.getenv());
+    envs.put("TERM", "vt100");
+    return new PtyProcess(myCommand, new String[]{myCommand}, envs);
   }
 
   @Override
@@ -47,7 +49,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
       @Override
       public boolean detachIsDefault() {
-        return false;
+        return true;
       }
 
       @Nullable
