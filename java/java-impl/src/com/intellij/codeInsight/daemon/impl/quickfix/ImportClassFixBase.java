@@ -60,9 +60,10 @@ import java.util.regex.PatternSyntaxException;
 public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> implements HintAction, HighPriorityAction {
   @NotNull
   private final T myElement;
+  @NotNull
   private final R myRef;
 
-  protected ImportClassFixBase(@NotNull T elem, R ref) {
+  protected ImportClassFixBase(@NotNull T elem, @NotNull R ref) {
     myElement = elem;
     myRef = ref;
   }

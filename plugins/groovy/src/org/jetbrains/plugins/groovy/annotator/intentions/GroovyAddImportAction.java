@@ -34,7 +34,7 @@ import java.util.List;
  * @author peter
  */
 public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement, GrReferenceElement> {
-  public GroovyAddImportAction(GrReferenceElement ref) {
+  public GroovyAddImportAction(@NotNull GrReferenceElement ref) {
     super(ref, ref);
   }
 
