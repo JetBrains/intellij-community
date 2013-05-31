@@ -47,7 +47,7 @@ public class MainFrame {
       }
     };
 
-    AnAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
+    RefreshAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         ui_controller.refresh(false);
@@ -71,6 +71,8 @@ public class MainFrame {
         ui_controller.setLongEdgeVisibility(state);
       }
     };
+
+    refreshAction.registerShortcutOn(mainPanel);
 
     DefaultActionGroup toolbarGroup = new DefaultActionGroup(hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction);
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true).getComponent();
