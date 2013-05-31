@@ -15,6 +15,7 @@
  */
 package org.jetbrains.git4idea.ssh;
 
+import com.sun.jna.platform.win32.User32;
 import com.trilead.ssh2.KnownHosts;
 import com.jcraft.jsch.agentproxy.AgentProxy;
 import com.jcraft.jsch.agentproxy.connector.SSHAgentConnector;
@@ -43,14 +44,16 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
 
   @Override
   protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
-    generator.addClasses(AgentProxy.class);
-    generator.addClasses(JNAUSocketFactory.class);
-    generator.addClasses(KnownHosts.class);
-    generator.addClasses(PageantConnector.class);
-    generator.addClasses(SSHAgentConnector.class);
-    generator.addClasses(Structure.class);
-    generator.addClasses(TrileadAgentFactory.class);
-    generator.addClasses(TrileadAgentProxy.class);
+    generator.addClasses(
+      AgentProxy.class,               /* jsch-agentproxy */
+      JNAUSocketFactory.class,        /* jsch-agentproxy-usocket-jna */
+      KnownHosts.class,               /* trilead-ssh2 */
+      PageantConnector.class,         /* jsch-agentproxy-pageant */
+      SSHAgentConnector.class,        /* jsch-agentproxy-sshagent */
+      Structure.class,                /* jna */
+      TrileadAgentFactory.class,      /* jsch-agentproxy-trilead-thick */
+      TrileadAgentProxy.class,        /* jsch-agentproxy-trilead */
+      User32.class);                  /* jna-platform */
     generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
   }
 
