@@ -608,6 +608,9 @@ def layoutAndroid(String androidHome) {
       jar("layoutlib-api.jar") {
         module("layoutlib-api")
       }
+      jar("manifest-merger.jar") {
+        module("manifest-merger")
+      }
       jar("sdk-tools.jar") {
         module("assetstudio")
         module("ddmlib")
@@ -616,7 +619,6 @@ def layoutAndroid(String androidHome) {
         module("lint-cli")
         module("lint-api")
         module("lint-checks")
-        module("manifest-merger")
         module("ninepatch")
         module("sdk-common")
       }
