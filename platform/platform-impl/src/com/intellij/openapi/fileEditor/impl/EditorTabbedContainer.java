@@ -126,6 +126,16 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         return result;
       }
     }).getPresentation().setRequestFocusOnLastFocusedComponent(true);
+    myTabs.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (myTabs.findInfo(e) != null || isFloating()) return;
+        if (!e.isPopupTrigger() && SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+          final ActionManager mgr = ActionManager.getInstance();
+          mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
+        }
+      }
+    });
 
     setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
 
@@ -503,7 +513,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         if (!(deepestComponent instanceof InplaceButton)) {
           myActionClickCount++;
         }
-        if (myActionClickCount == 2 && !isFloating()) {
+        if (myActionClickCount > 1 && !isFloating()) {
           final ActionManager mgr = ActionManager.getInstance();
           mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
         }
