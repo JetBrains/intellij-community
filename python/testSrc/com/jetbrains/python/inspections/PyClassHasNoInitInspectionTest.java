@@ -23,6 +23,10 @@ public class PyClassHasNoInitInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testUnresolvedParent() {
+    doTest();
+  }
+
   public void testNew() {
     doTest();
   }

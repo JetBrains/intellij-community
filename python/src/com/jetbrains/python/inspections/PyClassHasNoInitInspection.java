@@ -3,9 +3,11 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import org.jetbrains.annotations.Nls;
@@ -39,6 +41,11 @@ public class PyClassHasNoInitInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
+      final PyExpression[] classes = node.getSuperClassExpressions();
+      for (PyExpression pyClass : classes) {
+        final PsiReference reference = pyClass.getReference();
+        if (reference == null || reference.resolve() == null) return;
+      }
       final PyFunction init = node.findInitOrNew(true);
       if (init == null) {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),
