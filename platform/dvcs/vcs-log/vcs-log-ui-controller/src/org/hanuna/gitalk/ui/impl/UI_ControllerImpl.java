@@ -181,6 +181,7 @@ public class UI_ControllerImpl implements UI_Controller {
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
+            mySwingUi.loadingCompleted();
             mySwingUi.updateUI();
             for (Hash hash : rebaseDelegate.selected) {
               mySwingUi.addToSelection(hash);

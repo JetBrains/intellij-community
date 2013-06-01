@@ -4,10 +4,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.components.JBLoadingPanel;
 import org.hanuna.gitalk.swing_ui.GitLogIcons;
 import org.hanuna.gitalk.ui.UI_Controller;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author erokhins
@@ -17,6 +19,7 @@ public class MainFrame {
   private final UI_Controller ui_controller;
   private final JPanel mainPanel = new JPanel();
   private final ActiveSurface myActiveSurface;
+  private final JBLoadingPanel myLoadingPanel;
 
 
   public MainFrame(final UI_Controller ui_controller) {
@@ -26,6 +29,9 @@ public class MainFrame {
     mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
     mainPanel.add(createToolbar());
     mainPanel.add(myActiveSurface);
+
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), ui_controller.getProject());
+    myLoadingPanel.startLoading();
   }
 
   public UI_GraphTable getGraphTable() {
@@ -79,10 +85,15 @@ public class MainFrame {
   }
 
   public JPanel getMainComponent() {
-    return mainPanel;
+    return myLoadingPanel;
   }
 
   public void refresh() {
     myActiveSurface.getBranchesPanel().rebuild();
+  }
+
+  public void initialLoadingCompleted() {
+    myLoadingPanel.add(mainPanel);
+    myLoadingPanel.stopLoading();
   }
 }

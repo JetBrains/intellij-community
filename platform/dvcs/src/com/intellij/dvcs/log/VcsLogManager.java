@@ -42,15 +42,12 @@ public class VcsLogManager extends AbstractProjectComponent {
           return;
         }
 
-        // TODO run in background (currently run under modal progress: see com.intellij.ide.startup.impl.StartupManagerImpl#runActivities
-
         // TODO multi-roots (including Git + Hg roots within a single project & multiple providers (or just pass root in params)
         VcsLogProvider logProvider = null;
         for (VcsLogProvider provider : Extensions.getExtensions(LOG_PROVIDER_EP, myProject)) {
           logProvider = provider;
         }
         VirtualFile root = myVcsManager.getAllVcsRoots()[0].getPath();
-
 
         UI_ControllerImpl myUiController = new UI_ControllerImpl(myProject, logProvider, root);
         myUiController.init();

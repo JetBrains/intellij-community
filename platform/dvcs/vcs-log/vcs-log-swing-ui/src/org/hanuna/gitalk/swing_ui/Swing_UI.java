@@ -50,6 +50,10 @@ public class Swing_UI {
     return myDragDropListener;
   }
 
+  public void loadingCompleted() {
+    mainFrame.initialLoadingCompleted();
+  }
+
   private class DragDropConditions {
 
     public boolean sameBranch(Node commit, List<Node> commitsBeingDragged) {
