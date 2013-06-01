@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.vcs.log.VcsLogProvider;
-import org.hanuna.gitalk.swing_ui.Swing_UI;
 import org.hanuna.gitalk.ui.impl.UI_ControllerImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,11 +53,9 @@ public class VcsLogManager extends AbstractProjectComponent {
 
 
         UI_ControllerImpl myUiController = new UI_ControllerImpl(myProject, logProvider, root);
-        Swing_UI mySwingUi = new Swing_UI(myUiController);
-        myUiController.addControllerListener(mySwingUi.getControllerListener());
-        myUiController.init(false, false);
+        myUiController.init();
 
-        Content vcsLogContentPane = new ContentImpl(mySwingUi.getMainFrame().getMainComponent(), "VCS LOG", true);
+        Content vcsLogContentPane = new ContentImpl(myUiController.getMainComponent(), "VCS LOG", true);
         ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
         changesView.addContent(vcsLogContentPane);
         vcsLogContentPane.setCloseable(false);

@@ -2,7 +2,6 @@ package com.intellij.vcs.log;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,7 +20,7 @@ public interface VcsLogProvider {
    * @return empty list, if all commits was readied
    */
   @NotNull
-  List<CommitParents> readNextBlock(@NotNull VirtualFile root, @NotNull Consumer<String> statusUpdater) throws VcsException;
+  List<CommitParents> readNextBlock(@NotNull VirtualFile root) throws VcsException;
 
   /**
    * Read details of the given commits from the VCS

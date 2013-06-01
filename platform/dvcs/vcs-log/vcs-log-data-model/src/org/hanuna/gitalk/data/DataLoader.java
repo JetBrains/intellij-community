@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.data;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -13,7 +14,7 @@ import java.io.IOException;
  */
 public interface DataLoader {
 
-  void readNextPart(@NotNull Consumer<String> statusUpdater, @NotNull FakeCommitsInfo fakeCommits, VirtualFile root)
+  void readNextPart(@NotNull ProgressIndicator indicator, @NotNull FakeCommitsInfo fakeCommits, VirtualFile root)
     throws IOException, VcsException;
 
   @NotNull

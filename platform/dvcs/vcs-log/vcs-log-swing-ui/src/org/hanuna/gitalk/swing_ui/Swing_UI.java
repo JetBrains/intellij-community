@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
@@ -14,7 +13,6 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
 import org.hanuna.gitalk.swing_ui.frame.ProgressFrame;
-import org.hanuna.gitalk.ui.ControllerListener;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +31,6 @@ import java.util.List;
 public class Swing_UI {
   private final ErrorModalDialog errorFrame = new ErrorModalDialog("error");
   private final ProgressFrame progressFrame = new ProgressFrame("Begin load");
-  private final ControllerListener swingControllerListener = new SwingControllerListener();
   private final DragDropListener myDragDropListener = new SwingDragDropListener();
   private final UI_Controller ui_controller;
   private final DragDropConditions myConditions = new DragDropConditions();
@@ -46,31 +43,7 @@ public class Swing_UI {
 
   public Swing_UI(UI_Controller ui_controller) {
     this.ui_controller = ui_controller;
-  }
-
-  public ControllerListener getControllerListener() {
-    return swingControllerListener;
-  }
-
-  public void setState(ControllerListener.State state) {
-    switch (state) {
-      case USUAL:
-        if (mainFrame == null) {
-          mainFrame = new MainFrame(ui_controller);
-        }
-        errorFrame.setVisible(false);
-        ui_controller.getCallback().enableModifications();
-        break;
-      case ERROR:
-        errorFrame.setVisible(true);
-        ui_controller.getCallback().enableModifications();
-        break;
-      case PROGRESS:
-        ui_controller.getCallback().disableModifications();
-        break;
-      default:
-        throw new IllegalArgumentException();
-    }
+    this.mainFrame = new MainFrame(ui_controller);
   }
 
   public DragDropListener getDragDropListener() {
@@ -379,7 +352,6 @@ public class Swing_UI {
 
       private void setDragAndDropNode(@Nullable Node node, boolean above) {
         ui_controller.getDataPack().getPrintCellModel().getCommitSelectController().selectDragAndDropNode(node, above);
-        Swing_UI.this.swingControllerListener.updateUI();
       }
 
       @Override
@@ -560,9 +532,6 @@ public class Swing_UI {
     }
   }
 
-  private class SwingControllerListener implements ControllerListener {
-
-    @Override
     public void jumpToRow(final int rowIndex) {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -573,7 +542,6 @@ public class Swing_UI {
       });
     }
 
-    @Override
     public void updateUI() {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -586,37 +554,6 @@ public class Swing_UI {
       });
     }
 
-    @Override
-    public void setState(@NotNull final State state) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          Swing_UI.this.setState(state);
-        }
-      });
-    }
-
-    @Override
-    public void setErrorMessage(@NotNull final String errorMessage) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          errorFrame.setMessage(errorMessage);
-        }
-      });
-    }
-
-    @Override
-    public void setUpdateProgressMessage(@NotNull final String progressMessage) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          progressFrame.setMessage(progressMessage);
-        }
-      });
-    }
-
-    @Override
     public void addToSelection(final Hash hash) {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -626,5 +563,4 @@ public class Swing_UI {
         }
       });
     }
-  }
 }

@@ -1,9 +1,9 @@
 package org.hanuna.gitalk.data.impl;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.data.DataLoader;
@@ -20,22 +20,19 @@ import java.util.Set;
  */
 public class DataLoaderImpl implements DataLoader {
   private final Project myProject;
-  private final boolean myReusePreviousGitOutput;
   private final CacheGet<Hash, CommitData> myCommitDataCache;
   @NotNull private final VcsLogProvider myLogProvider;
   private State state = State.UNINITIALIZED;
   private volatile DataPackImpl dataPack;
 
-  public DataLoaderImpl(Project project, boolean reusePreviousGitOutput, CacheGet<Hash, CommitData> commitDataCache,
-                        @NotNull VcsLogProvider logProvider) {
+  public DataLoaderImpl(Project project, CacheGet<Hash, CommitData> commitDataCache, @NotNull VcsLogProvider logProvider) {
     myProject = project;
-    myReusePreviousGitOutput = reusePreviousGitOutput;
     myCommitDataCache = commitDataCache;
     myLogProvider = logProvider;
   }
 
   @Override
-  public void readNextPart(@NotNull Consumer<String> statusUpdater, @NotNull FakeCommitsInfo fakeCommits, @NotNull VirtualFile root)
+  public void readNextPart(@NotNull ProgressIndicator indicator, @NotNull FakeCommitsInfo fakeCommits, @NotNull VirtualFile root)
     throws VcsException {
     switch (state) {
       case ALL_LOG_READER:
@@ -57,10 +54,9 @@ public class DataLoaderImpl implements DataLoader {
 
         System.out.println("=== readNextPart() called with " + fakeCommits.commits.size() + " fake commits");
         List<CommitParents> commitParentsList = new ArrayList<CommitParents>();
-        List<CommitParents> commits = myLogProvider.readNextBlock(root, statusUpdater);
+        List<CommitParents> commits = myLogProvider.readNextBlock(root);
         boolean inserted = false;
-        for (int i = 0; i < commits.size(); i++) {
-          CommitParents commit = commits.get(i);
+        for (CommitParents commit : commits) {
           if (!inserted && fakeCommits.base != null && commitParentsList.size() + fakeCommits.commits.size() >= fakeCommits.insertAbove) {
             commitParentsList.addAll(fakeCommits.commits);
             for (CommitParents fakeCommit : fakeCommits.commits) {
@@ -80,11 +76,11 @@ public class DataLoaderImpl implements DataLoader {
         }
         state = State.PART_LOG_READER;
 
-        dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater, myProject, myCommitDataCache, myLogProvider, root);
+        dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, indicator, myProject, myCommitDataCache, myLogProvider, root);
         break;
       case PART_LOG_READER:
-        List<CommitParents> nextPart = myLogProvider.readNextBlock(root, statusUpdater);
-        dataPack.appendCommits(nextPart, statusUpdater);
+        List<CommitParents> nextPart = myLogProvider.readNextBlock(root);
+        dataPack.appendCommits(nextPart);
         break;
       default:
         throw new IllegalStateException();

@@ -13,6 +13,7 @@ import org.jdesktop.swingx.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.util.List;
 
@@ -40,11 +41,6 @@ public interface UI_Controller {
   public TreeTableModel getRefsTreeTableModel();
 
   public RefTreeModel getRefTreeModel();
-
-  public void addControllerListener(@NotNull ControllerListener listener);
-
-
-  public void removeAllListeners();
 
   public void doubleClick(int rowIndex);
 
@@ -80,4 +76,7 @@ public interface UI_Controller {
   boolean isInteractiveRebaseInProgress();
 
   boolean areLongEdgesHidden();
+
+  @NotNull
+  JComponent getMainComponent();
 }

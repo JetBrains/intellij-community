@@ -1,12 +1,14 @@
 package org.hanuna.gitalk.ui.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -32,8 +34,9 @@ import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
+import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
-import org.hanuna.gitalk.ui.ControllerListener;
+import org.hanuna.gitalk.swing_ui.Swing_UI;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
@@ -44,6 +47,7 @@ import org.jdesktop.swingx.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.util.*;
 
@@ -52,8 +56,8 @@ import java.util.*;
  */
 public class UI_ControllerImpl implements UI_Controller {
 
+  private static final Logger LOG = Logger.getInstance(UI_Controller.class);
   private volatile DataLoaderImpl dataLoader;
-  private final EventsController events = new EventsController();
   private final Project myProject;
   private final BackgroundTaskQueue myDataLoaderQueue;
 
@@ -68,7 +72,6 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private GraphElement prevGraphElement = null;
   private Set<Hash> prevSelectionBranches;
-  private List<Ref> myRefs;
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
   private VcsLogActionHandler myVcsLogActionHandler = VcsLogActionHandler.DO_NOTHING;
@@ -127,19 +130,21 @@ public class UI_ControllerImpl implements UI_Controller {
       }
     }
   }, 5000);
+  private final Swing_UI mySwingUi;
 
   public UI_ControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
     myLogProvider = logProvider;
     myRoot = root;
-    myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading...");
+    myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading history...");
+    mySwingUi = new Swing_UI(this);
+
   }
 
   private void dataInit() {
     dataPack = dataLoader.getDataPack();
     refTreeModel = new RefTreeModelImpl(dataPack.getRefsModel());
     refTableModel = new RefTreeTableModel(refTreeModel);
-    myRefs = dataPack.getRefsModel().getAllRefs();
     graphTableModel = new GraphTableModel(dataPack);
     dataPackUtils = new DataPackUtils(dataPack);
 
@@ -158,67 +163,46 @@ public class UI_ControllerImpl implements UI_Controller {
 
   }
 
-  public void init(boolean inBackground, final boolean reusePreviousGitOutput) {
+  public void init() {
     final Consumer<ProgressIndicator> doInit = new Consumer<ProgressIndicator>() {
       @Override
       public void consume(final ProgressIndicator indicator) {
-        events.setState(ControllerListener.State.PROGRESS);
-        dataLoader = new DataLoaderImpl(myProject, reusePreviousGitOutput, commitDataCache, myLogProvider);
-        Consumer<String> statusUpdater = new Consumer<String>() {
-          @Override
-          public void consume(String key) {
-            events.setUpdateProgressMessage(key);
-            indicator.setText(key);
-          }
-        };
+        dataLoader = new DataLoaderImpl(myProject, commitDataCache, myLogProvider);
 
         try {
-          dataLoader.readNextPart(statusUpdater, rebaseDelegate.getFakeCommitsInfo(), myRoot);
+          dataLoader.readNextPart(indicator, rebaseDelegate.getFakeCommitsInfo(), myRoot);
           dataInit();
-          events.setState(ControllerListener.State.USUAL);
         }
         catch (VcsException e) {
-          events.setState(ControllerListener.State.ERROR);
-          events.setErrorMessage(e.getMessage());
+          notifyError(e);
         }
 
         ((GraphTableModel) getGraphTableModel()).addReworded(rebaseDelegate.reworded);
         ((GraphTableModel) getGraphTableModel()).addFixedUp(rebaseDelegate.fixedUp);
 
-        //SelectController selectController = dataPack.getPrintCellModel().getSelectController();
-        //Set<GraphElement> selection = new HashSet<GraphElement>();
-        //Node node = getDataPackUtils().getNodeByHash(hash);
-        //selectController.select(selection);
-        //
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            updateUI();
+            mySwingUi.updateUI();
             for (Hash hash : rebaseDelegate.selected) {
-              events.addToSelection(hash);
+              mySwingUi.addToSelection(hash);
             }
           }
         });
       }
     };
 
-    if (inBackground) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading...", false) {
-            public void run(@NotNull final ProgressIndicator indicator) {
-              doInit.consume(indicator);
-            }
-          });
-        }
-      });
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading...", false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        doInit.consume(indicator);
+      }
+    });
 
-    }
-    else {
-      doInit.consume(new EmptyProgressIndicator());
-    }
+  }
 
+  private void notifyError(VcsException e) {
+    LOG.warn(e);
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
   }
 
   private void preloadCommitDetails() throws VcsException {
@@ -233,6 +217,7 @@ public class UI_ControllerImpl implements UI_Controller {
   }
 
 
+  // TODO is null before initial load
   @Override
   @NotNull
   public TableModel getGraphTableModel() {
@@ -251,16 +236,6 @@ public class UI_ControllerImpl implements UI_Controller {
   }
 
   @Override
-  public void addControllerListener(@NotNull ControllerListener listener) {
-    events.addListener(listener);
-  }
-
-  @Override
-  public void removeAllListeners() {
-    events.removeAllListeners();
-  }
-
-  @Override
   public void over(@Nullable GraphElement graphElement) {
     SelectController selectController = dataPack.getPrintCellModel().getSelectController();
     FragmentManager fragmentManager = dataPack.getGraphModel().getFragmentManager();
@@ -272,12 +247,12 @@ public class UI_ControllerImpl implements UI_Controller {
     }
     selectController.deselectAll();
     if (graphElement == null) {
-      events.runUpdateUI();
+      mySwingUi.updateUI();
     }
     else {
       GraphFragment graphFragment = fragmentManager.relateFragment(graphElement);
       selectController.select(graphFragment);
-      events.runUpdateUI();
+      mySwingUi.updateUI();
     }
   }
 
@@ -293,9 +268,9 @@ public class UI_ControllerImpl implements UI_Controller {
       return;
     }
     UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
-    events.runUpdateUI();
+    mySwingUi.updateUI();
     //TODO:
-    events.runJumpToRow(updateRequest.from());
+    mySwingUi.jumpToRow(updateRequest.from());
   }
 
   public void click(int rowIndex) {
@@ -305,7 +280,8 @@ public class UI_ControllerImpl implements UI_Controller {
       FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
       dataPack.getPrintCellModel().getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
     }
-    events.runUpdateUI();
+    mySwingUi.updateUI();
+
   }
 
   @Override
@@ -330,9 +306,9 @@ public class UI_ControllerImpl implements UI_Controller {
         }
       });
 
-      events.runUpdateUI();
+      mySwingUi.updateUI();
       //TODO:
-      events.runJumpToRow(0);
+      mySwingUi.jumpToRow(0);
 
       timer.print();
     }
@@ -344,23 +320,17 @@ public class UI_ControllerImpl implements UI_Controller {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          events.setState(ControllerListener.State.PROGRESS);
-
-          dataLoader.readNextPart(new Consumer<String>() {
+          dataLoader.readNextPart(indicator, rebaseDelegate.getFakeCommitsInfo(), myRoot);
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
-            public void consume(String key) {
-              events.setUpdateProgressMessage(key);
+            public void run() {
+              mySwingUi.updateUI();
             }
-          }, rebaseDelegate.getFakeCommitsInfo(), myRoot);
-
-
-          events.setState(ControllerListener.State.USUAL);
-          events.runUpdateUI();
+          });
 
         }
         catch (VcsException e) {
-          events.setState(ControllerListener.State.ERROR);
-          events.setErrorMessage(e.getMessage());
+          notifyError(e);
         }
       }
     });
@@ -369,8 +339,8 @@ public class UI_ControllerImpl implements UI_Controller {
   @Override
   public void showAll() {
     dataPack.getGraphModel().getFragmentManager().showAll();
-    events.runUpdateUI();
-    events.runJumpToRow(0);
+    mySwingUi.updateUI();
+    mySwingUi.jumpToRow(0);
   }
 
   @Override
@@ -380,17 +350,13 @@ public class UI_ControllerImpl implements UI_Controller {
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            events.setState(ControllerListener.State.PROGRESS);
-            events.setUpdateProgressMessage("Hide long branches");
             MyTimer timer = new MyTimer("hide All");
             dataPack.getGraphModel().getFragmentManager().hideAll();
 
-            events.runUpdateUI();
+            mySwingUi.updateUI();
             //TODO:
-            events.runJumpToRow(0);
+            mySwingUi.jumpToRow(0);
             timer.print();
-
-            events.setState(ControllerListener.State.USUAL);
           }
         });
       }
@@ -400,25 +366,31 @@ public class UI_ControllerImpl implements UI_Controller {
   @Override
   public void setLongEdgeVisibility(boolean visibility) {
     dataPack.getPrintCellModel().setLongEdgeVisibility(visibility);
-    events.runUpdateUI();
+    mySwingUi.updateUI();
   }
 
   @Override
   public boolean areLongEdgesHidden() {
-    return dataPack.getPrintCellModel().areLongEdgesHidden();
+    return dataPack == null ? GraphPrintCellModel.HIDE_LONG_EDGES_DEFAULT : dataPack.getPrintCellModel().areLongEdgesHidden();
+  }
+
+  @NotNull
+  @Override
+  public JComponent getMainComponent() {
+    return mySwingUi.getMainFrame().getMainComponent();
   }
 
   @Override
   public void jumpToCommit(Hash commitHash) {
     int row = dataPackUtils.getRowByHash(commitHash);
     if (row != -1) {
-      events.runJumpToRow(row);
+      mySwingUi.jumpToRow(row);
     }
   }
 
   @Override
   public List<Ref> getRefs() {
-    return myRefs;
+    return dataPack == null ? Collections.<Ref>emptyList() : dataPack.getRefsModel().getAllRefs();
   }
 
   @NotNull
@@ -464,11 +436,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @Override
   public void refresh(boolean reusePreviousGitOutput) {
-    init(true, reusePreviousGitOutput);
-  }
-
-  public void updateUI() {
-    events.runUpdateUI();
+    init();
   }
 
   @Override

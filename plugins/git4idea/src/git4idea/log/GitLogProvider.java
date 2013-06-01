@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +57,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<CommitParents> readNextBlock(@NotNull VirtualFile root, @NotNull Consumer<String> statusUpdater) throws VcsException {
+  public List<CommitParents> readNextBlock(@NotNull VirtualFile root) throws VcsException {
     // TODO either don't query details here, or save them right away
     List<GitCommit> history = GitHistoryUtils.history(myProject, root);
     return ContainerUtil.map(history, new Function<GitCommit, CommitParents>() {

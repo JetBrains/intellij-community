@@ -14,7 +14,7 @@ import java.util.List;
 public class GraphPrintCellModelImpl implements GraphPrintCellModel {
   private final LayoutModel layoutModel;
   private final SelectController selectController;
-  private boolean hideLongEdges = true;
+  private boolean hideLongEdges = HIDE_LONG_EDGES_DEFAULT;
   private final CommitSelectController commitSelectController;
 
   public GraphPrintCellModelImpl(Graph graph) {

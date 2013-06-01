@@ -1,12 +1,9 @@
 package org.hanuna.gitalk.data.impl;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.vcs.log.CommitData;
-import com.intellij.vcs.log.CommitParents;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
@@ -14,6 +11,7 @@ import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.RefsModel;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
@@ -21,8 +19,6 @@ import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.impl.GraphModelImpl;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
-import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.data.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,11 +29,11 @@ import java.util.List;
 public class DataPackImpl implements DataPack {
   public static DataPackImpl buildDataPack(@NotNull List<CommitParents> commitParentsList,
                                            @NotNull List<Ref> allRefs,
-                                           Consumer<String> statusUpdater,
+                                           @NotNull ProgressIndicator indicator,
                                            Project project,
                                            CacheGet<Hash, CommitData> commitDataCache,
                                            @NotNull VcsLogProvider logProvider, VirtualFile root) {
-    statusUpdater.consume("Build graph");
+    indicator.setText("Build graph");
 
     MyTimer timer = new MyTimer("graph build");
     MutableGraph graph = GraphBuilder.build(commitParentsList, allRefs);
@@ -47,7 +43,7 @@ public class DataPackImpl implements DataPack {
     GraphModel graphModel = new GraphModelImpl(graph, allRefs);
     timer.print();
 
-    statusUpdater.consume("Build print model");
+    indicator.setText("Build print model");
     timer.clear("build printModel");
     final GraphPrintCellModel printCellModel = new GraphPrintCellModelImpl(graphModel.getGraph());
     timer.print();
@@ -88,8 +84,7 @@ public class DataPackImpl implements DataPack {
     commitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache, logProvider, root);
   }
 
-  public void appendCommits(@NotNull List<CommitParents> commitParentsList, @NotNull Consumer<String> statusUpdater) {
-    statusUpdater.consume("Rebuild graph and print model");
+  public void appendCommits(@NotNull List<CommitParents> commitParentsList) {
     MyTimer timer = new MyTimer("append commits");
     graphModel.appendCommitsToGraph(commitParentsList);
     timer.print();

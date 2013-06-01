@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GraphPrintCellModel {
 
+  boolean HIDE_LONG_EDGES_DEFAULT = true;
+
   @NotNull
   public GraphPrintCell getGraphPrintCell(final int rowIndex);
 

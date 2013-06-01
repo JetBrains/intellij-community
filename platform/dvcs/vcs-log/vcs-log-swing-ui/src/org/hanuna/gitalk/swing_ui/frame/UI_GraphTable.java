@@ -52,7 +52,7 @@ public class UI_GraphTable extends JTable {
   private boolean dragged = false;
 
   public UI_GraphTable(UI_Controller ui_controller) {
-    super(ui_controller.getGraphTableModel());
+    super();
     UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(new LineBorder(new Color(255, 0, 0, 0))));
     this.ui_controller = ui_controller;
     prepare();
@@ -67,8 +67,6 @@ public class UI_GraphTable extends JTable {
     setRowHeight(HEIGHT_CELL);
     setShowHorizontalLines(false);
     setIntercellSpacing(new Dimension(0, 0));
-
-    setPreferredColumnWidths();
 
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
