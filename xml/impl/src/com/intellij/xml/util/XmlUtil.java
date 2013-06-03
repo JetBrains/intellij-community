@@ -108,10 +108,18 @@ public class XmlUtil {
   @NonNls public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
   @NonNls public static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
   @NonNls public static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
-  @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3};
+  @NonNls public static final String JSTL_CORE_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsp/jstl/core";
+
+  @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3, JSTL_CORE_URI_JAVAEE_7};
+
 
   @NonNls public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
+  @NonNls public static final String JSF_HTML_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/html";
+  @NonNls public static final String[] JSF_HTML_URIS = {JSF_HTML_URI, JSF_HTML_URI_JAVAEE_7};
+
   @NonNls public static final String JSF_CORE_URI = "http://java.sun.com/jsf/core";
+  @NonNls public static final String JSF_CORE_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/core";
+  @NonNls public static final String[] JSF_CORE_URIS = {JSF_CORE_URI, JSF_CORE_URI_JAVAEE_7};
 
   @NonNls public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
   @NonNls public static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
@@ -136,9 +144,16 @@ public class XmlUtil {
   @NonNls public static final String[] WEB_XML_URIS =
     {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
+
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
+  @NonNls public static final String FACELETS_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/facelets";
+  @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7};
+
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_URI2 = "http://java.sun.com/jstl/functions";
+  @NonNls public static final String JSTL_FUNCTIONS_JAVAEE_7 = "http://xmlns.jcp.org/jsp/jstl/functions";
+  @NonNls public static final String[] JSTL_FUNCTIONS_URIS = {JSTL_FUNCTIONS_URI, JSTL_FUNCTIONS_URI2, JSTL_FUNCTIONS_JAVAEE_7};
+
   @NonNls public static final String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
   @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
@@ -256,7 +271,7 @@ public class XmlUtil {
   }
 
   public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project, Module module) {
-    final List<IndexedRelevantResource<String,XsdNamespaceBuilder>>
+    final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
     final PsiManager psiManager = PsiManager.getInstance(project);
     return ContainerUtil.mapNotNull(resources, new NullableFunction<IndexedRelevantResource<String, XsdNamespaceBuilder>, XmlFile>() {
@@ -380,7 +395,7 @@ public class XmlUtil {
   }
 
   public static boolean attributeFromTemplateFramework(@NonNls final String name, final XmlTag tag) {
-    return "jsfc".equals(name) && tag.getNSDescriptor(JSF_HTML_URI, true) != null;
+    return "jsfc".equals(name) && isJsfHtmlScheme(tag);
   }
 
   @Nullable
@@ -488,6 +503,15 @@ public class XmlUtil {
     return false;
   }
 
+  private static boolean isJsfHtmlScheme(XmlTag tag) {
+    for (String jsfHtmlUri : JSF_HTML_URIS) {
+      if (tag.getNSDescriptor(jsfHtmlUri, true) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   public static PsiFile findRelativeFile(String uri, PsiElement base) {
     if (base instanceof PsiFile) {
@@ -523,7 +547,7 @@ public class XmlUtil {
 
   @Nullable
   public static PsiElement findNamespaceDeclaration(XmlElement xmlElement, String nsName) {
-    while (! (xmlElement instanceof XmlTag) && xmlElement != null) {
+    while (!(xmlElement instanceof XmlTag) && xmlElement != null) {
       final PsiElement parent = xmlElement.getParent();
       if (!(parent instanceof XmlElement)) return null;
       xmlElement = (XmlElement)parent;
@@ -548,7 +572,8 @@ public class XmlUtil {
       CodeStyleManager.getInstance(tag.getProject()).reformat(tag);
     }
     else {
-      CodeStyleManager.getInstance(tag.getProject()).reformatRange(tag, tag.getTextRange().getStartOffset(), child.getTextRange().getEndOffset());
+      CodeStyleManager.getInstance(tag.getProject())
+        .reformatRange(tag, tag.getTextRange().getStartOffset(), child.getTextRange().getEndOffset());
     }
   }
 
@@ -722,8 +747,8 @@ public class XmlUtil {
       final Language language = file.getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
         return new String[][]{new String[]{"", XHTML_URI}};
-        }
       }
+    }
 
     return null;
   }
@@ -732,7 +757,7 @@ public class XmlUtil {
   public static String getDtdUri(XmlDocument document) {
     XmlProlog prolog = document.getProlog();
     if (prolog != null) {
-      return getDtdUri( prolog.getDoctype() );
+      return getDtdUri(prolog.getDoctype());
     }
     return null;
   }
@@ -915,11 +940,10 @@ public class XmlUtil {
   }
 
   /**
-   *
    * @param xmlTag
    * @param localName
    * @param namespace
-   * @param bodyText pass null to create collapsed tag, empty string means creating expanded one
+   * @param bodyText              pass null to create collapsed tag, empty string means creating expanded one
    * @param enforceNamespacesDeep
    * @return
    */
@@ -938,7 +962,9 @@ public class XmlUtil {
     }
     try {
       String tagStart = qname + (!StringUtil.isEmpty(namespace) && xmlTag.getPrefixByNamespace(namespace) == null &&
-                  !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))? " xmlns=\"" + namespace + "\"" : "");
+                                 !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))
+                                 ? " xmlns=\"" + namespace + "\""
+                                 : "");
       Language language = xmlTag.getLanguage();
       if (!(language instanceof HTMLLanguage)) language = StdFileTypes.XML.getLanguage();
       XmlTag retTag;
