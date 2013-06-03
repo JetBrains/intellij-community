@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.console.PyConsoleIndentUtil;
 
@@ -48,7 +49,8 @@ public class PyConsoleIndentTest extends UsefulTestCase {
     try {
       String fileText = FileUtil.loadFile(new File(getTestDataPath() + name + ".py"));
       String expected = FileUtil.loadFile(new File(getTestDataPath() + name + ".after.py"));
-      assertEquals(expected, PyConsoleIndentUtil.normalize(fileText, indent));
+      assertEquals(StringUtil.convertLineSeparators(expected), StringUtil.convertLineSeparators(
+        PyConsoleIndentUtil.normalize(fileText, indent)));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
