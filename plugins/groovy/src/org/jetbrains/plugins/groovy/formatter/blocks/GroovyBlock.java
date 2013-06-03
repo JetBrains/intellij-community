@@ -206,6 +206,12 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     if (psiParent instanceof GrIfStatement || psiParent instanceof GrLoopStatement) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
+    if (psiParent instanceof GrLabeledStatement && newChildIndex == 2) {
+      final Indent indent = GroovyIndentProcessor.indentLabelBlock(psiParent, getContext().getGroovySettings())
+                            ? Indent.getLabelIndent()
+                            : Indent.getNoneIndent();
+      return new ChildAttributes(indent, null);
+    }
     return new ChildAttributes(Indent.getNoneIndent(), null);
   }
 
