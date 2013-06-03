@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
 public class InspectionToolRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
 
-  private final ArrayList<Factory<InspectionToolWrapper>> myInspectionToolFactories = new ArrayList<Factory<InspectionToolWrapper>>();
+  private final List<Factory<InspectionToolWrapper>> myInspectionToolFactories = new ArrayList<Factory<InspectionToolWrapper>>();
 
   private final AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
   private final AtomicBoolean myInspectionComponentsLoaded = new AtomicBoolean(false);
@@ -108,6 +108,7 @@ public class InspectionToolRegistrar {
     }
   }
 
+  @NotNull
   public static InspectionToolWrapper wrapTool(@NotNull InspectionProfileEntry profileEntry) {
     if (profileEntry instanceof InspectionToolWrapper) {
       return (InspectionToolWrapper)profileEntry;
@@ -240,7 +241,7 @@ public class InspectionToolRegistrar {
         @Override
         public void run() {
           List<InspectionToolWrapper> tools = createTools();
-          for (InspectionTool tool : tools) {
+          for (InspectionToolWrapper tool : tools) {
             processText(tool.getDisplayName().toLowerCase(), tool);
 
             final String description = tool.loadDescription();
@@ -254,7 +255,7 @@ public class InspectionToolRegistrar {
     }
   }
 
-  private void processText(@NotNull @NonNls String descriptionText, @NotNull InspectionTool tool) {
+  private void processText(@NotNull @NonNls String descriptionText, @NotNull InspectionToolWrapper tool) {
     if (ApplicationManager.getApplication().isDisposed()) return;
     LOG.assertTrue(myOptionsRegistrar != null);
     final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
@@ -263,7 +264,7 @@ public class InspectionToolRegistrar {
     }
   }
 
-  private static boolean checkTool(@NotNull final InspectionTool toolWrapper) {
+  private static boolean checkTool(@NotNull final InspectionToolWrapper toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
       String message = null;
       try {

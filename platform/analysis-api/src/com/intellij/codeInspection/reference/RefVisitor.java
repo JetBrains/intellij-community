@@ -16,9 +16,24 @@
 
 /*
  * User: anna
- * Date: 20-Dec-2007
+ * Date: 18-Dec-2007
  */
 package com.intellij.codeInspection.reference;
 
-public interface RefDirectory extends RefElement {
+import org.jetbrains.annotations.NotNull;
+
+public class RefVisitor {
+  public void visitElement(@NotNull RefEntity elem) {}
+
+  public void visitFile(@NotNull RefFile file) {
+    visitElement(file);
+  }
+
+  public void visitModule(@NotNull RefModule module){
+    visitElement(module);
+  }
+
+  public void visitDirectory(@NotNull RefDirectory directory) {
+    visitElement(directory);
+  }
 }

@@ -85,7 +85,7 @@ public abstract class RefManager {
   /**
    * Creates (if necessary) and returns the reference graph node for the PSI element specified by its type and FQName.
    *
-   * @param type   {@link SmartRefElementPointer.FILE, etc.}
+   * @param type   {@link SmartRefElementPointer#FILE, etc.}
    * @param fqName fully qualified name for the element
    * @return the node for the element, or null if the element is not found or does not have
    *         a corresponding reference graph node type.
