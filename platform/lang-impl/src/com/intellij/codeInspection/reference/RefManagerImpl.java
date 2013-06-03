@@ -19,7 +19,7 @@
  * User: max
  * Date: Oct 22, 2001
  * Time: 8:21:36 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.reference;
