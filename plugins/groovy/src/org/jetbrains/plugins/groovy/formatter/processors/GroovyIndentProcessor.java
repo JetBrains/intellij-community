@@ -145,7 +145,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
-    if (myChildType == LABEL) {
+    if (myChildType == mIDENT) {
       CommonCodeStyleSettings.IndentOptions indentOptions = myBlock.getContext().getSettings().getIndentOptions();
       if (indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE) {
         myResult = Indent.getAbsoluteLabelIndent();

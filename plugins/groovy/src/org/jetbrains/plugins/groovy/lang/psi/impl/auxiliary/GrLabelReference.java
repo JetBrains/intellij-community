@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class GrLabelReference implements PsiReference {
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof GrLabeledStatement) {
-      myStatement = handleElementRename(((GrLabeledStatement)element).getLabelName());
+      myStatement = handleElementRename(((GrLabeledStatement)element).getName());
     }
     throw new IncorrectOperationException("Can't bind not to labeled statement");
   }

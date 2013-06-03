@@ -226,8 +226,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
   GroovyElementType PARENTHESIZED_EXPRESSION = new GroovyElementType("Parenthesized expression");
-  // Plain label
-  GroovyElementType LABEL = new GroovyElementType("Label");
 
   // Arguments
   GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 
 /**
  * @author ilyas
  */
-public interface GrLabeledStatement extends GrStatement, PsiNamedElement{
-  @NotNull
-  String getLabelName();
-
+public interface GrLabeledStatement extends GrStatement, GrNamedElement {
   @Nullable
   GrStatement getStatement();
 
   @NotNull
-  GrLabel getLabel();
+  PsiElement getLabel();
+
+  @NotNull
+  @Override
+  String getName();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -51,13 +51,12 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
 
   @NotNull
   public String getLabelName() {
-    final GrLabel label = getLabel();
-    return label.getName();
+    return getName();
   }
 
   @NotNull
-  public GrLabel getLabel() {
-    final GrLabel label = findChildByClass(GrLabel.class);
+  public PsiElement getLabel() {
+    final PsiElement label = findChildByType(GroovyTokenTypes.mIDENT);
     assert label != null;
     return label;
   }
@@ -69,7 +68,7 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     GrStatement statement = getStatement();
     return statement == null || statement == lastParent || statement.processDeclarations(processor, state, lastParent, place);
@@ -82,14 +81,22 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    final GrLabel labelElement = getLabel();
-    final GrLabel newLabel = GroovyPsiElementFactory.getInstance(getProject()).createLabel(name);
+    final PsiElement labelElement = getLabel();
+    final PsiElement newLabel = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(name);
     labelElement.replace(newLabel);
     return this;
   }
 
+  @NotNull
   @Override
   public String getName() {
-    return getLabelName();
+    final PsiElement label = getLabel();
+    return label.getText();
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNameIdentifierGroovy() {
+    return getLabel();
   }
 }

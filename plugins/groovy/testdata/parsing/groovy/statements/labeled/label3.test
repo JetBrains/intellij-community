@@ -1,0 +1,8 @@
+myLabel:
+-----
+Groovy script
+  Labeled statement
+    PsiElement(identifier)('myLabel')
+    PsiElement(:)(':')
+    PsiErrorElement:Statement expected
+      <empty list>
