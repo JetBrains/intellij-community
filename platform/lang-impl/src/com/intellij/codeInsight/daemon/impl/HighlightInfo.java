@@ -93,7 +93,6 @@ public class HighlightInfo implements Segment {
   boolean fromInjection;
 
   private GutterIconRenderer gutterIconRenderer;
-  private String myProblemGroup;
   volatile boolean bijective;
   private ProblemGroup myProblemGroup;
 
@@ -660,7 +659,7 @@ public class HighlightInfo implements Segment {
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon) {
-      this(action, options, displayName, icon, null);
+      this(action, options, displayName, icon, null, null);
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon, @Nullable HighlightDisplayKey key, @Nullable ProblemGroup problemGroup) {

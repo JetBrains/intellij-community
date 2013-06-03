@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -48,7 +49,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private final HintAction myHintAction;
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
-  private String myProblemGroup;
+  private ProblemGroup myProblemGroup;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
@@ -208,11 +209,11 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   }
 
   @Nullable
-  public String getProblemGroup() {
+  public ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 
-  public void setProblemGroup(@Nullable String problemGroup) {
+  public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
 

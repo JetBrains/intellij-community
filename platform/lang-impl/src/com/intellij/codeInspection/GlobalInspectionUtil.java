@@ -54,7 +54,7 @@ public class GlobalInspectionUtil {
   }
 
   public static void createProblem(PsiElement elt, HighlightInfo info, TextRange range,
-                                   @Nullable String problemGroup,
+                                   @Nullable ProblemGroup problemGroup,
                                    InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    GlobalInspectionContext globalContext) {
     List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
