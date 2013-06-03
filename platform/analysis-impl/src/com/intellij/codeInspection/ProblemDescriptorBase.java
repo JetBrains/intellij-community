@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -40,7 +41,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private final boolean myShowTooltip;
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
-  private String myProblemGroup;
+  private ProblemGroup myProblemGroup;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
@@ -186,12 +187,12 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
   @Override
   @Nullable
-  public String getProblemGroup() {
+  public ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 
   @Override
-  public void setProblemGroup(@Nullable String problemGroup) {
+  public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
 

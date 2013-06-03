@@ -19,6 +19,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -58,7 +59,7 @@ public class GlobalInspectionUtil {
   public static void createProblem(PsiElement elt,
                                    @NotNull HighlightInfo info,
                                    TextRange range,
-                                   @Nullable String problemGroup,
+                                   @Nullable ProblemGroup problemGroup,
                                    @NotNull InspectionManager manager,
                                    @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    @NotNull GlobalInspectionContext globalContext) {

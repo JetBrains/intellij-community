@@ -428,8 +428,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     final HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
-    return new HighlightInfo(attributes, null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
-                             severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel, 0);
+    HighlightInfo highlightInfo = new HighlightInfo(attributes, null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
+                                                    severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel, 0);
+    highlightInfo.setProblemGroup(problemDescriptor.getProblemGroup());
+    return highlightInfo;
   }
 
   private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
