@@ -57,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"CallToPrintStackTrace"})
 public class IdeaApplication {
@@ -123,12 +124,17 @@ public class IdeaApplication {
     IconLoader.activate();
 
     new JFrame().pack(); // this peer will prevent shutting down our application
+
     final File file = new File(PathManager.getSystemPath());
+    final AtomicBoolean reported = new AtomicBoolean();
+    final long lowDiskSpaceThreshold = 50 * 1024 * 1024;
+
     JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
-        final long lowDiskSpaceThreshold = 50 * 1024 * 1024;
-        if (file.getUsableSpace() < lowDiskSpaceThreshold) {
+        if (!reported.get() && file.getUsableSpace() < lowDiskSpaceThreshold) {
+          reported.compareAndSet(false, true);
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -138,8 +144,12 @@ public class IdeaApplication {
                              ? "Low disk space on disk where system directory of " + fullProductName + " is located"
                              : "System directory of " + fullProductName + " is read only";
               new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
-                .createNotification(title, file.getPath(), NotificationType.INFORMATION, null).notify(
-                null);
+                .createNotification(title, file.getPath(), NotificationType.INFORMATION, null).whenExpired(new Runnable() {
+                @Override
+                public void run() {
+                  reported.compareAndSet(true, false);
+                }
+              }).notify(null);
             }
           });
         }
