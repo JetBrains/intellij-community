@@ -63,10 +63,10 @@ public class CodeCompletionPanel {
     String basicShortcut = KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION));
     String smartShortcut = KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION));
     if (StringUtil.isNotEmpty(basicShortcut)) {
-      myCbOnCodeCompletion.setText(myCbOnCodeCompletion.getText() + " (" + basicShortcut + ")");
+      myCbOnCodeCompletion.setText(myCbOnCodeCompletion.getText() + " ( " + basicShortcut + " )");
     }
     if (StringUtil.isNotEmpty(smartShortcut)) {
-      myCbOnSmartTypeCompletion.setText(myCbOnSmartTypeCompletion.getText() + " (" + smartShortcut + ")");
+      myCbOnSmartTypeCompletion.setText(myCbOnSmartTypeCompletion.getText() + " ( " + smartShortcut + " )");
     }
 
     myCbAutocompletion.addActionListener(
