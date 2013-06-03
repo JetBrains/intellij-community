@@ -99,11 +99,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     return myControl;
   }
 
-  @NotNull
-  public ExternalSystemSettingsManager getSettingsManager() {
-    return mySettingsManager;
-  }
-
   public void prepare(@NotNull WizardContext context) {
     myControl.reset();
     String pathToUse = context.getProjectFileDirectory();
@@ -135,7 +130,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
         projects.add(projectSettings);
         systemSettings.setLinkedProjectsSettings(projects);
-        onProjectInit(project);
 
         if (externalProjectNode != null) {
           ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
@@ -179,8 +173,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   protected abstract void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project);
-
-  protected abstract void onProjectInit(@NotNull Project project);
 
   /**
    * The whole import sequence looks like below:
@@ -300,7 +292,16 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
   }
 
-  // TODO den add doc
+  /**
+   * Allows to adjust external project config file to use on the basis of the given value.
+   * <p/>
+   * Example: a user might choose a directory which contains target config file and particular implementation expands
+   * that to a particular file under the directory.
+   * 
+   * @param file  base external project config file
+   * @return      external project config file to use
+   */
+  @NotNull
   protected abstract File getExternalProjectConfigToUse(@NotNull File file);
 
   @Nullable
@@ -314,7 +315,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param context  storage for the project/module settings.
    */
   public void applyProjectSettings(@NotNull WizardContext context) {
-    
     if (myExternalProjectNode == null) {
       assert false;
       return;
