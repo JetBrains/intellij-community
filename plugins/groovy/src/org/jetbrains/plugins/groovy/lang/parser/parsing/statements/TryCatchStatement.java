@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,8 +104,9 @@ public class TryCatchStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
       warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
-    } else {
+      builder.error(GroovyBundle.message("lcurly.expected"));
+    }
+    else {
       warn.drop();
     }
 
@@ -117,7 +118,4 @@ public class TryCatchStatement implements GroovyElementTypes {
       parseHandlers(builder, parser);
     }
   }
-
-
-
 }

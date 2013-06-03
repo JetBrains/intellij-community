@@ -117,7 +117,7 @@ public class GroovyParser implements PsiParser {
     }
     else {
       warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
+      builder.error(GroovyBundle.message("statement.expected"));
     }
     marker.done(FOR_STATEMENT);
     return true;
@@ -214,7 +214,7 @@ public class GroovyParser implements PsiParser {
 
     if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
+      builder.error(GroovyBundle.message("statement.expected"));
       return false;
     }
     else {
