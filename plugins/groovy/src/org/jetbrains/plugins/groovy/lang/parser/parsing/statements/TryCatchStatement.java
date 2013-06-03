@@ -57,24 +57,28 @@ public class TryCatchStatement implements GroovyElementTypes {
     }
 
     if (kFINALLY.equals(builder.getTokenType()) || ParserUtils.lookAhead(builder, mNLS, kFINALLY)) {
-      ParserUtils.getToken(builder, mNLS);
-      PsiBuilder.Marker finallyMarker = builder.mark();
-      warn = builder.mark();
-      ParserUtils.getToken(builder, kFINALLY);
-      ParserUtils.getToken(builder, mNLS);
-
-      if (mLCURLY.equals(builder.getTokenType()) && OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
-        warn.drop();
-        finallyMarker.done(FINALLY_CLAUSE);
-      }
-      else {
-        finallyMarker.drop();
-        warn.rollbackTo();
-        builder.error(GroovyBundle.message("expression.expected"));
-      }
+      parseFinally(builder, parser);
     }
+
     marker.done(TRY_BLOCK_STATEMENT);
     return true;
+  }
+
+  private static void parseFinally(PsiBuilder builder, GroovyParser parser) {
+    ParserUtils.getToken(builder, mNLS);
+    PsiBuilder.Marker finallyMarker = builder.mark();
+    ParserUtils.getToken(builder, kFINALLY);
+    ParserUtils.getToken(builder, mNLS);
+
+    PsiBuilder.Marker warn = builder.mark();
+    if (mLCURLY.equals(builder.getTokenType()) && OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
+      warn.drop();
+    }
+    else {
+      warn.rollbackTo();
+      builder.error(GroovyBundle.message("lcurly.expected"));
+    }
+    finallyMarker.done(FINALLY_CLAUSE);
   }
 
   /**
@@ -86,7 +90,7 @@ public class TryCatchStatement implements GroovyElementTypes {
     PsiBuilder.Marker catchMarker = builder.mark();
     ParserUtils.getToken(builder, kCATCH);
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      catchMarker.drop();
+      catchMarker.done(CATCH_CLAUSE);
       return;
     }
 

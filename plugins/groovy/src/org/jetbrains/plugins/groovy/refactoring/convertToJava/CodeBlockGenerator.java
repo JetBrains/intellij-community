@@ -526,7 +526,10 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitFinallyClause(GrFinallyClause finallyClause) {
     builder.append("finally ");
-    finallyClause.getBody().accept(this);
+    final GrOpenBlock body = finallyClause.getBody();
+    if (body != null) {
+      body.accept(this);
+    }
   }
 
   @Override
