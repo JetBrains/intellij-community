@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.django.testRunner.DjangoTestUtil;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
@@ -91,7 +92,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
-          final Location location = failedTest.getLocation(myProject);
+          final Location location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
           if (location != null) {
             final PsiElement element = location.getPsiElement();
 
@@ -138,7 +139,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
   @NotNull
   @Override
-  protected Filter getFilter(Project project) {
+  protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
     return new Filter() {
       public boolean shouldAccept(final AbstractTestProxy test) {
         boolean ignored = (test.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX.getValue());
