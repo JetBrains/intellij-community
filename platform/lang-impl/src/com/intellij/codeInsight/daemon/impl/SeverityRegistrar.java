@@ -30,7 +30,6 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -151,20 +150,18 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     ourMap.clear();
     ourRendererColors.clear();
     final List children = element.getChildren(INFO);
-    if (children != null){
-      for (Object child : children) {
-        final Element infoElement = (Element)child;
+    for (Object child : children) {
+      final Element infoElement = (Element)child;
 
-        final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes();
-        highlightInfo.readExternal(infoElement);
+      final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes();
+      highlightInfo.readExternal(infoElement);
 
-        Color color = null;
-        final String colorStr = infoElement.getAttributeValue(COLOR);
-        if (colorStr != null){
-          color = new Color(Integer.parseInt(colorStr, 16));
-        }
-        registerSeverity(highlightInfo, color);
+      Color color = null;
+      final String colorStr = infoElement.getAttributeValue(COLOR);
+      if (colorStr != null){
+        color = new Color(Integer.parseInt(colorStr, 16));
       }
+      registerSeverity(highlightInfo, color);
     }
     myOrder.clear();
 

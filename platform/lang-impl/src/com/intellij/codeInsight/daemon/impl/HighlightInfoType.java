@@ -200,45 +200,4 @@ public interface HighlightInfoType {
       return myToolKey;
     }
   }
-
-  class HighlightInfoTypeSeverityByKeyAttrBySeverity implements HighlightInfoType {
-    static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeSeverityByKeyAttrBySeverity");
-
-    private final HighlightDisplayKey mySeverityKey;
-
-    public HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey severityKey) {
-      mySeverityKey = severityKey;
-    }
-
-    @Override
-    @NotNull
-    public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      InspectionProfile profile = psiElement == null
-                                  ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
-                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile();
-      HighlightDisplayLevel level = profile.getErrorLevel(mySeverityKey, psiElement);
-      LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
-      return level.getSeverity();
-    }
-
-    @Override
-    public TextAttributesKey getAttributesKey() {
-      final HighlightSeverity severity = getSeverity(null);
-      final HighlightInfoTypeImpl infoType = SeverityRegistrar.getInstance().getHighlightInfoTypeBySeverity(severity);
-      return infoType != null
-             ? infoType.getAttributesKey()
-             : severity == HighlightSeverity.ERROR
-               ? CodeInsightColors.ERRORS_ATTRIBUTES
-               : severity == HighlightSeverity.WARNING
-                 ? CodeInsightColors.WARNINGS_ATTRIBUTES
-                 : severity == HighlightSeverity.WEAK_WARNING
-                   ? CodeInsightColors.WEAK_WARNING_ATTRIBUTES
-                   : CodeInsightColors.INFO_ATTRIBUTES;
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    public String toString() {
-      return "HighlightInfoTypeSeverityByKeyAttrBySeverity[severity=" + mySeverityKey + "]";
-    }
-  }
 }
