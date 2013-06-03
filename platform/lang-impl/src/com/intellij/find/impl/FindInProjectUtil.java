@@ -627,6 +627,7 @@ public class FindInProjectUtil {
                                                                        @NotNull final UsageViewPresentation presentation) {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(true);
+    processPresentation.setShowFindOptionsPrompt(false);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
     processPresentation.setProgressIndicatorFactory(
       new Factory<ProgressIndicator>() {
