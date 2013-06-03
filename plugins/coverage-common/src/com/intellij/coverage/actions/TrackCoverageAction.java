@@ -123,7 +123,7 @@ public class TrackCoverageAction extends ToggleModelAction {
       if (test != null && !test.isInProgress()) {
         final List<? extends AbstractTestProxy> list = test.getAllTests();
         for (AbstractTestProxy proxy : list) {
-          final Location location = proxy.getLocation(myProperties.getProject());
+          final Location location = proxy.getLocation(myProperties.getProject(), myProperties.getScope());
           if (location != null) {
             final PsiElement element = location.getPsiElement();
             final String name = currentSuite.getCoverageEngine().getTestMethodName(element, proxy);
