@@ -235,7 +235,12 @@ public abstract class DialogWrapper {
 
   protected DialogWrapper(Project project, boolean canBeParent, boolean applicationModalIfPossible) {
     ensureEventDispatchThread();
-    myPeer = createPeer(WindowManager.getInstance().suggestParentWindow(project), canBeParent, applicationModalIfPossible);
+    if (ApplicationManager.getApplication() != null) {
+      myPeer = createPeer(WindowManager.getInstance().suggestParentWindow(project), canBeParent, applicationModalIfPossible);
+    }
+    else {
+      myPeer = createPeer(null, canBeParent, applicationModalIfPossible);
+    }
     createDefaultActions();
   }
 

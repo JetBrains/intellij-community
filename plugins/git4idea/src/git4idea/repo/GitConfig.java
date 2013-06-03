@@ -19,6 +19,7 @@ package git4idea.repo;
   import com.google.common.base.Predicate;
   import com.google.common.collect.Collections2;
   import com.google.common.collect.Iterables;
+  import com.intellij.dvcs.repo.RepoStateException;
   import com.intellij.ide.plugins.IdeaPluginDescriptor;
   import com.intellij.openapi.diagnostic.Logger;
   import com.intellij.openapi.util.Pair;
@@ -128,7 +129,7 @@ public class GitConfig {
 
   /**
    * Creates an instance of GitConfig by reading information from the specified {@code .git/config} file.
-   * @throws GitRepoStateException if {@code .git/config} couldn't be read or has invalid format.<br/>
+   * @throws RepoStateException if {@code .git/config} couldn't be read or has invalid format.<br/>
    *         If in general it has valid format, but some sections are invalid, it skips invalid sections, but reports an error.
    */
   @NotNull
@@ -140,7 +141,7 @@ public class GitConfig {
       ini.load(configFile);
     }
     catch (IOException e) {
-      LOG.error(new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
+      LOG.error(new RepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
       return new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(), Collections.<BranchConfig>emptyList());
     }
 

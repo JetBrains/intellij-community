@@ -525,8 +525,8 @@ public final class UpdateChecker {
               return downloader.getPluginName();
             }
           }, ", ");
-          final String message = "You already have the latest version of " + ApplicationInfo.getInstance().getVersionName() + " installed.<br> " +
-                                 "The following plugins are ready to <a href=\"update\">update</a>: " + updatedPluginsList;
+          String message = "You have the latest version of " + ApplicationInfo.getInstance().getVersionName() + " installed.<br> ";
+          message += "The following plugin" + (updatedPlugins.size() == 1 ? " is" : "s are") + " ready to <a href=\"update\">update</a>: " + updatedPluginsList;
           showBalloonNotification(showPluginsUpdateDialogRunnable, message);
         }
         else if ((updatedPlugins != null || alwaysShowResults) && !ourUpdateInfoDialogShown) {

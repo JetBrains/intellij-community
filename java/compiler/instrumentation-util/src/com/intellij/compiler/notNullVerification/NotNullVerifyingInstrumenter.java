@@ -34,6 +34,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private static final String CONSTRUCTOR_NAME = "<init>";
   private static final String EXCEPTION_INIT_SIGNATURE = "(L" + STRING_CLASS_NAME + ";)V";
 
+  private static final String ANNOTATION_DEFAULT_METHOD = "value";
+
   private static final String NULL_ARG_MESSAGE = "Argument %d for @NotNull parameter of %s.%s must not be null";
   private static final String NULL_RESULT_MESSAGE = "@NotNull method %s.%s must not return null";
 
@@ -65,25 +67,51 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       private final List<Integer> myNotNullParams = new ArrayList<Integer>();
       private int mySyntheticCount = 0;
       private boolean myIsNotNull = false;
+      private String myMessage = null;
       private Label myStartGeneratedCodeLabel;
 
       public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
-        final AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
+        AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
         if (isReferenceType(args[parameter]) && anno.equals(NOT_NULL_TYPE)) {
           myNotNullParams.add(new Integer(parameter));
+          av = new AnnotationVisitor(Opcodes.ASM4, av) {
+            @Override
+            public void visit(String methodName, Object o) {
+              if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
+                String message = (String) o;
+                if(!message.isEmpty()) {
+                  myMessage = message;
+                }
+              }
+              super.visit(methodName, o);
+            }
+          };
         }
         else if (anno.equals(SYNTHETIC_TYPE)) {
           // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
           mySyntheticCount++;
         }
+
         return av;
       }
 
       @Override
       public AnnotationVisitor visitAnnotation(String anno, boolean isRuntime) {
-        final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
+        AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
         if (isReferenceType(returnType) && anno.equals(NOT_NULL_TYPE)) {
           myIsNotNull = true;
+          av = new AnnotationVisitor(Opcodes.ASM4, av) {
+            @Override
+            public void visit(String methodName, Object o) {
+              if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
+                String message = (String) o;
+                if(!message.isEmpty()) {
+                  myMessage = message;
+                }
+              }
+              super.visit(methodName, o);
+            }
+          };
         }
 
         return av;
@@ -105,7 +133,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           Label end = new Label();
           mv.visitJumpInsn(IFNONNULL, end);
 
-          generateThrow(IAE_CLASS_NAME, String.format(NULL_ARG_MESSAGE, param - mySyntheticCount, myClassName, name), end);
+          generateThrow(IAE_CLASS_NAME, myMessage == null ? String.format(NULL_ARG_MESSAGE, param - mySyntheticCount, myClassName, name) : myMessage, end);
         }
       }
 
@@ -124,7 +152,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
             mv.visitInsn(DUP);
             final Label skipLabel = new Label();
             mv.visitJumpInsn(IFNONNULL, skipLabel);
-            generateThrow(ISE_CLASS_NAME, String.format(NULL_RESULT_MESSAGE, myClassName, name), skipLabel);
+            generateThrow(ISE_CLASS_NAME, myMessage == null ? String.format(NULL_RESULT_MESSAGE, myClassName, name) : myMessage, skipLabel);
           }
         }
 

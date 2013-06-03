@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -194,7 +195,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
               GitRepository repository = createGitRepository(root);
               repositories.put(root, repository);
             }
-            catch (GitRepoStateException e) {
+            catch (RepoStateException e) {
               LOG.error("Couldn't initialize GitRepository in " + root.getPresentableUrl(), e);
             }
           }

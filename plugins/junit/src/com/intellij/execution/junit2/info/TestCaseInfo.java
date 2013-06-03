@@ -20,6 +20,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +41,8 @@ class TestCaseInfo extends ClassBasedInfo {
   }
 
   @Nullable
-  public Location getLocation(final Project project) {
-    final Location<PsiClass> classLocation = (Location<PsiClass>)super.getLocation(project);
+  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
+    final Location<PsiClass> classLocation = (Location<PsiClass>)super.getLocation(project, searchScope);
     if (classLocation == null) return null;
     String strippedMethodName = myMethod; //navigation to for parametr. methods
     final int idx = myMethod.indexOf('[');

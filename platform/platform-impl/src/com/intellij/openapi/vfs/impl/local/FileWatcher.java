@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -80,7 +81,7 @@ public class FileWatcher {
   private volatile MyProcessHandler myProcessHandler;
   private volatile int myStartAttemptCount = 0;
   private volatile boolean myIsShuttingDown = false;
-  private volatile boolean myFailureShownToTheUser = false;
+  private final AtomicBoolean myFailureShownToTheUser = new AtomicBoolean(false);
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
 
   private volatile List<String> myRecursiveWatchRoots = emptyList();
@@ -215,11 +216,10 @@ public class FileWatcher {
     return length < 0 || length == executable.length();
   }
 
-  private void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
+  public void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
     LOG.warn(cause);
 
-    if (!myFailureShownToTheUser) {
-      myFailureShownToTheUser = true;
+    if (myFailureShownToTheUser.compareAndSet(false, true)) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           String title = ApplicationBundle.message("watcher.slow.sync");
@@ -466,10 +466,7 @@ public class FileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        LOG.warn(line);
-        String title = ApplicationBundle.message("watcher.slow.sync");
-        NotificationListener listener = NotificationListener.URL_OPENING_LISTENER;
-        Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, line, NotificationType.WARNING, listener));
+        notifyOnFailure(line, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;
       }
       else if (myLastOp == WatcherOp.REMAP || myLastOp == WatcherOp.UNWATCHEABLE) {

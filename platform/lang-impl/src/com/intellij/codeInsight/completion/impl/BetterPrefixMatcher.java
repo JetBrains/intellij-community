@@ -51,6 +51,16 @@ public class BetterPrefixMatcher extends PrefixMatcher {
     return myOriginal.matchingDegree(name) >= myMinMatchingDegree;
   }
 
+  @Override
+  public boolean isStartMatch(String name) {
+    return myOriginal.isStartMatch(name);
+  }
+
+  @Override
+  public int matchingDegree(String string) {
+    return myOriginal.matchingDegree(string);
+  }
+
   @NotNull
   @Override
   public PrefixMatcher cloneWithPrefix(@NotNull String prefix) {

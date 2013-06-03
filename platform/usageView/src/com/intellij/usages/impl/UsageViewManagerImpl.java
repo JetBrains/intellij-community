@@ -414,8 +414,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              myPresentation.getScopeText());
 
               if (notFoundActions.isEmpty()) {
+                String[] lines = myProcessPresentation.isShowFindOptionsPrompt() ? new String[] {StringUtil.escapeXml(message), createOptionsHtml()} : new String[]{StringUtil.escapeXml(message)};
                 notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
-                                    MessageType.INFO, myProcessPresentation, UsageViewManagerImpl.this.myProject, StringUtil.escapeXml(message), createOptionsHtml());
+                                    MessageType.INFO, myProcessPresentation, UsageViewManagerImpl.this.myProject, lines);
                 findStartedBalloonShown.set(false);
               }
               else {

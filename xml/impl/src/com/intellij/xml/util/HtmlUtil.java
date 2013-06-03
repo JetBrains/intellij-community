@@ -127,10 +127,11 @@ public class HtmlUtil {
   };
 
   // flow elements are block or inline, so they shuld not close <p> for example
-  @NonNls private static final String[] POSSIBLY_INLINE_TAGS = {"a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
-    "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
-    "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
-    "strong", "sub", "sup", "textarea", "tt", "u", "var"};
+  @NonNls private static final String[] POSSIBLY_INLINE_TAGS =
+    {"a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
+      "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
+      "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
+      "strong", "sub", "sup", "textarea", "tt", "u", "var"};
 
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<String>();
 
@@ -306,8 +307,9 @@ public class HtmlUtil {
 
     switch (type) {
       case XmlEntitiesInspection.UNKNOWN_TAG:
-        HtmlUnknownTagInspection unknownTagInspection = (HtmlUnknownTagInspection)profile.getUnwrappedTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
-                                                                                                           containingFile);
+        HtmlUnknownTagInspection unknownTagInspection =
+          (HtmlUnknownTagInspection)profile.getUnwrappedTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
+                                                             containingFile);
         if (unknownTagInspection != null) {
           return unknownTagInspection.getAdditionalEntries();
         }
@@ -338,8 +340,16 @@ public class HtmlUtil {
       return descriptors;
     }
 
-    if (declarationTag.getPrefixByNamespace(XmlUtil.JSF_HTML_URI) != null &&
-        declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null &&
+
+    boolean isJsfHtmlNamespace = false;
+    for (String jsfHtmlUri : XmlUtil.JSF_HTML_URIS) {
+      if (declarationTag.getPrefixByNamespace(jsfHtmlUri) != null) {
+        isJsfHtmlNamespace = true;
+        break;
+      }
+    }
+
+    if (isJsfHtmlNamespace && declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null &&
         !XmlUtil.JSP_URI.equals(declarationTag.getNamespace())) {
 
       descriptors = ArrayUtil.append(
@@ -662,8 +672,7 @@ public class HtmlUtil {
   public static boolean isPureHtmlFile(@NotNull PsiFile file) {
     FileType fileTypeByName = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
     return file.getLanguage() == HTMLLanguage.INSTANCE &&
-        fileTypeByName == HtmlFileType.INSTANCE &&
-        !(file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider);
+           fileTypeByName == HtmlFileType.INSTANCE &&
+           !(file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider);
   }
-
 }

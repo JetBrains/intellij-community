@@ -39,6 +39,11 @@ public class FindUsagesProcessPresentation {
   private boolean myShowNotFoundMessage;
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
   private Collection<PsiFile> myLargeFiles;
+  private boolean myShowFindOptionsPrompt = true; // in the case of find in path, "find options" does not make sense
+
+  public FindUsagesProcessPresentation() {
+    int i  = 0;
+  }
 
   public void addNotFoundAction(@NotNull Action action) {
     if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
@@ -81,6 +86,14 @@ public class FindUsagesProcessPresentation {
   @NotNull
   public Collection<PsiFile> getLargeFiles() {
     return myLargeFiles == null ? Collections.<PsiFile>emptyList() : myLargeFiles;
+  }
+
+  public boolean isShowFindOptionsPrompt() {
+    return myShowFindOptionsPrompt;
+  }
+
+  public void setShowFindOptionsPrompt(boolean showFindOptionsPrompt) {
+    myShowFindOptionsPrompt = showFindOptionsPrompt;
   }
 }
 

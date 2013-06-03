@@ -15,7 +15,7 @@
  */
 package git4idea.repo;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import git4idea.GitLocalBranch;
@@ -58,64 +58,16 @@ import java.util.Collection;
  *
  * @author Kirill Likhodedov
  */
-public interface GitRepository {
+public interface GitRepository extends Repository {
 
   Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
-
-  /**
-   * Current state of the repository.
-   */
-  enum State {
-    /**
-     * HEAD is on branch, no merge process is in progress (and no rebase as well).
-     */
-    NORMAL,
-    /**
-     * During merge (for instance, merge failed with conflicts that weren't immediately resolved).
-     */
-    MERGING {
-      @Override public String toString() {
-        return "Merging";
-      }
-    },
-    /**
-     * During rebase.
-     */
-    REBASING {
-      @Override public String toString() {
-        return "Rebasing";
-      }
-    },
-    /**
-     * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
-     */
-    DETACHED
-  }
-
-  @NotNull
-  VirtualFile getRoot();
 
   @NotNull
   VirtualFile getGitDir();
 
   @NotNull
-  String getPresentableUrl();
-
-  @NotNull
-  Project getProject();
-
-  @NotNull
   GitUntrackedFilesHolder getUntrackedFilesHolder();
 
-  @NotNull
-  State getState();
-
-  /**
-   * Returns the hash of the revision, which HEAD currently points to.
-   * Returns null only in the case of a fresh repository, when no commit have been made.
-   */
-  @Nullable
-  String getCurrentRevision();
 
   /**
    * Returns the current branch of this Git repository.
@@ -144,22 +96,8 @@ public interface GitRepository {
   @NotNull
   Collection<GitBranchTrackInfo> getBranchTrackInfos();
 
-  boolean isMergeInProgress();
-
   boolean isRebaseInProgress();
 
   boolean isOnBranch();
-
-  /**
-   * @return true if current repository is "fresh", i.e. if no commits have been made yet.
-   */
-  boolean isFresh();
-
-  /**
-   * Synchronously updates the GitRepository by reading information from .git/config and .git/refs/...
-   */
-  void update();
-
-  String toLogString();
 
 }

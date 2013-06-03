@@ -15,16 +15,14 @@
  */
 package org.zmlx.hg4idea.repo;
 
+import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
@@ -39,24 +37,24 @@ import java.util.List;
  * @author Nadya Zabrodina
  */
 final class HgRepositoryUpdater implements Disposable, BulkFileListener {
-  private final HgRepositoryFiles myRepositoryFiles;
-  private final MessageBusConnection myMessageBusConnection;
-  private final QueueProcessor<Object> myUpdateQueue;
-  private final Object DUMMY_UPDATE_OBJECT = new Object();
-  private final VirtualFile myBranchHeadsDir;
-  private final LocalFileSystem.WatchRequest myWatchRequest;
+  @NotNull private final HgRepositoryFiles myRepositoryFiles;
+  @Nullable private final MessageBusConnection myMessageBusConnection;
+  @NotNull private final QueueProcessor<Object> myUpdateQueue;
+  @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
+  @Nullable private final VirtualFile myBranchHeadsDir;
+  @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
 
 
-  HgRepositoryUpdater(HgRepository repository) {
+  HgRepositoryUpdater(@NotNull HgRepository repository) {
     VirtualFile hgDir = repository.getHgDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);
     myRepositoryFiles = HgRepositoryFiles.getInstance(hgDir);
-    visitHgDirVfs(hgDir);
+    RepositoryUtil.visitVcsDirVfs(hgDir, HgRepositoryFiles.getSubDirRelativePaths());
 
-    myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsPath());
+    myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
 
     Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<Object>(new Updater(repository), project.getDisposed());
+    myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
     if (!project.isDisposed()) {
       myMessageBusConnection = project.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -66,26 +64,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
   }
 
-  private static void visitHgDirVfs(@NotNull VirtualFile hgDir) {
-    hgDir.getChildren();
-    for (String subdir : HgRepositoryFiles.getSubDirRelativePaths()) {
-      VirtualFile dir = hgDir.findFileByRelativePath(subdir);
-      // process recursively, because we need to visit all branches under cache/branchheads
-      visitAllChildrenRecursively(dir);
-    }
-  }
-
-  private static void visitAllChildrenRecursively(@Nullable VirtualFile dir) {
-    if (dir == null) {
-      return;
-    }
-    VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile virtualFile) {
-        return true;
-      }
-    });
-  }
 
   @Override
   public void dispose() {
@@ -118,7 +96,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       }
       else if (myRepositoryFiles.isBranchFile(filePath)) {
         branchFileChanged = true;
-        visitAllChildrenRecursively(myBranchHeadsDir);
+        RepositoryUtil.visitAllChildrenRecursively(myBranchHeadsDir);
       }
       else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
@@ -131,16 +109,4 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
   }
 
-  private static class Updater implements Consumer<Object> {
-    private final HgRepository myRepository;
-
-    public Updater(HgRepository repository) {
-      myRepository = repository;
-    }
-
-    @Override
-    public void consume(Object dummy) {
-      myRepository.update();
-    }
-  }
 }

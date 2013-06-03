@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 /**
  * Handles the following responsibilities:
@@ -58,28 +57,12 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
   @Override
   public boolean validate() throws ConfigurationException {
     myControl.apply();
-    storeCurrentSettings();
     AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
       return false;
     }
     builder.ensureProjectIsDefined(getWizardContext());
     return true;
-  }
-
-  @Override
-  public void onStepLeaving() {
-    storeCurrentSettings();
-  }
-
-  private void storeCurrentSettings() {
-    final String projectPath = myControl.getProjectSettings().getExternalProjectPath();
-    if (projectPath != null) {
-      final File parent = new File(projectPath).getParentFile();
-      if (parent != null) {
-        getWizardContext().setProjectName(parent.getName());
-      }
-    }
   }
 
   private void initGradleSettingsControl() {

@@ -18,11 +18,13 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -38,11 +40,14 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public abstract class DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
@@ -132,7 +137,19 @@ public abstract class DocumentCommitProcessor {
       endOffset = document.getTextLength();
       lengthShift = document.getTextLength() - myTreeElementBeingReparsedSoItWontBeCollected.getTextLength();
     }
-    assertBeforeCommit(document, file, textBlock, chars, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
+    if (!assertBeforeCommit(document, file, textBlock, chars, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected)) {
+      return new Processor<Document>() {
+        @Override
+        public boolean process(Document document) {
+          VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+          log("Recovering from assertBeforeCommit", task, synchronously, vFile, vFile != null && vFile.isValid());
+          if (vFile != null && vFile.isValid()) {
+            FileContentUtilCore.reparseFiles(Arrays.asList(vFile));
+          }
+          return true;
+        }
+      };
+    }
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
     final DiffLog diffLog = blockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars, task.indicator);
 
@@ -201,7 +218,7 @@ public abstract class DocumentCommitProcessor {
     }
   }
 
-  private static void assertBeforeCommit(@NotNull Document document,
+  private static boolean assertBeforeCommit(@NotNull Document document,
                                          @NotNull PsiFile file,
                                          @NotNull TextBlock textBlock,
                                          @NotNull CharSequence chars,
@@ -227,13 +244,17 @@ public abstract class DocumentCommitProcessor {
         if (!psiSuffix.equals(docSuffix)) {
           msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
         }
-        throw new AssertionError(msg);
+        LOG.error(msg);
+        return false;
       }
     }
     else if (document.getTextLength() - textBlock.getTextEndOffset() !=
              myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() - psiEndOffset) {
-      throw new AssertionError("PSI/document inconsistency before reparse: file=" + file);
+      LOG.error("PSI/document inconsistency before reparse: file=" + file);
+      return false;
     }
+    
+    return true;
   }
 
   private void assertAfterCommit(Document document,

@@ -17,12 +17,6 @@ public abstract class AbstractImportFromExternalSystemWizardStep extends Project
     super(context);
   }
 
-  @NotNull
-  @Override
-  public WizardContext getWizardContext() {
-    return super.getWizardContext();
-  }
-
   @Override
   @Nullable
   protected AbstractExternalProjectImportBuilder getBuilder() {

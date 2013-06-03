@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,11 +147,13 @@ public class TodoFilter implements Cloneable{
    * @param element in which all data will be stored
    * @param patterns all available patterns
    */
-  public void writeExternal(Element element,TodoPattern[] patterns){
+  public void writeExternal(Element element, TodoPattern[] patterns){
     element.setAttribute(ATTRIBUTE_NAME,myName);
-    for (int i = 0; i < patterns.length; i++) {
+    for (TodoPattern pattern : myTodoPatterns) {
+      int index = ArrayUtilRt.find(patterns, pattern);
+      LOG.assertTrue(index != -1);
       Element child = new Element(ELEMENT_PATTERN);
-      child.setAttribute(ATTRIBUTE_INDEX, Integer.toString(i));
+      child.setAttribute(ATTRIBUTE_INDEX, Integer.toString(index));
       element.addContent(child);
     }
   }

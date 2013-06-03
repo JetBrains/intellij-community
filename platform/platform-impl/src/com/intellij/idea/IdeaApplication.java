@@ -17,12 +17,16 @@ package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -49,8 +53,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"CallToPrintStackTrace"})
 public class IdeaApplication {
@@ -117,6 +123,28 @@ public class IdeaApplication {
     IconLoader.activate();
 
     new JFrame().pack(); // this peer will prevent shutting down our application
+    final File file = new File(PathManager.getSystemPath());
+    JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        final long lowDiskSpaceThreshold = 50 * 1024 * 1024;
+        if (file.getUsableSpace() < lowDiskSpaceThreshold) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              boolean writable = file.canWrite();
+              String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
+              String title = writable
+                             ? "Low disk space on disk where system directory of " + fullProductName + " is located"
+                             : "System directory of " + fullProductName + " is read only";
+              new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
+                .createNotification(title, file.getPath(), NotificationType.INFORMATION, null).notify(
+                null);
+            }
+          });
+        }
+      }
+    }, 10, 30, TimeUnit.SECONDS);
   }
 
   protected ApplicationStarter getStarter() {

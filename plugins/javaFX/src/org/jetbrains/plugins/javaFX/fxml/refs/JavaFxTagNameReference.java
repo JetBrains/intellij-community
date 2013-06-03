@@ -78,7 +78,7 @@ public class JavaFxTagNameReference extends TagNameReference{
       return super.getVariants();
     }
     final XmlTag xmlTag = (XmlTag)element;
-    
+
     final List<XmlElementDescriptor>
       variants = TagNameReference.<XmlElementDescriptor>getTagNameVariants(xmlTag, Arrays.asList(xmlTag.knownNamespaces()), new ArrayList<String>(), Function.ID);
     final List<LookupElement> elements = new ArrayList<LookupElement>(variants.size());
@@ -95,12 +95,15 @@ public class JavaFxTagNameReference extends TagNameReference{
   public static class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
     @Override
     public void registerFixes(JavaFxTagNameReference ref, QuickFixActionRegistrar registrar) {
-      registrar.register(new JavaFxImportClassFix(ref, ref.getTagElement()) {
-        @Override
-        protected XmlTag getTagElement(JavaFxTagNameReference ref) {
-          return ref.getTagElement();
-        }
-      });
+      XmlTag element = ref.getTagElement();
+      if (element != null) {
+        registrar.register(new JavaFxImportClassFix(ref, element) {
+          @Override
+          protected XmlTag getTagElement(JavaFxTagNameReference ref) {
+            return ref.getTagElement();
+          }
+        });
+      }
     }
 
     @NotNull
@@ -112,7 +115,7 @@ public class JavaFxTagNameReference extends TagNameReference{
 
   private static class JavaFxTagInsertHandler extends XmlTagInsertHandler {
     public static final JavaFxTagInsertHandler INSTANCE = new JavaFxTagInsertHandler();
-    
+
     @Override
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);

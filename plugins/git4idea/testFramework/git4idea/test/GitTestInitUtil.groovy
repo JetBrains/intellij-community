@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import git4idea.GitPlatformFacade
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
+import org.jetbrains.annotations.NotNull
 
-import static com.intellij.dvcs.test.Executor.*
-import static git4idea.test.GitExecutor.*
+import static com.intellij.dvcs.test.Executor.cd
+import static com.intellij.dvcs.test.Executor.touch
+import static git4idea.test.GitExecutor.git
 
 /**
  *
@@ -47,6 +49,7 @@ class GitTestInitUtil {
       protected void notifyListeners() {
       }
 
+      @NotNull
       @Override
       String getPresentableUrl() {
         return rootDir;
