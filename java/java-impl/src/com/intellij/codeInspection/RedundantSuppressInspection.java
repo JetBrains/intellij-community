@@ -302,7 +302,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   @Override
   @Nullable
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull final QuickFix fix) {
     if (myQuickFixes != null) {
       final List<String> list = myQuickFixes.getKeysByValue(fix);
       if (list != null) {

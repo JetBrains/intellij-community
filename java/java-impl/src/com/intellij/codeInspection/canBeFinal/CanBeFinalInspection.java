@@ -125,7 +125,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
 
   @Override
   @Nullable
-  public RefGraphAnnotator getAnnotator(final RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new CanBeFinalAnnotator(refManager);
   }
 
@@ -177,8 +177,8 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor problemsProcessor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor problemsProcessor) {
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
       problemsProcessor.ignoreElement(entryPoint);
     }

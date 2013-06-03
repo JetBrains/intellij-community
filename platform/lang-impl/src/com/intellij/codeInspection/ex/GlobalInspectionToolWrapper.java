@@ -95,7 +95,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   public HTMLComposerImpl getComposer() {
     return new DescriptorComposer(this) {
       @Override
-      protected void composeAdditionalDescription(final StringBuffer buf, final RefEntity refEntity) {
+      protected void composeAdditionalDescription(@NotNull final StringBuffer buf, @NotNull final RefEntity refEntity) {
         getTool().compose(buf, refEntity, this);
       }
     };

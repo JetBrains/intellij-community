@@ -202,8 +202,8 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
-                                                final ProblemDescriptionsProcessor descriptionsProcessor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext context,
+                                                @NotNull final ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
@@ -266,7 +266,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull final QuickFix fix) {
     final List<Boolean> list = myQuickFixes.getKeysByValue(fix);
     if (list != null) {
       LOG.assertTrue(list.size() == 1);

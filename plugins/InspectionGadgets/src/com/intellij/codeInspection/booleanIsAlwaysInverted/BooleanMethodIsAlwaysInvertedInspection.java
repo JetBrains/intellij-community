@@ -47,7 +47,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
 
   @Override
   @Nullable
-  public RefGraphAnnotator getAnnotator(final RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new BooleanInvertedAnnotator();
   }
 
@@ -87,8 +87,8 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
-                                                final ProblemDescriptionsProcessor descriptionsProcessor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext context,
+                                                @NotNull final ProblemDescriptionsProcessor descriptionsProcessor) {
     manager.iterate(new RefJavaVisitor() {
       @Override
       public void visitMethod(@NotNull final RefMethod refMethod) {

@@ -43,7 +43,7 @@ public class ElementOnlyUsedFromTestCodeInspection
 
   @Override
   @Nullable
-  public RefGraphAnnotator getAnnotator(RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new ElementOnlyUsedFromTestCodeAnnotator();
   }
 

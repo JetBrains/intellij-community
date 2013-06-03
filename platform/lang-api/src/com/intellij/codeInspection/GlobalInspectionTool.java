@@ -46,7 +46,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @see #isGraphNeeded
    */
   @Nullable
-  public RefGraphAnnotator getAnnotator(final RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return null;
   }
 
@@ -145,16 +145,16 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @return true if a repeated call to this method is required after the queued usage processors
    *         have completed work, false otherwise.
    */
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor){
+  public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager,
+                                             @NotNull GlobalInspectionContext globalContext,
+                                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor){
     return false;
   }
 
   /**
-   * Allows TeamCity plugin to reconstract quickfixes from server side data
+   * Allows TeamCity plugin to reconstruct quickfixes from server side data
    * @param hint a hint to distinguish different quick fixes for one problem
-   * @return quickfix to be shown in editor when server side insepctions are enabled
+   * @return quickfix to be shown in editor when server side inspections are enabled
    */
   @Nullable
   public QuickFix getQuickFix(final String hint) {
@@ -162,12 +162,12 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Allows TeamCity plugin to serialize quick fixes on server in order to reconstract them in idea
+   * Allows TeamCity plugin to serialize quick fixes on server in order to reconstruct them in idea
    * @param fix fix to be serialized
    * @return hint to be stored on server
    */
   @Nullable
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull QuickFix fix) {
     return null;
   }
 
@@ -177,7 +177,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @param refEntity entity to describe
    * @param composer provides sample api to compose html
    */
-  public void compose(StringBuffer buf, RefEntity refEntity, HTMLComposer composer) {
+  public void compose(@NotNull StringBuffer buf, @NotNull RefEntity refEntity, @NotNull HTMLComposer composer) {
   }
 
   /**

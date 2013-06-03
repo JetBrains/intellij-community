@@ -28,7 +28,7 @@ import java.util.Set;
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
 
   @Override
-  public RefGraphAnnotator getAnnotator(final RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new UnnecessaryModuleDependencyAnnotator(refManager);
   }
 

@@ -75,8 +75,8 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
 
 
   @Override
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
@@ -129,7 +129,7 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
 
   @Override
   @Nullable
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull final QuickFix fix) {
     final InlineParameterValueFix valueFix = (InlineParameterValueFix)fix;
     return valueFix.getParamName() + " " + valueFix.getValue();
   }
