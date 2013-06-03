@@ -28,6 +28,10 @@ public class JBMenuItem extends JMenuItem {
     super(message);
   }
 
+  public JBMenuItem(String text, Icon icon) {
+    super(text, icon);
+  }
+
   public JBMenuItem(Action a) {
     super(a);
   }

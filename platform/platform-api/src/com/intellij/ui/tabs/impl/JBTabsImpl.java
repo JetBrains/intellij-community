@@ -559,8 +559,7 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout.myMorePopup = new JBPopupMenu();
     for (final TabInfo each : myVisibleInfos) {
       if (!mySingleRowLayout.isTabHidden(each)) continue;
-      final JMenuItem item = new JBCheckboxMenuItem(each.getText(), getSelectedInfo() == each);
-      item.setIcon(each.getIcon());
+      final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
       mySingleRowLayout.myMorePopup.add(item);
       item.addActionListener(new ActionListener() {
         @Override
@@ -1411,6 +1410,8 @@ public class JBTabsImpl extends JComponent
       }
 
       if (isSingleRow()) {
+        myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
+        mySingleRowLayout.scroll(0);
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
       }
