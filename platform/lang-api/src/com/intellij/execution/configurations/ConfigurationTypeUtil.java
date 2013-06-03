@@ -36,7 +36,8 @@ public class ConfigurationTypeUtil {
         return (T)type;
       }
     }
-    assert false : Arrays.toString(types) + " loader: " + configurationTypeClass.getClassLoader();
+    assert false : Arrays.toString(types) + " loader: " + configurationTypeClass.getClassLoader() +
+                   ", " + configurationTypeClass;
     return null;
   }
 
