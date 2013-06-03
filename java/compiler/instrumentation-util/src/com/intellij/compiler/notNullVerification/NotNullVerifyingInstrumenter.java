@@ -71,48 +71,50 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       private Label myStartGeneratedCodeLabel;
 
       public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
-        final AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
+        AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
         if (isReferenceType(args[parameter]) && anno.equals(NOT_NULL_TYPE)) {
           myNotNullParams.add(new Integer(parameter));
+          av = new AnnotationVisitor(Opcodes.ASM4, av) {
+            @Override
+            public void visit(String methodName, Object o) {
+              if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
+                String message = (String) o;
+                if(!message.isEmpty()) {
+                  myMessage = message;
+                }
+              }
+              super.visit(methodName, o);
+            }
+          };
         }
         else if (anno.equals(SYNTHETIC_TYPE)) {
           // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
           mySyntheticCount++;
         }
 
-        return new AnnotationVisitor(Opcodes.ASM4, av) {
-          @Override
-          public void visit(String methodName, Object o) {
-            if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
-              String message = (String) o;
-              if(!message.isEmpty()) {
-                myMessage = message;
-              }
-            }
-            super.visit(methodName, o);
-          }
-        };
+        return av;
       }
 
       @Override
       public AnnotationVisitor visitAnnotation(String anno, boolean isRuntime) {
-        final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
+        AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
         if (isReferenceType(returnType) && anno.equals(NOT_NULL_TYPE)) {
           myIsNotNull = true;
+          av = new AnnotationVisitor(Opcodes.ASM4, av) {
+            @Override
+            public void visit(String methodName, Object o) {
+              if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
+                String message = (String) o;
+                if(!message.isEmpty()) {
+                  myMessage = message;
+                }
+              }
+              super.visit(methodName, o);
+            }
+          };
         }
 
-        return new AnnotationVisitor(Opcodes.ASM4, av) {
-          @Override
-          public void visit(String methodName, Object o) {
-            if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
-              String message = (String) o;
-              if(!message.isEmpty()) {
-                myMessage = message;
-              }
-            }
-            super.visit(methodName, o);
-          }
-        };
+        return av;
       }
 
       @Override
