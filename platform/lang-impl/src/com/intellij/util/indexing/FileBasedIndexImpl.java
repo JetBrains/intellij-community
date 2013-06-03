@@ -520,11 +520,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException> process =
+          final ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException> process =
             new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
               @Override
               public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
-                ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
                 return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
               }
             };
@@ -537,7 +536,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           final ProgressIndicator currentProgress = progressManager.getProgressIndicator();
           if (currentProgress == null && ApplicationManager.getApplication().isDispatchThread()) {
             return progressManager.runProcessWithProgressSynchronously(
-              process, LangBundle.message("compacting.indices.title"), false, null);
+              new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
+                @Override
+                public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
+                  ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                  return process.compute();
+                }
+              }, LangBundle.message("compacting.indices.title"), false, null);
           }
           if (currentProgress != null)  {
             // reuse existing progress indicator if available
