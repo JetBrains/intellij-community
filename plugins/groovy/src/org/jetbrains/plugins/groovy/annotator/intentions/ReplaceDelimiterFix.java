@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -23,6 +22,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 /**
  * @author Max Medvedev
  */
-public class ReplaceDelimiterFix implements IntentionAction {
+public class ReplaceDelimiterFix extends Intention {
   @NotNull
   @Override
   public String getText() {
@@ -51,7 +52,8 @@ public class ReplaceDelimiterFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final PsiFile file = element.getContainingFile();
     PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
     GrForStatement forStatement = PsiTreeUtil.getParentOfType(at, GrForStatement.class);
     if (forStatement == null) return;
@@ -62,6 +64,17 @@ public class ReplaceDelimiterFix implements IntentionAction {
       PsiElement delimiter = ((GrForInClause)clause).getDelimiter();
       delimiter.replace(child);
     }
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return true;
+      }
+    };
   }
 
   @Override

@@ -62,7 +62,9 @@ public abstract class CreateClassFix {
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {
     return new CreateClassActionBase(CreateClassKind.CLASS, expression.getReferenceElement()) {
 
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      @Override
+      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+        final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
         final PsiManager manager = myRefElement.getManager();
@@ -144,7 +146,9 @@ public abstract class CreateClassFix {
 
   public static IntentionAction createClassFixAction(final GrReferenceElement refElement, CreateClassKind type) {
     return new CreateClassActionBase(type, refElement) {
-      public void invoke(@NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+      @Override
+      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+        final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
 

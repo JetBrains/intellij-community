@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,119 +15,65 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrModifierFix extends GroovyFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(GrModifierFix.class);
-
-
-  @NotNull
-  private final PsiModifierList myModifierList;
-
-  @GrModifier.GrModifierConstant
+public class GrModifierFix extends Intention {
   private final String myModifier;
-
-  @NotNull
   private final String myText;
-
-  private final boolean myShowContainingClass;
   private final boolean myDoSet;
+  private final PsiModifierList myModifierList;
 
   public GrModifierFix(@NotNull PsiMember member,
                        @NotNull PsiModifierList modifierList,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
                        boolean doSet) {
-    myModifier = modifier;
-    myShowContainingClass = showContainingClass;
     myModifierList = modifierList;
+    myModifier = modifier;
     myDoSet = doSet;
 
-    myText = initText(member);
-  }
-
-  @NotNull
-  public String getText() {
-    return myText;
+    myText = org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix.initText(member, showContainingClass, modifier, doSet);
   }
 
   @NotNull
   @Override
-  public String getName() {
-    return getText();
+  public String getText() {
+    return myText;
   }
 
-  private String initText(final PsiMember member) {
-    String name;
-    if (myShowContainingClass) {
-      final PsiClass containingClass = member.getContainingClass();
-      String containingClassName;
-      if (containingClass != null) {
-        containingClassName = containingClass.getName() + ".";
-      }
-      else {
-        containingClassName = "";
-      }
-
-      name = containingClassName + member.getName();
-    }
-    else {
-      name = member.getName();
-    }
-    String modifierText = toPresentableText(myModifier);
-
-    if (myDoSet) {
-      return GroovyBundle.message("change.modifier", name, modifierText);
-    }
-    else {
-      return GroovyBundle.message("change.modifier.not", name, modifierText);
-    }
+  @Override
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    assert myModifierList.isValid();
+    myModifierList.setModifierProperty(myModifier, myDoSet);
   }
 
-  public static String toPresentableText(String modifier) {
-    return GroovyBundle.message(modifier + ".visibility.presentation");
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return element instanceof PsiModifierList || element instanceof PsiModifierListOwner;
+      }
+    };
   }
 
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("change.modifier.family.name");
-  }
-
-  @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-   invokeImpl();
-  }
-
-  private void invokeImpl() {
-    LOG.assertTrue(myModifierList.isValid());
-    myModifierList.setModifierProperty(myModifier, myDoSet);
-  }
-
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myModifierList.isValid();
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    invokeImpl();
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

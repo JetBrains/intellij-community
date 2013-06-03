@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
@@ -37,6 +36,8 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -51,7 +52,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyStaticImportMethodFix implements IntentionAction {
+public class GroovyStaticImportMethodFix extends Intention {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.GroovyStaticImportMethodFix");
   private final SmartPsiElementPointer<GrMethodCall> myMethodCall;
   private List<PsiMethod> myCandidates = null;
@@ -130,7 +131,9 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
     return result;
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
+  @Override
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final PsiFile file = element.getContainingFile();
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     if (getCandidates().size() == 1) {
       final PsiMethod toImport = getCandidates().get(0);
@@ -139,6 +142,17 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
     else {
       chooseAndImport(editor);
     }
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return true;
+      }
+    };
   }
 
   private void doImport(final PsiMethod toImport) {

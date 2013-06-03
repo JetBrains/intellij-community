@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,6 +22,8 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author Max Medvedev
  */
-public class GrReplacePrimitiveTypeWithWrapperFix implements IntentionAction {
+public class GrReplacePrimitiveTypeWithWrapperFix extends Intention {
   private static final Logger LOG = Logger.getInstance(GrReplacePrimitiveTypeWithWrapperFix.class);
 
   private final GrTypeElement myTypeElement;
@@ -64,7 +65,7 @@ public class GrReplacePrimitiveTypeWithWrapperFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final PsiType type = myTypeElement.getType();
     if (!(type instanceof PsiPrimitiveType)) return;
 
@@ -73,6 +74,17 @@ public class GrReplacePrimitiveTypeWithWrapperFix implements IntentionAction {
 
     final PsiElement replaced = myTypeElement.replace(newTypeElement);
     GrReferenceAdjuster.shortenReferences(replaced);
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return myTypeElement.isValid();
+      }
+    };
   }
 
   @Override
