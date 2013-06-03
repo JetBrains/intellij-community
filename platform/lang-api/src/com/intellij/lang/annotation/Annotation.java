@@ -58,7 +58,7 @@ public final class Annotation implements Segment {
   private boolean myIsFileLevelAnnotation = false;
   private GutterIconRenderer myGutterIconRenderer;
   @Nullable
-  private String myProblemGroup;
+  private ProblemGroup myProblemGroup;
   private List<QuickFixInfo> myBatchFixes;
 
   public static class QuickFixInfo {
@@ -411,21 +411,21 @@ public final class Annotation implements Segment {
   }
 
   /**
-   * Gets the unique string, which is the same for all of the problems of this group
+   * Gets the unique object, which is the same for all of the problems of this group
    *
    * @return the problem group
    */
   @Nullable
-  public String getProblemGroup() {
+  public ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 
   /**
-   * Sets the unique string, which is the same for all of the problems of this group
+   * Sets the unique object, which is the same for all of the problems of this group
    *
    * @param problemGroup the problem group
    */
-  public void setProblemGroup(@Nullable String problemGroup) {
+  public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
 
