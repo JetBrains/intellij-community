@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -53,7 +54,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private PsiElementVisitor myProjectIterator;
   private EntryPointsManager myEntryPointsManager;
 
-  public RefJavaManagerImpl(RefManagerImpl manager) {
+  public RefJavaManagerImpl(@NotNull RefManagerImpl manager) {
     myRefManager = manager;
     final Project project = manager.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -174,7 +175,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
 
   @Override
-  public void iterate(final RefVisitor visitor) {
+  public void iterate(@NotNull final RefVisitor visitor) {
     if (myPackages != null) {
       for (RefPackage refPackage : myPackages.values()) {
         refPackage.accept(visitor);

@@ -68,7 +68,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   // To be used only from RefImplicitConstructor.
-  protected RefMethodImpl(String name, RefClass ownerClass) {
+  protected RefMethodImpl(String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
     myOwnerClass = ownerClass;
     ((RefClassImpl)ownerClass).add(this);
@@ -325,7 +325,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  public void accept(final RefVisitor visitor) {
+  public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
@@ -417,6 +417,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return (RefClass) getOwner();
   }
 
+  @NotNull
   @Override
   public String getName() {
     if (isValid()) {

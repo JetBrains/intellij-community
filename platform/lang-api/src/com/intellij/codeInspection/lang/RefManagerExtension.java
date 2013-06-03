@@ -27,14 +27,17 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RefManagerExtension<T> {
+  @NotNull
   Key<T> getID();
 
+  @NotNull
   Language getLanguage();
 
-  void iterate(RefVisitor visitor);
+  void iterate(@NotNull RefVisitor visitor);
 
   void cleanup();
 

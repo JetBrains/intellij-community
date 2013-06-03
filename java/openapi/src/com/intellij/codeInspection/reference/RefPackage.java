@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A node in the reference graph corresponding to a Java package.
  *
@@ -28,6 +30,7 @@ public interface RefPackage extends RefEntity {
    *
    * @return the full-qualified name for the package.
    */
+  @NotNull
   @Override
   String getQualifiedName();
 }

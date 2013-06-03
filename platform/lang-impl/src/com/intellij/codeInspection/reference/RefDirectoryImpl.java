@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
@@ -49,7 +50,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   }
 
   @Override
-  public void accept(final RefVisitor visitor) {
+  public void accept(@NotNull final RefVisitor visitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
@@ -62,6 +63,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   protected void initialize() {
   }
 
+  @NotNull
   @Override
   public String getQualifiedName() {
     return getName(); //todo relative name

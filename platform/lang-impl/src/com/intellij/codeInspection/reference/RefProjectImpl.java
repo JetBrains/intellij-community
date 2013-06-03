@@ -25,11 +25,12 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class RefProjectImpl extends RefEntityImpl implements RefProject {
-  public RefProjectImpl(RefManager refManager) {
+  public RefProjectImpl(@NotNull RefManager refManager) {
     super(refManager.getProject().getName(), refManager);
   }
 
