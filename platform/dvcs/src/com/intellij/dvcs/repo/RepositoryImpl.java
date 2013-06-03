@@ -30,7 +30,7 @@ public abstract class RepositoryImpl implements Repository, Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRootDir;
-  @NotNull private final MessageBus myMessageBus;
+  @Nullable private final MessageBus myMessageBus;
 
 
   @NotNull protected volatile State myState;
@@ -86,7 +86,7 @@ public abstract class RepositoryImpl implements Repository, Disposable {
   public void dispose() {
   }
 
-  @NotNull
+  @Nullable
   public MessageBus getMessageBus() {
     return myMessageBus;
   }
