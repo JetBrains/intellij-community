@@ -215,8 +215,9 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   public PsiElement getDeclaration() {
-    if (myDeclaration != null) {
-      final PsiElement element = myDeclaration.getElement();
+    final SmartPsiElementPointer<? extends PsiElement> declaration = myDeclaration;
+    if (declaration != null) {
+      final PsiElement element = declaration.getElement();
       if (element != null && element.isValid()) {
         return element;
       }
@@ -225,7 +226,6 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     final PsiElement decl = myNsDescriptor.getDeclaration();
     if (decl == null/* || !decl.isValid()*/) {
       myDeclaration = null;
-      System.out.println("decl is null");
       return null;
     }
 
@@ -244,7 +244,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return getDeclarationImpl(element, location);
   }
 
-  private PsiElement getDeclarationImpl(PsiElement decl, Locator location) {
+  private static PsiElement getDeclarationImpl(PsiElement decl, Locator location) {
     final VirtualFile virtualFile = RngSchemaValidator.findVirtualFile(location.getSystemId());
     if (virtualFile == null) {
       return decl;
@@ -262,6 +262,9 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     assert document != null;
 
+    if (line <= 0 || document.getLineCount() < line - 1) {
+      return decl;
+    }
     final int startOffset = document.getLineStartOffset(line - 1);
 
     final PsiElement at;
@@ -271,7 +274,8 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       }
       at = file.findElementAt(startOffset + column - 2);
     } else {
-      at = PsiTreeUtil.nextLeaf(file.findElementAt(startOffset));
+      PsiElement element = file.findElementAt(startOffset);
+      at = element != null ? PsiTreeUtil.nextLeaf(element) : null;
     }
 
     return PsiTreeUtil.getParentOfType(at, XmlTag.class);
