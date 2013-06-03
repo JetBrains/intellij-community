@@ -45,8 +45,8 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
   @Override
   public CommonProblemDescriptor[] checkElement(
-    RefEntity refEntity, AnalysisScope scope, InspectionManager manager,
-    GlobalInspectionContext globalContext) {
+    @NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager,
+    @NotNull GlobalInspectionContext globalContext) {
     if (!(refEntity instanceof RefMethod)) {
       return null;
     }

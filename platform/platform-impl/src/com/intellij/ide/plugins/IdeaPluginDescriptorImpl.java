@@ -199,7 +199,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           if (dependency.optional) {
             optionalDependentPlugins.add(id);
             if (dependency.configFile != null && !dependency.configFile.isEmpty()) {
-              myOptionalConfigs.put(id, dependency.configFile);  
+              myOptionalConfigs.put(id, dependency.configFile);
             }
           }
         }
@@ -208,14 +208,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
     myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
 
-    List<HelpSetPath> hsPathes = new ArrayList<HelpSetPath>();
+    List<HelpSetPath> hsPaths = new ArrayList<HelpSetPath>();
     if (pluginBean.helpSets != null) {
       for (PluginHelpSet pluginHelpSet : pluginBean.helpSets) {
         HelpSetPath hsPath = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
-        hsPathes.add(hsPath);
+        hsPaths.add(hsPath);
       }
     }
-    myHelpSets = !hsPathes.isEmpty() ? hsPathes.toArray(new HelpSetPath[hsPathes.size()]) : HelpSetPath.EMPTY;
+    myHelpSets = hsPaths.isEmpty() ? HelpSetPath.EMPTY : hsPaths.toArray(new HelpSetPath[hsPaths.size()]);
 
     myAppComponents = pluginBean.applicationComponents;
     myProjectComponents = pluginBean.projectComponents;

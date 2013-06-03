@@ -152,7 +152,7 @@ public class ToolsImpl implements Tools {
     myDefaultState.getTool().writeSettings(inspectionElement);
   }
 
-  void readExternal(Element toolElement, InspectionProfileImpl profile) throws InvalidDataException {
+  void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileImpl profile) throws InvalidDataException {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
     final ProfileManager profileManager = profile.getProfileManager();
     final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getOwnSeverityRegistrar();

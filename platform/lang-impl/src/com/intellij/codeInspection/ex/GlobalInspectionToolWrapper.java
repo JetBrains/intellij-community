@@ -75,9 +75,9 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     return getTool().isGraphNeeded();
   }
 
-  public void processFile(final AnalysisScope analysisScope,
-                          final InspectionManager manager,
-                          final GlobalInspectionContext context,
+  public void processFile(@NotNull final AnalysisScope analysisScope,
+                          @NotNull final InspectionManager manager,
+                          @NotNull final GlobalInspectionContext context,
                           final boolean filterSuppressed) {
     context.getRefManager().iterate(new RefVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {

@@ -58,11 +58,11 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
   @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
-                                                final AnalysisScope scope,
-                                                final InspectionManager manager,
-                                                final GlobalInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
+                                                @NotNull final AnalysisScope scope,
+                                                @NotNull final InspectionManager manager,
+                                                @NotNull final GlobalInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
@@ -103,15 +103,15 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = manager.getProject();
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
       processor.ignoreElement(entryPoint);
     }
 
     final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(project);
-    final AnalysisScope scope = manager.getScope();
+    final AnalysisScope scope = ((RefManagerImpl)manager).getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
@@ -162,7 +162,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
   @Override
   @Nullable
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull final QuickFix fix) {
     return ((AcceptSuggested)fix).getHint();
   }
 
@@ -173,7 +173,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  public void compose(final StringBuffer buf, final RefEntity refEntity, final HTMLComposer composer) {
+  public void compose(@NotNull final StringBuffer buf, @NotNull final RefEntity refEntity, @NotNull final HTMLComposer composer) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
       final HTMLJavaHTMLComposer javaComposer = composer.getExtension(HTMLJavaHTMLComposer.COMPOSER);

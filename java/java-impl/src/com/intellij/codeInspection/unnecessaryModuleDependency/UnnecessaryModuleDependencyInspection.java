@@ -33,7 +33,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
   }
 
   @Override
-  public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, final GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, @NotNull final GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefModule){
       final RefModule refModule = (RefModule)refEntity;
       final Module module = refModule.getModule();

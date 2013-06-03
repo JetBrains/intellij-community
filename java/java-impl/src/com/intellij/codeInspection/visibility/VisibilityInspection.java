@@ -143,11 +143,11 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
 
   @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
-                                                final AnalysisScope scope,
-                                                final InspectionManager manager,
-                                                final GlobalInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
+                                                @NotNull final AnalysisScope scope,
+                                                @NotNull final InspectionManager manager,
+                                                @NotNull final GlobalInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefJavaElement) {
       final RefJavaElement refElement = (RefJavaElement)refEntity;
 

@@ -52,10 +52,10 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
   }
 
   @Override
-  public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
-                                                AnalysisScope scope,
-                                                final InspectionManager manager,
-                                                final GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                @NotNull AnalysisScope scope,
+                                                @NotNull final InspectionManager manager,
+                                                @NotNull final GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefMethod) {
       RefMethod refMethod = (RefMethod)refEntity;
       if (!refMethod.isReferenced()) return null;

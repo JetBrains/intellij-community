@@ -50,9 +50,9 @@ public class ElementOnlyUsedFromTestCodeInspection
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(
-    RefEntity refEntity, AnalysisScope scope, InspectionManager manager,
-    GlobalInspectionContext globalContext,
-    ProblemDescriptionsProcessor processor) {
+    @NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager,
+    @NotNull GlobalInspectionContext globalContext,
+    @NotNull ProblemDescriptionsProcessor processor) {
     if (!isOnlyUsedFromTestCode(refEntity)) {
       return null;
     }
