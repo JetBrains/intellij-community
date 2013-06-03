@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -695,6 +696,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       setBackground(UIUtil.getPanelBackground());
 
+      if (!ApplicationManagerEx.getApplicationEx().isLoaded()) {
+        final Point loc = getLocation();
+        loc.y += Splash.SIZE.getHeight() / 2 + 42; // half splash + progress header
+        setLocation(loc);
+      }
       super.show();
     }
 
