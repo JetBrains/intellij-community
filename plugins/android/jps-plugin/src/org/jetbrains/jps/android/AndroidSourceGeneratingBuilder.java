@@ -1177,8 +1177,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         resDataMap.put(resFilePath, dataToReuse);
       }
       else {
-        final ArrayList<ResourceEntry> entries = new ArrayList<ResourceEntry>();
-        collectValueResources(resFile, entries);
+        final List<ResourceEntry> entries = AndroidBuildDataCache.getInstance().getParsedValueResourceFile(resFile);
         resDataMap.put(resFilePath, new ResourceFileData(entries, 0));
       }
       valueResFilesTimestamps.put(resFilePath, resFileTimestamp);
@@ -1190,28 +1189,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final ResourceFileData data =
         new ResourceFileData(Collections.<ResourceEntry>emptyList(), idProvidingType ? resFileTimestamp : 0);
       resDataMap.put(resFilePath, data);
-    }
-  }
-
-  private static void collectValueResources(@NotNull File valueResXmlFile, @NotNull final List<ResourceEntry> result)
-    throws IOException {
-    final InputStream inputStream = new BufferedInputStream(new FileInputStream(valueResXmlFile));
-    try {
-
-      FormsParsing.parse(inputStream, new ValueResourcesFileParser() {
-        @Override
-        protected void stop() {
-          throw new FormsParsing.ParserStoppedException();
-        }
-
-        @Override
-        protected void process(@NotNull ResourceEntry resourceEntry) {
-          result.add(resourceEntry);
-        }
-      });
-    }
-    finally {
-      inputStream.close();
     }
   }
 

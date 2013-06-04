@@ -6,14 +6,18 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.ResourceEntry;
+import org.jetbrains.android.util.ValueResourcesFileParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.incremental.java.FormsParsing;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -24,6 +28,7 @@ public class AndroidBuildDataCache {
 
   private final Map<String, MyComputedValue> mySdkManagers = new HashMap<String, MyComputedValue>();
   private final Map<JpsModule, MyAndroidDeps> myModule2AndroidDeps = new HashMap<JpsModule, MyAndroidDeps>();
+  private final Map<String, List<ResourceEntry>> myParsedValueResourceFiles = new HashMap<String, List<ResourceEntry>>();
 
   @NotNull
   public static AndroidBuildDataCache getInstance() {
@@ -35,6 +40,43 @@ public class AndroidBuildDataCache {
 
   public static void clean() {
     ourInstance = null;
+  }
+
+  // If parsing throws IOException, the result it is not cached, so invoker should catch it and stop the build
+  public List<ResourceEntry> getParsedValueResourceFile(@NotNull File file) throws IOException {
+    final String path = FileUtil.toCanonicalPath(file.getPath());
+    List<ResourceEntry> entries = myParsedValueResourceFiles.get(path);
+
+    if (entries == null) {
+      entries = parseValueResourceFile(file);
+      myParsedValueResourceFiles.put(path, entries);
+    }
+    return entries;
+  }
+
+  @NotNull
+  private static List<ResourceEntry> parseValueResourceFile(@NotNull File valueResXmlFile)
+    throws IOException {
+    final ArrayList<ResourceEntry> result = new ArrayList<ResourceEntry>();
+
+    final InputStream inputStream = new BufferedInputStream(new FileInputStream(valueResXmlFile));
+    try {
+      FormsParsing.parse(inputStream, new ValueResourcesFileParser() {
+        @Override
+        protected void stop() {
+          throw new FormsParsing.ParserStoppedException();
+        }
+
+        @Override
+        protected void process(@NotNull ResourceEntry resourceEntry) {
+          result.add(resourceEntry);
+        }
+      });
+    }
+    finally {
+      inputStream.close();
+    }
+    return result;
   }
 
   @NotNull
