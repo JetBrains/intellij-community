@@ -53,6 +53,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.ExternalChangeAction;
@@ -327,7 +328,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
             FileDocumentManager.getInstance().saveAllDocuments();
           }
         });
-        contentRoot.refresh(false, true);
+        VfsUtil.markDirtyAndRefresh(false, true, true, contentRoot);
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
