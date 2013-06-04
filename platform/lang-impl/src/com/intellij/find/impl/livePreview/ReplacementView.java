@@ -24,7 +24,7 @@ import java.awt.*;
 public class ReplacementView extends JPanel {
 
   private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
-  private String myReplacement;
+  private final String myReplacement;
 
   @Override
   protected void paintComponent(Graphics graphics) {

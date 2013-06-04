@@ -13,8 +13,8 @@ import javax.swing.*;
  */
 public class CustomFoldingConfigurable implements SearchableConfigurable {
 
-  private CustomFoldingConfiguration myConfiguration;
-  private CustomFoldingSettingsPanel mySettingsPanel;
+  private final CustomFoldingConfiguration myConfiguration;
+  private final CustomFoldingSettingsPanel mySettingsPanel;
 
   public CustomFoldingConfigurable(Project project) {
     myConfiguration = CustomFoldingConfiguration.getInstance(project);

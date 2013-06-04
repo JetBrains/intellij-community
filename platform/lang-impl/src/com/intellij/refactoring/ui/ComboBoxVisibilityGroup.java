@@ -30,8 +30,8 @@ import java.util.Map;
  */
 class ComboBoxVisibilityGroup extends ComboBoxAction {
   private String myValue;
-  private DefaultActionGroup myGroup;
-  private Map<String, String> myMap = new HashMap<String, String>();
+  private final DefaultActionGroup myGroup;
+  private final Map<String, String> myMap = new HashMap<String, String>();
 
   protected ComboBoxVisibilityGroup(final String[] options, String[] presentableNames, final Runnable run) {
     final AnAction[] myActions = new AnAction[options.length];

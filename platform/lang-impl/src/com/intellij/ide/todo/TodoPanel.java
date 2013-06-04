@@ -321,7 +321,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     if(node.getUserObject() == null){
       return null;
     }
-    return myTodoTreeBuilder.getFileForNode(node);
+    return TodoTreeBuilder.getFileForNode(node);
   }
 
   protected void setDisplayName(String tabName) {

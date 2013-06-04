@@ -44,7 +44,7 @@ import java.util.List;
  * @author dsl
  */
 public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, MemberInfoType extends MemberInfoBase> extends RefactoringDialog {
-  private String myRefactoringName;
+  private final String myRefactoringName;
   protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
   protected final List<MemberInfoType> myMemberInfos;

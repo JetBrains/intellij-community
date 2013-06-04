@@ -18,7 +18,7 @@ import java.awt.event.KeyEvent;
 * To change this template use File | Settings | File Templates.
 */
 public class ShowMoreOptions extends AnAction implements DumbAware {
-  private JComponent myToolbarComponent;
+  private final JComponent myToolbarComponent;
   public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), null);
 
   public ShowMoreOptions(JComponent toolbarComponent, JTextComponent searchField) {

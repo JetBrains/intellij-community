@@ -86,14 +86,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final Stack<Context> myBackStack    = new Stack<Context>();
   private final Stack<Context> myForwardStack = new Stack<Context>();
-  private       ActionToolbar        myToolBar;
+  private final ActionToolbar        myToolBar;
   private       boolean              myIsEmpty;
   private       boolean              myIsShown;
   private final JLabel               myElementLabel;
   private       Style                myFontSizeStyle;
   private       JSlider              myFontSizeSlider;
-  private       JComponent           mySettingsPanel;
-  private       MyShowSettingsButton myShowSettingsButton;
+  private final JComponent           mySettingsPanel;
+  private final MyShowSettingsButton myShowSettingsButton;
   private       boolean              myIgnoreFontSizeSliderChange;
 
   private static class Context {
@@ -192,7 +192,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           super.processMouseWheelEvent(e);
           return;
         }
-        
+
         int change = Math.abs(e.getWheelRotation());
         boolean increase = e.getWheelRotation() <= 0;
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
@@ -206,7 +206,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
             newFontSize = newFontSize.smaller();
           }
         }
-        
+
         if (newFontSize == scheme.getQuickDocFontSize()) {
           return;
         }
@@ -279,7 +279,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     };
     layeredPane.add(myScrollPane);
     layeredPane.setLayer(myScrollPane, 0);
-    
+
     mySettingsPanel = createSettingsPanel();
     layeredPane.add(mySettingsPanel);
     layeredPane.setLayer(mySettingsPanel, JLayeredPane.POPUP_LAYER);
@@ -355,7 +355,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       String selectedText = myEditorPane.getSelectedText();
       return selectedText == null? null : selectedText.replace((char)160, ' ');
     }
-     
+
     return null;
   }
 
@@ -392,7 +392,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myFontSizeSlider.setOpaque(true);
     return result;
   }
-  
+
   private void setFontSizeSliderSize(FontSize fontSize) {
     myIgnoreFontSizeSliderChange = true;
     try {
@@ -408,7 +408,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myIgnoreFontSizeSliderChange = false;
     }
   }
-  
+
   public synchronized boolean isEmpty() {
     return myIsEmpty;
   }
@@ -547,7 +547,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, false);
   }
-  
+
   private void goBack() {
     if (myBackStack.isEmpty()) return;
     Context context = myBackStack.pop();
@@ -780,7 +780,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myHint = null;
     myNavigateCallback = null;
   }
-  
+
   private class MyShowSettingsButton extends ActionButton {
 
     MyShowSettingsButton() {
@@ -802,7 +802,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myAction.actionPerformed(event);
     }
   }
-  
+
   private class MyShowSettingsAction extends ToggleAction {
 
     @Override
@@ -816,7 +816,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         mySettingsPanel.setVisible(false);
         return;
       }
-      
+
       EditorColorsManager colorsManager = EditorColorsManager.getInstance();
       EditorColorsScheme scheme = colorsManager.getGlobalScheme();
       setFontSizeSliderSize(scheme.getQuickDocFontSize());

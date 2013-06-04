@@ -63,7 +63,7 @@ public class DirectoryChooser extends DialogWrapper {
   private final DirectoryChooserView myView;
   private boolean myFilterExisting;
   private PsiDirectory myDefaultSelection;
-  private List<ItemWrapper> myItems = new ArrayList<ItemWrapper>();
+  private final List<ItemWrapper> myItems = new ArrayList<ItemWrapper>();
   private PsiElement mySelection;
   private final TabbedPaneWrapper myTabbedPaneWrapper;
   private final ChooseByNamePanel myChooseByNamePanel;

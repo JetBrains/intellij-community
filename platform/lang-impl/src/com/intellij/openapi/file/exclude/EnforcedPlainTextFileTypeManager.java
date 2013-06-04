@@ -48,7 +48,7 @@ import java.util.List;
  */
 @State(name = "EnforcedPlainTextFileTypeManager", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/plainTextFiles.xml")})
 public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager implements ProjectManagerListener {
-  private Collection<Project> myProcessedProjects = new WeakList<Project>();
+  private final Collection<Project> myProcessedProjects = new WeakList<Project>();
   private boolean myNeedsSync = true;
 
   public EnforcedPlainTextFileTypeManager() {
@@ -89,7 +89,7 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
     }
     fireRootsChanged(filesToSync, true);
   }
-  
+
   public void unmarkPlainText(VirtualFile... files) {
     List<VirtualFile> filesToSync = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
@@ -151,7 +151,7 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
   }
 
   private boolean syncWithProject(Project project) {
-    if (project.isDisposed()) return false;    
+    if (project.isDisposed()) return false;
     ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
     if (projectPlainTextFileTypeManager == null) return true;
     for (VirtualFile file : projectPlainTextFileTypeManager.getFiles()) {

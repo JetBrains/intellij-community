@@ -168,7 +168,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   };
 
   private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, isTreeShowing(), myTree);
-  private ScopeTreeViewPanel.MyChangesListListener myChangesListListener = new MyChangesListListener();
+  private final ScopeTreeViewPanel.MyChangesListListener myChangesListListener = new MyChangesListListener();
   protected ActionCallback myActionCallback;
 
   public ScopeTreeViewPanel(@NotNull Project project) {

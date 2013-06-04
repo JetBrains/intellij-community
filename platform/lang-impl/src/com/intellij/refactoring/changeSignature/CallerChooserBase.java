@@ -67,7 +67,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private TreeSelectionListener myTreeSelectionListener;
   private Editor myCallerEditor;
   private Editor myCalleeEditor;
-  private boolean myInitDone;
+  private final boolean myInitDone;
   private final String myFileName;
 
   protected abstract MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);

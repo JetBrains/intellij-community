@@ -65,7 +65,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private boolean myAlphabeticallySorted = false;
   private boolean myShowClasses = true;
   protected boolean myAllowEmptySelection = false;
-  private boolean myAllowMultiSelection;
+  private final boolean myAllowMultiSelection;
   private final Project myProject;
   private final boolean myIsInsertOverrideVisible;
   private final JComponent myHeaderPanel;

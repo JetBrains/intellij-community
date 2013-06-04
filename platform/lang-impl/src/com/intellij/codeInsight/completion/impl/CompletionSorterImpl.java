@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class CompletionSorterImpl extends CompletionSorter {
   private final List<ClassifierFactory<LookupElement>> myMembers;
-  private int myHashCode;
+  private final int myHashCode;
 
   CompletionSorterImpl(List<ClassifierFactory<LookupElement>> members) {
     myMembers = members;

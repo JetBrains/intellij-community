@@ -73,6 +73,7 @@ public class TextOccurrencesUtil {
       @Override
       public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
         UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
+          @Override
           public UsageInfo compute() {
             return factory.createUsageInfo(psiFile, startOffset, endOffset);
           }

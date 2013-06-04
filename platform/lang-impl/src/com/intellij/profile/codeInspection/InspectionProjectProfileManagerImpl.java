@@ -107,6 +107,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
     }
   }
 
+  @Override
   public boolean isProfileLoaded() {
     return myName2Profile.containsKey(getInspectionProfile().getName());
   }
@@ -203,6 +204,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
     });
   }
 
+  @Override
   public void initProfileWrapper(@NotNull Profile profile) {
     final InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
     wrapper.init(myProject);

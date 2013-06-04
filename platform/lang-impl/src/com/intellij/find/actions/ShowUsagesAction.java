@@ -308,6 +308,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           if (visibleNodes.size() >= maxUsages) return false;
           if(UsageViewManager.isSelfUsage(usage, myUsageTarget)) return true;
           UsageNode node = ApplicationManager.getApplication().runReadAction(new Computable<UsageNode>() {
+            @Override
             public UsageNode compute() {
               return usageView.doAppendUsage(usage);
             }

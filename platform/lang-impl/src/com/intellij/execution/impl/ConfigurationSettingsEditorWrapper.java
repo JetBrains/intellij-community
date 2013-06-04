@@ -50,7 +50,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private JPanel myWholePanel;
 
   private JPanel myBeforeLaunchContainer;
-  private BeforeRunStepsPanel myBeforeRunStepsPanel;
+  private final BeforeRunStepsPanel myBeforeRunStepsPanel;
 
   private final ConfigurationSettingsEditor myEditor;
   private final HideableDecorator myDecorator;

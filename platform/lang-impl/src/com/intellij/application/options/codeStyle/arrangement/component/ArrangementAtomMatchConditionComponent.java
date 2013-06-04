@@ -90,7 +90,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @NotNull private Color myBackgroundColor;
 
-  @Nullable private Dimension myTextControlSize;
+  @Nullable private final Dimension myTextControlSize;
   @Nullable private Rectangle myScreenBounds;
   @Nullable private Listener  myListener;
 

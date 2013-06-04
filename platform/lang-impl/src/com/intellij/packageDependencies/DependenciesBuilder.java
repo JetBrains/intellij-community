@@ -31,7 +31,7 @@ import java.util.*;
  * Date: Jan 19, 2005
  */
 public abstract class DependenciesBuilder {
-  private Project myProject;
+  private final Project myProject;
   private final AnalysisScope myScope;
   private final AnalysisScope myScopeOfInterest;
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<PsiFile, Set<PsiFile>>();

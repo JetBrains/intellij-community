@@ -79,7 +79,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   private class LeftRenderer extends ColoredListCellRenderer {
     private final String myModuleName;
-    private Matcher myMatcher;
+    private final Matcher myMatcher;
 
     public LeftRenderer(final String moduleName, Matcher matcher) {
       myModuleName = moduleName;
