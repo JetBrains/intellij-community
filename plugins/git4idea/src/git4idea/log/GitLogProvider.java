@@ -59,7 +59,10 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<CommitParents> readNextBlock(@NotNull VirtualFile root) throws VcsException {
     // TODO either don't query details here, or save them right away
-    List<GitCommit> history = GitHistoryUtils.history(myProject, root);
+    List<GitCommit> history = GitHistoryUtils.history(myProject, root,
+                                                      "HEAD", "--branches", "--remotes", "--tags",
+                                                      "--date-order", "--encoding=UTF-8", "--full-history", "--sparse",
+                                                      "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE);
     return ContainerUtil.map(history, new Function<GitCommit, CommitParents>() {
       @Override
       public CommitParents fun(GitCommit gitCommit) {
