@@ -212,10 +212,12 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     for (MavenArtifact depArtifact : mavenProject.getDependencies()) {
       if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(depArtifact.getType()) &&
           mavenTree.findProject(depArtifact) == null) {
+        final AndroidExternalApklibDependenciesManager.MavenDependencyInfo depInfo =
+          AndroidExternalApklibDependenciesManager.MavenDependencyInfo.create(depArtifact);
 
         final String apklibModuleName = doImportExternalApklibDependency(
           project, modelsProvider, mavenTree, mavenProject,
-          mavenProject2ModuleName, tasks, depArtifact);
+          mavenProject2ModuleName, tasks, depInfo);
 
         if (ArrayUtil.find(rootModel.getDependencyModuleNames(), apklibModuleName) < 0) {
           final DependencyScope scope = getApklibModuleDependencyScope(depArtifact);
@@ -234,16 +236,17 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
                                                          MavenProject mavenProject,
                                                          Map<MavenProject, String> mavenProject2ModuleName,
                                                          List<MavenProjectsProcessorTask> tasks,
-                                                         MavenArtifact depArtifact) {
+                                                         AndroidExternalApklibDependenciesManager.MavenDependencyInfo depInfo) {
+    final MavenId depArtifactMavenId = new MavenId(depInfo.getGroupId(), depInfo.getArtifactId(), depInfo.getVersion());
     final ModifiableModuleModel moduleModel = modelsProvider.getModuleModel();
-    final String apklibModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(depArtifact.getMavenId());
+    final String apklibModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(depArtifactMavenId);
     Module apklibModule = moduleModel.findModuleByName(apklibModuleName);
 
     if ((apklibModule == null || apklibModule.getUserData(MODULE_IMPORTED) == null) &&
-        MavenConstants.SCOPE_COMPILE.equals(depArtifact.getScope())) {
+        MavenConstants.SCOPE_COMPILE.equals(depInfo.getScope())) {
       apklibModule =
-        importExternalApklibArtifact(project, apklibModule, modelsProvider, mavenProject, mavenTree, depArtifact.getMavenId(),
-                                     depArtifact.getPath(), moduleModel, mavenProject2ModuleName);
+        importExternalApklibArtifact(project, apklibModule, modelsProvider, mavenProject, mavenTree, depArtifactMavenId,
+                                     depInfo.getPath(), moduleModel, mavenProject2ModuleName);
       if (apklibModule != null) {
         apklibModule.putUserData(MODULE_IMPORTED, Boolean.TRUE);
         final Module finalGenModule = apklibModule;
