@@ -67,6 +67,9 @@ public class AndroidRunDdmsAction extends AndroidRunSdkToolAction {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (project.isDisposed()) {
+              return;
+            }
             AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true);
           }
         });

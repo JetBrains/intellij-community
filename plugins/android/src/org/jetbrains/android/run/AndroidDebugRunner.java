@@ -285,6 +285,9 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (project.isDisposed()) {
+          return;
+        }
         final String sessionName = descriptor.getDisplayName();
         final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(executor.getToolWindowId());
         final Content content = descriptor.getAttachedContent();
