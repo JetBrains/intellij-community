@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UIBundle;
@@ -58,6 +59,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +70,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -1271,14 +1274,23 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private static class MyDropAreaPainter extends AbstractPainter {
-    private Rectangle myBoundingBox;
+    private Shape myBoundingBox;
+    private Color myColor = ColorUtil.mix(JBColor.BLUE, JBColor.WHITE, .3);
+
+    @Override
+    public boolean needsRepaint() {
+      return myBoundingBox != null;
+    }
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
-      g.setColor(JBColor.BLACK);
-      g.setStroke(new BasicStroke(3));
+      GraphicsUtil.setupAAPainting(g);
+      g.setColor(ColorUtil.toAlpha(myColor, 200));
+      g.setStroke(new BasicStroke(2));
       g.draw(myBoundingBox);
+      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.fill(myBoundingBox);
     }
 
     private void processDropOver(RunnerContentUi ui, DockableContent dockable, RelativePoint dropTarget) {
@@ -1335,7 +1347,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         r = new RelativeRectangle(cellWrapper).getRectangleOn(component);
         break;
       }
-      myBoundingBox = r;
+      myBoundingBox = new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, 16, 16);
     }
   }
 
