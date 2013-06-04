@@ -14,10 +14,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -56,6 +53,8 @@ public class AndroidBuildDataCache {
     final MyAndroidDeps result = new MyAndroidDeps();
     final boolean recursively = AndroidJpsUtil.shouldProcessDependenciesRecursively(module);
     collectAndroidDependencies(module, result, new HashSet<String>(), true, recursively);
+    Collections.reverse(result.myAndroidDeps);
+    Collections.reverse(result.myLibAndroidDeps);
     return result;
   }
 
@@ -80,10 +79,10 @@ public class AndroidBuildDataCache {
             if (recursively) {
               collectAndroidDependencies(depModule, result, visitedSet, fillLibs && depExtension.isLibrary(), recursively);
             }
-            result.myAndroidDeps.add(0, depExtension);
+            result.myAndroidDeps.add(depExtension);
 
             if (fillLibs && depExtension.isLibrary()) {
-              result.myLibAndroidDeps.add(0, depExtension);
+              result.myLibAndroidDeps.add(depExtension);
             }
           }
         }
