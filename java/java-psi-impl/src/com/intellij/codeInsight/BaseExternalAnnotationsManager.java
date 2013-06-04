@@ -197,22 +197,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     try {
       Document document = JDOMUtil.loadDocument(escapeAttributes(file.getText()));
       Element rootElement = document.getRootElement();
-        //noinspection unchecked
+      //noinspection unchecked
       List<Element> itemElements = rootElement == null ? Collections.<Element>emptyList() : (List<Element>)rootElement.getChildren("item");
-      boolean sorted = true;
-      boolean modified = false;
-      String prevItemName = null;
       for (Element element : itemElements) {
         String externalName = element.getAttributeValue("name");
-        if (externalName == null) {
-          element.detach();
-          modified = true;
-          continue;
-        }
-        if (prevItemName != null && prevItemName.compareTo(externalName) > 0) {
-          sorted = false;
-        }
-        prevItemName = externalName;
 
         //noinspection unchecked
         for (Element annotationElement : (List<Element>) element.getChildren("annotation")) {
@@ -243,47 +231,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
           data.add(externalName, annData);
         }
-      }
-      if (!sorted) {
-        modified = true;
-        List<Element> items = new ArrayList<Element>(rootElement.getChildren("item"));
-        rootElement.removeChildren("item");
-        Collections.sort(items, new Comparator<Element>() {
-          @Override
-          public int compare(Element item1, Element item2) {
-            String externalName1 = item1.getAttributeValue("name");
-            String externalName2 = item2.getAttributeValue("name");
-            return externalName1.compareTo(externalName2);
-          }
-        });
-        for (Element item : items) {
-          rootElement.addContent(item);
-        }
-      }
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (modified && virtualFile.isInLocalFileSystem() && virtualFile.isWritable()) {
-        final Project project = file.getProject();
-        final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-        final StringWriter string = new StringWriter(file.getTextLength());
-        JDOMUtil.writeDocument(document, string, "\n");
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (file.getModificationStamp() == fileModificationStamp && !fileDocumentManager.isFileModified(virtualFile)) {
-              // modify .xml in write action to avoid conflicts and torn reads
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  com.intellij.openapi.editor.Document editorDoc = PsiDocumentManager.getInstance(project).getDocument(file);
-                  if (editorDoc != null) {
-                    editorDoc.setText(string.toString());
-                    fileDocumentManager.saveDocument(editorDoc);
-                  }
-                }
-              });
-            }
-          }
-        }, project.getDisposed());
       }
     }
     catch (IOException e) {
