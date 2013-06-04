@@ -632,14 +632,27 @@ foo(4) {
   }
 
   void testGenericTypeIndex() {
+    addLinkedHashMap()
     assertScript('''\
-def foo(@DelegatesTo.Target def map, @DelegatesTo(genericTypeIndex = 1) Closure c) {}
+public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 1) Closure c) {}
 
 foo([1:'ab', 2:'cde']) {
   sub<caret>string(1)
 }
 ''', 'String')
   }
+
+  void testGenericTypeIndex1() {
+    addLinkedHashMap()
+    assertScript('''\
+public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 0) Closure c) {}
+
+foo([1:'ab', 2:'cde']) {
+  sub<caret>string(1)
+}
+''', 'String')
+  }
+
 
   void assertScript(String text, String resolvedClass) {
     myFixture.configureByText('_a.groovy', text)

@@ -170,24 +170,30 @@ public class GrClosureSignatureUtil {
     };
   }
 
+  @NotNull
   public static GrClosureSignature createSignatureWithErasedParameterTypes(final GrClosableBlock closure) {
-    final PsiParameter[] params = closure.getParameterList().getParameters();
+    final GrClosureSignature signature = createSignature(closure);
+    return rawSignature(signature);
+  }
+
+  @NotNull
+  public static GrClosureSignature rawSignature(@NotNull final GrClosureSignature signature) {
+    final GrClosureParameter[] params = signature.getParameters();
     final GrClosureParameter[] closureParams = new GrClosureParameter[params.length];
     for (int i = 0; i < params.length; i++) {
-      PsiParameter param = params[i];
+      GrClosureParameter param = params[i];
       PsiType type = TypeConversionUtil.erasure(param.getType());
-      closureParams[i] = new GrClosureParameterImpl(type, GrClosureParameterImpl.isParameterOptional(param),
-                                                    GrClosureParameterImpl.getDefaultInitializer(param));
+      closureParams[i] = new GrClosureParameterImpl(type, param.isOptional(), param.getDefaultInitializer());
     }
     return new GrClosureSignatureImpl(closureParams, null, GrClosureParameterImpl.isVararg(closureParams), false) {
       @Override
       public PsiType getReturnType() {
-        return closure.getReturnType();
+        return signature.getReturnType();
       }
 
       @Override
       public boolean isValid() {
-        return closure.isValid();
+        return signature.isValid();
       }
     };
   }
