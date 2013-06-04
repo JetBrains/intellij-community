@@ -319,6 +319,10 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   private static boolean containsDependencyOnApklibFile(@NotNull LibraryOrderEntry libraryOrderEntry,
                                                         @NotNull MavenModifiableModelsProvider modelsProvider) {
     final Library library = libraryOrderEntry.getLibrary();
+
+    if (library == null) {
+      return false;
+    }
     final Library.ModifiableModel libraryModel = modelsProvider.getLibraryModel(library);
     final String[] urls = libraryModel.getUrls(OrderRootType.CLASSES);
 
