@@ -213,31 +213,9 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(depArtifact.getType()) &&
           mavenTree.findProject(depArtifact) == null) {
 
-        final ModifiableModuleModel moduleModel = modelsProvider.getModuleModel();
-        final String apklibModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(depArtifact.getMavenId());
-        Module apklibModule = moduleModel.findModuleByName(apklibModuleName);
-
-        if ((apklibModule == null || apklibModule.getUserData(MODULE_IMPORTED) == null) &&
-            MavenConstants.SCOPE_COMPILE.equals(depArtifact.getScope())) {
-          apklibModule =
-            importExternalApklibArtifact(project, apklibModule, modelsProvider, mavenProject, mavenTree, depArtifact.getMavenId(),
-                                         depArtifact.getPath(), moduleModel, mavenProject2ModuleName);
-          if (apklibModule != null) {
-            apklibModule.putUserData(MODULE_IMPORTED, Boolean.TRUE);
-            final Module finalGenModule = apklibModule;
-
-            tasks.add(new MavenProjectsProcessorTask() {
-              @Override
-              public void perform(Project project,
-                                  MavenEmbeddersManager embeddersManager,
-                                  MavenConsole console,
-                                  MavenProgressIndicator indicator)
-                throws MavenProcessCanceledException {
-                finalGenModule.putUserData(MODULE_IMPORTED, null);
-              }
-            });
-          }
-        }
+        final String apklibModuleName = doImportExternalApklibDependency(
+          project, modelsProvider, mavenTree, mavenProject,
+          mavenProject2ModuleName, tasks, depArtifact);
 
         if (ArrayUtil.find(rootModel.getDependencyModuleNames(), apklibModuleName) < 0) {
           final DependencyScope scope = getApklibModuleDependencyScope(depArtifact);
@@ -248,6 +226,41 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         }
       }
     }
+  }
+
+  private static String doImportExternalApklibDependency(Project project,
+                                                         MavenModifiableModelsProvider modelsProvider,
+                                                         MavenProjectsTree mavenTree,
+                                                         MavenProject mavenProject,
+                                                         Map<MavenProject, String> mavenProject2ModuleName,
+                                                         List<MavenProjectsProcessorTask> tasks,
+                                                         MavenArtifact depArtifact) {
+    final ModifiableModuleModel moduleModel = modelsProvider.getModuleModel();
+    final String apklibModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(depArtifact.getMavenId());
+    Module apklibModule = moduleModel.findModuleByName(apklibModuleName);
+
+    if ((apklibModule == null || apklibModule.getUserData(MODULE_IMPORTED) == null) &&
+        MavenConstants.SCOPE_COMPILE.equals(depArtifact.getScope())) {
+      apklibModule =
+        importExternalApklibArtifact(project, apklibModule, modelsProvider, mavenProject, mavenTree, depArtifact.getMavenId(),
+                                     depArtifact.getPath(), moduleModel, mavenProject2ModuleName);
+      if (apklibModule != null) {
+        apklibModule.putUserData(MODULE_IMPORTED, Boolean.TRUE);
+        final Module finalGenModule = apklibModule;
+
+        tasks.add(new MavenProjectsProcessorTask() {
+          @Override
+          public void perform(Project project,
+                              MavenEmbeddersManager embeddersManager,
+                              MavenConsole console,
+                              MavenProgressIndicator indicator)
+            throws MavenProcessCanceledException {
+            finalGenModule.putUserData(MODULE_IMPORTED, null);
+          }
+        });
+      }
+    }
+    return apklibModuleName;
   }
 
   @Nullable
