@@ -223,6 +223,8 @@ static void main_loop() {
   struct timeval timeout;
 
   while (true) {
+    usleep(50000);
+
     FD_ZERO(&rfds);
     FD_SET(input_fd, &rfds);
     FD_SET(inotify_fd, &rfds);
