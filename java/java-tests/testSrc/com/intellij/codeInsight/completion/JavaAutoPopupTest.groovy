@@ -958,6 +958,7 @@ class Foo {
     edt {
       myFixture.completeBasic()
     }
+    assert !lookup : myFixture.lookupElementStrings
     myFixture.checkResult 'class Foo extends <caret>'
   }
 
