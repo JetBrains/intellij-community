@@ -747,12 +747,7 @@ public class ScopeEditorPanel {
           setToComponent(component, requestFocus);
         }
       });
-      myRequestFocus = requestFocus;
-    }
-
-    @Override
-    public void start() {
-      super.start();
+      myRequestFocus = requestFocus; 
       myTextChanged = false;
     }
 
