@@ -39,7 +39,7 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
 
   @Override
   public void projectOpened() {
-    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new MyFileEditorManagerListener(), myProject);
+    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
   }
 
   @Override
@@ -56,7 +56,7 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
         final FileEditor[] fileEditors = source.getEditors(file);
         for (final FileEditor each : fileEditors) {
           if (each instanceof TextEditor) {
-            Disposer.register(each, new ImageOrColorPreviewManager((TextEditor)each));
+            Disposer.register(each, new ImageOrColorPreviewManager((TextEditor)each, source.getProject()));
           }
         }
       }

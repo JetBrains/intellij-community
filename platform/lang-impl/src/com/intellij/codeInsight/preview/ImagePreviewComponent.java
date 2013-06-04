@@ -121,7 +121,10 @@ public class ImagePreviewComponent extends JPanel {
               refresh(file);
               SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
               if (imageRef != null) {
-                return new ImagePreviewComponent(imageRef.get());
+                final BufferedImage image = imageRef.get();
+                if (image != null) {
+                  return new ImagePreviewComponent(image);
+                }
               }
             }
             catch (IOException e) {
@@ -133,6 +136,13 @@ public class ImagePreviewComponent extends JPanel {
     }
 
     return null;
+  }
+
+  /**
+   * This method doesn't use caching, so if you want to use it then you should consider implementing external cache.
+   */
+  public static JComponent getPreviewComponent(@NotNull final BufferedImage image) {
+    return new ImagePreviewComponent(image);
   }
 
   private static class ImageComp extends JComponent {
