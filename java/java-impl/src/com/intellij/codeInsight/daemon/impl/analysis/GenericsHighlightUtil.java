@@ -350,6 +350,7 @@ public class GenericsHighlightUtil {
           return false;
         }
       }
+      if (psiClass instanceof PsiTypeParameter && psiClass.getExtendsListTypes().length != 0) return false;
     }
     if (!type.isRaw()) return true;
     //allow unchecked conversions in method calls but not in type declaration

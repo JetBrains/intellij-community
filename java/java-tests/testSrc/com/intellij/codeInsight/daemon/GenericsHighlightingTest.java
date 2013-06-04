@@ -247,6 +247,10 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCaptureTopLevelWildcardsForConditionalExpression() throws Exception { doTest5(false);}
   public void testGenericsOverrideMethodInRawInheritor() throws Exception { doTest5(false);}
 
+  public void testIDEA107654() throws Exception {
+    doTest5(false);
+  }
+
   public void testIDEA27185(){ doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
   public void testIDEA67571(){ doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testTypeArgumentsOnRawType(){ doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
