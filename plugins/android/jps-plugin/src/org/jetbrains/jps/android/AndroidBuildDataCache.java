@@ -26,7 +26,8 @@ import java.util.*;
 public class AndroidBuildDataCache {
   private static AndroidBuildDataCache ourInstance;
 
-  private final Map<String, MyComputedValue> mySdkManagers = new HashMap<String, MyComputedValue>();
+  private final Map<String, MyComputedValue<SdkManager>> mySdkManagers =
+    new HashMap<String, MyComputedValue<SdkManager>>();
   private final Map<JpsModule, MyAndroidDeps> myModule2AndroidDeps = new HashMap<JpsModule, MyAndroidDeps>();
   private final Map<String, List<ResourceEntry>> myParsedValueResourceFiles = new HashMap<String, List<ResourceEntry>>();
 
@@ -135,48 +136,48 @@ public class AndroidBuildDataCache {
   @NotNull
   public SdkManager getSdkManager(@NotNull String androidSdkHomePath)
     throws ComputationException {
-    MyComputedValue value = mySdkManagers.get(FileUtil.toCanonicalPath(androidSdkHomePath));
+    MyComputedValue<SdkManager> value = mySdkManagers.get(FileUtil.toCanonicalPath(androidSdkHomePath));
 
     if (value == null) {
       value = computeSdkManager(androidSdkHomePath);
       mySdkManagers.put(androidSdkHomePath, value);
     }
-    return (SdkManager)value.getValue();
+    return value.getValue();
   }
 
   @NotNull
-  private static MyComputedValue computeSdkManager(@NotNull String androidSdkHomePath) {
+  private static MyComputedValue<SdkManager> computeSdkManager(@NotNull String androidSdkHomePath) {
     final MessageBuildingSdkLog log = new MessageBuildingSdkLog();
     final SdkManager manager = AndroidCommonUtils.createSdkManager(androidSdkHomePath, log);
 
     if (manager == null) {
       final String message = log.getErrorMessage();
-      return new ErrorComputedValue("Android SDK is parsed incorrectly." + (message.length() > 0 ? " Parsing log:\n" + message : ""));
+      return new ErrorComputedValue<SdkManager>("Android SDK is parsed incorrectly." + (message.length() > 0 ? " Parsing log:\n" + message : ""));
     }
-    return new SuccessComputedValue(manager);
+    return new SuccessComputedValue<SdkManager>(manager);
   }
 
-  private abstract static class MyComputedValue {
+  private abstract static class MyComputedValue<T> {
     @NotNull
-    abstract Object getValue() throws ComputationException;
+    abstract T getValue() throws ComputationException;
   }
 
-  private static class SuccessComputedValue extends MyComputedValue {
+  private static class SuccessComputedValue<T> extends MyComputedValue<T> {
     @NotNull
-    private final Object myValue;
+    private final T myValue;
 
-    private SuccessComputedValue(@NotNull Object value) {
+    private SuccessComputedValue(@NotNull T value) {
       myValue = value;
     }
 
     @NotNull
     @Override
-    Object getValue() throws ComputationException {
+    T getValue() throws ComputationException {
       return myValue;
     }
   }
 
-  private static class ErrorComputedValue extends MyComputedValue {
+  private static class ErrorComputedValue<T> extends MyComputedValue<T> {
     @NotNull
     private final String myMessage;
 
@@ -186,7 +187,7 @@ public class AndroidBuildDataCache {
 
     @NotNull
     @Override
-    Object getValue() throws ComputationException {
+    T getValue() throws ComputationException {
       throw new ComputationException(myMessage);
     }
   }
