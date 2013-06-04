@@ -17,8 +17,7 @@ package com.intellij.framework.library.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.RequiredFrameworkVersion;
-import com.intellij.framework.FrameworkGroup;
-import com.intellij.framework.FrameworkGroupVersion;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.library.*;
 import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
@@ -81,14 +80,8 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
 
     @Override
     public boolean isAvailable(@NotNull FrameworkSupportModel model) {
-      FrameworkSupportModelBase modelBase = (FrameworkSupportModelBase)model;
-      for (FrameworkGroup<?> group : modelBase.getFrameworkGroups()) {
-        if (group.getId().equals(myGroupId)) {
-          FrameworkGroupVersion selectedVersion = modelBase.getSelectedVersion(group);
-          return selectedVersion != null && myVersionId.equals(selectedVersion.getId());
-        }
-      }
-      return true;
+      FrameworkVersion selectedVersion = ((FrameworkSupportModelBase)model).getSelectedVersion(myGroupId);
+      return selectedVersion != null && myVersionId.equals(selectedVersion.getId());
     }
   }
 }

@@ -31,4 +31,10 @@ public class FrameworkGroupNode extends FrameworkSupportNodeBase {
   public Icon getIcon() {
     return myGroup.getIcon();
   }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myGroup.getId();
+  }
 }

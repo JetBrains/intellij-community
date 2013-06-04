@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -60,13 +62,17 @@ public class FrameworkSupportOptionsComponent {
     layout.setVerticalFill(true);
     myMainPanel = new JPanel(layout);
     myModel.registerOptionsComponent(provider, this);
+    List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
+    if (!versions.isEmpty()) {
+      myMainPanel.add(new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions).getMainPanel());
+    }
 
     final JComponent component = myConfigurable.createComponent();
     if (component != null) {
       myMainPanel.add(component);
     }
 
-    final boolean addSeparator = component != null;
+    final boolean addSeparator = component != null || !versions.isEmpty();
     myLibraryOptionsPanelWrapper = new JPanel(new BorderLayout());
     myMainPanel.add(myLibraryOptionsPanelWrapper);
     if (myConfigurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {

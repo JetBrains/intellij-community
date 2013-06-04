@@ -159,7 +159,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void initializeGroupPanel(FrameworkGroup<?> group) {
     if (!myInitializedGroupPanels.containsKey(group)) {
-      FrameworkGroupOptionsComponent component = new FrameworkGroupOptionsComponent(group, myModel);
+      FrameworkVersionComponent component = new FrameworkVersionComponent(myModel, group.getId(), group.getGroupVersions());
       myInitializedGroupPanels.put(group, component.getMainPanel());
       myOptionsPanel.add(group.getId(), component.getMainPanel());
     }
