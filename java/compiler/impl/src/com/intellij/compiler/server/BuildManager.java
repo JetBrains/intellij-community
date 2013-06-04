@@ -18,7 +18,7 @@ package com.intellij.compiler.server;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
-import com.intellij.compiler.server.impl.CompileServerClasspathManager;
+import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.execution.ExecutionAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
@@ -152,7 +152,7 @@ public class BuildManager implements ApplicationComponent{
 
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
-  private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
+  private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
   private final Executor myPooledThreadExecutor = new PooledThreadExecutor();
   private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
@@ -843,9 +843,15 @@ public class BuildManager implements ApplicationComponent{
     workDirectory.mkdirs();
     cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
+    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+      for (String arg : provider.getVMArguments()) {
+        cmdLine.addParameter(arg);
+      }
+    }
+    
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.add(compilerPath);
-    cp.addAll(myClasspathManager.getCompileServerPluginsClasspath(project));
+    cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
     if (isProfilingMode) {
       cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
       cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,sessionname=ExternalBuild");
