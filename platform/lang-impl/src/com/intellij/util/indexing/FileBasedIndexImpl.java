@@ -409,7 +409,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
           @Override
           public MapIndexStorage<K, V> compute() throws IOException {
-            ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+            final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+            if (indicator != null) {
+              indicator.setIndeterminate(true);
+            }
             return new MapIndexStorage<K, V>(
               IndexInfrastructure.getStorageFile(name),
               extension.getKeyDescriptor(),
@@ -539,7 +542,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
                 @Override
                 public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
-                  ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                  final ProgressIndicator indicator = progressManager.getProgressIndicator();
+                  if (indicator != null) {
+                    indicator.setIndeterminate(true);
+                  }
                   return process.compute();
                 }
               }, LangBundle.message("compacting.indices.title"), false, null);
