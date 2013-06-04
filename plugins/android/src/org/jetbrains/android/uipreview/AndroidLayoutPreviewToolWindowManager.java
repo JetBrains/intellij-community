@@ -631,7 +631,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         public void run() {
           processFileEditorChange(getActiveLayoutXmlEditor());
         }
-      });
+      }, myProject.getDisposed());
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
