@@ -186,7 +186,7 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
   }
 
   @Nullable
-  private String getActivityToLaunch(@NotNull AndroidFacet facet, @Nullable ProcessHandler processHandler) {
+  private String getActivityToLaunch(@NotNull final AndroidFacet facet, @Nullable ProcessHandler processHandler) {
     String activityToLaunch = null;
 
     if (MODE.equals(LAUNCH_DEFAULT_ACTIVITY)) {
@@ -206,12 +206,20 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       activityToLaunch = ACTIVITY_CLASS;
     }
     if (activityToLaunch != null) {
-      final GlobalSearchScope scope = facet.getModule().getModuleWithDependenciesAndLibrariesScope(false);
-      final PsiClass activityClass = JavaPsiFacade.getInstance(getProject()).findClass(activityToLaunch, scope);
+      final String finalActivityToLaunch = activityToLaunch;
 
-      if (activityClass != null) {
-        activityToLaunch = JavaExecutionUtil.getRuntimeQualifiedName(activityClass);
-      }
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          final GlobalSearchScope scope = facet.getModule().getModuleWithDependenciesAndLibrariesScope(false);
+          final PsiClass activityClass = JavaPsiFacade.getInstance(getProject()).findClass(finalActivityToLaunch, scope);
+
+          if (activityClass != null) {
+            return JavaExecutionUtil.getRuntimeQualifiedName(activityClass);
+          }
+          return null;
+        }
+      });
     }
     return activityToLaunch;
   }
