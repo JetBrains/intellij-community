@@ -82,7 +82,7 @@ public class AndroidJpsUtil {
    * and compute all jars referred by library modules. Moreover it would be incorrect,
    * because Maven has dependency resolving algorithm based on versioning
    */
-  private static boolean shouldProcessDependenciesRecursively(JpsModule module) {
+  public static boolean shouldProcessDependenciesRecursively(JpsModule module) {
     return JpsJavaDependenciesEnumerationHandler.shouldProcessDependenciesRecursively(
       JpsJavaDependenciesEnumerationHandler.createHandlers(
         Collections.singletonList(module)));
@@ -526,37 +526,7 @@ public class AndroidJpsUtil {
 
   @NotNull
   public static List<JpsAndroidModuleExtension> getAllAndroidDependencies(@NotNull JpsModule module, boolean librariesOnly) {
-    final List<JpsAndroidModuleExtension> result = new ArrayList<JpsAndroidModuleExtension>();
-    final boolean recursively = shouldProcessDependenciesRecursively(module);
-    collectDependentAndroidLibraries(module, result, new HashSet<String>(), librariesOnly, recursively);
-    return result;
-  }
-
-  private static void collectDependentAndroidLibraries(@NotNull JpsModule module,
-                                                       @NotNull List<JpsAndroidModuleExtension> result,
-                                                       @NotNull Set<String> visitedSet,
-                                                       boolean librariesOnly,
-                                                       boolean recursively) {
-    final List<JpsDependencyElement> dependencies =
-      new ArrayList<JpsDependencyElement>(JpsJavaExtensionService.getInstance().getDependencies(
-        module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, false));
-
-    for (int i = dependencies.size() - 1; i >= 0; i--) {
-      final JpsDependencyElement item = dependencies.get(i);
-
-      if (item instanceof JpsModuleDependency) {
-        final JpsModule depModule = ((JpsModuleDependency)item).getModule();
-        if (depModule != null) {
-          final JpsAndroidModuleExtension depExtension = getExtension(depModule);
-          if (depExtension != null && (!librariesOnly || depExtension.isLibrary()) && visitedSet.add(depModule.getName())) {
-            if (recursively) {
-              collectDependentAndroidLibraries(depModule, result, visitedSet, librariesOnly, recursively);
-            }
-            result.add(0, depExtension);
-          }
-        }
-      }
-    }
+    return AndroidBuildDataCache.getInstance().getAllAndroidDependencies(module, librariesOnly);
   }
 
   public static boolean isLightBuild(@NotNull CompileContext context) {
