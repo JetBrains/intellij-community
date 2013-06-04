@@ -23,7 +23,7 @@ package com.intellij.codeInspection.unusedLibraries;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
@@ -60,17 +60,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class UnusedLibrariesInspection extends GlobalInspectionTool {
+public class UnusedLibrariesInspection extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#" + UnusedLibrariesInspection.class.getName());
   private final JobDescriptor BACKWARD_ANALYSIS = new JobDescriptor(InspectionsBundle.message("unused.library.backward.analysis.job.description"));
 
   @Override
-  public void runInspection(@NotNull AnalysisScope scope,
-                            @NotNull InspectionManager manager,
-                            @NotNull final GlobalInspectionContext globalContext,
-                            @NotNull ProblemDescriptionsProcessor problemProcessor) {
-    ((GlobalInspectionContextImpl)globalContext).appendJobDescriptor(BACKWARD_ANALYSIS);
-    final Project project = manager.getProject();
+  public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
+    final Project project = getContext().getProject();
     final ArrayList<VirtualFile> libraryRoots = new ArrayList<VirtualFile>();
     if (scope.getScopeType() == AnalysisScope.PROJECT) {
       ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(project, false, false));
@@ -114,43 +110,33 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
     BACKWARD_ANALYSIS.setTotalAmount(builder.getTotalFileCount());
-    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
-                                                                                       @Override
-                                                                                       public void run() {
-                                                                                         builder.analyze();
-                                                                                       }
-                                                                                     }, new ProgressIndicatorBase() {
-                                                                                       @Override
-                                                                                       public void setFraction(final double fraction) {
-                                                                                         super.setFraction(fraction);
-                                                                                         int nextAmount = (int)(fraction *
-                                                                                                                BACKWARD_ANALYSIS
-                                                                                                                  .getTotalAmount());
-                                                                                         if (nextAmount >
-                                                                                             BACKWARD_ANALYSIS.getDoneAmount() &&
-                                                                                             nextAmount <
-                                                                                             BACKWARD_ANALYSIS.getTotalAmount()) {
-                                                                                           BACKWARD_ANALYSIS.setDoneAmount(nextAmount);
-                                                                                           globalContext
-                                                                                             .incrementJobDoneAmount(BACKWARD_ANALYSIS,
-                                                                                                                     getText2());
-                                                                                         }
-                                                                                       }
+    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+      @Override
+      public void run() {
+        builder.analyze();
+      }
+    }, new ProgressIndicatorBase() {
+      @Override
+      public void setFraction(final double fraction) {
+        super.setFraction(fraction);
+        int nextAmount = (int)(fraction * BACKWARD_ANALYSIS.getTotalAmount());
+        if (nextAmount > BACKWARD_ANALYSIS.getDoneAmount() && nextAmount < BACKWARD_ANALYSIS.getTotalAmount()) {
+          BACKWARD_ANALYSIS.setDoneAmount(nextAmount);
+          getContext().incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
+        }
+      }
 
-                                                                                       @Override
-                                                                                       public boolean isCanceled() {
-                                                                                         return progressIndicator != null &&
-                                                                                                progressIndicator.isCanceled() ||
-                                                                                                super.isCanceled();
-                                                                                       }
-                                                                                     }
-    );
+      @Override
+      public boolean isCanceled() {
+        return progressIndicator != null && progressIndicator.isCanceled() || super.isCanceled();
+      }
+    });
     BACKWARD_ANALYSIS.setDoneAmount(BACKWARD_ANALYSIS.getTotalAmount());
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
     for (PsiFile file : dependencies.keySet()) {
       final VirtualFile virtualFile = file.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
-      for (Iterator<VirtualFile> i = libraryRoots.iterator(); i.hasNext(); ) {
+      for (Iterator<VirtualFile> i = libraryRoots.iterator(); i.hasNext();) {
         if (VfsUtil.isAncestor(i.next(), virtualFile, false)) {
           i.remove();
         }
@@ -172,7 +158,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
         files.add(libraryRoot);
       }
     }
-    final RefManager refManager = globalContext.getRefManager();
+    final RefManager refManager = getRefManager();
     for (OrderEntry orderEntry : unusedLibs.keySet()) {
       if (!(orderEntry instanceof LibraryOrderEntry)) continue;
       final RefModule refModule = refManager.getRefModule(orderEntry.getOwnerModule());
@@ -180,22 +166,25 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
       final VirtualFile[] roots = ((LibraryOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
       if (files.size() < roots.length) {
         final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
-          @Override
-          public String fun(final VirtualFile file) {
-            return file.getPresentableName();
-          }
-        }, ",");
-        String message =
-          InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName());
-        problemProcessor.addProblemElement(refModule,
-                                           manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, files)));
+            @Override
+            public String fun(final VirtualFile file) {
+              return file.getPresentableName();
+            }
+          }, ",");
+        String message = InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName());
+        addProblemElement(refModule, manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, files)));
       }
       else {
         String message = InspectionsBundle.message("unused.library.problem.descriptor", orderEntry.getPresentableName());
-        problemProcessor.addProblemElement(refModule,
-                                           manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, null)));
+        addProblemElement(refModule, manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, null)));
       }
     }
+  }
+
+  @Override
+  @NotNull
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
+    return new JobDescriptor[] {BACKWARD_ANALYSIS};
   }
 
   @Override
