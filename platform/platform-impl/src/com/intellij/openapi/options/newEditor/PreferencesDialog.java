@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,6 +31,10 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class PreferencesDialog extends DialogWrapper {
+  private JPanel myRoot;
+  private JPanel myTopPanel;
+  private JPanel myCenterPanel;
+
   public PreferencesDialog(@Nullable Project project, ConfigurableGroup[] groups) {
     super(project);
     setSize(800, 600);
@@ -44,9 +49,49 @@ public class PreferencesDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel();
-    panel.setPreferredSize(new Dimension(800, 600));
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    panel.add(createEditorSettings());
+    panel.add(createProjectSettings());
+    panel.add(createApplicationSettings());
+    panel.add(createOtherSettings());
+    panel.setPreferredSize(new Dimension(800, 450));
+    myCenterPanel.add(panel, BorderLayout.CENTER);
+    return myRoot;
+  }
+
+  private static JComponent createEditorSettings() {
+    final LabeledButtonsPanel panel = new LabeledButtonsPanel("Editor");
+    panel.addButton(new PreferenceButton("Editor", AllIcons.Preferences.Editor));
+    panel.addButton(new PreferenceButton("Code Style", AllIcons.Preferences.CodeStyle));
     return panel;
   }
+
+  private static JComponent createProjectSettings() {
+    final LabeledButtonsPanel panel = new LabeledButtonsPanel("Project");
+    panel.addButton(new PreferenceButton("Compiler", AllIcons.Preferences.Compiler));
+    panel.addButton(new PreferenceButton("Version Control", AllIcons.Preferences.VersionControl));
+    panel.addButton(new PreferenceButton("File Colors", AllIcons.Preferences.FileColors));
+    return panel;
+  }
+
+  private static JComponent createApplicationSettings() {
+    final LabeledButtonsPanel panel = new LabeledButtonsPanel("IDE");
+    panel.addButton(new PreferenceButton("Appearance", AllIcons.Preferences.Appearance));
+    panel.addButton(new PreferenceButton("General", AllIcons.Preferences.General));
+    panel.addButton(new PreferenceButton("Keymap", AllIcons.Preferences.Keymap));
+    panel.addButton(new PreferenceButton("File Types", AllIcons.Preferences.FileTypes));
+    return panel;
+  }
+
+  private static JComponent createOtherSettings() {
+    final LabeledButtonsPanel panel = new LabeledButtonsPanel("Other");
+    panel.addButton(new PreferenceButton("Plugins", AllIcons.Preferences.Plugins));
+    panel.addButton(new PreferenceButton("Updates", AllIcons.Preferences.Updates));
+    return panel;
+  }
+
+
+
 
   @Nullable
   @Override
