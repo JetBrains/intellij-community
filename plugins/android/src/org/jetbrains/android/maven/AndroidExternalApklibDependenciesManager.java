@@ -22,6 +22,7 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 
 import java.util.Map;
@@ -110,11 +111,20 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
     public MavenDependencyInfo() {
     }
 
-    public MavenDependencyInfo(@NotNull MavenId mavenId,
-                               @NotNull String type,
-                               @NotNull String scope,
-                               @NotNull String path,
-                               @NotNull String libName) {
+    @NotNull
+    public static MavenDependencyInfo create(@NotNull MavenArtifact artifact) {
+      final String path = artifact.getPathForExtraArtifact(null, null);
+      final String libName = artifact.getLibraryName();
+
+      return new AndroidExternalApklibDependenciesManager.MavenDependencyInfo(
+        artifact.getMavenId(), artifact.getType(), artifact.getScope(), path, libName);
+    }
+
+    private MavenDependencyInfo(@NotNull MavenId mavenId,
+                                @NotNull String type,
+                                @NotNull String scope,
+                                @NotNull String path,
+                                @NotNull String libName) {
       myGroupId = mavenId.getGroupId();
       myArtifactId = mavenId.getArtifactId();
       myVersion = mavenId.getVersion();
