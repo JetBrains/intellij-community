@@ -18,6 +18,8 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidAptValidityState implements ValidityState {
+  private static final int VERSION = 0;
+
   private final Map<String, ResourceFileData> myResources;
   private final TObjectLongHashMap<String> myValueResourceFilesTimestamps;
   private final List<ResourceEntry> myManifestElements;
@@ -40,6 +42,11 @@ public class AndroidAptValidityState implements ValidityState {
   }
 
   public AndroidAptValidityState(@NotNull DataInput in) throws IOException {
+    final int version = in.readInt();
+
+    if (version != VERSION) {
+      throw new IOException("old version");
+    }
     myPackageName = in.readUTF();
 
     final int filesCount = in.readInt();
@@ -108,6 +115,7 @@ public class AndroidAptValidityState implements ValidityState {
 
   @Override
   public void save(DataOutput out) throws IOException {
+    out.writeInt(VERSION);
     out.writeUTF(myPackageName);
     out.writeInt(myResources.size());
 
