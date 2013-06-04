@@ -26,9 +26,9 @@ public class MainFrame {
     this.ui_controller = ui_controller;
     myActiveSurface = new ActiveSurface(ui_controller);
 
-    mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-    mainPanel.add(createToolbar());
-    mainPanel.add(myActiveSurface);
+    mainPanel.setLayout(new BorderLayout());
+    mainPanel.add(createToolbar(), BorderLayout.NORTH);
+    mainPanel.add(myActiveSurface, BorderLayout.CENTER);
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), ui_controller.getProject());
     myLoadingPanel.startLoading();
