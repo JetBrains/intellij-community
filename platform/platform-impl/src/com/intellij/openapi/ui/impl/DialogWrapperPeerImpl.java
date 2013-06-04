@@ -763,7 +763,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       if (!ApplicationManagerEx.getApplicationEx().isLoaded()) {
         final Point loc = getLocation();
-        loc.y += Splash.SIZE.getHeight() / 2 + 42; // half splash + progress header
+        loc.y = Splash.BOUNDS.y + Splash.BOUNDS.height;
         setLocation(loc);
       }
       super.show();
