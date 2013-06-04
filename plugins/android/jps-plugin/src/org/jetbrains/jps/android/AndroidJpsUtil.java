@@ -11,7 +11,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
-import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
@@ -341,9 +340,9 @@ public class AndroidJpsUtil {
   }
 
   @Nullable
-  public static IAndroidTarget parseAndroidTarget(@NotNull JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk,
-                                                  @Nullable CompileContext context,
-                                                  String builderName) {
+  public static IAndroidTarget getAndroidTarget(@NotNull JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk,
+                                                @Nullable CompileContext context,
+                                                String builderName) {
     JpsAndroidSdkProperties sdkProperties = sdk.getSdkProperties().getData();
     final String targetHashString = sdkProperties.getBuildTargetHashString();
     if (targetHashString == null) {
@@ -354,15 +353,13 @@ public class AndroidJpsUtil {
       return null;
     }
 
-    final MessageBuildingSdkLog log = new MessageBuildingSdkLog();
-    final SdkManager manager = AndroidCommonUtils.createSdkManager(sdk.getHomePath(), log);
-
-    if (manager == null) {
-      final String message = log.getErrorMessage();
+    final SdkManager manager;
+    try {
+      manager = AndroidBuildDataCache.getInstance().getSdkManager(sdk.getHomePath());
+    }
+    catch (AndroidBuildDataCache.ComputationException e) {
       if (context != null) {
-        context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                   "Android SDK is parsed incorrectly." +
-                                                   (message.length() > 0 ? " Parsing log:\n" + message : "")));
+        context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR, e.getMessage()));
       }
       return null;
     }
@@ -463,7 +460,7 @@ public class AndroidJpsUtil {
       return null;
     }
 
-    final IAndroidTarget target = parseAndroidTarget(sdk, context, builderName);
+    final IAndroidTarget target = getAndroidTarget(sdk, context, builderName);
     if (target == null) {
       if (context != null) {
         context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
