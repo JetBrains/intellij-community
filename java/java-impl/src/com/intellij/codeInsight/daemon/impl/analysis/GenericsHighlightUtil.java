@@ -1274,8 +1274,12 @@ public class GenericsHighlightUtil {
             final PsiElement resolve = ref.resolve();
             if (resolve instanceof PsiClass) {
               final PsiClass containingClass = ((PsiClass)resolve).getContainingClass();
-              if (containingClass != null && psiClass.isInheritor(containingClass, true)) {
-                return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(((PsiClass)resolve).getName() + " is not accessible in current context").range(ref).create();
+              if (containingClass != null) {
+                if (psiClass.isInheritor(containingClass, true) || 
+                    unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getExtendsList()) ||
+                    unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getImplementsList())) {
+                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(((PsiClass)resolve).getName() + " is not accessible in current context").range(ref).create();
+                }
               }
             }
           }
@@ -1283,6 +1287,24 @@ public class GenericsHighlightUtil {
       }
     }
     return null;
+  }
+
+  private static boolean unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(PsiClass containingClass,
+                                                                                              PsiReferenceList referenceList) {
+    if (referenceList != null) {
+      for (PsiJavaCodeReferenceElement referenceElement : referenceList.getReferenceElements()) {
+        if (!referenceElement.isQualified()) {
+          final PsiElement superClass = referenceElement.resolve();
+          if (superClass instanceof PsiClass) {
+            final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
+            if (superContainingClass != null && containingClass.isInheritor(superContainingClass, true)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }
 
