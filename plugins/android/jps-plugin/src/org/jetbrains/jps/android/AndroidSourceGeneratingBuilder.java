@@ -928,6 +928,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
                                       depLibPackagesSet, packageName, proguardOutputCfgFilePath);
 
         if (newState.equalsTo(oldState)) {
+          // we need to update state, because it also contains myValueResFilesTimestamps not taking into account by equalsTo()
+          storage.update(module.getName(), newState);
           continue;
         }
         didSomething = true;
