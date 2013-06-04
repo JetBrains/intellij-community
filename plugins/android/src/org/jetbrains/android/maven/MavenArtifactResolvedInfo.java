@@ -14,12 +14,12 @@ import java.util.List;
 public class MavenArtifactResolvedInfo {
   private String myApiLevel;
   private List<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>
-    myApklibDependencies = new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>();
+    myDependencies = new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>();
 
   public MavenArtifactResolvedInfo(String apiLevel,
                                    Collection<AndroidExternalApklibDependenciesManager.MavenDependencyInfo> dependencyInfos) {
     myApiLevel = apiLevel;
-    myApklibDependencies = new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>(dependencyInfos);
+    myDependencies = new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>(dependencyInfos);
   }
 
   public MavenArtifactResolvedInfo() {
@@ -31,12 +31,12 @@ public class MavenArtifactResolvedInfo {
 
   @Tag("dependencies")
   @AbstractCollection(surroundWithTag = false)
-  public List<AndroidExternalApklibDependenciesManager.MavenDependencyInfo> getApklibDependencies() {
-    return myApklibDependencies;
+  public List<AndroidExternalApklibDependenciesManager.MavenDependencyInfo> getDependencies() {
+    return myDependencies;
   }
 
-  public void setApklibDependencies(List<AndroidExternalApklibDependenciesManager.MavenDependencyInfo> apklibDependencies) {
-    myApklibDependencies = apklibDependencies;
+  public void setDependencies(List<AndroidExternalApklibDependenciesManager.MavenDependencyInfo> dependencies) {
+    myDependencies = dependencies;
   }
 
   public void setApiLevel(String apiLevel) {

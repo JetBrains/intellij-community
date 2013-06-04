@@ -63,7 +63,7 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
     return myState.getArtifactFilesMap().get(mavenIdStr);
   }
 
-  public void setSdkInfoForArtifact(@NotNull MavenId mavenId, @NotNull MavenArtifactResolvedInfo info) {
+  public void setResolvedInfoForArtifact(@NotNull MavenId mavenId, @NotNull MavenArtifactResolvedInfo info) {
     final String key = AndroidMavenUtil.getMavenIdStringForFileName(mavenId);
     myState.getResolvedInfoMap().put(key, info);
   }
