@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -172,15 +173,26 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
                   statement instanceof GrContinueStatement ||
                   statement instanceof GrReturnStatement ||
                   statement instanceof GrThrowStatement) {
-                return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(myContext.getSettings()), null);
+                final Indent indent = GroovyIndentProcessor.getSwitchCaseIndent(myContext.getSettings());
+                return new ChildAttributes(indent, null);
               }
             }
-            @SuppressWarnings("ConstantConditions")
+
             int indentSize = myContext.getSettings().getIndentOptions().INDENT_SIZE;
-            return new ChildAttributes(Indent.getSpaceIndent(myContext.getSettings().INDENT_CASE_FROM_SWITCH ? 2 * indentSize : indentSize), null);
+            final int spaces = myContext.getSettings().INDENT_CASE_FROM_SWITCH
+                               ? 2 * indentSize
+                               : indentSize;
+            return new ChildAttributes(Indent.getSpaceIndent(spaces), null);
           }
         }
       }
+    }
+
+    if (psiParent instanceof GrCaseLabel) {
+      return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(getContext().getSettings()), null);
+    }
+    if (psiParent instanceof GrCaseSection) {
+      return getSwitchIndent((GrCaseSection)psiParent, newChildIndex);
     }
 
     if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || SWITCH_STATEMENT.equals(astNode.getElementType())) {
@@ -206,7 +218,29 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     if (psiParent instanceof GrIfStatement || psiParent instanceof GrLoopStatement) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
+    if (psiParent instanceof GrLabeledStatement && newChildIndex == 2) {
+      final Indent indent = GroovyIndentProcessor.indentLabelBlock(psiParent, getContext().getGroovySettings())
+                            ? Indent.getLabelIndent()
+                            : Indent.getNoneIndent();
+      return new ChildAttributes(indent, null);
+    }
     return new ChildAttributes(Indent.getNoneIndent(), null);
+  }
+
+  private ChildAttributes getSwitchIndent(GrCaseSection psiParent, int newIndex) {
+    final GrStatement[] statements = psiParent.getStatements();
+    newIndex--;
+    for (int i = 0; i < statements.length && i < newIndex; i++) {
+      GrStatement statement = statements[i];
+      if (statement instanceof GrBreakStatement ||
+          statement instanceof GrContinueStatement ||
+          statement instanceof GrReturnStatement ||
+          statement instanceof GrThrowStatement) {
+        return new ChildAttributes(Indent.getNoneIndent(), null);
+      }
+    }
+    final Indent indent = GroovyIndentProcessor.getSwitchCaseIndent(getContext().getSettings());
+    return new ChildAttributes(indent, null);
   }
 
 

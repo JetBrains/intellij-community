@@ -66,7 +66,6 @@ import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -378,7 +377,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void setAdvertisementText(@Nullable String text) {
     myAdText = text;
     if (StringUtil.isNotEmpty(text)) {
-      addAdvertisement(ObjectUtils.assertNotNull(text));
+      addAdvertisement(text, null);
     }
   }
 
@@ -1294,12 +1293,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     requestResize();
   }
 
-  public void addAdvertisement(@NotNull final String text) {
+  public void addAdvertisement(@NotNull final String text, final @Nullable Color bgColor) {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
         if (!myDisposed) {
-          myAdComponent.addAdvertisement(text);
+          myAdComponent.addAdvertisement(text, bgColor);
           if (myShown) {
             requestResize();
             refreshUi(false, false);

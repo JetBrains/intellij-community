@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.spock.SpockUtils;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
@@ -145,7 +146,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
-    if (myChildType == LABEL) {
+    if (myChildType == mIDENT) {
       CommonCodeStyleSettings.IndentOptions indentOptions = myBlock.getContext().getSettings().getIndentOptions();
       if (indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE) {
         myResult = Indent.getAbsoluteLabelIndent();
@@ -165,7 +166,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
     final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
     if (clazz == null) return false;
-    if (InheritanceUtil.isInheritor(clazz, SpockUtils.SPEC_CLASS_NAME)) {
+    if (isDirectInheritorOfSpecification(clazz) || InheritanceUtil.isInheritor(clazz, SpockUtils.SPEC_CLASS_NAME)) {
       return true;
     }
 
@@ -176,6 +177,19 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       }
     }
 
+    return false;
+  }
+
+  private static boolean isDirectInheritorOfSpecification(@NotNull GrTypeDefinition clazz) {
+    final GrExtendsClause clause = clazz.getExtendsClause();
+    if (clause != null) {
+      final GrCodeReferenceElement[] refs = clause.getReferenceElements();
+      for (GrCodeReferenceElement ref : refs) {
+        if (SpockUtils.SPEC_CLASS_NAME.equals(ref.getClassNameText())) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 

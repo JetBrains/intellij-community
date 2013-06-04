@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
-
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+package com.intellij.lang.annotation;
 
 /**
- * @author ilyas
+ * Unique object, which is the same for all of the problems of some group.
+ * It is used to split some inspection to several fake inspections
  */
-public interface GrLabel extends GroovyPsiElement {
-  String getName();
+public interface ProblemGroup {
+  String getProblemName();
 }

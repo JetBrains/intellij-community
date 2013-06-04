@@ -157,7 +157,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     final PsiClass refClass = resolveResult.getElement();
     assert refClass != null : type;
-    return new LightClassReference(myManager, type.getPresentableText(), refClass, resolveResult.getSubstitutor());
+    return new LightClassReference(myManager, type.getInternalCanonicalText(), refClass, resolveResult.getSubstitutor());
   }
 
   @NotNull

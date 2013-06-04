@@ -381,7 +381,10 @@ public class JavaCompletionContributor extends CompletionContributor {
   static boolean isClassNamePossible(CompletionParameters parameters) {
     boolean isSecondCompletion = parameters.getInvocationCount() >= 2;
 
-    final PsiElement parent = parameters.getPosition().getParent();
+    PsiElement position = parameters.getPosition();
+    if (JavaCompletionData.isInstanceofPlace(position)) return false;
+
+    final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return isSecondCompletion;
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return isSecondCompletion;
 
@@ -406,7 +409,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    if (JavaCompletionData.isAfterPrimitiveOrArrayType(parameters.getPosition())) {
+    if (JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
       return false;
     }
     

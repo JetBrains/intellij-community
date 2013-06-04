@@ -80,10 +80,15 @@ public class SwitchStatement implements GroovyElementTypes {
 
       PsiBuilder.Marker sectionMarker = builder.mark();
       parseCaseLabel(builder, parser);
+
+      final PsiBuilder.Marker warn = builder.mark();
       ParserUtils.getToken(builder, mNLS);
       if (builder.getTokenType() == mRCURLY) {
-        builder.error(GroovyBundle.message("expression.expected"));
-      } else {
+        warn.rollbackTo();
+        builder.error(GroovyBundle.message("statement.expected"));
+      }
+      else {
+        warn.drop();
         parser.parseSwitchCaseList(builder);
       }
       sectionMarker.done(CASE_SECTION);
@@ -111,10 +116,10 @@ public class SwitchStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     if (parseCaseLabel(builder, parser)) {
       beforeNls.drop();
-    } else {
+    }
+    else {
       beforeNls.rollbackTo();
     }
     return true;
   }
-
 }

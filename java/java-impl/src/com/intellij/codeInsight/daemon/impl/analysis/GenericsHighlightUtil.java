@@ -1261,5 +1261,27 @@ public class GenericsHighlightUtil {
     }
     return null;
   }
+
+  public static HighlightInfo checkCannotPassInner(PsiJavaCodeReferenceElement ref) {
+    if (ref.getParent() instanceof PsiTypeElement) {
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+      if (psiClass != null) {
+        if (PsiTreeUtil.isAncestor(psiClass.getExtendsList(), ref, false) ||
+            PsiTreeUtil.isAncestor(psiClass.getImplementsList(), ref, false)) {
+          final PsiElement qualifier = ref.getQualifier();
+          if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() == psiClass) {
+            final PsiElement resolve = ref.resolve();
+            if (resolve instanceof PsiClass) {
+              final PsiClass containingClass = ((PsiClass)resolve).getContainingClass();
+              if (containingClass != null && psiClass.isInheritor(containingClass, true)) {
+                return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(((PsiClass)resolve).getName() + " is not accessible in current context").range(ref).create();
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
 }
 

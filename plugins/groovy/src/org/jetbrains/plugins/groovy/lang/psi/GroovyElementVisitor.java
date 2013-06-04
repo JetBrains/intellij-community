@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -210,10 +209,6 @@ public abstract class GroovyElementVisitor {
 
   public void visitIndexProperty(GrIndexProperty expression) {
     visitExpression(expression);
-  }
-
-  public void visitLabel(GrLabel label) {
-    visitElement(label);
   }
 
   public void visitArgumentList(GrArgumentList list) {

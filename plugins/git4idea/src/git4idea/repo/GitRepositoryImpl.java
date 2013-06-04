@@ -21,9 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.messages.MessageBus;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -40,12 +37,10 @@ import java.util.Collections;
  */
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, Disposable {
 
-  private static final Object STUB_OBJECT = new Object();
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
-  @NotNull private final QueueProcessor<Object> myNotifier;
 
   @Nullable private volatile GitLocalBranch myCurrentBranch;
   @NotNull private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
@@ -65,7 +60,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     myGitDir = GitUtil.findGitDir(rootDir);
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
-    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(getProject(), getMessageBus(), this), getProject().getDisposed());
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
@@ -170,7 +164,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     myRemotes = config.parseRemotes();
     readRepository(myRemotes);
     myBranchTrackInfos = config.parseTrackInfos(myBranches.getLocalBranches(), myBranches.getRemoteBranches());
-    notifyListeners();
+    if (!Disposer.isDisposed(getProject()) && getMessageBus() != null) {
+      getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(this);
+    }
   }
 
   private void readRepository(@NotNull Collection<GitRemote> remotes) {
@@ -178,30 +174,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     myCurrentRevision = myReader.readCurrentRevision();
     myCurrentBranch = myReader.readCurrentBranch();
     myBranches = myReader.readBranches(remotes);
-  }
-
-  protected void notifyListeners() {
-    myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
-  }
-
-  private static class NotificationConsumer implements Consumer<Object> {
-
-    private final Project myProject;
-    private final MessageBus myMessageBus;
-    private final GitRepository myRepository;
-
-    NotificationConsumer(Project project, MessageBus messageBus, GitRepository repository) {
-      myProject = project;
-      myMessageBus = messageBus;
-      myRepository = repository;
-    }
-
-    @Override
-    public void consume(Object o) {
-      if (!Disposer.isDisposed(myProject)) {
-        myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged(myRepository);
-      }
-    }
   }
 
   @Override

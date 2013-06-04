@@ -3,12 +3,12 @@ class C implements A {
 }
 
 interface A {
-    A a = new C(<error descr="Cannot find symbol variable this">this</error>);
+    A a = new C(<error descr="'A.this' cannot be referenced from a static context">this</error>);
     A a1 = new C(<error descr="Cannot find symbol variable this">this</error>){};
 
     class B  {
         A foo() {
-            return <error descr="Cannot find symbol variable this">A.this</error>;
+            return <error descr="'A.this' cannot be referenced from a static context">A.this</error>;
         }
 
         B foo1() {

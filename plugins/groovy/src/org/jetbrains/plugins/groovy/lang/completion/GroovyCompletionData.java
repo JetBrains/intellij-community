@@ -480,7 +480,8 @@ public class GroovyCompletionData {
 
         if (superParent instanceof GrStatementOwner ||
             superParent instanceof GrLabeledStatement ||
-            superParent instanceof GrControlStatement) {
+            superParent instanceof GrControlStatement ||
+            superParent instanceof GrMethodCall) {
           return true;
         }
       }
@@ -531,6 +532,18 @@ public class GroovyCompletionData {
         return true;
       }
     }
+
+    if (context != null &&
+        (context.getParent() instanceof GrReferenceExpression) &&
+        (context.getParent().getParent() instanceof GrMethodCall) &&
+        nearestLeftSibling(context.getParent().getParent()) instanceof GrTryCatchStatement) {
+      GrTryCatchStatement tryStatement = (GrTryCatchStatement) nearestLeftSibling(context.getParent().getParent());
+      if (tryStatement == null) return false;
+      if (tryStatement.getFinallyClause() == null) {
+        return true;
+      }
+    }
+
     return false;
   }
 

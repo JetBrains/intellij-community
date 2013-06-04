@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements;
-
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 
 /**
- * @author ilyas
+ * This interface needs to be implemented by implementers of {@link ProblemGroup}
+ * that support suppressing of problems.
  */
-public interface GrLabeledStatement extends GrStatement, GrNamedElement {
-  @Nullable
-  GrStatement getStatement();
-
+public interface SuppressableProblemGroup extends ProblemGroup {
+  /**
+   * Returns the list of suppression actions for the specified element.
+   *
+   * @param element the element on which Alt-Enter is pressed, or null if getting the list of available suppression actions in
+   *                Inspections tool window
+   * @return the list of suppression actions.
+   */
   @NotNull
-  PsiElement getLabel();
-
-  @NotNull
-  @Override
-  String getName();
+  SuppressIntentionAction[] getSuppressActions(@Nullable final PsiElement element);
 }

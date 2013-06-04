@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -43,19 +44,19 @@ public interface ProblemDescriptor extends CommonProblemDescriptor{
   void setTextAttributes(TextAttributesKey key);
 
   /**
-   * Gets the unique string, which is the same for all of the problems of this group
+   * Gets the unique object, which is the same for all of the problems of this group
    *
    * @return the problem group
    */
   @Nullable
-  String getProblemGroup();
+  ProblemGroup getProblemGroup();
 
   /**
-   * Sets the unique string, which is the same for all of the problems of this group
+   * Sets the unique object, which is the same for all of the problems of this group
    *
    * @param problemGroup the problemGroup
    */
-  void setProblemGroup(@Nullable String problemGroup);
+  void setProblemGroup(@Nullable ProblemGroup problemGroup);
 
   boolean showTooltip();
 }

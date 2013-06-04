@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public interface GrNamedElement extends PsiNamedElement, GroovyPsiElement, PsiModifierListOwner {
+public interface GrNamedElement extends PsiNamedElement, GroovyPsiElement {
   @NotNull
   PsiElement getNameIdentifierGroovy();
 }

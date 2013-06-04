@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     parser.parseBlockBody(builder);
     if (!builder.eof() && builder.getTokenType() != mRCURLY) {
-      builder.error(GroovyBundle.message("expression.expected"));
+      builder.error(GroovyBundle.message("statement.expected"));
       ParserUtils.skipCountingBraces(builder, GroovyParser.RCURLY_ONLY);
     }
 
