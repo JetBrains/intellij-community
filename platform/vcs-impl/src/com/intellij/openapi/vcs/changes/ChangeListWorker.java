@@ -220,9 +220,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       // scope is not important: nothing had been added jet, nothing to move to "old state" members
       newList.startProcessingChanges(myProject, null);      // this is executed only when use through GATE
     }
-    if (ChangeListManagerImpl.DEBUG) {
-      ChangeListManagerImpl.log("ChangeListWorker.addChangeList: " + newList);
-    }
     return newList.copy();
   }
 
@@ -271,9 +268,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
 
     final LocalChangeList removed = myMap.remove(listName);
-    if (ChangeListManagerImpl.DEBUG) {
-      ChangeListManagerImpl.log("ChangeListWorker.removeChangeList: name = [" + name + "], removed = " + removed);
-    }
     return true;
   }
 

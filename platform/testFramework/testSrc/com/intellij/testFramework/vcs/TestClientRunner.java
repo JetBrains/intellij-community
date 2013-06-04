@@ -17,9 +17,9 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +37,7 @@ import java.util.Map;
  * @since 2.05.2012
  */
 public class TestClientRunner {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.vcs.TestClientRunner");
   private final boolean myTraceClient;
   private final File myClientBinaryPath;
   private final Map<String, String> myClientEnvironment;
@@ -64,9 +65,9 @@ public class TestClientRunner {
     Collections.addAll(arguments, commandLine);
 
     if (myTraceClient) {
-      ChangeListManagerImpl.log("*** running:\n" + arguments);
+      LOG.info("*** running:\n" + arguments);
       if (StringUtil.isNotEmpty(stdin)) {
-        ChangeListManagerImpl.log("*** stdin:\n" + stdin);
+        LOG.info("*** stdin:\n" + stdin);
       }
     }
 
@@ -93,14 +94,14 @@ public class TestClientRunner {
     final CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
     final ProcessOutput result = handler.runProcess(100*1000);
     if (myTraceClient || result.isTimeout()) {
-      ChangeListManagerImpl.log("*** result: " + result.getExitCode());
+      LOG.debug("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
       if (out.length() > 0) {
-        ChangeListManagerImpl.log("*** output:\n" + out);
+        LOG.debug("*** output:\n" + out);
       }
       final String err = result.getStderr().trim();
       if (err.length() > 0) {
-        ChangeListManagerImpl.log("*** error:\n" + err);
+        LOG.debug("*** error:\n" + err);
       }
     }
 
