@@ -398,7 +398,14 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         ZipUtil.extract(artifactFile, targetDir, null);
       }
       catch (IOException e) {
-        LOG.error(e);
+        final String message = e.getMessage();
+
+        if (message == null) {
+          LOG.error(e);
+        }
+        else {
+          AndroidUtils.reportImportErrorToEventLog("I/O error: " + message, genModuleName);
+        }
         return null;
       }
     }
