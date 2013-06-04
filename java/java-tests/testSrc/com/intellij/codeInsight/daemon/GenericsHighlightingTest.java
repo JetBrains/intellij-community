@@ -269,6 +269,10 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest5(false);
   }
 
+  public void testIDEA77128() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
   public void testDisableCastingToNestedWildcards() throws Exception {
     doTest5(false);
   }
