@@ -293,9 +293,14 @@ public class UsageViewManagerImpl extends UsageViewManager {
         usageView = new MyUsageViewImpl(myProject);
         if (myUsageViewRef.compareAndSet(null, usageView)) {
           openView(usageView);
-          Usage firstUsage = myFirstUsage.get();
+          final Usage firstUsage = myFirstUsage.get();
           if (firstUsage != null) {
-            usageView.appendUsage(firstUsage);
+            final UsageViewImpl finalUsageView = usageView;
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                finalUsageView.appendUsage(firstUsage);
+              }
+            });
           }
         }
         else {
