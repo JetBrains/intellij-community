@@ -42,7 +42,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class Splash extends JDialog implements StartupProgress {
-  public static Dimension SIZE;
+  public static Rectangle BOUNDS;
   private final Icon myImage;
   private int myProgressHeight = 2;
   private Color myProgressColor = null;
@@ -62,7 +62,6 @@ public class Splash extends JDialog implements StartupProgress {
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
-    SIZE = new Dimension(originalImage.getIconWidth(), originalImage.getIconHeight());
     myImage = new SplashImage(originalImage, textColor);
     myLabel = new JLabel(myImage) {
       @Override
@@ -97,6 +96,7 @@ public class Splash extends JDialog implements StartupProgress {
   public void show() {
     super.show();
     toFront();
+    BOUNDS = getBounds();
     //Sometimes this causes deadlock in EDT
     // http://bugs.sun.com/view_bug.do?bug_id=6724890
     //
