@@ -48,10 +48,10 @@ public class ClassWithTooManyTransitiveDependentsInspection
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
-    RefEntity refEntity,
-    AnalysisScope analysisScope,
-    InspectionManager inspectionManager,
-    GlobalInspectionContext globalInspectionContext) {
+    @NotNull RefEntity refEntity,
+    @NotNull AnalysisScope analysisScope,
+    @NotNull InspectionManager inspectionManager,
+    @NotNull GlobalInspectionContext globalInspectionContext) {
     if (!(refEntity instanceof RefClass)) {
       return null;
     }

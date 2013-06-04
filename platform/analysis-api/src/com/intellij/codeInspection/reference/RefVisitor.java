@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * User: anna
+ * Date: 18-Dec-2007
+ */
 package com.intellij.codeInspection.reference;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * A node in the reference graph corresponding to a Java package.
- *
- * @author anna
- * @since 6.0
- * @see RefJavaManager#getPackage
- */
-public interface RefPackage extends RefEntity {
-  /**
-   * Returns the full-qualified name for the package, or an empty string for the default package.
-   *
-   * @return the full-qualified name for the package.
-   */
-  @NotNull
-  @Override
-  String getQualifiedName();
+public class RefVisitor {
+  public void visitElement(@NotNull RefEntity elem) {}
+
+  public void visitFile(@NotNull RefFile file) {
+    visitElement(file);
+  }
+
+  public void visitModule(@NotNull RefModule module){
+    visitElement(module);
+  }
+
+  public void visitDirectory(@NotNull RefDirectory directory) {
+    visitElement(directory);
+  }
 }

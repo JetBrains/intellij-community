@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -47,7 +48,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
   }
 
   @Override
-  public void accept(final RefVisitor visitor) {
+  public void accept(@NotNull final RefVisitor visitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {

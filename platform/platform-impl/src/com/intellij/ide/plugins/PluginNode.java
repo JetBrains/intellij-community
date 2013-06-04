@@ -100,7 +100,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * Be carefull when comparing Plugins versions. Use
+   * Be careful when comparing Plugins versions. Use
    * PluginManagerColumnInfo.compareVersion() for version comparing.
    *
    * @return Return plugin version
@@ -281,24 +281,24 @@ public class PluginNode implements IdeaPluginDescriptor {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public ComponentConfig[] getAppComponents() {
-    return null;
+    throw new IllegalStateException();
   }
 
-  @Nullable
+  @NotNull
   public ComponentConfig[] getProjectComponents() {
-    return null;
+    throw new IllegalStateException();
   }
 
-  @Nullable
+  @NotNull
   public ComponentConfig[] getModuleComponents() {
-    return null;
+    throw new IllegalStateException();
   }
 
-  @Nullable
+  @NotNull
   public HelpSetPath[] getHelpSets() {
-    return null;
+    throw new IllegalStateException();
   }
 
   @Nullable

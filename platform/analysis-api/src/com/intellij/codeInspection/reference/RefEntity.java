@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,8 +35,10 @@ public interface RefEntity extends UserDataHolder {
    *
    * @return the name of the node.
    */
+  @NotNull
   String getName();
 
+  @NotNull
   String getQualifiedName();
 
   /**
@@ -57,7 +60,7 @@ public interface RefEntity extends UserDataHolder {
    *
    * @param refVisitor the visitor to accept.
    */
-  void accept(final RefVisitor refVisitor);
+  void accept(@NotNull RefVisitor refVisitor);
 
   /**
    * Returns a user-readable name for the element corresponding to the node.
@@ -78,6 +81,7 @@ public interface RefEntity extends UserDataHolder {
    *
    * @return the reference graph element for the instance.
    */
+  @NotNull
   RefManager getRefManager();
 
   @Nullable

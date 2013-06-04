@@ -47,10 +47,10 @@ public class ClassWithTooManyDependenciesInspection
 
   @Override
   public void runInspection(
-    AnalysisScope scope,
-    final InspectionManager inspectionManager,
-    GlobalInspectionContext globalInspectionContext,
-    final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    @NotNull AnalysisScope scope,
+    @NotNull final InspectionManager inspectionManager,
+    @NotNull GlobalInspectionContext globalInspectionContext,
+    @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     final RefManager refManager = globalInspectionContext.getRefManager();
     refManager.iterate(new RefJavaVisitor() {
 

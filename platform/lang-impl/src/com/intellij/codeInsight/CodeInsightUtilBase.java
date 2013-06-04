@@ -100,6 +100,12 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     return true;
   }
 
+  @Override
+  public boolean prepareVirtualFilesForWrite(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+    return !status.hasReadonlyFiles();
+  }
+
   // returns true on success
   public static boolean prepareEditorForWrite(@NotNull Editor editor) {
     if (!editor.isViewer()) return true;

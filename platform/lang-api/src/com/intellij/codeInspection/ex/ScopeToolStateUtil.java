@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection.ex;
 
-/*
- * User: anna
- * Date: 18-Dec-2007
- */
-package com.intellij.codeInspection.reference;
-
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class RefVisitor {
-  public void visitElement(@NotNull RefEntity elem) {}
-
-  public void visitFile(@NotNull RefFile file) {
-    visitElement(file);
-  }
-
-  public void visitModule(@NotNull RefModule module){
-    visitElement(module);
-  }
-
-  public void visitDirectory(@NotNull RefDirectory directory) {
-    visitElement(directory);
+public class ScopeToolStateUtil {
+  @Nullable
+  public static NamedScope getScope(@NotNull ScopeToolState toolState) {
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    return toolState.getScope(project);
   }
 }

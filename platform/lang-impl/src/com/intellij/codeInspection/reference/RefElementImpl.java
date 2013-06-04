@@ -36,7 +36,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +45,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
-  private static final ArrayList<RefElement> EMPTY_REFERNCES_LIST = new ArrayList<RefElement>(0);
+  private static final List<RefElement> EMPTY_REFERNCES_LIST = new ArrayList<RefElement>(0);
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
 
   private static final int IS_ENTRY_MASK = 0x80;
@@ -57,8 +57,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   private final SmartPsiElementPointer myID;
 
-  private ArrayList<RefElement> myOutReferences;
-  private ArrayList<RefElement> myInReferences;
+  private List<RefElement> myOutReferences;
+  private List<RefElement> myInReferences;
 
   private String[] mySuppressions = null;
 
@@ -66,7 +66,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private final Module myModule;
   protected static final int IS_REACHABLE_MASK = 0x40;
 
-  protected RefElementImpl(String name, RefElement owner) {
+  protected RefElementImpl(String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
     myID = null;
     myFlags = 0;
@@ -77,7 +77,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     this(file.getName(), file, manager);
   }
 
-  protected RefElementImpl(String name, PsiElement element, RefManager manager) {
+  protected RefElementImpl(String name, @NotNull PsiElement element, @NotNull RefManager manager) {
     super(name, manager);
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
     myFlags = 0;

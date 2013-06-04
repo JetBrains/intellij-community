@@ -21,15 +21,13 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -578,7 +576,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     severities.add(HighlightSeverity.WARNING);
     severities.add(HighlightSeverity.WEAK_WARNING);
     final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
-      severityRegistrar.getRegisteredHighlightingInfoTypes();
+      SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar);
     for (SeverityRegistrar.SeverityBasedTextAttributes info : infoTypes) {
       severities.add(info.getSeverity());
     }
@@ -1044,7 +1042,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       for (int i = 0, toolsSize = tools.size(); i < toolsSize; i++) {
         final ScopeToolState pair = tools.get(i);
-        if (!Comparing.equal(pair.getScope(), descriptors.get(i).getScope())) {
+        if (!Comparing.equal(ScopeToolStateUtil.getScope(pair), descriptors.get(i).getScope())) {
           return true;
         }
       }

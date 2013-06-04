@@ -799,7 +799,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     return myTools;
   }
 
-  private void appendJobDescriptor(@NotNull JobDescriptor job) {
+  public void appendJobDescriptor(@NotNull JobDescriptor job) {
     if (!myJobDescriptors.contains(job)) {
       myJobDescriptors.add(job);
       job.setDoneAmount(0);

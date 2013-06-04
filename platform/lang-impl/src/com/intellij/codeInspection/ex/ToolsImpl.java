@@ -152,7 +152,7 @@ public class ToolsImpl implements Tools {
     myDefaultState.getTool().writeSettings(inspectionElement);
   }
 
-  void readExternal(Element toolElement, InspectionProfileImpl profile) throws InvalidDataException {
+  void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileImpl profile) throws InvalidDataException {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
     final ProfileManager profileManager = profile.getProfileManager();
     final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getOwnSeverityRegistrar();
@@ -243,7 +243,7 @@ public class ToolsImpl implements Tools {
     final List<NamedScope> result = new ArrayList<NamedScope>();
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
-        result.add(state.getScope());
+        result.add(ScopeToolStateUtil.getScope(state));
       }
     }
     else {
@@ -287,7 +287,7 @@ public class ToolsImpl implements Tools {
     if (!myEnabled) return false;
     if (namedScope != null && myTools != null) {
       for (ScopeToolState state : myTools) {
-        if (Comparing.equal(namedScope, state.getScope())) return state.isEnabled();
+        if (Comparing.equal(namedScope, ScopeToolStateUtil.getScope(state))) return state.isEnabled();
       }
     }
     return myDefaultState.isEnabled();
@@ -365,7 +365,7 @@ public class ToolsImpl implements Tools {
   public void enableTool(NamedScope namedScope) {
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
-        if (Comparing.equal(state.getScope(), namedScope)) {
+        if (Comparing.equal(ScopeToolStateUtil.getScope(state), namedScope)) {
           state.setEnabled(true);
         }
       }
@@ -376,7 +376,7 @@ public class ToolsImpl implements Tools {
   public void disableTool(NamedScope namedScope) {
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
-        if (Comparing.equal(state.getScope(), namedScope)) {
+        if (Comparing.equal(ScopeToolStateUtil.getScope(state), namedScope)) {
           state.setEnabled(false);
         }
       }
@@ -413,7 +413,7 @@ public class ToolsImpl implements Tools {
   public HighlightDisplayLevel getLevel(final NamedScope scope) {
     if (myTools != null && scope != null){
       for (ScopeToolState state : myTools) {
-        if (Comparing.equal(state.getScope(), scope)) {
+        if (Comparing.equal(ScopeToolStateUtil.getScope(state), scope)) {
           return state.getLevel();
         }
       }
@@ -441,7 +441,7 @@ public class ToolsImpl implements Tools {
     if (myTools != null && myTools.size() > idx && idx >= 0) {
       final ScopeToolState scopeToolState = myTools.get(idx);
       myTools.remove(idx);
-      final NamedScope scope = scopeToolState.getScope();
+      final NamedScope scope = ScopeToolStateUtil.getScope(scopeToolState);
       if (scope != null) {
         myTools.add(idx, new ScopeToolState(scope, scopeToolState.getTool(), scopeToolState.isEnabled(), level));
       } else {

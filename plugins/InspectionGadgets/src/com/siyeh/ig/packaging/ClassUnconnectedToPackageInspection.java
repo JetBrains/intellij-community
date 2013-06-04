@@ -45,10 +45,10 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(
-    RefEntity refEntity,
-    AnalysisScope analysisScope,
-    InspectionManager manager,
-    GlobalInspectionContext globalInspectionContext) {
+    @NotNull RefEntity refEntity,
+    @NotNull AnalysisScope analysisScope,
+    @NotNull InspectionManager manager,
+    @NotNull GlobalInspectionContext globalInspectionContext) {
     if (!(refEntity instanceof RefClass)) {
       return null;
     }

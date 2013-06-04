@@ -72,6 +72,7 @@ public interface GlobalInspectionContext extends UserDataHolder {
    */
   boolean isSuppressed(@NotNull PsiElement element, String inspectionToolId);
 
+  @NotNull
   Project getProject();
 
   <T> T getExtension(Key<T> key);

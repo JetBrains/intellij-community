@@ -24,7 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -133,7 +133,7 @@ public class LibraryUtil {
         }
       }
     }
-    return VfsUtil.toVirtualFileArray(roots);
+    return VfsUtilCore.toVirtualFileArray(roots);
   }
 
   @Nullable

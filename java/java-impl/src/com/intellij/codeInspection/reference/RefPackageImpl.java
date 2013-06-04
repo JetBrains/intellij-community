@@ -26,6 +26,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -33,24 +34,25 @@ import javax.swing.*;
 public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   private final String myQualifiedName;
 
-  public RefPackageImpl(String name, RefManager refManager) {
+  public RefPackageImpl(@NotNull String name, @NotNull RefManager refManager) {
     super(getPackageSuffix(name), refManager);
     myQualifiedName = name;
   }
 
+  @NotNull
   @Override
   public String getQualifiedName() {
     return myQualifiedName;
   }
 
-  private static String getPackageSuffix(String fullName) {
+  private static String getPackageSuffix(@NotNull String fullName) {
     int dotIndex = fullName.lastIndexOf('.');
     return (dotIndex >= 0) ? fullName.substring(dotIndex + 1) : fullName;
   }
 
 
   @Override
-  public void accept(final RefVisitor visitor) {
+  public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override

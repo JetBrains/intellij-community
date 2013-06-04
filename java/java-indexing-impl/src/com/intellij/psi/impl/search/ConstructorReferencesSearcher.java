@@ -28,7 +28,7 @@ public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReferenc
         return aClass;
       }
     });
-    if (aClass == null) {
+    if (manager[0] == null) {
       return;
     }
     new ConstructorReferencesSearchHelper(manager[0])

@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
@@ -47,6 +48,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
     return ((RefClassImpl)getOwnerClass()).isSuspicious();
   }
 
+  @NotNull
   @Override
   public String getName() {
     return InspectionsBundle.message("inspection.reference.implicit.constructor.name", getOwnerClass().getName());
