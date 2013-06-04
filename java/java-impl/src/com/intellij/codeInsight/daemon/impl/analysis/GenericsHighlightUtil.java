@@ -350,6 +350,7 @@ public class GenericsHighlightUtil {
           return false;
         }
       }
+      if (psiClass instanceof PsiTypeParameter && psiClass.getExtendsListTypes().length != 0) return false;
     }
     if (!type.isRaw()) return true;
     //allow unchecked conversions in method calls but not in type declaration
@@ -1260,6 +1261,50 @@ public class GenericsHighlightUtil {
       }
     }
     return null;
+  }
+
+  public static HighlightInfo checkCannotPassInner(PsiJavaCodeReferenceElement ref) {
+    if (ref.getParent() instanceof PsiTypeElement) {
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+      if (psiClass != null) {
+        if (PsiTreeUtil.isAncestor(psiClass.getExtendsList(), ref, false) ||
+            PsiTreeUtil.isAncestor(psiClass.getImplementsList(), ref, false)) {
+          final PsiElement qualifier = ref.getQualifier();
+          if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() == psiClass) {
+            final PsiElement resolve = ref.resolve();
+            if (resolve instanceof PsiClass) {
+              final PsiClass containingClass = ((PsiClass)resolve).getContainingClass();
+              if (containingClass != null) {
+                if (psiClass.isInheritor(containingClass, true) || 
+                    unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getExtendsList()) ||
+                    unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getImplementsList())) {
+                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(((PsiClass)resolve).getName() + " is not accessible in current context").range(ref).create();
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(PsiClass containingClass,
+                                                                                              PsiReferenceList referenceList) {
+    if (referenceList != null) {
+      for (PsiJavaCodeReferenceElement referenceElement : referenceList.getReferenceElements()) {
+        if (!referenceElement.isQualified()) {
+          final PsiElement superClass = referenceElement.resolve();
+          if (superClass instanceof PsiClass) {
+            final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
+            if (superContainingClass != null && containingClass.isInheritor(superContainingClass, true)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }
 

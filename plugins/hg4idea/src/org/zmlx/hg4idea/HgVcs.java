@@ -189,6 +189,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
+  public boolean fileListenerIsSynchronous() {
+    return false;
+  }
+
+  @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
     return commitedChangesProvider;
   }

@@ -233,7 +233,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       public UsageSearcher create() {
         return new UsageSearcher() {
           @Override
-          public void generate(final Processor<Usage> processor) {
+          public void generate(@NotNull final Processor<Usage> processor) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {

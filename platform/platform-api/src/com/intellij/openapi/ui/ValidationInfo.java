@@ -27,6 +27,7 @@ import javax.swing.*;
  * @see com.intellij.openapi.ui.DialogWrapper#doValidate()
  */
 public final class ValidationInfo {
+  @NotNull
   public final String message;
   public final JComponent component;
 

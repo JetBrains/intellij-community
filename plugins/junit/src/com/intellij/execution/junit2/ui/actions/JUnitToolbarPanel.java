@@ -57,7 +57,7 @@ public class JUnitToolbarPanel extends ToolbarPanel {
         if (test == null) return;
         final Project project = jUnitModel.getProject();
         if (!ScrollToTestSourceAction.isScrollEnabled(model)) return;
-        final Location location = test.getInfo().getLocation(project);
+        final Location location = test.getInfo().getLocation(project, jUnitModel.getProperties().getScope());
         if (location != null) {
           final PsiClass aClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
           if (aClass != null && JUnitToolbarPanel.TEST_SUITE_CLASS_NAME.equals(aClass.getQualifiedName())) return;

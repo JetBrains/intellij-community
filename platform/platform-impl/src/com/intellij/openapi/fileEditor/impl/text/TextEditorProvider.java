@@ -35,6 +35,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -52,14 +53,17 @@ import java.beans.PropertyChangeListener;
  */
 public class TextEditorProvider implements FileEditorProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
+
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
 
-  @NonNls private static final String TYPE_ID = "text-editor";
-  @NonNls private static final String LINE_ATTR = "line";
-  @NonNls private static final String COLUMN_ATTR = "column";
-  @NonNls private static final String SELECTION_START_ATTR = "selection-start";
-  @NonNls private static final String SELECTION_END_ATTR = "selection-end";
+  @NonNls private static final String TYPE_ID                         = "text-editor";
+  @NonNls private static final String LINE_ATTR                       = "line";
+  @NonNls private static final String COLUMN_ATTR                     = "column";
+  @NonNls private static final String SELECTION_START_ATTR            = "selection-start";
+  @NonNls private static final String SELECTION_END_ATTR              = "selection-end";
   @NonNls private static final String VERTICAL_SCROLL_PROPORTION_ATTR = "vertical-scroll-proportion";
+  @NonNls private static final String VERTICAL_OFFSET_ATTR            = "vertical-offset";
+  @NonNls private static final String MAX_VERTICAL_OFFSET_ATTR        = "max-vertical-offset";
 
   public static TextEditorProvider getInstance() {
     return ApplicationManager.getApplication().getComponent(TextEditorProvider.class);
@@ -101,6 +105,12 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       state.SELECTION_START = Integer.parseInt(element.getAttributeValue(SELECTION_START_ATTR));
       state.SELECTION_END = Integer.parseInt(element.getAttributeValue(SELECTION_END_ATTR));
       state.VERTICAL_SCROLL_PROPORTION = Float.parseFloat(element.getAttributeValue(VERTICAL_SCROLL_PROPORTION_ATTR));
+      String verticalOffset = element.getAttributeValue(VERTICAL_OFFSET_ATTR);
+      String maxVerticalOffset = element.getAttributeValue(MAX_VERTICAL_OFFSET_ATTR);
+      if (!StringUtil.isEmpty(verticalOffset) && !StringUtil.isEmpty(maxVerticalOffset)) {
+        state.VERTICAL_SCROLL_OFFSET = Integer.parseInt(verticalOffset);
+        state.MAX_VERTICAL_SCROLL_OFFSET = Integer.parseInt(maxVerticalOffset);
+      }
     }
     catch (NumberFormatException ignored) {
     }
@@ -117,6 +127,8 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     element.setAttribute(SELECTION_START_ATTR, Integer.toString(state.SELECTION_START));
     element.setAttribute(SELECTION_END_ATTR, Integer.toString(state.SELECTION_END));
     element.setAttribute(VERTICAL_SCROLL_PROPORTION_ATTR, Float.toString(state.VERTICAL_SCROLL_PROPORTION));
+    element.setAttribute(VERTICAL_OFFSET_ATTR, Integer.toString(state.VERTICAL_SCROLL_OFFSET));
+    element.setAttribute(MAX_VERTICAL_OFFSET_ATTR, Integer.toString(state.MAX_VERTICAL_SCROLL_OFFSET));
   }
 
   @Override
@@ -188,6 +200,11 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
     // scrolling proportion restored slightly differs from what have been saved.
     state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
+    if (editor instanceof EditorEx) {
+      state.VERTICAL_SCROLL_OFFSET = editor.getScrollingModel().getVerticalScrollOffset();
+      state.MAX_VERTICAL_SCROLL_OFFSET = ((EditorEx)editor).getScrollPane().getVerticalScrollBar().getMaximum();
+    }
+    
     return state;
   }
 
@@ -195,10 +212,20 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     LogicalPosition pos = new LogicalPosition(state.LINE, state.COLUMN);
     editor.getCaretModel().moveToLogicalPosition(pos);
     editor.getSelectionModel().removeSelection();
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    EditorEx editorEx = editor instanceof EditorEx ? (EditorEx)editor : null;
+    boolean preciselyScrollVertically =
+      state.VERTICAL_SCROLL_OFFSET > 0
+      && editorEx != null
+      && editorEx.getScrollPane().getVerticalScrollBar().getMaximum() == state.MAX_VERTICAL_SCROLL_OFFSET;
+    if (preciselyScrollVertically) {
+      editor.getScrollingModel().scrollVertically(state.VERTICAL_SCROLL_OFFSET);
+    }
+    else {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-    if (state.VERTICAL_SCROLL_PROPORTION != -1) {
-      EditorUtil.setVerticalScrollProportion(editor, state.VERTICAL_SCROLL_PROPORTION);
+      if (state.VERTICAL_SCROLL_PROPORTION != -1) {
+        EditorUtil.setVerticalScrollProportion(editor, state.VERTICAL_SCROLL_PROPORTION);
+      }
     }
 
     final Document document = editor.getDocument();
@@ -211,8 +238,12 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       int endOffset = Math.min(state.SELECTION_END, document.getTextLength());
       editor.getSelectionModel().setSelection(startOffset, endOffset);
     }
-    ((EditorEx) editor).stopOptimizedScrolling();
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (editorEx != null && !preciselyScrollVertically) {
+      ((EditorEx) editor).stopOptimizedScrolling();
+    }
+    if (!preciselyScrollVertically) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {

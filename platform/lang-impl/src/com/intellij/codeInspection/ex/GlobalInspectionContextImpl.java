@@ -26,6 +26,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -682,10 +683,10 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       public void addProblemElement(RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
         for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
           if (problemDescriptor instanceof ProblemDescriptor) {
-            String problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
+            ProblemGroup problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
 
             if (problemGroup != null) {
-              DescriptorProviderInspection dummyWrapper = wrappersMap.get(problemGroup);
+              DescriptorProviderInspection dummyWrapper = wrappersMap.get(problemGroup.getProblemName());
 
               if (dummyWrapper != null) { // Else it's switched off
                 dummyWrapper.addProblemElement(refEntity, problemDescriptor);

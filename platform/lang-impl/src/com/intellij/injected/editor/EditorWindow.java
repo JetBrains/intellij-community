@@ -630,7 +630,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @Override
-  public void addFocusListener(@NotNull FocusChangeListener listener, Disposable parentDisposable) {
+  public void addFocusListener(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
     myDelegate.addFocusListener(listener, parentDisposable);
   }
 
@@ -794,7 +794,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
 
   @Override
   public void setPurePaintingMode(boolean enabled) {
-    myDelegate.setPurePaintingMode(enabled); 
+    myDelegate.setPurePaintingMode(enabled);
   }
 
   @Override

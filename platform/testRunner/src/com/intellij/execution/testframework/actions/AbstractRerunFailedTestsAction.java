@@ -40,6 +40,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -131,8 +132,9 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     TestFrameworkRunningModel model = getModel();
     if (model == null || model.getRoot() == null) return false;
     final List<? extends AbstractTestProxy> myAllTests = model.getRoot().getAllTests();
+    final GlobalSearchScope searchScope = model.getProperties().getScope();
     for (Object test : myAllTests) {
-      if (getFilter(project).shouldAccept((AbstractTestProxy)test)) return true;
+      if (getFilter(project, searchScope).shouldAccept((AbstractTestProxy)test)) return true;
     }
     return false;
   }
@@ -143,11 +145,11 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     final List<? extends AbstractTestProxy> myAllTests = model != null
                                                          ? model.getRoot().getAllTests()
                                                          : Collections.<AbstractTestProxy>emptyList();
-    return getFilter(project).select(myAllTests);
+    return getFilter(project, model != null ? model.getProperties().getScope() : GlobalSearchScope.allScope(project)).select(myAllTests);
   }
 
   @NotNull
-  protected Filter getFilter(Project project) {
+  protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
     return Filter.FAILED_OR_INTERRUPTED;
   }
 

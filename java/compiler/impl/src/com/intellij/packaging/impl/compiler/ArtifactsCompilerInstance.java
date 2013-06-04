@@ -151,12 +151,12 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
       return Collections.emptyList();
     }
 
-    DumbService.getInstance(getProject()).waitForSmartMode();
-    new ReadAction() {
-      protected void run(final Result result) {
+    DumbService.getInstance(getProject()).runReadActionInSmartMode(new Runnable() {
+      @Override
+      public void run() {
         collectItems(artifact, outputPath);
       }
-    }.execute();
+    });
     return new ArrayList<ArtifactCompilerCompileItem>(myBuilderContext.getProcessingItems());
   }
 

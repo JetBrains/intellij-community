@@ -19,6 +19,7 @@ package com.intellij.execution.junit2.info;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ClassBasedInfo extends TestInfo {
@@ -40,8 +41,8 @@ public abstract class ClassBasedInfo extends TestInfo {
   }
 
   @Nullable
-  public Location getLocation(final Project project) {
-    return myClass.getLocation(project);
+  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
+    return myClass.getLocation(project, searchScope);
   }
 
   public String getComment() {

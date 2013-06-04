@@ -64,6 +64,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestField();
   }
 
+  public void testLiteral() throws Exception {
+    doTestField();
+  }
+
   public void testEnumConstantOrdinal() throws Exception {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];

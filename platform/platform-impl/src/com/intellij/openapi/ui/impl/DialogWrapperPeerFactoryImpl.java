@@ -35,9 +35,18 @@ public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
     return new DialogWrapperPeerImpl(wrapper, canBeParent);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Deprecated
   @Override
   public DialogWrapperPeer createPeer(@NotNull final DialogWrapper wrapper, final boolean canBeParent, final boolean applicationModalIfPossible) {
-    return new DialogWrapperPeerImpl(wrapper, canBeParent, applicationModalIfPossible);
+    return new DialogWrapperPeerImpl(wrapper, null, canBeParent, applicationModalIfPossible);
+  }
+
+  @Override
+  public DialogWrapperPeer createPeer(@NotNull final DialogWrapper wrapper, final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
+    return new DialogWrapperPeerImpl(wrapper, owner, canBeParent, applicationModalIfPossible);
   }
 
   @Override

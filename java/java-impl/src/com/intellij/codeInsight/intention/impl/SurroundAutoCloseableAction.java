@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -63,6 +64,10 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
+      return;
+    }
+
     final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
     if (variable == null) return;
     final PsiExpression initializer = variable.getInitializer();

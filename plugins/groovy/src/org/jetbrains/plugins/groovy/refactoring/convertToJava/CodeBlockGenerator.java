@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -305,7 +305,7 @@ public class CodeBlockGenerator extends Generator {
     GenerationUtil.writeStatement(builder, context, labeledStatement, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
-        final String label = labeledStatement.getLabelName();
+        final String label = labeledStatement.getName();
         final GrStatement statement = labeledStatement.getStatement();
 
         builder.append(label).append(": ");
@@ -526,7 +526,10 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitFinallyClause(GrFinallyClause finallyClause) {
     builder.append("finally ");
-    finallyClause.getBody().accept(this);
+    final GrOpenBlock body = finallyClause.getBody();
+    if (body != null) {
+      body.accept(this);
+    }
   }
 
   @Override

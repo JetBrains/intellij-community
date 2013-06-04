@@ -27,11 +27,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,22 +119,16 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   @Nullable
   public String getActionId() {
+    final StringBuilder name = new StringBuilder();
+    name.append(AntConfiguration.getActionIdPrefix(myModel.getBuildFile().getProject()));
+
     final String modelName = myModel.getName();
-    if (modelName == null || modelName.length() == 0) {
-      return null;
+    if (!StringUtil.isEmptyOrSpaces(modelName)) {
+      name.append("_").append(modelName);
     }
-    final StringBuilder name = StringBuilderSpinAllocator.alloc();
-    try {
-      name.append(AntConfiguration.getActionIdPrefix(myModel.getBuildFile().getProject()));
-      name.append("_");
-      name.append(modelName);
-      name.append('_');
-      name.append(getName());
-      return name.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(name);
-    }
+
+    name.append('_').append(getName());
+    return name.toString();
   }
 
   @Nullable

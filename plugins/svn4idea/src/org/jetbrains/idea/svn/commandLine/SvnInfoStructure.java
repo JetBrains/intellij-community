@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import org.apache.subversion.javahl.ConflictDescriptor;
 import org.jetbrains.idea.svn.portable.ConflictActionConvertor;
 import org.jetbrains.idea.svn.portable.IdeaSVNInfo;
-import org.jetbrains.idea.svn.portable.OperationConvertor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.wc.*;
@@ -76,7 +75,8 @@ public class SvnInfoStructure {
       final SVNConflictAction action = ConflictActionConvertor.create(ConflictDescriptor.Action.valueOf(myTreeConflict.myAction));
       final SVNConflictReason reason = parseConflictReason(myTreeConflict.myReason);
       //final SVNConflictReason reason = ConflictReasonConvertor.convert(ConflictDescriptor.Reason.valueOf(myTreeConflict.myReason));
-      final SVNOperation operation = OperationConvertor.convert(ConflictDescriptor.Operation.valueOf(myTreeConflict.myOperation));
+      SVNOperation operation = SVNOperation.fromString(myTreeConflict.myOperation);
+      operation = operation == null ? SVNOperation.NONE : operation;
       return new SVNTreeConflictDescription(myFile, myKind, action, reason, operation,
                                             createVersion(myTreeConflict.mySourceLeft),
                                             createVersion(myTreeConflict.mySourceRight));

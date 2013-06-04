@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -69,7 +70,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
   }
 
-  protected void composeAdditionalDescription(final StringBuffer buf, final RefEntity refEntity) {}
+  protected void composeAdditionalDescription(@NotNull StringBuffer buf, @NotNull RefEntity refEntity) {}
 
   @Override
   public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
@@ -123,7 +124,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
   }
 
-  protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
+  protected void composeDescription(@NotNull CommonProblemDescriptor description, int i, @NotNull StringBuffer buf, @NotNull RefEntity refElement) {
     PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
     StringBuffer anchor = new StringBuffer();
     VirtualFile vFile = null;

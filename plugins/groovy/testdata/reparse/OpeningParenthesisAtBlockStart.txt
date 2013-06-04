@@ -51,7 +51,7 @@ Groovy script
       PsiElement(new line)('\n\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
-  PsiErrorElement:';' or new line expected
+  PsiErrorElement:Unexpected symbol
     PsiElement(})('}')
 ---
 Groovy script
@@ -111,5 +111,5 @@ Groovy script
       PsiWhiteSpace('\n\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
-  PsiErrorElement:';' or new line expected
+  PsiErrorElement:Unexpected symbol
     PsiElement(})('}')

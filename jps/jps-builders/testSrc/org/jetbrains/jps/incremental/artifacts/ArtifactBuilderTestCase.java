@@ -142,8 +142,10 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
       assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
       final File tempFile = new File(file.getParentFile(), "__" + newName);
       FileUtil.rename(file, tempFile);
-      FileUtil.copyContent(tempFile, new File(file.getParentFile(), newName));
+      File newFile = new File(file.getParentFile(), newName);
+      FileUtil.copyContent(tempFile, newFile);
       FileUtil.delete(tempFile);
+      change(newFile.getPath());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

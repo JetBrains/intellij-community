@@ -59,7 +59,7 @@ public class PsiSearchScopeUtil {
     if (context != null) file = context.getContainingFile();
     if (file == null) return false;
     VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile == null || globalScope.contains(file.getVirtualFile());
+    return virtualFile == null || globalScope.contains(virtualFile);
   }
 
   public static boolean isInScope(@NotNull LocalSearchScope local, @NotNull PsiElement element) {

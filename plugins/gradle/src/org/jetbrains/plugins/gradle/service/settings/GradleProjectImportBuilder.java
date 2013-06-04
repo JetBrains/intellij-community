@@ -24,14 +24,12 @@ import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExtern
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -122,20 +120,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     return candidate;
   }
 
-
-  @Override
-  protected void onProjectInit(@NotNull Project project) {
-    GradleSettings settings = (GradleSettings)getSettingsManager().getSettings(project, GradleConstants.SYSTEM_ID);
-    // TODO den implement
-//    settings.setPreferLocalInstallationToWrapper(getConfigurable().isPreferLocalInstallationToWrapper());
-//    settings.setGradleHome(getConfigurable().getGradleHomePath());
-
-    // Reset linked gradle home for default project (legacy bug).
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    // TODO den implement
-//    getSettingsManager().getSettings(defaultProject, GradleConstants.SYSTEM_ID).setLinkedExternalProjectPath(null);
-  }
-
+  @NotNull
   @Override
   protected File getExternalProjectConfigToUse(@NotNull File file) {
     if (file.isDirectory()) {

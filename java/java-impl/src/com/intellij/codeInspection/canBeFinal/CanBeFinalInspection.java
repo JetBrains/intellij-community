@@ -125,18 +125,18 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
 
   @Override
   @Nullable
-  public RefGraphAnnotator getAnnotator(final RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new CanBeFinalAnnotator(refManager);
   }
 
 
   @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
-                                                final AnalysisScope scope,
-                                                final InspectionManager manager,
-                                                final GlobalInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
+                                                @NotNull final AnalysisScope scope,
+                                                @NotNull final InspectionManager manager,
+                                                @NotNull final GlobalInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefJavaElement) {
       final RefJavaElement refElement = (RefJavaElement)refEntity;
       if (refElement instanceof RefParameter) return null;
@@ -177,8 +177,8 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor problemsProcessor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor problemsProcessor) {
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
       problemsProcessor.ignoreElement(entryPoint);
     }

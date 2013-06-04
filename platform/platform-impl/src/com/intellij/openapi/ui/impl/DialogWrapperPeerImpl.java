@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -170,14 +171,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     createDialog(owner, canBeParent);
   }
 
+  /** @see DialogWrapper#DialogWrapper(boolean, boolean)
+   */
+  @Deprecated
   public DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, final boolean canBeParent, final boolean applicationModalIfPossible) {
+    this(wrapper, null, canBeParent, applicationModalIfPossible);
+  }
+
+  public DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper,final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
     myWrapper = wrapper;
     myWindowManager = null;
     Application application = ApplicationManager.getApplication();
     if (application != null && application.hasComponent(WindowManager.class)) {
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
-    createDialog(null, canBeParent);
+    createDialog(owner, canBeParent);
     if (applicationModalIfPossible && !isHeadless()) {
       Dialog.ModalityType modalityType = Dialog.ModalityType.TOOLKIT_MODAL;
       if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
@@ -753,6 +761,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       setBackground(UIUtil.getPanelBackground());
 
+      if (!ApplicationManagerEx.getApplicationEx().isLoaded()) {
+        final Point loc = getLocation();
+        loc.y = Splash.BOUNDS.y + Splash.BOUNDS.height;
+        setLocation(loc);
+      }
       super.show();
     }
 

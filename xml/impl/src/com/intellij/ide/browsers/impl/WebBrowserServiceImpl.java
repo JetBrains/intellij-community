@@ -20,6 +20,8 @@ import com.intellij.ide.browsers.Urls;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
@@ -55,10 +57,17 @@ public class WebBrowserServiceImpl extends WebBrowserService {
     }
 
     if (!(preferLocalUrl && HtmlUtil.isHtmlFile(psiFile))) {
-      WebBrowserUrlProvider provider = getProvider(psiElement);
+      Pair<WebBrowserUrlProvider, Url> provider = getProvider(psiElement);
       if (provider != null) {
+        if (provider.second != null) {
+          return provider.second;
+        }
+
         try {
-          return provider.getUrl(psiElement, psiFile, virtualFile);
+          Url url = provider.first.getUrl(psiElement, psiFile, virtualFile);
+          if (url != null) {
+            return url;
+          }
         }
         catch (WebBrowserUrlProvider.BrowserException e) {
           if (!HtmlUtil.isHtmlFile(psiFile)) {
@@ -82,16 +91,17 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   }
 
   @Nullable
-  public static WebBrowserUrlProvider getProvider(@Nullable PsiElement element) {
+  public static Pair<WebBrowserUrlProvider, Url> getProvider(@Nullable PsiElement element) {
     PsiFile psiFile = element == null ? null : element.getContainingFile();
     if (psiFile == null) {
       return null;
     }
 
+    Ref<Url> result = Ref.create();
     List<WebBrowserUrlProvider> allProviders = Arrays.asList(WebBrowserUrlProvider.EP_NAME.getExtensions());
     for (WebBrowserUrlProvider urlProvider : DumbService.getInstance(element.getProject()).filterByDumbAwareness(allProviders)) {
-      if (urlProvider.canHandleElement(element, psiFile)) {
-        return urlProvider;
+      if (urlProvider.canHandleElement(element, psiFile, result)) {
+        return Pair.create(urlProvider, result.get());
       }
     }
     return null;

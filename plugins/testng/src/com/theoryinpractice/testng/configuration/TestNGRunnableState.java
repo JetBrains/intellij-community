@@ -37,15 +37,14 @@ import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -146,7 +145,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
     processHandler.addProcessListener(new ProcessAdapter() {
       private boolean myStarted = false;
-      
+
       @Override
       public void processTerminated(final ProcessEvent event) {
         unboundOutputRoot.flush();
@@ -195,7 +194,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         client.prepareListening(listener, port);
         myStarted = true;
         mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
-        ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
       }
 
       @Override
@@ -290,7 +289,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       @Override
       public void startNotified(final ProcessEvent event) {
         mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
-        ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
       }
     });
 

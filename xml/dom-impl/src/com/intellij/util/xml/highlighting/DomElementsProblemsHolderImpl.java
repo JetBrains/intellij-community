@@ -16,7 +16,7 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Condition;
@@ -129,7 +129,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
     return ContainerUtil.findAll(getProblems(domElement, true, withChildren), new Condition<DomElementProblemDescriptor>() {
       public boolean value(final DomElementProblemDescriptor object) {
-        return SeverityRegistrar.getInstance(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0;
+        return SeverityUtil.getSeverityRegistrar(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0;
       }
     });
 

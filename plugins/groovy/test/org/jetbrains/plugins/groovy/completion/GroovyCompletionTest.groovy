@@ -1135,9 +1135,11 @@ public class KeyVO {
     assert 'final' in myFixture.lookupElementStrings
   }
 
-  public void testSpaceTail() {
-    checkCompletion 'class A <caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
-    checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends<caret> ArrayList {}'
+  public void testSpaceTail1() {
+    checkCompletion 'class A ex<caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
+  }
+
+  public void testSpaceTail3() {
     checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements <caret> {}'
   }
 

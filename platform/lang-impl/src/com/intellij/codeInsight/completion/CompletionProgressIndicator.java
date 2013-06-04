@@ -46,6 +46,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -178,7 +179,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT, getProject())) {
             myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_DOT) +
-                                      " to choose the selected (or first) suggestion and insert a dot afterwards");
+                                      " to choose the selected (or first) suggestion and insert a dot afterwards", null);
           }
         } else {
           myLookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
@@ -188,15 +189,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER, getProject())) {
         myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
-                                      " to choose the selected (or first) suggestion");
+                                      " to choose the selected (or first) suggestion", null);
       }
       if (!myEditor.isOneLineMode() &&
           FeatureUsageTracker.getInstance()
             .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS, getProject())) {
         myLookup.addAdvertisement(CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN) + " and " +
                                   CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP) +
-                                  " will move caret down and up in the editor");
+                                  " will move caret down and up in the editor", null);
       }
+    } else if (DumbService.isDumb(getProject())) {
+      myLookup.addAdvertisement("Completion results might be incomplete until indexing is complete", MessageType.WARNING.getPopupBackground());
     }
 
     ProgressManager.checkCanceled();
@@ -333,7 +336,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         PerformanceWatcher.getInstance().dumpThreads(true);
       }
 
-      if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
+      if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion() && !DumbService.isDumb(getProject())) {
         final String text = DefaultCompletionContributor.getDefaultAdvertisementText(myParameters);
         if (text != null) {
           myLookup.setAdvertisementText(text);

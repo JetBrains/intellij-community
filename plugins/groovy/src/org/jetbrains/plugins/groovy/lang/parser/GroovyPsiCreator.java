@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentListImpl;
@@ -98,7 +97,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
 
     //Identifiers & literal
     if (elem == LITERAL) return new GrLiteralImpl(node);
-    if (elem == LABEL) return new GrLabelImpl(node);
 //    if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
     //Lists, maps etc...
     if (elem == LIST_OR_MAP) return new GrListOrMapImpl(node);

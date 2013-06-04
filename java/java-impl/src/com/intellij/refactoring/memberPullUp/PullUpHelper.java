@@ -215,6 +215,19 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     for (MemberInfo info : myMembersToMove) {
       if (info.getMember() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)info.getMember();
+        PsiMethod sibling = method;
+        PsiMethod anchor = null;
+        while (sibling != null) {
+          sibling = PsiTreeUtil.getNextSiblingOfType(sibling, PsiMethod.class);
+          if (sibling != null) {
+            anchor = MethodSignatureUtil
+              .findMethodInSuperClassBySignatureInDerived(method.getContainingClass(), myTargetSuperClass,
+                                                          sibling.getSignature(PsiSubstitutor.EMPTY), false);
+            if (anchor != null) {
+              break;
+            }
+          }
+        }
         PsiMethod methodCopy = (PsiMethod)method.copy();
         if (method.findSuperMethods(myTargetSuperClass).length == 0) {
           deleteOverrideAnnotationIfFound(methodCopy);
@@ -227,7 +240,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
 
           myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 
-          final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(methodCopy);
+          final PsiMember movedElement = anchor != null ? (PsiMember)myTargetSuperClass.addBefore(methodCopy, anchor) : (PsiMember)myTargetSuperClass.add(methodCopy);
           CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
           if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
             if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface() || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
@@ -258,7 +271,8 @@ public class PullUpHelper extends BaseRefactoringProcessor{
             superClassMethod.replace(methodCopy);
           }
           else {
-            final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(methodCopy);
+            final PsiMember movedElement =
+              anchor != null ? (PsiMember)myTargetSuperClass.addBefore(methodCopy, anchor) : (PsiMember)myTargetSuperClass.add(methodCopy);
             myMembersAfterMove.add(movedElement);
           }
           method.delete();

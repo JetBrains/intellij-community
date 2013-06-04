@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -175,7 +175,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     if (highlights == null) return;
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
-      if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
+      if (SeverityUtil.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
         result.add(new CodeSmellInfo(document, getDescription(highlightInfo),
                                      new TextRange(highlightInfo.startOffset, highlightInfo.endOffset), severity));
       }

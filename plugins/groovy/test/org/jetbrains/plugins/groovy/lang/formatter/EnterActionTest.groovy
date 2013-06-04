@@ -349,5 +349,21 @@ def cl =  {
 '''
   }
 
+  void testIndentAfterLabelColon() {
+    doTest('''
+class A extends spock.lang.Specification {
+  def 'test'() {
+    abc:<caret>
+  }
+}
+''', '''
+class A extends spock.lang.Specification {
+  def 'test'() {
+    abc:
+      <caret>
+  }
+}
+''')
+  }
 }
 

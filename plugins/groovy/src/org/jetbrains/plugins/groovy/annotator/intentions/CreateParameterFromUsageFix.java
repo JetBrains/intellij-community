@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -55,7 +54,7 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-public class CreateParameterFromUsageFix extends Intention implements IntentionAction, MethodOrClosureScopeChooser.JBPopupOwner {
+public class CreateParameterFromUsageFix extends Intention implements MethodOrClosureScopeChooser.JBPopupOwner {
   private final String myName;
   private JBPopup myEnclosingMethodsPopup = null;
 

@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -391,8 +390,13 @@ public class FindUsagesManager implements JDOMExternalizable {
         }
         final Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<UsageInfo>(new Processor<UsageInfo>() {
           @Override
-          public boolean process(UsageInfo usageInfo) {
-            return processor.process(UsageInfoToUsageConverter.convert(descriptor, usageInfo));
+          public boolean process(final UsageInfo usageInfo) {
+            Usage usage = ApplicationManager.getApplication().runReadAction(new Computable<Usage>() {
+              public Usage compute() {
+                return UsageInfoToUsageConverter.convert(descriptor, usageInfo);
+              }
+            });
+            return processor.process(usage);
           }
         });
         final List<? extends PsiElement> elements =
@@ -434,10 +438,16 @@ public class FindUsagesManager implements JDOMExternalizable {
             }
           });
           PsiSearchHelper.SERVICE.getInstance(project)
-            .processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
+            .processRequests(options.fastTrack, new Processor<PsiReference>() {
               @Override
-              public boolean processInReadAction(final PsiReference ref) {
-                return !ref.getElement().isValid() || usageInfoProcessor.process(new UsageInfo(ref));
+              public boolean process(final PsiReference ref) {
+                UsageInfo info = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
+                  public UsageInfo compute() {
+                    if (!ref.getElement().isValid()) return null;
+                    return new UsageInfo(ref);
+                  }
+                });
+                return info == null || usageInfoProcessor.process(info);
               }
             });
         }

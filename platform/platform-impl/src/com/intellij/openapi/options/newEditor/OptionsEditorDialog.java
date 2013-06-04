@@ -58,7 +58,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
    */
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups,
                              @Nullable Configurable preselectedConfigurable, boolean applicationModalIfPossible) {
-    super(true, applicationModalIfPossible);
+    super(project, true, applicationModalIfPossible);
     init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups, project));
   }
 
@@ -68,7 +68,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
    */
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups,
                              @NotNull String preselectedConfigurableDisplayName, boolean applicationModalIfPossible) {
-    super(true, applicationModalIfPossible);
+    super(project, true, applicationModalIfPossible);
     init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName, project));
   }
 

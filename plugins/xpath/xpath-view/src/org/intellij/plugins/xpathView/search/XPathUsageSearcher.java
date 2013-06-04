@@ -45,6 +45,7 @@ import org.jaxen.XPath;
 import org.jaxen.pattern.Pattern;
 import org.jaxen.pattern.PatternParser;
 import org.jaxen.saxpath.SAXPathException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -67,7 +68,7 @@ class XPathUsageSearcher implements UsageSearcher {
         myManager = PsiManager.getInstance(myProject);
     }
 
-    public void generate(final Processor<Usage> processor) {
+    public void generate(@NotNull final Processor<Usage> processor) {
         Runnable runnable = new Runnable() {
             public void run() {
                 myIndicator.setIndeterminate(true);

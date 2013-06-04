@@ -163,7 +163,7 @@ public class UpdateHighlightersUtil {
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
     final boolean myInfoIsError = isSevere(info, severityRegistrar);
     Processor<HighlightInfo> otherHighlightInTheWayProcessor = new Processor<HighlightInfo>() {
       @Override
@@ -235,7 +235,7 @@ public class UpdateHighlightersUtil {
     final MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     assertMarkupConsistent(markup, project);
 
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
 
@@ -308,7 +308,7 @@ public class UpdateHighlightersUtil {
                                      final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     DaemonCodeAnalyzerImpl.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override

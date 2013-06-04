@@ -117,7 +117,8 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
         IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent;
         finished = handler.deleteChildren(parent, children);
       }
-      else if (parent.getLayout() instanceof IComponentDeletionParticipant) {
+      else if (parent != null && /*check root*/
+               parent.getLayout() instanceof IComponentDeletionParticipant) {
         IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent.getLayout();
         finished = handler.deleteChildren(parent, children);
       }

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 /**
  * @author nik
@@ -49,6 +50,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     final Socket socket = createSocket();
     setPort(socket.getPort());
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         try {
           attachToSocket(socket);
@@ -63,7 +65,16 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
 
   @NotNull
   private Socket createSocket() throws IOException {
-    final InetAddress host = myHost != null ? myHost : InetAddress.getLocalHost();
+    InetAddress host = myHost;
+    if (host == null) {
+      try {
+        host = InetAddress.getLocalHost();
+      }
+      catch (UnknownHostException ignored) {
+        host = InetAddress.getByName(null);
+      }
+    }
+
     IOException exc = null;
     for (int i = 0; i < myPortsNumberToTry; i++) {
       int port = myInitialPort + i;
@@ -98,7 +109,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
             //noinspection BusyWait
             Thread.sleep(CONNECTION_ATTEMPT_DELAY);
           }
-          setStatus(ConnectionStatus.CONNECTION_FAILED, "Cannot connect to " + myHost + ", the maximum number of connection attempts exceeded");
+          setStatus(ConnectionStatus.CONNECTION_FAILED, "Cannot connect to " + (myHost != null ? myHost : "localhost") + ", the maximum number of connection attempts exceeded");
         }
         catch (InterruptedException ignored) {
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-  import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -37,13 +37,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author ilyas
  */
-public abstract class CreateClassActionBase implements IntentionAction {
+public abstract class CreateClassActionBase extends Intention {
   private CreateClassKind myType;
 
   protected final GrReferenceElement myRefElement;
@@ -77,7 +79,7 @@ public abstract class CreateClassActionBase implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myRefElement.isValid();
+    return myRefElement.isValid() && ModuleUtilCore.findModuleForPsiElement(myRefElement) != null;
   }
 
   public boolean startInWriteAction() {
@@ -167,5 +169,16 @@ public abstract class CreateClassActionBase implements IntentionAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
     return dialog.getTargetDirectory();
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return myRefElement.isValid();
+      }
+    };
   }
 }

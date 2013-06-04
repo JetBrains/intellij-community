@@ -491,8 +491,6 @@ public class AllIcons {
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.png"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
-    public static final Icon Widescreen_off = IconLoader.getIcon("/general/widescreen_off.png"); // 16x16
-    public static final Icon Widescreen_on = IconLoader.getIcon("/general/widescreen_on.png"); // 16x16
 
   }
   
@@ -879,6 +877,21 @@ public class AllIcons {
     public static final Icon Sorted = IconLoader.getIcon("/objectBrowser/sorted.png"); // 16x16
     public static final Icon SortedByUsage = IconLoader.getIcon("/objectBrowser/sortedByUsage.png"); // 16x16
     public static final Icon VisibilitySort = IconLoader.getIcon("/objectBrowser/visibilitySort.png"); // 16x16
+
+  }
+  
+  public static class Preferences {
+    public static final Icon Appearance = IconLoader.getIcon("/preferences/Appearance.png"); // 32x32
+    public static final Icon CodeStyle = IconLoader.getIcon("/preferences/CodeStyle.png"); // 32x32
+    public static final Icon Compiler = IconLoader.getIcon("/preferences/Compiler.png"); // 32x32
+    public static final Icon Editor = IconLoader.getIcon("/preferences/Editor.png"); // 32x32
+    public static final Icon FileColors = IconLoader.getIcon("/preferences/FileColors.png"); // 32x32
+    public static final Icon FileTypes = IconLoader.getIcon("/preferences/FileTypes.png"); // 32x32
+    public static final Icon General = IconLoader.getIcon("/preferences/General.png"); // 32x32
+    public static final Icon Keymap = IconLoader.getIcon("/preferences/Keymap.png"); // 32x32
+    public static final Icon Plugins = IconLoader.getIcon("/preferences/Plugins.png"); // 32x32
+    public static final Icon Updates = IconLoader.getIcon("/preferences/Updates.png"); // 32x32
+    public static final Icon VersionControl = IconLoader.getIcon("/preferences/VersionControl.png"); // 32x32
 
   }
   

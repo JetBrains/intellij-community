@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -143,6 +144,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, StubIdList>, IOException>() {
             @Override
             public MapIndexStorage<K, StubIdList> compute() throws IOException {
+              final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+              if (indicator != null) {
+                indicator.setIndeterminate(true);
+              }
               return new MapIndexStorage<K, StubIdList>(
                 IndexInfrastructure.getStorageFile(indexKey),
                 extension.getKeyDescriptor(),

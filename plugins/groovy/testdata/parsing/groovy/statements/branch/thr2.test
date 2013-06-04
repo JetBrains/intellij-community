@@ -7,5 +7,5 @@ Groovy script
     PsiErrorElement:Expression expected
       <empty list>
   PsiElement(new line)('\n')
-  PsiErrorElement:';' or new line expected
+  PsiErrorElement:Unexpected symbol
     PsiElement(wrong token)('#')

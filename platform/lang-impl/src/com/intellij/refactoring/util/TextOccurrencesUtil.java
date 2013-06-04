@@ -71,8 +71,12 @@ public class TextOccurrencesUtil {
 
     return helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
       @Override
-      public boolean process(PsiFile psiFile, int startOffset, int endOffset) {
-        UsageInfo usageInfo = factory.createUsageInfo(psiFile, startOffset, endOffset);
+      public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
+        UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
+          public UsageInfo compute() {
+            return factory.createUsageInfo(psiFile, startOffset, endOffset);
+          }
+        });
         return usageInfo == null || processor.process(usageInfo);
       }
     }, searchScope);

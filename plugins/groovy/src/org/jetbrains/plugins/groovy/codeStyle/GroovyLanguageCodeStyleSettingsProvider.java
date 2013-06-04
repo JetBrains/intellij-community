@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -32,6 +33,11 @@ import javax.swing.*;
  * @author Rustam Vishnyakov
  */
 public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+
+  public static final String IN_SPOCK_ONLY = "In Spock only";
+  public static final String ABSOLUTE = "Absolute";
+  public static final String RELATIVE = "Relative";
+
   @NotNull
   @Override
   public Language getLanguage() {
@@ -222,7 +228,8 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_LIST_OR_MAP", "List and maps literals", CodeStyleSettingsCustomizable.SPACES_WITHIN);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_CLOSURE_LBRACE", "Closure left brace in method calls", CodeStyleSettingsCustomizable.SPACES_BEFORE_LEFT_BRACE);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_GSTRING_INJECTION_BRACES", "GString injection braces", CodeStyleSettingsCustomizable.SPACES_WITHIN);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_TUPLE_EXPRESSION", "Tuple assignment expression", CodeStyleSettingsCustomizable.SPACES_WITHIN);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_TUPLE_EXPRESSION", "Tuple assignment expression",
+                                CodeStyleSettingsCustomizable.SPACES_WITHIN);
       return;
     }
     if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
@@ -258,6 +265,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     defaultSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     //defaultSettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    defaultSettings.getIndentOptions().LABEL_INDENT_SIZE = 2;
     return defaultSettings;
   }
 
@@ -273,13 +281,16 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     }
   }
 
+
+
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new SmartIndentOptionsEditor() {
       private JTextField myLabelIndent;
       private JLabel myLabelIndentLabel;
 
-      private JCheckBox myLabelIndentAbsolute;
+      private JComboBox myLabelIndentStyle;
+      private JBLabel myStyleLabel;
 
       protected void addComponents() {
         super.addComponents();
@@ -287,41 +298,65 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         myLabelIndent = new JTextField(4);
         add(myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent")), myLabelIndent);
 
-        myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
-        add(myLabelIndentAbsolute, true);
+        myStyleLabel = new JBLabel("Label indent style:");
+
+        myLabelIndentStyle = new JComboBox(new Object[] {IN_SPOCK_ONLY, ABSOLUTE, RELATIVE});
+        add(myStyleLabel, myLabelIndentStyle);
       }
 
       public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         boolean isModified = super.isModified(settings, options);
 
         isModified |= isFieldModified(myLabelIndent, options.LABEL_INDENT_SIZE);
-        isModified |= isFieldModified(myLabelIndentAbsolute, options.LABEL_INDENT_ABSOLUTE);
-
+        isModified |= isLabelStyleModified(options.LABEL_INDENT_ABSOLUTE, settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS);
         return isModified;
+      }
+
+      private boolean isLabelStyleModified(boolean absolute, boolean relative) {
+        if (absolute) {
+          return !ABSOLUTE.equals(myLabelIndentStyle.getSelectedItem());
+        }
+        else if (relative) {
+          return !RELATIVE.equals(myLabelIndentStyle.getSelectedItem());
+        }
+        else {
+          return !IN_SPOCK_ONLY.equals(myLabelIndentStyle.getSelectedItem());
+        }
       }
 
       public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         super.apply(settings, options);
         options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, Integer.MIN_VALUE, options.LABEL_INDENT_SIZE);
-        options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
+        options.LABEL_INDENT_ABSOLUTE = ABSOLUTE.equals(myLabelIndentStyle.getSelectedItem());
+        settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS = RELATIVE
+          .equals(myLabelIndentStyle.getSelectedItem());
       }
 
       public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
         super.reset(settings, options);
         myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
-        myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);
+        if (options.LABEL_INDENT_ABSOLUTE) {
+          myLabelIndentStyle.setSelectedItem(ABSOLUTE);
+        }
+        else if(settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS) {
+          myLabelIndentStyle.setSelectedItem(RELATIVE);
+        }
+        else {
+          myLabelIndentStyle.setSelectedItem(IN_SPOCK_ONLY);
+        }
       }
 
       public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         myLabelIndent.setEnabled(enabled);
         myLabelIndentLabel.setEnabled(enabled);
-        myLabelIndentAbsolute.setEnabled(enabled);
+        myStyleLabel.setEnabled(enabled);
+        myLabelIndentStyle.setEnabled(enabled);
       }
     };
   }
-  
-  
+
+
 
   private final static String INDENT_OPTIONS_SAMPLE =
     /*
@@ -336,7 +371,22 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "  }\n" +
     "  return Math.max(arg,\n" +
     "      0)\n" +
-    "}";
+    "}\n\n" +
+    "class HelloSpock extends spock.lang.Specification {\n" +
+    "  def \"length of Spock's and his friends' names\"() {\n" +
+    "    expect:\n" +
+    "    name.size() == length\n" +
+    "\n" +
+    "    where:\n" +
+    "    name | length | foo\n" +
+    "    \"Spock\" | 5\n" +
+    "    \"Kirk\" | 4 | xxx | yyy\n" +
+    "    \"Scotty\" | 6 |dddddddddd | fff\n" +
+    "\n" +
+    "    //aaa\n" +
+    "    a | b | c\n" +
+    "  }\n" +
+    "}\n";
   
   private final static String SPACING_SAMPLE =
     "class Foo {\n" +

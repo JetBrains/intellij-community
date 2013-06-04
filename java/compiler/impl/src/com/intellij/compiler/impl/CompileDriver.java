@@ -1959,8 +1959,7 @@ public class CompileDriver {
     finally {
       CompilerUtil.refreshIOFiles(filesToRefresh);
       if (!generatedFiles.isEmpty()) {
-        DumbService.getInstance(myProject).waitForSmartMode();
-        List<VirtualFile> vFiles = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
+        List<VirtualFile> vFiles = DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<List<VirtualFile>>() {
           public List<VirtualFile> compute() {
             final ArrayList<VirtualFile> vFiles = new ArrayList<VirtualFile>(generatedFiles.size());
             for (File generatedFile : generatedFiles) {
@@ -2162,8 +2161,7 @@ public class CompileDriver {
     final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
     final Set<String> allUrls = new HashSet<String>();
     final IOException[] ex = {null};
-    DumbService.getInstance(myProject).waitForSmartMode();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
       public void run() {
         try {
           for (FileProcessingCompiler.ProcessingItem item : items) {

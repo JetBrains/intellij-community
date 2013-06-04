@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import git4idea.GitPlatformFacade
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
+import org.jetbrains.annotations.NotNull
 
-import static com.intellij.dvcs.test.Executor.*
-import static git4idea.test.GitExecutor.*
+import static com.intellij.dvcs.test.Executor.cd
+import static com.intellij.dvcs.test.Executor.touch
+import static git4idea.test.GitExecutor.git
 
 /**
  *
@@ -43,10 +45,8 @@ class GitTestInitUtil {
     // the constructor and notifyListeners() should probably be private
     // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
     GitRepository repository = new GitRepositoryImpl(new MockVirtualFile(rootDir), platformFacade, project, project, true) {
-      @Override
-      protected void notifyListeners() {
-      }
 
+      @NotNull
       @Override
       String getPresentableUrl() {
         return rootDir;

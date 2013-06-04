@@ -70,6 +70,13 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("@NotNull method SimpleReturn.test must not return null", instance, method);
   }
 
+  public void testSimpleReturnWithMessage() throws Exception {
+    Class testClass = prepareTest();
+    Object instance = testClass.newInstance();
+    Method method = testClass.getMethod("test");
+    verifyCallThrowsException("This method cannot return null", instance, method);
+  }
+
   public void testMultipleReturns() throws Exception {
     Class testClass = prepareTest();
     Object instance = testClass.newInstance();
@@ -84,10 +91,23 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("Argument 0 for @NotNull parameter of SimpleParam.test must not be null", instance, method, (Object)null);
   }
 
+  public void testSimpleParamWithMessage() throws Exception {
+    Class testClass = prepareTest();
+    Object instance = testClass.newInstance();
+    Method method = testClass.getMethod("test", Object.class);
+    verifyCallThrowsException("SimpleParamWithMessage.test(o) cant be null", instance, method, (Object)null);
+  }
+
   public void testConstructorParam() throws Exception {
     Class testClass = prepareTest();
     Constructor method = testClass.getConstructor(Object.class);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of ConstructorParam.<init> must not be null", null, method, (Object)null);
+  }
+
+  public void testConstructorParamWithMessage() throws Exception {
+    Class testClass = prepareTest();
+    Constructor method = testClass.getConstructor(Object.class);
+    verifyCallThrowsException("ConstructorParam.ConstructorParam.o cant be null", null, method, (Object)null);
   }
 
   public void testEnumConstructor() throws Exception {

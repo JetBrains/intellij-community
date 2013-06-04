@@ -19,7 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +42,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class DumbService {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbService");
 
   /**
    * @see com.intellij.openapi.project.Project#getMessageBus()
@@ -56,12 +60,72 @@ public abstract class DumbService {
   }
 
   /**
-   * Run the runnable when dumb mode ends
+   * Executes the runnable immediately if not in dumb mode, or on AWT Event Dispatch thread when the dumb mode ends.
    * @param runnable runnable to run
    */
   public abstract void runWhenSmart(Runnable runnable);
 
+  /**
+   * Pause the current thread until dumb mode ends and then continue execution.
+   * NOTE: there are no guarantees that a new dumb mode won't begin before the next statement.
+   * Hence: use with care. Consider using {@link #runWhenSmart(Runnable)}, {@link #runReadActionInSmartMode(Runnable)} or {@link #repeatUntilPassesInSmartMode(Runnable)} instead
+   */
   public abstract void waitForSmartMode();
+
+  /**
+   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
+   */
+  public <T> T runReadActionInSmartMode(final Computable<T> r) {
+    final Ref<T> result = new Ref<T>();
+    runReadActionInSmartMode(new Runnable() {
+      @Override
+      public void run() {
+        result.set(r.compute());
+      }
+    });
+    return result.get();
+  }
+
+  /**
+   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
+   */
+  public void runReadActionInSmartMode(final Runnable r) {
+    while (true) {
+      waitForSmartMode();
+      boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          if (isDumb()) {
+            return false;
+          }
+          r.run();
+          return true;
+        }
+      });
+      if (success) break;
+    }
+  }
+
+  /**
+   * Pause the current thread until dumb mode ends, and then attempt to execute the runnable. If it fails due to another dumb mode having started,
+   * try again until the runnable is able to complete successfully.
+   * It makes sense to use this method when you have a long-running activity consisting of many small read actions, and you don't want to
+   * use a single long read action in order to keep the IDE responsive.
+   * 
+   * @see #runReadActionInSmartMode(Runnable) 
+   */
+  public void repeatUntilPassesInSmartMode(final Runnable r) {
+    while (true) {
+      waitForSmartMode();
+      try {
+        r.run();
+        return;
+      }
+      catch (IndexNotReadyException e) {
+        LOG.info(e);
+      }
+    }
+  }
 
   /**
    * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode

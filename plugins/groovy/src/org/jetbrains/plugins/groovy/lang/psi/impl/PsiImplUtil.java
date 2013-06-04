@@ -814,4 +814,17 @@ public class PsiImplUtil {
     }
     return result.toArray(new GrStatement[result.size()]);
   }
+
+  public static GrNamedArgument findNamedArgument(final GrNamedArgumentsOwner namedArgumentOwner,
+                                                  String label) {
+    for (PsiElement cur = namedArgumentOwner.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrNamedArgument) {
+        if (label.equals(((GrNamedArgument)cur).getLabelName())) {
+          return (GrNamedArgument)cur;
+        }
+      }
+    }
+
+    return null;
+  }
 }

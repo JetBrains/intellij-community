@@ -39,8 +39,6 @@ public class CodeCompletionPanel {
   private JCheckBox myCbAutocompletion;
   private JCheckBox myCbAutopopupJavaDoc;
   private JTextField myAutopopupJavaDocField;
-  private JCheckBox myCbAutocompleteCommonPrefix;
-  private JCheckBox myCbShowStaticAfterInstance;
 
   private JCheckBox myCbOnCodeCompletion;
   private JCheckBox myCbOnSmartTypeCompletion;
@@ -65,10 +63,10 @@ public class CodeCompletionPanel {
     String basicShortcut = KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION));
     String smartShortcut = KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION));
     if (StringUtil.isNotEmpty(basicShortcut)) {
-      myCbOnCodeCompletion.setText(myCbOnCodeCompletion.getText() + " (" + basicShortcut + ")");
+      myCbOnCodeCompletion.setText(myCbOnCodeCompletion.getText() + " ( " + basicShortcut + " )");
     }
     if (StringUtil.isNotEmpty(smartShortcut)) {
-      myCbOnSmartTypeCompletion.setText(myCbOnSmartTypeCompletion.getText() + " (" + smartShortcut + ")");
+      myCbOnSmartTypeCompletion.setText(myCbOnSmartTypeCompletion.getText() + " ( " + smartShortcut + " )");
     }
 
     myCbAutocompletion.addActionListener(
@@ -99,9 +97,7 @@ public class CodeCompletionPanel {
      }
    );
 
-    hideOption(myCbShowStaticAfterInstance, OptionId.COMPLETION_SHOW_STATIC_AFTER_IMPORT);
     hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
-    myCbAutocompleteCommonPrefix.setVisible(false);
 
     reset();
   }
@@ -133,8 +129,6 @@ public class CodeCompletionPanel {
 
     myCbOnCodeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     myCbOnSmartTypeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
-    myCbAutocompleteCommonPrefix.setSelected(codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
-    myCbShowStaticAfterInstance.setSelected(codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
 
@@ -160,8 +154,6 @@ public class CodeCompletionPanel {
     codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = myCbSelectByChars.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION = myCbOnCodeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myCbOnSmartTypeCompletion.isSelected();
-    codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX = myCbAutocompleteCommonPrefix.isSelected();
-    codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE = myCbShowStaticAfterInstance.isSelected();
     codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = myCbShowFullParameterSignatures.isSelected();
 
     codeInsightSettings.AUTO_POPUP_PARAMETER_INFO = myCbParameterInfoPopup.isSelected();
@@ -189,8 +181,6 @@ public class CodeCompletionPanel {
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     isModified |= isModified(myCbSelectByChars, codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS);
     isModified |= isModified(myCbOnSmartTypeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
-    isModified |= isModified(myCbAutocompleteCommonPrefix, codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
-    isModified |= isModified(myCbShowStaticAfterInstance, codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
     isModified |= isModified(myCbShowFullParameterSignatures, codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
     isModified |= isModified(myCbParameterInfoPopup, codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     isModified |= isModified(myCbAutocompletion, codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);

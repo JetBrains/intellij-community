@@ -17,8 +17,6 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +31,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -233,12 +230,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
 
     if (!nonWatched.isEmpty()) {
+      String message = ApplicationBundle.message("watcher.non.watchable.project");
+      watcher.notifyOnFailure(message, null);
       LOG.info("unwatched roots: " + nonWatched);
       LOG.info("manual watches: " + manualWatchRoots);
-      String title = ApplicationBundle.message("watcher.slow.sync");
-      String message = ApplicationBundle.message("watcher.non.watchable.project");
-      StringUtil.join(nonWatched, "<br>");
-      Notifications.Bus.notify(FileWatcher.NOTIFICATION_GROUP.getValue().createNotification(title, message, NotificationType.WARNING, null));
     }
   }
 

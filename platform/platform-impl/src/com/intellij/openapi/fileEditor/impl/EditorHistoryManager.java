@@ -156,7 +156,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     }
   }
 
-  private void updateHistoryEntry(@Nullable final VirtualFile file, final boolean changeEntryOrderOnly) {
+  public void updateHistoryEntry(@Nullable final VirtualFile file, final boolean changeEntryOrderOnly) {
     updateHistoryEntry(file, null, null, changeEntryOrderOnly);
   }
 

@@ -61,9 +61,9 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public void runInspection(final AnalysisScope scope, final InspectionManager manager,
-    final GlobalInspectionContext context,
-    final ProblemDescriptionsProcessor processor) {
+  public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager,
+    @NotNull final GlobalInspectionContext context,
+    @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = context.getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final SearchScope searchScope = scope.toSearchScope();

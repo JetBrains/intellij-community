@@ -473,4 +473,14 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      }
    }
 
+   public void testAutoImportIgnoresUnresolvedImportReferences() throws Throwable {
+     @NonNls String text = "package x; import xxx.yyy.ArrayList; class S {{ ArrayList<caret> r; }}";
+     configureByText(StdFileTypes.JAVA, text);
+
+     PsiJavaFile javaFile = (PsiJavaFile)getFile();
+     PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset()-1);
+     ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
+     assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
+   }
+
 }

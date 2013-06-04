@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public class RefModuleImpl extends RefEntityImpl implements RefModule {
   private final Module myModule;
 
-  protected RefModuleImpl(Module module, final RefManager manager) {
+  protected RefModuleImpl(Module module, @NotNull RefManager manager) {
     super(module.getName(), manager);
     myModule = module;
     ((RefProjectImpl)manager.getRefProject()).add(this);
@@ -43,7 +43,7 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   @Override
-  public void accept(final RefVisitor refVisitor) {
+  public void accept(@NotNull final RefVisitor refVisitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {

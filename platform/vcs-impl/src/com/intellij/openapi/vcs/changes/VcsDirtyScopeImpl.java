@@ -306,7 +306,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
         for (Map.Entry<VirtualFile, THashSet<FilePath>> entry : myDirtyFiles.entrySet()) {
           final VirtualFile groupRoot = entry.getKey();
-          if (VfsUtilCore.isAncestor(vcsRoot, groupRoot, false)) {
+          if (groupRoot != null && VfsUtilCore.isAncestor(vcsRoot, groupRoot, false)) {
             final THashSet<FilePath> files = entry.getValue();
             if (files != null) {
               for (Iterator<FilePath> it = files.iterator(); it.hasNext();) {

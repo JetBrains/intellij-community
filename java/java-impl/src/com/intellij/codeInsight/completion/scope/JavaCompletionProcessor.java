@@ -52,6 +52,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private PsiElement myDeclarationHolder = null;
   private final Set<Object> myResultNames = new THashSet<Object>();
   private final List<CompletionElement> myResults = new ArrayList<CompletionElement>();
+  private final List<CompletionElement> myFilteredResults = new ArrayList<CompletionElement>();
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
@@ -200,10 +201,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return true;
     }
 
-    if (!(myElement.getParent() instanceof PsiMethodReferenceExpression) && !isStaticsOk(element)) {
-      return true;
-    }
-
     if (element instanceof PsiPackage && myScope instanceof PsiClass && !isQualifiedContext()) {
       return true;
     }
@@ -211,7 +208,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (satisfies(element, state) && isAccessible(element)) {
       CompletionElement element1 = new CompletionElement(element, state.get(PsiSubstitutor.KEY));
       if (myResultNames.add(element1.getUniqueId())) {
-        myResults.add(element1);
+        StaticProblem sp = myElement.getParent() instanceof PsiMethodReferenceExpression ? StaticProblem.none : getStaticProblem(element);
+        if (sp != StaticProblem.instanceAfterStatic) {
+          (sp == StaticProblem.staticAfterInstance ? myFilteredResults : myResults).add(element1);
+        }
       }
     }
     return true;
@@ -222,16 +222,16 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return elementParent instanceof PsiQualifiedReference && ((PsiQualifiedReference)elementParent).getQualifier() != null;
   }
 
-  private boolean isStaticsOk(PsiElement element) {
+  private StaticProblem getStaticProblem(PsiElement element) {
     if (myOptions.showInstanceInStaticContext && !isQualifiedContext()) {
-      return true;
+      return StaticProblem.none;
     }
     if (element instanceof PsiModifierListOwner) {
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
       if (myStatic) {
         if (!(element instanceof PsiClass) && !modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
           // we don't need non static method in static context.
-          return false;
+          return StaticProblem.instanceAfterStatic;
         }
       }
       else {
@@ -239,11 +239,11 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
             && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
             && !myMembersFlag) {
           // according settings we don't need to process such fields/methods
-          return false;
+          return StaticProblem.staticAfterInstance;
         }
       }
     }
-    return true;
+    return StaticProblem.none;
   }
 
   public boolean satisfies(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -275,12 +275,16 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
-  public Iterable<CompletionElement> getResults(){
+  public Iterable<CompletionElement> getResults() {
+    if (myResults.isEmpty()) {
+      return myFilteredResults;
+    }
     return myResults;
   }
 
   public void clear() {
     myResults.clear();
+    myFilteredResults.clear();
   }
 
   @Override
@@ -350,4 +354,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
     }
   }
+  
+  private enum StaticProblem { none, staticAfterInstance, instanceAfterStatic }
 }

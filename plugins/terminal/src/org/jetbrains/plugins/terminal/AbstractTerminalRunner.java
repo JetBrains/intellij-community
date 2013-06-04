@@ -95,6 +95,8 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(null, processHandler, panel, getTerminalConnectionName(process));
 
+    contentDescriptor.setAutoFocusContent(true);
+
     toolbarActions.add(createCloseAction(defaultExecutor, contentDescriptor));
 
     showConsole(defaultExecutor, contentDescriptor, term.getTerminalPanel());

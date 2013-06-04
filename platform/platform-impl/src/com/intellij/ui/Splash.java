@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class Splash extends JDialog implements StartupProgress {
+  public static Rectangle BOUNDS;
   private final Icon myImage;
   private int myProgressHeight = 2;
   private Color myProgressColor = null;
@@ -95,6 +96,7 @@ public class Splash extends JDialog implements StartupProgress {
   public void show() {
     super.show();
     toFront();
+    BOUNDS = getBounds();
     //Sometimes this causes deadlock in EDT
     // http://bugs.sun.com/view_bug.do?bug_id=6724890
     //

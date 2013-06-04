@@ -93,7 +93,7 @@ public abstract class ProgressManager {
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
-  public abstract NonCancelableSection startNonCancelableSection(); 
+  public abstract NonCancelableSection startNonCancelableSection();
 
   public abstract void setCancelButtonText(String cancelButtonText);
 
@@ -191,4 +191,5 @@ public abstract class ProgressManager {
    */
   public abstract void run(@NotNull Task task);
 
+  public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
 }

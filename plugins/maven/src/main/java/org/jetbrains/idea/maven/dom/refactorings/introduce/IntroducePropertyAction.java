@@ -252,7 +252,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         return new UsageSearcher() {
           Set<UsageInfo> usages = new HashSet<UsageInfo>();
 
-          public void generate(final Processor<Usage> processor) {
+          public void generate(@NotNull final Processor<Usage> processor) {
             AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
             try {

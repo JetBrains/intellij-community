@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,28 +317,34 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     FileType fileType = file.getUserData(FILE_TYPE_KEY);
     if (fileType != null) return fileType;
 
-    final FileType assignedFileType = file instanceof LightVirtualFile? ((LightVirtualFile)file).getAssignedFileType() : null;
-    if (assignedFileType != null) return assignedFileType;
+    if (file instanceof LightVirtualFile) {
+      fileType = ((LightVirtualFile)file).getAssignedFileType();
+      if (fileType != null) return fileType;
+    }
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = mySpecialFileTypes.size(); i < size; i++) {
-      final FileTypeIdentifiableByVirtualFile type = mySpecialFileTypes.get(i);
-      if (type.isMyFileType(file)) return type;
+      FileTypeIdentifiableByVirtualFile type = mySpecialFileTypes.get(i);
+      if (type.isMyFileType(file)) {
+        return type;
+      }
     }
 
-    FileType byFileName = getFileTypeByFileName(file.getName());
-    if (byFileName != UnknownFileType.INSTANCE) return byFileName;
-    FileType detected = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
-    if (detected != null) {
-      return detected;
-    }
+    fileType = getFileTypeByFileName(file.getName());
+    if (fileType != UnknownFileType.INSTANCE) return fileType;
+
+    fileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
+    if (fileType != null) return fileType;
+
     return UnknownFileType.INSTANCE;
   }
 
   @NotNull
   @Override
   public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    if (file.isDirectory() || !file.isValid() || file.isSpecialFile()) return UnknownFileType.INSTANCE;
+    if (file.isDirectory() || !file.isValid() || file.isSpecialFile()) {
+      return UnknownFileType.INSTANCE;
+    }
     FileType fileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
     if (fileType == null) {
       fileType = detectFromContent(file);

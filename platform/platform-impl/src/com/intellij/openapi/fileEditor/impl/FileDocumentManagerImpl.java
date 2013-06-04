@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -78,6 +80,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener,
                                                                             ProjectManagerListener, SafeWriteRequestor {
@@ -226,16 +230,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @Override
   @Nullable
   public Document getCachedDocument(@NotNull VirtualFile file) {
-    Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
-    Document document = reference == null ? null : reference.get();
-
-    if (document != null && isBinaryWithoutDecompiler(file)) {
-      file.putUserData(DOCUMENT_KEY, null);
-      document.putUserData(FILE_KEY, null);
-      return null;
-    }
-
-    return document;
+    return dereference(file.getUserData(DOCUMENT_KEY));
   }
 
   public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
@@ -536,21 +531,32 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Override
-  public void propertyChanged(final VirtualFilePropertyEvent event) {
+  public void propertyChanged(VirtualFilePropertyEvent event) {
+    final VirtualFile file = event.getFile();
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
-      final VirtualFile file = event.getFile();
       final Document document = getCachedDocument(file);
-      if (document == null) return;
-
-      ApplicationManager.getApplication().runWriteAction(
-        new ExternalChangeAction() {
+      if (document != null) {
+        ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
           @Override
           public void run() {
-            document.setReadOnly(!event.getFile().isWritable());
+            document.setReadOnly(!file.isWritable());
           }
+        });
+      }
+    }
+    else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      Document document = getCachedDocument(file);
+      if (document != null) {
+        FileType type = file.getFileType();
+        if (type == UnknownFileType.INSTANCE) {
+          // a file is linked to a document - chances are it is an "unknown text file" now
+          FileTypeManager.getInstance().detectFileTypeFromContent(file);
         }
-      );
-      //myUnsavedDocuments.remove(document); //?
+        if (isBinaryWithoutDecompiler(file)) {
+          file.putUserData(DOCUMENT_KEY, null);
+          document.putUserData(FILE_KEY, null);
+        }
+      }
     }
   }
 

@@ -448,7 +448,7 @@ public class ResolveUtil {
   }
 
   private static boolean isApplicableLabelStatement(PsiElement element, String labelName) {
-    return ((element instanceof GrLabeledStatement && labelName.equals(((GrLabeledStatement)element).getLabelName())));
+    return ((element instanceof GrLabeledStatement && labelName.equals(((GrLabeledStatement)element).getName())));
   }
 
   @Nullable

@@ -613,7 +613,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertStringItems("byte");
     assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+  }
 
+  public void testNewByteArray2() {
+    configureByTestName();
+    assertStringItems("byte", "byte");
+    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+    assertEquals("[]{...}", LookupElementPresentation.renderElement(myItems[1]).getTailText());
   }
 
   public void testInsideStringLiteral() throws Throwable { doAntiTest(); }

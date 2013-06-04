@@ -36,7 +36,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBat
 
   @Override
   public boolean isEnabledByDefault() {
-    return true;
+    return false;
   }
 
   @Nullable

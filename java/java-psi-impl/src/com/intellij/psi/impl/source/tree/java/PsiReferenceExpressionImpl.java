@@ -25,10 +25,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
-import com.intellij.psi.filters.AndFilter;
-import com.intellij.psi.filters.ConstructorFilter;
-import com.intellij.psi.filters.NotFilter;
-import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -450,7 +448,17 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (isQualified()) {
       filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
     }
-    filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
+    filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter()), new ElementFilter() {
+      @Override
+      public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+        return LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)element, PsiReferenceExpressionImpl.this);
+      }
+
+      @Override
+      public boolean isClassAcceptable(Class hintClass) {
+        return true;
+      }
+    }));
     filter.addFilter(ElementClassFilter.VARIABLE);
 
     FilterScopeProcessor filterProcessor = new FilterScopeProcessor<CandidateInfo>(filter, processor) {

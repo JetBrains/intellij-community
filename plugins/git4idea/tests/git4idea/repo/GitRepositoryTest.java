@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static git4idea.repo.GitRepository.State.*;
+import static com.intellij.dvcs.repo.Repository.State.*;
 import static org.testng.Assert.*;
 
 /**

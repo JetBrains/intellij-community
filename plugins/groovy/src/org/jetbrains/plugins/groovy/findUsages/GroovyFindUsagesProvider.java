@@ -90,7 +90,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
                 return name;
             }
         } else if (element instanceof GrLabeledStatement) {
-            return ((GrLabeledStatement)element).getLabelName();
+            return ((GrLabeledStatement)element).getName();
         } else if (element instanceof PropertyForRename) {
           return ((PropertyForRename)element).getPropertyName();
         } else if (element instanceof GrClosableBlock) {

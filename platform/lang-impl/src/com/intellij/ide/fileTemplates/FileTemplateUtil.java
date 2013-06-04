@@ -52,6 +52,7 @@ import org.apache.velocity.runtime.parser.node.Node;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.runtime.resource.Resource;
 import org.apache.velocity.runtime.resource.loader.ResourceLoader;
+import org.apache.velocity.util.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,7 +227,7 @@ public class FileTemplateUtil{
   }
 
   public static String mergeTemplate(Map attributes, String content, boolean useSystemLineSeparators) throws IOException{
-    VelocityContext context = new VelocityContext();
+    VelocityContext context = createVelocityContext();
     for (final Object o : attributes.keySet()) {
       String name = (String)o;
       context.put(name, attributes.get(name));
@@ -234,8 +235,14 @@ public class FileTemplateUtil{
     return mergeTemplate(content, context, useSystemLineSeparators);
   }
 
-  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException{
+  private static VelocityContext createVelocityContext() {
     VelocityContext context = new VelocityContext();
+    context.put("StringUtils", StringUtils.class);
+    return context;
+  }
+
+  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException{
+    VelocityContext context = createVelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()){
       String name = (String)names.nextElement();

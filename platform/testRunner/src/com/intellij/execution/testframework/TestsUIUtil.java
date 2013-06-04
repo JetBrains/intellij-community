@@ -49,7 +49,8 @@ public class TestsUIUtil {
 
   @Nullable
   public static Object getData(final AbstractTestProxy testProxy, final String dataId, final TestFrameworkRunningModel model) {
-    final Project project = model.getProperties().getProject();
+    final TestConsoleProperties properties = model.getProperties();
+    final Project project = properties.getProject();
     if (testProxy == null) return null;
     if (AbstractTestProxy.DATA_KEY.is(dataId)) return testProxy;
     if (PlatformDataKeys.NAVIGATABLE.is(dataId)) return getOpenFileDescriptor(testProxy, model);
@@ -58,7 +59,7 @@ public class TestsUIUtil {
       return openFileDescriptor != null ? new Navigatable[]{openFileDescriptor} : null;
     }
     if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
-      final Location location = testProxy.getLocation(project);
+      final Location location = testProxy.getLocation(project, properties.getScope());
       if (location != null) {
         final PsiElement element = location.getPsiElement();
         return element.isValid() ? element : null;
@@ -67,8 +68,8 @@ public class TestsUIUtil {
         return null;
       }
     }
-    if (Location.DATA_KEY.is(dataId)) return testProxy.getLocation(project);
-    if (RuntimeConfiguration.DATA_KEY.is(dataId)) return model.getProperties().getConfiguration();
+    if (Location.DATA_KEY.is(dataId)) return testProxy.getLocation(project, properties.getScope());
+    if (RuntimeConfiguration.DATA_KEY.is(dataId)) return properties.getConfiguration();
     return null;
   }
 
@@ -84,7 +85,7 @@ public class TestsUIUtil {
     final Project project = testConsoleProperties.getProject();
 
     if (proxy != null) {
-      final Location location = proxy.getLocation(project);
+      final Location location = proxy.getLocation(project, testConsoleProperties.getScope());
       if (openFailureLine) {
         return proxy.getDescriptor(location, testConsoleProperties);
       }

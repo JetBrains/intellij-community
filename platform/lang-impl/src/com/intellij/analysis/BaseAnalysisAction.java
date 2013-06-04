@@ -144,7 +144,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(projectContext);
     }
 
-    final AnalysisScope analysisScope = AnalysisScope.KEY.getData(dataContext);
+    final AnalysisScope analysisScope = AnalysisScopeUtil.KEY.getData(dataContext);
     if (analysisScope != null) {
       return analysisScope;
     }

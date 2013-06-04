@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -180,6 +181,9 @@ public class GrHighlightUtil {
     else if (resolved instanceof GrVariable) {
       boolean reassigned = isReassigned((GrVariable)resolved);
       return reassigned ? REASSIGNED_LOCAL_VARIABLE : LOCAL_VARIABLE;
+    }
+    else if (resolved instanceof GrLabeledStatement) {
+      return LABEL;
     }
     return null;
   }

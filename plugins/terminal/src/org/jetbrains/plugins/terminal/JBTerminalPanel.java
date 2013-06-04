@@ -25,7 +25,6 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
 import com.jediterm.emulator.TextStyle;
 import com.jediterm.emulator.display.BackBuffer;
 import com.jediterm.emulator.display.LinesBuffer;
@@ -37,7 +36,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 public class JBTerminalPanel extends SwingTerminalPanel {
@@ -48,12 +46,6 @@ public class JBTerminalPanel extends SwingTerminalPanel {
     myColorScheme = scheme;
 
     styleState.setDefaultStyle(new TextStyle(myColorScheme.getDefaultForeground(), myColorScheme.getDefaultBackground()));
-  }
-
-  @Override
-  protected BufferedImage createBufferedImage(int width, int height) {
-    return UIUtil.createImage(width, height,
-                              BufferedImage.TYPE_INT_RGB);
   }
 
   protected Font createFont() {

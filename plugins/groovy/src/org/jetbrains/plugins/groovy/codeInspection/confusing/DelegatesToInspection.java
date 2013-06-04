@@ -67,7 +67,7 @@ public class DelegatesToInspection extends BaseInspection {
               }
             }
             else {
-              if (delegatesTo.findDeclaredAttributeValue("target") == null) {
+              if (delegatesTo.findDeclaredAttributeValue("target") == null && delegatesTo.findDeclaredAttributeValue("value") == null) {
                 return; // target is used
               }
             }

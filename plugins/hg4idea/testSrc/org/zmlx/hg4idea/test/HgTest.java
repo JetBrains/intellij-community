@@ -19,10 +19,12 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.testng.annotations.AfterMethod;
@@ -37,6 +39,8 @@ import static org.testng.Assert.assertTrue;
 
 /**
  * The ancestor of all hg4idea test cases.
+ *
+ * @deprecated Use {@link HgPlatformTest}.
  */
 public abstract class HgTest extends AbstractVcsTestCase {
 
@@ -54,6 +58,10 @@ public abstract class HgTest extends AbstractVcsTestCase {
   protected File myProjectDir; // location of the project repository. Initialized differently in each test: by init or by clone.
   protected HgTestChangeListManager myChangeListManager;
   private HgTestRepository myMainRepo;
+
+  protected HgTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   @BeforeMethod
   protected void setUp(final Method testMethod) throws Exception {

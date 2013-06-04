@@ -43,16 +43,16 @@ public class ElementOnlyUsedFromTestCodeInspection
 
   @Override
   @Nullable
-  public RefGraphAnnotator getAnnotator(RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new ElementOnlyUsedFromTestCodeAnnotator();
   }
 
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(
-    RefEntity refEntity, AnalysisScope scope, InspectionManager manager,
-    GlobalInspectionContext globalContext,
-    ProblemDescriptionsProcessor processor) {
+    @NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager,
+    @NotNull GlobalInspectionContext globalContext,
+    @NotNull ProblemDescriptionsProcessor processor) {
     if (!isOnlyUsedFromTestCode(refEntity)) {
       return null;
     }

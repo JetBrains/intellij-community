@@ -43,7 +43,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   private final AtomicReference<ConnectionState> myState = new AtomicReference<ConnectionState>(new ConnectionState(ConnectionStatus.NOT_CONNECTED));
   private boolean myStopping;
   private final EventDispatcher<SocketConnectionListener> myDispatcher = EventDispatcher.create(SocketConnectionListener.class);
-  private List<Thread> myThreadsToInterrupt = new ArrayList<Thread>();
+  private final List<Thread> myThreadsToInterrupt = new ArrayList<Thread>();
   private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
   private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<Request>();
   private final TIntObjectHashMap<TimeoutInfo> myTimeouts = new TIntObjectHashMap<TimeoutInfo>();
@@ -122,10 +122,12 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
     }
   }
 
+  @Override
   public void dispose() {
     LOG.debug("Firefox connection disposed");
   }
 
+  @Override
   public int getPort() {
     return myPort;
   }
@@ -137,6 +139,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
     myDispatcher.getMulticaster().statusChanged(status);
   }
 
+  @Override
   @NotNull
   public ConnectionState getState() {
     synchronized (myLock) {
@@ -144,6 +147,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
     }
   }
 
+  @Override
   public void addListener(@NotNull SocketConnectionListener listener, @Nullable Disposable parentDisposable) {
     if (parentDisposable != null) {
       myDispatcher.addListener(listener, parentDisposable);
@@ -188,8 +192,8 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   }
 
   private static class TimeoutInfo {
-    private int myTimeout;
-    private Runnable myOnTimeout;
+    private final int myTimeout;
+    private final Runnable myOnTimeout;
 
     private TimeoutInfo(int timeout, Runnable onTimeout) {
       myTimeout = timeout;
