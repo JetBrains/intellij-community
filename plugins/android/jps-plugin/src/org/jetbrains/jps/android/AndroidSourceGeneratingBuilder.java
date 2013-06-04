@@ -392,7 +392,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean shouldBeCopied(@NotNull File file) throws IOException {
     return file.isFile() &&
            (!FileUtilRt.extensionEquals(file.getName(), "java") ||
-           !isGeneratedByIdea(file));
+            !isGeneratedByIdea(file));
   }
 
   private static boolean removeCopiedFilesDuplicatingGeneratedFiles(final CompileContext context,
@@ -1143,38 +1143,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
             if (resFiles != null) {
               for (File resFile : resFiles) {
-                final String resFilePath = FileUtil.toSystemIndependentName(resFile.getPath());
-                final long resFileTimestamp = resFile.lastModified();
-
-                if (ResourceFolderType.VALUES.getName().equals(resType) && FileUtilRt.extensionEquals(resFile.getName(), "xml")) {
-                  ResourceFileData dataToReuse = null;
-
-                  if (oldState != null) {
-                    final long oldTimestamp = oldState.getValueResourceFilesTimestamps().get(resFilePath);
-
-                    if (resFileTimestamp == oldTimestamp) {
-                      dataToReuse = oldState.getResources().get(resFilePath);
-                    }
-                  }
-
-                  if (dataToReuse != null) {
-                    resDataMap.put(resFilePath, dataToReuse);
-                  }
-                  else {
-                  final ArrayList<ResourceEntry> entries = new ArrayList<ResourceEntry>();
-                  collectValueResources(resFile, entries);
-                    resDataMap.put(resFilePath, new ResourceFileData(entries, 0));
-                }
-                  valueResFilesTimestamps.put(resFilePath, resFileTimestamp);
-                }
-                else {
-                  final ResourceType resTypeObj = ResourceType.getEnum(resType);
-                  final boolean idProvidingType =
-                    resTypeObj != null && ArrayUtil.find(AndroidCommonUtils.ID_PROVIDING_RESOURCE_TYPES, resTypeObj) >= 0;
-                  final ResourceFileData data =
-                    new ResourceFileData(Collections.<ResourceEntry>emptyList(), idProvidingType ? resFileTimestamp : 0);
-                  resDataMap.put(resFilePath, data);
-                }
+                collectResources(resFile, resType, resDataMap, valueResFilesTimestamps, oldState);
               }
             }
           }
@@ -1182,6 +1151,46 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return resDataMap;
+  }
+
+  private static void collectResources(@NotNull File resFile,
+                                       @NotNull String resType,
+                                       @NotNull Map<String, ResourceFileData> resDataMap,
+                                       @NotNull TObjectLongHashMap<String> valueResFilesTimestamps,
+                                       @Nullable AndroidAptValidityState oldState)
+    throws IOException {
+    final String resFilePath = FileUtil.toSystemIndependentName(resFile.getPath());
+    final long resFileTimestamp = resFile.lastModified();
+
+    if (ResourceFolderType.VALUES.getName().equals(resType) && FileUtilRt.extensionEquals(resFile.getName(), "xml")) {
+      ResourceFileData dataToReuse = null;
+
+      if (oldState != null) {
+        final long oldTimestamp = oldState.getValueResourceFilesTimestamps().get(resFilePath);
+
+        if (resFileTimestamp == oldTimestamp) {
+          dataToReuse = oldState.getResources().get(resFilePath);
+        }
+      }
+
+      if (dataToReuse != null) {
+        resDataMap.put(resFilePath, dataToReuse);
+      }
+      else {
+        final ArrayList<ResourceEntry> entries = new ArrayList<ResourceEntry>();
+        collectValueResources(resFile, entries);
+        resDataMap.put(resFilePath, new ResourceFileData(entries, 0));
+      }
+      valueResFilesTimestamps.put(resFilePath, resFileTimestamp);
+    }
+    else {
+      final ResourceType resTypeObj = ResourceType.getEnum(resType);
+      final boolean idProvidingType =
+        resTypeObj != null && ArrayUtil.find(AndroidCommonUtils.ID_PROVIDING_RESOURCE_TYPES, resTypeObj) >= 0;
+      final ResourceFileData data =
+        new ResourceFileData(Collections.<ResourceEntry>emptyList(), idProvidingType ? resFileTimestamp : 0);
+      resDataMap.put(resFilePath, data);
+    }
   }
 
   private static void collectValueResources(@NotNull File valueResXmlFile, @NotNull final List<ResourceEntry> result)
