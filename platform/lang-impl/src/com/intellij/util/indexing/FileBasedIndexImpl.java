@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -409,6 +409,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
           @Override
           public MapIndexStorage<K, V> compute() throws IOException {
+            ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
             return new MapIndexStorage<K, V>(
               IndexInfrastructure.getStorageFile(name),
               extension.getKeyDescriptor(),
@@ -519,7 +520,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException> process =
+          final ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException> process =
             new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
               @Override
               public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
@@ -535,7 +536,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           final ProgressIndicator currentProgress = progressManager.getProgressIndicator();
           if (currentProgress == null && ApplicationManager.getApplication().isDispatchThread()) {
             return progressManager.runProcessWithProgressSynchronously(
-              process, LangBundle.message("compacting.indices.title"), false, null);
+              new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
+                @Override
+                public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
+                  ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                  return process.compute();
+                }
+              }, LangBundle.message("compacting.indices.title"), false, null);
           }
           if (currentProgress != null)  {
             // reuse existing progress indicator if available

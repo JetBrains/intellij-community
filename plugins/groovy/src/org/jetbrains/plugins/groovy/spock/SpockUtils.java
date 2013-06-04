@@ -93,7 +93,7 @@ public class SpockUtils {
         while (true) {
           GrStatement statement = l.getStatement();
 
-          if ("where".equals(l.getLabelName())) {
+          if ("where".equals(l.getName())) {
             elementUnderLabel = statement;
             break main;
           }

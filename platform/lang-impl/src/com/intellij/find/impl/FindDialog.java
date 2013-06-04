@@ -456,14 +456,12 @@ public class FindDialog extends DialogWrapper {
     }
     else {
       String message = validationInfo.message;
-      if (message != null) {
-        Messages.showMessageDialog(
-          myProject,
-          message,
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
-      }
+      Messages.showMessageDialog(
+        myProject,
+        message,
+        CommonBundle.getErrorTitle(),
+        Messages.getErrorIcon()
+      );
     }
   }
 
@@ -959,7 +957,7 @@ public class FindDialog extends DialogWrapper {
     if (selected != null && selected.indexOf('\n') < 0) {
       strings = ArrayUtil.remove(strings, selected);
       // this ensures that last searched string will be selected if selected == ""
-      if (selected.length() > 0) strings = ArrayUtil.append(strings, selected);
+      if (!selected.isEmpty()) strings = ArrayUtil.append(strings, selected);
     }
     for(int i = strings.length - 1; i >= 0; i--){
       combo.addItem(strings[i]);
@@ -1000,17 +998,12 @@ public class FindDialog extends DialogWrapper {
 
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
     String stringToFind = getStringToFind();
-    if (!stringToFind.isEmpty()) {
-      model.setStringToFind(stringToFind);
-    }
+    model.setStringToFind(stringToFind);
 
     if (model.isReplaceState()){
       model.setPromptOnReplace(true);
       model.setReplaceAll(false);
       String stringToReplace = getStringToReplace();
-      if (stringToReplace == null){
-        stringToReplace = "";
-      }
       model.setStringToReplace(StringUtil.convertLineSeparators(stringToReplace));
     }
 

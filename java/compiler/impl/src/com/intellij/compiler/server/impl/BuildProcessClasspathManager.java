@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.server.impl;
 
-import com.intellij.compiler.server.CompileServerPathProvider;
+import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -35,12 +35,12 @@ import java.util.List;
 /**
  * @author nik
  */
-public class CompileServerClasspathManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.impl.CompileServerClasspathManager");
+public class BuildProcessClasspathManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.impl.BuildProcessClasspathManager");
 
   private List<String> myCompileServerPluginsClasspath;
 
-  public List<String> getCompileServerPluginsClasspath(Project project) {
+  public List<String> getBuildProcessPluginsClasspath(Project project) {
     List<String> staticClasspath = getStaticClasspath();
     List<String> dynamicClasspath = getDynamicClasspath(project);
 
@@ -131,8 +131,8 @@ public class CompileServerClasspathManager {
   }
 
   private static List<String> getDynamicClasspath(Project project) {
-    List<String> classpath = ContainerUtil.newArrayList();
-    for (CompileServerPathProvider provider : project.getExtensions(CompileServerPathProvider.EP_NAME)) {
+    final List<String> classpath = ContainerUtil.newArrayList();
+    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
       classpath.addAll(provider.getClassPath());
     }
     return classpath;

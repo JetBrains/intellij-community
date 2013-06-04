@@ -67,7 +67,7 @@ public class FileContentUtil extends FileContentUtilCore {
         }
       }
     }
-    FileContentUtilCore.reparseFiles(files);
+    FileContentUtilCore.reparseFiles(fileSet);
   }
 
   public static void reparseOpenedFiles() {

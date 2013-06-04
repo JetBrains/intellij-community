@@ -37,7 +37,6 @@ import java.util.Collections;
  */
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, Disposable {
 
-
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
@@ -58,7 +57,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
                               @NotNull Disposable parentDisposable, final boolean light) {
     super(project, rootDir, parentDisposable);
     myPlatformFacade = facade;
-    myGitDir =  GitUtil.findGitDir(rootDir);
+    myGitDir = GitUtil.findGitDir(rootDir);
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
     if (!light) {
@@ -165,7 +164,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     myRemotes = config.parseRemotes();
     readRepository(myRemotes);
     myBranchTrackInfos = config.parseTrackInfos(myBranches.getLocalBranches(), myBranches.getRemoteBranches());
-    if (!Disposer.isDisposed(getProject())) {
+    if (!Disposer.isDisposed(getProject()) && getMessageBus() != null) {
       getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(this);
     }
   }

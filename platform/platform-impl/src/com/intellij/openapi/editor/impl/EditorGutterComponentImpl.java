@@ -567,7 +567,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void centerEditorByAnnotationArea() {
     IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myEditor.getProject());
 
-    RelativePoint point = new RelativePoint(myEditor.getComponent(), new Point(0, 0));
+    JComponent editorComponent = myEditor.getComponent();
+    RelativePoint point = new RelativePoint(editorComponent, new Point(0, 0));
     Point editorLocationInWindow = point.getPoint(ideFrame.getComponent());
 
     EditorSettings settings = myEditor.getSettings();
@@ -577,7 +578,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int editorLocationX = (int)editorLocationInWindow.getX();
     int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;
 
-    int width = (int)ideFrame.getComponent().getSize().getWidth();
+    int width = (int)(editorComponent.getLocation().getX() + editorComponent.getWidth());
     if (rightMarginX < width && editorLocationX < width - rightMarginX) {
       myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX - editorLocationX)/2 - myIconsAreaWidth - 10);
     }

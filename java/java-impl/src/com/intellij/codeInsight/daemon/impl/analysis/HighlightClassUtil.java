@@ -835,7 +835,7 @@ public class HighlightClassUtil {
       }
       if (place instanceof PsiModifierListOwner) {
         final PsiModifierList modifierList = ((PsiModifierListOwner)place).getModifierList();
-        if (modifierList != null && modifierList.hasExplicitModifier(PsiModifier.STATIC)) {
+        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
           return false;
         }
       }

@@ -85,7 +85,7 @@ public class AnsiEscapeDecoder {
   }
 
   private Key getCurrentOutputAttributes(final Key outputType) {
-    if (outputType == ProcessOutputTypes.STDERR) {
+    if (outputType == ProcessOutputTypes.STDERR || outputType == ProcessOutputTypes.SYSTEM) {
       return outputType;
     }
     return myCurrentColor != null ? myCurrentColor : outputType;

@@ -18,13 +18,21 @@ package com.intellij.compiler.server;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Project-level extension points to dynamically vary classpath of external build process.
+ * Project-level extension point to dynamically vary build process parameters like classpath, bootclasspath and JVM arguments.
  */
-public interface CompileServerPathProvider {
-  ExtensionPointName<CompileServerPathProvider> EP_NAME = ExtensionPointName.create("com.intellij.compileServer.pathProvider");
+public abstract class BuildProcessParametersProvider {
+  public static final ExtensionPointName<BuildProcessParametersProvider> EP_NAME = ExtensionPointName.create("com.intellij.buildProcess.parametersProvider");
 
-  @NotNull List<String> getClassPath();
+  public @NotNull List<String> getClassPath() {
+    return Collections.emptyList();
+  }
+  
+  public @NotNull List<String> getVMArguments() {
+    return Collections.emptyList();
+  }
+  
 }

@@ -531,8 +531,19 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
     if (prev == null) return false;
 
-    PsiExpression expr = PsiTreeUtil.getParentOfType(prev, PsiExpression.class);
-    return expr != null && expr.getTextRange().getEndOffset() == prev.getTextRange().getEndOffset();
+    PsiElement expr = PsiTreeUtil.getParentOfType(prev, PsiExpression.class);
+    if (expr != null && expr.getTextRange().getEndOffset() == prev.getTextRange().getEndOffset()) {
+      return true;
+    }
+
+    if (position instanceof PsiIdentifier && position.getParent() instanceof PsiLocalVariable) {
+      PsiType type = ((PsiLocalVariable)position.getParent()).getType();
+      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   public static boolean isSuitableForClass(PsiElement position) {

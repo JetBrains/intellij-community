@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testKing_regex$king4() throws Throwable { doTest(); }
   public void testLabeled$label1() throws Throwable { doTest(); }
   public void testLabeled$label2() throws Throwable { doTest(); }
+  public void testLabeled$label3() throws Throwable { doTest(); }
   public void testLoop$while1() throws Throwable { doTest(); }
   public void testLoop$while2() throws Throwable { doTest(); }
   public void testLoop$while3() throws Throwable { doTest(); }

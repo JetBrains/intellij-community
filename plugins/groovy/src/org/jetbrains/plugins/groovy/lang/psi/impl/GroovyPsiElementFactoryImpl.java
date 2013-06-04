@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -499,14 +498,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
     }
     return methods[0];
-  }
-
-  @Override
-  public GrLabel createLabel(@NotNull String name) {
-    GroovyFileBase file = createGroovyFileChecked(name + ": println()");
-    GrTopStatement definition = file.getTopStatements()[0];
-    assert definition instanceof GrLabeledStatement;
-    return ((GrLabeledStatement)definition).getLabel();
   }
 
   @NotNull

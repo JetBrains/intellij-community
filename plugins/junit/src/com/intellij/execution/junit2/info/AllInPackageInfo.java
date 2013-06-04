@@ -20,6 +20,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 
 class AllInPackageInfo extends TestInfo {
   private String myName;
@@ -36,7 +37,7 @@ class AllInPackageInfo extends TestInfo {
     return myName.length() > 0 ? myName : JUnitConfiguration.DEFAULT_PACKAGE_NAME;
   }
 
-  public Location getLocation(final Project project) {
+  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
     return null;
   }
 }

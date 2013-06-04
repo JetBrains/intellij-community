@@ -77,7 +77,7 @@ public final class QuickFixAction {
     if (info.quickFixActionRanges == null) {
       info.quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
     }
-    HighlightInfo.IntentionActionDescriptor desc = new HighlightInfo.IntentionActionDescriptor(action, options, displayName, null, key);
+    HighlightInfo.IntentionActionDescriptor desc = new HighlightInfo.IntentionActionDescriptor(action, options, displayName, null, key, info.getProblemGroup());
     info.quickFixActionRanges.add(Pair.create(desc, fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());

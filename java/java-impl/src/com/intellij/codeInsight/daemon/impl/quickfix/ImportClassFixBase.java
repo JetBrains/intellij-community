@@ -44,12 +44,14 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -60,9 +62,10 @@ import java.util.regex.PatternSyntaxException;
 public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> implements HintAction, HighPriorityAction {
   @NotNull
   private final T myElement;
+  @NotNull
   private final R myRef;
 
-  protected ImportClassFixBase(@NotNull T elem, R ref) {
+  protected ImportClassFixBase(@NotNull T elem, @NotNull R ref) {
     myElement = elem;
     myRef = ref;
   }
@@ -149,7 +152,31 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       classList = filtered;
     }
 
+    filterAlreadyImportedButUnresolved(classList);
     return classList;
+  }
+
+  private void filterAlreadyImportedButUnresolved(@NotNull List<PsiClass> list) {
+    PsiElement element = myRef.getElement();
+    PsiFile containingFile = element == null ? null : element.getContainingFile();
+    if (!(containingFile instanceof PsiJavaFile)) return;
+    PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    PsiImportList importList = javaFile.getImportList();
+    PsiImportStatementBase[] importStatements = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
+    Set<String> importedNames = new THashSet<String>(importStatements.length);
+    for (PsiImportStatementBase statement : importStatements) {
+      PsiJavaCodeReferenceElement ref = statement.getImportReference();
+      String name = ref == null ? null : ref.getReferenceName();
+      if (name != null && ref.resolve() == null) importedNames.add(name);
+    }
+
+    for (int i = list.size() - 1; i >= 0; i--) {
+      PsiClass aClass = list.get(i);
+      String className = aClass.getName();
+      if (className != null && importedNames.contains(className)) {
+        list.remove(i);
+      }
+    }
   }
 
   @Nullable

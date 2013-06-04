@@ -28,8 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 
-import java.util.Map;
 import java.util.Set;
 
 public class ExcludeFromRunAction extends AnAction{
@@ -42,10 +42,11 @@ public class ExcludeFromRunAction extends AnAction{
     LOG.assertTrue(project != null);
     final JUnitConfiguration configuration = (JUnitConfiguration)RuntimeConfiguration.DATA_KEY.getData(dataContext);
     LOG.assertTrue(configuration != null);
+    final GlobalSearchScope searchScope = configuration.getConfigurationModule().getSearchScope();
     final Set<String> patterns = configuration.getPersistentData().getPatterns();
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
     LOG.assertTrue(testProxy != null);
-    patterns.remove(((PsiClass)testProxy.getLocation(project).getPsiElement()).getQualifiedName());
+    patterns.remove(((PsiClass)testProxy.getLocation(project, searchScope).getPsiElement()).getQualifiedName());
   }
 
   @Override
@@ -61,7 +62,7 @@ public class ExcludeFromRunAction extends AnAction{
         if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
           final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
           if (testProxy != null) {
-            final Location location = testProxy.getLocation(project);
+            final Location location = testProxy.getLocation(project, ((JUnitConfiguration)configuration).getConfigurationModule().getSearchScope());
             if (location != null) {
               final PsiElement psiElement = location.getPsiElement();
               if (psiElement instanceof PsiClass && data.getPatterns().contains(((PsiClass)psiElement).getQualifiedName())) {

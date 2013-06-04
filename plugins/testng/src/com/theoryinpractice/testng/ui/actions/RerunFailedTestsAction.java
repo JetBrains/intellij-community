@@ -51,7 +51,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes) throws CantRunException {
                 for (AbstractTestProxy proxy : failedTests) {
-                  final Location location = proxy.getLocation(config.getProject());
+                  final Location location = proxy.getLocation(config.getProject(), config.getConfigurationModule().getSearchScope());
                   if (location != null) {
                     final PsiElement element = location.getPsiElement();
                     if (element instanceof PsiMethod && element.isValid()) {

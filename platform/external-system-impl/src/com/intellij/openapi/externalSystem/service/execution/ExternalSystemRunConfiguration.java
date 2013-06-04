@@ -109,6 +109,9 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
         for (String taskName : mySettings.getTaskNames()) {
           tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
         }
+        if (tasks.isEmpty()) {
+          throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
+        }
         final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(mySettings.getExternalSystemId(),
                                                                                      getProject(),
                                                                                      tasks,
