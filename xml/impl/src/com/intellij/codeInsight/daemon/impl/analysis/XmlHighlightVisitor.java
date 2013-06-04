@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -360,7 +360,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         localizedMessage,
         isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag) ?
           HighlightInfoType.INFORMATION :
-          SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
+          SeverityUtil.getSeverityRegistrar(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
         intentionAction,
         basicIntention);
     } else if (!htmlTag) {

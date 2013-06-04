@@ -44,18 +44,18 @@ public class Descriptor {
   private final ScopeToolState myState;
   private final InspectionProfileImpl myInspectionProfile;
 
-  public Descriptor(ScopeToolState pair, InspectionProfileImpl inspectionProfile) {
-    myState = pair;
+  public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileImpl inspectionProfile) {
+    myState = state;
     myInspectionProfile = inspectionProfile;
-    final InspectionProfileEntry tool = pair.getTool();
+    final InspectionProfileEntry tool = state.getTool();
     myText = tool.getDisplayName();
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
     myKey = HighlightDisplayKey.find(tool.getShortName());
-    myLevel = inspectionProfile.getErrorLevel(myKey, pair.getScope());
-    myEnabled = inspectionProfile.isToolEnabled(myKey, pair.getScope());
+    myLevel = inspectionProfile.getErrorLevel(myKey, ScopeToolStateUtil.getScope(state));
+    myEnabled = inspectionProfile.isToolEnabled(myKey, ScopeToolStateUtil.getScope(state));
     myTool = tool;
-    myScope = pair.getScope();
+    myScope = ScopeToolStateUtil.getScope(state);
   }
 
   public boolean equals(Object obj) {

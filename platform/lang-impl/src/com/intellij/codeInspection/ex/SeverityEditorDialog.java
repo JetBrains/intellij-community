@@ -22,6 +22,7 @@ import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -265,9 +266,9 @@ public class SeverityEditorDialog extends DialogWrapper {
   private void fillList(final HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
-    final List<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityRegistrar.SeverityBasedTextAttributes>();
-    infoTypes.addAll(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
-    Collections.sort(infoTypes, new Comparator<SeverityRegistrar.SeverityBasedTextAttributes>() {
+    final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityBasedTextAttributes>();
+    infoTypes.addAll(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+    Collections.sort(infoTypes, new Comparator<SeverityBasedTextAttributes>() {
       @Override
       public int compare(SeverityBasedTextAttributes attributes1,
                          SeverityBasedTextAttributes attributes2) {
@@ -317,8 +318,8 @@ public class SeverityEditorDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     apply((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
-    final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
-      new HashSet<SeverityRegistrar.SeverityBasedTextAttributes>(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
+    final Collection<SeverityBasedTextAttributes> infoTypes =
+      new HashSet<SeverityBasedTextAttributes>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     final ListModel listModel = myOptionsList.getModel();
     final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {

@@ -621,7 +621,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         if (nonDefaultToolStates != null) {
           for (ScopeToolState state : nonDefaultToolStates) {
             final InspectionTool inspectionTool = copyToolSettings((InspectionToolWrapper)state.getTool());
-            final NamedScope scope = project != null ? state.getScope(project) : state.getScope();
+            final NamedScope scope = project != null ? state.getScope(project) : ScopeToolStateUtil.getScope(state);
             if (scope != null) {
               tools.addTool(scope, inspectionTool, state.isEnabled(), state.getLevel());
             } else {

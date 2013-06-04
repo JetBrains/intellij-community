@@ -22,8 +22,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
@@ -58,17 +56,6 @@ public class ScopeToolState {
     myTool = tool;
     myEnabled = enabled;
     myLevel = level;
-  }
-
-  @Nullable
-  public NamedScope getScope() {
-    if (myScope == null) {
-      final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-      if (project != null) {
-        myScope = NamedScopesHolder.getScope(project, myScopeName);
-      }
-    }
-    return myScope;
   }
 
   @Nullable

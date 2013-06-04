@@ -26,7 +26,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
@@ -206,7 +206,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
     }
-    return SeverityRegistrar.getInstance(project).getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
+    return SeverityUtil.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
   }
 
   public static void setOutputPath(final String output) {
