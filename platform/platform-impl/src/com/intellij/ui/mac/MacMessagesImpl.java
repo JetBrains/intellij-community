@@ -526,24 +526,22 @@ public class MacMessagesImpl extends MacMessages {
 
   private static Window getForemostWindow(final Window window) {
     Window _window = null;
-    Component focusOwner = null;
-    if (window != null) {
+
+    Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+    if (focusOwner != null) {
+      _window = SwingUtilities.getWindowAncestor(focusOwner);
+    }
+
+    if (_window == null && window != null) {
       focusOwner = window.getMostRecentFocusOwner();
       if (focusOwner != null) {
         _window = SwingUtilities.getWindowAncestor(focusOwner);
-        if (_window == null) {
-          // The document root window does not have focused or recently focused descendants
-          // Let's check that the document root window does not have
-          // owned windows
-          // todo: find a window blocker
-        }
-      }
-    }
-
-    if (_window == null) {
-      focusOwner = IdeFocusManager.findInstance().getFocusOwner();
-      if (focusOwner != null) {
-        _window = SwingUtilities.getWindowAncestor(focusOwner);
+        //if (_window == null) {
+        //   The document root window does not have focused or recently focused descendants
+        //   Let's check that the document root window does not have
+        //   owned windows
+        //   todo: find a window blocker
+        //}
       }
     }
 
