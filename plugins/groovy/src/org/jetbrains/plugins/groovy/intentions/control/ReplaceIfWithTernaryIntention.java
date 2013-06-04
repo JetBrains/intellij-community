@@ -80,6 +80,7 @@ public class ReplaceIfWithTernaryIntention extends Intention {
       @Override
       public boolean satisfiedBy(PsiElement e) {
         if (!e.getNode().getElementType().equals(GroovyTokenTypes.kIF)) return false;
+        if (!(e.getParent() instanceof GrIfStatement)) return false;
 
         final GrIfStatement ifStatement = (GrIfStatement)e.getParent();
         final PsiElement thenBranch = skipBlock(ifStatement.getThenBranch());
