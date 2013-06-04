@@ -178,7 +178,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     }
   }
 
-  public void updateRepositoriesCollection() {
+  private void updateRepositoriesCollection() {
     Map<VirtualFile, GitRepository> repositories;
     try {
       REPO_LOCK.readLock().lock();
