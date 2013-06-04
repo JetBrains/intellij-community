@@ -220,8 +220,8 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         if ((apklibModule == null || apklibModule.getUserData(MODULE_IMPORTED) == null) &&
             MavenConstants.SCOPE_COMPILE.equals(depArtifact.getScope())) {
           apklibModule =
-            importExternalApklibArtifact(project, apklibModule, modelsProvider, mavenProject, mavenTree, depArtifact,
-                                         moduleModel, mavenProject2ModuleName);
+            importExternalApklibArtifact(project, apklibModule, modelsProvider, mavenProject, mavenTree, depArtifact.getMavenId(),
+                                         depArtifact.getPath(), moduleModel, mavenProject2ModuleName);
           if (apklibModule != null) {
             apklibModule.putUserData(MODULE_IMPORTED, Boolean.TRUE);
             final Module finalGenModule = apklibModule;
@@ -340,11 +340,10 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
                                                      MavenModifiableModelsProvider modelsProvider,
                                                      MavenProject mavenProject,
                                                      MavenProjectsTree mavenTree,
-                                                     MavenArtifact artifact,
+                                                     MavenId artifactMavenId,
+                                                     String artifactFilePath,
                                                      ModifiableModuleModel moduleModel,
                                                      Map<MavenProject, String> mavenProject2ModuleName) {
-    final MavenId artifactMavenId = artifact.getMavenId();
-
     final String genModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(artifactMavenId);
     String genExternalApklibsDirPath = null;
     String targetDirPath = null;
@@ -386,12 +385,10 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       LOG.error("Cannot create directory " + targetDirPath);
       return null;
     }
-
-    final File artifactFile = artifact.getFile();
-
     final AndroidExternalApklibDependenciesManager adm = AndroidExternalApklibDependenciesManager.getInstance(project);
+    adm.setArtifactFilePath(artifactMavenId, FileUtil.toSystemIndependentName(artifactFilePath));
 
-    adm.setArtifactFilePath(artifactMavenId, FileUtil.toSystemIndependentName(artifactFile.getPath()));
+    final File artifactFile = new File(artifactFilePath);
 
     if (artifactFile.exists()) {
       try {
