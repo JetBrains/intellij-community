@@ -211,7 +211,7 @@ public class FileWatcher {
   private static boolean isUpToDate(File executable) {
     long length = SystemInfo.isWindows ? 70216 :
                   SystemInfo.isMac ? 13924 :
-                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29269 : 22768 :
+                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29155 : 22791 :
                   -1;
     return length < 0 || length == executable.length();
   }
