@@ -120,7 +120,8 @@ public class AndroidBuildDataCache {
           if (depExtension != null && visitedSet.add(depModule.getName())) {
 
             if (recursively) {
-              collectAndroidDependencies(depModule, result, visitedSet, fillLibs && depExtension.isLibrary(), recursively);
+              final boolean newRecursively = AndroidJpsUtil.shouldProcessDependenciesRecursively(depModule);
+              collectAndroidDependencies(depModule, result, visitedSet, fillLibs && depExtension.isLibrary(), newRecursively);
             }
             result.myAndroidDeps.add(depExtension);
 

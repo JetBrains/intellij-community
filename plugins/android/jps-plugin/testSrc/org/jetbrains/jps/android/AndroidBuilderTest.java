@@ -815,6 +815,21 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
       .file("res_apk_entry", "res_apk_entry_content")
       .file("classes.dex", "classes_dex_content"));
     checkMakeUpToDate(executor);
+
+    JpsMavenExtensionService.getInstance().getOrCreateExtension(libModule);
+    final JpsModule nonMavenAppModule = addAndroidModule("non_maven_app", new String[]{"src"},
+                                                         "app", "non_maven_app", androidSdk).getFirst();
+    nonMavenAppModule.getDependenciesList().addModuleDependency(libModule);
+
+    final JpsModule libModule2 = addAndroidModule("lib2", new String[]{"src"}, "lib1", "lib2", androidSdk).getFirst();
+    final JpsAndroidModuleExtension libExtension2 = AndroidJpsUtil.getExtension(libModule2);
+    assert libExtension2 != null;
+    final JpsAndroidModuleProperties libProps2 = ((JpsAndroidModuleExtensionImpl)libExtension2).getProperties();
+    libProps2.LIBRARY_PROJECT = true;
+    libModule1.getDependenciesList().addModuleDependency(libModule2);
+
+    makeAll().assertSuccessful();
+    checkBuildLog(executor, "expected_log_1");
   }
 
   private void checkMakeUpToDate(MyExecutor executor) {

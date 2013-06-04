@@ -314,7 +314,9 @@ public class AndroidJpsUtil {
           processor.processJavaModuleOutputDirectory(depClassDir);
         }
         if (recursive) {
-          processClasspath(paths, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly, recursive, resolveJars);
+          final boolean newRecursive = shouldProcessDependenciesRecursively(depModule);
+          processClasspath(paths, depModule, processor, visitedModules,
+                           !depLibrary || exportedLibrariesOnly, newRecursive, resolveJars);
         }
       }
     }
