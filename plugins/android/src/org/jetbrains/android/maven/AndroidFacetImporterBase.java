@@ -261,6 +261,24 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
             finalGenModule.putUserData(MODULE_IMPORTED, null);
           }
         });
+        final MavenArtifactResolvedInfo resolvedDepArtifact =
+          AndroidExternalApklibDependenciesManager.getInstance(project).getResolvedInfoForArtifact(depArtifactMavenId);
+
+        if (resolvedDepArtifact != null) {
+          for (AndroidExternalApklibDependenciesManager.MavenDependencyInfo depDepInfo : resolvedDepArtifact.getDependencies()) {
+            final MavenId depDepMavenId = new MavenId(depDepInfo.getGroupId(), depDepInfo.getArtifactId(), depDepInfo.getVersion());
+
+            if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(depDepInfo.getType()) &&
+                mavenTree.findProject(depDepMavenId) == null) {
+              doImportExternalApklibDependency(project, modelsProvider, mavenTree, mavenProject,
+                                               mavenProject2ModuleName, tasks, depDepInfo);
+            }
+          }
+        }
+        else {
+          AndroidUtils.reportImportErrorToEventLog("Cannot find resolved info for artifact " + depArtifactMavenId.getKey(),
+                                                   apklibModuleName);
+        }
       }
     }
     return apklibModuleName;
