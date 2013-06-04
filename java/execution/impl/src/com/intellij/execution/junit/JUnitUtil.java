@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +157,7 @@ public class JUnitUtil {
   @Nullable
   private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
+    if (ancestorOrSelf == null) return null;
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
     Module module = JavaExecutionUtil.findModule(aClass);
     if (module == null) return null;
