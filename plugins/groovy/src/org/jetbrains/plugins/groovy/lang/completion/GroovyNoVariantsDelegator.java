@@ -63,7 +63,8 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
-          !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
+          !MapArgumentCompletionProvider.isMapKeyCompletion(parameters) &&
+          !GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
         if (Registry.is("ide.completion.show.better.matching.classes")) {
           result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
         }
