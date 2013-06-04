@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -171,6 +172,6 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       }
       list = (PsiReferenceList) element.getParent();
     }
-    return list;
+    return (PsiReferenceList)JavaCodeStyleManager.getInstance(extendsList.getProject()).shortenClassReferences(list);
   }
 }
