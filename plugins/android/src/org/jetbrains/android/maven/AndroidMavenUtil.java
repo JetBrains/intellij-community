@@ -59,7 +59,11 @@ public class AndroidMavenUtil {
     boolean resultUnderApp = false;
 
     for (MavenProject p : allProjects) {
-      final List<MavenArtifact> dependencies = p.findDependencies(mavenId);
+      List<MavenArtifact> dependencies = p.findDependencies(mavenId);
+
+      if (dependencies.size() == 0) {
+        dependencies = p.findDependencies(mavenId.getGroupId(), mavenId.getArtifactId());
+      }
 
       if (dependencies.size() > 0 && containsCompileDependency(dependencies)) {
         final VirtualFile projectDir = p.getDirectoryFile();
