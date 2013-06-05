@@ -17,18 +17,17 @@ package git4idea.log;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitVcsCommit;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.hanuna.gitalk.common.MyTimer;
@@ -59,18 +58,17 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<CommitParents> readNextBlock(@NotNull VirtualFile root) throws VcsException {
     // TODO either don't query details here, or save them right away
-    List<GitCommit> history = GitHistoryUtils.history(myProject, root,
-                                                      "HEAD", "--branches", "--remotes", "--tags",
-                                                      "--date-order", "--encoding=UTF-8", "--full-history", "--sparse",
+    List<GitCommit> history = GitHistoryUtils.history(myProject, root, "HEAD", "--branches", "--remotes", "--tags", "--date-order",
+                                                      "--encoding=UTF-8", "--full-history", "--sparse",
                                                       "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE);
     return ContainerUtil.map(history, new Function<GitCommit, CommitParents>() {
       @Override
       public CommitParents fun(GitCommit gitCommit) {
-        return new SimpleCommitParents(Hash.build(gitCommit.getHash().getValue()),
-                                       ContainerUtil.map(gitCommit.getParentsHashes(), new Function<String, Hash>() {
+        return new SimpleCommitParents(Hash.build(gitCommit.getHash().toString()),
+                                       ContainerUtil.map(gitCommit.getParents(), new Function<git4idea.Hash, Hash>() {
                                          @Override
-                                         public Hash fun(String s) {
-                                           return Hash.build(s);
+                                         public Hash fun(git4idea.Hash hash) {
+                                           return Hash.build(hash.toString());
                                          }
                                        }));
       }
@@ -83,7 +81,7 @@ public class GitLogProvider implements VcsLogProvider {
     List<GitCommit> gitCommits;
     MyTimer timer = new MyTimer();
     timer.clear();
-    gitCommits = GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(root), null, hashes);
+    gitCommits = GitHistoryUtils.commitsDetails(myProject, root, hashes);
     System.out.println("Details loading took " + timer.get() + "ms for " + hashes.size() + " hashes");
 
     List<CommitData> result = new SmartList<CommitData>();

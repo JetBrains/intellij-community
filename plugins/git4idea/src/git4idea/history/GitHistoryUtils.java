@@ -611,15 +611,7 @@ public class GitHistoryUtils {
       @Override
       public GitCommit fun(GitLogRecord record) {
         try {
-          List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
-            @Override
-            public Hash fun(String hash) {
-              return Hash.create(hash);
-            }
-          });
-          return new GitCommit(Hash.create(record.getHash()), record.getAuthorName(), record.getAuthorEmail(), record.getAuthorTimeStamp(),
-                               record.getCommitterName(), record.getCommitterEmail(), record.getLongTimeStamp(),
-                               record.getSubject(), record.getFullMessage(), parents, record.parseChanges(project, root));
+          return createCommit(project, root, record);
         }
         catch (VcsException e) {
           LOG.error(e);
@@ -627,6 +619,19 @@ public class GitHistoryUtils {
         }
       }
     }));
+  }
+
+  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record)
+                                        throws VcsException {
+    List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
+      @Override
+      public Hash fun(String hash) {
+        return Hash.create(hash);
+      }
+    });
+    return new GitCommit(Hash.create(record.getHash()), record.getAuthorName(), record.getAuthorEmail(), record.getAuthorTimeStamp(),
+                         record.getCommitterName(), record.getCommitterEmail(), record.getLongTimeStamp(),
+                         record.getSubject(), record.getFullMessage(), parents, record.parseChanges(project, root));
   }
 
   /**
@@ -851,6 +856,7 @@ public class GitHistoryUtils {
     return result;
   }
 
+  @Deprecated
   @NotNull
   public static List<GitHeavyCommit> commitsDetails(@NotNull Project project, @NotNull FilePath path, @Nullable SymbolicRefsI refs,
                                                @NotNull final Collection<String> commitsIds) throws VcsException {
@@ -869,6 +875,25 @@ public class GitHistoryUtils {
     for (GitLogRecord record : parser.parse(output)) {
       final GitHeavyCommit gitCommit = createCommit(project, refs, root, record);
       rc.add(gitCommit);
+    }
+    return rc;
+  }
+
+  @NotNull
+  public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull VirtualFile root,
+                                               @NotNull final Collection<String> hashes) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
+                                           SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
+                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
+    h.setStdoutSuppressed(true);
+    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters(new ArrayList<String>(hashes));
+
+    String output = h.run();
+    final List<GitCommit> rc = new ArrayList<GitCommit>();
+    for (GitLogRecord record : parser.parse(output)) {
+      rc.add(createCommit(project, root, record));
     }
     return rc;
   }
