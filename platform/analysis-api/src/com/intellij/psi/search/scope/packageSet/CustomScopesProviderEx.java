@@ -17,6 +17,8 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -59,5 +61,23 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
 
   public static enum ScopePlace {
     SETTING, ACTION
+  }
+
+  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+  private static class AllScopeHolder {
+    @NotNull
+    private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
+    @NotNull
+    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
+      @Override
+      public boolean contains(final VirtualFile file, NamedScopesHolder scopesHolder) {
+        return true;
+      }
+    });
+  }
+
+  @NotNull
+  public static NamedScope getAllScope() {
+    return AllScopeHolder.ALL;
   }
 }

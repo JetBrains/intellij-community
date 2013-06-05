@@ -1382,4 +1382,13 @@ public class FileUtil extends FileUtilRt {
     list.add(path.substring(index, path.length()));
     return list;
   }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isJarOrZip(File file) {
+    if (file.isDirectory()) {
+      return false;
+    }
+    final String name = file.getName();
+    return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
+  }
 }

@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
 
-import org.jetbrains.annotations.NotNull;
+/*
+ * User: anna
+ * Date: 28-May-2009
+ */
+package com.intellij.codeInspection;
 
-public interface ExternalizableScheme extends Scheme{
-  @NotNull
-  ExternalInfo getExternalInfo();
+import com.intellij.openapi.extensions.ExtensionPointName;
 
-  void setName(String newName);
+/**
+ * This will be removed in future versions.
+ * Please use {@link InspectionEP} for inspection registration
+ */
+@Deprecated
+public interface InspectionToolsFactory {
+  ExtensionPointName<InspectionToolsFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.inspectionToolsFactory");
+
+  InspectionProfileEntry[] createTools();
 }

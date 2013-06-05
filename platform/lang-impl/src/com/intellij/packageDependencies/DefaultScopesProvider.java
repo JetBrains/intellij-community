@@ -69,24 +69,6 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     return myScopes;
   }
 
-  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-  private static class AllScopeHolder {
-    @NotNull
-    private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
-    @NotNull
-    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
-      @Override
-      public boolean contains(final VirtualFile file, NamedScopesHolder scopesHolder) {
-        return true;
-      }
-    });
-  }
-
-  @NotNull
-  public static NamedScope getAllScope() {
-    return AllScopeHolder.ALL;
-  }
-
   @NotNull
   public NamedScope getProblemsScope() {
     return myProblemsScope;

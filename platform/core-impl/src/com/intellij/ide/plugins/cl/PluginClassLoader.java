@@ -17,7 +17,7 @@
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return c;
     }
 
-    PluginManager.addPluginClass(name, myPluginId, false);
+    PluginManagerCore.addPluginClass(name, myPluginId, false);
     throw new ClassNotFoundException(name + " " + this);
   }
 
@@ -109,7 +109,7 @@ public class PluginClassLoader extends UrlClassLoader {
       throw new PluginException(e, myPluginId);
     }
     if (c != null) {
-      PluginManager.addPluginClass(c.getName(), myPluginId, true);
+      PluginManagerCore.addPluginClass(c.getName(), myPluginId, true);
     }
 
     return c;
@@ -122,7 +122,7 @@ public class PluginClassLoader extends UrlClassLoader {
 
   public URL findResource(final String name) {
     final long started = myDebugTime ? System.nanoTime():0;
-    
+
     try {
       final URL resource = findResourceImpl(name);
       if (resource != null) {
