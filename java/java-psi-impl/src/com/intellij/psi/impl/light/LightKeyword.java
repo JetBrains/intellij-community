@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -38,7 +38,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
 
   @Override
   public IElementType getTokenType(){
-    Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+    Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
     lexer.start(myText);
     return lexer.getTokenType();
   }

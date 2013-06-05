@@ -1,9 +1,11 @@
 /* It's an automatically generated code. Do not modify it. */
-package com.intellij.lexer;
+package com.intellij.lang.java.lexer;
 
+import com.intellij.lexer.DocCommentTokenTypes;
+import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.*;
 
+@SuppressWarnings("ALL")
 %%
 
 %{
@@ -53,7 +55,6 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
 
 %%
 
-<YYINITIAL> "/**/" { return myTokenTypes.commentEnd(); }
 <YYINITIAL> "/**" { yybegin(COMMENT_DATA_START); return myTokenTypes.commentStart(); }
 <COMMENT_DATA_START> {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }
 <COMMENT_DATA>  {WHITE_DOC_SPACE_NO_LR}+ { return myTokenTypes.commentData(); }
@@ -69,13 +70,22 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
 
 <INLINE_TAG_NAME, COMMENT_DATA_START> "@param" { yybegin(PARAM_TAG_SPACE); return myTokenTypes.tagName(); }
 <PARAM_TAG_SPACE>  {WHITE_DOC_SPACE_CHAR}+ {yybegin(DOC_TAG_VALUE); return myTokenTypes.space();}
-<DOC_TAG_VALUE> [\<] { if (myJdk15Enabled) {yybegin(DOC_TAG_VALUE_IN_LTGT); return myTokenTypes.tagValueLT();} else { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); } }
+<DOC_TAG_VALUE> [\<] {
+  if (myJdk15Enabled) {
+    yybegin(DOC_TAG_VALUE_IN_LTGT);
+    return myTokenTypes.tagValueLT();
+  }
+  else {
+    yybegin(COMMENT_DATA);
+    return myTokenTypes.commentData();
+  }
+}
 <DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return myTokenTypes.tagValueToken(); }
 <DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return myTokenTypes.tagValueToken(); }
 <DOC_TAG_VALUE_IN_LTGT> [\>] { yybegin(COMMENT_DATA); return myTokenTypes.tagValueGT(); }
 
 <COMMENT_DATA_START, COMMENT_DATA> "{" {
-  if (checkAhead('@')){
+  if (checkAhead('@')) {
     yybegin(INLINE_TAG_NAME);
     return myTokenTypes.inlineTagStart();
   }
@@ -89,13 +99,12 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
 
 <COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
 <COMMENT_DATA_START> "@"{IDENTIFIER} { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName();  }
+
 <TAG_DOC_SPACE>  {WHITE_DOC_SPACE_CHAR}+ {
-
   if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA);
-  else if (checkAhead('\u007b') ) yybegin(COMMENT_DATA); //lbrace -  there's some error in JLex when typing lbrace directly
+  else if (checkAhead('\u007b') ) yybegin(COMMENT_DATA);  // lbrace - there's a error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE);
-
- return myTokenTypes.space();
+  return myTokenTypes.space();
 }
 
 "*"+"/" { return myTokenTypes.commentEnd(); }

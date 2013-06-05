@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lexer;
+package com.intellij.lang.java.lexer;
 
+import com.intellij.lexer.DocCommentTokenTypes;
+import com.intellij.lexer.JavaDocTokenTypes;
+import com.intellij.lexer.LexerBase;
+import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/** @deprecated use com.intellij.lang.java.JavaDocLexer (to remove in IDEA 14) */
-public class DocCommentLexer extends MergingLexerAdapter {
-  public DocCommentLexer(final DocCommentTokenTypes tokenTypes, final boolean isJdk15Enabled) {
+public class JavaDocLexer extends MergingLexerAdapter {
+  public JavaDocLexer(@NotNull LanguageLevel level) {
+    this(JavaDocTokenTypes.INSTANCE, level.isAtLeast(LanguageLevel.JDK_1_5));
+  }
+
+  private JavaDocLexer(DocCommentTokenTypes tokenTypes, boolean isJdk15Enabled) {
     super(new AsteriskStripperLexer(new _JavaDocLexer(isJdk15Enabled, tokenTypes), tokenTypes),
           tokenTypes.spaceCommentsTokenSet());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.ide.util.importProject;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,13 +38,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JavaModuleInsight extends ModuleInsight {
-  private final JavaLexer myLexer;
+  private final Lexer myLexer;
 
   public JavaModuleInsight(@Nullable final ProgressIndicator progress,
                            Set<String> existingModuleNames,
                            Set<String> existingProjectLibraryNames) {
     super(progress, existingModuleNames, existingProjectLibraryNames);
-    myLexer = new JavaLexer(LanguageLevel.JDK_1_5);
+    myLexer = JavaParserDefinition.createLexer(LanguageLevel.JDK_1_5);
   }
 
   @Override

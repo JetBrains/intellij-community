@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lexer;
+package com.intellij.lang.java.lexer;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;

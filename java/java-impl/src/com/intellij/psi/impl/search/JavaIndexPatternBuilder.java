@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
@@ -40,7 +40,7 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
   @Nullable
   public Lexer getIndexingLexer(final PsiFile file) {
     if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
-      return new JavaLexer(((PsiJavaFile)file).getLanguageLevel());
+      return JavaParserDefinition.createLexer(((PsiJavaFile)file).getLanguageLevel());
     }
     return null;
   }
