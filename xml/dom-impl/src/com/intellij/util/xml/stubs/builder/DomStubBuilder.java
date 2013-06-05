@@ -50,6 +50,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     Project project = fileContent.getProject();
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof XmlFile)) return null;
+    psiFile.putUserData(XmlUtil.CONTENT_FOR_DOM_STUBS, fileContent);
 
     XmlFile xmlFile = (XmlFile)psiFile;
     DomManager manager = DomManager.getDomManager(project);
@@ -69,6 +70,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     }
     finally {
       xmlFile.putUserData(XmlUtil.BUILDING_DOM_STUBS, null);
+      psiFile.putUserData(XmlUtil.CONTENT_FOR_DOM_STUBS, null);
     }
   }
 

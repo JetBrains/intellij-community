@@ -63,6 +63,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
@@ -168,6 +169,7 @@ public class XmlUtil {
 
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+  public final static Key<FileContent> CONTENT_FOR_DOM_STUBS = Key.create("dom stubs content");
 
   private XmlUtil() {
   }
