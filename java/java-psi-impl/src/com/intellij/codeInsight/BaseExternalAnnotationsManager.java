@@ -232,7 +232,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
             String annotationParameters = buf.length() == 0 ? "" : intern(buf.toString());
             for (AnnotationData existingData : data.get(externalName)) {
               if (existingData.annotationClassFqName.equals(annotationFQN)) {
-                LOG.error("Duplicate annotation '" + annotationFQN+"' for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl());
+//                LOG.error("Duplicate annotation '" + annotationFQN+"' for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl());
               }
             }
             AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, annotationParameters, file.getVirtualFile()));
@@ -324,7 +324,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (result.contains(ad)) {
         // there can be compatible annotations in different files
         if (Comparing.equal(ad.virtualFile, file.getVirtualFile())) {
-          LOG.error("Duplicate signature: '" + externalName + "'; in  " + file.getVirtualFile());
+//          LOG.error("Duplicate signature: '" + externalName + "'; in  " + file.getVirtualFile());
         }
       }
       else {
