@@ -16,6 +16,8 @@
 package com.intellij.spi;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,10 +29,12 @@ import javax.swing.*;
 /**
  * User: anna
  */
-public class SPIFileType implements FileTypeIdentifiableByVirtualFile {
+public class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final SPIFileType INSTANCE = new SPIFileType();
 
-  private SPIFileType() {}
+  private SPIFileType() {
+    super(SPILanguage.INSTANCE);
+  }
 
   @Override
   public boolean isMyFileType(VirtualFile file) {
@@ -66,11 +70,6 @@ public class SPIFileType implements FileTypeIdentifiableByVirtualFile {
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
-  }
-
-  @Override
-  public boolean isBinary() {
-    return false;
   }
 
   @Override
