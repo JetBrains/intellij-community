@@ -64,8 +64,8 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, JavaHighlightingColors.INVALID_STRING_ESCAPE);
     ourMap1.put(JavaTokenType.CHARACTER_LITERAL, JavaHighlightingColors.STRING);
 
-    ourMap1.put(JavaTokenType.LPARENTH, JavaHighlightingColors.PARENTHS);
-    ourMap1.put(JavaTokenType.RPARENTH, JavaHighlightingColors.PARENTHS);
+    ourMap1.put(JavaTokenType.LPARENTH, JavaHighlightingColors.PARENTHESES);
+    ourMap1.put(JavaTokenType.RPARENTH, JavaHighlightingColors.PARENTHESES);
 
     ourMap1.put(JavaTokenType.LBRACE, JavaHighlightingColors.BRACES);
     ourMap1.put(JavaTokenType.RBRACE, JavaHighlightingColors.BRACES);
