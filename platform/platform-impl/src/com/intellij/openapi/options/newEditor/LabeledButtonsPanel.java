@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
@@ -25,8 +28,13 @@ class LabeledButtonsPanel extends JPanel {
   private final JPanel myButtonsPanel = new JPanel();
   LabeledButtonsPanel(String label) {
     super(new BorderLayout());
-    add(new JLabel(label), BorderLayout.NORTH);
+    final JLabel text = new JLabel(label);
+    final Font font = UIUtil.getLabelFont();
+    text.setFont(font.deriveFont(Font.BOLD).deriveFont(font.getSize() + 2f));
+    text.setBorder(new EmptyBorder(2, 10, 8, 0));
+    add(text, BorderLayout.NORTH);
     myButtonsPanel.setLayout(new BoxLayout(myButtonsPanel, BoxLayout.X_AXIS));
+    myButtonsPanel.setOpaque(false);
     add(myButtonsPanel, BorderLayout.CENTER);
   }
 
