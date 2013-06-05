@@ -1407,6 +1407,7 @@
     <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
 
     <welcomeScreen implementation="com.intellij.ide.ui.laf.darcula.DarculaWelcomeScreenProvider"/>
+    <fileTypeFactory implementation="com.intellij.spi.SPIFileTypeFactory"/>
   </extensions>
 
   <actions>

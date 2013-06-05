@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -62,13 +63,13 @@ public class FileTypeChooser extends DialogWrapper {
     Arrays.sort(fileTypes, new Comparator<FileType>() {
       @Override
       public int compare(final FileType fileType1, final FileType fileType2) {
-        if (fileType1 == null){
+        if (fileType1 == null) {
           return 1;
         }
-        if (fileType2 == null){
+        if (fileType2 == null) {
           return -1;
         }
-        return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());  
+        return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
       }
     });
 
@@ -139,7 +140,7 @@ public class FileTypeChooser extends DialogWrapper {
    */
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
-    if (project != null) {
+    if (project != null && !(file instanceof FakeVirtualFile)) {
       ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().findFile(file); // autodetect text file if needed
     }
     FileType type = file.getFileType();
