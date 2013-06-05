@@ -16,13 +16,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.django.testRunner.DjangoTestUtil;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,29 +97,30 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
-          final Location location = failedTest.getLocation(myProject);
-          if (location == null) continue;
+          final Location location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
+          if (location != null) {
+            final PsiElement element = location.getPsiElement();
 
-          final PsiElement element = location.getPsiElement();
-          if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
-            String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
-            String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
-            if (target != null)
-              specs.add(target);
-          }
-          else {
-            PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-            PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-            final VirtualFile virtualFile = location.getVirtualFile();
-            if (virtualFile != null) {
-              String path = virtualFile.getCanonicalPath();
-              if (pyClass != null)
-                path += "::" + pyClass.getName();
-              if (pyFunction != null)
-                path += "::" + pyFunction.getName();
-
-              if (!specs.contains(path))
-                specs.add(path);
+            if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
+              String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
+              String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
+              if (target != null)
+                specs.add(target);
+            }
+            else {
+              PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+              PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+              final VirtualFile virtualFile = location.getVirtualFile();
+              if (virtualFile != null) {
+                String path = location.getVirtualFile().getCanonicalPath();
+                if (pyClass != null)
+                  path += "::" + pyClass.getName();
+                if (pyFunction != null)
+                  path += "::" + pyFunction.getName();
+  
+                if (!specs.contains(path))
+                  specs.add(path);
+              }
             }
           }
         }
@@ -143,7 +147,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
   @NotNull
   @Override
-  protected Filter getFilter(Project project) {
+  protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
     return new Filter() {
       public boolean shouldAccept(final AbstractTestProxy test) {
         boolean ignored = (test.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX.getValue());
