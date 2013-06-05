@@ -15,9 +15,12 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -33,7 +36,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
 
   @Override
   protected ByteBuffer create() throws IOException {
-    final RandomAccessFile file = new RandomAccessFile(myFile, RW);
+    final RandomAccessFile file = createFile();
     try {
       final FileChannel channel = file.getChannel();
       try {
@@ -51,13 +54,28 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     }
   }
 
+  private RandomAccessFile createFile() throws FileNotFoundException {
+    return FileUtilRt.doIOOperation(new FileUtilRt.RetriableIOOperation<RandomAccessFile, FileNotFoundException>() {
+      @Nullable
+      @Override
+      public RandomAccessFile execute(boolean finalAttempt) throws FileNotFoundException {
+        try {
+          return new RandomAccessFile(myFile, RW);
+        } catch (FileNotFoundException ex) {
+          if (!finalAttempt) return null;
+          throw ex;
+        }
+      }
+    });
+  }
+
   @Override
   public void flush() {
     final ByteBuffer buffer = getCachedBuffer();
     if (buffer == null || !isDirty()) return;
 
     try {
-      final RandomAccessFile file = new RandomAccessFile(myFile, RW);
+      final RandomAccessFile file = createFile();
       try {
         final FileChannel channel = file.getChannel();
         try {

@@ -22,6 +22,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -96,14 +97,22 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   private void writeLength(final long len) {
-    File lengthFile = getLengthFile();
+    final File lengthFile = getLengthFile();
     DataOutputStream stream = null;
     try {
-      stream = new DataOutputStream(new FileOutputStream(lengthFile));
-      stream.writeLong(len);
-    }
-    catch (FileNotFoundException e) {
-      LOG.error(e);
+      stream = FileUtilRt.doIOOperation(new FileUtilRt.RetriableIOOperation<DataOutputStream, FileNotFoundException>() {
+        @Nullable
+        @Override
+        public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
+          try {
+            return new DataOutputStream(new FileOutputStream(lengthFile));
+          } catch (FileNotFoundException ex) {
+            if (!lastAttempt) return null;
+            throw ex;
+          }
+        }
+      });
+      if (stream != null) stream.writeLong(len);
     }
     catch (IOException e) {
       LOG.error(e);
