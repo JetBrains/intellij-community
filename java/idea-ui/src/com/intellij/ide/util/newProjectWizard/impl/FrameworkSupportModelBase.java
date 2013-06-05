@@ -137,6 +137,12 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     if (!Comparing.equal(oldVersion, version)) {
       for (Map.Entry<String, FrameworkSupportNode> entry : mySettingsMap.entrySet()) {
         if (hasParentWithId(entry.getValue(), frameworkOrGroupId)) {
+          if (!entry.getValue().getId().equals(frameworkOrGroupId)) {
+            FrameworkSupportOptionsComponent component = myOptionsComponentsMap.get(entry.getKey());
+            if (component != null) {
+              component.updateVersionsComponent();
+            }
+          }
           updateFrameworkLibraryComponent(entry.getKey());
         }
       }

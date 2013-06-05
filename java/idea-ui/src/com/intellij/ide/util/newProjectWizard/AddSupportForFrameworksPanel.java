@@ -151,6 +151,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       FrameworkGroup<?> group = ((FrameworkGroupNode)node).getGroup();
       initializeGroupPanel(group);
       showCard(group.getId());
+      UIUtil.setEnabled(myOptionsPanel, true, true);
     }
     else {
       showCard(EMPTY_CARD);

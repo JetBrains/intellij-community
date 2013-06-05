@@ -46,6 +46,7 @@ import java.util.List;
 public class FrameworkSupportOptionsComponent {
   private final JPanel myMainPanel;
   private final FrameworkSupportModelBase myModel;
+  private FrameworkVersionComponent myFrameworkVersionComponent;
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private LibraryOptionsPanel myLibraryOptionsPanel;
   private final FrameworkSupportInModuleConfigurable myConfigurable;
@@ -64,7 +65,8 @@ public class FrameworkSupportOptionsComponent {
     myModel.registerOptionsComponent(provider, this);
     List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
     if (!versions.isEmpty()) {
-      myMainPanel.add(new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions).getMainPanel());
+      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions);
+      myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
     }
 
     final JComponent component = myConfigurable.createComponent();
@@ -72,7 +74,7 @@ public class FrameworkSupportOptionsComponent {
       myMainPanel.add(component);
     }
 
-    final boolean addSeparator = component != null || !versions.isEmpty();
+    final boolean addSeparator = component != null || myFrameworkVersionComponent != null;
     myLibraryOptionsPanelWrapper = new JPanel(new BorderLayout());
     myMainPanel.add(myLibraryOptionsPanelWrapper);
     if (myConfigurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
@@ -113,6 +115,13 @@ public class FrameworkSupportOptionsComponent {
     }
   }
 
+  public void updateVersionsComponent() {
+    if (myFrameworkVersionComponent != null) {
+      myFrameworkVersionComponent.updateVersionsList();
+    }
+  }
+
+
   private FrameworkLibraryVersionFilter createLibraryVersionFilter() {
     return new FrameworkLibraryVersionFilter() {
       @Override
@@ -121,7 +130,6 @@ public class FrameworkSupportOptionsComponent {
       }
     };
   }
-
 
   public JPanel getMainPanel() {
     return myMainPanel;
