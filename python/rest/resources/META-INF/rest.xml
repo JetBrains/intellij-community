@@ -19,6 +19,9 @@
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/RestDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/RestDarcula.xml"/>
+
+    <lang.elementManipulator forClass="com.jetbrains.rest.psi.RestLine"
+                             implementationClass="com.jetbrains.rest.psi.RestLineManipulator"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
