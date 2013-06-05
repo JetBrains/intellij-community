@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
@@ -89,7 +90,7 @@ public class Advertiser {
     GridBag gb = new GridBag();
     myComponent.add(myTextPanel, gb.next());
     myComponent.add(myNextLabel, gb.next());
-    myComponent.add(new JPanel(), gb.next().fillCellHorizontally().weightx(1));
+    myComponent.add(new NonOpaquePanel(), gb.next().fillCellHorizontally().weightx(1));
   }
 
   private void updateAdvertisements() {
