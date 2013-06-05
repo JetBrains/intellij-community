@@ -2,6 +2,10 @@ import imp
 import sys
 import datetime
 
+helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
+if sys.path[0] != helpers_dir:
+    sys.path.insert(0, helpers_dir)
+
 from tcunittest import TeamcityTestResult
 from tcmessages import TeamcityServiceMessages
 

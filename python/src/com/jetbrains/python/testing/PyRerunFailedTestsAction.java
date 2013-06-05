@@ -9,11 +9,13 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.django.testRunner.DjangoTestUtil;
@@ -21,7 +23,6 @@ import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +40,11 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   }
 
   @Override
+  @Nullable
   public MyRunProfile getRunProfile() {
-    final AbstractPythonRunConfiguration configuration = (AbstractPythonRunConfiguration)getModel().getProperties().getConfiguration();
+    final TestFrameworkRunningModel model = getModel();
+    if (model == null) return null;
+    final AbstractPythonRunConfiguration configuration = (AbstractPythonRunConfiguration)model.getProperties().getConfiguration();
     return new MyTestRunProfile(configuration);
   }
 
@@ -61,9 +65,8 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
       final AbstractPythonRunConfiguration configuration = ((AbstractPythonRunConfiguration)getPeer());
-      final PythonCommandLineState state = new FailedPythonTestCommandLineStateBase(configuration, env,
+      return new FailedPythonTestCommandLineStateBase(configuration, env,
                                                             (PythonTestCommandLineStateBase)configuration.getState(executor, env));
-      return state;
     }
   }
 
@@ -92,19 +95,21 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
           final Location location = failedTest.getLocation(myProject);
-          if (location != null) {
-            final PsiElement element = location.getPsiElement();
+          if (location == null) continue;
 
-            if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
-              String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
-              String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
-              if (target != null)
-                specs.add(target);
-            }
-            else {
-              PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-              PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-              String path = location.getVirtualFile().getCanonicalPath();
+          final PsiElement element = location.getPsiElement();
+          if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
+            String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
+            String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
+            if (target != null)
+              specs.add(target);
+          }
+          else {
+            PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+            PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+            final VirtualFile virtualFile = location.getVirtualFile();
+            if (virtualFile != null) {
+              String path = virtualFile.getCanonicalPath();
               if (pyClass != null)
                 path += "::" + pyClass.getName();
               if (pyFunction != null)

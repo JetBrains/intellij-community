@@ -1,6 +1,10 @@
 import sys, os
 import imp
 
+helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
+if sys.path[0] != helpers_dir:
+    sys.path.insert(0, helpers_dir)
+
 from tcunittest import TeamcityTestResult
 
 from pycharm_run_utils import import_system_module

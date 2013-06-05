@@ -1,6 +1,10 @@
-from tcmessages import TeamcityServiceMessages
 import os
 
+helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
+if sys.path[0] != helpers_dir:
+    sys.path.insert(0, helpers_dir)
+
+from tcmessages import TeamcityServiceMessages
 from pycharm_run_utils import adjust_sys_path
 
 adjust_sys_path(False)

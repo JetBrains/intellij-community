@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -124,6 +125,12 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     addBeforeParameters(cmd);
     script_params.addParameters(getTestSpecs());
     addAfterParameters(cmd);
+  }
+
+  @Override
+  public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
+    super.addPredefinedEnvironmentVariables(envs, passParentEnvs);
+    envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.getHelperPath("pycharm"));
   }
 
   protected abstract String getRunner();
