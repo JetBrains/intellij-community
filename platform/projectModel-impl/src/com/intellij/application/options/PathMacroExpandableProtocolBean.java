@@ -18,8 +18,8 @@ package com.intellij.application.options;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-public class PathMacroExpendableProtocolBean {
-  public static ExtensionPointName<PathMacroExpendableProtocolBean> EP_NAME = ExtensionPointName.create("com.intellij.pathMacroExpendableProtocol");
+public class PathMacroExpandableProtocolBean {
+  public static ExtensionPointName<PathMacroExpandableProtocolBean> EP_NAME = ExtensionPointName.create("com.intellij.pathMacroExpandableProtocol");
 
    @Attribute("protocol")
    public String protocol;

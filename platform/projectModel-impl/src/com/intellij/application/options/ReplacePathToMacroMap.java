@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -45,8 +46,10 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     List<String> protocols = new ArrayList<String>();
     protocols.add("file");
     protocols.add("jar");
-    for (PathMacroExpendableProtocolBean bean : PathMacroExpendableProtocolBean.EP_NAME.getExtensions()) {
-      protocols.add(bean.protocol);
+    if (Extensions.getRootArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME.getName())) {
+      for (PathMacroExpandableProtocolBean bean : PathMacroExpandableProtocolBean.EP_NAME.getExtensions()) {
+        protocols.add(bean.protocol);
+      }
     }
     PROTOCOLS = ArrayUtil.toStringArray(protocols);
   }
