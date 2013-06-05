@@ -218,9 +218,12 @@ public class MinusculeMatcher implements Matcher {
   public FList<TextRange> matchingFragments(@NotNull String name) {
     MatchingState state = myMatchingState.get();
     state.initializeState(name);
-    FList<TextRange> result = matchWildcards(name, 0, 0, state);
-    state.releaseState();
-    return result;
+    try {
+      return matchWildcards(name, 0, 0, state);
+    }
+    finally {
+      state.releaseState();
+    }
   }
 
   /**
