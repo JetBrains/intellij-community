@@ -30,7 +30,7 @@ import com.intellij.util.Function;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
@@ -438,7 +438,7 @@ public class GitHistoryUtilsTest extends GitTest {
     }
   }
 
-  private static void assertCommitEqualToTestRevision(GitCommit commit, GitTestRevision expected) throws IOException {
+  private static void assertCommitEqualToTestRevision(GitHeavyCommit commit, GitTestRevision expected) throws IOException {
     assertEquals(commit.getHash().toString(), expected.myHash);
     assertEquals(commit.getAuthor(), expected.myAuthorName);
     assertEquals(commit.getAuthorEmail(), expected.myAuthorEmail);
@@ -456,10 +456,10 @@ public class GitHistoryUtilsTest extends GitTest {
     }
   }
 
-  private static void assertCommitsEqualToTestRevisions(Collection<GitCommit> actualCommits, Collection<GitTestRevision> expectedRevisions) throws IOException {
+  private static void assertCommitsEqualToTestRevisions(Collection<GitHeavyCommit> actualCommits, Collection<GitTestRevision> expectedRevisions) throws IOException {
     assertEquals(actualCommits.size(), expectedRevisions.size());
     for (Iterator hit = actualCommits.iterator(), myIt = expectedRevisions.iterator(); hit.hasNext(); ) {
-      GitCommit commit = (GitCommit)hit.next();
+      GitHeavyCommit commit = (GitHeavyCommit)hit.next();
       GitTestRevision revision = (GitTestRevision)myIt.next();
       assertCommitEqualToTestRevision(commit, revision);
     }

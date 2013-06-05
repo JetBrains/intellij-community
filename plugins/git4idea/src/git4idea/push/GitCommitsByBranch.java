@@ -16,7 +16,7 @@
 package git4idea.push;
 
 import git4idea.GitBranch;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -79,8 +79,8 @@ final class GitCommitsByBranch {
   }
 
   @NotNull
-  public Collection<GitCommit> getAllCommits() {
-    Collection<GitCommit> commits = new ArrayList<GitCommit>();
+  public Collection<GitHeavyCommit> getAllCommits() {
+    Collection<GitHeavyCommit> commits = new ArrayList<GitHeavyCommit>();
     for (GitPushBranchInfo branchInfo : myCommitsByBranch.values()) {
       commits.addAll(branchInfo.getCommits());
     }

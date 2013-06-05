@@ -33,7 +33,7 @@ import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 
@@ -238,7 +238,7 @@ public class GitCherryPickStepdefs {
   }
 
   private static void cherryPick(List<String> virtualHashes) {
-    List<GitCommit> commits = new ArrayList<GitCommit>();
+    List<GitHeavyCommit> commits = new ArrayList<GitHeavyCommit>();
     for (String virtualHash : virtualHashes) {
       commits.add(createMockCommit(virtualHash));
     }
@@ -250,16 +250,16 @@ public class GitCherryPickStepdefs {
     cherryPick(Arrays.asList(virtualHashes));
   }
 
-  private static GitCommit createMockCommit(String virtualHash) {
+  private static GitHeavyCommit createMockCommit(String virtualHash) {
     CommitDetails realCommit = virtualCommits.getRealCommit(virtualHash);
     return mockCommit(realCommit.getHash(), realCommit.getMessage());
   }
 
-  private static GitCommit mockCommit(String hash, String message) {
+  private static GitHeavyCommit mockCommit(String hash, String message) {
     AbstractHash ahash = AbstractHash.create(hash);
     List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
-    return new GitCommit(NullVirtualFile.INSTANCE, ahash, SHAHash.emulate(ahash), "John Smith", null, null, message, message,
+    return new GitHeavyCommit(NullVirtualFile.INSTANCE, ahash, SHAHash.emulate(ahash), "John Smith", null, null, message, message,
                          null, null, null, null, null, null, null, changes, 0);
   }
 

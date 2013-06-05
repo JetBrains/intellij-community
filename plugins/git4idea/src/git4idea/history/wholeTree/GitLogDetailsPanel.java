@@ -30,7 +30,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.UIVcsUtil;
 import git4idea.history.browser.CachedRefs;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +60,7 @@ public class GitLogDetailsPanel {
   private final HtmlHighlighter myHtmlHighlighter;
   private JEditorPane myJEditorPane;
   private VirtualFile myRoot;
-  private GitCommit myCommit;
+  private GitHeavyCommit myCommit;
   private final Convertor<VirtualFile, CachedRefs> myRefsProvider;
   private final Processor<AbstractHash> myMarkProcessor;
 
@@ -158,7 +158,7 @@ public class GitLogDetailsPanel {
     ((CardLayout) myPanel.getLayout()).show(myPanel, LOADING);
   }
 
-  public void setData(VirtualFile root, @NotNull final GitCommit commit) {
+  public void setData(VirtualFile root, @NotNull final GitHeavyCommit commit) {
     myRoot = root;
     myCommit = commit;
     redrawBranchLabels();
@@ -243,7 +243,7 @@ public class GitLogDetailsPanel {
       myHighlighter = highlighter;
     }
 
-    public void setCommit(final VirtualFile root, final GitCommit c) {
+    public void setCommit(final VirtualFile root, final GitHeavyCommit c) {
       final String hash = myHighlighter.getResult(c.getHash().getValue());
       final String author = myHighlighter.getResult(c.getAuthor());
       final String committer = myHighlighter.getResult(c.getCommitter());

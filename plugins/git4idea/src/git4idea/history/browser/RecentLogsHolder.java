@@ -19,7 +19,7 @@ package git4idea.history.browser;
 public interface RecentLogsHolder {
   //boolean isReachable(final String childHash, final String parentHash);
   // todo move out
-  boolean isReachable(final GitCommit commit, SHAHash parentHash);
+  boolean isReachable(final GitHeavyCommit commit, SHAHash parentHash);
   SHAHash getHashByName(final String name);
-  GitCommit getByHash(final SHAHash hash);
+  GitHeavyCommit getByHash(final SHAHash hash);
 }

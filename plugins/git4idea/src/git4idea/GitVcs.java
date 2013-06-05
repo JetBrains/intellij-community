@@ -66,7 +66,7 @@ import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.NewGitUsersComponent;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.GitProjectLogManager;
 import git4idea.history.wholeTree.GitCommitDetailsProvider;
 import git4idea.history.wholeTree.GitCommitsSequentialIndex;
@@ -116,16 +116,16 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @see VcsDataKeys#CHANGES
    * @see #SELECTED_COMMITS
    */
-  public static final DataKey<GitCommit> GIT_COMMIT = DataKey.create("Git.Commit");
+  public static final DataKey<GitHeavyCommit> GIT_COMMIT = DataKey.create("Git.Commit");
 
   /**
    * Provides the list of Git commits selected in some list, for example, in the Git log.
    * @see #GIT_COMMIT
    */
-  public static final DataKey<List<GitCommit>> SELECTED_COMMITS = DataKey.create("Git.Selected.Commits");
+  public static final DataKey<List<GitHeavyCommit>> SELECTED_COMMITS = DataKey.create("Git.Selected.Commits");
 
   /**
-   * Provides the possibility to receive on demand those commit details which usually are not accessible from the {@link GitCommit} object.
+   * Provides the possibility to receive on demand those commit details which usually are not accessible from the {@link git4idea.history.browser.GitHeavyCommit} object.
    */
   public static final DataKey<GitCommitDetailsProvider> COMMIT_DETAILS_PROVIDER = DataKey.create("Git.Commits.Details.Provider");
 

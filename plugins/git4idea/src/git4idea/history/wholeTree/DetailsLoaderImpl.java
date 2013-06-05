@@ -154,16 +154,16 @@ public class DetailsLoaderImpl implements DetailsLoader {
         }
       }
       if (! hashes.isEmpty()) {
-          final Collection<GitCommit> result = myAccess.getCommitDetails(converted, refs);
+          final Collection<GitHeavyCommit> result = myAccess.getCommitDetails(converted, refs);
           if (result != null && (! result.isEmpty())) {
             myDetailsCache.acceptAnswer(result, myAccess.getRoot());
-            for (GitCommit gitCommit : result) {
+            for (GitHeavyCommit gitCommit : result) {
               converted.remove(gitCommit.getShortHash().getString());
             }
           }
           if (! converted.isEmpty()) {
             // todo this is bad
-            final Collection<GitCommit> error = new ArrayList<GitCommit>();
+            final Collection<GitHeavyCommit> error = new ArrayList<GitHeavyCommit>();
             for (String s : converted) {
               error.add(createNotLoadedCommit(AbstractHash.create(s)));
             }
@@ -172,9 +172,9 @@ public class DetailsLoaderImpl implements DetailsLoader {
       }
     }
 
-    private GitCommit createNotLoadedCommit(AbstractHash shortHash) {
+    private GitHeavyCommit createNotLoadedCommit(AbstractHash shortHash) {
       final String notKnown = "Can not load";
-      return new GitCommit(NullVirtualFile.INSTANCE, shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0), notKnown,
+      return new GitHeavyCommit(NullVirtualFile.INSTANCE, shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0), notKnown,
                               "Can not load details", Collections.<String>emptySet(), Collections.<FilePath>emptyList(), notKnown,
                               notKnown, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
                               Collections.<Change>emptyList(), 0);

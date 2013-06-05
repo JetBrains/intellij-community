@@ -27,7 +27,7 @@ import git4idea.GitPlatformFacade;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.util.GitCommitCompareInfo;
@@ -141,9 +141,9 @@ final class GitBranchWorker {
   }
 
   @NotNull
-  private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName) {
-    final List<GitCommit> headToBranch;
-    final List<GitCommit> branchToHead;
+  private Pair<List<GitHeavyCommit>, List<GitHeavyCommit>> loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName) {
+    final List<GitHeavyCommit> headToBranch;
+    final List<GitHeavyCommit> branchToHead;
     try {
       headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
       branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");

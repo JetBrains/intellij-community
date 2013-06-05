@@ -44,7 +44,7 @@ import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
 import git4idea.history.browser.SymbolicRefsI;
@@ -587,18 +587,18 @@ public class GitHistoryUtils {
     return rc;
   }
 
-  public static List<GitCommit> history(final Project project, @NotNull VirtualFile root, String... parameters) throws VcsException {
-    final List<GitCommit> commits = new ArrayList<GitCommit>();
+  public static List<GitHeavyCommit> history(final Project project, @NotNull VirtualFile root, String... parameters) throws VcsException {
+    final List<GitHeavyCommit> commits = new ArrayList<GitHeavyCommit>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    historyWithLinks(project, new FilePathImpl(root), null, new AsynchConsumer<GitCommit>() {
+    historyWithLinks(project, new FilePathImpl(root), null, new AsynchConsumer<GitHeavyCommit>() {
       @Override
       public void finished() {
         semaphore.up();
       }
 
       @Override
-      public void consume(GitCommit gitCommit) {
+      public void consume(GitHeavyCommit gitCommit) {
         commits.add(gitCommit);
       }
     }, null, null, false, parameters);
@@ -609,7 +609,7 @@ public class GitHistoryUtils {
   public static void historyWithLinks(final Project project,
                                       FilePath path,
                                       @Nullable final SymbolicRefsI refs,
-                                      @NotNull final AsynchConsumer<GitCommit> gitCommitConsumer,
+                                      @NotNull final AsynchConsumer<GitHeavyCommit> gitCommitConsumer,
                                       @Nullable final Getter<Boolean> isCanceled,
                                       @Nullable Collection<VirtualFile> paths,
                                       boolean fullHistory, final String... parameters) throws VcsException {
@@ -689,14 +689,14 @@ public class GitHistoryUtils {
                                GitLogParser parser,
                                SymbolicRefsI refs,
                                VirtualFile root,
-                               VcsException[] exc, GitLineHandler h, AsynchConsumer<GitCommit> gitCommitConsumer) {
+                               VcsException[] exc, GitLineHandler h, AsynchConsumer<GitHeavyCommit> gitCommitConsumer) {
     final String text = sb.toString();
     sb.setLength(0);
     sb.append(line);
     if (text.length() == 0) return;
     GitLogRecord record = parser.parseOneRecord(text);
 
-    final GitCommit gitCommit;
+    final GitHeavyCommit gitCommit;
     try {
       gitCommit = createCommit(project, refs, root, record);
     }
@@ -709,7 +709,7 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  private static GitCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
+  private static GitHeavyCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
                                         @NotNull GitLogRecord record) throws VcsException {
     final Collection<String> currentRefs = record.getRefs();
     List<String> locals = new ArrayList<String>();
@@ -717,7 +717,8 @@ public class GitHistoryUtils {
     List<String> tags = new ArrayList<String>();
     final String s = parseRefs(refs, currentRefs, locals, remotes, tags);
 
-    GitCommit gitCommit = new GitCommit(root, AbstractHash.create(record.getShortHash()), new SHAHash(record.getHash()), record.getAuthorName(),
+    GitHeavyCommit
+      gitCommit = new GitHeavyCommit(root, AbstractHash.create(record.getShortHash()), new SHAHash(record.getHash()), record.getAuthorName(),
                                       record.getCommitterName(),
                                       record.getDate(), record.getSubject(), record.getFullMessage(),
                                       new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root),
@@ -797,7 +798,7 @@ public class GitHistoryUtils {
   }
 
   @Nullable
-  public static List<Pair<String, GitCommit>> loadStashStackAsCommits(@NotNull Project project, @NotNull VirtualFile root,
+  public static List<Pair<String, GitHeavyCommit>> loadStashStackAsCommits(@NotNull Project project, @NotNull VirtualFile root,
                                                                       SymbolicRefsI refs, final String... parameters) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
@@ -811,17 +812,17 @@ public class GitHistoryUtils {
     h.setCharset(Charset.forName(GitConfigUtil.getLogEncoding(project, root)));
     out = h.run();
     final List<GitLogRecord> gitLogRecords = parser.parse(out);
-    final List<Pair<String, GitCommit>> result = new ArrayList<Pair<String, GitCommit>>();
+    final List<Pair<String, GitHeavyCommit>> result = new ArrayList<Pair<String, GitHeavyCommit>>();
     for (GitLogRecord gitLogRecord : gitLogRecords) {
       ProgressManager.checkCanceled();
-      final GitCommit gitCommit = createCommit(project, refs, root, gitLogRecord);
-      result.add(new Pair<String, GitCommit>(gitLogRecord.getShortenedRefLog(), gitCommit));
+      final GitHeavyCommit gitCommit = createCommit(project, refs, root, gitLogRecord);
+      result.add(new Pair<String, GitHeavyCommit>(gitLogRecord.getShortenedRefLog(), gitCommit));
     }
     return result;
   }
 
   @NotNull
-  public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull FilePath path, @Nullable SymbolicRefsI refs,
+  public static List<GitHeavyCommit> commitsDetails(@NotNull Project project, @NotNull FilePath path, @Nullable SymbolicRefsI refs,
                                                @NotNull final Collection<String> commitsIds) throws VcsException {
     path = getLastCommitName(project, path);     // adjust path using change manager
     VirtualFile root = GitUtil.getGitRoot(path);
@@ -834,9 +835,9 @@ public class GitHistoryUtils {
     h.addParameters(new ArrayList<String>(commitsIds));
 
     String output = h.run();
-    final List<GitCommit> rc = new ArrayList<GitCommit>();
+    final List<GitHeavyCommit> rc = new ArrayList<GitHeavyCommit>();
     for (GitLogRecord record : parser.parse(output)) {
-      final GitCommit gitCommit = createCommit(project, refs, root, record);
+      final GitHeavyCommit gitCommit = createCommit(project, refs, root, record);
       rc.add(gitCommit);
     }
     return rc;

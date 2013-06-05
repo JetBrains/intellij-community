@@ -32,7 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,8 +93,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
           return "";
         }
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-        if (userObject instanceof GitCommit) {
-          GitCommit commit = (GitCommit)userObject;
+        if (userObject instanceof GitHeavyCommit) {
+          GitHeavyCommit commit = (GitHeavyCommit)userObject;
           return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthor() + "\n\n" + commit.getDescription();
         }
         return "";
@@ -110,9 +110,9 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) myTree.getLastSelectedPathComponent();
         if (node != null) {
           Object nodeInfo = node.getUserObject();
-          if (nodeInfo instanceof GitCommit) {
+          if (nodeInfo instanceof GitHeavyCommit) {
             myChangesBrowser.getViewer().setEmptyText("No differences");
-            myChangesBrowser.setChangesToDisplay(((GitCommit)nodeInfo).getChanges());
+            myChangesBrowser.setChangesToDisplay(((GitHeavyCommit)nodeInfo).getChanges());
             return;
           }
         }
@@ -147,8 +147,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         return;
       }
       Object object = selectedNodes[0].getUserObject();
-      if (object instanceof GitCommit) {
-        sink.put(key, ArrayUtil.toObjectArray(((GitCommit)object).getChanges(), Change.class));
+      if (object instanceof GitHeavyCommit) {
+        sink.put(key, ArrayUtil.toObjectArray(((GitHeavyCommit)object).getChanges(), Change.class));
       }
     }
   }
@@ -185,7 +185,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     DefaultMutableTreeNode node = null;
     while (enumeration.hasMoreElements()) {
       node = (DefaultMutableTreeNode) enumeration.nextElement();
-      if (node.isLeaf() && node.getUserObject() instanceof GitCommit) {
+      if (node.isLeaf() && node.getUserObject() instanceof GitHeavyCommit) {
         break;
       }
     }
@@ -275,7 +275,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   private static DefaultMutableTreeNode createBranchNode(@NotNull GitBranch branch, @NotNull GitPushBranchInfo branchInfo) {
     DefaultMutableTreeNode branchNode = new DefaultMutableTreeNode(branchInfo);
-    for (GitCommit commit : branchInfo.getCommits()) {
+    for (GitHeavyCommit commit : branchInfo.getCommits()) {
       branchNode.add(new DefaultMutableTreeNode(commit));
     }
     if (branchInfo.isNewBranchCreated()) {
@@ -333,12 +333,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   @NotNull
-  private static String getDateString(@NotNull GitCommit commit) {
+  private static String getDateString(@NotNull GitHeavyCommit commit) {
     return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()) + " ";
   }
 
   @NotNull
-  private static String getHashString(@NotNull GitCommit commit) {
+  private static String getHashString(@NotNull GitHeavyCommit commit) {
     return commit.getShortHash().toString();
   }
 
@@ -356,8 +356,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
 
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      if (userObject instanceof GitCommit) {
-        GitCommit commit = (GitCommit)userObject;
+      if (userObject instanceof GitHeavyCommit) {
+        GitHeavyCommit commit = (GitHeavyCommit)userObject;
         renderer.append(commit.getSubject(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, getTextRenderer().getForeground()));
         renderer.setToolTipText(getHashString(commit) + " " + getDateString(commit));
       }

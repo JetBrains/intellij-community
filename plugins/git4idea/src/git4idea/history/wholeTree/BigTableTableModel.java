@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.committed.DateChangeListGroupingStrategy
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.ColumnInfo;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -457,7 +457,7 @@ public class BigTableTableModel extends AbstractTableModel {
     if (commitI == null) return column.getPreferredStringValue();
     if (commitI.holdsDecoration()) return columnIndex == 0 ? commitI.getDecorationString() : "";
 
-    final GitCommit details = myCache.convert(commitI.selectRepository(myRootsHolder.getRoots()), commitI.getHash());
+    final GitHeavyCommit details = myCache.convert(commitI.selectRepository(myRootsHolder.getRoots()), commitI.getHash());
     if (details == null) return LOADING;
     return column.valueOf(details);
   }

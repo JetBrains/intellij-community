@@ -28,7 +28,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -210,7 +210,7 @@ public class GitPushDialog extends DialogWrapper {
 
   private static String logMessageForCommits(GitCommitsByRepoAndBranch commitsToPush) {
     StringBuilder logMessage = new StringBuilder();
-    for (GitCommit commit : commitsToPush.getAllCommits()) {
+    for (GitHeavyCommit commit : commitsToPush.getAllCommits()) {
       logMessage.append(commit.getShortHash());
     }
     return logMessage.toString();

@@ -26,7 +26,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,13 +43,13 @@ import java.util.List;
  */
 public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
 
-  private final List<GitCommit> myCommits;
-  private final TableView<GitCommit> myTable;
+  private final List<GitHeavyCommit> myCommits;
+  private final TableView<GitHeavyCommit> myTable;
 
-  public GitCommitListPanel(@NotNull List<GitCommit> commits, @Nullable String emptyText) {
+  public GitCommitListPanel(@NotNull List<GitHeavyCommit> commits, @Nullable String emptyText) {
     myCommits = commits;
 
-    myTable = new TableView<GitCommit>();
+    myTable = new TableView<GitHeavyCommit>();
     updateModel();
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setStriped(true);
@@ -64,7 +64,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   /**
    * Adds a listener that would be called once user selects a commit in the table.
    */
-  public void addListSelectionListener(final @NotNull Consumer<GitCommit> listener) {
+  public void addListSelectionListener(final @NotNull Consumer<GitHeavyCommit> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         ListSelectionModel lsm = (ListSelectionModel)e.getSource();
@@ -91,7 +91,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
       if (rows.length != 1) return;
       int row = rows[0];
 
-      GitCommit gitCommit = myCommits.get(row);
+      GitHeavyCommit gitCommit = myCommits.get(row);
       // suppressing: inherited API
       //noinspection unchecked
       sink.put(key, ArrayUtil.toObjectArray(gitCommit.getChanges(), Change.class));
@@ -107,7 +107,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
     myTable.clearSelection();
   }
 
-  public void setCommits(@NotNull List<GitCommit> commits) {
+  public void setCommits(@NotNull List<GitHeavyCommit> commits) {
     myCommits.clear();
     myCommits.addAll(commits);
     updateModel();
@@ -115,15 +115,15 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private void updateModel() {
-    myTable.setModelAndUpdateColumns(new ListTableModel<GitCommit>(generateColumnsInfo(myCommits), myCommits, 0));
+    myTable.setModelAndUpdateColumns(new ListTableModel<GitHeavyCommit>(generateColumnsInfo(myCommits), myCommits, 0));
   }
 
   @NotNull
-  private ColumnInfo[] generateColumnsInfo(@NotNull List<GitCommit> commits) {
+  private ColumnInfo[] generateColumnsInfo(@NotNull List<GitHeavyCommit> commits) {
     ItemAndWidth hash = new ItemAndWidth("", 0);
     ItemAndWidth author = new ItemAndWidth("", 0);
     ItemAndWidth time = new ItemAndWidth("", 0);
-    for (GitCommit commit : commits) {
+    for (GitHeavyCommit commit : commits) {
       hash = getMax(hash, getHash(commit));
       author = getMax(author, getAuthor(commit));
       time = getMax(time, getTime(commit));
@@ -132,25 +132,25 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
     return new ColumnInfo[] {
     new GitCommitColumnInfo("Hash", hash.myItem) {
       @Override
-      public String valueOf(GitCommit commit) {
+      public String valueOf(GitHeavyCommit commit) {
         return getHash(commit);
       }
     },
-    new ColumnInfo<GitCommit, String>("Subject") {
+    new ColumnInfo<GitHeavyCommit, String>("Subject") {
       @Override
-      public String valueOf(GitCommit commit) {
+      public String valueOf(GitHeavyCommit commit) {
         return commit.getSubject();
       }
     },
     new GitCommitColumnInfo("Author", author.myItem) {
       @Override
-      public String valueOf(GitCommit commit) {
+      public String valueOf(GitHeavyCommit commit) {
         return getAuthor(commit);
       }
     },
     new GitCommitColumnInfo("Author time", time.myItem) {
       @Override
-      public String valueOf(GitCommit commit) {
+      public String valueOf(GitHeavyCommit commit) {
         return getTime(commit);
       }
     }
@@ -175,19 +175,19 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private static String getHash(GitCommit commit) {
+  private static String getHash(GitHeavyCommit commit) {
     return commit.getShortHash().toString();
   }
 
-  private static String getAuthor(GitCommit commit) {
+  private static String getAuthor(GitHeavyCommit commit) {
     return commit.getAuthor();
   }
 
-  private static String getTime(GitCommit commit) {
+  private static String getTime(GitHeavyCommit commit) {
     return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
   }
 
-  private abstract static class GitCommitColumnInfo extends ColumnInfo<GitCommit, String> {
+  private abstract static class GitCommitColumnInfo extends ColumnInfo<GitHeavyCommit, String> {
 
     @NotNull private final String myMaxString;
 
