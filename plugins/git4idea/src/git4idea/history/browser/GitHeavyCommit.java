@@ -20,11 +20,19 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
+import git4idea.GitCommit;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * This class is cluttered with a lot of fields which sometimes are populated, sometimes not, and some of which are completely
+ * unrelated to the commit object (like tags, branches, root or current branch).
+ * It will be removed.
+ * {@link GitCommit} should be used instead.
+ */
+@Deprecated
 public class GitHeavyCommit {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final AbstractHash myShortHash;

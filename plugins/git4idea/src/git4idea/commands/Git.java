@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitCommit;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRepository;
@@ -120,5 +121,5 @@ public interface Git {
   GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  List<GitHeavyCommit> history(@NotNull GitRepository repository, @NotNull String range);
+  List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
 }

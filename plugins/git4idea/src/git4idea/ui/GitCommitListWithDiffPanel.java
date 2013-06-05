@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.util.Consumer;
-import git4idea.history.browser.GitHeavyCommit;
+import git4idea.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,12 +39,12 @@ public class GitCommitListWithDiffPanel extends JPanel {
   private final ChangesBrowser myChangesBrowser;
   private final GitCommitListPanel myCommitListPanel;
 
-  public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitHeavyCommit> commits) {
+  public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
     super(new BorderLayout());
 
     myCommitListPanel = new GitCommitListPanel(commits, null);
-    myCommitListPanel.addListSelectionListener(new Consumer<GitHeavyCommit>() {
-      @Override public void consume(GitHeavyCommit commit) {
+    myCommitListPanel.addListSelectionListener(new Consumer<GitCommit>() {
+      @Override public void consume(GitCommit commit) {
         myChangesBrowser.setChangesToDisplay(commit.getChanges());
       }
     });
@@ -64,7 +64,7 @@ public class GitCommitListWithDiffPanel extends JPanel {
     return myCommitListPanel.getPreferredFocusComponent();
   }
   
-  public void setCommits(@NotNull List<GitHeavyCommit> commits) {
+  public void setCommits(@NotNull List<GitCommit> commits) {
     myCommitListPanel.setCommits(commits);
   }
 

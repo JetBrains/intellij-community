@@ -23,9 +23,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitBranch;
+import git4idea.GitCommit;
 import git4idea.GitExecutionException;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -191,7 +191,7 @@ public class GitImpl implements Git {
 
   @NotNull
   @Override
-  public List<GitHeavyCommit> history(@NotNull GitRepository repository, @NotNull String range) {
+  public List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range) {
     try {
       return GitHistoryUtils.history(repository.getProject(), repository.getRoot(), range);
     }

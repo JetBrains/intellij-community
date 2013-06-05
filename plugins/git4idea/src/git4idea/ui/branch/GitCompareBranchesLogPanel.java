@@ -23,7 +23,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import git4idea.history.browser.GitHeavyCommit;
+import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListPanel;
 import git4idea.ui.GitRepositoryComboboxListCellRenderer;
@@ -120,21 +120,21 @@ class GitCompareBranchesLogPanel extends JPanel {
     return repoSelectorPanel;
   }
 
-  private ArrayList<GitHeavyCommit> getBranchToHeadCommits(GitRepository selectedRepo) {
-    return new ArrayList<GitHeavyCommit>(myCompareInfo.getBranchToHeadCommits(selectedRepo));
+  private ArrayList<GitCommit> getBranchToHeadCommits(GitRepository selectedRepo) {
+    return new ArrayList<GitCommit>(myCompareInfo.getBranchToHeadCommits(selectedRepo));
   }
 
-  private ArrayList<GitHeavyCommit> getHeadToBranchCommits(GitRepository selectedRepo) {
-    return new ArrayList<GitHeavyCommit>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
+  private ArrayList<GitCommit> getHeadToBranchCommits(GitRepository selectedRepo) {
+    return new ArrayList<GitCommit>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
   }
 
 
   private static void addSelectionListener(@NotNull GitCommitListPanel sourcePanel,
                                            @NotNull final GitCommitListPanel otherPanel,
                                            @NotNull final ChangesBrowser changesBrowser) {
-    sourcePanel.addListSelectionListener(new Consumer<GitHeavyCommit>() {
+    sourcePanel.addListSelectionListener(new Consumer<GitCommit>() {
       @Override
-      public void consume(GitHeavyCommit commit) {
+      public void consume(GitCommit commit) {
         changesBrowser.setChangesToDisplay(commit.getChanges());
         otherPanel.clearSelection();
       }

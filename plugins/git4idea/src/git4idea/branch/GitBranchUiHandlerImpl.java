@@ -32,7 +32,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.*;
 import git4idea.commands.Git;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
@@ -176,7 +175,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull final Map<GitRepository, List<GitHeavyCommit>> history,
+  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull final Map<GitRepository, List<GitCommit>> history,
                                                   @NotNull final String unmergedBranch, @NotNull final List<String> mergedToBranches,
                                                   @NotNull final String baseBranch) {
     final AtomicBoolean forceDelete = new AtomicBoolean();

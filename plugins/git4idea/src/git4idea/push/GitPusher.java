@@ -37,7 +37,6 @@ import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -184,7 +183,7 @@ public final class GitPusher {
       GitRemoteBranch dest = sourceDest.getDest();
       assert dest != null : "Destination branch can't be null here for branch " + source;
 
-      List<GitHeavyCommit> commits;
+      List<GitCommit> commits;
       GitPushBranchInfo.Type type;
       if (dest == NO_TARGET_BRANCH) {
         commits = collectRecentCommitsOnBranch(repository, source);
@@ -204,12 +203,12 @@ public final class GitPusher {
     return new GitCommitsByBranch(commitsByBranch);
   }
 
-  private List<GitHeavyCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
+  private List<GitCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
     return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=" + RECENT_COMMITS_NUMBER, source.getName());
   }
 
   @NotNull
-  private List<GitHeavyCommit> collectCommitsToPush(@NotNull GitRepository repository, @NotNull String source, @NotNull String destination)
+  private List<GitCommit> collectCommitsToPush(@NotNull GitRepository repository, @NotNull String source, @NotNull String destination)
     throws VcsException {
     return GitHistoryUtils.history(myProject, repository.getRoot(), destination + ".." + source);
   }

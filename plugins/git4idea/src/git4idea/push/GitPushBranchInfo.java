@@ -15,9 +15,9 @@
  */
 package git4idea.push;
 
+import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.history.browser.GitHeavyCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ final class GitPushBranchInfo {
   private final GitLocalBranch mySourceBranch;
   private final GitRemoteBranch myDestBranch;
   private final Type myType;
-  private final List<GitHeavyCommit> myCommits;
+  private final List<GitCommit> myCommits;
 
   enum Type {
     STANDARD,             // the branch this branch is targeted, exists (and is either the tracked/matched branch or manually specified)
@@ -42,7 +42,7 @@ final class GitPushBranchInfo {
   }
 
   GitPushBranchInfo(@NotNull GitLocalBranch sourceBranch, @NotNull GitRemoteBranch destBranch,
-                    @NotNull List<GitHeavyCommit> commits, @NotNull Type type) {
+                    @NotNull List<GitCommit> commits, @NotNull Type type) {
     mySourceBranch = sourceBranch;
     myCommits = commits;
     myDestBranch = destBranch;
@@ -68,8 +68,8 @@ final class GitPushBranchInfo {
   }
 
   @NotNull
-  List<GitHeavyCommit> getCommits() {
-    return new ArrayList<GitHeavyCommit>(myCommits);
+  List<GitCommit> getCommits() {
+    return new ArrayList<GitCommit>(myCommits);
   }
 
   @NotNull

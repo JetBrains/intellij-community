@@ -23,11 +23,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitCommit;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitImpl;
 import git4idea.commands.GitLineHandlerListener;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +123,7 @@ public class GitTestImpl implements Git {
 
   @NotNull
   @Override
-  public List<GitHeavyCommit> history(@NotNull GitRepository repository, @NotNull String range) {
+  public List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range) {
     return Collections.emptyList();
   }
 

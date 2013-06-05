@@ -24,8 +24,8 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitBranch;
+import git4idea.GitCommit;
 import git4idea.GitPlatformFacade;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListWithDiffPanel;
@@ -53,7 +53,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(GitBranchIsNotFullyMergedDialog.class);
 
   private final Project myProject;
-  private final Map<GitRepository, List<GitHeavyCommit>> myCommits;
+  private final Map<GitRepository, List<GitCommit>> myCommits;
   private final String myBranchToDelete;
   private final String myBaseBranch;
   private final List<String> myMergedToBranches;
@@ -73,7 +73,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
    * @return true if user decided to delete the branch.
    */
   public static boolean showAndGetAnswer(@NotNull Project project,
-                                         @NotNull Map<GitRepository, List<GitHeavyCommit>> commits,
+                                         @NotNull Map<GitRepository, List<GitCommit>> commits,
                                          @NotNull String branchToDelete,
                                          @NotNull List<String> mergedToBranches,
                                          @Nullable String baseBranch) {
@@ -83,7 +83,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   }
 
   private GitBranchIsNotFullyMergedDialog(@NotNull Project project,
-                                          @NotNull Map<GitRepository, List<GitHeavyCommit>> commits,
+                                          @NotNull Map<GitRepository, List<GitCommit>> commits,
                                           @NotNull String branchToDelete,
                                           @Nullable String baseBranch,
                                           @NotNull List<String> mergedToBranches) {
@@ -96,7 +96,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     myRepositories = commits.keySet();
 
     myInitialRepository = calcInitiallySelectedRepository();
-    myCommitListWithDiffPanel = new GitCommitListWithDiffPanel(myProject, new ArrayList<GitHeavyCommit>(myCommits.get(myInitialRepository)));
+    myCommitListWithDiffPanel = new GitCommitListWithDiffPanel(myProject, new ArrayList<GitCommit>(myCommits.get(myInitialRepository)));
 
     init();
 
@@ -169,8 +169,8 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     repositorySelector.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        List<GitHeavyCommit> commits = myCommits.get((GitRepository)repositorySelector.getSelectedItem());
-        myCommitListWithDiffPanel.setCommits(new ArrayList<GitHeavyCommit>(commits));
+        List<GitCommit> commits = myCommits.get((GitRepository)repositorySelector.getSelectedItem());
+        myCommitListWithDiffPanel.setCommits(new ArrayList<GitCommit>(commits));
       }
     });
 

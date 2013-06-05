@@ -20,10 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import git4idea.GitCommit;
 import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -169,7 +169,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
                                            @NotNull Collection<GitRepository> repositories) {
     final List<String> mergedToBranches = getMergedToBranches(unmergedBranch);
 
-    final Map<GitRepository, List<GitHeavyCommit>> history = new HashMap<GitRepository, List<GitHeavyCommit>>();
+    final Map<GitRepository, List<GitCommit>> history = new HashMap<GitRepository, List<GitCommit>>();
 
     // note getRepositories() instead of getRemainingRepositories() here:
     // we don't confuse user with the absence of repositories that have succeeded, just show no commits for them (and don't query for log)
@@ -178,7 +178,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         history.put(repository, getUnmergedCommits(repository, unmergedBranch, baseBranch));
       }
       else {
-        history.put(repository, Collections.<GitHeavyCommit>emptyList());
+        history.put(repository, Collections.<GitCommit>emptyList());
       }
     }
 
@@ -186,7 +186,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private List<GitHeavyCommit> getUnmergedCommits(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String baseBranch) {
+  private List<GitCommit> getUnmergedCommits(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String baseBranch) {
     return myGit.history(repository, baseBranch + ".." + branchName);
   }
 

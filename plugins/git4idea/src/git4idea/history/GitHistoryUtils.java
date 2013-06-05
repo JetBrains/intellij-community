@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -36,11 +35,10 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.concurrency.Semaphore;
-import git4idea.GitBranch;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
@@ -587,25 +585,57 @@ public class GitHistoryUtils {
     return rc;
   }
 
-  public static List<GitHeavyCommit> history(final Project project, @NotNull VirtualFile root, String... parameters) throws VcsException {
-    final List<GitHeavyCommit> commits = new ArrayList<GitHeavyCommit>();
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    historyWithLinks(project, new FilePathImpl(root), null, new AsynchConsumer<GitHeavyCommit>() {
-      @Override
-      public void finished() {
-        semaphore.up();
-      }
+  /**
+   * <p>Get & parse git log detailed output with commits, their parents and their changes.</p>
+   *
+   * <p>Warning: this is method is effective by speed, but don't query too much, because the whole log output is retrieved at once,
+   *    and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
+   */
+  @NotNull
+  public static List<GitCommit> history(@NotNull final Project project, @NotNull final VirtualFile root, String... parameters)
+                                        throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME,
+                                           AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY, RAW_BODY);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parameters);
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("--full-history", "--sparse");
+    h.endOptions();
 
+    String output = h.run();
+
+    List<GitLogRecord> records = parser.parse(output);
+
+    return ContainerUtil.skipNulls(ContainerUtil.map(records, new Function<GitLogRecord, GitCommit>() {
       @Override
-      public void consume(GitHeavyCommit gitCommit) {
-        commits.add(gitCommit);
+      public GitCommit fun(GitLogRecord record) {
+        try {
+          List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
+            @Override
+            public Hash fun(String hash) {
+              return Hash.create(hash);
+            }
+          });
+          return new GitCommit(Hash.create(record.getHash()), record.getAuthorName(), record.getAuthorEmail(), record.getAuthorTimeStamp(),
+                               record.getCommitterName(), record.getCommitterEmail(), record.getLongTimeStamp(),
+                               record.getSubject(), record.getFullMessage(), parents, record.parseChanges(project, root));
+        }
+        catch (VcsException e) {
+          LOG.error(e);
+          return null;
+        }
       }
-    }, null, null, false, parameters);
-    semaphore.waitFor();
-    return commits;
+    }));
   }
 
+  /**
+   * <p>Returns the history queried by {@code git log}} command with a possibility to asynchronously process each log record
+   *    returned by Git.</p>
+   * <p>This method is not efficient.
+   *    Consider using {@link #history(Project, VirtualFile, String...)} if you can afford storing the whole Git output in memory while
+   *    parsing.</p>
+   */
   public static void historyWithLinks(final Project project,
                                       FilePath path,
                                       @Nullable final SymbolicRefsI refs,
