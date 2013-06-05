@@ -39,8 +39,8 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public abstract class InspectionRVContentProvider {
-  private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
+  private final Project myProject;
 
   public InspectionRVContentProvider(final Project project) {
     myProject = project;
