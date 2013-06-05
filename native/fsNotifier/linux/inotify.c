@@ -27,6 +27,12 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#ifdef __amd64__
+__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
+#else
+__asm__(".symver memcpy,memcpy@GLIBC_2.0");
+#endif
+
 
 #define WATCH_COUNT_NAME "/proc/sys/fs/inotify/max_user_watches"
 
