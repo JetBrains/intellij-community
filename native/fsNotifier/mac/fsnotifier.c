@@ -68,24 +68,9 @@ static void callback(ConstFSEventStreamRef streamRef,
 }
 
 static void * EventProcessingThread(void *data) {
-    CFStringRef path = CFSTR("/");
-    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
-    void *callbackInfo = NULL;
-    CFAbsoluteTime latency = 0.3;  // Latency in seconds
-
-    FSEventStreamRef stream = FSEventStreamCreate(
-        NULL,
-        &callback,
-        callbackInfo,
-        pathsToWatch,
-        kFSEventStreamEventIdSinceNow,
-        latency,
-        kFSEventStreamCreateFlagNoDefer
-    );
-
+    FSEventStreamRef stream = (FSEventStreamRef) data;
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     FSEventStreamStart(stream);
-
     CFRunLoopRun();
     return NULL;
 }
@@ -169,11 +154,27 @@ int main(const int argc, const char* argv[]) {
         return 1;
     }
 
-    pthread_t threadId;
-    if (pthread_create(&threadId, NULL, EventProcessingThread, NULL) != 0) {
-        // Give up if cannot create a thread.
+    CFStringRef path = CFSTR("/");
+    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
+    CFAbsoluteTime latency = 0.3;  // Latency in seconds
+    FSEventStreamRef stream = FSEventStreamCreate(
+        NULL,
+        &callback,
+        NULL,
+        pathsToWatch,
+        kFSEventStreamEventIdSinceNow,
+        latency,
+        kFSEventStreamCreateFlagNoDefer
+    );
+    if (stream == NULL) {
         printf("GIVEUP\n");
         return 2;
+    }
+
+    pthread_t threadId;
+    if (pthread_create(&threadId, NULL, EventProcessingThread, stream) != 0) {
+        printf("GIVEUP\n");
+        return 3;
     }
 
     while (TRUE) {
