@@ -16,8 +16,6 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -31,15 +29,6 @@ import org.jetbrains.annotations.NotNull;
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(FileViewProvider file) {
     super(JavaStubElementTypes.JAVA_FILE, JavaStubElementTypes.JAVA_FILE, file);
-  }
-
-  @Override
-  public String toString() {
-    return "PsiJavaFile:" + getName();
-  }
-
-  public Lexer createLexer() {
-    return JavaParserDefinition.createLexer(getLanguageLevel());
   }
 
   @NotNull
@@ -59,5 +48,10 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   @NotNull
   public FileType getFileType() {
     return JavaFileType.INSTANCE;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiJavaFile:" + getName();
   }
 }
