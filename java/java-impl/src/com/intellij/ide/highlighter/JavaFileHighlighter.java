@@ -97,7 +97,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     }
   }
 
-  private final LanguageLevel myLanguageLevel;
+  protected final LanguageLevel myLanguageLevel;
 
   public JavaFileHighlighter() {
     this(LanguageLevel.HIGHEST);
