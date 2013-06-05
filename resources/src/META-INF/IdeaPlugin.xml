@@ -1410,6 +1410,7 @@
     <fileTypeFactory implementation="com.intellij.spi.SPIFileTypeFactory"/>
     <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>
     <lang.commenter language="SPI" implementationClass="com.intellij.spi.SPICommenter"/>
+    <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
   </extensions>
 
   <actions>
