@@ -51,6 +51,7 @@ public interface FilePath {
   /**
    * @return the file name (without directory component)
    */
+  @NotNull
   String getName();
 
   String getPresentableUrl();
@@ -73,10 +74,11 @@ public interface FilePath {
    */
   FileType getFileType();
 
-  void refresh();
+  VirtualFile refresh();
 
   void hardRefresh();
 
+  @NotNull
   String getPath();
 
   /**
@@ -91,7 +93,7 @@ public interface FilePath {
    * @param strict if false, the method also returns true if files are equal
    * @return true if {@code this} file is ancestor of the {@code parent}.
    */
-  boolean isUnder(FilePath parent, boolean strict);
+  boolean isUnder(@NotNull FilePath parent, boolean strict);
 
   /**
    * @return the parent path or null if there are no parent
