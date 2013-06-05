@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -91,23 +92,28 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     if (text.length() < path.length() || path.isEmpty()) {
       return text;
     }
+    int shift = 0;
+    while (true) {
 
-    boolean startsWith = caseSensitive ? text.startsWith(path) : StringUtil.startsWithIgnoreCase(text, path);
+      final int indexInText = caseSensitive ? text.indexOf(path, shift) : StringUtil.indexOfIgnoreCase(text, path, shift);
+      if (indexInText < 0) break;
 
-    if (!startsWith) return text;
-
-    //check that this is complete path (ends with "/" or "!/")
-    // do not collapse partial paths, i.e. do not substitute "/a/b/cd" in paths like "/a/b/cdeFgh"
-    int endOfOccurrence = path.length();
-    final boolean isWindowsRoot = path.endsWith(":/");
-    if (!isWindowsRoot &&
-        endOfOccurrence < text.length() &&
-        text.charAt(endOfOccurrence) != '/' &&
-        !text.substring(endOfOccurrence).startsWith("!/")) {
-      return text;
+      //check that this is complete path (ends with "/" or "!/")
+      // do not collapse partial paths, i.e. do not substitute "/a/b/cd" in paths like "/a/b/cdeFgh"
+      int endOfOccurrence = path.length() + indexInText;
+      final boolean isWindowsRoot = path.endsWith(":/");
+      if (!isWindowsRoot &&
+          endOfOccurrence < text.length() &&
+          text.charAt(endOfOccurrence) != '/' &&
+          !text.substring(endOfOccurrence).startsWith("!/")) {
+        shift = endOfOccurrence;
+        continue;
+      }
+      text = StringUtil.replaceSubstring(text, new TextRange(indexInText, endOfOccurrence), myMacroMap.get(path));
+      shift = indexInText + myMacroMap.get(path).length();
     }
 
-    return myMacroMap.get(path) + text.substring(endOfOccurrence);
+    return text;
   }
 
   @Override
