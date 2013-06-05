@@ -260,7 +260,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
         @Override
         public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
-          if (PluginManager.shouldSkipPlugin(IdeaPluginDescriptorImpl.this)) return;
+          if (PluginManagerCore.shouldSkipPlugin(IdeaPluginDescriptorImpl.this)) return;
           final ExtensionsArea area = Extensions.getArea(areaInstance);
           area.registerAreaExtensionsAndPoints(IdeaPluginDescriptorImpl.this, myExtensionsPoints, myExtensions);
         }

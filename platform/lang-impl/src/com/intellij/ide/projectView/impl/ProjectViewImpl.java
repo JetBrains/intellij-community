@@ -325,8 +325,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private class ChangeViewAction extends AnAction {
-    private String myId;
-    private String mySubId;
+    private final String myId;
+    private final String mySubId;
 
     private ChangeViewAction(String id, String subId) {
       myId = id;

@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,11 +127,13 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
       for (File file : entry.getValue()) {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
-          if (entry.getKey() == OrderRootType.CLASSES) {
+          if (ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
             LOG.warn(
               String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
             );
           }
+          String url = VfsUtilCore.pathToUrl(file.getAbsolutePath());
+          model.addRoot(url, entry.getKey());
           continue;
         }
         if (virtualFile.isDirectory()) {

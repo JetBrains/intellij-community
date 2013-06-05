@@ -38,9 +38,9 @@ public class HgRepositoryReader {
 
   private static Pattern BRANCH_PATTERN = Pattern.compile("\\s*(.+)\\s+(.+)");
 
-  @NotNull private final File myHgDir;         // .hg/
-  @NotNull private final File myBranchHeadsFile;       // .hg/cache/branchheads -  this file does not exist before first commit
-  @NotNull private final File myCurrentBranch; // .hg/branch
+  @NotNull private final File myHgDir;            // .hg
+  @NotNull private final File myBranchHeadsFile;  // .hg/cache/branchheads (does not exist before first commit)
+  @NotNull private final File myCurrentBranch;    // .hg/branch
 
   public HgRepositoryReader(@NotNull File hgDir) {
     myHgDir = hgDir;
@@ -51,7 +51,6 @@ public class HgRepositoryReader {
     myCurrentBranch = new File(myHgDir, "branch");
   }
 
-
   /**
    * Finds current revision value.
    *
@@ -60,7 +59,7 @@ public class HgRepositoryReader {
   @Nullable
   public String readCurrentRevision() {
     if (checkIsFresh()) return null;
-    String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).trim().split("\n");
+    String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
     Matcher matcher = BRANCH_PATTERN.matcher(head);
     if (matcher.matches()) {
@@ -74,18 +73,14 @@ public class HgRepositoryReader {
    */
   @NotNull
   public String readCurrentBranch() {
-    if (branchExist()) {
-      String rev = RepositoryUtil.tryLoadFile(myCurrentBranch);
-      return rev.trim();
-    }
-    return HgRepository.DEFAULT_BRANCH;
+    return branchExist() ? RepositoryUtil.tryLoadFile(myCurrentBranch) : HgRepository.DEFAULT_BRANCH;
   }
 
   @NotNull
   public List<String> readBranches() {
     List<String> branches = new ArrayList<String>();
     if (!checkIsFresh()) {
-      String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).trim().split("\n");
+      String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
         Matcher matcher = BRANCH_PATTERN.matcher(branchesWithHeads[i]);
@@ -98,16 +93,12 @@ public class HgRepositoryReader {
   }
 
   public boolean isMergeInProgress() {
-    File mergeFile = new File(myHgDir, "merge");
-    return mergeFile.exists();
+    return new File(myHgDir, "merge").exists();
   }
 
   @NotNull
   public Repository.State readState() {
-    if (isMergeInProgress()) {
-      return Repository.State.MERGING;
-    }
-    return Repository.State.NORMAL;
+    return isMergeInProgress() ? Repository.State.MERGING : Repository.State.NORMAL;
   }
 
   public boolean checkIsFresh() {

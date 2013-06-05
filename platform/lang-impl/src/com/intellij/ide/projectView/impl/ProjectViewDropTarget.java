@@ -56,7 +56,7 @@ import java.util.List;
  */
 class ProjectViewDropTarget implements DnDNativeTarget {
 
-  private JTree myTree;
+  private final JTree myTree;
   private final Retriever myRetriever;
   private final Project myProject;
 

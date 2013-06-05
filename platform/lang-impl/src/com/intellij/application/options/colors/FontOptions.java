@@ -83,7 +83,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   @Nullable private final Dimension myPreferredSize;
 
   private boolean myIsInSchemeChange;
-  private String  myTitle;
+  private final String  myTitle;
 
   public FontOptions(ColorAndFontOptions options) {
     this(options, ApplicationBundle.message("group.editor.font"));
@@ -140,7 +140,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         onFontsInit();
       }
     });
-    
+
     mySelectedFontsModel.addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {
@@ -173,7 +173,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         }
       }
     });
-    
+
     mySelectedFontsList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -190,7 +190,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         }
       }
     });
-    
+
     myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void textChanged(DocumentEvent event) {
@@ -237,7 +237,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     });
 
   }
-  
+
   public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
     if (!sharedScheme) {
       Messages.showMessageDialog(
@@ -279,13 +279,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
         selectedFonts.add(fontFamily);
       }
     }
-    
+
     int newSelectionIndex = 0;
     if (selectedValue != null) {
       newSelectionIndex = Math.max(0, mySelectedFontsModel.indexOf(selectedValue));
     }
     mySelectedFontsList.setSelectedIndex(newSelectionIndex);
-    
+
     for (int i = myAllFontsModel.size() - 1; i >= 0; i--) {
       if (selectedFonts.contains(myAllFontsModel.getElementAt(i))) {
         myAllFontsModel.remove(i);
@@ -320,12 +320,12 @@ public class FontOptions extends JPanel implements OptionsPanel{
     }
     myAllFontsList.setSelectedIndex(newSelectionIndex);
   }
-  
+
   @NotNull
   protected FontPreferences getFontPreferences() {
     return getCurrentScheme().getFontPreferences();
   }
-  
+
   protected float getLineSpacing() {
     return getCurrentScheme().getLineSpacing();
   }
@@ -366,20 +366,20 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
     insets.left = 8;
     editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.font.size")), constraints);
-    
+
     insets.left = 2;
     editorFontPanel.add(myEditorFontSizeField, constraints);
-    
+
     insets.left = 8;
     editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.line.spacing")), constraints);
-    
+
     insets.left = 2;
     editorFontPanel.add(myLineSpacingField, constraints);
-    
+
     editorFontPanel.add(new JLabel(""), new GridBag().insets(insets).weightx(1).fillCellHorizontally().coverLine());
-    
+
     editorFontPanel.add(myFontsControl, new GridBag().weightx(1).weighty(1).fillCell().coverLine().insets(insets));
-    
+
     return editorFontPanel;
   }
 

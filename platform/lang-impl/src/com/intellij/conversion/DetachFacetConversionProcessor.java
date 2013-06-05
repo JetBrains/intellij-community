@@ -24,7 +24,7 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 import java.util.List;
 
 public class DetachFacetConversionProcessor extends ConversionProcessor<ModuleSettings>{
-  private String[] myFacetNames;
+  private final String[] myFacetNames;
 
   public DetachFacetConversionProcessor(@NotNull String... names) {
     myFacetNames = names;

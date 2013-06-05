@@ -31,7 +31,7 @@ import com.intellij.psi.search.TodoPattern;
  */
 public class TodoItemsCreator {
   private final static Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.TodoItemsCreator");
-  private TodoPattern[] myTodoPatterns;
+  private final TodoPattern[] myTodoPatterns;
 
   public TodoItemsCreator() {
     myTodoPatterns = TodoConfiguration.getInstance().getTodoPatterns();

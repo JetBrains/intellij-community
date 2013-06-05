@@ -42,8 +42,8 @@ public class IntentionSettingsPanel implements MasterDetails {
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
   private DetailsComponent myDetailsComponent;
-  
-  private Alarm myResetAlarm = new Alarm();
+
+  private final Alarm myResetAlarm = new Alarm();
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {

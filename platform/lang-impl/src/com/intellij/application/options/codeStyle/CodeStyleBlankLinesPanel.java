@@ -42,13 +42,13 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
 
-  private List<IntOption> myOptions = new ArrayList<IntOption>();
-  private Set<String> myAllowedOptions = new HashSet<String>();
+  private final List<IntOption> myOptions = new ArrayList<IntOption>();
+  private final Set<String> myAllowedOptions = new HashSet<String>();
   private boolean myAllOptionsAllowed = false;
   private boolean myIsFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<String, String>();
 
-  private MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions
+  private final MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions
     = new MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>>();
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
@@ -128,7 +128,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.method"), "BLANK_LINES_AROUND_METHOD");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.method.body"), "BLANK_LINES_BEFORE_METHOD_BODY");
     initCustomOptions(optionGroup, BLANK_LINES);
-    
+
     if (optionGroup.getComponents().length == 0) return null;
 
     return optionGroup;

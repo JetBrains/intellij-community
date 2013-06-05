@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @since 14-May-2009
  */
 public class InspectionConfigTreeNode extends CheckedTreeNode {
-  private ScopeToolState myState;
+  private final ScopeToolState myState;
   private boolean myByDefault;
   private boolean myInspectionNode;
   private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {

@@ -37,7 +37,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final int myIndex;
   private final Icon myIcon;
   private final NavBarPanel myPanel;
-  private Object myObject;
+  private final Object myObject;
   private final boolean isPopupElement;
   private final NavBarUI myUI;
 

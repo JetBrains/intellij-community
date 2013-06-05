@@ -18,7 +18,7 @@ import com.intellij.util.PlatformUtils;
 * To change this template use File | Settings | File Templates.
 */
 public abstract class ShowModulesAction extends ToggleAction {
-  private Project myProject;
+  private final Project myProject;
 
   public ShowModulesAction(Project project) {
     super(IdeBundle.message("action.show.modules"), IdeBundle.message("action.description.show.modules"),

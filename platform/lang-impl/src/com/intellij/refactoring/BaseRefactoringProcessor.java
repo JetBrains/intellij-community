@@ -521,6 +521,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  @Override
   public final void run() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();

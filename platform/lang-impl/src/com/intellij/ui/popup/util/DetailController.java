@@ -27,7 +27,7 @@ import java.io.File;
 
 public class DetailController implements TreeSelectionListener, ListSelectionListener {
   private final MasterController myMasterController;
-  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private DetailView myDetailView;
 
   public DetailController(MasterController myMasterController) {

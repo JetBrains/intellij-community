@@ -34,6 +34,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
 
   @NotNull private HgRepositoryReader myRepositoryReader;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     File hgDir = new File(myRepository.getPath(), ".hg");
@@ -43,7 +44,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testMergeState() {
-    hg("merge branchB");
+    hg("merge --tool internal:merge branchB");
     assertEquals(myRepositoryReader.readState(), Repository.State.MERGING);
   }
 

@@ -217,7 +217,7 @@ class _TemplateTextLexer implements FlexLexer {
 
 
   _TemplateTextLexer(java.io.Reader in) {
-    this.zzReader = in;
+    zzReader = in;
   }
 
   /**

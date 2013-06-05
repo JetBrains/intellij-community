@@ -28,7 +28,7 @@ import java.util.*;
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private final List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
   private boolean myExtensionsLoaded = false;
-  private Map<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>> myKeyToDescriptorMap =
+  private final Map<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>> myKeyToDescriptorMap =
     new HashMap<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>>();
 
   @Override

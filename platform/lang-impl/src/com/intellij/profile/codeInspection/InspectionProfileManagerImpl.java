@@ -173,6 +173,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myProfilesAreInitialized.set(false);
   }
 
+  @Override
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
       if (mySchemesManager.getAllSchemeNames().isEmpty()) {
@@ -202,6 +203,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
 
+  @Override
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()){

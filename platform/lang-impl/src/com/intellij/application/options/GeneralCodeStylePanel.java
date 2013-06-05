@@ -57,7 +57,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myPanel;
   private JCheckBox myCbWrapWhenTypingReachesRightMargin;
   private JPanel myDefaultIndentOptionsPanel;
-  private SmartIndentOptionsEditor myIndentOptionsEditor;
+  private final SmartIndentOptionsEditor myIndentOptionsEditor;
 
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {

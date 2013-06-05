@@ -77,9 +77,9 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     return mySearchField;
   }
 
-  private JBSplitter mySplitPane = new JBSplitter(false);
-  private JPanel myLeftComponent = new JPanel(new BorderLayout());
-  private JPanel myRightComponent = new JPanel(new BorderLayout());
+  private final JBSplitter mySplitPane = new JBSplitter(false);
+  private final JPanel myLeftComponent = new JPanel(new BorderLayout());
+  private final JPanel myRightComponent = new JPanel(new BorderLayout());
 
   {
     mySplitPane.setBorder(IdeBorderFactory.createEmptyBorder(1, 0, 2, 0));
@@ -109,14 +109,14 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private MyUndoProvider mySearchUndo;
   private MyUndoProvider myReplaceUndo;
 
-  private Getter<JTextComponent> mySearchFieldGetter = new Getter<JTextComponent>() {
+  private final Getter<JTextComponent> mySearchFieldGetter = new Getter<JTextComponent>() {
     @Override
     public JTextComponent get() {
       return mySearchField;
     }
   };
 
-  private Getter<JTextComponent> myReplaceFieldGetter = new Getter<JTextComponent>() {
+  private final Getter<JTextComponent> myReplaceFieldGetter = new Getter<JTextComponent>() {
     @Override
     public JTextComponent get() {
       return myReplaceField;
@@ -134,8 +134,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private JComponent myToolbarComponent;
 
-  private LivePreviewController myLivePreviewController;
-  private SearchResults mySearchResults;
+  private final LivePreviewController myLivePreviewController;
+  private final SearchResults mySearchResults;
 
   private final FindModel myFindModel;
   private JPanel myReplacementPane;
@@ -392,7 +392,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     actionGroup.addAction(new ToggleSelectionOnlyAction(this));
 
     class MyCustomComponentDoNothingAction extends AnAction implements CustomComponentAction {
-      private JComponent c;
+      private final JComponent c;
 
       MyCustomComponentDoNothingAction(JComponent c) {
         this.c = c;
@@ -488,7 +488,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       if (myReplacementPane != null) {
         myReplacementPane = null;
       }
-    } 
+    }
 
     String stringToFind = myFindModel.getStringToFind();
 
@@ -618,7 +618,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     tbComponent.setOpaque(false);
     tbComponent.setBorder(null);
     myReplacementPane.add(tbComponent);
-    
+
     myReplacementPane.add(myReplaceButton);
 
     myReplacementPane.add(myReplaceAllButton);
@@ -627,7 +627,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     setSmallerFontAndOpaque(myReplaceButton);
     setSmallerFontAndOpaque(myReplaceAllButton);
     setSmallerFontAndOpaque(myExcludeButton);
-    
+
     Utils.setSmallerFont(myReplaceField);
     new VariantsCompletionAction(this, myReplaceFieldGetter);
     new NextOccurrenceAction(this, myReplaceFieldGetter);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -454,6 +455,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element buildElement = parentNode.getChild(ELEMENT_BUILD);
     if (buildElement != null) {
       myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
+      PluginManagerCore.BUILD_NUMBER = myBuildNumber;
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();

@@ -413,7 +413,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   private class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
-    private LogFileOptions myLogFileOptions;
+    private final LogFileOptions myLogFileOptions;
 
     public LogFileCellEditor(LogFileOptions options) {
       myLogFileOptions = options;

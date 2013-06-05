@@ -41,7 +41,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchTextOccurrences;
-  private SafeDeleteProcessorDelegate myDelegate;
+  private final SafeDeleteProcessorDelegate myDelegate;
 
   public interface Callback {
     void run(SafeDeleteDialog dialog);

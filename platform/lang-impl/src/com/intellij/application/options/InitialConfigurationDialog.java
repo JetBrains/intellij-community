@@ -78,7 +78,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JPanel myCreateEntryPanel;
   private ComboBox myAppearanceComboBox;
   private JLabel myPreferencesLabel;
-  private String myColorSettingsPage;
+  private final String myColorSettingsPage;
   private SimpleEditorPreview myPreviewEditor;
   private ColorAndFontOptions myPreviewOptions;
   private MyColorPreviewPanel myHidingPreviewPanel;

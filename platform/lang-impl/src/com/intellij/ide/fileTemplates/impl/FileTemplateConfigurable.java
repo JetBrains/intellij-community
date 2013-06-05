@@ -100,7 +100,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();;
   private Splitter mySplitter;
-  private FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
+  private final FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
 
   public FileTemplateConfigurable() {
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());

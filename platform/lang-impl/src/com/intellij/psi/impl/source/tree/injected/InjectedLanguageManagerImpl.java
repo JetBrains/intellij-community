@@ -301,7 +301,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
 
   @Override
-  public String getUnescapedText(@NotNull final PsiElement injectedNode) {
+  public String
+  getUnescapedText(@NotNull final PsiElement injectedNode) {
     final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
     // gather text from (patched) leaves
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {

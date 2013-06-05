@@ -62,7 +62,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
 
   private String myVersion;
   private List<String> myTags = new ArrayList<String>();
-  private List<String> myAttributes = new ArrayList<String>();
+  private final List<String> myAttributes = new ArrayList<String>();
   @Override
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {

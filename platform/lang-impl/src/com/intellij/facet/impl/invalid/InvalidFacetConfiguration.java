@@ -28,7 +28,7 @@ import org.jdom.Element;
  * @author nik
  */
 public class InvalidFacetConfiguration implements FacetConfiguration {
-  private FacetState myFacetState;
+  private final FacetState myFacetState;
   private final String myErrorMessage;
 
   public InvalidFacetConfiguration(FacetState facetState, String errorMessage) {

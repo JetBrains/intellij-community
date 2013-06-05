@@ -42,8 +42,8 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @NotNull private final PsiDirectory myDirectory;
   private final boolean myIsDirectory;
   @Nullable private PsiDirectory myCreatedElement = null;
-  @NotNull private String myDelimiters;
-  @Nullable private Component myDialogParent;
+  @NotNull private final String myDelimiters;
+  @Nullable private final Component myDialogParent;
 
   public CreateDirectoryOrPackageHandler(@Nullable Project project,
                                          @NotNull PsiDirectory directory,

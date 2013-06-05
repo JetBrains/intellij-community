@@ -41,8 +41,8 @@ import java.util.*;
 public class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.DetectedFrameworksData");
   private PersistentHashMap<Integer,TIntHashSet> myExistentFrameworkFiles;
-  private TIntObjectHashMap<TIntHashSet> myNewFiles;
-  private MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
+  private final TIntObjectHashMap<TIntHashSet> myNewFiles;
+  private final MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
 
   public DetectedFrameworksData(Project project) {
     myDetectedFrameworks = new MultiMap<Integer, DetectedFrameworkDescription>();

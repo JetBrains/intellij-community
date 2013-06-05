@@ -42,7 +42,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
   private final PsiFile myFile;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormattingDocumentModelImpl");
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
 
   public FormattingDocumentModelImpl(final Document document, PsiFile file) {
     myDocument = document;
@@ -154,7 +154,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
       return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset,
                                                               mySettings);
     }
-    
+
     final PsiElement element = myFile.findElementAt(startOffset);
     if (element == null) {
       return whiteSpaceText;

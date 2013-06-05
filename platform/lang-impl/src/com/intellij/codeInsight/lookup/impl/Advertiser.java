@@ -40,7 +40,7 @@ public class Advertiser {
   private final List<Pair<String, Color>> myTexts = ContainerUtil.createLockFreeCopyOnWriteList();
   private volatile Dimension myCachedPrefSize;
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
-    private JLabel mySample = createLabel();
+    private final JLabel mySample = createLabel();
 
     @Override
     public Dimension getPreferredSize() {
@@ -67,8 +67,8 @@ public class Advertiser {
     }
   };
   private volatile int myCurrentItem = 0;
-  private JLabel myTextPanel = createLabel();
-  private JLabel myNextLabel;
+  private final JLabel myTextPanel = createLabel();
+  private final JLabel myNextLabel;
 
   public Advertiser() {
     myNextLabel = new JLabel(">>");

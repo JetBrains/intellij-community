@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class EditorHeaderAction extends AnAction {
-  private EditorSearchComponent myEditorSearchComponent;
+  private final EditorSearchComponent myEditorSearchComponent;
 
   protected static void registerShortcutsForComponent(List<Shortcut> shortcuts, JComponent component, AnAction a) {
     a.registerCustomShortcutSet(
