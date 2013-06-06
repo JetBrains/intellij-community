@@ -191,9 +191,9 @@ class GitLogRecord {
   }
 
   private List<GitRevisionNumber> prepareParentRevisions() {
-    final String[] parentsShortHashes = getParentsShortHashes();
-    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsShortHashes.length);
-    for (String parentsShortHash : parentsShortHashes) {
+    final String[] parentHashes = myOptions.containsKey(SHORT_PARENTS) ? getParentsShortHashes() : getParentsHashes();
+    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentHashes.length);
+    for (String parentsShortHash : parentHashes) {
       parents.add(AbstractHash.create(parentsShortHash));
     }
 

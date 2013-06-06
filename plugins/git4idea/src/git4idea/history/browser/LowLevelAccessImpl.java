@@ -94,7 +94,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   }
 
   @Override
-  public List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefsI refs) throws VcsException {
+  public List<GitHeavyCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefsI refs) throws VcsException {
     return GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(myRoot), refs, commitIds);
   }
 
@@ -143,7 +143,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
   public void loadCommits(final @NotNull Collection<String> startingPoints, @NotNull final Collection<String> endPoints,
                           @NotNull final Collection<ChangesFilter.Filter> filters,
-                          @NotNull final AsynchConsumer<GitCommit> consumer,
+                          @NotNull final AsynchConsumer<GitHeavyCommit> consumer,
                           int useMaxCnt,
                           Getter<Boolean> isCanceled, SymbolicRefsI refs, final boolean topoOrder)
     throws VcsException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util.indexing;
 
-package com.intellij.psi.impl.include;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Avdeev
- */
-public abstract class FileIncludeProvider {
+public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTypeSpecificInputFilter {
+  private FileType[] myFileTypes;
 
-  public static final ExtensionPointName<FileIncludeProvider> EP_NAME = ExtensionPointName.create("com.intellij.include.provider");
+  public DefaultFileTypeSpecificInputFilter(@NotNull FileType... fileTypes) {
+    myFileTypes = fileTypes;
+  }
 
-  @NotNull
-  public abstract String getId();
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+    for(FileType ft:myFileTypes) fileTypeSink.consume(ft);
+  }
 
-  public abstract boolean acceptFile(VirtualFile file);
-
-  public abstract void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
-
-  @NotNull
-  public abstract FileIncludeInfo[] getIncludeInfos(FileContent content);
+  @Override
+  public boolean acceptInput(VirtualFile file) {
+    return true;
+  }
 }

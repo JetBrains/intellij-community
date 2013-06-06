@@ -16,7 +16,7 @@
 package git4idea.push;
 
 import git4idea.GitBranch;
-import git4idea.history.browser.GitCommit;
+import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 

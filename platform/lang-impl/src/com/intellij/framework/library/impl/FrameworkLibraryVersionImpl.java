@@ -16,7 +16,7 @@
 package com.intellij.framework.library.impl;
 
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
-import com.intellij.framework.library.FrameworkAvailabilityFilter;
+import com.intellij.framework.library.FrameworkAvailabilityCondition;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.util.download.impl.DownloadableFileSetDescriptionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -27,21 +27,21 @@ import java.util.List;
  * @author nik
  */
 public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionImpl<DownloadableLibraryFileDescription> implements FrameworkLibraryVersion {
-  @NotNull private final FrameworkAvailabilityFilter myAvailabilityFilter;
+  @NotNull private final FrameworkAvailabilityCondition myAvailabilityCondition;
   private final String myLibraryCategory;
 
   public FrameworkLibraryVersionImpl(String versionString,
-                                     @NotNull FrameworkAvailabilityFilter availabilityFilter,
+                                     @NotNull FrameworkAvailabilityCondition availabilityCondition,
                                      List<DownloadableLibraryFileDescription> libraryFiles,
                                      String category) {
     super(category, versionString, libraryFiles);
-    myAvailabilityFilter = availabilityFilter;
+    myAvailabilityCondition = availabilityCondition;
     myLibraryCategory = category;
   }
 
   @NotNull
-  public FrameworkAvailabilityFilter getAvailabilityFilter() {
-    return myAvailabilityFilter;
+  public FrameworkAvailabilityCondition getAvailabilityCondition() {
+    return myAvailabilityCondition;
   }
 
   @NotNull

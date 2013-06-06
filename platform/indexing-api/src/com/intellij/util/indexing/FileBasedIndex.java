@@ -17,6 +17,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +135,11 @@ public abstract class FileBasedIndex implements BaseComponent {
   /**
   * Author: dmitrylomov
   */
-  public static interface InputFilter {
+  public interface InputFilter {
     boolean acceptInput(VirtualFile file);
+  }
+
+  public interface FileTypeSpecificInputFilter extends InputFilter {
+    void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
   }
 }

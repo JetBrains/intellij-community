@@ -20,12 +20,20 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
+import git4idea.GitCommit;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class GitCommit {
+/**
+ * This class is cluttered with a lot of fields which sometimes are populated, sometimes not, and some of which are completely
+ * unrelated to the commit object (like tags, branches, root or current branch).
+ * It will be removed.
+ * {@link GitCommit} should be used instead.
+ */
+@Deprecated
+public class GitHeavyCommit {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final AbstractHash myShortHash;
   @NotNull private final SHAHash myHash;
@@ -43,7 +51,7 @@ public class GitCommit {
   private final List<String> myRemoteBranches;
 
   private final Set<String> myParentsHashes;
-  private final Set<GitCommit> myParentsLinks;
+  private final Set<GitHeavyCommit> myParentsLinks;
 
   // todo concern having
   private final List<FilePath> myPathsList;
@@ -56,22 +64,22 @@ public class GitCommit {
   // very expensive to calculate it massively, seems it wouldnt be shown
   private boolean myOnTracked;
 
-  public GitCommit(@NotNull VirtualFile root, @NotNull final AbstractHash shortHash,
-                   @NotNull final SHAHash hash,
-                   final String author,
-                   final String committer,
-                   final Date date,
-                   final String subject,
-                   final String description,
-                   final Set<String> parentsHashes,
-                   final List<FilePath> pathsList,
-                   final String authorEmail,
-                   final String comitterEmail,
-                   List<String> tags,
-                   final List<String> localBranches,
-                   final List<String> remoteBranches,
-                   List<Change> changes,
-                   long authorTime) {
+  public GitHeavyCommit(@NotNull VirtualFile root, @NotNull final AbstractHash shortHash,
+                        @NotNull final SHAHash hash,
+                        final String author,
+                        final String committer,
+                        final Date date,
+                        final String subject,
+                        final String description,
+                        final Set<String> parentsHashes,
+                        final List<FilePath> pathsList,
+                        final String authorEmail,
+                        final String comitterEmail,
+                        List<String> tags,
+                        final List<String> localBranches,
+                        final List<String> remoteBranches,
+                        List<Change> changes,
+                        long authorTime) {
     myRoot = root;
     myShortHash = shortHash;
     myAuthor = author;
@@ -90,10 +98,10 @@ public class GitCommit {
     myRemoteBranches = remoteBranches;
     myAuthorTime = authorTime;
     //myBranches = branches;
-    myParentsLinks = new HashSet<GitCommit>();
+    myParentsLinks = new HashSet<GitHeavyCommit>();
   }
 
-  public void addParentLink(final GitCommit commit) {
+  public void addParentLink(final GitHeavyCommit commit) {
     myParentsLinks.add(commit);
   }
 
@@ -124,7 +132,7 @@ public class GitCommit {
   }
 
   // todo think of interface
-  public Set<GitCommit> getParentsLinks() {
+  public Set<GitHeavyCommit> getParentsLinks() {
     return myParentsLinks;
   }
 
@@ -133,7 +141,7 @@ public class GitCommit {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    GitCommit gitCommit = (GitCommit)o;
+    GitHeavyCommit gitCommit = (GitHeavyCommit)o;
 
     if (!myHash.equals(gitCommit.myHash)) return false;
 

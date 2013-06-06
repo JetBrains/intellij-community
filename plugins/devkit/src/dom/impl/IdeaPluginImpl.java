@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,37 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 /*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 06.12.2007
+* @author S. Weinreuter
 */
 public abstract class IdeaPluginImpl implements IdeaPlugin {
+
+  private final NullableLazyValue<String> myPluginId = new VolatileNullableLazyValue<String>() {
+    @Nullable
+    @Override
+    protected String compute() {
+      final XmlTag tag = getXmlTag();
+      if (tag == null) {
+        return null;
+      }
+
+      final XmlTag idTag = tag.findFirstSubTag("id");
+      if (idTag != null) {
+        return idTag.getValue().getTrimmedText();
+      }
+
+      final XmlTag name = tag.findFirstSubTag("name");
+      return name != null ? name.getValue().getTrimmedText() : null;
+    }
+  };
+
   public String getPluginId() {
-    final XmlTag tag = getXmlTag();
-    if (tag == null) {
-      return null;
-    }
-
-    final XmlTag idTag = tag.findFirstSubTag("id");
-    if (idTag != null) {
-      return idTag.getValue().getTrimmedText();
-    }
-
-    final XmlTag name = tag.findFirstSubTag("name");
-    return name != null ? name.getValue().getTrimmedText() : null;
+    return myPluginId.getValue();
   }
 }

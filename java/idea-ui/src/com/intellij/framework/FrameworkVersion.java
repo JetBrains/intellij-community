@@ -15,7 +15,7 @@
  */
 package com.intellij.framework;
 
-import com.intellij.framework.library.FrameworkAvailabilityFilter;
+import com.intellij.framework.library.FrameworkAvailabilityCondition;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,5 +29,5 @@ public interface FrameworkVersion {
   String getPresentableName();
 
   @NotNull
-  FrameworkAvailabilityFilter getAvailabilityFilter();
+  FrameworkAvailabilityCondition getAvailabilityCondition();
 }

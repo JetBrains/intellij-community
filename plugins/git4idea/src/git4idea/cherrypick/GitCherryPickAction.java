@@ -29,7 +29,7 @@ import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.GitCommitDetailsProvider;
 import git4idea.repo.GitRepository;
@@ -58,13 +58,13 @@ public class GitCherryPickAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
-    final List<GitCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
+    final List<GitHeavyCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
     if (project == null || commits == null || commits.isEmpty()) {
       LOG.info(String.format("Cherry-pick action should be disabled. Project: %s, commits: %s", project, commits));
       return;
     }
 
-    for (GitCommit commit : commits) {
+    for (GitHeavyCommit commit : commits) {
       myIdsInProgress.add(commit.getShortHash());
     }
 
@@ -75,14 +75,14 @@ public class GitCherryPickAction extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
-          Map<GitRepository, List<GitCommit>> commitsInRoots = sortCommits(groupCommitsByRoots(project, commits));
+          Map<GitRepository, List<GitHeavyCommit>> commitsInRoots = sortCommits(groupCommitsByRoots(project, commits));
           new GitCherryPicker(myProject, myGit, myPlatformFacade, autoCommit).cherryPick(commitsInRoots);
         }
         finally {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               myPlatformFacade.getChangeListManager(project).unblockModalNotifications();
-              for (GitCommit commit : commits) {
+              for (GitHeavyCommit commit : commits) {
                 myIdsInProgress.remove(commit.getShortHash());
               }
             }
@@ -96,25 +96,25 @@ public class GitCherryPickAction extends DumbAwareAction {
    * Sort commits so that earliest ones come first: they need to be cherry-picked first.
    */
   @NotNull
-  private static Map<GitRepository, List<GitCommit>> sortCommits(@NotNull Map<GitRepository, List<GitCommit>> groupedCommits) {
-    for (List<GitCommit> gitCommits : groupedCommits.values()) {
+  private static Map<GitRepository, List<GitHeavyCommit>> sortCommits(@NotNull Map<GitRepository, List<GitHeavyCommit>> groupedCommits) {
+    for (List<GitHeavyCommit> gitCommits : groupedCommits.values()) {
       Collections.reverse(gitCommits);
     }
     return groupedCommits;
   }
 
   @NotNull
-  private Map<GitRepository, List<GitCommit>> groupCommitsByRoots(@NotNull Project project, @NotNull List<GitCommit> commits) {
-    Map<GitRepository, List<GitCommit>> groupedCommits = new HashMap<GitRepository, List<GitCommit>>();
-    for (GitCommit commit : commits) {
+  private Map<GitRepository, List<GitHeavyCommit>> groupCommitsByRoots(@NotNull Project project, @NotNull List<GitHeavyCommit> commits) {
+    Map<GitRepository, List<GitHeavyCommit>> groupedCommits = new HashMap<GitRepository, List<GitHeavyCommit>>();
+    for (GitHeavyCommit commit : commits) {
       GitRepository repository = myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
       if (repository == null) {
         LOG.info("No repository found for commit " + commit);
         continue;
       }
-      List<GitCommit> commitsInRoot = groupedCommits.get(repository);
+      List<GitHeavyCommit> commitsInRoot = groupedCommits.get(repository);
       if (commitsInRoot == null) {
-        commitsInRoot = new ArrayList<GitCommit>();
+        commitsInRoot = new ArrayList<GitHeavyCommit>();
         groupedCommits.put(repository, commitsInRoot);
       }
       commitsInRoot.add(commit);
@@ -129,14 +129,14 @@ public class GitCherryPickAction extends DumbAwareAction {
   }
 
   private boolean enabled(AnActionEvent e) {
-    final List<GitCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
+    final List<GitHeavyCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
     final Project project = e.getProject();
 
     if (commits == null || commits.isEmpty() || project == null) {
       return false;
     }
 
-    for (GitCommit commit : commits) {
+    for (GitHeavyCommit commit : commits) {
       if (myIdsInProgress.contains(commit.getShortHash())) {
         return false;
       }

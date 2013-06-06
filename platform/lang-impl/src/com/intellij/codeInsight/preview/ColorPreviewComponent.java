@@ -16,16 +16,20 @@
 
 package com.intellij.codeInsight.preview;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author spleaner
  */
-public class ColorPreviewComponent extends JComponent {
+public class ColorPreviewComponent extends JComponent implements PreviewHintComponent {
+  @NotNull
   private final Color myColor;
 
-  public ColorPreviewComponent(final Color color) {
+  public ColorPreviewComponent(@NotNull final Color color) {
     myColor = color;
     setOpaque(true);
   }
@@ -46,5 +50,10 @@ public class ColorPreviewComponent extends JComponent {
   @Override
   public Dimension getPreferredSize() {
     return new Dimension(70, 25);
+  }
+
+  @Override
+  public boolean isEqualTo(@Nullable PreviewHintComponent other) {
+    return other instanceof ColorPreviewComponent && myColor.equals(((ColorPreviewComponent)other).myColor);
   }
 }
