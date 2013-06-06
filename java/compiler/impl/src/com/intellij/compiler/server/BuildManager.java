@@ -844,9 +844,8 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
     for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
-      for (String arg : provider.getVMArguments()) {
-        cmdLine.addParameter(arg);
-      }
+      final List<String> args = provider.getVMArguments();
+      cmdLine.addParameters(args);
     }
     
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
