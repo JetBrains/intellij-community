@@ -93,7 +93,9 @@ public class FrameworkSupportUtil {
   @Nullable
   public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<FrameworkSupportInModuleProvider> providers) {
     for (FrameworkSupportInModuleProvider provider : providers) {
-      if (id.equals(provider.getFrameworkType().getId())) {
+      String frameworkId = provider.getFrameworkType().getId();
+      if (id.equals(frameworkId)
+          || id.equals("facet:"+frameworkId)) {//we need this additional check for compatibility, e.g. id of web framework support provider was changed from 'facet:web' for 'web'
         return provider;
       }
     }
