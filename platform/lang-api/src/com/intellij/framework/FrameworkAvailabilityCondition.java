@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+package com.intellij.framework;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import org.jetbrains.annotations.NotNull;

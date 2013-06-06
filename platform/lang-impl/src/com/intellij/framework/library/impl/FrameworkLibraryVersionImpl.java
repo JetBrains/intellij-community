@@ -16,7 +16,7 @@
 package com.intellij.framework.library.impl;
 
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
-import com.intellij.framework.library.FrameworkAvailabilityCondition;
+import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.util.download.impl.DownloadableFileSetDescriptionImpl;
 import org.jetbrains.annotations.NotNull;

@@ -15,7 +15,6 @@
  */
 package com.intellij.framework;
 
-import com.intellij.framework.library.FrameworkAvailabilityCondition;
 import org.jetbrains.annotations.NotNull;
 
 /**
