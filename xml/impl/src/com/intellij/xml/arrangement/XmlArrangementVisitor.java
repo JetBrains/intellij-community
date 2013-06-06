@@ -50,9 +50,8 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
 
   @Override
   public void visitXmlAttribute(XmlAttribute attribute) {
-    final String name = attribute.isNamespaceDeclaration() ? "" : attribute.getName();
     final XmlElementArrangementEntry entry = createNewEntry(
-      attribute.getTextRange(), XML_ATTRIBUTE, name, true);
+      attribute.getTextRange(), XML_ATTRIBUTE, attribute.getName(), true);
     processEntry(entry, null);
   }
 
