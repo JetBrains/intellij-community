@@ -7,6 +7,14 @@
 
 '''perform automatic newline conversion
 
+  Deprecation: The win32text extension requires each user to configure
+  the extension again and again for each clone since the configuration
+  is not copied when cloning.
+
+  We have therefore made the ``eol`` as an alternative. The ``eol``
+  uses a version controlled file for its configuration and each clone
+  will therefore use the right settings from the start.
+
 To perform automatic newline conversion, use::
 
   [extensions]
@@ -37,6 +45,8 @@ from mercurial.i18n import _
 from mercurial.node import short
 from mercurial import util
 import re
+
+testedwith = 'internal'
 
 # regexp for single LF without CR preceding.
 re_single_lf = re.compile('(^|[^\r])\n', re.MULTILINE)
@@ -111,7 +121,7 @@ def forbidnewline(ui, repo, hooktype, node, newline, **kwargs):
     # changegroup that contains an unacceptable commit followed later
     # by a commit that fixes the problem.
     tip = repo['tip']
-    for rev in xrange(len(repo)-1, repo[node].rev()-1, -1):
+    for rev in xrange(len(repo) - 1, repo[node].rev() - 1, -1):
         c = repo[rev]
         for f in c.files():
             if f in seen or f not in tip or f not in c:
@@ -120,7 +130,7 @@ def forbidnewline(ui, repo, hooktype, node, newline, **kwargs):
             data = c[f].data()
             if not util.binary(data) and newline in data:
                 if not halt:
-                    ui.warn(_('Attempt to commit or push text file(s) '
+                    ui.warn(_('attempt to commit or push text file(s) '
                               'using %s line endings\n') %
                               newlinestr[newline])
                 ui.warn(_('in %s: %s\n') % (short(c.node()), f))
@@ -156,3 +166,7 @@ def reposetup(ui, repo):
     for name, fn in _filters.iteritems():
         repo.adddatafilter(name, fn)
 
+def extsetup(ui):
+    if ui.configbool('win32text', 'warn', True):
+        ui.warn(_("win32text is deprecated: "
+                  "http://mercurial.selenic.com/wiki/Win32TextExtension\n"))

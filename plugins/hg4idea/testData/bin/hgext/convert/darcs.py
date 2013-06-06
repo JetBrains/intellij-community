@@ -8,34 +8,31 @@
 from common import NoRepo, checktool, commandline, commit, converter_source
 from mercurial.i18n import _
 from mercurial import util
-import os, shutil, tempfile
+import os, shutil, tempfile, re
 
 # The naming drift of ElementTree is fun!
 
 try:
-    from xml.etree.cElementTree import ElementTree
+    from xml.etree.cElementTree import ElementTree, XMLParser
 except ImportError:
     try:
-        from xml.etree.ElementTree import ElementTree
+        from xml.etree.ElementTree import ElementTree, XMLParser
     except ImportError:
         try:
-            from elementtree.cElementTree import ElementTree
+            from elementtree.cElementTree import ElementTree, XMLParser
         except ImportError:
             try:
-                from elementtree.ElementTree import ElementTree
+                from elementtree.ElementTree import ElementTree, XMLParser
             except ImportError:
-                ElementTree = None
+                pass
 
 class darcs_source(converter_source, commandline):
     def __init__(self, ui, path, rev=None):
         converter_source.__init__(self, ui, path, rev=rev)
         commandline.__init__(self, ui, 'darcs')
 
-        # check for _darcs, ElementTree, _darcs/inventory so that we can
-        # easily skip test-convert-darcs if ElementTree is not around
-        if not os.path.exists(os.path.join(path, '_darcs', 'inventories')):
-            raise NoRepo(_("%s does not look like a darcs repository") % path)
-
+        # check for _darcs, ElementTree so that we can easily skip
+        # test-convert-darcs if ElementTree is not around
         if not os.path.exists(os.path.join(path, '_darcs')):
             raise NoRepo(_("%s does not look like a darcs repository") % path)
 
@@ -45,7 +42,7 @@ class darcs_source(converter_source, commandline):
             raise util.Abort(_('darcs version 2.1 or newer needed (found %r)') %
                              version)
 
-        if ElementTree is None:
+        if "ElementTree" not in globals():
             raise util.Abort(_("Python ElementTree module is not available"))
 
         self.path = os.path.realpath(path)
@@ -54,6 +51,15 @@ class darcs_source(converter_source, commandline):
         self.changes = {}
         self.parents = {}
         self.tags = {}
+
+        # Check darcs repository format
+        format = self.format()
+        if format:
+            if format in ('darcs-1.0', 'hashed'):
+                raise NoRepo(_("%s repository format is unsupported, "
+                               "please upgrade") % format)
+        else:
+            self.ui.warn(_('failed to detect repository format!'))
 
     def before(self):
         self.tmppath = tempfile.mkdtemp(
@@ -82,12 +88,36 @@ class darcs_source(converter_source, commandline):
         self.ui.debug('cleaning up %s\n' % self.tmppath)
         shutil.rmtree(self.tmppath, ignore_errors=True)
 
+    def recode(self, s, encoding=None):
+        if isinstance(s, unicode):
+            # XMLParser returns unicode objects for anything it can't
+            # encode into ASCII. We convert them back to str to get
+            # recode's normal conversion behavior.
+            s = s.encode('latin-1')
+        return super(darcs_source, self).recode(s, encoding)
+
     def xml(self, cmd, **kwargs):
+        # NOTE: darcs is currently encoding agnostic and will print
+        # patch metadata byte-for-byte, even in the XML changelog.
         etree = ElementTree()
-        fp = self._run(cmd, **kwargs)
-        etree.parse(fp)
-        self.checkexit(fp.close())
+        # While we are decoding the XML as latin-1 to be as liberal as
+        # possible, etree will still raise an exception if any
+        # non-printable characters are in the XML changelog.
+        parser = XMLParser(encoding='latin-1')
+        p = self._run(cmd, **kwargs)
+        etree.parse(p.stdout, parser=parser)
+        p.wait()
+        self.checkexit(p.returncode)
         return etree.getroot()
+
+    def format(self):
+        output, status = self.run('show', 'repo', no_files=True,
+                                  repodir=self.path)
+        self.checkexit(status)
+        m = re.search(r'^\s*Format:\s*(.*)$', output, re.MULTILINE)
+        if not m:
+            return None
+        return ','.join(sorted(f.strip() for f in m.group(1).split(',')))
 
     def manifest(self):
         man = []
@@ -107,8 +137,12 @@ class darcs_source(converter_source, commandline):
         elt = self.changes[rev]
         date = util.strdate(elt.get('local_date'), '%a %b %d %H:%M:%S %Z %Y')
         desc = elt.findtext('name') + '\n' + elt.findtext('comment', '')
-        return commit(author=elt.get('author'), date=util.datestr(date),
-                      desc=desc.strip(), parents=self.parents[rev])
+        # etree can return unicode objects for name, comment, and author,
+        # so recode() is used to ensure str objects are emitted.
+        return commit(author=self.recode(elt.get('author')),
+                      date=util.datestr(date, '%Y-%m-%d %H:%M:%S %1%2'),
+                      desc=self.recode(desc).strip(),
+                      parents=self.parents[rev])
 
     def pull(self, rev):
         output, status = self.run('pull', self.path, all=True,
@@ -157,11 +191,11 @@ class darcs_source(converter_source, commandline):
     def getfile(self, name, rev):
         if rev != self.lastrev:
             raise util.Abort(_('internal calling inconsistency'))
-        return open(os.path.join(self.tmppath, name), 'rb').read()
-
-    def getmode(self, name, rev):
-        mode = os.lstat(os.path.join(self.tmppath, name)).st_mode
-        return (mode & 0111) and 'x' or ''
+        path = os.path.join(self.tmppath, name)
+        data = util.readfile(path)
+        mode = os.lstat(path).st_mode
+        mode = (mode & 0111) and 'x' or ''
+        return data, mode
 
     def gettags(self):
         return self.tags

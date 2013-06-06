@@ -14,8 +14,8 @@ For more information:
 http://mercurial.selenic.com/wiki/RebaseExtension
 '''
 
-from mercurial import util, repair, merge, cmdutil, commands, error
-from mercurial import extensions, ancestor, copies, patch
+from mercurial import hg, util, repair, merge, cmdutil, commands, bookmarks
+from mercurial import extensions, patch, scmutil, phases, obsolete, error
 from mercurial.commands import templateopts
 from mercurial.node import nullrev
 from mercurial.lock import release
@@ -23,14 +23,53 @@ from mercurial.i18n import _
 import os, errno
 
 nullmerge = -2
+revignored = -3
 
+cmdtable = {}
+command = cmdutil.command(cmdtable)
+testedwith = 'internal'
+
+@command('rebase',
+    [('s', 'source', '',
+     _('rebase from the specified changeset'), _('REV')),
+    ('b', 'base', '',
+     _('rebase from the base of the specified changeset '
+       '(up to greatest common ancestor of base and dest)'),
+     _('REV')),
+    ('r', 'rev', [],
+     _('rebase these revisions'),
+     _('REV')),
+    ('d', 'dest', '',
+     _('rebase onto the specified changeset'), _('REV')),
+    ('', 'collapse', False, _('collapse the rebased changesets')),
+    ('m', 'message', '',
+     _('use text as collapse commit message'), _('TEXT')),
+    ('e', 'edit', False, _('invoke editor on commit messages')),
+    ('l', 'logfile', '',
+     _('read collapse commit message from file'), _('FILE')),
+    ('', 'keep', False, _('keep original changesets')),
+    ('', 'keepbranches', False, _('keep original branch names')),
+    ('D', 'detach', False, _('(DEPRECATED)')),
+    ('t', 'tool', '', _('specify merge tool')),
+    ('c', 'continue', False, _('continue an interrupted rebase')),
+    ('a', 'abort', False, _('abort an interrupted rebase'))] +
+     templateopts,
+    _('[-s REV | -b REV] [-d REV] [OPTION]'))
 def rebase(ui, repo, **opts):
     """move changeset (and descendants) to a different branch
 
     Rebase uses repeated merging to graft changesets from one part of
     history (the source) onto another (the destination). This can be
-    useful for linearizing local changes relative to a master
+    useful for linearizing *local* changes relative to a master
     development tree.
+
+    You should not rebase changesets that have already been shared
+    with others. Doing so will force everybody else to perform the
+    same rebase or they will end up with duplicated changesets after
+    pulling in your rebased changesets.
+
+    In its default configuration, Mercurial will prevent you from
+    rebasing published changes. See :hg:`help phases` for details.
 
     If you don't specify a destination changeset (``-d/--dest``),
     rebase uses the tipmost head of the current named branch as the
@@ -49,6 +88,11 @@ def rebase(ui, repo, **opts):
     the whole branch. If you specify neither ``-s`` nor ``-b``, rebase
     uses the parent of the working directory as the base.
 
+    For advanced usage, a third way is available through the ``--rev``
+    option. It allows you to specify an arbitrary set of changesets to
+    rebase. Descendants of revs you specify with this option are not
+    automatically included in the rebase.
+
     By default, rebase recreates the changesets in the source branch
     as descendants of dest and then destroys the originals. Use
     ``--keep`` to preserve the original source changesets. Some
@@ -64,107 +108,179 @@ def rebase(ui, repo, **opts):
 
     If a rebase is interrupted to manually resolve a merge, it can be
     continued with --continue/-c or aborted with --abort/-a.
+
+    Returns 0 on success, 1 if nothing to rebase.
     """
     originalwd = target = None
+    activebookmark = None
     external = nullrev
     state = {}
     skipped = set()
     targetancestors = set()
 
+    editor = None
+    if opts.get('edit'):
+        editor = cmdutil.commitforceeditor
+
     lock = wlock = None
     try:
-        lock = repo.lock()
         wlock = repo.wlock()
+        lock = repo.lock()
 
         # Validate input and define rebasing points
         destf = opts.get('dest', None)
         srcf = opts.get('source', None)
         basef = opts.get('base', None)
+        revf = opts.get('rev', [])
         contf = opts.get('continue')
         abortf = opts.get('abort')
         collapsef = opts.get('collapse', False)
-        extrafn = opts.get('extrafn')
+        collapsemsg = cmdutil.logmessage(ui, opts)
+        extrafn = opts.get('extrafn') # internal, used by e.g. hgsubversion
         keepf = opts.get('keep', False)
         keepbranchesf = opts.get('keepbranches', False)
-        detachf = opts.get('detach', False)
+        # keepopen is not meant for use on the command line, but by
+        # other extensions
+        keepopen = opts.get('keepopen', False)
+
+        if collapsemsg and not collapsef:
+            raise util.Abort(
+                _('message can only be specified with collapse'))
 
         if contf or abortf:
             if contf and abortf:
-                raise error.ParseError('rebase',
-                                       _('cannot use both abort and continue'))
+                raise util.Abort(_('cannot use both abort and continue'))
             if collapsef:
-                raise error.ParseError(
-                    'rebase', _('cannot use collapse with continue or abort'))
-
-            if detachf:
-                raise error.ParseError(
-                    'rebase', _('cannot use detach with continue or abort'))
-
+                raise util.Abort(
+                    _('cannot use collapse with continue or abort'))
             if srcf or basef or destf:
-                raise error.ParseError('rebase',
+                raise util.Abort(
                     _('abort and continue do not allow specifying revisions'))
+            if opts.get('tool', False):
+                ui.warn(_('tool option will be ignored\n'))
 
-            (originalwd, target, state, collapsef, keepf,
-                                keepbranchesf, external) = restorestatus(repo)
+            (originalwd, target, state, skipped, collapsef, keepf,
+                keepbranchesf, external, activebookmark) = restorestatus(repo)
             if abortf:
-                abort(repo, originalwd, target, state)
-                return
+                return abort(repo, originalwd, target, state)
         else:
             if srcf and basef:
-                raise error.ParseError('rebase', _('cannot specify both a '
-                                                   'revision and a base'))
-            if detachf:
-                if not srcf:
-                    raise error.ParseError(
-                      'rebase', _('detach requires a revision to be specified'))
-                if basef:
-                    raise error.ParseError(
-                        'rebase', _('cannot specify a base with detach'))
+                raise util.Abort(_('cannot specify both a '
+                                   'source and a base'))
+            if revf and basef:
+                raise util.Abort(_('cannot specify both a '
+                                   'revision and a base'))
+            if revf and srcf:
+                raise util.Abort(_('cannot specify both a '
+                                   'revision and a source'))
 
-            cmdutil.bail_if_changed(repo)
-            result = buildstate(repo, destf, srcf, basef, detachf)
+            cmdutil.bailifchanged(repo)
+
+            if not destf:
+                # Destination defaults to the latest revision in the
+                # current branch
+                branch = repo[None].branch()
+                dest = repo[branch]
+            else:
+                dest = scmutil.revsingle(repo, destf)
+
+            if revf:
+                rebaseset = repo.revs('%lr', revf)
+            elif srcf:
+                src = scmutil.revrange(repo, [srcf])
+                rebaseset = repo.revs('(%ld)::', src)
+            else:
+                base = scmutil.revrange(repo, [basef or '.'])
+                rebaseset = repo.revs(
+                    '(children(ancestor(%ld, %d)) and ::(%ld))::',
+                    base, dest, base)
+            if rebaseset:
+                root = min(rebaseset)
+            else:
+                root = None
+
+            if not rebaseset:
+                repo.ui.debug('base is ancestor of destination\n')
+                result = None
+            elif (not (keepf or obsolete._enabled)
+                  and repo.revs('first(children(%ld) - %ld)',
+                                rebaseset, rebaseset)):
+                raise util.Abort(
+                    _("can't remove original changesets with"
+                      " unrebased descendants"),
+                    hint=_('use --keep to keep original changesets'))
+            else:
+                result = buildstate(repo, dest, rebaseset, collapsef)
+
             if not result:
                 # Empty state built, nothing to rebase
                 ui.status(_('nothing to rebase\n'))
-                return
+                return 1
+            elif not keepf and not repo[root].mutable():
+                raise util.Abort(_("can't rebase immutable changeset %s")
+                                 % repo[root],
+                                 hint=_('see hg help phases for details'))
             else:
                 originalwd, target, state = result
                 if collapsef:
-                    targetancestors = set(repo.changelog.ancestors(target))
+                    targetancestors = repo.changelog.ancestors([target],
+                                                               inclusive=True)
                     external = checkexternal(repo, state, targetancestors)
 
         if keepbranchesf:
-            if extrafn:
-                raise error.ParseError(
-                    'rebase', _('cannot use both keepbranches and extrafn'))
+            assert not extrafn, 'cannot use both keepbranches and extrafn'
             def extrafn(ctx, extra):
                 extra['branch'] = ctx.branch()
+            if collapsef:
+                branches = set()
+                for rev in state:
+                    branches.add(repo[rev].branch())
+                    if len(branches) > 1:
+                        raise util.Abort(_('cannot collapse multiple named '
+                            'branches'))
+
 
         # Rebase
         if not targetancestors:
-            targetancestors = set(repo.changelog.ancestors(target))
-            targetancestors.add(target)
+            targetancestors = repo.changelog.ancestors([target], inclusive=True)
 
-        for rev in sorted(state):
+        # Keep track of the current bookmarks in order to reset them later
+        currentbookmarks = repo._bookmarks.copy()
+        activebookmark = activebookmark or repo._bookmarkcurrent
+        if activebookmark:
+            bookmarks.unsetcurrent(repo)
+
+        sortedstate = sorted(state)
+        total = len(sortedstate)
+        pos = 0
+        for rev in sortedstate:
+            pos += 1
             if state[rev] == -1:
-                ui.debug("rebasing %d:%s\n" % (rev, repo[rev]))
+                ui.progress(_("rebasing"), pos, ("%d:%s" % (rev, repo[rev])),
+                            _('changesets'), total)
                 storestatus(repo, originalwd, target, state, collapsef, keepf,
-                                                    keepbranchesf, external)
+                            keepbranchesf, external, activebookmark)
                 p1, p2 = defineparents(repo, rev, target, state,
                                                         targetancestors)
                 if len(repo.parents()) == 2:
                     repo.ui.debug('resuming interrupted rebase\n')
                 else:
-                    stats = rebasenode(repo, rev, p1, p2, state)
-                    if stats and stats[3] > 0:
-                        raise util.Abort(_('fix unresolved conflicts with hg '
-                                    'resolve then run hg rebase --continue'))
-                updatedirstate(repo, rev, target, p2)
+                    try:
+                        ui.setconfig('ui', 'forcemerge', opts.get('tool', ''))
+                        stats = rebasenode(repo, rev, p1, state, collapsef)
+                        if stats and stats[3] > 0:
+                            raise error.InterventionRequired(
+                                _('unresolved conflicts (see hg '
+                                  'resolve, then hg rebase --continue)'))
+                    finally:
+                        ui.setconfig('ui', 'forcemerge', '')
+                cmdutil.duplicatecopies(repo, rev, target)
                 if not collapsef:
-                    newrev = concludenode(repo, rev, p1, p2, extrafn=extrafn)
+                    newrev = concludenode(repo, rev, p1, p2, extrafn=extrafn,
+                                          editor=editor)
                 else:
                     # Skip commit if we are collapsing
-                    repo.dirstate.setparents(repo[p1].node())
+                    repo.setparents(repo[p1].node())
                     newrev = None
                 # Update the state
                 if newrev is not None:
@@ -176,59 +292,57 @@ def rebase(ui, repo, **opts):
                         skipped.add(rev)
                     state[rev] = p1
 
+        ui.progress(_('rebasing'), None)
         ui.note(_('rebase merging completed\n'))
 
-        if collapsef:
+        if collapsef and not keepopen:
             p1, p2 = defineparents(repo, min(state), target,
                                                         state, targetancestors)
-            commitmsg = 'Collapsed revision'
-            for rebased in state:
-                if rebased not in skipped and state[rebased] != nullmerge:
-                    commitmsg += '\n* %s' % repo[rebased].description()
-            commitmsg = ui.edit(commitmsg, repo.ui.username())
+            if collapsemsg:
+                commitmsg = collapsemsg
+            else:
+                commitmsg = 'Collapsed revision'
+                for rebased in state:
+                    if rebased not in skipped and state[rebased] > nullmerge:
+                        commitmsg += '\n* %s' % repo[rebased].description()
+                commitmsg = ui.edit(commitmsg, repo.ui.username())
             newrev = concludenode(repo, rev, p1, external, commitmsg=commitmsg,
-                                  extrafn=extrafn)
+                                  extrafn=extrafn, editor=editor)
 
         if 'qtip' in repo.tags():
             updatemq(repo, state, skipped, **opts)
 
+        if currentbookmarks:
+            # Nodeids are needed to reset bookmarks
+            nstate = {}
+            for k, v in state.iteritems():
+                if v > nullmerge:
+                    nstate[repo[k].node()] = repo[v].node()
+            # XXX this is the same as dest.node() for the non-continue path --
+            # this should probably be cleaned up
+            targetnode = repo[target].node()
+
         if not keepf:
-            # Remove no more useful revisions
-            rebased = [rev for rev in state if state[rev] != nullmerge]
-            if rebased:
-                if set(repo.changelog.descendants(min(rebased))) - set(state):
-                    ui.warn(_("warning: new changesets detected "
-                              "on source branch, not stripping\n"))
-                else:
-                    repair.strip(ui, repo, repo[min(rebased)].node(), "strip")
+            collapsedas = None
+            if collapsef:
+                collapsedas = newrev
+            clearrebased(ui, repo, state, skipped, collapsedas)
+
+        if currentbookmarks:
+            updatebookmarks(repo, targetnode, nstate, currentbookmarks)
 
         clearstatus(repo)
-        ui.status(_("rebase completed\n"))
-        if os.path.exists(repo.sjoin('undo')):
-            util.unlink(repo.sjoin('undo'))
+        ui.note(_("rebase completed\n"))
+        util.unlinkpath(repo.sjoin('undo'), ignoremissing=True)
         if skipped:
             ui.note(_("%d revisions have been skipped\n") % len(skipped))
+
+        if (activebookmark and
+            repo['tip'].node() == repo._bookmarks[activebookmark]):
+                bookmarks.setcurrent(repo, activebookmark)
+
     finally:
         release(lock, wlock)
-
-def rebasemerge(repo, rev, first=False):
-    'return the correct ancestor'
-    oldancestor = ancestor.ancestor
-
-    def newancestor(a, b, pfunc):
-        if b == rev:
-            return repo[rev].parents()[0].rev()
-        return oldancestor(a, b, pfunc)
-
-    if not first:
-        ancestor.ancestor = newancestor
-    else:
-        repo.ui.debug("first revision, do not change ancestor\n")
-    try:
-        stats = merge.update(repo, rev, True, True, False)
-        return stats
-    finally:
-        ancestor.ancestor = oldancestor
 
 def checkexternal(repo, state, targetancestors):
     """Check whether one or more external revisions need to be taken in
@@ -249,41 +363,32 @@ def checkexternal(repo, state, targetancestors):
                 external = p.rev()
     return external
 
-def updatedirstate(repo, rev, p1, p2):
-    """Keep track of renamed files in the revision that is going to be rebased
-    """
-    # Here we simulate the copies and renames in the source changeset
-    cop, diver = copies.copies(repo, repo[rev], repo[p1], repo[p2], True)
-    m1 = repo[rev].manifest()
-    m2 = repo[p1].manifest()
-    for k, v in cop.iteritems():
-        if k in m1:
-            if v in m1 or v in m2:
-                repo.dirstate.copy(v, k)
-                if v in m2 and v not in m1:
-                    repo.dirstate.remove(v)
-
-def concludenode(repo, rev, p1, p2, commitmsg=None, extrafn=None):
+def concludenode(repo, rev, p1, p2, commitmsg=None, editor=None, extrafn=None):
     'Commit the changes and store useful information in extra'
     try:
-        repo.dirstate.setparents(repo[p1].node(), repo[p2].node())
-        if commitmsg is None:
-            commitmsg = repo[rev].description()
+        repo.setparents(repo[p1].node(), repo[p2].node())
         ctx = repo[rev]
+        if commitmsg is None:
+            commitmsg = ctx.description()
         extra = {'rebase_source': ctx.hex()}
         if extrafn:
             extrafn(ctx, extra)
         # Commit might fail if unresolved files exist
         newrev = repo.commit(text=commitmsg, user=ctx.user(),
-                             date=ctx.date(), extra=extra)
+                             date=ctx.date(), extra=extra, editor=editor)
         repo.dirstate.setbranch(repo[newrev].branch())
+        targetphase = max(ctx.phase(), phases.draft)
+        # retractboundary doesn't overwrite upper phase inherited from parent
+        newnode = repo[newrev].node()
+        if newnode:
+            phases.retractboundary(repo, targetphase, [newnode])
         return newrev
     except util.Abort:
         # Invalidate the previous setparents
         repo.dirstate.invalidate()
         raise
 
-def rebasenode(repo, rev, p1, p2, state):
+def rebasenode(repo, rev, p1, state, collapse):
     'Rebase a single revision'
     # Merge phase
     # Update to target and merge it with local
@@ -294,9 +399,21 @@ def rebasenode(repo, rev, p1, p2, state):
         repo.ui.debug(" already in target\n")
     repo.dirstate.write()
     repo.ui.debug(" merge against %d:%s\n" % (repo[rev].rev(), repo[rev]))
-    first = repo[rev].rev() == repo[min(state)].rev()
-    stats = rebasemerge(repo, rev, first)
-    return stats
+    base = None
+    if repo[rev].rev() != repo[min(state)].rev():
+        base = repo[rev].p1().node()
+    # When collapsing in-place, the parent is the common ancestor, we
+    # have to allow merging with it.
+    return merge.update(repo, rev, True, True, False, base, collapse)
+
+def nearestrebased(repo, rev, state):
+    """return the nearest ancestors of rev in the rebase result"""
+    rebased = [r for r in state if state[r] > nullmerge]
+    candidates = repo.revs('max(%ld  and (::%d))', rebased, rev)
+    if candidates:
+        return state[candidates[0]]
+    else:
+        return None
 
 def defineparents(repo, rev, target, state, targetancestors):
     'Return the new parent relationship of the revision that will be rebased'
@@ -309,6 +426,10 @@ def defineparents(repo, rev, target, state, targetancestors):
     elif P1n in state:
         if state[P1n] == nullmerge:
             p1 = target
+        elif state[P1n] == revignored:
+            p1 = nearestrebased(repo, P1n, state)
+            if p1 is None:
+                p1 = target
         else:
             p1 = state[P1n]
     else: # P1n external
@@ -321,6 +442,11 @@ def defineparents(repo, rev, target, state, targetancestors):
         if P2n in state:
             if p1 == target: # P1n in targetancestors or external
                 p1 = state[P2n]
+            elif state[P2n] == revignored:
+                p2 = nearestrebased(repo, P2n, state)
+                if p2 is None:
+                    # no ancestors rebased yet, detach
+                    p2 = target
             else:
                 p2 = state[P2n]
         else: # P2n external
@@ -343,26 +469,56 @@ def isagitpatch(repo, patchname):
 def updatemq(repo, state, skipped, **opts):
     'Update rebased mq patches - finalize and then import them'
     mqrebase = {}
-    for p in repo.mq.applied:
-        if repo[p.rev].rev() in state:
+    mq = repo.mq
+    original_series = mq.fullseries[:]
+    skippedpatches = set()
+
+    for p in mq.applied:
+        rev = repo[p.node].rev()
+        if rev in state:
             repo.ui.debug('revision %d is an mq patch (%s), finalize it.\n' %
-                                        (repo[p.rev].rev(), p.name))
-            mqrebase[repo[p.rev].rev()] = (p.name, isagitpatch(repo, p.name))
+                                        (rev, p.name))
+            mqrebase[rev] = (p.name, isagitpatch(repo, p.name))
+        else:
+            # Applied but not rebased, not sure this should happen
+            skippedpatches.add(p.name)
 
     if mqrebase:
-        repo.mq.finish(repo, mqrebase.keys())
+        mq.finish(repo, mqrebase.keys())
 
         # We must start import from the newest revision
         for rev in sorted(mqrebase, reverse=True):
             if rev not in skipped:
-                repo.ui.debug('import mq patch %d (%s)\n'
-                              % (state[rev], mqrebase[rev][0]))
-                repo.mq.qimport(repo, (), patchname=mqrebase[rev][0],
-                            git=mqrebase[rev][1],rev=[str(state[rev])])
-        repo.mq.save_dirty()
+                name, isgit = mqrebase[rev]
+                repo.ui.debug('import mq patch %d (%s)\n' % (state[rev], name))
+                mq.qimport(repo, (), patchname=name, git=isgit,
+                                rev=[str(state[rev])])
+            else:
+                # Rebased and skipped
+                skippedpatches.add(mqrebase[rev][0])
+
+        # Patches were either applied and rebased and imported in
+        # order, applied and removed or unapplied. Discard the removed
+        # ones while preserving the original series order and guards.
+        newseries = [s for s in original_series
+                     if mq.guard_re.split(s, 1)[0] not in skippedpatches]
+        mq.fullseries[:] = newseries
+        mq.seriesdirty = True
+        mq.savedirty()
+
+def updatebookmarks(repo, targetnode, nstate, originalbookmarks):
+    'Move bookmarks to their correct changesets, and delete divergent ones'
+    marks = repo._bookmarks
+    for k, v in originalbookmarks.iteritems():
+        if v in nstate:
+            # update the bookmarks for revs that have moved
+            marks[k] = nstate[v]
+            bookmarks.deletedivergent(repo, [targetnode], k)
+
+    marks.write()
 
 def storestatus(repo, originalwd, target, state, collapse, keep, keepbranches,
-                                                                external):
+                external, activebookmark):
     'Store the current status to allow recovery'
     f = repo.opener("rebasestate", "w")
     f.write(repo[originalwd].hex() + '\n')
@@ -371,17 +527,20 @@ def storestatus(repo, originalwd, target, state, collapse, keep, keepbranches,
     f.write('%d\n' % int(collapse))
     f.write('%d\n' % int(keep))
     f.write('%d\n' % int(keepbranches))
+    f.write('%s\n' % (activebookmark or ''))
     for d, v in state.iteritems():
         oldrev = repo[d].hex()
-        newrev = repo[v].hex()
+        if v > nullmerge:
+            newrev = repo[v].hex()
+        else:
+            newrev = v
         f.write("%s:%s\n" % (oldrev, newrev))
     f.close()
     repo.ui.debug('rebase status stored\n')
 
 def clearstatus(repo):
     'Remove the status files'
-    if os.path.exists(repo.join("rebasestate")):
-        util.unlink(repo.join("rebasestate"))
+    util.unlinkpath(repo.join("rebasestate"), ignoremissing=True)
 
 def restorestatus(repo):
     'Restore a previously stored status'
@@ -389,6 +548,7 @@ def restorestatus(repo):
         target = None
         collapse = False
         external = nullrev
+        activebookmark = None
         state = {}
         f = repo.opener("rebasestate")
         for i, l in enumerate(f.read().splitlines()):
@@ -404,11 +564,28 @@ def restorestatus(repo):
                 keep = bool(int(l))
             elif i == 5:
                 keepbranches = bool(int(l))
+            elif i == 6 and not (len(l) == 81 and ':' in l):
+                # line 6 is a recent addition, so for backwards compatibility
+                # check that the line doesn't look like the oldrev:newrev lines
+                activebookmark = l
             else:
                 oldrev, newrev = l.split(':')
-                state[repo[oldrev].rev()] = repo[newrev].rev()
+                if newrev in (str(nullmerge), str(revignored)):
+                    state[repo[oldrev].rev()] = int(newrev)
+                else:
+                    state[repo[oldrev].rev()] = repo[newrev].rev()
+        skipped = set()
+        # recompute the set of skipped revs
+        if not collapse:
+            seen = set([target])
+            for old, new in sorted(state.items()):
+                if new != nullrev and new in seen:
+                    skipped.add(old)
+                seen.add(new)
+        repo.ui.debug('computed skipped revs: %s\n' % skipped)
         repo.ui.debug('rebase status resumed\n')
-        return originalwd, target, state, collapse, keep, keepbranches, external
+        return (originalwd, target, state, skipped,
+                collapse, keep, keepbranches, external, activebookmark)
     except IOError, err:
         if err.errno != errno.ENOENT:
             raise
@@ -416,80 +593,152 @@ def restorestatus(repo):
 
 def abort(repo, originalwd, target, state):
     'Restore the repository to its original state'
-    if set(repo.changelog.descendants(target)) - set(state.values()):
+    dstates = [s for s in state.values() if s != nullrev]
+    immutable = [d for d in dstates if not repo[d].mutable()]
+    if immutable:
+        raise util.Abort(_("can't abort rebase due to immutable changesets %s")
+                         % ', '.join(str(repo[r]) for r in immutable),
+                         hint=_('see hg help phases for details'))
+
+    descendants = set()
+    if dstates:
+        descendants = set(repo.changelog.descendants(dstates))
+    if descendants - set(dstates):
         repo.ui.warn(_("warning: new changesets detected on target branch, "
-                                                    "not stripping\n"))
+                       "can't abort\n"))
+        return -1
     else:
         # Strip from the first rebased revision
         merge.update(repo, repo[originalwd].rev(), False, True, False)
-        rebased = filter(lambda x: x > -1, state.values())
+        rebased = filter(lambda x: x > -1 and x != target, state.values())
         if rebased:
-            strippoint = min(rebased)
-            repair.strip(repo.ui, repo, repo[strippoint].node(), "strip")
+            strippoints = [c.node()  for c in repo.set('roots(%ld)', rebased)]
+            # no backup of rebased cset versions needed
+            repair.strip(repo.ui, repo, strippoints)
         clearstatus(repo)
-        repo.ui.status(_('rebase aborted\n'))
+        repo.ui.warn(_('rebase aborted\n'))
+        return 0
 
-def buildstate(repo, dest, src, base, detach):
-    'Define which revisions are going to be rebased and where'
-    targetancestors = set()
-    detachset = set()
+def buildstate(repo, dest, rebaseset, collapse):
+    '''Define which revisions are going to be rebased and where
 
-    if not dest:
-        # Destination defaults to the latest revision in the current branch
-        branch = repo[None].branch()
-        dest = repo[branch].rev()
-    else:
-        dest = repo[dest].rev()
+    repo: repo
+    dest: context
+    rebaseset: set of rev
+    '''
 
     # This check isn't strictly necessary, since mq detects commits over an
     # applied patch. But it prevents messing up the working directory when
     # a partially completed rebase is blocked by mq.
-    if 'qtip' in repo.tags() and (repo[dest].hex() in
-                            [s.rev for s in repo.mq.applied]):
+    if 'qtip' in repo.tags() and (dest.node() in
+                            [s.node for s in repo.mq.applied]):
         raise util.Abort(_('cannot rebase onto an applied mq patch'))
 
-    if src:
-        commonbase = repo[src].ancestor(repo[dest])
-        if commonbase == repo[src]:
+    roots = list(repo.set('roots(%ld)', rebaseset))
+    if not roots:
+        raise util.Abort(_('no matching revisions'))
+    roots.sort()
+    state = {}
+    detachset = set()
+    for root in roots:
+        commonbase = root.ancestor(dest)
+        if commonbase == root:
             raise util.Abort(_('source is ancestor of destination'))
-        if commonbase == repo[dest]:
-            raise util.Abort(_('source is descendant of destination'))
-        source = repo[src].rev()
-        if detach:
-            # We need to keep track of source's ancestors up to the common base
-            srcancestors = set(repo.changelog.ancestors(source))
-            baseancestors = set(repo.changelog.ancestors(commonbase.rev()))
-            detachset = srcancestors - baseancestors
-            detachset.remove(commonbase.rev())
+        if commonbase == dest:
+            samebranch = root.branch() == dest.branch()
+            if not collapse and samebranch and root in dest.children():
+                repo.ui.debug('source is a child of destination\n')
+                return None
+
+        repo.ui.debug('rebase onto %d starting from %s\n' % (dest, roots))
+        state.update(dict.fromkeys(rebaseset, nullrev))
+        # Rebase tries to turn <dest> into a parent of <root> while
+        # preserving the number of parents of rebased changesets:
+        #
+        # - A changeset with a single parent will always be rebased as a
+        #   changeset with a single parent.
+        #
+        # - A merge will be rebased as merge unless its parents are both
+        #   ancestors of <dest> or are themselves in the rebased set and
+        #   pruned while rebased.
+        #
+        # If one parent of <root> is an ancestor of <dest>, the rebased
+        # version of this parent will be <dest>. This is always true with
+        # --base option.
+        #
+        # Otherwise, we need to *replace* the original parents with
+        # <dest>. This "detaches" the rebased set from its former location
+        # and rebases it onto <dest>. Changes introduced by ancestors of
+        # <root> not common with <dest> (the detachset, marked as
+        # nullmerge) are "removed" from the rebased changesets.
+        #
+        # - If <root> has a single parent, set it to <dest>.
+        #
+        # - If <root> is a merge, we cannot decide which parent to
+        #   replace, the rebase operation is not clearly defined.
+        #
+        # The table below sums up this behavior:
+        #
+        # +------------------+----------------------+-------------------------+
+        # |                  |     one parent       |  merge                  |
+        # +------------------+----------------------+-------------------------+
+        # | parent in        | new parent is <dest> | parents in ::<dest> are |
+        # | ::<dest>         |                      | remapped to <dest>      |
+        # +------------------+----------------------+-------------------------+
+        # | unrelated source | new parent is <dest> | ambiguous, abort        |
+        # +------------------+----------------------+-------------------------+
+        #
+        # The actual abort is handled by `defineparents`
+        if len(root.parents()) <= 1:
+            # ancestors of <root> not ancestors of <dest>
+            detachset.update(repo.changelog.findmissingrevs([commonbase.rev()],
+                                                            [root.rev()]))
+    for r in detachset:
+        if r not in state:
+            state[r] = nullmerge
+    if len(roots) > 1:
+        # If we have multiple roots, we may have "hole" in the rebase set.
+        # Rebase roots that descend from those "hole" should not be detached as
+        # other root are. We use the special `revignored` to inform rebase that
+        # the revision should be ignored but that `defineparents` should search
+        # a rebase destination that make sense regarding rebased topology.
+        rebasedomain = set(repo.revs('%ld::%ld', rebaseset, rebaseset))
+        for ignored in set(rebasedomain) - set(rebaseset):
+            state[ignored] = revignored
+    return repo['.'].rev(), dest.rev(), state
+
+def clearrebased(ui, repo, state, skipped, collapsedas=None):
+    """dispose of rebased revision at the end of the rebase
+
+    If `collapsedas` is not None, the rebase was a collapse whose result if the
+    `collapsedas` node."""
+    if obsolete._enabled:
+        markers = []
+        for rev, newrev in sorted(state.items()):
+            if newrev >= 0:
+                if rev in skipped:
+                    succs = ()
+                elif collapsedas is not None:
+                    succs = (repo[collapsedas],)
+                else:
+                    succs = (repo[newrev],)
+                markers.append((repo[rev], succs))
+        if markers:
+            obsolete.createmarkers(repo, markers)
     else:
-        if base:
-            cwd = repo[base].rev()
-        else:
-            cwd = repo['.'].rev()
+        rebased = [rev for rev in state if state[rev] > nullmerge]
+        if rebased:
+            stripped = []
+            for root in repo.set('roots(%ld)', rebased):
+                if set(repo.changelog.descendants([root.rev()])) - set(state):
+                    ui.warn(_("warning: new changesets detected "
+                              "on source branch, not stripping\n"))
+                else:
+                    stripped.append(root.node())
+            if stripped:
+                # backup the old csets by default
+                repair.strip(ui, repo, stripped, "all")
 
-        if cwd == dest:
-            repo.ui.debug('source and destination are the same\n')
-            return None
-
-        targetancestors = set(repo.changelog.ancestors(dest))
-        if cwd in targetancestors:
-            repo.ui.debug('source is ancestor of destination\n')
-            return None
-
-        cwdancestors = set(repo.changelog.ancestors(cwd))
-        if dest in cwdancestors:
-            repo.ui.debug('source is descendant of destination\n')
-            return None
-
-        cwdancestors.add(cwd)
-        rebasingbranch = cwdancestors - targetancestors
-        source = min(rebasingbranch)
-
-    repo.ui.debug('rebase onto %d starting from %d\n' % (dest, source))
-    state = dict.fromkeys(repo.changelog.descendants(source), nullrev)
-    state.update(dict.fromkeys(detachset, nullmerge))
-    state[source] = nullrev
-    return repo['.'].rev(), repo[dest].rev(), state
 
 def pullrebase(orig, ui, repo, *args, **opts):
     'Call rebase after pull if the latter has been invoked with --rebase'
@@ -499,43 +748,41 @@ def pullrebase(orig, ui, repo, *args, **opts):
             ui.debug('--update and --rebase are not compatible, ignoring '
                      'the update flag\n')
 
-        cmdutil.bail_if_changed(repo)
+        movemarkfrom = repo['.'].node()
+        cmdutil.bailifchanged(repo)
         revsprepull = len(repo)
-        orig(ui, repo, *args, **opts)
+        origpostincoming = commands.postincoming
+        def _dummy(*args, **kwargs):
+            pass
+        commands.postincoming = _dummy
+        try:
+            orig(ui, repo, *args, **opts)
+        finally:
+            commands.postincoming = origpostincoming
         revspostpull = len(repo)
         if revspostpull > revsprepull:
+            # --rev option from pull conflict with rebase own --rev
+            # dropping it
+            if 'rev' in opts:
+                del opts['rev']
             rebase(ui, repo, **opts)
             branch = repo[None].branch()
             dest = repo[branch].rev()
             if dest != repo['.'].rev():
                 # there was nothing to rebase we force an update
-                merge.update(repo, dest, False, False, False)
+                hg.update(repo, dest)
+                if bookmarks.update(repo, [movemarkfrom], repo['.'].node()):
+                    ui.status(_("updating bookmark %s\n")
+                              % repo._bookmarkcurrent)
     else:
+        if opts.get('tool'):
+            raise util.Abort(_('--tool can only be used with --rebase'))
         orig(ui, repo, *args, **opts)
 
 def uisetup(ui):
     'Replace pull with a decorator to provide --rebase option'
     entry = extensions.wrapcommand(commands.table, 'pull', pullrebase)
     entry[1].append(('', 'rebase', None,
-                     _("rebase working directory to branch head"))
-)
-
-cmdtable = {
-"rebase":
-        (rebase,
-        [
-        ('s', 'source', '', _('rebase from the specified changeset')),
-        ('b', 'base', '', _('rebase from the base of the specified changeset '
-                            '(up to greatest common ancestor of base and dest)')),
-        ('d', 'dest', '', _('rebase onto the specified changeset')),
-        ('', 'collapse', False, _('collapse the rebased changesets')),
-        ('', 'keep', False, _('keep original changesets')),
-        ('', 'keepbranches', False, _('keep original branch names')),
-        ('', 'detach', False, _('force detaching of source from its original '
-                                'branch')),
-        ('c', 'continue', False, _('continue an interrupted rebase')),
-        ('a', 'abort', False, _('abort an interrupted rebase'))] +
-         templateopts,
-        _('hg rebase [-s REV | -b REV] [-d REV] [options]\n'
-          'hg rebase {-a|-c}'))
-}
+                     _("rebase working directory to branch head")))
+    entry[1].append(('t', 'tool', '',
+                     _("specify merge tool for rebase")))

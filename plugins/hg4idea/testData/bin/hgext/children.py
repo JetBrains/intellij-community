@@ -8,12 +8,17 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-'''command to display child changesets'''
+'''command to display child changesets (DEPRECATED)
 
-from mercurial import cmdutil
+This extension is deprecated. You should use :hg:`log -r
+"children(REV)"` instead.
+'''
+
+from mercurial import cmdutil, commands
 from mercurial.commands import templateopts
 from mercurial.i18n import _
 
+testedwith = 'internal'
 
 def children(ui, repo, file_=None, **opts):
     """show the children of the given or working directory revision
@@ -38,7 +43,10 @@ def children(ui, repo, file_=None, **opts):
 cmdtable = {
     "children":
         (children,
-         [('r', 'rev', '', _('show children of the specified revision')),
+         [('r', 'rev', '',
+           _('show children of the specified revision'), _('REV')),
          ] + templateopts,
          _('hg children [-r REV] [FILE]')),
 }
+
+commands.inferrepo += " children"

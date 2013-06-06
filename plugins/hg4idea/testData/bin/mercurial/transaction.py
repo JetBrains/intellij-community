@@ -1,4 +1,4 @@
-# transaction.py - simple journalling scheme for mercurial
+# transaction.py - simple journaling scheme for mercurial
 #
 # This transaction scheme is intended to gracefully handle program
 # errors and interruptions. More serious failures like system crashes
@@ -13,7 +13,7 @@
 
 from i18n import _
 import os, errno
-import error
+import error, util
 
 def active(func):
     def _active(self, *args, **kwds):
@@ -27,22 +27,27 @@ def _playback(journal, report, opener, entries, unlink=True):
     for f, o, ignore in entries:
         if o or not unlink:
             try:
-                opener(f, 'a').truncate(o)
+                fp = opener(f, 'a')
+                fp.truncate(o)
+                fp.close()
             except IOError:
                 report(_("failed to truncate %s\n") % f)
                 raise
         else:
             try:
-                fn = opener(f).name
-                os.unlink(fn)
+                fp = opener(f)
+                fn = fp.name
+                fp.close()
+                util.unlink(fn)
             except (IOError, OSError), inst:
                 if inst.errno != errno.ENOENT:
                     raise
-    os.unlink(journal)
+    util.unlink(journal)
 
 class transaction(object):
     def __init__(self, report, opener, journal, after=None, createmode=None):
         self.count = 1
+        self.usages = 1
         self.report = report
         self.opener = opener
         self.after = after
@@ -51,7 +56,7 @@ class transaction(object):
         self.journal = journal
         self._queue = []
 
-        self.file = open(self.journal, "w")
+        self.file = util.posixfile(self.journal, "w")
         if createmode is not None:
             os.chmod(self.journal, createmode & 0666)
 
@@ -108,7 +113,15 @@ class transaction(object):
     @active
     def nest(self):
         self.count += 1
+        self.usages += 1
         return self
+
+    def release(self):
+        if self.count > 0:
+            self.usages -= 1
+        # if the transaction scopes are left without being closed, fail
+        if self.count > 0 and self.usages == 0:
+            self._abort()
 
     def running(self):
         return self.count > 0
@@ -124,7 +137,7 @@ class transaction(object):
         if self.after:
             self.after()
         if os.path.isfile(self.journal):
-            os.unlink(self.journal)
+            util.unlink(self.journal)
         self.journal = None
 
     @active
@@ -136,12 +149,13 @@ class transaction(object):
 
     def _abort(self):
         self.count = 0
+        self.usages = 0
         self.file.close()
 
         try:
             if not self.entries:
                 if self.journal:
-                    os.unlink(self.journal)
+                    util.unlink(self.journal)
                 return
 
             self.report(_("transaction abort!\n"))
@@ -150,7 +164,7 @@ class transaction(object):
                 _playback(self.journal, self.report, self.opener,
                           self.entries, False)
                 self.report(_("rollback completed\n"))
-            except:
+            except Exception:
                 self.report(_("rollback failed - please run hg recover\n"))
         finally:
             self.journal = None
@@ -159,7 +173,10 @@ class transaction(object):
 def rollback(opener, file, report):
     entries = []
 
-    for l in open(file).readlines():
+    fp = util.posixfile(file)
+    lines = fp.readlines()
+    fp.close()
+    for l in lines:
         f, o = l.split('\0')
         entries.append((f, int(o), None))
 
