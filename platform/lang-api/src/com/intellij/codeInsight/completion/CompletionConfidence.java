@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CompletionConfidence {
 
+  /**
+   * @deprecated not used anymore, only the user controls whether the lookup will be focused
+   */
   @NotNull
   public abstract ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters);
 
