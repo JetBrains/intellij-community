@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.NotNullFunction;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,9 @@ public class JavaParameters extends SimpleJavaParameters {
   public static final int JDK_AND_CLASSES_AND_TESTS = JDK_ONLY | CLASSES_ONLY | TESTS_ONLY;
   public static final int CLASSES_AND_TESTS = CLASSES_ONLY | TESTS_ONLY;
 
-  public void configureByModule(final Module module, final int classPathType, final Sdk jdk) throws CantRunException {
+  public void configureByModule(final Module module,
+                                @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType,
+                                final Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();
@@ -70,7 +73,7 @@ public class JavaParameters extends SimpleJavaParameters {
   }
 
   @Nullable
-  private static NotNullFunction<OrderEntry, VirtualFile[]> computeRootProvider(int classPathType, final Sdk jdk) {
+  private static NotNullFunction<OrderEntry, VirtualFile[]> computeRootProvider(@MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, final Sdk jdk) {
     return (classPathType & JDK_ONLY) == 0 ? null : new NotNullFunction<OrderEntry, VirtualFile[]>() {
       @NotNull
       @Override
@@ -90,7 +93,8 @@ public class JavaParameters extends SimpleJavaParameters {
     }
   }
 
-  public void configureByModule(final Module module, final int classPathType) throws CantRunException {
+  public void configureByModule(final Module module,
+                                @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType) throws CantRunException {
     configureByModule(module, classPathType, getModuleJdk(module));
   }
 
@@ -106,7 +110,7 @@ public class JavaParameters extends SimpleJavaParameters {
     return jdk;
   }
 
-  public void configureByProject(final Project project, final int classPathType, final Sdk jdk) throws CantRunException {
+  public void configureByProject(final Project project, @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType, final Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();
@@ -121,7 +125,7 @@ public class JavaParameters extends SimpleJavaParameters {
     configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
   }
 
-  private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {
+  private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, Sdk jdk) {
     if ((classPathType & JDK_ONLY) == 0) {
       enumerator = enumerator.withoutSdk();
     }
