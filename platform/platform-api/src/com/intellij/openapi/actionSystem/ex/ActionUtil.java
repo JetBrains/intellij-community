@@ -25,6 +25,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,17 +57,27 @@ public class ActionUtil {
       return;
     }
 
-    String message;
-    final String beAvailableUntil = " available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
-    if (actionNames.isEmpty()) {
-      message = "This action is not" + beAvailableUntil;
-    } else if (actionNames.size() == 1) {
-      message = "'" + actionNames.get(0) + "' action is not" + beAvailableUntil;
-    } else {
-      message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
-    }
+    DumbService.getInstance(project).showDumbModeNotification(getActionUnavailableMessage(actionNames));
+  }
 
-    DumbService.getInstance(project).showDumbModeNotification(message);
+  @NotNull
+  public static String getActionUnavailableMessage(@NotNull List<String> actionNames) {
+      String message;
+      final String beAvailableUntil = " available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
+      if (actionNames.isEmpty()) {
+        message = "This action is not" + beAvailableUntil;
+      } else if (actionNames.size() == 1) {
+        message = "'" + actionNames.get(0) + "' action is not" + beAvailableUntil;
+      } else {
+        message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
+      }
+      return message;
+  }
+
+  @NotNull
+  public static String getUnavailableMessage(@NotNull String action, boolean plural) {
+    return action + (plural ? " are" : " is")
+           + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
   }
 
   /**
