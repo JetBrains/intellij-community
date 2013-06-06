@@ -49,6 +49,11 @@ public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
 
   @Nullable
   public Entry getCachedEntry(int id) {
+    return getCachedEntry(id, true);
+  }
+
+  @Nullable
+  public Entry getCachedEntry(int id, boolean allowMutation) {
     Entry entry = myProtectedQueue.getEntry(id);
     if (entry != null) {
       protectedHits++;
@@ -57,21 +62,19 @@ public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
 
     entry = myProbationalQueue.getEntry(id);
     if (entry != null) {
-      probationalHits++;
-      printStatistics(probationalHits);
+      printStatistics(++probationalHits);
 
-
-      myProbationalQueue.removeEntry(entry.key);
-      Entry demoted = myProtectedQueue.putEntry(entry);
-      if (demoted != null) {
-        myProbationalQueue.putEntry(demoted);
+      if (allowMutation) {
+        myProbationalQueue.removeEntry(entry.key);
+        Entry demoted = myProtectedQueue.putEntry(entry);
+        if (demoted != null) {
+          myProbationalQueue.putEntry(demoted);
+        }
       }
       return entry;
     }
 
-    misses++;
-    //noinspection ConstantConditions
-    printStatistics(misses);
+    printStatistics(++misses);
 
     return null;
   }
