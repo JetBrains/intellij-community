@@ -28,7 +28,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.FindUsagesIndicator;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -751,10 +751,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void doReRun() {
     final AtomicInteger usageCountWithoutDefinition = new AtomicInteger(0);
     final Project project = myProject;
-    final FindUsagesIndicator findUsagesIndicator = new FindUsagesIndicator();
     Task.Backgroundable task = new Task.Backgroundable(project, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
+        final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
         setSearchInProgress(true);
 
         setCurrentSearchCancelled(false);
@@ -771,8 +771,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             if (incrementCounter) {
               final int usageCount = usageCountWithoutDefinition.incrementAndGet();
               if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
-                if (findUsagesIndicator.switchTooManyUsagesStatus()) {
-                  UsageViewManagerImpl.showTooManyUsagesWarning(project, findUsagesIndicator, usageCountWithoutDefinition.get(), UsageViewImpl.this);
+                if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                  UsageViewManagerImpl
+                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, usageCountWithoutDefinition.get(), UsageViewImpl.this);
                 }
               }
               ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -781,14 +782,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                 }
               });
             }
-            return !findUsagesIndicator.isCanceled();
+            return !indicator.isCanceled();
           }
         });
         drainQueuedUsageNodes();
         setSearchInProgress(false);
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, findUsagesIndicator);
+    ProgressManager.getInstance().run(task);
   }
 
   private void reset() {

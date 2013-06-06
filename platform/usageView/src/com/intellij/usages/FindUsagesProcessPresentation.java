@@ -42,7 +42,6 @@ public class FindUsagesProcessPresentation {
   private boolean myShowFindOptionsPrompt = true; // in the case of find in path, "find options" does not make sense
 
   public FindUsagesProcessPresentation() {
-    int i  = 0;
   }
 
   public void addNotFoundAction(@NotNull Action action) {

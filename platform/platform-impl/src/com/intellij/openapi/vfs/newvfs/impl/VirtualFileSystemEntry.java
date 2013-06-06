@@ -88,7 +88,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       String target = myParent.getFileSystem().resolveSymLink(this);
       putUserData(SYMLINK_TARGET, target != null ? FileUtil.toSystemIndependentName(target) : target);
     }
-    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
+    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || myParent.getFlagInt(HAS_SYMLINK_FLAG));
   }
 
   @Override
@@ -97,7 +97,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return FileNameCache.getVFileName(myNameId);
   }
 
-  int compareNameTo(@NotNull String name, boolean ignoreCase) {
+  public int compareNameTo(@NotNull String name, boolean ignoreCase) {
     return FileNameCache.compareNameTo(myNameId, name, ignoreCase);
   }
 

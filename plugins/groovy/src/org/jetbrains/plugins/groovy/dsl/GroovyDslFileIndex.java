@@ -58,6 +58,7 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -92,7 +93,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   public static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Groovy DSL errors", NotificationDisplayType.BALLOON, true);
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
-  private final MyInputFilter myInputFilter = new MyInputFilter();
 
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
@@ -144,7 +144,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return new MyInputFilter();
   }
 
   @Override
@@ -511,7 +511,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  private static class MyInputFilter implements FileBasedIndex.InputFilter {
+  private static class MyInputFilter extends DefaultFileTypeSpecificInputFilter {
+    MyInputFilter() {
+      super(GroovyFileType.GROOVY_FILE_TYPE);
+    }
+
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return "gdsl".equals(file.getExtension());

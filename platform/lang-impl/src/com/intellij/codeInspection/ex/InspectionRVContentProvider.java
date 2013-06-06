@@ -39,8 +39,8 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public abstract class InspectionRVContentProvider {
-  private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
+  private final Project myProject;
 
   public InspectionRVContentProvider(final Project project) {
     myProject = project;
@@ -82,7 +82,7 @@ public abstract class InspectionRVContentProvider {
                                              final boolean showStructure,
                                              final Map<String, Set<RefEntity>> contents,
                                              final Map<RefEntity, CommonProblemDescriptor[]> problems,
-                                             final @Nullable DefaultTreeModel model);
+                                             @Nullable final DefaultTreeModel model);
 
   protected abstract void appendDescriptor(final InspectionTool tool,
                                            final UserObjectContainer container,

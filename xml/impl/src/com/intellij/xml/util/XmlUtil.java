@@ -169,7 +169,6 @@ public class XmlUtil {
 
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
-  public final static Key<FileContent> CONTENT_FOR_DOM_STUBS = Key.create("dom stubs content");
 
   private XmlUtil() {
   }

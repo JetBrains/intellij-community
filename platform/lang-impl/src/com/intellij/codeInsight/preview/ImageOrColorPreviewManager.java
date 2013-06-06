@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.preview;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -42,32 +44,41 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+
+import static com.intellij.codeInsight.hint.HintManagerImpl.getHintPosition;
 
 /**
  * @author spleaner
  */
 public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener, KeyListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.html.preview.ImageOrColorPreviewManager");
-  private MergingUpdateQueue myQueue;
-  private Editor myEditor;
-  private PsiFile myFile;
-  private LightweightHint myHint;
-  private PsiElement myElement;
+  private static final String QUEUE_NAME = "ImageOrColorPreview";
+  private static final int HINT_HIDE_FLAGS = HintManager.HIDE_BY_ANY_KEY |
+                                             HintManager.HIDE_BY_OTHER_HINT |
+                                             HintManager.HIDE_BY_SCROLLING |
+                                             HintManager.HIDE_BY_TEXT_CHANGE |
+                                             HintManager.HIDE_IF_OUT_OF_EDITOR;
+  @Nullable private MergingUpdateQueue myQueue;
+  @Nullable private Editor myEditor;
+  @Nullable private PsiFile myFile;
+  @Nullable private LightweightHint myHint;
+  @Nullable private PsiElement myElement;
 
-  public ImageOrColorPreviewManager(@NotNull final TextEditor editor) {
+  public ImageOrColorPreviewManager(@NotNull final TextEditor editor, @NotNull Project project) {
     myEditor = editor.getEditor();
 
     myEditor.addEditorMouseMotionListener(this);
     myEditor.getContentComponent().addKeyListener(this);
 
     Document document = myEditor.getDocument();
-    myFile = PsiDocumentManager.getInstance(myEditor.getProject()).getPsiFile(document);
+    myFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
 
     final JComponent component = editor.getEditor().getComponent();
-    myQueue = new MergingUpdateQueue("ImageOrColorPreview", 100, component.isShowing(), component);
+    myQueue = new MergingUpdateQueue(QUEUE_NAME, 100, component.isShowing(), component);
     Disposer.register(this, new UiNotifyConnector(editor.getComponent(), myQueue));
   }
 
@@ -76,7 +87,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   @Override
-  public void keyPressed(final KeyEvent e) {
+  public void keyPressed(@NotNull final KeyEvent e) {
     if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
       if (myEditor != null) {
         final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
@@ -84,8 +95,10 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
           final Point location = pointerInfo.getLocation();
           SwingUtilities.convertPointFromScreen(location, myEditor.getContentComponent());
 
-          myQueue.cancelAllUpdates();
-          myQueue.queue(new PreviewUpdate(this, location));
+          if (myQueue != null) {
+            myQueue.cancelAllUpdates();
+            myQueue.queue(new PreviewUpdate(this, location));
+          }
         }
       }
     }
@@ -95,44 +108,44 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   public void keyReleased(final KeyEvent e) {
   }
 
+  @Nullable
   public Editor getEditor() {
     return myEditor;
   }
 
   @Nullable
   private PsiElement getPsiElementAt(@NotNull final Point point) {
-    final LogicalPosition position = getLogicalPosition_(point);
-    if (myFile != null && !(myFile instanceof PsiCompiledElement)) {
+    final LogicalPosition position = getLogicalPosition(point);
+    if (myEditor != null && myFile != null && !(myFile instanceof PsiCompiledElement)) {
       return myFile.getViewProvider().findElementAt(myEditor.logicalPositionToOffset(position));
     }
 
     return null;
   }
 
-  private LogicalPosition getLogicalPosition(final PsiElement element) {
-    return myEditor.offsetToLogicalPosition(element.getTextRange().getEndOffset());
+  @NotNull
+  private LogicalPosition getLogicalPosition(@NotNull final Point point) {
+    return myEditor != null ? myEditor.xyToLogicalPosition(point) : new LogicalPosition(0, 0);
   }
 
-  private LogicalPosition getLogicalPosition_(final Point point) {
-    return myEditor.xyToLogicalPosition(point);
-  }
-
-  private void setCurrentHint(final LightweightHint hint, final PsiElement element) {
+  private void setCurrentHint(@Nullable final LightweightHint hint, final PsiElement element) {
     if (hint != null) {
       myHint = hint;
       myElement = element;
     }
   }
 
-  private void showHint(final LightweightHint hint, final PsiElement element, Editor editor) {
+  private void showHint(@NotNull final LightweightHint hint,
+                        @NotNull final PsiElement element,
+                        @NotNull Editor editor,
+                        @NotNull Point point) {
     if (element != myElement && element.isValid()) {
       hideCurrentHintIfAny();
       setCurrentHint(hint, element);
 
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManagerImpl.getHintPosition(hint, editor, getLogicalPosition(element),
-                                                                                         HintManagerImpl.RIGHT_UNDER), HintManagerImpl
-        .HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_OTHER_HINT | HintManagerImpl.HIDE_BY_SCROLLING | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl
-        .HIDE_IF_OUT_OF_EDITOR, 0, false);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor,
+                                                       getHintPosition(hint, editor, getLogicalPosition(point), HintManager.RIGHT_UNDER),
+                                                       HINT_HIDE_FLAGS, 0, false);
     }
   }
 
@@ -169,9 +182,11 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   @Override
-  public void mouseMoved(EditorMouseEvent e) {
-    myQueue.cancelAllUpdates();
-    if (myHint == null && e.getMouseEvent().getModifiers() == KeyEvent.SHIFT_MASK) {
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
+    if (myQueue != null) {
+      myQueue.cancelAllUpdates();
+    }
+    if (myHint == null && e.getMouseEvent().getModifiers() == InputEvent.SHIFT_MASK) {
       myQueue.queue(new PreviewUpdate(this, e.getMouseEvent().getPoint()));
     }
     else {
@@ -186,12 +201,12 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
   @Nullable
   private static LightweightHint getHint(@NotNull PsiElement element) {
-    for(PreviewHintProvider hintProvider: Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
+    for (PreviewHintProvider hintProvider : Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
       JComponent preview;
       try {
         preview = hintProvider.getPreviewComponent(element);
       }
-      catch(Exception e) {
+      catch (Exception e) {
         LOG.error(e);
         continue;
       }
@@ -205,7 +220,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
   private static final class PreviewUpdate extends Update {
     private final ImageOrColorPreviewManager myManager;
-    private final Point myPoint;
+    @NotNull private final Point myPoint;
 
     public PreviewUpdate(@NonNls final ImageOrColorPreviewManager manager, @NotNull final Point point) {
       super(manager);
@@ -217,8 +232,9 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     @Override
     public void run() {
       final PsiElement element = myManager.getPsiElementAt(myPoint);
-      if (element != null && element.isValid()) {
-        if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(myManager.getEditor().getDocument())) {
+      final Editor editor = myManager.getEditor();
+      if (editor != null && element != null && element.isValid()) {
+        if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument())) {
           return;
         }
 
@@ -226,12 +242,9 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
           return;
         }
 
-        final LightweightHint hint = ImageOrColorPreviewManager.getHint(element);
+        final LightweightHint hint = getHint(element);
         if (hint != null) {
-          final Editor editor = myManager.getEditor();
-          if (editor != null) {
-            myManager.showHint(hint, element, editor);
-          }
+          myManager.showHint(hint, element, editor, myPoint);
         }
         else {
           myManager.hideCurrentHintIfAny();

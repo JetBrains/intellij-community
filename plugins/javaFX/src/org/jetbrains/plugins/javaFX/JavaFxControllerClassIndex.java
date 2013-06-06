@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -127,7 +128,10 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  static class MyInputFilter implements FileBasedIndex.InputFilter {
+  public static class MyInputFilter extends DefaultFileTypeSpecificInputFilter {
+    public MyInputFilter() {
+      super(StdFileTypes.XML);
+    }
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return JavaFxFileTypeFactory.isFxml(file);

@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.util.FindUsagesIndicator;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -655,9 +655,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       processPsiFileRootsAsync(new ArrayList<VirtualFile>(candidateFiles.keySet()), new Processor<PsiElement>() {
         @Override
         public boolean process(final PsiElement psiRoot) {
-          if (progress instanceof FindUsagesIndicator) {
-            ((FindUsagesIndicator)progress).pauseProcessingIfTooManyUsages();
-          }
+          TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
           final VirtualFile vfile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
             public VirtualFile compute() {
               return psiRoot.getContainingFile().getVirtualFile();

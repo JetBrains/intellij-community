@@ -24,6 +24,8 @@ import com.intellij.psi.PsiReference;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -43,21 +45,43 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class ImagePreviewComponent extends JPanel {
+public class ImagePreviewComponent extends JPanel implements PreviewHintComponent {
   private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
   private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
   private static final Key<String> FORMAT_KEY = Key.create("Image.format");
 
   private static final List<String> supportedExtensions = Arrays.asList(ImageIO.getReaderFormatNames());
+  @NotNull
+  private final BufferedImage myImage;
 
   private ImagePreviewComponent(@NotNull final BufferedImage image) {
     setLayout(new BorderLayout());
 
-    add(new ImageComp(image), BorderLayout.CENTER);
+    myImage = image;
+    add(new ImageComp(), BorderLayout.CENTER);
     add(createLabel(image), BorderLayout.SOUTH);
 
     setBackground(UIUtil.getToolTipBackground());
     setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+  }
+
+  @TestOnly
+  public boolean isEqualTo(@Nullable PreviewHintComponent other) {
+    if (!(other instanceof ImagePreviewComponent)) {
+      return false;
+    }
+    ImagePreviewComponent otherPreview = (ImagePreviewComponent)other;
+    if (myImage.getWidth() == otherPreview.myImage.getWidth() && myImage.getHeight() == otherPreview.myImage.getHeight()) {
+      for (int x = 0; x < myImage.getWidth(); x++) {
+        for (int y = 0; y < myImage.getHeight(); y++) {
+          if (myImage.getRGB(x, y) != otherPreview.myImage.getRGB(x, y)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -121,7 +145,10 @@ public class ImagePreviewComponent extends JPanel {
               refresh(file);
               SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
               if (imageRef != null) {
-                return new ImagePreviewComponent(imageRef.get());
+                final BufferedImage image = imageRef.get();
+                if (image != null) {
+                  return new ImagePreviewComponent(image);
+                }
               }
             }
             catch (IOException e) {
@@ -135,20 +162,24 @@ public class ImagePreviewComponent extends JPanel {
     return null;
   }
 
-  private static class ImageComp extends JComponent {
-    private final BufferedImage myImage;
+  /**
+   * This method doesn't use caching, so if you want to use it then you should consider implementing external cache.
+   */
+  public static ImagePreviewComponent getPreviewComponent(@NotNull final BufferedImage image) {
+    return new ImagePreviewComponent(image);
+  }
+
+  private class ImageComp extends JComponent {
     private final Dimension myPreferredSize;
 
-    private ImageComp(@NotNull final BufferedImage image) {
-      myImage = image;
-
-      if (image.getWidth() > 300 || image.getHeight() > 300) {
+    private ImageComp() {
+      if (myImage.getWidth() > 300 || myImage.getHeight() > 300) {
         // will make image smaller
-        final float factor = 300.0f / Math.max(image.getWidth(), image.getHeight());
-        myPreferredSize = new Dimension((int)(image.getWidth() * factor), (int)(image.getHeight() * factor));
+        final float factor = 300.0f / Math.max(myImage.getWidth(), myImage.getHeight());
+        myPreferredSize = new Dimension((int)(myImage.getWidth() * factor), (int)(myImage.getHeight() * factor));
       }
       else {
-        myPreferredSize = new Dimension(image.getWidth(), image.getHeight());
+        myPreferredSize = new Dimension(myImage.getWidth(), myImage.getHeight());
       }
     }
 
