@@ -16,6 +16,8 @@
 package git4idea;
 
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-public final class GitCommit {
+public final class GitCommit implements VcsCommit {
 
   @NotNull private final Hash myHash; // full (long) hash
 
@@ -59,11 +61,13 @@ public final class GitCommit {
     myChanges = changes;
   }
 
+  @Override
   @NotNull
   public Hash getHash() {
     return myHash;
   }
 
+  @Override
   @NotNull
   public String getAuthorName() {
     return myAuthorName;
@@ -74,6 +78,7 @@ public final class GitCommit {
     return myAuthorEmail;
   }
 
+  @Override
   public long getAuthorTime() {
     return myAuthorTime;
   }
@@ -97,6 +102,7 @@ public final class GitCommit {
     return mySubject;
   }
 
+  @Override
   @NotNull
   public String getFullMessage() {
     return myFullMessage;

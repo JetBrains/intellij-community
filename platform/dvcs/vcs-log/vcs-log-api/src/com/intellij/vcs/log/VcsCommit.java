@@ -14,10 +14,10 @@ public interface VcsCommit {
   String getFullMessage();
 
   @NotNull
-  String getHash();
+  Hash getHash();
 
   @NotNull
-  String getAuthor();
+  String getAuthorName();
 
   long getAuthorTime();
 }

@@ -38,6 +38,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
@@ -626,10 +627,10 @@ public class GitHistoryUtils {
     List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
       @Override
       public Hash fun(String hash) {
-        return Hash.create(hash);
+        return Hash.build(hash);
       }
     });
-    return new GitCommit(Hash.create(record.getHash()), record.getAuthorName(), record.getAuthorEmail(), record.getAuthorTimeStamp(),
+    return new GitCommit(Hash.build(record.getHash()), record.getAuthorName(), record.getAuthorEmail(), record.getAuthorTimeStamp(),
                          record.getCommitterName(), record.getCommitterEmail(), record.getLongTimeStamp(),
                          record.getSubject(), record.getFullMessage(), parents, record.parseChanges(project, root));
   }

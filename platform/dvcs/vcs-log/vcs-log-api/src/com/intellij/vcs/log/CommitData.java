@@ -1,7 +1,5 @@
 package com.intellij.vcs.log;
 
-import com.intellij.vcs.log.VcsCommit;
-import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,20 +14,13 @@ import org.jetbrains.annotations.NotNull;
 public class CommitData {
 
   private final VcsCommit myCommit;
-  private final Hash hash;
 
   public CommitData(VcsCommit commit) {
     myCommit = commit;
-    hash = Hash.build(myCommit.getHash());
-  }
-
-  public CommitData(VcsCommit commit, Hash hash) {
-    myCommit = commit;
-    this.hash = hash;
   }
 
   public Hash getCommitHash() {
-    return hash;
+    return myCommit.getHash();
   }
 
   @NotNull
@@ -39,7 +30,7 @@ public class CommitData {
 
   @NotNull
   public String getAuthor() {
-    return myCommit.getAuthor();
+    return myCommit.getAuthorName();
   }
 
   public long getTimeStamp() {
