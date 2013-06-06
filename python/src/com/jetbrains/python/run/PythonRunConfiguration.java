@@ -5,8 +5,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -104,6 +104,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
+    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {

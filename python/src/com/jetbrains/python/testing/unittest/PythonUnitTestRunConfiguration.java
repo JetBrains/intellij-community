@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -60,6 +61,7 @@ public class PythonUnitTestRunConfiguration extends
     JDOMExternalizerUtil.writeField(element, "PUREUNITTEST", String.valueOf(myIsPureUnittest));
     JDOMExternalizerUtil.writeField(element, "PARAMS", myParams);
     JDOMExternalizerUtil.writeField(element, "USE_PARAM", String.valueOf(useParam));
+    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   @Override

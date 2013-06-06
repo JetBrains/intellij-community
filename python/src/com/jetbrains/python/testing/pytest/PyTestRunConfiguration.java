@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
@@ -114,6 +115,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     JDOMExternalizerUtil.writeField(element, PARAMS_FIELD, myParams);
     JDOMExternalizerUtil.writeField(element, "USE_PARAM", String.valueOf(useParam));
     JDOMExternalizerUtil.writeField(element, "USE_KEYWORD", String.valueOf(useKeyword));
+    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   @Override
