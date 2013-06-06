@@ -16,6 +16,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -35,6 +36,7 @@ public class TreeAnchorizer {
     return element;
   }
 
+  @Nullable
   public Object retrieveElement(Object anchor) {
     return anchor;
   }
