@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecut
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -38,7 +39,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
-public class ExternalSystemRunConfiguration extends RunConfigurationBase {
+public class ExternalSystemRunConfiguration extends RunConfigurationBase implements LocatableConfiguration {
   
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
 
@@ -49,6 +50,21 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
   {
     super(project, factory, name);
     mySettings.setExternalSystemIdString(externalSystemId.getId());
+  }
+
+  @Override
+  public boolean isGeneratedName() {
+    return Comparing.equal(getName(), getGeneratedName());
+  }
+
+  @NotNull
+  private String getGeneratedName() {
+    return AbstractExternalSystemTaskConfigurationType.generateName(getProject(), mySettings);
+  }
+  
+  @Override
+  public String suggestedName() {
+    return getGeneratedName();
   }
 
   @Override
@@ -86,13 +102,15 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
   @Nullable
   @Override
   public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    // TODO den implement
+    return null;
   }
 
   @Nullable
   @Override
   public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    // TODO den implement
+    return null;
   }
 
   @Nullable
@@ -158,7 +176,7 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    // TODO den implement
   }
   
   private static class MyProcessHandler extends ProcessHandler {

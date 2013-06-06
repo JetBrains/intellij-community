@@ -14,8 +14,8 @@
     <action id="ExternalSystem.RunTask"
             class="com.intellij.openapi.externalSystem.action.RunExternalTaskAction"
             icon="AllIcons.Toolwindows.ToolWindowRun"/>
-    <group id="ExternalSystem.Tree.Context">
-      <reference id="ExternalSystem.RunTask"/>
+    <group id="ExternalSystem.Tree.Context" popup="true">
+      <reference ref="RunContextGroup"/>
     </group>
     
   </actions>

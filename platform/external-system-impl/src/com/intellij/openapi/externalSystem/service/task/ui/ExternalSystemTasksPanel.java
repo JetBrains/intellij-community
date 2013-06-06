@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import com.intellij.execution.Location;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -25,11 +26,16 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
@@ -50,6 +56,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
   @NotNull private final ExternalSystemTasksTree      myAllTasksTree;
   @NotNull private final ProjectSystemId              myExternalSystemId;
   @NotNull private final NotificationGroup            myNotificationGroup;
+  @NotNull private final Project                      myProject;
 
   @Nullable private Producer<ExternalTaskPojo> mySelectedTaskProvider;
 
@@ -60,6 +67,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     super(true);
     myExternalSystemId = externalSystemId;
     myNotificationGroup = notificationGroup;
+    myProject = project;
     myAllTasksModel = new ExternalSystemTasksTreeModel(externalSystemId);
 
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
@@ -101,6 +109,34 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     else if (ExternalSystemDataKeys.SELECTED_TASK.is(dataId)) {
       return mySelectedTaskProvider == null ? null : mySelectedTaskProvider.produce();
     }
+    else if (Location.DATA_KEY.is(dataId)) {
+      Location location = buildLocation();
+      return location == null ? super.getData(dataId) : location;
+    }
     return null;
+  }
+
+  @Nullable
+  private Location buildLocation() {
+    if (mySelectedTaskProvider == null) {
+      return null;
+    }
+    ExternalTaskPojo task = mySelectedTaskProvider.produce();
+    if (task == null) {
+      return null;
+    }
+
+    String projectPath = task.getLinkedExternalProjectPath();
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectPath);
+    if (vFile == null) {
+      return null;
+    }
+
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vFile);
+    if (psiFile == null) {
+      return null;
+    }
+
+    return new ExternalSystemTaskLocation(myProject, psiFile, task);
   }
 }

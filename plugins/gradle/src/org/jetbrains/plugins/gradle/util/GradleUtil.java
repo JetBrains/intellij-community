@@ -175,18 +175,4 @@ public class GradleUtil {
     buffer.append(ExternalSystemConstants.PATH_SEPARATOR).append(GradleConstants.DEFAULT_SCRIPT_NAME);
     return buffer.toString();
   }
-
-  @NotNull
-  public static String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
-    if (rootProjectPath == null) {
-      return new File(targetProjectPath).getParentFile().getName();
-    }
-    File rootProjectDir = new File(rootProjectPath).getParentFile();
-    StringBuilder buffer = new StringBuilder();
-    for (File f = new File(targetProjectPath).getParentFile(); f != null && !FileUtil.filesEqual(f, rootProjectDir); f = f.getParentFile()) {
-      buffer.insert(0, f.getName()).insert(0, ":");
-    }
-    buffer.insert(0, rootProjectDir.getName());
-    return buffer.toString();
-  }
 }
