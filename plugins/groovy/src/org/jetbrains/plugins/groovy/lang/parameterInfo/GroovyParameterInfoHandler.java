@@ -414,6 +414,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           else {
             buffer.append(psiType.getPresentableText());
           }
+          buffer.append(' ').append(parameters[i].getName() != null ? parameters[i].getName() : "<unknown>");
+
           int endOffset = buffer.length();
 
           if (context.isUIComponentEnabled() &&
