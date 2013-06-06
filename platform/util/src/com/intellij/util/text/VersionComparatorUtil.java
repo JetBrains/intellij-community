@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,6 +19,13 @@ import java.util.regex.Pattern;
 public class VersionComparatorUtil {
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
+
+  public static final Comparator<String> COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String s1, String s2) {
+      return VersionComparatorUtil.compare(s1, s2);
+    }
+  };
 
   private VersionComparatorUtil() {
   }
