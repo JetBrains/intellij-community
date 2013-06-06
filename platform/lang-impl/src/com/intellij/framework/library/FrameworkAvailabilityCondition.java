@@ -21,13 +21,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class FrameworkAvailabilityFilter {
-  public static final FrameworkAvailabilityFilter ALWAYS = new FrameworkAvailabilityFilter() {
+public abstract class FrameworkAvailabilityCondition {
+  public static final FrameworkAvailabilityCondition ALWAYS_TRUE = new FrameworkAvailabilityCondition() {
     @Override
-    public boolean isAvailable(@NotNull FrameworkSupportModel model) {
+    public boolean isAvailableFor(@NotNull FrameworkSupportModel model) {
       return true;
     }
   };
 
-  public abstract boolean isAvailable(@NotNull FrameworkSupportModel model);
+  public abstract boolean isAvailableFor(@NotNull FrameworkSupportModel model);
 }
