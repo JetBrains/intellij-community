@@ -2,6 +2,8 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -26,7 +28,9 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
-               final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(parameters.getPosition().getProject());
+               final Module module = ModuleUtilCore.findModuleForPsiElement(parameters.getPosition());
+               if (module == null) return;
+               final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
                final PsiFile file = parameters.getOriginalFile();
                if (settings.isEpydocFormat(file) || settings.isReSTFormat(file)) {
                  int offset = parameters.getOffset();

@@ -1,7 +1,8 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -10,6 +11,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,10 +19,7 @@ import java.util.List;
  * @author yole
  */
 @State(name = "PyDocumentationSettings",
-      storages = {
-      @Storage( file = StoragePathMacros.PROJECT_FILE),
-      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/other.xml", scheme = StorageScheme.DIRECTORY_BASED)
-      }
+       storages = {@Storage(file = "$MODULE_FILE$")}
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
   public String myDocStringFormat = "";
@@ -52,8 +51,8 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
     return format.equalsIgnoreCase(myDocStringFormat);
   }
 
-  public static PyDocumentationSettings getInstance(Project project) {
-    return ServiceManager.getService(project, PyDocumentationSettings.class);
+  public static PyDocumentationSettings getInstance(@NotNull Module module) {
+    return ModuleServiceManager.getService(module, PyDocumentationSettings.class);
   }
 
   public void setFormat(String format) {

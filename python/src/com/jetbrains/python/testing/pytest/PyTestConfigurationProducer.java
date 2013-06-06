@@ -10,21 +10,28 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.webcore.packaging.PackageVersionComparator;
-import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.testing.*;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +52,17 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
-    if (! (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) return null;
+    if (! (TestRunnerService.getInstance(module).getProjectConfiguration().equals(
            PythonTestConfigurationsModel.PY_TEST_NAME))) return null;
 
     PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
     if (file == null) return null;
     myPsiElement = file;
-    String path = file.getVirtualFile().getPath();
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return null;
+    String path = virtualFile.getPath();
 
     if (file instanceof PyFile || file instanceof PsiDirectory) {
       final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(file);
@@ -62,7 +73,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       RunManager.getInstance(location.getProject()).createRunConfiguration(file.getName(), getConfigurationFactory());
     PyTestRunConfiguration configuration = (PyTestRunConfiguration)result.getConfiguration();
     configuration.setUseModuleSdk(true);
-    configuration.setModule(ModuleUtil.findModuleForPsiElement(myPsiElement));
+    configuration.setModule(ModuleUtilCore.findModuleForPsiElement(myPsiElement));
 
     final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
     if (sdk == null) return null;
@@ -124,7 +135,8 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       if (configuration instanceof PyTestRunConfiguration) {
         final PsiElement element = location.getPsiElement();
         PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
-        if (file == null || !((PyTestRunConfiguration)configuration).getTestToRun().equals(file.getVirtualFile().getPath())) {
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null || !((PyTestRunConfiguration)configuration).getTestToRun().equals(virtualFile.getPath())) {
           continue;
         }
         PyFunction testFunction = findTestFunction(location);
@@ -137,7 +149,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     return null;
   }
 
-  public int compareTo(Object o) {
+  public int compareTo(@NotNull Object o) {
     return PREFERED;
   }
 }

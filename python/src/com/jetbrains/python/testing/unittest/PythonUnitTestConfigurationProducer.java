@@ -6,6 +6,8 @@ package com.jetbrains.python.testing.unittest;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,7 +24,9 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
 
   protected boolean isAvailable(Location location) {
     PsiElement element = location.getPsiElement();
-    if ((TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) return false;
+    if ((TestRunnerService.getInstance(module).getProjectConfiguration().equals(
       PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME))) {
       if (element instanceof PsiDirectory) {
         final PyTestVisitor visitor = new PyTestVisitor();

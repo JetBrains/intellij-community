@@ -16,7 +16,7 @@
 
 package com.jetbrains.python.testing;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.PyBundle;
 
@@ -33,12 +33,12 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public static final String PYTHONS_ATTEST_NAME = PyBundle.message("runcfg.attest.display_name");
 
   private String myTestRunner;
-  private Project myProject;
+  private Module myModule;
 
-  public PythonTestConfigurationsModel(final List items, final Object selection, Project project) {
+  public PythonTestConfigurationsModel(final List items, final Object selection, Module module) {
     super(items, selection);
-    myProject = project;
-    myTestRunner = TestRunnerService.getInstance(myProject).getProjectConfiguration();
+    myModule = module;
+    myTestRunner = TestRunnerService.getInstance(myModule).getProjectConfiguration();
   }
   public void reset() {
     setSelectedItem(myTestRunner);
@@ -46,7 +46,7 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
 
   public void apply() {
     myTestRunner = (String)getSelectedItem();
-    TestRunnerService.getInstance(myProject).setProjectConfiguration(myTestRunner);
+    TestRunnerService.getInstance(myModule).setProjectConfiguration(myTestRunner);
   }
 
   public Object getTestRunner() {

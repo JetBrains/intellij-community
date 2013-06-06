@@ -10,11 +10,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -119,10 +122,10 @@ public class PyDocstringGenerator {
 
       Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
 
+      final VirtualFile virtualFile = myFile.getVirtualFile();
+      if (virtualFile == null) return;
       OpenFileDescriptor descriptor = new OpenFileDescriptor(
-        myProject,
-        myFile.getVirtualFile(),
-        myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
+        myProject, virtualFile, myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
       );
       Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
       if (targetEditor != null) {
@@ -224,7 +227,7 @@ public class PyDocstringGenerator {
     if (myDocStringOwner instanceof PyFunction) {
       final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
-      if (document != null && statementList != null && statementList.getStatements().length != 0
+      if (document != null && statementList != null && myFunction != null && statementList.getStatements().length != 0
           && document.getLineNumber(statementList.getTextOffset()) != document.getLineNumber(myFunction.getTextOffset())) {
         whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
       }
@@ -421,8 +424,11 @@ public class PyDocstringGenerator {
   }
 
   private String getPrefix() {
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myProject);
     String prefix = ":";
+    final Module module = ModuleUtilCore.findModuleForPsiElement(myDocStringOwner);
+    if (module == null) return prefix;
+
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     if (documentationSettings.isEpydocFormat(getFile())) {
       prefix = "@";
     }

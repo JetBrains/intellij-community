@@ -353,7 +353,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testDocstringParams() {                      //PY-3394
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
       doInspectionTest("DocstringParams.py", PyDocstringInspection.class,
@@ -365,7 +365,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testDocstringParams1() {
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
       doInspectionTest("DocstringParams1.py", PyDocstringInspection.class,
@@ -377,7 +377,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testDocstringParams2() {                      //PY-4964
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
       doInspectionTest("DocstringParams2.py", PyDocstringInspection.class,
@@ -394,6 +394,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
     IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.remove.unnecessary.backslash"));
+    assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
   }
@@ -409,6 +410,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
     IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.remove.unnecessary.backslash"));
+    assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
   }

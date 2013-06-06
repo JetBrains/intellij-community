@@ -1,15 +1,13 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -40,7 +38,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
 
 class PyDocumentationBuilder {
   private final PsiElement myElement;
@@ -359,14 +356,15 @@ class PyDocumentationBuilder {
 
   private static void addFormattedDocString(PsiElement element, @NotNull String docstring,
                                             ChainIterable<String> formattedOutput, ChainIterable<String> unformattedOutput) {
-    Project project = element.getProject();
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+    final Project project = element.getProject();
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) return;
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     List<String> result = new ArrayList<String>();
     String[] lines = removeCommonIndentation(docstring);
     String preparedDocstring = StringUtil.join(lines, "\n");
     if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
         StructuredDocString.isEpydocDocstring(preparedDocstring)) {
-      Module module = ModuleUtil.findModuleForPsiElement(element);
       final EpydocString epydocString = new EpydocString(preparedDocstring);
 
       String formatted = epydocString.getDescription();
@@ -377,10 +375,8 @@ class PyDocumentationBuilder {
     }
     else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
       StructuredDocString.isSphinxDocstring(preparedDocstring)) {
-      Module module = ModuleUtilCore.findModuleForPsiElement(element);
       String formatted = null;
-      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(element.getProject());
-      Sdk pythonSdk = module != null ? PythonSdkType.findPython2Sdk(module) : projectRootManager.getProjectSdk();
+      Sdk pythonSdk = PythonSdkType.findPython2Sdk(module);
       if (pythonSdk != null) {
         formatted = ReSTRunner.formatDocstring(pythonSdk, docstring);
       }
@@ -624,7 +620,7 @@ class PyDocumentationBuilder {
     }
 
     public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
-      String vpath = VfsUtil.urlToPath(root.getUrl());
+      String vpath = VfsUtilCore.urlToPath(root.getUrl());
       if (myPath.startsWith(vpath)) {
         myResult = vpath;
         return false;

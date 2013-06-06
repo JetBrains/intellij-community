@@ -5,6 +5,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -94,7 +96,9 @@ public class DocstringQuickFix implements LocalQuickFix {
     }
     if (docStringExpression != null) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(docStringExpression);
+      if (module == null) return;
+      PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
       if (documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())) {
         myPrefix = "@";
       }

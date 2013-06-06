@@ -144,6 +144,7 @@ public class PythonCompletionTest extends PyTestCase {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     final LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
     assertEquals(1, elements.length);
     assertEquals("children", elements [0].getLookupString());
   }
@@ -216,6 +217,7 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.configureByText(PythonFileType.INSTANCE, "");
     myFixture.completeBasic();
     final List<String> elements = myFixture.getLookupElementStrings();
+    assertNotNull(elements);
     assertTrue(elements.contains("import"));
   }
 
@@ -320,7 +322,9 @@ public class PythonCompletionTest extends PyTestCase {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
-    assertFalse(myFixture.getLookupElementStrings().contains("continue"));
+    final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertFalse(lookupElementStrings.contains("continue"));
   }
 
   public void testElseInCondExpr() {  // PY-2397
@@ -406,12 +410,14 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testEpydocTags() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
     settings.setFormat(DocStringFormat.EPYTEXT);
     try {
       myFixture.configureByFile("completion/epydocTags.py");
       myFixture.completeBasic();
-      assertTrue(myFixture.getLookupElementStrings().contains("@param"));
+      final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+      assertNotNull(lookupElementStrings);
+      assertTrue(lookupElementStrings.contains("@param"));
     }
     finally {
       settings.setFormat(DocStringFormat.PLAIN);
@@ -419,7 +425,7 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testEpydocTagsMiddle() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
     settings.setFormat(DocStringFormat.EPYTEXT);
     try {
       myFixture.configureByFile("completion/epydocTagsMiddle.py");
@@ -556,7 +562,9 @@ public class PythonCompletionTest extends PyTestCase {
       myFixture.copyDirectoryToProject("completion/relativeImportExcludeToplevel", "");
       myFixture.configureByFile("pack/subpack/modX.py");
       myFixture.completeBasic();
-      assertFalse(myFixture.getLookupElementStrings().contains("sys"));
+      final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+      assertNotNull(lookupElementStrings);
+      assertFalse(lookupElementStrings.contains("sys"));
     }
     finally {
       setLanguageLevel(null);

@@ -420,7 +420,7 @@ public class PyIntentionTest extends PyTestCase {
   private void doDocStubTest() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.REST);
     try {
       doTest(PyBundle.message("INTN.doc.string.stub"), true);

@@ -64,12 +64,12 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
     myProject = myModule.getProject();
-    myDocumentationSettings = PyDocumentationSettings.getInstance(myProject);
+    myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myWorkDir.addBrowseFolderListener("Please choose working directory:", null, myProject, fileChooserDescriptor);
-    ReSTService service = ReSTService.getInstance(myProject);
+    ReSTService service = ReSTService.getInstance(myModule);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
@@ -84,7 +84,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   @NotNull
   private String getRequirementsPath() {
     final String path = PyPackageRequirementsSettings.getInstance(myModule).getRequirementsPath();
-    final String text;
     if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && PyPackageUtil.findRequirementsTxt(myModule) == null) {
       return "";
     }
@@ -166,9 +165,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
 
   @Override
   public JComponent createComponent() {
-    List<String> configurations = TestRunnerService.getInstance(myProject).getConfigurations();
-    myModel = new PythonTestConfigurationsModel(configurations, TestRunnerService.getInstance(myProject).getProjectConfiguration(),
-                                                myProject);
+    List<String> configurations = TestRunnerService.getInstance(myModule).getConfigurations();
+    myModel = new PythonTestConfigurationsModel(configurations,
+                                                TestRunnerService.getInstance(myModule).getProjectConfiguration(), myModule);
 
     updateConfigurations();
     initErrorValidation();
@@ -190,10 +189,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
       return true;
     }
-    if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText())) {
+    if (!ReSTService.getInstance(myModule).getWorkdir().equals(myWorkDir.getText())) {
       return true;
     }
-    if (!ReSTService.getInstance(myProject).txtIsRst() == txtIsRst.isSelected()) {
+    if (!ReSTService.getInstance(myModule).txtIsRst() == txtIsRst.isSelected()) {
       return true;
     }
     if (!getRequirementsPath().equals(myRequirementsPathField.getText())) {
@@ -222,8 +221,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     }
     myModel.apply();
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
-    ReSTService.getInstance(myProject).setWorkdir(myWorkDir.getText());
-    ReSTService.getInstance(myProject).setTxtIsRst(txtIsRst.isSelected());
+    ReSTService.getInstance(myModule).setWorkdir(myWorkDir.getText());
+    ReSTService.getInstance(myModule).setTxtIsRst(txtIsRst.isSelected());
     myDocumentationSettings.analyzeDoctest = analyzeDoctest.isSelected();
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
@@ -235,8 +234,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myTestRunnerComboBox.repaint();
     myModel.reset();
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
-    myWorkDir.setText(ReSTService.getInstance(myProject).getWorkdir());
-    txtIsRst.setSelected(ReSTService.getInstance(myProject).txtIsRst());
+    myWorkDir.setText(ReSTService.getInstance(myModule).getWorkdir());
+    txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
     myRequirementsPathField.setText(getRequirementsPath());
   }

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyTestRunnableScriptFilter implements RunnableScriptFilter {
   public boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location) {
     return isPyTestInstalled(module) && isPyTestScript(script) &&
-      TestRunnerService.getInstance(script.getProject()).getProjectConfiguration().
+      TestRunnerService.getInstance(module).getProjectConfiguration().
         equals(PythonTestConfigurationsModel.PY_TEST_NAME);
   }
 

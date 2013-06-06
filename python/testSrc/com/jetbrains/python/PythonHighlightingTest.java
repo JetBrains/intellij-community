@@ -173,7 +173,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testDocstring() {  // PY-8025
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.REST);
     try {
       doTest(false, true);

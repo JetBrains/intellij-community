@@ -3,6 +3,8 @@ package com.jetbrains.rest.inspections;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -62,7 +64,9 @@ public class RestRoleInspection extends RestInspection {
       super(holder);
       myIgnoredRoles = ImmutableSet.copyOf(ignoredRoles);
       Project project = holder.getProject();
-      String dir = ReSTService.getInstance(project).getWorkdir();
+      final Module module = ModuleUtilCore.findModuleForPsiElement(holder.getFile());
+      if (module == null) return;
+      String dir = ReSTService.getInstance(module).getWorkdir();
       if (!dir.isEmpty())
         fillSphinxRoles(dir, project);
     }
@@ -101,7 +105,8 @@ public class RestRoleInspection extends RestInspection {
       RestFile file = (RestFile)node.getContainingFile();
 
       if (PsiTreeUtil.getParentOfType(node, RestDirectiveBlock.class) != null) return;
-      if (node.getNextSibling() == null || node.getNextSibling().getNode().getElementType() != RestTokenTypes.INTERPRETED) return;
+      final PsiElement sibling = node.getNextSibling();
+      if (sibling == null || sibling.getNode().getElementType() != RestTokenTypes.INTERPRETED) return;
       if (RestUtil.PREDEFINED_ROLES.contains(node.getText()) || myIgnoredRoles.contains(node.getRoleName()))
         return;
 

@@ -1,6 +1,8 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.documentation.*;
@@ -50,10 +52,10 @@ public class DocStringAnnotator extends PyAnnotator {
 
   private void annotateDocStringStmt(final PyStringLiteralExpression stmt) {
     if (stmt != null) {
-      final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(stmt.getProject());
-      if (settings.isPlain(stmt.getContainingFile()))
-        return;       // nothing to annotate if docstrings are plain
-      else {
+      final Module module = ModuleUtilCore.findModuleForPsiElement(stmt);
+      if (module == null) return;
+      final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
+      if (!settings.isPlain(stmt.getContainingFile())) {
         String[] tags = settings.isEpydocFormat(stmt.getContainingFile()) ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
         int pos = 0;
         while(true) {

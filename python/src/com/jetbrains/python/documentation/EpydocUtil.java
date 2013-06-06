@@ -1,5 +1,7 @@
 package com.jetbrains.python.documentation;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -16,7 +18,9 @@ public class EpydocUtil {
   }
 
   public static boolean isVariableDocString(PyStringLiteralExpression expr) {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(expr.getProject());
+    final Module module = ModuleUtilCore.findModuleForPsiElement(expr);
+    if (module == null) return false;
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
     if (settings.isEpydocFormat(expr.getContainingFile()) || settings.isReSTFormat(expr.getContainingFile())) {
       final PsiElement parent = expr.getParent();
       if (!(parent instanceof PyExpressionStatement)) {

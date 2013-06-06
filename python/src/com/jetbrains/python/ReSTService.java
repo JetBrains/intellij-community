@@ -1,17 +1,18 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
  */
 @State(name = "ReSTService",
-      storages = {
-      @Storage( file = StoragePathMacros.PROJECT_FILE),
-      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/rest.xml", scheme = StorageScheme.DIRECTORY_BASED)
-      }
+       storages = {@Storage(file = "$MODULE_FILE$")}
 )
 public class ReSTService implements PersistentStateComponent<ReSTService> {
   public String DOC_DIR = "";
@@ -34,8 +35,8 @@ public class ReSTService implements PersistentStateComponent<ReSTService> {
     DOC_DIR = workDir;
   }
 
-  public static ReSTService getInstance(Project project) {
-    return ServiceManager.getService(project, ReSTService.class);
+  public static ReSTService getInstance(@NotNull Module module) {
+    return ModuleServiceManager.getService(module, ReSTService.class);
   }
 
   public String getWorkdir() {

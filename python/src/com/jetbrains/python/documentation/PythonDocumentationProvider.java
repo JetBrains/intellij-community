@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -493,8 +495,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   // link item to containing class
 
   public static String generateDocumentationContentStub(PyFunction element, String offset, boolean checkReturn) {
-    Project project = element.getProject();
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     String result = "";
     if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
       result += generateContent(element, offset, EPYDOC_PREFIX, checkReturn);

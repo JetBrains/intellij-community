@@ -2,6 +2,8 @@ package com.jetbrains.python.testing.attest;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
@@ -22,9 +24,12 @@ public class PythonAtTestConfigurationProducer extends
 
   protected boolean isAvailable(Location location) {
     PsiElement element = location.getPsiElement();
-    final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
-    return (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
-      PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME) && sdk != null);
+    Module module = location.getModule();
+    if (module == null) module = ModuleUtilCore.findModuleForPsiElement(element);
+
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    return module != null && TestRunnerService.getInstance(module).getProjectConfiguration().equals(
+      PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME) && sdk != null;
   }
 
   protected boolean isTestClass(PyClass pyClass) {
@@ -37,7 +42,7 @@ public class PythonAtTestConfigurationProducer extends
     return false;
   }
 
-  private boolean hasTestFunction(PyClass pyClass) {
+  private static boolean hasTestFunction(PyClass pyClass) {
     PyFunction[] methods = pyClass.getMethods();
     for (PyFunction function : methods) {
       PyDecoratorList decorators = function.getDecoratorList();

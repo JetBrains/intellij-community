@@ -43,7 +43,7 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 public class SphinxBaseCommand {
 
   protected boolean setWorkDir(Module module) {
-    ReSTService service = ReSTService.getInstance(module.getProject());
+    final ReSTService service = ReSTService.getInstance(module);
     String workDir = service.getWorkdir();
     if (workDir.isEmpty()) {
       AskForWorkDir dialog = new AskForWorkDir(module.getProject());
@@ -62,7 +62,7 @@ public class SphinxBaseCommand {
     private AskForWorkDir(Project project) {
       super(project);
 
-      setTitle("Set sphinx working directory: ");
+      setTitle("Set Sphinx Working Directory: ");
       init();
       VirtualFile baseDir =  project.getBaseDir();
       String path = baseDir != null? baseDir.getPath() : "";
@@ -84,7 +84,7 @@ public class SphinxBaseCommand {
     }
   }
 
-  protected final String myCommand = "sphinx-quickstart"+ (SystemInfo.isWindows ? ".exe" : "");
+  protected static final String ourCommand = "sphinx-quickstart"+ (SystemInfo.isWindows ? ".exe" : "");
 
   public void execute(@NotNull final Module module) {
     final Project project = module.getProject();
@@ -105,7 +105,7 @@ public class SphinxBaseCommand {
         .run();
     }
     catch (ExecutionException e) {
-      Messages.showErrorDialog(e.getMessage(), "Restructuredtext error");
+      Messages.showErrorDialog(e.getMessage(), "ReStructuredText Error");
     }
   }
 
@@ -113,7 +113,7 @@ public class SphinxBaseCommand {
   protected Runnable getAfterTask(final Module module) {
     return new Runnable() {
       public void run() {
-        ReSTService service = ReSTService.getInstance(module.getProject());
+        final ReSTService service = ReSTService.getInstance(module);
         LocalFileSystem.getInstance().refreshAndFindFileByPath(service.getWorkdir());
       }
     };
@@ -134,7 +134,7 @@ public class SphinxBaseCommand {
       throw new ExecutionException("No sdk specified");
     }
 
-    ReSTService service = ReSTService.getInstance(module.getProject());
+    ReSTService service = ReSTService.getInstance(module);
     cmd.setWorkDirectory(service.getWorkdir().isEmpty()? module.getProject().getBaseDir().getPath(): service.getWorkdir());
     PythonCommandLineState.createStandardGroupsIn(cmd);
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
@@ -170,7 +170,7 @@ public class SphinxBaseCommand {
   }
 
   @Nullable
-  private String getCommandPath(Sdk sdk) {
-    return RestUtil.findRunner(sdk.getHomePath(), myCommand);
+  private static String getCommandPath(Sdk sdk) {
+    return RestUtil.findRunner(sdk.getHomePath(), ourCommand);
   }
 }

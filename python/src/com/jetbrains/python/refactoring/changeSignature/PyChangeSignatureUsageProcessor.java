@@ -1,5 +1,7 @@
 package com.jetbrains.python.refactoring.changeSignature;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -315,10 +317,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     for (PyParameterInfo info : parameters) {
       names.add(info.getName());
     }
+    final Module module = ModuleUtilCore.findModuleForPsiElement(function);
+    if (module == null) return;
     for (PyParameter p : function.getParameterList().getParameters()) {
       final String paramName = p.getName();
       if (!names.contains(paramName) && paramName != null) {
-        PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(function.getProject());
+        PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
         String prefix = documentationSettings.isEpydocFormat(docStringExpression.getContainingFile()) ? "@" : ":";
         final String replacement = PythonDocCommentUtil.removeParamFromDocstring(docStringExpression.getText(), prefix,
                                                                                  paramName);

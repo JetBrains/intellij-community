@@ -42,13 +42,13 @@ public class PyTestRunnerUpdater implements StartupActivity {
 
     for (Module m: ModuleManager.getInstance(project).getModules()) {
       if (ModuleType.get(m) instanceof PythonModuleTypeBase) {
-        updateIntegratedTools(project, 10000);
+        updateIntegratedTools(m, 10000);
         break;
       }
     }
   }
 
-  private static void updateIntegratedTools(final Project project, final int delay) {
+  private static void updateIntegratedTools(final Module module, final int delay) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         if (delay > 0) {
@@ -59,91 +59,83 @@ public class PyTestRunnerUpdater implements StartupActivity {
           }
         }
 
-
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!TestRunnerService.getInstance(project).getProjectConfiguration().isEmpty())
+            if (!TestRunnerService.getInstance(module).getProjectConfiguration().isEmpty())
               return;
 
             //check setup.py
-            String testRunner = detectTestRunnerFromSetupPy(project);
+            String testRunner = detectTestRunnerFromSetupPy(module);
 
             //try to find test_runner import
-            final Collection<VirtualFile> filenames = FilenameIndex.getAllFilesByExt(project, PythonFileType.INSTANCE.getDefaultExtension(),
-                                                                                     GlobalSearchScope.projectScope(project));
+            final Collection<VirtualFile> filenames = FilenameIndex.getAllFilesByExt(module.getProject(), PythonFileType.INSTANCE.getDefaultExtension(),
+                                                                                     GlobalSearchScope.moduleScope(module));
 
-            for (VirtualFile file : filenames){
+            for (VirtualFile file : filenames) {
               if (file.getName().startsWith("test")) {
-                if (testRunner.isEmpty()) testRunner = checkImports(file, project);   //find test runner import
+                if (testRunner.isEmpty()) testRunner = checkImports(file, module);   //find test runner import
               }
               else {
-                if (PyDocumentationSettings.getInstance(project).getFormat().isEmpty()) {
-                  checkDocstring(file, project);    // detect docstring type
+                if (PyDocumentationSettings.getInstance(module).getFormat().isEmpty()) {
+                  checkDocstring(file, module);    // detect docstring type
                 }
               }
-              if (!testRunner.isEmpty() && !PyDocumentationSettings.getInstance(project).getFormat().isEmpty()) {
+              if (!testRunner.isEmpty() && !PyDocumentationSettings.getInstance(module).getFormat().isEmpty()) {
                 break;
               }
             }
             if (testRunner.isEmpty()) {
               //check if installed in sdk
-              for (Module module : ModuleManager.getInstance(project).getModules()) {
-                final Sdk sdk = PythonSdkType.findPythonSdk(module);
-                if (sdk != null && sdk.getSdkType() instanceof PythonSdkType && testRunner.isEmpty()) {
-                  String sdkHome = sdk.getHomePath();
-                  if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST))
-                    testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST))
-                    testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST))
-                    testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-                }
-
+              final Sdk sdk = PythonSdkType.findPythonSdk(module);
+              if (sdk != null && sdk.getSdkType() instanceof PythonSdkType && testRunner.isEmpty()) {
+                if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST))
+                  testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+                else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST))
+                  testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+                else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST))
+                  testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
               }
             }
 
             if (testRunner.isEmpty()) testRunner = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
 
-            TestRunnerService.getInstance(project).setProjectConfiguration(testRunner);
-            if (PyDocumentationSettings.getInstance(project).getFormat().isEmpty())
-              PyDocumentationSettings.getInstance(project).setFormat(DocStringFormat.PLAIN);
+            TestRunnerService.getInstance(module).setProjectConfiguration(testRunner);
+            if (PyDocumentationSettings.getInstance(module).getFormat().isEmpty())
+              PyDocumentationSettings.getInstance(module).setFormat(DocStringFormat.PLAIN);
           }
-        }, ModalityState.any(), project.getDisposed());
+        }, ModalityState.any(), module.getDisposed());
       }
     });
   }
 
-  private static String detectTestRunnerFromSetupPy(Project project) {
+  private static String detectTestRunnerFromSetupPy(Module module) {
     String testRunner = "";
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      if (!testRunner.isEmpty()) break;
-      final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-      if (setupPy == null)
-        continue;
-      final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
-      if (setupCall == null)
-        continue;
-      for (PyExpression arg : setupCall.getArguments()) {
-        if (arg instanceof PyKeywordArgument) {
-          final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-          if ("test_loader".equals(kwarg.getKeyword()) || "test_suite".equals(kwarg.getKeyword())) {
-            final PyExpression value = kwarg.getValueExpression();
-            if (value instanceof PyStringLiteralExpression) {
-              final String stringValue = ((PyStringLiteralExpression)value).getStringValue();
-              if (stringValue.contains(PyNames.NOSE_TEST)) {
-                testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-                break;
-              }
-              if (stringValue.contains(PyNames.PY_TEST)) {
-                testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-                break;
-              }
-              if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
-                testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-                break;
-              }
+    if (!testRunner.isEmpty()) return  testRunner;
+    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
+    if (setupPy == null)
+      return  testRunner;
+    final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
+    if (setupCall == null)
+      return  testRunner;
+    for (PyExpression arg : setupCall.getArguments()) {
+      if (arg instanceof PyKeywordArgument) {
+        final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
+        if ("test_loader".equals(kwarg.getKeyword()) || "test_suite".equals(kwarg.getKeyword())) {
+          final PyExpression value = kwarg.getValueExpression();
+          if (value instanceof PyStringLiteralExpression) {
+            final String stringValue = ((PyStringLiteralExpression)value).getStringValue();
+            if (stringValue.contains(PyNames.NOSE_TEST)) {
+              testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+              break;
+            }
+            if (stringValue.contains(PyNames.PY_TEST)) {
+              testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+              break;
+            }
+            if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
+              testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
+              break;
             }
           }
         }
@@ -152,9 +144,9 @@ public class PyTestRunnerUpdater implements StartupActivity {
     return testRunner;
   }
 
-  private static void checkDocstring(VirtualFile file, Project project) {
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+  private static void checkDocstring(VirtualFile file, Module module) {
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
+    final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(file);
     if (psiFile instanceof PyFile) {
       if (documentationSettings.isEpydocFormat(psiFile))
         documentationSettings.setFormat(DocStringFormat.EPYTEXT);
@@ -186,8 +178,8 @@ public class PyTestRunnerUpdater implements StartupActivity {
     }
   }
 
-  private static String checkImports(VirtualFile file, Project project) {
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+  private static String checkImports(VirtualFile file, Module module) {
+    final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(file);
     if (psiFile instanceof PyFile) {
       final List<PyImportElement> importTargets = ((PyFile)psiFile).getImportTargets();
       for (PyImportElement importElement : importTargets) {
