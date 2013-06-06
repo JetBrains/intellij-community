@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.startup;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * called from {@link com.intellij.openapi.components.ProjectComponent#projectOpened()}.
  */
 public abstract class StartupManager {
-
   /**
    * Returns the startup manager instance for the specified project.
    *
@@ -37,13 +35,6 @@ public abstract class StartupManager {
   }
 
   public abstract void registerPreStartupActivity(@NotNull Runnable runnable);
-
-  /**
-   * Registers a CacheUpdater instance that will be used to build initial caches and indices.
-   * Must be called in registerPreStartupActivity or registerStartupActivity
-   * @param updater to be run
-   */
-  public abstract void registerCacheUpdater(@NotNull CacheUpdater updater);
 
   /**
    * Registers an activity which is performed during project load while the "Loading Project"
