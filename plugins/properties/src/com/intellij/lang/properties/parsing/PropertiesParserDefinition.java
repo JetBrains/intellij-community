@@ -85,9 +85,6 @@ public class PropertiesParserDefinition implements ParserDefinition {
     else if (type == PropertiesElementTypes.PROPERTIES_LIST) {
       return new PropertiesListImpl(node);
     }
-
-    LOG.error("Alien element type [" + type + "]. Can't create Property PsiElement for that.");
-
-    return new ASTWrapperPsiElement(node);
+    throw new AssertionError("Alien element type [" + type + "]. Can't create Property PsiElement for that.");
   }
 }

@@ -13,21 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework;
+package com.intellij.ide.util.treeView;
 
-import com.intellij.framework.library.FrameworkAvailabilityCondition;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
- * @author nik
+ * @author peter
  */
-public interface FrameworkVersion {
-  @NotNull
-  String getId();
+public class TreeAnchorizer {
+  private static final TreeAnchorizer ourInstance;
+  static {
+    TreeAnchorizer implementation = ServiceManager.getService(TreeAnchorizer.class);
+    ourInstance = implementation == null ? new TreeAnchorizer() : implementation;
+  }
 
-  @NotNull
-  String getPresentableName();
+  public static TreeAnchorizer getService() {
+    return ourInstance;
+  }
 
-  @NotNull
-  FrameworkAvailabilityCondition getAvailabilityCondition();
+  public Object createAnchor(Object element) {
+    return element;
+  }
+
+  public Object retrieveElement(Object anchor) {
+    return anchor;
+  }
+
 }

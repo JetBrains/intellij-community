@@ -229,16 +229,6 @@ public class PathMacroManagerTest {
   }
 
   @Test
-  public void testReplacePathInTheMiddle() {
-    setUpMocks("/home");
-
-    ReplacePathToMacroMap map = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
-    String src = "-s cum /home/run.py  /home  /home/routing/test/spec";
-    String dst = "-s cum $PROJECT_DIR$/run.py  /home  $PROJECT_DIR$/routing/test/spec";
-    assertEquals(dst, map.substitute(src, true));
-  }
-
-  @Test
   public void testProjectUnderUserHome() {
     setUpMocks(USER_HOME + "/IdeaProjects/foo");
 

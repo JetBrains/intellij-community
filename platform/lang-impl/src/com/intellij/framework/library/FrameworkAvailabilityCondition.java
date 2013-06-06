@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.wholeTree;
+package com.intellij.framework.library;
 
-import com.intellij.util.containers.SLRUMap;
-import git4idea.history.browser.GitHeavyCommit;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author irengrig
+ * @author nik
  */
-public class LinesCache {
-  private final static int ourSize = 400; // todo ?
-  private final SLRUMap<String, GitHeavyCommit> myCache;
+public abstract class FrameworkAvailabilityCondition {
+  public static final FrameworkAvailabilityCondition ALWAYS_TRUE = new FrameworkAvailabilityCondition() {
+    @Override
+    public boolean isAvailableFor(@NotNull FrameworkSupportModel model) {
+      return true;
+    }
+  };
 
-  public LinesCache() {
-    myCache = new SLRUMap<String, GitHeavyCommit>(ourSize, 50);
-  }
-
-  public GitHeavyCommit get(final String hash) {
-    return myCache.get(hash);
-  }
+  public abstract boolean isAvailableFor(@NotNull FrameworkSupportModel model);
 }

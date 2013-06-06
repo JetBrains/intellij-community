@@ -92,7 +92,7 @@ public class ChangesFilter {
       myFilters = filters;
       myMemoryFilter = new MemoryFilter() {
         @Override
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           for (Filter filter : myFilters) {
             if (!filter.getMemoryFilter().applyInMemory(commit)) return false;
           }
@@ -172,13 +172,13 @@ public class ChangesFilter {
       myUsers.add(name);
     }
 
-    public boolean applyInMemory(GitCommit commit) {
+    public boolean applyInMemory(GitHeavyCommit commit) {
       return myUsers.contains(commit.getCommitter()) || myUsers.contains(commit.getAuthor());
     }
   }
 
   public interface MemoryFilter {
-    boolean applyInMemory(final GitCommit commit);
+    boolean applyInMemory(final GitHeavyCommit commit);
   }
 
   public interface CommandParametersFilter {
@@ -212,7 +212,7 @@ public class ChangesFilter {
       };
       myMemoryFilter = new MemoryFilter() {
         @Override
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           return commit.getDate().getTime() <= myTs;
         }
       };
@@ -250,7 +250,7 @@ public class ChangesFilter {
       };
       myMemoryFilter = new MemoryFilter() {
         @Override
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           return commit.getDate().getTime() >= myTs;
         }
       };
@@ -288,7 +288,7 @@ public class ChangesFilter {
         }
       };
       myMemoryFilter = new MemoryFilter() {
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           return myPattern.matcher(commit.getAuthor()).matches();
         }
       };
@@ -340,7 +340,7 @@ public class ChangesFilter {
         }
       };
       myMemoryFilter = new MemoryFilter() {
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           return myPattern.matcher(commit.getCommitter()).matches();
         }
       };
@@ -390,7 +390,7 @@ public class ChangesFilter {
         }
       };
       myMemoryFilter = new MemoryFilter() {
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           return commit.getDate().before(myDate);
         }
       };
@@ -440,7 +440,7 @@ public class ChangesFilter {
         }
       };
       myMemoryFilter = new MemoryFilter() {
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           return commit.getDate().after(myDate);
         }
       };
@@ -488,7 +488,7 @@ public class ChangesFilter {
         }
       });
       myMemoryFilter = new MemoryFilter() {
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           if (myMap.isEmpty()) return true;
           
           final List<FilePath> pathList = commit.getPathsList();
@@ -590,7 +590,7 @@ public class ChangesFilter {
         }
       };
       myMemoryFilter = new MemoryFilter() {
-        public boolean applyInMemory(GitCommit commit) {
+        public boolean applyInMemory(GitHeavyCommit commit) {
           return myPattern.matcher(commit.getDescription()).matches() || myPattern.matcher(commit.getCommitter()).matches() ||
                  myPattern.matcher(commit.getAuthor()).matches();
         }

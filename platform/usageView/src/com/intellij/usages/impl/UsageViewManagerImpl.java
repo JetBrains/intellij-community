@@ -30,7 +30,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.FindUsagesIndicator;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
@@ -144,7 +144,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        new SearchForUsagesRunnable(UsageViewManagerImpl.this.myProject, usageView, presentation, searchFor, searcherFactory, processPresentation, listener).run();
+        new SearchForUsagesRunnable(UsageViewManagerImpl.this.myProject, usageView, presentation, searchFor, searcherFactory,
+                                    processPresentation, listener).run();
       }
 
       @Override
@@ -159,8 +160,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
         return new NotificationInfo("Find Usages", "Find Usages Finished", notification);
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new FindUsagesIndicator());
-    //ProgressManager.getInstance().run(task);
+    ProgressManager.getInstance().run(task);
     return usageView.get();
   }
 
@@ -238,7 +238,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
 
   public static void showTooManyUsagesWarning(@NotNull final Project project,
-                                              @NotNull final FindUsagesIndicator indicator,
+                                              @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
+                                              @NotNull final ProgressIndicator indicator,
                                               final int usageCount,
                                               final UsageViewImpl usageView) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -251,7 +252,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
           usageView.setCurrentSearchCancelled(true);
           indicator.cancel();
         }
-        indicator.userResponded();
+        tooManyUsagesStatus.userResponded();
       }
     });
   }
@@ -332,11 +333,15 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
 
     private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
+      ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
+      TooManyUsagesStatus.createFor(indicator);
       Alarm findUsagesStartedBalloon = new Alarm();
       findUsagesStartedBalloon.addRequest(new Runnable() {
         @Override
         public void run() {
-          notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, UsageViewManagerImpl.this.myProject,"Find Usages in progress...");
+          String balloon = "Searching for " + myPresentation.getUsagesString()+"...";
+          notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, UsageViewManagerImpl.this.myProject,
+                              balloon);
           findStartedBalloonShown.set(true);
         }
       }, 300, ModalityState.NON_MODAL);
@@ -347,7 +352,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
         public boolean process(final Usage usage) {
           ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
           if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return false;
-
+          TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
+          tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
           boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
 
           if (incrementCounter) {
@@ -359,9 +365,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
             final UsageViewImpl usageView = getUsageView();
 
             if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
-              if (indicator instanceof FindUsagesIndicator &&
-                  ((FindUsagesIndicator)indicator).switchTooManyUsagesStatus()) {
-                showTooManyUsagesWarning(myProject, (FindUsagesIndicator)indicator, myUsageCountWithoutDefinition.get(), usageView);
+              if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                showTooManyUsagesWarning(myProject, tooManyUsagesStatus, indicator, myUsageCountWithoutDefinition.get(), usageView);
               }
             }
 

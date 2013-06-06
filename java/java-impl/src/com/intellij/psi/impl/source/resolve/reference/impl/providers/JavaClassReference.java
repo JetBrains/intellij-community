@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -278,7 +279,12 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
 
-    final PsiClass[] classes = aPackage.getClasses(scope);
+    final List<PsiClass> classes = ContainerUtil.filter(aPackage.getClasses(scope), new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass psiClass) {
+        return StringUtil.isNotEmpty(psiClass.getName());
+      }
+    });
     final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
     if (options != null) {
       final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);
@@ -294,7 +300,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
     else {
-      ContainerUtil.addAll(list, classes);
+      list.addAll(classes);
     }
     return list.toArray();
   }

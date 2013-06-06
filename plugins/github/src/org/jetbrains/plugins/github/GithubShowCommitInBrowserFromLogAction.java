@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
       return null;
     }
 
-    GitCommit commit = e.getData(GitVcs.GIT_COMMIT);
+    GitHeavyCommit commit = e.getData(GitVcs.GIT_COMMIT);
     if (commit == null) {
       return null;
     }
@@ -70,9 +70,9 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
   private static class EventData {
     @NotNull private final Project myProject;
     @NotNull private final GitRepository myRepository;
-    @NotNull private final GitCommit myCommit;
+    @NotNull private final GitHeavyCommit myCommit;
 
-    private EventData(@NotNull Project project, @NotNull GitRepository repository, @NotNull GitCommit commit) {
+    private EventData(@NotNull Project project, @NotNull GitRepository repository, @NotNull GitHeavyCommit commit) {
       myProject = project;
       myRepository = repository;
       myCommit = commit;
@@ -89,7 +89,7 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
     }
 
     @NotNull
-    public GitCommit getCommit() {
+    public GitHeavyCommit getCommit() {
       return myCommit;
     }
   }

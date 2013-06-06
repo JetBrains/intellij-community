@@ -39,9 +39,12 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Function;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
 import com.intellij.util.xml.stubs.FileStub;
+import com.intellij.util.xml.stubs.builder.DomStubBuilder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +89,14 @@ public class DomServiceImpl extends DomService {
     }
 
     if (!file.isValid()) return XmlFileHeader.EMPTY;
+
+    if (XmlUtil.isStubBuilding(file) && file.getFileType() == XmlFileType.INSTANCE) {
+      FileContent fileContent = file.getUserData(DomStubBuilder.CONTENT_FOR_DOM_STUBS);
+      if (fileContent != null) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
+        return NanoXmlUtil.parseHeader(new CharSequenceReader(fileContent.getContentAsText()));
+      }
+    }
     return NanoXmlUtil.parseHeader(file);
   }
 

@@ -204,7 +204,8 @@ public class CommitDetails {
     Pattern reg = Pattern.compile("^\\s*\\[.+ ([a-fA-F0-9]+)\\] (.+)$");
     Matcher matcher = reg.matcher(line);
     boolean matches = matcher.matches();
-    assertTrue("The output of the commit command doesn't match the expected pattern: [" + StringUtil.escapeLineBreak(line) + "]", matches);
+    assertTrue(String.format("The output of the commit command doesn't match the expected pattern: %nLine: [%s]%nWhole output: [%s]",
+                             StringUtil.escapeLineBreak(line), StringUtil.escapeLineBreak(commitOutput)), matches);
     return new CommitDetails().hash(matcher.group(1)).message(matcher.group(2));
   }
 
