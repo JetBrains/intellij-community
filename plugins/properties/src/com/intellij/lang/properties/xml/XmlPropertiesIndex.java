@@ -1,9 +1,11 @@
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.*;
 import com.intellij.util.text.CharArrayUtil;
@@ -22,7 +24,7 @@ import java.util.Map;
  *         Date: 7/25/11
  */
 public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesIndex.Key, String>
-  implements FileBasedIndex.InputFilter, DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
+  implements FileBasedIndex.FileTypeSpecificInputFilter, DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
              KeyDescriptor<XmlPropertiesIndex.Key> {
 
   public final static Key MARKER_KEY = new Key();
@@ -69,7 +71,12 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   @Override
   public boolean acceptInput(VirtualFile file) {
-    return XmlFileType.INSTANCE == file.getFileType();
+    return true;
+  }
+
+  @Override
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+    fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
   @NotNull

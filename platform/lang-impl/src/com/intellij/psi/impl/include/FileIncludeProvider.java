@@ -17,7 +17,9 @@
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +34,9 @@ public abstract class FileIncludeProvider {
   public abstract String getId();
 
   public abstract boolean acceptFile(VirtualFile file);
-  
+
+  public abstract void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
+
   @NotNull
   public abstract FileIncludeInfo[] getIncludeInfos(FileContent content);
 }

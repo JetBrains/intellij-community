@@ -41,7 +41,6 @@ import java.util.*;
 public class FormClassIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("FormClassIndex");
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
-  private final MyInputFilter myInputFilter = new MyInputFilter();
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
@@ -63,7 +62,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.GUI_DESIGNER_FORM);
   }
 
   @Override
@@ -91,13 +90,6 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
         return Collections.singletonMap(className, null);
       }
       return Collections.emptyMap();
-    }
-  }
-
-  private static class MyInputFilter implements FileBasedIndex.InputFilter {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      return file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
     }
   }
 

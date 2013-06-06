@@ -6,7 +6,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -72,7 +71,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         final HashMap<String, Void> map = new HashMap<String, Void>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
-          if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.EMPTY_MAP;
+          if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
           NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
             NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
             int depth;
@@ -137,14 +136,10 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML, RncFileType.getInstance()) {
       @Override
       public boolean acceptInput(VirtualFile file) {
-        if (file.getFileSystem() instanceof JarFileSystem) {
-          return false; // there is lots and lots of custom XML inside zip files
-        }
-        final FileType fileType = file.getFileType();
-        return fileType == StdFileTypes.XML || fileType == RncFileType.getInstance();
+        return !(file.getFileSystem() instanceof JarFileSystem);
       }
     };
   }
@@ -243,7 +238,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
     @Override
     public ItemPresentation getPresentation() {
-      return myPresentation != null ? this : null;
+      return this;
     }
 
     @Override

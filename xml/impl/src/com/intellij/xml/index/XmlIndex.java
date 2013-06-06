@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -40,15 +41,6 @@ import java.util.List;
 public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
   protected static final EnumeratorStringDescriptor KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
-
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
-    public boolean acceptInput(final VirtualFile file) {
-      FileType fileType = file.getFileType();
-      final String extension = file.getExtension();
-      return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||
-             DTDFileType.INSTANCE.equals(fileType) && "dtd".equals(extension);
-    }
-  };
 
   protected static GlobalSearchScope createFilter(final Project project) {
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
@@ -108,7 +100,14 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
   }
 
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, DTDFileType.INSTANCE) {
+      public boolean acceptInput(final VirtualFile file) {
+        FileType fileType = file.getFileType();
+        final String extension = file.getExtension();
+        return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||
+               DTDFileType.INSTANCE.equals(fileType) && "dtd".equals(extension);
+      }
+    };
   }
 
   public boolean dependsOnFileContent() {
