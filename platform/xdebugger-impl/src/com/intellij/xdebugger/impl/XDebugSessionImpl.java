@@ -103,6 +103,9 @@ public class XDebugSessionImpl implements XDebugSession {
   private ConsoleView myConsoleView;
   private final Icon myIcon;
 
+  private volatile boolean breakpointsInitialized;
+  private boolean autoInitBreakpoints = true;
+
   public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner,
                            XDebuggerManagerImpl debuggerManager) {
     this(env, runner, debuggerManager, env.getRunProfile().getName(), env.getRunProfile().getIcon(), false);
@@ -146,6 +149,11 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public void setPauseActionSupported(final boolean isSupported) {
     myPauseActionSupported = isSupported;
+  }
+
+  @Override
+  public void setAutoInitBreakpoints(boolean value) {
+    autoInitBreakpoints = value;
   }
 
   @Override
@@ -209,15 +217,9 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess = process;
     mySessionData = sessionData;
 
-    XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
-    XDependentBreakpointManager dependentBreakpointManager = breakpointManager.getDependentBreakpointManager();
-    disableSlaveBreakpoints(dependentBreakpointManager);
-    processAllBreakpoints(true, false);
-
-    myBreakpointListener = new MyBreakpointListener();
-    breakpointManager.addBreakpointListener(myBreakpointListener);
-    myDependentBreakpointListener = new MyDependentBreakpointListener();
-    dependentBreakpointManager.addListener(myDependentBreakpointListener);
+    if (autoInitBreakpoints) {
+      initBreakpoints();
+    }
 
     myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
@@ -232,6 +234,22 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     return mySessionTab;
+  }
+
+  @Override
+  public void initBreakpoints() {
+    LOG.assertTrue(!breakpointsInitialized);
+    breakpointsInitialized = true;
+
+    XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
+    XDependentBreakpointManager dependentBreakpointManager = breakpointManager.getDependentBreakpointManager();
+    disableSlaveBreakpoints(dependentBreakpointManager);
+    processAllBreakpoints(true, false);
+
+    myBreakpointListener = new MyBreakpointListener();
+    breakpointManager.addBreakpointListener(myBreakpointListener);
+    myDependentBreakpointListener = new MyDependentBreakpointListener();
+    dependentBreakpointManager.addListener(myDependentBreakpointListener);
   }
 
   @Override
