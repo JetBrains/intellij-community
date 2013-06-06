@@ -4108,7 +4108,7 @@ public class AbstractTreeUi {
         }
       }
     }
-    else if (myElementToNodeMap.get(element) instanceof List) {
+    else if (myElementToNodeMap.get(TreeAnchorizer.getService().createAnchor(element)) instanceof List) {
       final TreePath[] paths = getTree().getSelectionPaths();
       if (paths != null && paths.length > 0) {
         Set<DefaultMutableTreeNode> selectedNodes = new HashSet<DefaultMutableTreeNode>();
@@ -4119,7 +4119,7 @@ public class AbstractTreeUi {
         }
 
 
-        final List nodes = (List)myElementToNodeMap.get(element);
+        final List nodes = (List)myElementToNodeMap.get(TreeAnchorizer.getService().createAnchor(element));
         for (Object each : nodes) {
           DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)each;
           while (eachNode != null) {
@@ -4565,6 +4565,7 @@ public class AbstractTreeUi {
   }
 
   private void createMapping(Object element, DefaultMutableTreeNode node) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     if (!myElementToNodeMap.containsKey(element)) {
       myElementToNodeMap.put(element, node);
     }
@@ -4584,6 +4585,7 @@ public class AbstractTreeUi {
   }
 
   private void removeMapping(Object element, DefaultMutableTreeNode node, @Nullable Object elementToPutNodeActionsFor) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     final Object value = myElementToNodeMap.get(element);
     if (value != null) {
       if (value instanceof DefaultMutableTreeNode) {
@@ -4638,6 +4640,7 @@ public class AbstractTreeUi {
   }
 
   protected Object findNodeByElement(Object element) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     if (myElementToNodeMap.containsKey(element)) {
       return myElementToNodeMap.get(element);
     }
@@ -4653,6 +4656,7 @@ public class AbstractTreeUi {
 
   @Nullable
   private DefaultMutableTreeNode findNodeForChildElement(@NotNull DefaultMutableTreeNode parentNode, Object element) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     final Object value = myElementToNodeMap.get(element);
     if (value == null) {
       return null;
@@ -4913,12 +4917,6 @@ public class AbstractTreeUi {
   @NotNull
   public Collection<TreeUpdatePass> getYeildingPasses() {
     return myYieldingPasses;
-  }
-
-  public boolean isBuilt(Object element) {
-    if (!myElementToNodeMap.containsKey(element)) return false;
-    final Object node = myElementToNodeMap.get(element);
-    return !myUnbuiltNodes.contains(node);
   }
 
   private static class LoadedChildren {

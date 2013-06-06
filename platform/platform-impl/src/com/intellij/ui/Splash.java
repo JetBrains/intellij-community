@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +43,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class Splash extends JDialog implements StartupProgress {
-  public static Rectangle BOUNDS;
+  @Nullable public static Rectangle BOUNDS;
   private final Icon myImage;
   private int myProgressHeight = 2;
   private Color myProgressColor = null;

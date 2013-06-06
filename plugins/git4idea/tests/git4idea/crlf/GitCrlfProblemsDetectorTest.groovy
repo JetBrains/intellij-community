@@ -33,30 +33,34 @@ import static org.junit.Assert.assertTrue
  */
 class GitCrlfProblemsDetectorTest extends GitLightTest {
 
-  private String myOldCoreAutoCrlfValue
+  private String myOldGlobalAutoCrlfValue
+  private String myOldSystemAutoCrlfValue
 
   @Before
   public void setUp() {
     super.setUp();
     cd myProjectRoot
-    if (isGlobalCommandPossible()) {
-      myOldCoreAutoCrlfValue = git ("config --global core.autocrlf")
+    try {
+      myOldGlobalAutoCrlfValue = git ("config --global core.autocrlf")
       git ("config --global --unset core.autocrlf")
+    } catch (Exception e) {
+      System.out.println("Couldn't operate with global config: " + e.getMessage())
     }
+    myOldSystemAutoCrlfValue = git ("config --system core.autocrlf")
+    git ("config --system --unset core.autocrlf")
 
     createRepository(myProjectRoot)
   }
 
   @After
   public void tearDown() {
-    if (!StringUtil.isEmptyOrSpaces(myOldCoreAutoCrlfValue)) {
-      git ("config --global core.autocrlf " + myOldCoreAutoCrlfValue);
+    if (!StringUtil.isEmptyOrSpaces(myOldGlobalAutoCrlfValue)) {
+      git ("config --global core.autocrlf " + myOldGlobalAutoCrlfValue);
+    }
+    if (!StringUtil.isEmptyOrSpaces(myOldSystemAutoCrlfValue)) {
+      git ("config --global core.autocrlf " + myOldSystemAutoCrlfValue);
     }
     super.tearDown();
-  }
-
-  private static boolean isGlobalCommandPossible() {
-    return System.getenv("HOME") != null;
   }
 
   @Test
