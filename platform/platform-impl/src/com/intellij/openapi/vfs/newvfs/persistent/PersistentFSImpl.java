@@ -853,7 +853,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             // do not call super method since we know it's the root
             String name = getName();
             int nameLength = name.length();
-            boolean appendSlash = SystemInfo.isWindows && nameLength == 2 && name.charAt(1) == ':';
+            boolean appendSlash = SystemInfo.isWindows && nameLength == 2 && name.charAt(1) == ':'
+                                  && pathLength == 0 // otherwise we called this as a part of longer file path calculation and slash will be added anyway
+              ;
 
             int rootPathLength = pathLength + nameLength;
             if (appendSlash) ++rootPathLength;
