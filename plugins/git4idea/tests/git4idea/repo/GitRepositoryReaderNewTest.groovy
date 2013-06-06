@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package git4idea.repo
+
+import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.PluginPathManager
 import git4idea.GitLocalBranch
 import git4idea.test.GitLightTest
@@ -63,7 +65,7 @@ class GitRepositoryReaderNewTest extends GitLightTest {
     GitLocalBranch branch = reader.readCurrentBranch();
     def state = reader.readState();
     assertNull "Current branch can't be identified for this case", branch
-    assertEquals "State value is incorrect", GitRepository.State.REBASING, state
+    assertEquals "State value is incorrect", Repository.State.REBASING, state
   }
 
   @Test

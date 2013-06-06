@@ -149,6 +149,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   private void notifyTerminated(final int exitCode, final boolean willBeDestroyed) {
     myAfterStartNotifiedRunner.execute(new Runnable() {
+      @Override
       public void run() {
         LOG.assertTrue(isStartNotified(), "Start notify is not called");
 

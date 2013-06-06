@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
@@ -37,7 +36,7 @@ import java.util.*;
 public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionIndex");
   public static final ID<Integer,Void> NAME = ID.create("FrameworkDetectionIndex");
-  private FileTypesInputFilter myInputFilter;
+
   private final FrameworkDetectorRegistry myRegistry;
   private final EventDispatcher<FrameworkDetectionIndexListener> myDispatcher = EventDispatcher.create(FrameworkDetectionIndexListener.class);
 
@@ -99,14 +98,11 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    if (myInputFilter == null) {
-      final Set<FileType> acceptedTypes = new HashSet<FileType>();
-      for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-        acceptedTypes.add(detector.getFileType());
-      }
-      myInputFilter = new FileTypesInputFilter(acceptedTypes);
+    final Set<FileType> acceptedTypes = new HashSet<FileType>();
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+      acceptedTypes.add(detector.getFileType());
     }
-    return myInputFilter;
+    return new DefaultFileTypeSpecificInputFilter(acceptedTypes.toArray(new FileType[acceptedTypes.size()]));
   }
 
   @Override
@@ -117,18 +113,5 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
   @Override
   public int getVersion() {
     return myRegistry.getDetectorsVersion();
-  }
-
-  private static class FileTypesInputFilter implements FileBasedIndex.InputFilter {
-    private final Set<FileType> myAcceptedTypes;
-
-    public FileTypesInputFilter(Set<FileType> acceptedTypes) {
-      myAcceptedTypes = acceptedTypes;
-    }
-
-    @Override
-    public boolean acceptInput(VirtualFile file) {
-      return myAcceptedTypes.contains(file.getFileType());
-    }
   }
 }

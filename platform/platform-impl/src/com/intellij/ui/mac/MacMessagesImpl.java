@@ -33,6 +33,7 @@ import sun.awt.SunToolkit;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
@@ -183,6 +184,9 @@ public class MacMessagesImpl extends MacMessages {
 
   private MacMessagesImpl() {}
 
+  private static Method  isModalBlockedMethod = null;
+  private static Method  getModalBlockerMethod = null;
+
   static {
     if (SystemInfo.isMac) {
       final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSAlertDelegate_");
@@ -197,6 +201,17 @@ public class MacMessagesImpl extends MacMessages {
       }
       Foundation.registerObjcClassPair(delegateClass);
     }
+
+    Class [] noParams = new Class [] {};
+
+    try {
+      isModalBlockedMethod =  Window.class.getDeclaredMethod("isModalBlocked", noParams);
+      getModalBlockerMethod =  Window.class.getDeclaredMethod("getModalBlocker", noParams);
+    }
+    catch (NoSuchMethodException e) {
+      LOG.error(e);
+    }
+
   }
 
   @Override
@@ -526,22 +541,14 @@ public class MacMessagesImpl extends MacMessages {
 
   private static Window getForemostWindow(final Window window) {
     Window _window = null;
-    Component focusOwner = null;
-    if (window != null) {
-      focusOwner = window.getMostRecentFocusOwner();
-      if (focusOwner != null) {
-        _window = SwingUtilities.getWindowAncestor(focusOwner);
-        if (_window == null) {
-          // The document root window does not have focused or recently focused descendants
-          // Let's check that the document root window does not have
-          // owned windows
-          // todo: find a window blocker
-        }
-      }
+
+    Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+    if (focusOwner != null) {
+      _window = SwingUtilities.getWindowAncestor(focusOwner);
     }
 
-    if (_window == null) {
-      focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+    if (_window == null && window != null) {
+      focusOwner = window.getMostRecentFocusOwner();
       if (focusOwner != null) {
         _window = SwingUtilities.getWindowAncestor(focusOwner);
       }
@@ -557,6 +564,26 @@ public class MacMessagesImpl extends MacMessages {
     if (_window == null) {
       _window = WindowManager.getInstance().findVisibleFrame();
     }
+
+    if (_window != null) {
+      synchronized (_window.getTreeLock()) {
+        try {
+          isModalBlockedMethod.setAccessible(true);
+          if ((Boolean)isModalBlockedMethod.invoke(_window, null)) {
+
+            getModalBlockerMethod.setAccessible(true);
+            _window = (Dialog)getModalBlockerMethod.invoke(_window, null);
+          }
+        }
+        catch (InvocationTargetException e) {
+          LOG.error(e);
+        }
+        catch (IllegalAccessException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
     return _window;
   }
 

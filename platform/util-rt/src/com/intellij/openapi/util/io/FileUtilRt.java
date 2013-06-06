@@ -40,7 +40,7 @@ public class FileUtilRt {
   public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, getUserFileSizeLimit());
 
   private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
-  private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
+  private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
   public static final FileFilter ALL_FILES = new FileFilter() {
@@ -454,16 +454,32 @@ public class FileUtilRt {
     return true;
   }
 
-  protected static boolean deleteFile(@NotNull File file) {
-    for (int i = 0; i < MAX_FILE_DELETE_ATTEMPTS; i++) {
-      if (file.delete() || !file.exists()) return true;
+  public interface RetriableIOOperation<T, E extends Throwable> {
+    @Nullable T execute(boolean lastAttempt) throws E;
+  }
+
+  public static @Nullable <T, E extends Throwable> T doIOOperation(@NotNull RetriableIOOperation<T, E> ioTask) throws E {
+    for (int i = 0; i < MAX_FILE_IO_ATTEMPTS;) {
+      T result = ioTask.execute(++i == MAX_FILE_IO_ATTEMPTS);
+      if (result != null) return result;
+
       try {
         //noinspection BusyWait
         Thread.sleep(10);
       }
       catch (InterruptedException ignored) { }
     }
-    return false;
+    return null;
+  }
+
+  protected static boolean deleteFile(@NotNull final File file) {
+    Boolean result = doIOOperation(new RetriableIOOperation<Boolean, RuntimeException>() {
+      @Override
+      public Boolean execute(boolean lastAttempt) {
+        return file.delete() || !file.exists();
+      }
+    });
+    return Boolean.TRUE.equals(result);
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {

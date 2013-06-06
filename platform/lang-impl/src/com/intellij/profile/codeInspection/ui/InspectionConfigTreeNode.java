@@ -17,6 +17,7 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.ScopeToolStateUtil;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.CheckedTreeNode;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @since 14-May-2009
  */
 public class InspectionConfigTreeNode extends CheckedTreeNode {
-  private ScopeToolState myState;
+  private final ScopeToolState myState;
   private boolean myByDefault;
   private boolean myInspectionNode;
   private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {
@@ -71,7 +72,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
 
   @Nullable
   public NamedScope getScope() {
-    return myState != null ? myState.getScope() : null;
+    return myState != null ? ScopeToolStateUtil.getScope(myState) : null;
   }
 
   public boolean isByDefault() {

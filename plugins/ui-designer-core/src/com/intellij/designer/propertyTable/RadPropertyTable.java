@@ -15,7 +15,7 @@
  */
 package com.intellij.designer.propertyTable;
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -104,7 +104,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
   @NotNull
   protected TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
-    return SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+    return SeverityUtil.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

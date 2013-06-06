@@ -126,6 +126,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     }
   }
 
+  @NotNull
   public Collection<CommonProblemDescriptor> getProblemDescriptors() {
     return getProblemToElements().keySet();
   }
@@ -143,7 +144,6 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   @Override
   public void ignoreElement(@NotNull final RefEntity refEntity) {
-    if (refEntity == null) return;
     getProblemElements().remove(refEntity);
     getQuickFixActions().remove(refEntity);
   }

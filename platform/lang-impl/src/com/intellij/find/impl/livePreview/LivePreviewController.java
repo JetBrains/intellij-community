@@ -30,7 +30,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   private final Alarm myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   protected SearchResults mySearchResults;
   private LivePreview myLivePreview;
-  private boolean myReplaceDenied = false;
+  private final boolean myReplaceDenied = false;
   private boolean mySuppressUpdate = false;
 
   private boolean myTrackingDocument;
@@ -38,7 +38,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private boolean myListeningSelection = false;
 
-  private SelectionListener mySelectionListener = new SelectionListener() {
+  private final SelectionListener mySelectionListener = new SelectionListener() {
     @Override
     public void selectionChanged(SelectionEvent e) {
       smartUpdate();
@@ -60,7 +60,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
 
-  private DocumentAdapter myDocumentListener = new DocumentAdapter() {
+  private final DocumentAdapter myDocumentListener = new DocumentAdapter() {
     @Override
     public void documentChanged(final DocumentEvent e) {
       if (!myTrackingDocument) {

@@ -1,7 +1,23 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -22,7 +38,6 @@ public class RepositoryUtil {
   private static final Logger LOGGER = Logger.getInstance(RepositoryUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
 
-
   public static void assertFileExists(File file, String message) {
     if (!file.exists()) {
       throw new RepoStateException(message);
@@ -32,16 +47,17 @@ public class RepositoryUtil {
   /**
    * Loads the file content.
    * Tries 3 times, then a {@link RepoStateException} is thrown.
+   * Content is then trimmed and line separators get converted.
    *
    * @param file File to read.
    * @return file content.
    */
   @NotNull
-  public static String tryLoadFile(final File file) {
+  public static String tryLoadFile(@NotNull final File file) {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return FileUtil.loadFile(file);
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file).trim());
       }
     }, file);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,11 +154,11 @@ class GitRepositoryReader {
     if (!rebaseDir.exists()) {
       return null;
     }
-    final File headName = new File(rebaseDir, "head-name");
+    File headName = new File(rebaseDir, "head-name");
     if (!headName.exists()) {
       return null;
     }
-    String branchName = RepositoryUtil.tryLoadFile(headName).trim();
+    String branchName = RepositoryUtil.tryLoadFile(headName);
     File branchFile = findBranchFile(branchName);
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
@@ -300,7 +300,7 @@ class GitRepositoryReader {
   @Nullable
   private static String loadHashFromBranchFile(@NotNull File branchFile) {
     try {
-      return RepositoryUtil.tryLoadFile(branchFile).trim();
+      return RepositoryUtil.tryLoadFile(branchFile);
     }
     catch (RepoStateException e) {  // notify about error but don't break the process
       LOG.error("Couldn't read " + branchFile, e);
@@ -372,15 +372,12 @@ class GitRepositoryReader {
 
   @NotNull
   private static String readBranchFile(@NotNull File branchFile) {
-    String rev = RepositoryUtil.tryLoadFile(branchFile);
-    return rev.trim();
+    return RepositoryUtil.tryLoadFile(branchFile);
   }
 
   @NotNull
   private Head readHead() {
     String headContent = RepositoryUtil.tryLoadFile(myHeadFile);
-    headContent = headContent.trim(); // remove possible leading and trailing spaces to clearly match regexps
-
     Matcher matcher = BRANCH_PATTERN.matcher(headContent);
     if (matcher.matches()) {
       return new Head(true, matcher.group(1));

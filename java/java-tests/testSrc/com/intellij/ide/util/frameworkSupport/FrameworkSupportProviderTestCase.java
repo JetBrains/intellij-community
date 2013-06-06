@@ -112,6 +112,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     return configurable;
   }
 
+  @NotNull
   protected <F extends Facet> F getFacet(FacetTypeId<F> id) {
     final F facet = FacetManager.getInstance(myModule).getFacetByType(id);
     assertNotNull(id + " facet not found", facet);

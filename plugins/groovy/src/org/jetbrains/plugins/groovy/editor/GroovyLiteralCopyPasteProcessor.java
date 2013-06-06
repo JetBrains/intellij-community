@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
@@ -41,6 +42,8 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  * @author peter
  */
 public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProcessor {
+
+  private static final Logger LOG = Logger.getInstance(GroovyLiteralCopyPasteProcessor.class);
 
   @Override
   protected boolean isCharLiteral(@NotNull PsiElement token) {
@@ -158,6 +161,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @NotNull
   @Override
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+    if (s.length() == 0) return s;
     IElementType tokenType = token.getNode().getElementType();
 
     if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
@@ -173,6 +177,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       StringBuilder b = new StringBuilder();
       GrStringUtil.escapeStringCharacters(s.length(), s, singleLine ? "\"" : "", singleLine, true, b);
       GrStringUtil.unescapeCharacters(b, singleLine ? "'" : "'\"", true);
+      LOG.assertTrue(b.length() > 0, "s=" + s);
       for (int i = b.length() - 2; i >= 0; i--) {
         if (b.charAt(i) == '$') {
           final char next = b.charAt(i + 1);

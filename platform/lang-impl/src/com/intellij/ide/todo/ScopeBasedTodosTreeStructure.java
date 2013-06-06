@@ -37,7 +37,7 @@ import javax.swing.*;
 import java.util.Collection;
 
 public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
-  private JComboBox myScopes;
+  private final JComboBox myScopes;
 
   public ScopeBasedTodosTreeStructure(Project project, JComboBox scopes) {
     super(project);

@@ -114,6 +114,7 @@ draggable
 dtrace
 dumpfile
 dylib
+ehcache
 elseif
 elsif
 endregion
@@ -252,6 +253,7 @@ minvalue
 miny
 mixin
 mlslabel
+mockito
 mongodb
 monospaced
 multi

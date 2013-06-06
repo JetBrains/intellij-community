@@ -50,7 +50,7 @@ public class PopupPositionManager {
       positionAdjuster.adjust(hint);
       return;
     }
-    
+
     if (editor != null && editor.getComponent().isShowing()) {
       hint.showInBestPositionFor(editor);
       return;
@@ -100,7 +100,7 @@ public class PopupPositionManager {
 
   private static class PositionAdjuster2 extends PositionAdjuster {
 
-    private Component myTopComponent;
+    private final Component myTopComponent;
 
     private PositionAdjuster2(final Component relativeTo, final Component topComponent) {
       super(relativeTo);
@@ -116,9 +116,9 @@ public class PopupPositionManager {
   private static class PositionAdjuster {
     private static final int GAP = 5;
 
-    private Component myRelativeTo;
-    private Point myRelativeOnScreen;
-    private Rectangle myScreenRect;
+    private final Component myRelativeTo;
+    private final Point myRelativeOnScreen;
+    private final Rectangle myScreenRect;
 
     public PositionAdjuster(final Component relativeTo) {
       myRelativeTo = relativeTo;

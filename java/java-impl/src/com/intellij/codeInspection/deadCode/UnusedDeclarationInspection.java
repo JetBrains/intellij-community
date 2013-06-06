@@ -528,7 +528,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   }
 
   private static class WeakUnreferencedFilter extends UnreferencedFilter {
-    private WeakUnreferencedFilter(final InspectionTool tool) {
+    private WeakUnreferencedFilter(@NotNull InspectionTool tool) {
       super(tool);
     }
 
@@ -770,7 +770,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (descriptor instanceof ProblemDescriptor) {
       if (DELETE.equals(hint)) {
         return new PermanentDeleteFix(((ProblemDescriptor)descriptor).getPsiElement());
-      } else if (COMMENT.equals(hint)) {
+      }
+      if (COMMENT.equals(hint)) {
         return new CommentOutFix(((ProblemDescriptor)descriptor).getPsiElement());
       }
     }

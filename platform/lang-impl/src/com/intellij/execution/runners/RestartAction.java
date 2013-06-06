@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
 
-  private ProcessHandler myProcessHandler;
+  private final ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   @NotNull private final RunContentDescriptor myDescriptor;
   @NotNull private final Executor myExecutor;

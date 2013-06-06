@@ -6,7 +6,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -45,17 +44,6 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @NonNls
   public static final ID<String, Void> NAME = ID.create("RelaxSymbolIndex");
 
-  public static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(VirtualFile file) {
-      if (file.getFileSystem() instanceof JarFileSystem) {
-        return false; // there is lots and lots of custom XML inside zip files
-      }
-      final FileType fileType = file.getFileType();
-      return fileType == StdFileTypes.XML || fileType == RncFileType.getInstance();
-    }
-  };
-
   public static Collection<String> getSymbolNames(Project project) {
     return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
@@ -81,8 +69,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       @NotNull
       public Map<String, Void> map(FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<String, Void>();
-        final FileType type = inputData.getFileType();
-        if (type == XmlFileType.INSTANCE) {
+        if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
           if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
           NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
@@ -120,7 +107,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
               depth--;
             }
           });
-        } else if (type == RncFileType.getInstance()) {
+        } else if (inputData.getFileType() == RncFileType.getInstance()) {
           final PsiFile file = inputData.getPsiFile();
           if (file instanceof XmlFile) {
             final Grammar grammar = GrammarFactory.getGrammar((XmlFile)file);
@@ -149,7 +136,12 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML, RncFileType.getInstance()) {
+      @Override
+      public boolean acceptInput(VirtualFile file) {
+        return !(file.getFileSystem() instanceof JarFileSystem);
+      }
+    };
   }
 
   @Override

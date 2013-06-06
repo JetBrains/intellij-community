@@ -29,7 +29,7 @@ import java.util.List;
  * @author anna
  */
 public class TestScopeProvider extends CustomScopesProviderEx {
-  private TestsScope myTestsScope = new TestsScope();
+  private final TestsScope myTestsScope = new TestsScope();
 
   public static TestScopeProvider getInstance(Project project) {
     return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, TestScopeProvider.class);

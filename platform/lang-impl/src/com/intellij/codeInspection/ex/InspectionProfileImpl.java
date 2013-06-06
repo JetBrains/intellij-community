@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
@@ -176,16 +175,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public boolean isChanged() {
     if (mySource != null && mySource.myLockedProfile != myLockedProfile) return true;
     return myModified;
-  }
-
-  public VisibleTreeState getExpandedNodes() {
-    if (myProfileManager instanceof ApplicationProfileManager) {
-      return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(this);
-    }
-    else {
-      DefaultProjectProfileManager projectProfileManager = (DefaultProjectProfileManager)myProfileManager;
-      return ProjectInspectionProfilesVisibleTreeState.getInstance(projectProfileManager.getProject()).getVisibleTreeState(this);
-    }
   }
 
   private static boolean toolSettingsAreEqual(String toolName, @NotNull InspectionProfileImpl profile1, @NotNull InspectionProfileImpl profile2) {
@@ -621,7 +610,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         if (nonDefaultToolStates != null) {
           for (ScopeToolState state : nonDefaultToolStates) {
             final InspectionTool inspectionTool = copyToolSettings((InspectionToolWrapper)state.getTool());
-            final NamedScope scope = project != null ? state.getScope(project) : state.getScope();
+            final NamedScope scope = project != null ? state.getScope(project) : ScopeToolStateUtil.getScope(state);
             if (scope != null) {
               tools.addTool(scope, inspectionTool, state.isEnabled(), state.getLevel());
             } else {
@@ -736,7 +725,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myDisplayLevelMap = inspectionProfile.myDisplayLevelMap;
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
-    myProfileManager = inspectionProfile.myProfileManager;
+    myProfileManager = inspectionProfile.getProfileManager();
 
     myExternalInfo.copy(inspectionProfile.getExternalInfo());
 
@@ -931,7 +920,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public boolean equals(Object o) {
     if (super.equals(o)) {
-      return ((InspectionProfileImpl) o).getProfileManager() == myProfileManager;
+      return ((InspectionProfileImpl) o).getProfileManager() == InspectionProfileImpl.this.getProfileManager();
     }
     return false;
   }

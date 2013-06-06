@@ -3,20 +3,21 @@
  */
 package com.intellij.psi.tree;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiParser;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 /**
  * @author gregsh
@@ -97,4 +98,32 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
     //   Total: 7694 types
   }
 
+  public void testManipulatorRegistered() {
+    LanguageExtensionPoint[] extensions =
+      Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
+    Set<String> classes = new HashSet<String>();
+    List<String> failures = new ArrayList<String>();
+    int total = 0;
+    for (LanguageExtensionPoint e : extensions) {
+      ParserDefinition definition = (ParserDefinition)e.getInstance();
+
+      for (IElementType type : IElementType.enumerate(IElementType.TRUE)) {
+        if (type instanceof ILeafElementType) continue;
+        try {
+          CompositeElement treeElement = ASTFactory.composite(type);
+          total++;
+          PsiElement element = treeElement instanceof PsiElement? (PsiElement)treeElement : definition.createElement(treeElement);
+          if (element instanceof PsiLanguageInjectionHost && classes.add(element.getClass().getName())) {
+            boolean ok = ElementManipulators.getManipulator(element) != null;
+            System.out.println((ok ? "OK  " : "FAIL") + " " + element.getClass().getSimpleName() + " [" + definition.getClass().getSimpleName() + "]");
+            if (!ok) failures.add(element.getClass().getName());
+          }
+        }
+        catch (Throwable ignored) {
+        }
+      }
+    }
+    System.out.println("count: " + classes.size() + ", total: " + total);
+    assertEmpty("PsiLanguageInjectionHost requires " + ElementManipulators.EP_NAME, failures);
+  }
 }

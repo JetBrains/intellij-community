@@ -19,7 +19,7 @@
  * User: max
  * Date: Oct 22, 2001
  * Time: 8:21:36 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.reference;
@@ -62,6 +62,7 @@ public class RefManagerImpl extends RefManager {
 
   private int myLastUsedMask = 256 * 256 * 256 * 4;
 
+  @NotNull
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
@@ -82,7 +83,7 @@ public class RefManagerImpl extends RefManager {
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  public RefManagerImpl(Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
+  public RefManagerImpl(@NotNull Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
     myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
@@ -104,7 +105,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public void iterate(RefVisitor visitor) {
+  public void iterate(@NotNull RefVisitor visitor) {
     myLock.readLock().lock();
     try {
       for (RefElement refElement : getSortedElements()) {
@@ -176,7 +177,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public <T> T getExtension(final Key<T> key) {
+  public <T> T getExtension(@NotNull final Key<T> key) {
     return (T)myExtensions.get(key);
   }
 
@@ -306,11 +307,13 @@ public class RefManagerImpl extends RefManager {
     return myIsInProcess;
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   @Override
   public RefProject getRefProject() {
     return myRefProject;
@@ -338,6 +341,7 @@ public class RefManagerImpl extends RefManager {
     return answer;
   }
 
+  @NotNull
   @Override
   public PsiManager getPsiManager() {
     return myPsiManager;

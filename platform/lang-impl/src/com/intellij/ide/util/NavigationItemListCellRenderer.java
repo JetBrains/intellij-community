@@ -120,7 +120,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
   private static class LeftRenderer extends ColoredListCellRenderer {
     public final boolean myRenderLocation;
-    private Matcher myMatcher;
+    private final Matcher myMatcher;
 
     public LeftRenderer(boolean renderLocation, Matcher matcher) {
       myRenderLocation = renderLocation;

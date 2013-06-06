@@ -50,7 +50,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
-  private boolean myNavToolbarGroupExist;
+  private final boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
 
   public NavBarRootPaneExtension(Project project) {

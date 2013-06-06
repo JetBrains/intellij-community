@@ -95,6 +95,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public void setContentElementType(final IElementType contentElementType) {
+    LOG.assertTrue(contentElementType instanceof ILazyParseableElementType, contentElementType);
     myContentElementType = contentElementType;
   }
 
@@ -104,7 +105,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected void init(@NotNull final IElementType elementType, final IElementType contentElementType) {
     myElementType = elementType;
-    myContentElementType = contentElementType;
+    setContentElementType(contentElementType);
   }
 
   public TreeElement createContentLeafElement(CharSequence leafText) {

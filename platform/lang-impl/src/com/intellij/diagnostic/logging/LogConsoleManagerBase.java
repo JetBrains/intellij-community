@@ -48,7 +48,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
 
   private ExecutionEnvironment myEnvironment;
-  private GlobalSearchScope mySearchScope;
+  private final GlobalSearchScope mySearchScope;
 
   /**
    * @deprecated use {@link #LogConsoleManagerBase(com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}

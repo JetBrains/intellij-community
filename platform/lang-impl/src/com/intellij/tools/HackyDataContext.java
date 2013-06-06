@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 class HackyDataContext implements DataContext {
-  private static DataKey[] keys = {
+  private static final DataKey[] keys = {
     PlatformDataKeys.PROJECT,
     PlatformDataKeys.PROJECT_FILE_DIRECTORY,
     PlatformDataKeys.EDITOR,
@@ -41,7 +41,7 @@ class HackyDataContext implements DataContext {
 
 
   private final Map<String, Object> values = new HashMap<String, Object>();
-  private AnActionEvent myActionEvent;
+  private final AnActionEvent myActionEvent;
 
   public HackyDataContext(DataContext context, AnActionEvent e) {
     myActionEvent = e;

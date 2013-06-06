@@ -18,15 +18,19 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.Key;
 
 public abstract class ProcessAdapter implements ProcessListener{
+  @Override
   public void startNotified(final ProcessEvent event) {
   }
 
+  @Override
   public void processTerminated(final ProcessEvent event) {
   }
 
+  @Override
   public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
   }
 
+  @Override
   public void onTextAvailable(final ProcessEvent event, final Key outputType) {
   }
 }

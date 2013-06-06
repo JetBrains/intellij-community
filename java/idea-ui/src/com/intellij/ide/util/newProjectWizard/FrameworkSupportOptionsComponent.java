@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -44,6 +46,7 @@ import java.awt.*;
 public class FrameworkSupportOptionsComponent {
   private final JPanel myMainPanel;
   private final FrameworkSupportModelBase myModel;
+  private FrameworkVersionComponent myFrameworkVersionComponent;
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private LibraryOptionsPanel myLibraryOptionsPanel;
   private final FrameworkSupportInModuleConfigurable myConfigurable;
@@ -60,13 +63,18 @@ public class FrameworkSupportOptionsComponent {
     layout.setVerticalFill(true);
     myMainPanel = new JPanel(layout);
     myModel.registerOptionsComponent(provider, this);
+    List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
+    if (!versions.isEmpty()) {
+      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions);
+      myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
+    }
 
     final JComponent component = myConfigurable.createComponent();
     if (component != null) {
       myMainPanel.add(component);
     }
 
-    final boolean addSeparator = component != null;
+    final boolean addSeparator = component != null || myFrameworkVersionComponent != null;
     myLibraryOptionsPanelWrapper = new JPanel(new BorderLayout());
     myMainPanel.add(myLibraryOptionsPanelWrapper);
     if (myConfigurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
@@ -107,15 +115,22 @@ public class FrameworkSupportOptionsComponent {
     }
   }
 
+  public void updateVersionsComponent() {
+    if (myFrameworkVersionComponent != null) {
+      myFrameworkVersionComponent.updateVersionsList();
+    }
+  }
+
+
   private FrameworkLibraryVersionFilter createLibraryVersionFilter() {
     return new FrameworkLibraryVersionFilter() {
       @Override
       public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
-        return myConfigurable.getLibraryVersionFilter().isAccepted(version) && ((FrameworkLibraryVersionImpl)version).getAvailabilityFilter().isAvailable(myModel);
+        return myConfigurable.getLibraryVersionFilter().isAccepted(version) && ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(
+          myModel);
       }
     };
   }
-
 
   public JPanel getMainPanel() {
     return myMainPanel;

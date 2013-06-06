@@ -15,18 +15,27 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -72,6 +81,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   public InspectionProfileManagerImpl(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
+    registerProvidedSeverities();
+
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
       @Override
       public InspectionProfileImpl readScheme(final Document document) {
@@ -114,11 +125,26 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     };
 
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
-
   }
 
   private static InspectionProfileImpl createSampleProfile() {
     return new InspectionProfileImpl("Default");
+  }
+
+  public static void registerProvidedSeverities() {
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+      for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
+        final HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(null);
+        SeverityRegistrar.registerStandard(highlightInfoType, highlightSeverity);
+        final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
+        TextAttributes textAttributes = scheme.getAttributes(attributesKey);
+        if (textAttributes == null) {
+          textAttributes = attributesKey.getDefaultAttributes();
+        }
+        HighlightDisplayLevel.registerSeverity(highlightSeverity, provider.getTrafficRendererColor(textAttributes));
+      }
+    }
   }
 
   @Override
@@ -147,6 +173,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myProfilesAreInitialized.set(false);
   }
 
+  @Override
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
       if (mySchemesManager.getAllSchemeNames().isEmpty()) {
@@ -176,6 +203,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
 
+  @Override
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()){

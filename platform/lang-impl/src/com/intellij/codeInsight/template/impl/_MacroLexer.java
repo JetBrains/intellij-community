@@ -309,7 +309,7 @@ class _MacroLexer implements FlexLexer {
 
 
   _MacroLexer(java.io.Reader in) {
-    this.zzReader = in;
+    zzReader = in;
   }
 
   /**

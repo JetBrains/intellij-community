@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -29,8 +30,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author: Roman Chernyatchik
  */
 public class TestTreeRenderer extends ColoredTreeCellRenderer {
-  private final TestConsoleProperties myConsoleProperties;
   @NonNls private static final String SPACE_STRING = " ";
+
+  private final TestConsoleProperties myConsoleProperties;
+  private SMRootTestProxyFormatter myAdditionalRootFormatter;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
@@ -50,11 +53,14 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       final SMTestProxy testProxy = desc.getElement();
 
       if (testProxy instanceof SMTestProxy.SMRootTestProxy) {
-        //Root node
-        if (testProxy.isLeaf()) {
-          TestsPresentationUtil.formatRootNodeWithoutChildren((SMTestProxy.SMRootTestProxy)testProxy, this);
+        SMTestProxy.SMRootTestProxy rootTestProxy = (SMTestProxy.SMRootTestProxy) testProxy;
+        if (rootTestProxy.isLeaf()) {
+          TestsPresentationUtil.formatRootNodeWithoutChildren(rootTestProxy, this);
         } else {
-          TestsPresentationUtil.formatRootNodeWithChildren((SMTestProxy.SMRootTestProxy)testProxy, this);
+          TestsPresentationUtil.formatRootNodeWithChildren(rootTestProxy, this);
+        }
+        if (myAdditionalRootFormatter != null) {
+          myAdditionalRootFormatter.format(rootTestProxy, this);
         }
       } else {
         TestsPresentationUtil.formatTestProxy(testProxy, this);
@@ -71,5 +77,13 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
   public TestConsoleProperties getConsoleProperties() {
     return myConsoleProperties;
+  }
+
+  public void setAdditionalRootFormatter(@NotNull SMRootTestProxyFormatter formatter) {
+    myAdditionalRootFormatter = formatter;
+  }
+
+  public void removeAdditionalRootFormatter() {
+    myAdditionalRootFormatter = null;
   }
 }

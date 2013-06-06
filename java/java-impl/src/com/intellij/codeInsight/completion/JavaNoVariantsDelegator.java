@@ -54,7 +54,8 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     } else if (Registry.is("ide.completion.show.all.classes") || Registry.is("ide.completion.show.better.matching.classes")) {
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
-          JavaCompletionContributor.isClassNamePossible(parameters)) {
+          JavaCompletionContributor.isClassNamePossible(parameters) &&
+          !JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
         if (Registry.is("ide.completion.show.better.matching.classes")) {
           result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults))); 
         }

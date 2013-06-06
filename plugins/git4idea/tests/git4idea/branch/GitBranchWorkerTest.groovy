@@ -29,9 +29,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.util.LineSeparator
 import com.intellij.util.text.CharArrayUtil
+import git4idea.GitCommit
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
-import git4idea.history.browser.GitCommit
 import git4idea.repo.GitRepository
 import git4idea.test.GitLightTest
 import org.jetbrains.annotations.NotNull
@@ -782,7 +782,12 @@ class GitBranchWorkerTest extends GitLightTest {
     }
 
     @Override
-    boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull Map<GitRepository, List<GitCommit>> history, @NotNull String unmergedBranch, @NotNull List<String> mergedToBranches, @NotNull String baseBranch) {
+    boolean showBranchIsNotFullyMergedDialog(
+      Project project,
+      Map<GitRepository, List<GitCommit>> history,
+      String unmergedBranch,
+      List<String> mergedToBranches,
+      String baseBranch) {
       throw new UnsupportedOperationException()
     }
 

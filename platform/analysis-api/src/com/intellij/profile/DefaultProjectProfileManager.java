@@ -71,6 +71,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     LOG.assertTrue(myApplicationProfileManager != null);
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

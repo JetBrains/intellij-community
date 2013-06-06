@@ -30,6 +30,8 @@ import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
@@ -97,6 +99,12 @@ public class TraverseUIStarter implements ApplicationStarter {
       configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
       final TreeSet<OptionDescription> sortedOptions = options.get(configurable);
       writeOptions(configurableElement, sortedOptions);
+      if (configurable instanceof ConfigurableWrapper) {
+        final UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
+        if (wrapped instanceof SearchableConfigurable) {
+          configurable = (SearchableConfigurable)wrapped;
+        }
+      }
       if (configurable instanceof KeymapPanel){
         processKeymap(configurableElement);
       } else if (configurable instanceof OptionsContainingConfigurable){

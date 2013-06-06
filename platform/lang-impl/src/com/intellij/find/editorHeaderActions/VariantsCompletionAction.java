@@ -44,7 +44,7 @@ import java.util.Set;
 
 public class VariantsCompletionAction extends AnAction {
   private Getter<JTextComponent> myTextField;
-  private EditorSearchComponent myEditorSearchComponent;
+  private final EditorSearchComponent myEditorSearchComponent;
 
   public EditorSearchComponent getEditorSearchComponent() {
     return myEditorSearchComponent;

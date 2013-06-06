@@ -59,7 +59,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
-  private PredefinedCodeStyle[] myPredefinedCodeStyles;
+  private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
@@ -90,7 +90,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   /**
-   * Adds "Tabs and Indents" tab if the language has its own LanguageCodeStyleSettings provider and instantiates indent options in 
+   * Adds "Tabs and Indents" tab if the language has its own LanguageCodeStyleSettings provider and instantiates indent options in
    * getDefaultSettings() method.
    * @param settings CodeStyleSettings to be used with "Tabs and Indents" panel.
    */
@@ -464,7 +464,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private class ConfigurableWrapper extends CodeStyleAbstractPanel {
 
-    private Configurable myConfigurable;
+    private final Configurable myConfigurable;
     private JComponent myComponent;
 
     public ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
@@ -567,14 +567,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   //========================================================================================================================================
-  
+
   protected class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
 
     private final IndentOptionsEditor myEditor;
     private final LanguageCodeStyleSettingsProvider myProvider;
-    private JPanel myTopPanel;
-    private JPanel myLeftPanel;
-    private JPanel myRightPanel;
+    private final JPanel myTopPanel;
+    private final JPanel myLeftPanel;
+    private final JPanel myRightPanel;
 
     protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider, IndentOptionsEditor editor) {
       super(settings);

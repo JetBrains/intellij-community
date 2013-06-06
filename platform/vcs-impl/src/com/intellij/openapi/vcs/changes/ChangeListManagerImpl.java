@@ -438,12 +438,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private void debugLogging(final String s) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(s);
-    }
-  }
-
   private void updateImmediately() {
     final DataHolder dataHolder;
 
@@ -476,7 +470,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           return scope.toString();
         }
       }, "->\n");
-      debugLogging("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " + scopeInString);
+      LOG.debug("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " + scopeInString);
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
@@ -508,7 +502,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myWorker = dataHolder.getChangeListWorker();
               myWorker.onAfterWorkerSwitch(oldWorker);
               myModifier.setWorker(myWorker);
-              debugLogging("refresh procedure finished, unversioned size: " +
+              LOG.debug("refresh procedure finished, unversioned size: " +
                            dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\n changes: " + myWorker);
               final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
               myComposite = dataHolder.getComposite();
@@ -588,9 +582,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
 
     for (final VcsDirtyScope scope : scopes) {
-      if (DEBUG) {
-        ChangeListManagerImpl.log("ChangeListManagerImpl.iterateScopes: scope = " + scope);
-      }
       myUpdateChangesProgressIndicator.checkCanceled();
 
       final AbstractVcs vcs = scope.getVcs();
@@ -1584,18 +1575,4 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return freezeReason != null;
   }
 
-  public static boolean DEBUG = false;
-  private static final StringBuffer log = new StringBuffer();
-  @TestOnly
-  public static void clearLog() {
-    log.setLength(0);
-  }
-  @TestOnly
-  public static void printLog() {
-    System.out.println(log);
-    System.out.flush();
-  }
-  public static void log(Object o) {
-    log.append(o).append("\n");
-  }
 }

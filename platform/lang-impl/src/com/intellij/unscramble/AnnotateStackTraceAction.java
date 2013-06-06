@@ -70,7 +70,7 @@ class AnnotateStackTraceAction extends AnAction {
   private int maxDateLength = 0;
   private final Editor myEditor;
   private boolean myGutterShowed = false;
-  private HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
+  private final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
   AnnotateStackTraceAction(ConsoleViewImpl consoleView) {
     super("Show files modification info", null, AllIcons.Actions.Annotate);

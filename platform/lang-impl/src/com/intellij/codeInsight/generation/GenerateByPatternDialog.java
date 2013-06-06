@@ -33,9 +33,9 @@ public class GenerateByPatternDialog extends DialogWrapper {
   private JPanel myPanel;
   private Splitter mySplitter;
   private Tree myTree = new Tree();
-  private Editor myEditor;
+  private final Editor myEditor;
 
-  private MultiMap<String,PatternDescriptor> myMap;
+  private final MultiMap<String,PatternDescriptor> myMap;
 
   public GenerateByPatternDialog(Project project, PatternDescriptor[] descriptors, DataContext context) {
     super(project);

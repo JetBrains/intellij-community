@@ -17,8 +17,7 @@ package com.intellij.framework.library.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.RequiredFrameworkVersion;
-import com.intellij.framework.FrameworkGroup;
-import com.intellij.framework.FrameworkGroupVersion;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.library.*;
 import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
@@ -44,12 +43,12 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
     return new LibraryVersionsFetcher(groupId, localUrls) {
       //todo[nik] pull up this method after moving corresponding API to lang-api
       @NotNull
-      protected FrameworkAvailabilityFilter createAvailabilityFilter(Artifact version) {
+      protected FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {
         RequiredFrameworkVersion groupVersion = version.getRequiredFrameworkVersion();
         if (groupVersion != null) {
-          return new FrameworkLibraryAvailabilityFilter(groupVersion.myGroupId, groupVersion.myVersion);
+          return new FrameworkLibraryAvailabilityCondition(groupVersion.myGroupId, groupVersion.myVersion);
         }
-        return FrameworkAvailabilityFilter.ALWAYS;
+        return FrameworkAvailabilityCondition.ALWAYS_TRUE;
       }
     };
   }
@@ -70,25 +69,19 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
     return new DownloadableLibraryPropertiesEditor(description, editorComponent, libraryType);
   }
 
-  private static class FrameworkLibraryAvailabilityFilter extends FrameworkAvailabilityFilter {
+  private static class FrameworkLibraryAvailabilityCondition extends FrameworkAvailabilityCondition {
     private final String myGroupId;
     private final String myVersionId;
 
-    public FrameworkLibraryAvailabilityFilter(String groupId, String versionId) {
+    public FrameworkLibraryAvailabilityCondition(String groupId, String versionId) {
       myGroupId = groupId;
       myVersionId = versionId;
     }
 
     @Override
-    public boolean isAvailable(@NotNull FrameworkSupportModel model) {
-      FrameworkSupportModelBase modelBase = (FrameworkSupportModelBase)model;
-      for (FrameworkGroup<?> group : modelBase.getFrameworkGroups()) {
-        if (group.getId().equals(myGroupId)) {
-          FrameworkGroupVersion selectedVersion = modelBase.getSelectedVersion(group);
-          return selectedVersion != null && myVersionId.equals(selectedVersion.getId());
-        }
-      }
-      return true;
+    public boolean isAvailableFor(@NotNull FrameworkSupportModel model) {
+      FrameworkVersion selectedVersion = ((FrameworkSupportModelBase)model).getSelectedVersion(myGroupId);
+      return selectedVersion != null && myVersionId.equals(selectedVersion.getId());
     }
   }
 }

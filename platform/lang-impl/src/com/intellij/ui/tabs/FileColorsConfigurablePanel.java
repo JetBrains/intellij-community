@@ -205,7 +205,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void apply() {
     myManager.setEnabled(myEnabledCheckBox.isSelected());
     myManager.setEnabledForTabs(myTabsEnabledCheckBox.isSelected());
-    myManager.setEnabledForProjectView(myProjectViewEnabledCheckBox.isSelected());
+    FileColorManagerImpl.setEnabledForProjectView(myProjectViewEnabledCheckBox.isSelected());
 
     myLocalTable.apply();
     mySharedTable.apply();

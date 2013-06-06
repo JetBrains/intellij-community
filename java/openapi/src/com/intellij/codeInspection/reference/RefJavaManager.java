@@ -29,6 +29,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   @NonNls public static final String CLASS = "class";
@@ -70,11 +71,13 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract EntryPointsManager getEntryPointsManager();
 
+  @NotNull
   @Override
   public Language getLanguage() {
     return StdLanguages.JAVA;
   }
 
+  @NotNull
   @Override
   public Key<RefJavaManager> getID() {
     return MANAGER;

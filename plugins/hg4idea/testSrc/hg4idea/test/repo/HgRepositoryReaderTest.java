@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package hg4idea.test.repo;
 
 import com.intellij.dvcs.test.TestRepositoryUtil;
@@ -9,19 +24,19 @@ import org.zmlx.hg4idea.repo.HgRepositoryReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author Nadya Zabrodina
  */
 public class HgRepositoryReaderTest extends HgPlatformTest {
 
-
   @NotNull private HgRepositoryReader myRepositoryReader;
   @NotNull private File myHgDir;
   @NotNull private Collection<String> myBranches;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myHgDir = new File(myRepository.getPath(), ".hg");
@@ -40,7 +55,6 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     myBranches = readBranches();
   }
 
-
   public void testHEAD() {
     assertEquals("25e44c95b2612e3cdf29a704dabf82c77066cb67", myRepositoryReader.readCurrentRevision());
   }
@@ -57,18 +71,13 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
 
   @NotNull
   private Collection<String> readBranches() throws IOException {
-    final Collection<String> branches = new ArrayList<String>();
-    String branchesName = "branchheads-served";
-    final File branchHeads = new File(new File(myHgDir, "cache"), branchesName);
+    Collection<String> branches = new HashSet<String>();
+    File branchHeads = new File(new File(myHgDir, "cache"), "branchheads-served");
     String[] branchesWithHashes = FileUtil.loadFile(branchHeads).split("\n");
     for (int i = 1; i < branchesWithHashes.length; ++i) {
-      String ref = branchesWithHashes[i];
-      String[] refAndName = ref.split(" ");
-      String name = refAndName[1];
-
-      if (!branches.contains(name)) {
-        branches.add(name);
-      }
+      String[] refAndName = branchesWithHashes[i].trim().split(" ");
+      assertEquals(2, refAndName.length);
+      branches.add(refAndName[1]);
     }
     return branches;
   }

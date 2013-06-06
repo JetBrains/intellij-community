@@ -224,7 +224,7 @@ public class TrafficProgressPanel extends JPanel {
       String text = "<html><body>";
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
         if (status.errorCount[i] > 0) {
-          final HighlightSeverity severity = SeverityRegistrar.getInstance(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
+          final HighlightSeverity severity = SeverityUtil.getSeverityRegistrar(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
           String name =
             status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
           text += status.errorAnalyzingFinished

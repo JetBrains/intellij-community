@@ -15,16 +15,14 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
+import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 
@@ -34,24 +32,22 @@ import java.util.List;
 /**
  * @author yole
  */
-public class ExtensionPointBeanClassInspection extends DevKitInspectionBase {
-  @NotNull
+public class ExtensionPointBeanClassInspection extends BasicDomElementsInspection<IdeaPlugin> {
+
+  public ExtensionPointBeanClassInspection() {
+    super(IdeaPlugin.class);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new XmlElementVisitor() {
-      @Override
-      public void visitXmlTag(XmlTag tag) {
-        DomElement element = DomUtil.getDomElement(tag);
-        if (element instanceof ExtensionPoint) {
-          ExtensionPoint extensionPoint = (ExtensionPoint)element;
-          if (extensionPoint.getWithElements().isEmpty() && !collectMissingWithTags(extensionPoint).isEmpty()) {
-            holder.registerProblem(tag,
-                                   "<extensionPoint> does not have <with> tags to specify the types of class fields",
-                                   new AddWithTagFix());
-          }
-        }
+  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+    if (element instanceof ExtensionPoint) {
+      ExtensionPoint extensionPoint = (ExtensionPoint)element;
+      if (extensionPoint.getWithElements().isEmpty() && !collectMissingWithTags(extensionPoint).isEmpty()) {
+        holder.createProblem(extensionPoint,
+                             "<extensionPoint> does not have <with> tags to specify the types of class fields",
+                             new AddWithTagFix());
       }
-    };
+    }
   }
 
   public static List<PsiField> collectMissingWithTags(ExtensionPoint element) {

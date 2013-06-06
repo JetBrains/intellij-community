@@ -38,10 +38,10 @@ public abstract class GlobalSimpleInspectionTool extends GlobalInspectionTool {
                                  @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor);
 
   @Override
-  public final void runInspection(AnalysisScope scope,
-                                  InspectionManager manager,
-                                  GlobalInspectionContext globalContext,
-                                  ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+  public final void runInspection(@NotNull AnalysisScope scope,
+                                  @NotNull InspectionManager manager,
+                                  @NotNull GlobalInspectionContext globalContext,
+                                  @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     throw new IncorrectOperationException("You must override checkFile() instead");
   }
 

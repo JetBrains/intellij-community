@@ -81,10 +81,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
   static final Icon ourInactiveArrowIcon = new EmptyIcon(AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
-  
+
   private static final int NORMAL_BORDER_SIZE = 6;
   private static final int SMALL_BORDER_SIZE = 4;
-  
+
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
   private static final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
 
@@ -279,7 +279,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     Point location = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
     return new Point(location.x, location.y);
   }
-  
+
   private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
     final int offset = editor.getCaretModel().getOffset();
@@ -291,7 +291,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
     return point.x > (AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2);
   }
-                                                                 
+
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull final Editor editor,
@@ -574,7 +574,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   public static class EditIntentionSettingsAction implements IntentionAction, HighPriorityAction {
-    private String myFamilyName;
+    private final String myFamilyName;
 
     public EditIntentionSettingsAction(IntentionAction action) {
       myFamilyName = action.getFamilyName();

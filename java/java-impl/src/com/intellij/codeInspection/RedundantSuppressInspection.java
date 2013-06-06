@@ -83,10 +83,10 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
   }
 
   @Override
-  public void runInspection(final AnalysisScope scope,
-                            final InspectionManager manager,
-                            final GlobalInspectionContext globalContext,
-                            final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+  public void runInspection(@NotNull final AnalysisScope scope,
+                            @NotNull final InspectionManager manager,
+                            @NotNull final GlobalInspectionContext globalContext,
+                            @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitClass(@NotNull RefClass refClass) {
         if (!globalContext.shouldCheck(refClass, RedundantSuppressInspection.this)) return;
@@ -110,13 +110,13 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
   }
 
   @Nullable
-  private CommonProblemDescriptor[] checkElement(RefClass refEntity, InspectionManager manager, final Project project) {
+  private CommonProblemDescriptor[] checkElement(@NotNull RefClass refEntity, @NotNull InspectionManager manager, @NotNull Project project) {
     final PsiClass psiClass = refEntity.getElement();
     if (psiClass == null) return null;
     return checkElement(psiClass, manager, project);
   }
 
-  public CommonProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, InspectionManager manager, Project project) {
+  public CommonProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, @NotNull InspectionManager manager, @NotNull Project project) {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
     psiElement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitModifierList(PsiModifierList list) {
@@ -302,7 +302,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   @Override
   @Nullable
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull final QuickFix fix) {
     if (myQuickFixes != null) {
       final List<String> list = myQuickFixes.getKeysByValue(fix);
       if (list != null) {

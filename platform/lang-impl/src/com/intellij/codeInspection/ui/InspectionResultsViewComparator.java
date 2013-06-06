@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
@@ -56,7 +56,7 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
       final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
       final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;
-      return -SeverityRegistrar.getInstance(groupNode1.getProject()).compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
+      return -SeverityUtil.getSeverityRegistrar(groupNode1.getProject()).compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
     }
     if (node1 instanceof InspectionSeverityGroupNode) return -1;
     if (node2 instanceof InspectionSeverityGroupNode) return 1;

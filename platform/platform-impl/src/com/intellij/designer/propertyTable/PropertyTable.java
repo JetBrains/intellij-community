@@ -861,12 +861,12 @@ public abstract class PropertyTable extends JBTable {
       message = "No message";
     }
 
-    Messages.showMessageDialog(formatErrorGettingValueMesage(message),
+    Messages.showMessageDialog(formatErrorGettingValueMessage(message),
                                "Invalid Input",
                                Messages.getErrorIcon());
   }
 
-  private static String formatErrorGettingValueMesage(String message) {
+  private static String formatErrorGettingValueMessage(String message) {
     return MessageFormat.format("Error setting value: {0}", message);
   }
 
@@ -1324,7 +1324,7 @@ public abstract class PropertyTable extends JBTable {
         }
         catch (Exception e) {
           LOG.debug(e);
-          renderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          renderer.append(formatErrorGettingValueMessage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return renderer;
         }
       }

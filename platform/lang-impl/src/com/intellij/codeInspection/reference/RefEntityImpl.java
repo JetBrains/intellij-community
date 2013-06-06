@@ -37,24 +37,26 @@ import java.util.List;
 public abstract class RefEntityImpl implements RefEntity {
   private static final String NO_NAME = InspectionsBundle.message("inspection.reference.noname");
   private RefEntityImpl myOwner;
-  protected ArrayList<RefEntity> myChildren;
+  protected List<RefEntity> myChildren;
   private final String myName;
   private THashMap myUserMap = null;
   protected int myFlags = 0;
   protected final RefManagerImpl myManager;
 
-  protected RefEntityImpl(String name, final RefManager manager) {
+  protected RefEntityImpl(String name, @NotNull RefManager manager) {
     myManager = (RefManagerImpl)manager;
     myName = name != null ? name : NO_NAME;
     myOwner = null;
     myChildren = null;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;
   }
 
+  @NotNull
   @Override
   public String getQualifiedName() {
     return myName;
@@ -105,7 +107,7 @@ public abstract class RefEntityImpl implements RefEntity {
   }
 
   @Override
-  public void accept(final RefVisitor refVisitor) {
+  public void accept(@NotNull final RefVisitor refVisitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
@@ -152,6 +154,7 @@ public abstract class RefEntityImpl implements RefEntity {
     return myName;
   }
 
+  @NotNull
   @Override
   public RefManagerImpl getRefManager() {
     return myManager;

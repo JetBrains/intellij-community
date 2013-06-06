@@ -17,10 +17,10 @@ package com.intellij.xml.util;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
+import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -40,8 +40,12 @@ public class XIncludeProvider extends FileIncludeProvider {
 
   @Override
   public boolean acceptFile(VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    return fileType == XmlFileType.INSTANCE && !ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
+    return file.getFileType() == XmlFileType.INSTANCE;
+  }
+
+  @Override
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+    fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
   @NotNull

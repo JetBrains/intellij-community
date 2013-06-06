@@ -280,6 +280,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
 
       final GrIntroduceContext context = getContext(project, editor, selectedExpr, variable, stringPart);
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, context.getOccurrences())) {
+        return false;
+      }
       checkOccurrences(context.getOccurrences());
       final Settings settings = showDialog(context);
       if (settings == null) return false;

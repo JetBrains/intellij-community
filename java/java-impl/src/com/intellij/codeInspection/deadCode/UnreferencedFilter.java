@@ -26,9 +26,10 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnreferencedFilter extends RefUnreachableFilter {
-  public UnreferencedFilter(final InspectionTool tool) {
+  public UnreferencedFilter(@NotNull InspectionTool tool) {
     super(tool);
   }
 

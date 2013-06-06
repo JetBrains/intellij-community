@@ -29,7 +29,7 @@ import javax.swing.*;
  */
 public class StructureViewComposite implements StructureView {
   @NotNull private final StructureViewDescriptor[] myStructureViews;
-  @NotNull private StructureViewDescriptor mySelectedViewDescriptor;
+  @NotNull private final StructureViewDescriptor mySelectedViewDescriptor;
   public static class StructureViewDescriptor {
     public final String title;
     public final StructureView structureView;

@@ -14,6 +14,7 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +34,13 @@ public class ExternalSystemConstants {
   @NonNls @NotNull public static final String TOOL_WINDOW_PLACE = "ExternalSystem.ToolWindow";
   @NonNls @NotNull public static final String TREE_PLACE        = "ExternalSystem.Tree";
 
-  public static final char PATH_SEPARATOR = '/';
+  public static final boolean VERBOSE_PROCESSING = SystemProperties.getBooleanProperty("external.system.verbose.processing", false);
+  public static final char    PATH_SEPARATOR     = '/';
 
   // Order.
   public static final int BUILTIN_SERVICE_ORDER             = 42;
   public static final int BUILTIN_TOOL_WINDOW_SERVICE_ORDER = 62;
   public static final int UNORDERED                         = 1000;
-  
+
   public static final int TEXT_FIELD_WIDTH_IN_COLUMNS = 20;
 }

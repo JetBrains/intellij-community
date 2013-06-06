@@ -449,4 +449,10 @@ public class PsiUtilCore {
     if (candidate.isKindOf(language)) return candidate;
     return language;
   }
+
+  public static void ensureValid(@NotNull PsiElement element) {
+    if (!element.isValid()) {
+      throw new PsiInvalidElementAccessException(element);
+    }
+  }
 }

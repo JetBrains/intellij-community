@@ -75,7 +75,7 @@ public class ConsoleHistoryController {
   private final AnAction myHistoryPrev = new MyAction(false);
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
-  private ModelHelper myHelper;
+  private final ModelHelper myHelper;
   private long myLastSaveStamp;
 
   public ConsoleHistoryController(@NotNull final String type,
@@ -243,7 +243,7 @@ public class ConsoleHistoryController {
   }
 
   private class MyAction extends AnAction {
-    private boolean myNext;
+    private final boolean myNext;
 
     public MyAction(final boolean next) {
       myNext = next;
@@ -353,7 +353,7 @@ public class ConsoleHistoryController {
       }
     }
   }
-  
+
   public static class ModelHelper {
     private final String myType;
     private final String myId;

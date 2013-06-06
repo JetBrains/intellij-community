@@ -68,6 +68,7 @@ typedef struct {
 
 static array* roots = NULL;
 
+static int log_level = 0;
 static bool self_test = false;
 
 static void init_log();
@@ -159,7 +160,7 @@ static void init_log() {
   char ident[32];
   snprintf(ident, sizeof(ident), "fsnotifier[%d]", getpid());
   openlog(ident, 0, LOG_USER);
-  setlogmask(LOG_UPTO(level));
+  log_level = level;
 }
 
 
@@ -177,8 +178,11 @@ void message(MSG id) {
 
 
 void userlog(int priority, const char* format, ...) {
-  va_list ap;
+  if (priority > log_level) {
+    return;
+  }
 
+  va_list ap;
   va_start(ap, format);
   vsyslog(priority, format, ap);
   va_end(ap);
@@ -217,23 +221,26 @@ static void main_loop() {
   int nfds = (inotify_fd > input_fd ? inotify_fd : input_fd) + 1;
   fd_set rfds;
   struct timeval timeout;
-  bool go_on = true;
 
-  while (go_on) {
+  while (true) {
+    usleep(50000);
+
     FD_ZERO(&rfds);
     FD_SET(input_fd, &rfds);
     FD_SET(inotify_fd, &rfds);
     timeout = (struct timeval){MISSING_ROOT_TIMEOUT, 0};
 
     if (select(nfds, &rfds, NULL, NULL, &timeout) < 0) {
-      userlog(LOG_ERR, "select: %s", strerror(errno));
-      go_on = false;
+      if (errno != EINTR) {
+        userlog(LOG_ERR, "select: %s", strerror(errno));
+        break;
+      }
     }
     else if (FD_ISSET(input_fd, &rfds)) {
-      go_on = read_input();
+      if (!read_input()) break;
     }
     else if (FD_ISSET(inotify_fd, &rfds)) {
-      go_on = process_inotify_input();
+      if (!process_inotify_input()) break;
     }
     else {
       check_missing_roots();

@@ -59,32 +59,32 @@ public class TestCaseLoader {
   public TestCaseLoader(String classFilterName, boolean isPerformanceTestsRun) {
     myIsPerformanceTestsRun = isPerformanceTestsRun;
 
-    URL excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResource(classFilterName);
-    if (excludedStream != null) {
-      TestClassesFilter filter;
-      try {
-        String testGroupName = System.getProperty(TARGET_TEST_GROUP, "").trim();
-        InputStreamReader reader = new InputStreamReader(excludedStream.openStream());
-        try {
-          filter = GroupBasedTestClassFilter.createOn(reader, testGroupName);
-          System.out.println("Using test group: [" + testGroupName +"]");
-        }
-        finally {
-          reader.close();
-        }
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-        filter = TestClassesFilter.ALL_CLASSES;
-        System.out.println("Using all classes");
-      }
-      myTestClassesFilter = filter;
+    String patterns = System.getProperty(TARGET_TEST_PATTERNS);
+    if (patterns != null) {
+      myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
+      System.out.println("Using patterns: [" + patterns +"]");
     }
     else {
-      String patterns = System.getProperty(TARGET_TEST_PATTERNS);
-      if (patterns != null) {
-        myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
-        System.out.println("Using patterns: [" + patterns +"]");
+      URL excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResource(classFilterName);
+      if (excludedStream != null) {
+        TestClassesFilter filter;
+        try {
+          String testGroupName = System.getProperty(TARGET_TEST_GROUP, "").trim();
+          InputStreamReader reader = new InputStreamReader(excludedStream.openStream());
+          try {
+            filter = GroupBasedTestClassFilter.createOn(reader, testGroupName);
+            System.out.println("Using test group: [" + testGroupName +"]");
+          }
+          finally {
+            reader.close();
+          }
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+          filter = TestClassesFilter.ALL_CLASSES;
+          System.out.println("Using all classes");
+        }
+        myTestClassesFilter = filter;
       }
       else {
         myTestClassesFilter = TestClassesFilter.ALL_CLASSES;

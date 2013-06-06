@@ -118,10 +118,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
       }
 
       final FileType fileType = file.getFileType();
-      if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)) {
-        return false;
-      }
-      
+
       if (fileType instanceof LanguageFileType) {
         final Language lang = ((LanguageFileType)fileType).getLanguage();
         final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);

@@ -20,7 +20,6 @@ import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -45,8 +44,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
-      final FileType fileType = file.getFileType();
-      return isIndexable(fileType) && !ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
+      return isIndexable(file.getFileType());
     }
   };
 

@@ -56,12 +56,18 @@ public class FrameworkSupportNode extends FrameworkSupportNodeBase {
 
   @NotNull
   public String getTitle() {
-    return myProvider.getFrameworkType().getPresentableName();
+    return myProvider.getPresentableName();
   }
 
   @NotNull
   @Override
   public Icon getIcon() {
     return myProvider.getFrameworkType().getIcon();
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myProvider.getFrameworkType().getId();
   }
 }
