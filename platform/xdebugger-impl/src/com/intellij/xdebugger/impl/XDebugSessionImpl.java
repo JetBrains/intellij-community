@@ -158,7 +158,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void rebuildViews() {
-    if (!myShowTabOnSuspend) {
+    if (!myShowTabOnSuspend && mySessionTab != null) {
       mySessionTab.rebuildViews();
     }
   }
