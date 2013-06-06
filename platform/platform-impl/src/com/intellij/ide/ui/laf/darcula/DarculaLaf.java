@@ -23,11 +23,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.sun.jna.platform.unix.X11;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
@@ -86,6 +88,17 @@ public final class DarculaLaf extends BasicLookAndFeel {
       final UIDefaults metalDefaults =
         (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
+      if (SystemInfo.isLinux) {
+        Font font = findFont("Ubuntu");
+        if (font != null) {
+          for (Object key : defaults.keySet()) {
+            if (key instanceof String && ((String)key).endsWith(".font")) {
+              defaults.put(key, new FontUIResource(font.deriveFont(15f)));
+            }
+          }
+        }
+      }
+
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
       patchStyledEditorKit();
@@ -99,6 +112,15 @@ public final class DarculaLaf extends BasicLookAndFeel {
       log(ignore);
     }
     return super.getDefaults();
+  }
+
+  private static Font findFont(String name) {
+    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
+      if (font.getName().equals(name)) {
+        return font;
+      }
+    }
+    return null;
   }
 
   private static void patchComboBox(UIDefaults metalDefaults, UIDefaults defaults) {
