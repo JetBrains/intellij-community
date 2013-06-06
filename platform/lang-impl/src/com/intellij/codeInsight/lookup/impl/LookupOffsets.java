@@ -37,7 +37,7 @@ public class LookupOffsets {
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
-  private RangeMarker myLookupOriginalStartMarker;
+  private final RangeMarker myLookupOriginalStartMarker;
   private final Editor myEditor;
 
   public LookupOffsets(Editor editor) {

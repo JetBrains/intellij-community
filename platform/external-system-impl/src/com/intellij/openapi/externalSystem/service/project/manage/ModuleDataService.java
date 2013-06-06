@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
@@ -75,67 +76,15 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       @Override
       public void run() {
         final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
-        if (toCreate.isEmpty()) {
-          return;
+        if (!toCreate.isEmpty()) {
+          createModules(toCreate, project);
         }
-        removeExistingModulesConfigs(toCreate);
-        Application application = ApplicationManager.getApplication();
-        final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
-        application.runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final ModuleManager moduleManager = ModuleManager.getInstance(project);
-            final ProjectEntityChangeListener publisher
-              = project.getMessageBus().syncPublisher(ProjectEntityChangeListener.TOPIC);
-            for (DataNode<ModuleData> module : toCreate) {
-              publisher.onChangeStart(module, module.getData().getOwner());
-              try {
-                importModule(moduleManager, module);
-              }
-              finally {
-                publisher.onChangeEnd(module, module.getData().getOwner());
-              }
-            }
+        for (DataNode<ModuleData> node : toImport) {
+          Module module = myProjectStructureHelper.findIdeModule(node.getData(), project);
+          if (module != null) {
+            syncPaths(module, node.getData());
           }
-
-          private void importModule(@NotNull ModuleManager moduleManager, @NotNull DataNode<ModuleData> module) {
-            ModuleData data = module.getData();
-            final Module created = moduleManager.newModule(data.getModuleFilePath(), data.getModuleTypeId());
-
-            // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
-            ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
-            final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
-            moduleRootModel.inheritSdk();
-            created.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, data.getOwner().toString());
-            ProjectData projectData = module.getData(ProjectKeys.PROJECT);
-            if (projectData != null) {
-              created.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, projectData.getLinkedExternalProjectPath());
-            }
-            
-            RootPolicy<Object> visitor = new RootPolicy<Object>() {
-              @Override
-              public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
-                moduleRootModel.removeOrderEntry(libraryOrderEntry);
-                return value;
-              }
-
-              @Override
-              public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
-                moduleRootModel.removeOrderEntry(moduleOrderEntry);
-                return value;
-              }
-            };
-            try {
-              for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
-                orderEntry.accept(visitor, null);
-              }
-            }
-            finally {
-              moduleRootModel.commit();
-            }
-            moduleMappings.put(module, created);
-          }
-        });
+        }
       }
     };
     if (synchronous) {
@@ -144,6 +93,59 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     else {
       UIUtil.invokeLaterIfNeeded(task);
     }
+  }
+
+  private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate, @NotNull final Project project) {
+    removeExistingModulesConfigs(toCreate);
+    Application application = ApplicationManager.getApplication();
+    final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
+    application.runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final ModuleManager moduleManager = ModuleManager.getInstance(project);
+        for (DataNode<ModuleData> module : toCreate) {
+          importModule(moduleManager, module);
+        }
+      }
+
+      private void importModule(@NotNull ModuleManager moduleManager, @NotNull DataNode<ModuleData> module) {
+        ModuleData data = module.getData();
+        final Module created = moduleManager.newModule(data.getModuleFilePath(), data.getModuleTypeId());
+
+        // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
+        final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+        moduleRootModel.inheritSdk();
+        created.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, data.getOwner().toString());
+        ProjectData projectData = module.getData(ProjectKeys.PROJECT);
+        if (projectData != null) {
+          created.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, projectData.getLinkedExternalProjectPath());
+        }
+
+        RootPolicy<Object> visitor = new RootPolicy<Object>() {
+          @Override
+          public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
+            moduleRootModel.removeOrderEntry(libraryOrderEntry);
+            return value;
+          }
+
+          @Override
+          public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
+            moduleRootModel.removeOrderEntry(moduleOrderEntry);
+            return value;
+          }
+        };
+        try {
+          for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
+            orderEntry.accept(visitor, null);
+          }
+        }
+        finally {
+          moduleRootModel.commit();
+        }
+        moduleMappings.put(module, created);
+      }
+    });
   }
   
   @NotNull
@@ -184,6 +186,31 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     });
   }
 
+  private static void syncPaths(@NotNull Module module, @NotNull ModuleData data) {
+    CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+    if (extension == null) {
+      LOG.warn(String.format("Can't sync paths for module '%s'. Reason: no compiler extension is found for it", module.getName()));
+      return;
+    }
+    CompilerModuleExtension model = (CompilerModuleExtension)extension.getModifiableModel(true);
+    try {
+      String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
+      if (compileOutputPath != null) {
+        model.setCompilerOutputPath(compileOutputPath);
+      }
+
+      String testCompileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.TEST);
+      if (testCompileOutputPath != null) {
+        model.setCompilerOutputPathForTests(testCompileOutputPath);
+      }
+
+      model.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
+    }
+    finally {
+      model.commit();
+    }
+  }
+  
   @Override
   public void removeData(@NotNull final Collection<? extends Module> modules, @NotNull Project project, boolean synchronous) {
     if (modules.isEmpty()) {

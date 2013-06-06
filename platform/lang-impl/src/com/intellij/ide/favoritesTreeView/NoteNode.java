@@ -29,7 +29,7 @@ public class NoteNode {
   private Set<Concept> myConcepts;
 
   private String myText;
-  private boolean myReadonly;
+  private final boolean myReadonly;
 
   public NoteNode(String text, boolean readonly) {
     myText = text;

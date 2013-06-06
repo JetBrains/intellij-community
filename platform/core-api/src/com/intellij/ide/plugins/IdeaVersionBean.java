@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
 
-import org.jetbrains.annotations.NotNull;
+/*
+ * User: anna
+ * Date: 12-Jul-2007
+ */
+package com.intellij.ide.plugins;
 
-public interface ExternalizableScheme extends Scheme{
-  @NotNull
-  ExternalInfo getExternalInfo();
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 
-  void setName(String newName);
+@Tag("idea-version")
+public class IdeaVersionBean {
+  @Attribute("since-build")
+  public String sinceBuild;
+
+  @Attribute("until-build")
+  public String untilBuild;
+
 }

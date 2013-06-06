@@ -392,6 +392,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           @Override
           public boolean process(final UsageInfo usageInfo) {
             Usage usage = ApplicationManager.getApplication().runReadAction(new Computable<Usage>() {
+              @Override
               public Usage compute() {
                 return UsageInfoToUsageConverter.convert(descriptor, usageInfo);
               }
@@ -442,6 +443,7 @@ public class FindUsagesManager implements JDOMExternalizable {
               @Override
               public boolean process(final PsiReference ref) {
                 UsageInfo info = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
+                  @Override
                   public UsageInfo compute() {
                     if (!ref.getElement().isValid()) return null;
                     return new UsageInfo(ref);

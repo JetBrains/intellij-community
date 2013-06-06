@@ -95,7 +95,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private Set<PsiFile> myIllegalsInRightTree = new HashSet<PsiFile>();
 
   private final Project myProject;
-  private List<DependenciesBuilder> myBuilders;
+  private final List<DependenciesBuilder> myBuilders;
   private final Set<PsiFile> myExcluded;
   private Content myContent;
   private final DependencyPanelSettings mySettings = new DependencyPanelSettings();

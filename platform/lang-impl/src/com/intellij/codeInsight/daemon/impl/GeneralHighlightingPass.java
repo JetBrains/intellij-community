@@ -101,7 +101,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private final List<HighlightInfo> myHighlights = new ArrayList<HighlightInfo>();
 
   protected volatile boolean myHasErrorElement;
-  private volatile boolean myErrorFound;
+  private boolean myErrorFound;
   private static final Comparator<HighlightVisitor> VISITOR_ORDER_COMPARATOR = new Comparator<HighlightVisitor>() {
     @Override
     public int compare(final HighlightVisitor o1, final HighlightVisitor o2) {

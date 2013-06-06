@@ -21,7 +21,6 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lexer.HtmlHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XHtmlHighlightingLexer;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -76,18 +75,6 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      if (file.getFileSystem() != LocalFileSystem.getInstance() && !(file.getFileSystem() instanceof TempFileSystem)) {
-        return false;
-      }
-
-      final FileType fileType = file.getFileType();
-      return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
-    }
-  };
-
   @NotNull
   @Override
   public ID<String, Void> getName() {
@@ -107,7 +94,16 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.HTML, StdFileTypes.XHTML) {
+      @Override
+      public boolean acceptInput(final VirtualFile file) {
+        if (file.getFileSystem() != LocalFileSystem.getInstance() && !(file.getFileSystem() instanceof TempFileSystem)) {
+          return false;
+        }
+
+        return true;
+      }
+    };
   }
 
   @Override

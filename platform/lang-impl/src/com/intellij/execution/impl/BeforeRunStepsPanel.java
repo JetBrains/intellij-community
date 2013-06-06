@@ -57,7 +57,7 @@ class BeforeRunStepsPanel extends JPanel {
   private RunConfiguration myRunConfiguration;
 
   private final List<BeforeRunTask> originalTasks = new ArrayList<BeforeRunTask>();
-  private StepsBeforeRunListener myListener;
+  private final StepsBeforeRunListener myListener;
   private final JPanel myPanel;
 
   BeforeRunStepsPanel(StepsBeforeRunListener listener) {

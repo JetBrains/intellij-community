@@ -249,7 +249,6 @@ public class FileWatcher {
 
     LOG.info("Starting file watcher: " + myExecutable);
     ProcessBuilder processBuilder = new ProcessBuilder(myExecutable.getAbsolutePath());
-    processBuilder.redirectErrorStream(true);
     Process process = processBuilder.start();
     myProcessHandler = new MyProcessHandler(process);
     myProcessHandler.addProcessListener(new MyProcessAdapter());
@@ -421,7 +420,7 @@ public class FileWatcher {
 
     @Override
     public void processTerminated(ProcessEvent event) {
-      LOG.warn("Watcher terminated.");
+      LOG.warn("Watcher terminated with exit code " + event.getExitCode());
 
       myProcessHandler = null;
 
@@ -436,7 +435,12 @@ public class FileWatcher {
 
     @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
-      if (outputType != ProcessOutputTypes.STDOUT) return;
+      if (outputType == ProcessOutputTypes.STDERR) {
+        LOG.warn(event.getText());
+      }
+      if (outputType != ProcessOutputTypes.STDOUT) {
+        return;
+      }
 
       final String line = event.getText().trim();
       if (LOG.isDebugEnabled()) {

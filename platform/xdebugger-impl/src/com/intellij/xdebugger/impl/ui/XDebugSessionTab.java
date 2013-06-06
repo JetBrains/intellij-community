@@ -24,6 +24,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.LayoutAwareExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
@@ -135,8 +136,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
-    final Content consoleContent = createConsoleContent();
-    myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
+    final Content consoleContent;
+    if (myConsole instanceof LayoutAwareExecutionConsole) {
+      LayoutAwareExecutionConsole layoutConsole = (LayoutAwareExecutionConsole) myConsole;
+      consoleContent = layoutConsole.buildContent(myUi);
+    }
+    else {
+      consoleContent = createConsoleContent();
+      myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
+    }
     attachNotificationTo(consoleContent);
 
     debugProcess.registerAdditionalContent(myUi);

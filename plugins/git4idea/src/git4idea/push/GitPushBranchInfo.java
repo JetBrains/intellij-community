@@ -15,9 +15,9 @@
  */
 package git4idea.push;
 
+import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

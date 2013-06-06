@@ -20,7 +20,7 @@ import java.util.ArrayList;
 * To change this template use File | Settings | File Templates.
 */
 public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
-  private Getter<JTextComponent> myTextField;
+  private final Getter<JTextComponent> myTextField;
 
   public JTextComponent getTextField() {
     return myTextField.get();

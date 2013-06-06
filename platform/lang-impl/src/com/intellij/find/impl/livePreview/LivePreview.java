@@ -108,7 +108,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
   private Delegate myDelegate;
 
-  private SearchResults mySearchResults;
+  private final SearchResults mySearchResults;
 
   private Balloon myReplacementBalloon;
 
@@ -390,7 +390,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
                                   highlighter.getEndOffset() != selectionRange.getStartOffset();
         if (intersectsWithSelection) break;
       }
-      
+
       final Object userData = highlighter.getUserData(IN_SELECTION_KEY);
       if (userData != null) {
         if (!intersectsWithSelection) {
@@ -491,9 +491,9 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
 
     MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
-    
+
     final RangeHighlighter[] candidate = new RangeHighlighter[1];
-    
+
     boolean notFound = markupModel.processRangeHighlightersOverlappingWith(
       textRange.getStartOffset(), textRange.getEndOffset(),
       new Processor<RangeHighlighterEx>() {

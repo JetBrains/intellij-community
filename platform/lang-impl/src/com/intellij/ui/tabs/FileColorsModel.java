@@ -47,7 +47,7 @@ public class FileColorsModel implements Cloneable {
   private final List<FileColorConfiguration> myConfigurations;
   private final List<FileColorConfiguration> mySharedConfigurations;
   private static final Map<String, String> globalScopes;
-  private static Map<String, String> globalScopesColors;
+  private static final Map<String, String> globalScopesColors;
   static {
     globalScopes = new HashMap<String, String>();
     globalScopes.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");

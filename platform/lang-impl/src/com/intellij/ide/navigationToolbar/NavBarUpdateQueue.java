@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,14 +94,20 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   }
 
   private void requestModelUpdateFromContextOrObject(DataContext dataContext, Object object) {
+    final NavBarModel model = myPanel.getModel();
     if (dataContext != null) {
       if (PlatformDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupShowing()) {
         requestModelUpdate(null, myPanel.getContextObject(), true);
         return;
       }
-      myPanel.getModel().updateModel(dataContext);
+      final Window window = SwingUtilities.getWindowAncestor(myPanel);
+      if (window != null && !window.isFocused()) {
+        model.updateModel(DataManager.getInstance().getDataContext(myPanel));
+      } else {
+        model.updateModel(dataContext);
+      }
     } else {
-      myPanel.getModel().updateModel(object);
+      model.updateModel(object);
     }
 
     queueRebuildUi();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util;
 
-/*
- * User: anna
- * Date: 12-Jul-2007
- */
-package com.intellij.ide.plugins;
-
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
-
-@Tag("idea-version")
-public class IdeaVersionBean {
-  @Attribute("since-build")
-  public String sinceBuild;
-
-  @Attribute("until-build")
-  public String untilBuild;
-
+public class PlatformUtilsCore {
+  public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 }

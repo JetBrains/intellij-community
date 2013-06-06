@@ -97,7 +97,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private final Map<Integer, Map<TemplateOptionalProcessor, Boolean>> myTemplateOptions = new LinkedHashMap<Integer, Map<TemplateOptionalProcessor, Boolean>>();
   private final Map<Integer, Map<TemplateContextType, Boolean>> myTemplateContext = new LinkedHashMap<Integer, Map<TemplateContextType, Boolean>>();
-  private JPanel myDetailsPanel = new JPanel(new CardLayout());
+  private final JPanel myDetailsPanel = new JPanel(new CardLayout());
   private LiveTemplateSettingsEditor myCurrentTemplateEditor;
 
   public TemplateListPanel() {
@@ -170,7 +170,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       if (templates.isEmpty()) {
         throw new ConfigurationException("An empty template group found: " + templateGroup.getName() + ", a group should contain at least one template");
       }
-      
+
       for (TemplateImpl template : templates) {
         if (StringUtil.isEmptyOrSpaces(template.getKey())) {
           throw new ConfigurationException("A live template with an empty key has been found in " + templateGroup.getName() + " group, such live templates cannot be invoked");

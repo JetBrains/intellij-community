@@ -25,8 +25,8 @@ import com.intellij.ui.SimpleTextAttributes;
 * @author nik
 */
 class ValidExcludeListItem extends ExcludeListItem {
-  private VirtualFile myFile;
-  private FrameworkType myFrameworkType;
+  private final VirtualFile myFile;
+  private final FrameworkType myFrameworkType;
 
   ValidExcludeListItem(FrameworkType frameworkType, VirtualFile file) {
     myFrameworkType = frameworkType;

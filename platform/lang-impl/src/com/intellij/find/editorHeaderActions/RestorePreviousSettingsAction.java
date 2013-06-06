@@ -33,7 +33,7 @@ import java.util.Collections;
 * To change this template use File | Settings | File Templates.
 */
 public class RestorePreviousSettingsAction extends EditorHeaderAction implements DumbAware {
-  private JTextComponent myTextField;
+  private final JTextComponent myTextField;
   private static final KeyboardShortcut SHORTCUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null);
 
   public RestorePreviousSettingsAction(EditorSearchComponent editorSearchComponent, JTextComponent textField) {

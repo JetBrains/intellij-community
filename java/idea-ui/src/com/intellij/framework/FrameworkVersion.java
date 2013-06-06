@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options;
+package com.intellij.framework;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.framework.library.FrameworkAvailabilityCondition;
+import org.jetbrains.annotations.NotNull;
 
-public class PathMacroExpendableProtocolBean {
-  public static ExtensionPointName<PathMacroExpendableProtocolBean> EP_NAME = ExtensionPointName.create("com.intellij.pathMacroExpendableProtocol");
+/**
+ * @author nik
+ */
+public interface FrameworkVersion {
+  @NotNull
+  String getId();
 
-   @Attribute("protocol")
-   public String protocol;
+  @NotNull
+  String getPresentableName();
+
+  @NotNull
+  FrameworkAvailabilityCondition getAvailabilityCondition();
 }

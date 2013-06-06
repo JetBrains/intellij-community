@@ -48,7 +48,7 @@ import java.util.List;
 public class DetectionExcludesConfigurable implements Configurable {
   private final Project myProject;
   private final DetectionExcludesConfigurationImpl myConfiguration;
-  private SortedListModel<ExcludeListItem> myModel;
+  private final SortedListModel<ExcludeListItem> myModel;
   private JPanel myMainPanel;
 
   public DetectionExcludesConfigurable(@NotNull Project project, @NotNull DetectionExcludesConfigurationImpl configuration) {

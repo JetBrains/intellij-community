@@ -45,7 +45,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   private final MultiMap<PsiFile, TodoItem> myMap;
   private final Set<PsiFile> myIncludedFiles;
   private PsiTodoSearchHelper myPsiTodoSearchHelper;
-  private ChangeListManager myChangeListManager;
+  private final ChangeListManager myChangeListManager;
 
   public CustomChangelistTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, final String title,
                                           final List<TodoItem> list) {

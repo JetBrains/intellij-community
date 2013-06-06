@@ -337,7 +337,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
         }
       }
-      return result.toArray(new CandidateInfo[result.size()]);
+      return result.isEmpty() ? candidates : result.toArray(new CandidateInfo[result.size()]);
     }
     else {
       assert call instanceof PsiEnumConstant;

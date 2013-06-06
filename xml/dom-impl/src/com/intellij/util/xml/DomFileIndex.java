@@ -17,7 +17,6 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -38,12 +37,6 @@ import java.util.Set;
  */
 public class DomFileIndex extends ScalarIndexExtension<String>{
   public static final ID<String,Void> NAME = ID.create("DomFileIndex");
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      return file.getFileType() == StdFileTypes.XML;
-    }
-  };
   private final DataIndexer<String,Void, FileContent> myDataIndexer;
 
   public DomFileIndex() {
@@ -98,7 +91,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
   }
 
   @Override

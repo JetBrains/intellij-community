@@ -17,13 +17,11 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -63,7 +61,10 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
+    InspectionProfileEntry tool = inspectionProfile.getInspectionTool(myToolId);
+    return tool == null || tool.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
   }
 
   @Override

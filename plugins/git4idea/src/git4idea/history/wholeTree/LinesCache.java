@@ -16,20 +16,20 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.util.containers.SLRUMap;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 
 /**
  * @author irengrig
  */
 public class LinesCache {
   private final static int ourSize = 400; // todo ?
-  private final SLRUMap<String, GitCommit> myCache;
+  private final SLRUMap<String, GitHeavyCommit> myCache;
 
   public LinesCache() {
-    myCache = new SLRUMap<String, GitCommit>(ourSize, 50);
+    myCache = new SLRUMap<String, GitHeavyCommit>(ourSize, 50);
   }
 
-  public GitCommit get(final String hash) {
+  public GitHeavyCommit get(final String hash) {
     return myCache.get(hash);
   }
 }

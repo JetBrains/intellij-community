@@ -111,7 +111,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private boolean myShowSeparatorLine = true;
 
-  private FocusChangeListener myFocusListener = new FocusChangeListener() {
+  private final FocusChangeListener myFocusListener = new FocusChangeListener() {
     @Override
     public void focusGained(Editor editor) {
       myCurrentEditor = editor;

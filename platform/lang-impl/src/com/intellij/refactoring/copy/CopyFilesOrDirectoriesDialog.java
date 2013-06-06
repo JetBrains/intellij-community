@@ -17,6 +17,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,13 +31,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
@@ -58,9 +55,22 @@ import java.util.List;
 
 public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   public static final int MAX_PATH_LENGTH = 70;
+  private static final String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
 
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
+  private JCheckBox myOpenFilesInEditor = createOpenInEditorCB();
+
+  public static JCheckBox createOpenInEditorCB() {
+    final JCheckBox checkBox = new JCheckBox("Open copy in editor", PropertiesComponent.getInstance().getBoolean(COPY_OPEN_IN_EDITOR, true));
+    checkBox.setMnemonic('o');
+    return checkBox;
+  }
+  
+  public static void saveOpenInEditorState(boolean selected) {
+    PropertiesComponent.getInstance().setValue(COPY_OPEN_IN_EDITOR, String.valueOf(selected));
+  }
+
   private JTextField myNewNameField;
   private final Project myProject;
   private final boolean myShowDirectoryField;
@@ -116,6 +126,16 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       setMultipleElementCopyLabel(elements);
     }
 
+    boolean allBinary = true;
+    for (PsiElement element : elements) {
+      if (!(element.getContainingFile() instanceof PsiBinaryFile)) {
+        allBinary = false;
+        break;
+      }
+    }
+    if (allBinary) {
+      myOpenFilesInEditor.setVisible(false);
+    }
     if (myShowDirectoryField) {
       myTargetDirectoryField.getChildComponent()
         .setText(defaultTargetDirectory == null ? "" : defaultTargetDirectory.getVirtualFile().getPresentableUrl());
@@ -208,6 +228,9 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       formBuilder.addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText));
     }
 
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(myOpenFilesInEditor, BorderLayout.EAST);
+    formBuilder.addComponent(wrapper);
     return formBuilder.getPanel();
   }
 
@@ -217,6 +240,10 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
 
   public String getNewName() {
     return myNewNameField != null ? myNewNameField.getText().trim() : null;
+  }
+
+  public boolean openInEditor() {
+    return myOpenFilesInEditor.isSelected();
   }
 
   @Override
@@ -246,6 +273,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       }
 
       RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, targetDirectoryName);
+      saveOpenInEditorState(myOpenFilesInEditor.isSelected());
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         @Override

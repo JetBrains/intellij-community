@@ -44,7 +44,7 @@ class PluginClassCache {
 
   @Nullable
   private static PluginId findLoadingPlugin(String className) {
-    for (IdeaPluginDescriptor descriptor : PluginManager.getPlugins()) {
+    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       ClassLoader loader = descriptor.getPluginClassLoader();
       if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).hasLoadedClass(className)) {
         return descriptor.getPluginId();
@@ -68,7 +68,7 @@ class PluginClassCache {
       }
     });
     for (PluginId id : counters) {
-      PluginManager.getLogger().info(id + " loaded " + myClassCounts.get(id) + " classes");
+      PluginManagerCore.getLogger().info(id + " loaded " + myClassCounts.get(id) + " classes");
     }
   }
 

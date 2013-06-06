@@ -220,7 +220,7 @@ class FileTemplateTextLexer implements FlexLexer {
 
 
   FileTemplateTextLexer(java.io.Reader in) {
-    this.zzReader = in;
+    zzReader = in;
   }
 
   /**

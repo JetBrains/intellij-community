@@ -18,13 +18,9 @@ package com.intellij.codeInsight;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,14 +34,18 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.*;
 import gnu.trove.THashSet;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -193,113 +193,25 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     if (cached != null && cached.getSecond() == fileModificationStamp) {
       return cached.getFirst();
     }
-    MostlySingularMultiMap<String, AnnotationData> data = new MostlySingularMultiMap<String, AnnotationData>();
+    DataParsingSaxHandler handler = new DataParsingSaxHandler(file);
     try {
-      Document document = JDOMUtil.loadDocument(escapeAttributes(file.getText()));
-      Element rootElement = document.getRootElement();
-        //noinspection unchecked
-      List<Element> itemElements = rootElement == null ? Collections.<Element>emptyList() : (List<Element>)rootElement.getChildren("item");
-      boolean sorted = true;
-      boolean modified = false;
-      String prevItemName = null;
-      for (Element element : itemElements) {
-        String externalName = element.getAttributeValue("name");
-        if (externalName == null) {
-          element.detach();
-          modified = true;
-          continue;
-        }
-        if (prevItemName != null && prevItemName.compareTo(externalName) > 0) {
-          sorted = false;
-        }
-        prevItemName = externalName;
-
-        //noinspection unchecked
-        for (Element annotationElement : (List<Element>) element.getChildren("annotation")) {
-          String annotationFQN = annotationElement.getAttributeValue("name");
-          if (StringUtil.isEmpty(annotationFQN)) continue;
-          annotationFQN = intern(annotationFQN);
-          //noinspection unchecked
-          List<Element> children = (List<Element>)annotationElement.getChildren();
-          StringBuilder buf = new StringBuilder(children.size() * "name=value,".length()); // just guess
-          for (Element annotationParameter : children) {
-            if (buf.length() != 0) {
-              buf.append(",");
-            }
-            String nameValue = annotationParameter.getAttributeValue("name");
-            if (nameValue != null) {
-              buf.append(nameValue);
-              buf.append("=");
-            }
-            buf.append(annotationParameter.getAttributeValue("val"));
-          }
-          String annotationParameters = buf.length() == 0 ? "" : intern(buf.toString());
-          for (AnnotationData existingData : data.get(externalName)) {
-            if (existingData.annotationClassFqName.equals(annotationFQN)) {
-              duplicateError(file, externalName, "Duplicate annotation '" + annotationFQN + "' ");
-            }
-          }
-          AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, annotationParameters, file.getVirtualFile()));
-
-          data.add(externalName, annData);
-        }
-      }
-      if (!sorted) {
-        modified = true;
-        List<Element> items = new ArrayList<Element>(rootElement.getChildren("item"));
-        rootElement.removeChildren("item");
-        Collections.sort(items, new Comparator<Element>() {
-          @Override
-          public int compare(Element item1, Element item2) {
-            String externalName1 = item1.getAttributeValue("name");
-            String externalName2 = item2.getAttributeValue("name");
-            return externalName1.compareTo(externalName2);
-          }
-        });
-        for (Element item : items) {
-          rootElement.addContent(item);
-        }
-      }
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (modified && virtualFile.isInLocalFileSystem() && virtualFile.isWritable()) {
-        final Project project = file.getProject();
-        final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-        final StringWriter string = new StringWriter(file.getTextLength());
-        JDOMUtil.writeDocument(document, string, "\n");
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (file.getModificationStamp() == fileModificationStamp && !fileDocumentManager.isFileModified(virtualFile)) {
-              // modify .xml in write action to avoid conflicts and torn reads
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  com.intellij.openapi.editor.Document editorDoc = PsiDocumentManager.getInstance(project).getDocument(file);
-                  if (editorDoc != null) {
-                    editorDoc.setText(string.toString());
-                    fileDocumentManager.saveDocument(editorDoc);
-                  }
-                }
-              });
-            }
-          }
-        }, project.getDisposed());
-      }
+      SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
+      saxParser.parse(new InputSource(new StringReader(escapeAttributes(file.getText()))), handler);
     }
     catch (IOException e) {
       LOG.error(e);
     }
-    catch (JDOMException e) {
+    catch (ParserConfigurationException e) {
       LOG.error(e);
     }
-    if (data.isEmpty()) {
-      data = MostlySingularMultiMap.emptyMap();
+    catch (SAXException e) {
+      LOG.error(e);
     }
-    data.compact();
-    Pair<MostlySingularMultiMap<String, AnnotationData>, Long> pair = Pair.create(data, file.getModificationStamp());
+
+    Pair<MostlySingularMultiMap<String, AnnotationData>, Long> pair = Pair.create(handler.getResult(), file.getModificationStamp());
     annotationFileToDataAndModStamp.put(file, pair);
 
-    return data;
+    return pair.first;
   }
 
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
@@ -547,4 +459,66 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
     }
   };
+
+  private class DataParsingSaxHandler extends DefaultHandler {
+    private final MostlySingularMultiMap<String, AnnotationData> data = new MostlySingularMultiMap<String, AnnotationData>();
+
+    private final PsiFile file;
+
+    private String externalName = null;
+    private String annotationFQN = null;
+    private StringBuilder arguments = null;
+
+    private DataParsingSaxHandler(PsiFile file) {
+      this.file = file;
+    }
+
+    @Override
+    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+      if ("item".equals(qName)) {
+        externalName = attributes.getValue("name");
+      } else if ("annotation".equals(qName)) {
+        annotationFQN = attributes.getValue("name");
+        arguments = new StringBuilder();
+      } else if ("val".equals(qName)) {
+        if (arguments.length() != 0) {
+          arguments.append(",");
+        }
+        String name = attributes.getValue("name");
+        if (name != null) {
+          arguments.append(name);
+          arguments.append("=");
+        }
+        arguments.append(attributes.getValue("val"));
+      }
+    }
+
+    @Override
+    public void endElement(String uri, String localName, String qName) throws SAXException {
+      if ("item".equals(qName)) {
+        externalName = null;
+      } else if ("annotation".equals(qName)) {
+        if (externalName != null && annotationFQN != null) {
+          String argumentsString = arguments.length() == 0 ? "" : intern(arguments.toString());
+          for (AnnotationData existingData : data.get(externalName)) {
+            if (existingData.annotationClassFqName.equals(annotationFQN)) {
+              duplicateError(file, externalName, "Duplicate annotation '" + annotationFQN + "' ");
+            }
+          }
+          AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, argumentsString, file.getVirtualFile()));
+          data.add(externalName, annData);
+          annotationFQN = null;
+          arguments = null;
+        }
+      }
+    }
+
+    public MostlySingularMultiMap<String, AnnotationData> getResult() {
+      if (data.isEmpty()) {
+        return MostlySingularMultiMap.emptyMap();
+      }
+      data.compact();
+      return data;
+    }
+  }
 }

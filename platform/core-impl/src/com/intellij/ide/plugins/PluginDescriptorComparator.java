@@ -37,8 +37,8 @@ public class PluginDescriptorComparator implements Comparator<IdeaPluginDescript
     for (final IdeaPluginDescriptor descriptor : descriptors) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
-    myIdToNumberMap.put(PluginId.getId(PluginManager.CORE_PLUGIN_ID), 0);
-    
+    myIdToNumberMap.put(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID), 0);
+
     final Stack<PluginId> visited = new Stack<PluginId>();
     for (int idx = 0; idx < descriptors.length && myIdToNumberMap.size() != descriptors.length; idx++) {
       assignNumbers(descriptors[idx].getPluginId(), idToDescriptorMap, visited);

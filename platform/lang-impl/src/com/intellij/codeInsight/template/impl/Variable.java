@@ -27,7 +27,7 @@ public class Variable implements Cloneable {
 
   private String myDefaultValueString;
   private Expression myDefaultValueExpression;
-  private boolean mySkipOnStart;
+  private final boolean mySkipOnStart;
 
   public Variable(String name, Expression expression, Expression defaultValueExpression, boolean alwaysStopAt, boolean skipOnStart) {
     myName = name;

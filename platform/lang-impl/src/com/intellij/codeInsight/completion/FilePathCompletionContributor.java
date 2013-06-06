@@ -296,7 +296,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
         FileReference ref = fileReferencePair.getFirst();
         context.setTailOffset(ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset());
-        ref.bindToElement(myFile, true);
+        ref.bindToElement(myFile);
       }
     }
 

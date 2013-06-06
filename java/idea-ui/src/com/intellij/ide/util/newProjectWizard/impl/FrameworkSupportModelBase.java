@@ -17,7 +17,9 @@ package com.intellij.ide.util.newProjectWizard.impl;
 
 import com.intellij.framework.FrameworkGroup;
 import com.intellij.framework.FrameworkGroupVersion;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.framework.addSupport.FrameworkVersionListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
@@ -34,7 +36,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,9 +47,10 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   private final ModuleBuilder myModuleBuilder;
   private final LibrariesContainer myLibrariesContainer;
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
+  private final EventDispatcher<FrameworkVersionListener> myVersionEventDispatcher = EventDispatcher.create(FrameworkVersionListener.class);
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
   private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<String, FrameworkSupportOptionsComponent>();
-  private final Map<FrameworkGroup<?>, FrameworkGroupVersion> mySelectedVersions = new HashMap<FrameworkGroup<?>, FrameworkGroupVersion>();
+  private final Map<String, FrameworkVersion> mySelectedVersions = new HashMap<String, FrameworkVersion>();
 
   public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     myProject = project;
@@ -89,6 +91,10 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myDispatcher.addListener(listener, parentDisposable);
   }
 
+  public void addFrameworkVersionListener(@NotNull FrameworkVersionListener listener, @NotNull Disposable parentDisposable) {
+    myVersionEventDispatcher.addListener(listener, parentDisposable);
+  }
+
   public void removeFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
     myDispatcher.removeListener(listener);
   }
@@ -126,34 +132,41 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     return ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)node.getConfigurable()).getConfigurable();
   }
 
-  public void setSelectedVersion(@NotNull FrameworkGroup<?> group, @Nullable FrameworkGroupVersion version) {
-    FrameworkGroupVersion oldVersion = mySelectedVersions.put(group, version);
+  public void setSelectedVersion(@NotNull String frameworkOrGroupId, @NotNull FrameworkVersion version) {
+    FrameworkVersion oldVersion = mySelectedVersions.put(frameworkOrGroupId, version);
     if (!Comparing.equal(oldVersion, version)) {
       for (Map.Entry<String, FrameworkSupportNode> entry : mySettingsMap.entrySet()) {
-        FrameworkGroup<?> parentGroup = getParentGroup(entry.getValue());
-        if (group.equals(parentGroup)) {
+        if (hasParentWithId(entry.getValue(), frameworkOrGroupId)) {
+          if (!entry.getValue().getId().equals(frameworkOrGroupId)) {
+            FrameworkSupportOptionsComponent component = myOptionsComponentsMap.get(entry.getKey());
+            if (component != null) {
+              component.updateVersionsComponent();
+            }
+          }
           updateFrameworkLibraryComponent(entry.getKey());
         }
       }
     }
+    myVersionEventDispatcher.getMulticaster().versionChanged(version);
+  }
+
+  private static boolean hasParentWithId(final FrameworkSupportNode node, @NotNull String frameworkOrGroupId) {
+    FrameworkSupportNodeBase current = node;
+    while (current != null) {
+      if (current.getId().equals(frameworkOrGroupId)) return true;
+      current = current.getParentNode();
+    }
+    return false;
   }
 
   @Nullable
-  private static FrameworkGroup<?> getParentGroup(final FrameworkSupportNode node) {
-    FrameworkSupportNodeBase current = node;
-    while (current instanceof FrameworkSupportNode) {
-      current = current.getParentNode();
-    }
-    return current instanceof FrameworkGroupNode ? ((FrameworkGroupNode)current).getGroup() : null;
-  }
-
-  public Collection<FrameworkGroup<?>> getFrameworkGroups() {
-    return mySelectedVersions.keySet();
+  public <V extends FrameworkVersion> V getSelectedVersion(@NotNull String frameworkOrGroupId) {
+    return (V)mySelectedVersions.get(frameworkOrGroupId);
   }
 
   @Nullable
   public <V extends FrameworkGroupVersion> V getSelectedVersion(@NotNull FrameworkGroup<V> group) {
-    return (V)mySelectedVersions.get(group);
+    return (V)mySelectedVersions.get(group.getId());
   }
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {

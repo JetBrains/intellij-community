@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class PlatformUtils {
-  public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
-
+public class PlatformUtils extends PlatformUtilsCore {
   public static final String IDEA_PREFIX = "idea";
   public static final String COMMUNITY_PREFIX = "Idea";
   public static final String APPCODE_PREFIX = "AppCode";

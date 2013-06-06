@@ -24,7 +24,7 @@ import java.util.List;
  */
 public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElement> extends AnAction {
   @NotNull
-  protected final Class<T> myClass;  
+  protected final Class<T> myClass;
   @NotNull
   protected final Class<? extends PsiFile> myFileClass;
 
@@ -38,7 +38,7 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
     final Editor editor = getEditor(e);
     final PsiFile file = getPsiFile(e);
     if (editor == null || file == null) return;
-    
+
     final List<T> expressions = getElement(editor, file);
     T first = ContainerUtil.getFirstItem(expressions);
 
@@ -52,6 +52,7 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
           }
         },
         new Function<T, String>() {
+          @Override
           public String fun(@NotNull T expression) {
             return expression.getText();
           }

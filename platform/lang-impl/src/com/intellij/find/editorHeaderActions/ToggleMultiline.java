@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 
 
 public class ToggleMultiline extends ToggleAction {
-  private EditorSearchComponent myEditorSearchComponent;
+  private final EditorSearchComponent myEditorSearchComponent;
 
   public ToggleMultiline(EditorSearchComponent editorSearchComponent) {
     super("Multiline", "Toggle Multiline Mode", AllIcons.Actions.ShowViewer);

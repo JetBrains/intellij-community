@@ -48,7 +48,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
   private static final String NAV_BAR_POPUP = "NAV_BAR_POPUP";
   private final NavBarPanel myPanel;
-  private int myIndex;
+  private final int myIndex;
   private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";
 
   public NavBarPopup(final NavBarPanel panel, Object[] siblings, final int selectedIndex) {
@@ -228,7 +228,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private static class NavbarPopupList extends JBListWithHintProvider implements Queryable {
-    private NavBarPanel myPanel;
+    private final NavBarPanel myPanel;
 
     public NavbarPopupList(NavBarPanel panel, Object[] siblings) {
       super(siblings);

@@ -31,7 +31,7 @@ public class PowerSaveHectorProvider implements HectorComponentPanelsProvider {
   @Override
   public HectorComponentPanel createConfigurable(@NotNull PsiFile file) {
     return new HectorComponentPanel() {
-      private JCheckBox myCheckBox = new JCheckBox("Power Save Mode");
+      private final JCheckBox myCheckBox = new JCheckBox("Power Save Mode");
 
       @Override
       public JComponent createComponent() {

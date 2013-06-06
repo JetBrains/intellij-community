@@ -93,7 +93,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
 
   private static class Reader {
     private int idx;
-    private String is;
+    private final String is;
 
     private Reader(String is) {
       this.idx = 0;

@@ -101,13 +101,13 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     if (strategy == null) {
       file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, strategy = new MyInspectionProfileStrategy());
     }
-    
+
     if (!(strategy instanceof MyInspectionProfileStrategy)) {
       return;
     }
-    
+
     ((MyInspectionProfileStrategy)strategy).setUseSpellCheck(apply);
-    
+
     if (apply) {
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
     }
@@ -118,13 +118,13 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       analyzer.restart(file);
     }
   }
-  
+
   private static class MyInspectionProfileStrategy implements Function<InspectionProfileWrapper, InspectionProfileWrapper> {
-    
+
     private final Map<InspectionProfileWrapper, MyInspectionProfileWrapper> myWrappers
       = new WeakHashMap<InspectionProfileWrapper, MyInspectionProfileWrapper>();
     private boolean myUseSpellCheck;
-    
+
     @Override
     public InspectionProfileWrapper fun(InspectionProfileWrapper inspectionProfileWrapper) {
       if (!READY) {
@@ -142,9 +142,8 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       myUseSpellCheck = useSpellCheck;
     }
   }
-  
-  private static class MyInspectionProfileWrapper extends InspectionProfileWrapper {
 
+  private static class MyInspectionProfileWrapper extends InspectionProfileWrapper {
     private final InspectionProfileWrapper myDelegate;
     private boolean myUseSpellCheck;
 
@@ -153,6 +152,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       myDelegate = delegate;
     }
 
+    @NotNull
     @Override
     public List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(PsiElement element) {
       Set<LocalInspectionToolWrapper> result = new THashSet<LocalInspectionToolWrapper>(myDelegate.getHighlightingLocalInspectionTools(element), new TObjectHashingStrategy<LocalInspectionToolWrapper>() {
@@ -166,7 +166,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
           return o1.getShortName().equals(o2.getShortName());
         }
       });
-      
+
       if (myUseSpellCheck) {
         result.removeAll(SPELL_CHECK_TOOLS);
         result.addAll(SPELL_CHECK_TOOLS);

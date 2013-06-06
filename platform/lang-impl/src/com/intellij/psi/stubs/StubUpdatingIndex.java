@@ -69,7 +69,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
-  private Map<FileType,Integer> myVersionMap = computeVersionMap();
+  private final Map<FileType,Integer> myVersionMap = computeVersionMap();
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();

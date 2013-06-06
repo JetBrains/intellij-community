@@ -81,7 +81,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   private Graph<Module> myModulesGraph;
   private final Module[] myModules;
 
-  private JTextField myPathField = new JTextField();
+  private final JTextField myPathField = new JTextField();
 
   private final Splitter mySplitter;
   @NonNls private static final String ourHelpID = "module.dependencies.tool.window";

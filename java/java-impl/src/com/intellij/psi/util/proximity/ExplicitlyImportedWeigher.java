@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,8 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
       return 0;
     }
 
+    PsiUtilCore.ensureValid(position);
+
     final PsiFile elementFile = element.getContainingFile();
     final PsiFile positionFile = position.getContainingFile();
     if (positionFile != null && elementFile != null && positionFile.getOriginalFile().equals(elementFile.getOriginalFile())) {
@@ -81,6 +84,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
       if (qname != null) {
         final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(position, PsiJavaFile.class, false);
         if (psiJavaFile != null) {
+          PsiUtilCore.ensureValid(psiJavaFile);
           final PsiImportList importList = psiJavaFile.getImportList();
           if (importList != null) {
             for (final PsiImportStatement importStatement : importList.getImportStatements()) {

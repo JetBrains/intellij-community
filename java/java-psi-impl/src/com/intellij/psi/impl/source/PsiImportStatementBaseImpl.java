@@ -22,6 +22,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.PsiUtilCore;
 
 /**
  * @author dsl
@@ -49,7 +50,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
 
   @Override
   public PsiJavaCodeReferenceElement getImportReference() {
-    assert isValid();
+    PsiUtilCore.ensureValid(this);
     final PsiImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getReference();

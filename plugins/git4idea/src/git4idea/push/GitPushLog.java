@@ -31,8 +31,8 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
+import git4idea.GitCommit;
 import git4idea.GitUtil;
-import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof GitCommit) {
           GitCommit commit = (GitCommit)userObject;
-          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthor() + "\n\n" + commit.getDescription();
+          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthorName() + "\n\n" + commit.getFullMessage();
         }
         return "";
       }
@@ -339,7 +339,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   @NotNull
   private static String getHashString(@NotNull GitCommit commit) {
-    return commit.getShortHash().toString();
+    return GitUtil.getShortHash(commit.getHash().toString());
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {

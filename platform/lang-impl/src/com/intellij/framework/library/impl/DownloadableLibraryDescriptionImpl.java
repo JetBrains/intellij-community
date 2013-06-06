@@ -25,7 +25,7 @@ import java.util.List;
  * @author nik
  */
 public class DownloadableLibraryDescriptionImpl implements DownloadableLibraryDescription {
-  private List<? extends FrameworkLibraryVersion> myVersions;
+  private final List<? extends FrameworkLibraryVersion> myVersions;
 
   public DownloadableLibraryDescriptionImpl(List<? extends FrameworkLibraryVersion> versions) {
     myVersions = versions;

@@ -114,7 +114,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @NotNull
   @Override
   public String collapsePath(@NotNull String path) {
-    return myContext.collapsePath(path, this);
+    return ConversionContextImpl.collapsePath(path, this);
   }
 
   @Override
@@ -246,7 +246,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
         return;
       }
     }
-    String path = myContext.collapsePath(FileUtil.toSystemIndependentName(directory.getAbsolutePath()), this);
+    String path = ConversionContextImpl.collapsePath(FileUtil.toSystemIndependentName(directory.getAbsolutePath()), this);
     contentRoot.addContent(new Element(ExcludeFolderImpl.ELEMENT_NAME).setAttribute(ExcludeFolderImpl.URL_ATTRIBUTE, VfsUtil.pathToUrl(path)));
   }
 

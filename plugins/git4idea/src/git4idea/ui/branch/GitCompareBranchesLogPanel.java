@@ -23,7 +23,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import git4idea.history.browser.GitCommit;
+import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListPanel;
 import git4idea.ui.GitRepositoryComboboxListCellRenderer;

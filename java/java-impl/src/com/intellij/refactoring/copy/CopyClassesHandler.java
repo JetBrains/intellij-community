@@ -181,6 +181,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     Project project = defaultTargetDirectory.getProject();
     Object targetDirectory = null;
     String className = null;
+    boolean openInEditor = true;
     if (copyOneClass(classes)) {
       final String commonPath = ArrayUtil.find(elements, classes.values().iterator().next()) == -1 ? normalizeRelativeMap(relativePathsMap) : null;
       CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false){
@@ -195,6 +196,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
       dialog.show();
       if (dialog.isOK()) {
+        openInEditor = dialog.openInEditor();
         targetDirectory = dialog.getTargetDirectory();
         className = dialog.getClassName();
         if (className == null || className.length() == 0) return;
@@ -218,12 +220,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         if (dialog.isOK()) {
           targetDirectory = dialog.getTargetDirectory();
           className = dialog.getNewName();
+          openInEditor = dialog.openInEditor();
         }
       }
     }
     if (targetDirectory != null) {
       copyClassesImpl(className, project, classes, relativePathsMap, targetDirectory, defaultTargetDirectory, RefactoringBundle.message(
-        "copy.handler.copy.class"), false);
+        "copy.handler.copy.class"), false, openInEditor);
     }
   }
 
@@ -251,7 +254,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       String className = dialog.getClassName();
       PsiDirectory targetDirectory = element.getContainingFile().getContainingDirectory();
       copyClassesImpl(className, project, Collections.singletonMap(classes[0].getContainingFile(), classes), null, targetDirectory,
-                      targetDirectory, RefactoringBundle.message("copy.handler.clone.class"), true);
+                      targetDirectory, RefactoringBundle.message("copy.handler.clone.class"), true, true);
     }
   }
 
@@ -262,7 +265,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                       final Object targetDirectory,
                                       final PsiDirectory defaultTargetDirectory,
                                       final String commandName,
-                                      final boolean selectInActivePanel) {
+                                      final boolean selectInActivePanel, 
+                                      final boolean openInEditor) {
     final boolean[] result = new boolean[] {false};
     Runnable command = new Runnable() {
       public void run() {
@@ -278,7 +282,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
               PsiElement newElement = doCopyClasses(classes, map, copyClassName, target, project);
               if (newElement != null) {
                 CopyHandler.updateSelectionInActiveProjectView(newElement, project, selectInActivePanel);
-                EditorHelper.openInEditor(newElement);
+                if (openInEditor) EditorHelper.openInEditor(newElement);
 
                 result[0] = true;
               }

@@ -34,7 +34,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
   private final UnusedDeclarationInspection myOwner;
   private QuickFixAction[] myQuickFixActions;
 
-  public DummyEntryPointsTool(UnusedDeclarationInspection owner) {
+  public DummyEntryPointsTool(@NotNull UnusedDeclarationInspection owner) {
     myOwner = owner;
   }
 

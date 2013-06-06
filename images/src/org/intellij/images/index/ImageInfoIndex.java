@@ -46,16 +46,6 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
 
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
-             file.getFileType() == ImageFileTypeManager.getInstance().getImageFileType() &&
-             (file.getLength() / 1024) < ourMaxImageSize
-        ;
-    }
-  };
-
   private final DataExternalizer<ImageInfo> myValueExternalizer = new DataExternalizer<ImageInfo>() {
     @Override
     public void save(final DataOutput out, final ImageInfo info) throws IOException {
@@ -102,7 +92,14 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType()) {
+      @Override
+      public boolean acceptInput(final VirtualFile file) {
+        return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
+               (file.getLength() / 1024) < ourMaxImageSize
+          ;
+      }
+    };
   }
 
   @Override

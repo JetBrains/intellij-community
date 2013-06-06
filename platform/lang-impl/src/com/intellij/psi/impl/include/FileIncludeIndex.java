@@ -17,9 +17,11 @@
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
@@ -160,7 +162,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+    return new FileBasedIndex.FileTypeSpecificInputFilter() {
       @Override
       public boolean acceptInput(VirtualFile file) {
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
@@ -172,6 +174,13 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
           }
         }
         return false;
+      }
+
+      @Override
+      public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+        for (FileIncludeProvider provider : myProviders) {
+          provider.registerFileTypesUsedForIndexing(fileTypeSink);
+        }
       }
     };
   }

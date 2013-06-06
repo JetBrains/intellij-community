@@ -308,7 +308,7 @@ class _ScopesLexer implements FlexLexer {
   }
 
   _ScopesLexer(java.io.Reader in) {
-    this.zzReader = in;
+    zzReader = in;
   }
 
   /**

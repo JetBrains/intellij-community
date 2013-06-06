@@ -103,9 +103,6 @@ public class UpdateRequestsQueue {
 
       if (! myStopped) {
         if (! myRequestSubmitted) {
-          if (ChangeListManagerImpl.DEBUG) {
-            ChangeListManagerImpl.log("UpdateRequestsQueue.schedule");
-          }
           final MyRunnable runnable = new MyRunnable();
           myRequestSubmitted = true;
           myExecutor.get().schedule(runnable, 300, TimeUnit.MILLISECONDS);
@@ -154,30 +151,19 @@ public class UpdateRequestsQueue {
   }
 
   public void waitUntilRefreshed() {
-    if (ChangeListManagerImpl.DEBUG) {
-      ChangeListManagerImpl.log("UpdateRequestsQueue.waitUntilRefreshed");
-    }
-
-    try {
-      while (true) {
-        final Semaphore semaphore = new Semaphore();
-        synchronized (myLock) {
-          if (!myRequestSubmitted && !myRequestRunning) {
-            return;
-          }
-
-          semaphore.down();
-          myWaitingUpdateCompletionSemaphores.add(semaphore);
-        }
-        if (!semaphore.waitFor(100*1000)) {
-          LOG.error("Too long VCS update");
+    while (true) {
+      final Semaphore semaphore = new Semaphore();
+      synchronized (myLock) {
+        if (!myRequestSubmitted && !myRequestRunning) {
           return;
         }
+
+        semaphore.down();
+        myWaitingUpdateCompletionSemaphores.add(semaphore);
       }
-    }
-    finally {
-      if (ChangeListManagerImpl.DEBUG) {
-        ChangeListManagerImpl.log(" - end - UpdateRequestsQueue.waitUntilRefreshed");
+      if (!semaphore.waitFor(100*1000)) {
+        LOG.error("Too long VCS update");
+        return;
       }
     }
   }
@@ -271,14 +257,7 @@ public class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
-        if (ChangeListManagerImpl.DEBUG) {
-          ChangeListManagerImpl.log("UpdateRequestsQueue$MyRunnable.run");
-        }
-
         myDelegate.run();
-        if (ChangeListManagerImpl.DEBUG) {
-          ChangeListManagerImpl.log(" - end - UpdateRequestsQueue$MyRunnable.run");
-        }
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInsight.preview;
 
-/*
- * User: anna
- * Date: 28-May-2009
- */
-package com.intellij.codeInspection;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
- * This will be removed in future versions.
- * Please use {@link InspectionEP} for inspection registration
+ * User: zolotov
+ * Date: 6/5/13
  */
-@Deprecated
-public interface InspectionToolsFactory {
-  ExtensionPointName<InspectionToolsFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.inspectionToolsFactory");
-
-  InspectionProfileEntry[] createTools();
+public interface PreviewHintComponent {
+  @TestOnly
+  boolean isEqualTo(@Nullable PreviewHintComponent other);
 }

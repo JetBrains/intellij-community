@@ -22,7 +22,7 @@ import javax.swing.*;
 
 public class ItemWrapperListRenderer extends ColoredListCellRenderer {
   private final JComponent myAccessory;
-  private Project myProject;
+  private final Project myProject;
 
   public ItemWrapperListRenderer(Project project, JComponent accessory) {
     myAccessory = accessory;

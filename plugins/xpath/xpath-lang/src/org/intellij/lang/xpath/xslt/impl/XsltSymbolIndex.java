@@ -144,13 +144,10 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
 
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
-        return new FileBasedIndex.InputFilter() {
+        return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML) {
             @Override
             public boolean acceptInput(VirtualFile file) {
-                if (file.getFileSystem() instanceof JarFileSystem) {
-                  return false; // there is lots and lots of custom XML inside zip files
-                }
-                return file.getFileType() == StdFileTypes.XML;
+                return !(file.getFileSystem() instanceof JarFileSystem);
             }
         };
     }

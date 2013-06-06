@@ -37,7 +37,7 @@ public class InspectionNode extends InspectionTreeNode {
 
   private boolean myTooBigForOnlineRefresh = false;
 
-  public InspectionNode(InspectionTool tool) {
+  public InspectionNode(@NotNull InspectionTool tool) {
     super(tool);
   }
 

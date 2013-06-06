@@ -14,14 +14,14 @@ package git4idea.history.wholeTree;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 
 import java.util.Set;
 
 /**
 * @author irengrig
 */
-public class GitCommitToCommitConvertor implements Convertor<GitCommit, CommitHashPlusParents> {
+public class GitCommitToCommitConvertor implements Convertor<GitHeavyCommit, CommitHashPlusParents> {
   private final static GitCommitToCommitConvertor ourInstance = new GitCommitToCommitConvertor();
 
   public static GitCommitToCommitConvertor getInstance() {
@@ -29,7 +29,7 @@ public class GitCommitToCommitConvertor implements Convertor<GitCommit, CommitHa
   }
 
   @Override
-  public CommitHashPlusParents convert(GitCommit o) {
+  public CommitHashPlusParents convert(GitHeavyCommit o) {
     final Set<String> parentsHashes = o.getParentsHashes();
     return new CommitHashPlusParents(o.getShortHash(), ArrayUtil.toStringArray(parentsHashes), o.getDate().getTime(),
                                      o.getAuthor());
