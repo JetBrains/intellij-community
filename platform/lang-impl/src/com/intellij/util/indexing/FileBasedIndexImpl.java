@@ -67,6 +67,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -98,7 +99,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices =
     new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
-  private final Set<ID<?, ?>> myIndicesWithoutFileTypeInfo = new THashSet<ID<?, ?>>();
+  private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<ID<?, ?>>();
   private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<FileType, List<ID<?, ?>>>();
 
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new THashMap<ID<?, ?>, Semaphore>();
@@ -447,9 +448,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         myIndices.put(name, new Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>(index, new IndexableFilesFilter(inputFilter)));
         if (inputFilter instanceof FileTypeSpecificInputFilter) {
           ((FileTypeSpecificInputFilter)inputFilter).registerFileTypesUsedForIndexing(new Consumer<FileType>() {
+            final Set<FileType> addedTypes = new THashSet<FileType>();
             @Override
             public void consume(FileType type) {
-              if (type == null) {
+              if (type == null || !addedTypes.add(type)) {
                 return;
               }
               List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(type);
@@ -1766,14 +1768,51 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private Set<ID<?, ?>> getAffectedIndexCandidates(VirtualFile file) {
+  private static final Iterable<ID<?, ?>> EMPTY_ITERABLE = new Iterable<ID<?, ?>>() {
+    @Override
+    public Iterator<ID<?, ?>> iterator() {
+      return EmptyIterator.getInstance();
+    }
+  };
+
+  private static class AffectedIndexCandidatesIterable implements Iterable<ID<?, ?>>, Iterator<ID<?, ?>> {
+    private final List<ID<?, ?>> myIndicesWithFileTypeInfo;
+    private List<ID<?, ?>> myCurrentList;
+    private int myIndex;
+
+    AffectedIndexCandidatesIterable(FileBasedIndexImpl instance, FileType fileType) {
+      myCurrentList = instance.myIndicesWithoutFileTypeInfo;
+      List<ID<?, ?>> ids = instance.myFileType2IndicesWithFileTypeInfoMap.get(fileType);
+      myIndicesWithFileTypeInfo = ids != null ? ids:Collections.<ID<?, ?>>emptyList();
+      if (myIndex >= myCurrentList.size()) myCurrentList = myIndicesWithFileTypeInfo;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myIndex < myCurrentList.size();
+    }
+
+    @Override
+    public ID next() {
+      ID<?, ?> next = myCurrentList.get(myIndex ++);
+      if (myIndex == myCurrentList.size()) {
+        if (myCurrentList == myIndicesWithFileTypeInfo) myCurrentList = Collections.emptyList();
+        else myCurrentList = myIndicesWithFileTypeInfo;
+        myIndex = 0;
+      }
+      return next;
+    }
+
+    @Override
+    public void remove() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public Iterator<ID<?, ?>> iterator() { return this; }
+  }
+
+  private Iterable<ID<?, ?>> getAffectedIndexCandidates(VirtualFile file) {
     FileType fileType = file.getFileType();
-    if (isProjectOrWorkspaceFile(file, fileType)) return Collections.emptySet();
-    List<ID<?, ?>> idList = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
-    Set<ID<?, ?>> affectedIds = new THashSet<ID<?, ?>>(myIndicesWithoutFileTypeInfo.size() + (idList != null ? idList.size() : 0));
-    affectedIds.addAll(myIndicesWithoutFileTypeInfo);
-    if (idList != null) affectedIds.addAll(idList);
-    return affectedIds;
+    return isProjectOrWorkspaceFile(file, fileType)? EMPTY_ITERABLE : new AffectedIndexCandidatesIterable(this, fileType);
   }
 
   private static void cleanFileContent(FileContentImpl fc, PsiFile psiFile) {
@@ -2013,10 +2052,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void invalidateIndicesForFile(final VirtualFile file, boolean markForReindex) {
       cleanProcessedFlag(file);
       IndexingStamp.flushCache(file);
-      Set<ID<?, ?>> affectedIndexIds = getAffectedIndexCandidates(file);
-      final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(affectedIndexIds.size());
 
-      for (final ID<?, ?> indexId : affectedIndexIds) {
+      List<ID<?, ?>> indicesWithFileTypeInfo = myFileType2IndicesWithFileTypeInfoMap.get(file.getFileType());
+      final int estimatedAffectedIndicesCapacity = myIndicesWithoutFileTypeInfo.size() +
+                                             (indicesWithFileTypeInfo != null ? indicesWithFileTypeInfo.size() : 0);
+      final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(estimatedAffectedIndicesCapacity);
+
+      for (final ID<?, ?> indexId : getAffectedIndexCandidates(file)) {
         try {
           if (!needsFileContentLoading(indexId)) {
             if (shouldUpdateIndex(file, indexId)) {
