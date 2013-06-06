@@ -607,7 +607,7 @@ public class GitHistoryUtils {
 
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.skipNulls(ContainerUtil.map(records, new Function<GitLogRecord, GitCommit>() {
+    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, GitCommit>() {
       @Override
       public GitCommit fun(GitLogRecord record) {
         try {
@@ -626,7 +626,7 @@ public class GitHistoryUtils {
           return null;
         }
       }
-    }));
+    });
   }
 
   /**
