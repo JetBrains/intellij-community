@@ -449,6 +449,8 @@
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>
+    
+    <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider$GroovyExtensionVetoSPI"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
