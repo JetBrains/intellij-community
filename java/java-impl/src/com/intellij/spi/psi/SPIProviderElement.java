@@ -20,10 +20,9 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.ClassCandidateInfo;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.SPIFileType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -32,39 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * User: anna
  */
-public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaReference {
+public class SPIProviderElement extends ASTWrapperPsiElement implements PsiReference {
   public SPIProviderElement(ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public void processVariants(PsiScopeProcessor processor) {
-  }
-
-  @NotNull
-  @Override
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
-    final PsiElement resolve = resolve();
-    if (resolve instanceof PsiClass) {
-      return new ClassCandidateInfo(resolve, PsiSubstitutor.EMPTY);
-    }
-    return JavaResolveResult.EMPTY;
-  }
-
-  @NotNull
-  @Override
-  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final PsiElement resolve = resolve();
-    if (resolve instanceof PsiClass) {
-      return new JavaResolveResult[]{new ClassCandidateInfo(resolve, PsiSubstitutor.EMPTY)};
-    }
-    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   @Override
@@ -74,7 +48,8 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
 
   @Override
   public TextRange getRangeInElement() {
-    return new TextRange(0, getTextLength());
+    final PsiElement last = PsiTreeUtil.getDeepestLast(this);
+    return new TextRange(last.getStartOffsetInParent(), getTextLength());
   }
 
   @Nullable

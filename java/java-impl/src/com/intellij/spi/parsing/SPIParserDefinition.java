@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.spi.psi.SPIPackElement;
 import com.intellij.spi.psi.SPIProviderElement;
 import com.intellij.spi.psi.SPIProvidersElementList;
 import com.intellij.spi.psi.SPIFile;
@@ -99,6 +100,9 @@ public class SPIParserDefinition implements ParserDefinition {
     if (elementType == SPIElementTypes.PROVIDER) {
       return new SPIProviderElement(node);
     }
+    if (elementType == SPIElementTypes.PACK) {
+      return new SPIPackElement(node);
+    }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 
@@ -116,7 +120,7 @@ public class SPIParserDefinition implements ParserDefinition {
     if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
       final PsiBuilder.Marker prop = builder.mark();
 
-      parseProviderChar(builder);
+      parseProviderChar(builder, builder.mark());
       prop.done(SPIElementTypes.PROVIDER);
     }
     else {
@@ -125,15 +129,16 @@ public class SPIParserDefinition implements ParserDefinition {
     }
   }
 
-  private static void parseProviderChar(final PsiBuilder builder) {
+  private static void parseProviderChar(final PsiBuilder builder, PsiBuilder.Marker pack) {
     final IElementType initialTokenType = builder.getTokenType();
     if (initialTokenType == null) return;
     LOG.assertTrue(initialTokenType == JavaTokenType.IDENTIFIER);
     builder.advanceLexer();
+    pack.done(SPIElementTypes.PACK);
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT || tokenType == SPITokenType.DOLLAR) {
       builder.advanceLexer();
-      parseProviderChar(builder);
+      parseProviderChar(builder, pack.precede());
     }
   }
 }
