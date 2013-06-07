@@ -437,7 +437,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     msg += "; file stamp: " + file.getModificationStamp();
     msg += "; file modCount: " + file.getModificationCount();
 
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document != null) {
       msg += "\nsaved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
       msg += "; doc stamp: " + document.getModificationStamp();

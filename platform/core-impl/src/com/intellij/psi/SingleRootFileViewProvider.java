@@ -472,7 +472,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + '}';
+    return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
   }
 
   private interface Content {

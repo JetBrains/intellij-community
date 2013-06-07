@@ -70,7 +70,9 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         }
       }
       if (element instanceof PsiFileStub) {
-        return new StubTree((PsiFileStub)element);
+        StubTree tree = new StubTree((PsiFileStub)element);
+        tree.setDebugInfo("created from file content, timestamp=" + vFile.getTimeStamp());
+        return tree;
       }
     }
     catch (IOException e) {
@@ -104,7 +106,9 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       catch (SerializerNotFoundException e) {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
       }
-      return stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
+      ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
+      tree.setDebugInfo("created from index, index creation stamp=" + IndexInfrastructure.getIndexCreationStamp(StubUpdatingIndex.INDEX_ID) + "; index stamp=" + IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID));
+      return tree;
     }
     else if (size != 0) {
       return processError(vFile, "Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id,
