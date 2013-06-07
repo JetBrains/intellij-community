@@ -899,6 +899,7 @@
     <codeInsight.implementMethod language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaImplementMethodsHandler"/>
     <codeInsight.delegateMethods language="JAVA" implementationClass="com.intellij.codeInsight.generation.GenerateDelegateHandler"/>
     <codeInsight.gotoSuper language="JAVA" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
+    <codeInsight.gotoSuper language="SPI" implementationClass="com.intellij.spi.SPIGotoSuperHandler"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider"/>
