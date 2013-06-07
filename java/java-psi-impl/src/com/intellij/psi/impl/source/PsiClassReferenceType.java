@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -137,7 +138,7 @@ public class PsiClassReferenceType extends PsiClassType {
   @Override
   @NotNull
   public ClassResolveResult resolveGenerics() {
-    LOG.assertTrue(isValid());
+    PsiUtilCore.ensureValid(myReference);
     final JavaResolveResult result = myReference.advancedResolve(false);
     return new DelegatingClassResolveResult(result);
   }

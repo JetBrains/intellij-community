@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
@@ -373,9 +374,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     for (final PsiField field : psiClass.getFields()) {
       if (field == element) continue;
 
-      assert field.isValid() : "invalid field: " + field;
+      PsiUtilCore.ensureValid(field);
       PsiType fieldType = field.getType();
-      assert fieldType.isValid() : "invalid field type: " + field + "; " + fieldType + " of " + fieldType.getClass();
+      PsiUtil.ensureValidType(fieldType);
 
       final PsiModifierList modifierList = field.getModifierList();
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
