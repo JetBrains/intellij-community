@@ -13,14 +13,14 @@ import org.jetbrains.annotations.NotNull;
 public interface XDebugLayoutCustomizer {
 
   /**
-   * Creates {@code Content} instance for a given {@code console}.
+   * Registers tab for the given {@code console}, that is returned by {@link com.intellij.xdebugger.XDebugProcess#createConsole()}.
    *
    * @param console {@code ExecutionConsole} instance
    * @param ui {@code RunnerLayoutUi} instance
-   * @return {@code Content} instance
+   * @return registered {@code Content} instance
    */
   @NotNull
-  Content createConsoleContent(@NotNull ExecutionConsole console, @NotNull RunnerLayoutUi ui);
+  Content registerConsoleContent(@NotNull ExecutionConsole console, @NotNull RunnerLayoutUi ui);
 
   /**
    * Registers additional tabs for 'Debug' tool window.

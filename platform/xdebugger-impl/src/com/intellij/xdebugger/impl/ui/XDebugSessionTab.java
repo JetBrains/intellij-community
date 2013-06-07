@@ -139,12 +139,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugLayoutCustomizer layoutCustomizer = debugProcess.getLayoutCustomizer();
     final Content consoleContent;
     if (layoutCustomizer != null) {
-      consoleContent = layoutCustomizer.createConsoleContent(myConsole, myUi);
+      consoleContent = layoutCustomizer.registerConsoleContent(myConsole, myUi);
     }
     else {
       consoleContent = createConsoleContent();
+      myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
     }
-    myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
     attachNotificationTo(consoleContent);
 
     debugProcess.registerAdditionalContent(myUi);
