@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -31,7 +32,11 @@ public class PreferenceButton extends JComponent {
   public PreferenceButton(String label, Icon icon) {
     myLabel = label;
     myIcon = icon;
-    setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    if (SystemInfo.isMac) {
+      setFont(new Font("Lucida Grande", Font.PLAIN, 11));
+    } else {
+      setFont(UIUtil.getLabelFont());
+    }
     setPreferredSize(new Dimension(100, 70));
     setOpaque(false);
   }
