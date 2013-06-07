@@ -48,7 +48,7 @@ public class GrClosureParameterImpl implements GrClosureParameter {
 
   @Nullable
   private static PsiType getParameterType(@NotNull PsiParameter parameter) {
-    return parameter instanceof GrParameter ? ((GrParameter)parameter).getTypeGroovy() : parameter.getType();
+    return parameter instanceof GrParameter ? ((GrParameter)parameter).getDeclaredType() : parameter.getType();
   }
 
   @Nullable
