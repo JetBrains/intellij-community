@@ -126,7 +126,9 @@ public class SPIParserDefinition implements ParserDefinition {
   }
 
   private static void parseProviderChar(final PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == JavaTokenType.IDENTIFIER);
+    final IElementType initialTokenType = builder.getTokenType();
+    if (initialTokenType == null) return;
+    LOG.assertTrue(initialTokenType == JavaTokenType.IDENTIFIER);
     builder.advanceLexer();
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT || tokenType == SPITokenType.DOLLAR) {
