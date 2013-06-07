@@ -42,9 +42,11 @@ public class HgExecutor extends Executor {
     if (exec != null) {
       return exec;
     }
-    exec = findInPath(programName, unixExec, winExec);
-    if (exec != null) {
-      return exec;
+    if (SystemInfo.isWindows) {
+      exec = findInPath(programName, unixExec, winExec);
+      if (exec != null) {
+        return exec;
+      }
     }
     exec = findInSources(programName, unixExec, winExec);
     if (exec != null) {
