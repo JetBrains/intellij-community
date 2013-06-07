@@ -38,9 +38,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -230,7 +230,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-    final PsiManager psiManager = PsiManager.getInstance(project);
 
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
@@ -428,28 +427,41 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   @Override
   protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
-    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(psi);
-    if (faultyContainer != null) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      PsiFile psiFile = psi.getManager().findFile(file);
-
-      String msg = "Invalid stub element type in index: " + file;
-      msg += "; found: " + psi;
-      msg += "; file stamp: " + file.getModificationStamp();
-      msg += "; file modCount: " + file.getModificationCount();
-      if (document != null) {
-        msg += "; unsaved: " + FileDocumentManager.getInstance().isDocumentUnsaved(document);
-        msg += "; doc stamp: " + document.getModificationStamp();
-        msg += "; committed: " + PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
-      }
-      if (psiFile != null) {
-        msg += "; psi stamp: " + psiFile.getModificationStamp();
-        msg += "; viewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
-      }
-      LOG.error(msg);
+    if (file == null) {
+      super.reportStubPsiMismatch(psi, file);
       return;
     }
-    super.reportStubPsiMismatch(psi, file);
 
+    String msg = "Invalid stub element type in index: " + file;
+    msg += "; found: " + psi;
+    msg += "; file stamp: " + file.getModificationStamp();
+    msg += "; file modCount: " + file.getModificationCount();
+
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document != null) {
+      msg += "\nsaved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
+      msg += "; doc stamp: " + document.getModificationStamp();
+      msg += "; committed: " + PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
+    }
+
+    PsiFile psiFile = psi.getManager().findFile(file);
+    if (psiFile != null) {
+      msg += "\nviewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
+      if (psiFile instanceof PsiFileImpl) {
+        StubElement stub = ((PsiFileImpl)psiFile).getStub();
+        msg += "; psi.stubbed: " + (stub != null);
+        if (stub == null) {
+          FileElement treeElement = ((PsiFileImpl)psiFile).getTreeElement();
+          msg += "; ast loaded: " + (treeElement != null);
+          if (treeElement != null) {
+            msg += "; ast parsed: " + treeElement.isParsed();
+          }
+        }
+      }
+    }
+
+    msg += "\nindex stamp: " + IndexingStamp.getIndexStamp(file, StubUpdatingIndex.INDEX_ID);
+    msg += "; index creation stamp: " + IndexInfrastructure.getIndexCreationStamp(StubUpdatingIndex.INDEX_ID);
+    LOG.error(msg);
   }
 }
