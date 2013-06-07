@@ -288,7 +288,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       return;
     }
     if (configuration == null && (currentDescriptor == null || currentDescriptor.getRestarter() == null)) {
-      LOG.error("Nothing to restart");
+      LOG.error("Nothing to restart for descriptor ["+currentDescriptor+"]");
       return;
     }
     final List<RunContentDescriptor> descriptorsToStop = new ArrayList<RunContentDescriptor>();
