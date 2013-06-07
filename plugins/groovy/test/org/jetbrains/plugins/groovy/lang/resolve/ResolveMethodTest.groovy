@@ -1583,4 +1583,14 @@ anon.fo<caret>o()
       foo().bar.first().subs<caret>tring(1, 2)
     ''', PsiMethod)
   }
+
+  void testMixinClosure() {
+    resolveByText('''
+def foo() {
+    def x = { a -> print a}
+    Integer.metaClass.abc = { print 'something' }
+    1.a<caret>bc()
+}
+''', PsiMethod)
+  }
 }
