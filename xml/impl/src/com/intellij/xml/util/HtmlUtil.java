@@ -16,7 +16,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
@@ -315,11 +314,9 @@ public class HtmlUtil {
         }
         break;
       case XmlEntitiesInspection.UNKNOWN_ATTRIBUTE:
-        LocalInspectionToolWrapper wrapper1 =
-          (LocalInspectionToolWrapper)profile.getInspectionTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME,
-                                                                containingFile);
         HtmlUnknownAttributeInspection unknownAttributeInspection =
-          wrapper1 != null ? (HtmlUnknownAttributeInspection)wrapper1.getTool() : null;
+          (HtmlUnknownAttributeInspection)profile.getUnwrappedTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME,
+                                                                   containingFile);
         if (unknownAttributeInspection != null) {
           return unknownAttributeInspection.getAdditionalEntries();
         }
