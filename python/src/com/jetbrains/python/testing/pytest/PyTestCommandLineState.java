@@ -52,7 +52,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     assert script_params != null;
     String params = myConfiguration.getParams();
     if (!StringUtil.isEmptyOrSpaces(params)) {
-      for (String p : params.split(" "))
+      for (String p : StringUtil.splitHonorQuotes(params, ' '))
         script_params.addParameter(p);
     }
 
