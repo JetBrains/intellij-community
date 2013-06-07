@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.spi.SPILanguage;
 
-interface SPIElementTypes {
+public interface SPIElementTypes {
 
   IFileElementType FILE = new IFileElementType(SPILanguage.INSTANCE);
   IElementType PROVIDER = new IElementType("PROVIDER", SPILanguage.INSTANCE);

@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.spi.SPIFileType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,8 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
   }
 
   @Override
-  public void processVariants(PsiScopeProcessor processor) {}
+  public void processVariants(PsiScopeProcessor processor) {
+  }
 
   @NotNull
   @Override
@@ -53,7 +55,7 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final PsiElement resolve = resolve();
     if (resolve instanceof PsiClass) {
-      return new JavaResolveResult[] {new ClassCandidateInfo(resolve, PsiSubstitutor.EMPTY)};
+      return new JavaResolveResult[]{new ClassCandidateInfo(resolve, PsiSubstitutor.EMPTY)};
     }
     return JavaResolveResult.EMPTY_ARRAY;
   }
@@ -82,11 +84,20 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return null;
+    final SPIProvidersElementList firstChild =
+      (SPIProvidersElementList)PsiFileFactory.getInstance(getProject())
+        .createFileFromText("spi_dummy", SPIFileType.INSTANCE, newElementName).getFirstChild();
+    return replace(firstChild.getElements().get(0));
   }
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (element instanceof PsiClass) {
+      final String className = ClassUtil.getJVMClassName((PsiClass)element);
+      if (className != null) {
+        return handleElementRename(className);
+      }
+    }
     return null;
   }
 
