@@ -29,6 +29,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * User: anna
  */
@@ -45,6 +48,35 @@ public class SPIFile extends PsiFileBase {
         return ClassUtil.findPsiClass(getManager(), getName(), null, true, getResolveScope()); 
       }
     }));
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferences() {
+    final List<PsiReference> refs = new ArrayList<PsiReference>();
+    int idx = 0;
+    int d;
+    final String fileName = getName();
+    while ((d = fileName.indexOf(".", idx)) > -1) {
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(fileName.substring(0, d));
+      if (aPackage != null) {
+        refs.add(new SPIFileName2PackageReference(this, aPackage));
+      }
+      idx = d + 1;
+    }
+    final PsiReference reference = getReference();
+    PsiElement resolve = reference.resolve();
+    while (resolve instanceof PsiClass) {
+      resolve = ((PsiClass)resolve).getContainingClass();
+      if (resolve != null) {
+        final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)resolve);
+        if (jvmClassName != null) {
+          refs.add(new SPIFileName2PackageReference(this, resolve));
+        }
+      }
+    }
+    refs.add(reference);
+    return refs.toArray(new PsiReference[refs.size()]);
   }
 
   @NotNull
@@ -69,10 +101,12 @@ public class SPIFile extends PsiFileBase {
 
     @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      final String className = ClassUtil.getJVMClassName(myClass);
-      if (className != null) {
-        final String newFileName = className.substring(0, className.lastIndexOf(myClass.getName())) + newElementName;
-        return getElement().setName(newFileName);
+      if (myClass != null) {
+        final String className = ClassUtil.getJVMClassName(myClass);
+        if (className != null) {
+          final String newFileName = className.substring(0, className.lastIndexOf(myClass.getName())) + newElementName;
+          return getElement().setName(newFileName);
+        }
       }
       return getElement();
     }
@@ -83,6 +117,52 @@ public class SPIFile extends PsiFileBase {
         final String className = ClassUtil.getJVMClassName((PsiClass)element);
         if (className != null) {
           return getElement().setName(className);
+        }
+      }
+      return getElement();
+    }
+
+    @NotNull
+    @Override
+    public Object[] getVariants() {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+  }
+
+  private static class SPIFileName2PackageReference extends PsiReferenceBase<PsiFile> {
+    private final PsiElement myPackageOrContainingClass;
+
+    public SPIFileName2PackageReference(PsiFile file, @NotNull PsiElement psiPackage) {
+      super(file, new TextRange(0, 0), false);
+      myPackageOrContainingClass = psiPackage;
+    }
+
+    @NotNull
+    @Override
+    public String getCanonicalText() {
+      return myPackageOrContainingClass instanceof PsiPackage 
+             ? ((PsiPackage)myPackageOrContainingClass).getQualifiedName() : ClassUtil.getJVMClassName((PsiClass)myPackageOrContainingClass);
+    }
+
+    @Nullable
+    @Override
+    public PsiElement resolve() {
+      return myPackageOrContainingClass;
+    }
+
+    @Override
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      return getElement().setName(newElementName + getElement().getName().substring(getCanonicalText().length()));
+    }
+
+    @Override
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+      if (element instanceof PsiPackage) {
+        return handleElementRename(((PsiPackage)element).getQualifiedName());
+      } else if (element instanceof PsiClass) {
+        final String className = ClassUtil.getJVMClassName((PsiClass)element);
+        if (className != null) {
+          return handleElementRename(className);
         }
       }
       return getElement();
