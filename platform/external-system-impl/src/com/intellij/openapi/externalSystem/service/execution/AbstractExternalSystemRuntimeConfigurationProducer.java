@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -64,6 +66,39 @@ public abstract class AbstractExternalSystemRuntimeConfigurationProducer extends
     taskExecutionSettings.setTaskNames(Collections.singletonList(task.getName()));
     configuration.setName(AbstractExternalSystemTaskConfigurationType.generateName(location.getProject(), taskExecutionSettings));
     return settings;
+  }
+
+  @Nullable
+  @Override
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurationsSettings,
+                                                                 ConfigurationContext context) {
+    if (!(location instanceof ExternalSystemTaskLocation)) {
+      return null;
+    }
+    ExternalTaskPojo taskPojo = ((ExternalSystemTaskLocation)location).getTask();
+
+    for (RunnerAndConfigurationSettings settings : existingConfigurationsSettings) {
+      RunConfiguration runConfiguration = settings.getConfiguration();
+      if (!(runConfiguration instanceof ExternalSystemRunConfiguration)) {
+        continue;
+      }
+      if (match(taskPojo, ((ExternalSystemRunConfiguration)runConfiguration).getSettings())) {
+        return settings;
+      }
+    }
+    return null;
+  }
+
+  private static boolean match(@NotNull ExternalTaskPojo task, @NotNull ExternalSystemTaskExecutionSettings settings) {
+    if (!task.getLinkedExternalProjectPath().equals(settings.getExternalProjectPath())) {
+      return false;
+    }
+    List<String> taskNames = settings.getTaskNames();
+    if (taskNames.size() != 1) {
+      return false;
+    }
+    return task.getName().equals(taskNames.get(0));
   }
 
   @Override

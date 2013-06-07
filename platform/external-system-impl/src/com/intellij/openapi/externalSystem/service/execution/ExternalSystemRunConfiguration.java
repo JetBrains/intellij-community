@@ -137,12 +137,18 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            String greeting = ExternalSystemBundle.message("run.text.starting", StringUtil.join(mySettings.getTaskNames(), " "));
+            final String greeting;
+            if (mySettings.getTaskNames().size() > 1) {
+              greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", StringUtil.join(mySettings.getTaskNames(), " "));
+            }
+            else {
+              greeting = ExternalSystemBundle.message("run.text.starting.single.task", StringUtil.join(mySettings.getTaskNames(), " "));
+            }
             processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
             task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
-              
+
               private boolean myResetGreeting = true;
-              
+
               @Override
               public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
                 if (myResetGreeting) {
