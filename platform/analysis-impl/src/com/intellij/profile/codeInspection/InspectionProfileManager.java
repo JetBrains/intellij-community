@@ -75,17 +75,17 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
   public abstract Profile createProfile();
 
   @Override
-  public void addProfileChangeListener(final ProfileChangeAdapter listener) {
+  public void addProfileChangeListener(@NotNull final ProfileChangeAdapter listener) {
     myProfileChangeAdapters.add(listener);
   }
 
   @Override
-  public void addProfileChangeListener(ProfileChangeAdapter listener, Disposable parentDisposable) {
+  public void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable) {
     ContainerUtil.add(listener, myProfileChangeAdapters, parentDisposable);
   }
 
   @Override
-  public void removeProfileChangeListener(final ProfileChangeAdapter listener) {
+  public void removeProfileChangeListener(@NotNull final ProfileChangeAdapter listener) {
     myProfileChangeAdapters.remove(listener);
   }
 
@@ -104,20 +104,14 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
   }
 
   @Override
-  public abstract void setRootProfile(String rootProfile);
-
-
-  @Override
   public abstract Profile getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent);
 
   @Override
+  @NotNull
   public abstract Profile getRootProfile();
 
   @Override
   public abstract void deleteProfile(final String profile);
-
-  @Override
-  public abstract void addProfile(final Profile profile);
 
   @Nullable
   public static File getProfileDirectory() {

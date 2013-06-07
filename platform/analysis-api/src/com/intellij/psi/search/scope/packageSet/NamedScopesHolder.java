@@ -60,10 +60,10 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   private final List<ScopeListener> myScopeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  public void addScopeListener(ScopeListener scopeListener) {
+  public void addScopeListener(@NotNull ScopeListener scopeListener) {
     myScopeListeners.add(scopeListener);
   }
-  public void removeScopeListener(ScopeListener scopeListener) {
+  public void removeScopeListener(@NotNull ScopeListener scopeListener) {
     myScopeListeners.remove(scopeListener);
   }
 

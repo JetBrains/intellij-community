@@ -39,11 +39,11 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     super(ep);
   }
 
-  CommonInspectionToolWrapper(InspectionTool tool) {
+  public CommonInspectionToolWrapper(@NotNull InspectionTool tool) {
     super(tool);
   }
 
-  private CommonInspectionToolWrapper(CommonInspectionToolWrapper other) {
+  private CommonInspectionToolWrapper(@NotNull CommonInspectionToolWrapper other) {
     super(other);
   }
 

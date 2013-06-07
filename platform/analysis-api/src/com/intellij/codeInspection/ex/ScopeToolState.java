@@ -46,12 +46,12 @@ public class ScopeToolState {
   private JComponent myAdditionalConfigPanel;
   private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
 
-  public ScopeToolState(@NotNull NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public ScopeToolState(@NotNull NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, @NotNull HighlightDisplayLevel level) {
     this(scope.getName(), tool, enabled, level);
     myScope = scope;
   }
 
-  public ScopeToolState(@NotNull String scopeName, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public ScopeToolState(@NotNull String scopeName, @NotNull InspectionProfileEntry tool, boolean enabled, @NotNull HighlightDisplayLevel level) {
     myScopeName = scopeName;
     myTool = tool;
     myEnabled = enabled;
@@ -82,6 +82,7 @@ public class ScopeToolState {
     return myEnabled;
   }
 
+  @NotNull
   public HighlightDisplayLevel getLevel() {
     return myLevel;
   }
@@ -90,7 +91,7 @@ public class ScopeToolState {
     myEnabled = enabled;
   }
 
-  public void setLevel(HighlightDisplayLevel level) {
+  public void setLevel(@NotNull HighlightDisplayLevel level) {
     myLevel = level;
   }
 
@@ -112,7 +113,7 @@ public class ScopeToolState {
     myAdditionalConfigPanel = null;
   }
 
-  public void setTool(InspectionProfileEntry tool) {
+  public void setTool(@NotNull InspectionProfileEntry tool) {
     myTool = tool;
   }
 

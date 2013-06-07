@@ -28,6 +28,7 @@ import com.intellij.codeInspection.ex.SeverityEditorDialog;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -86,6 +87,7 @@ public class LevelChooser extends ComboboxWithBrowseButton {
     }
   }
 
+  @NotNull
   public HighlightDisplayLevel getLevel() {
     HighlightSeverity severity = (HighlightSeverity)getComboBox().getSelectedItem();
     if (severity == null) return HighlightDisplayLevel.WARNING;

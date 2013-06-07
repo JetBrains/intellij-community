@@ -18,6 +18,7 @@ package com.intellij.profile;
 import com.intellij.openapi.Disposable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ApplicationProfileManager implements ProfileManager{
   public abstract Profile createProfile();
 
-  public abstract void addProfileChangeListener(ProfileChangeAdapter listener);
+  public abstract void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
-  public abstract void addProfileChangeListener(ProfileChangeAdapter listener, Disposable parentDisposable);
+  public abstract void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable);
 
-  public abstract void removeProfileChangeListener(ProfileChangeAdapter listener);
+  public abstract void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
   public abstract void fireProfileChanged(Profile profile);
 
@@ -39,9 +40,10 @@ public abstract class ApplicationProfileManager implements ProfileManager{
 
   public abstract void setRootProfile(String rootProfile);
 
+  @NotNull
   public abstract Profile getRootProfile();
 
-  public abstract void addProfile(Profile profile);
+  public abstract void addProfile(@NotNull Profile profile);
 
   @Override
   public NamedScopesHolder getScopesManager() {

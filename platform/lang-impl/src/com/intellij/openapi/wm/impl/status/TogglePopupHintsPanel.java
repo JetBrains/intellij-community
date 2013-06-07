@@ -41,7 +41,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
-
   private Icon myCurrentIcon;
   private String myToolTipText;
 
@@ -149,7 +148,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
       myToolTipText = null;
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && myStatusBar != null) {
       myStatusBar.updateWidget(ID());
     }
   }
@@ -166,5 +165,4 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
     }
     return null;
   }
-
 }
