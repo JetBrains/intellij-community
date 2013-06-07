@@ -15,18 +15,25 @@
  */
 package com.intellij.spi.psi;
 
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.spi.SPIFileType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * User: anna
@@ -112,6 +119,22 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
   @NotNull
   @Override
   public Object[] getVariants() {
+    final String name = getContainingFile().getName();
+    final PsiClass superProvider = JavaPsiFacade.getInstance(getProject()).findClass(name, getResolveScope());
+    if (superProvider != null) {
+      final List<Object> result = new ArrayList<Object>();
+      ClassInheritorsSearch.search(superProvider).forEach(new Processor<PsiClass>() {
+        @Override
+        public boolean process(PsiClass psiClass) {
+          final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
+          if (jvmClassName != null) {
+            result.add(LookupElementBuilder.create(psiClass, jvmClassName));
+          }
+          return false;
+        }
+      });
+      return result.toArray(new Object[result.size()]);
+    }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
