@@ -448,14 +448,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     if (psiFile != null) {
       msg += "\nviewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
       if (psiFile instanceof PsiFileImpl) {
-        StubElement stub = ((PsiFileImpl)psiFile).getStub();
-        msg += "; psi.stubbed: " + (stub != null);
+        StubTree stub = ((PsiFileImpl)psiFile).getStubTree();
         if (stub == null) {
           FileElement treeElement = ((PsiFileImpl)psiFile).getTreeElement();
           msg += "; ast loaded: " + (treeElement != null);
           if (treeElement != null) {
             msg += "; ast parsed: " + treeElement.isParsed();
           }
+        } else {
+          msg += "\nstub info=" + stub.getDebugInfo();
         }
       }
     }
