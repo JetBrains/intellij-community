@@ -62,8 +62,7 @@ public abstract class AbstractExternalSystemRuntimeConfigurationProducer extends
     ExternalTaskPojo task = taskLocation.getTask();
     taskExecutionSettings.setExternalProjectPath(task.getLinkedExternalProjectPath());
     taskExecutionSettings.setTaskNames(Collections.singletonList(task.getName()));
-    // TODO den implement
-    configuration.setName("xxx");
+    configuration.setName(AbstractExternalSystemTaskConfigurationType.generateName(location.getProject(), taskExecutionSettings));
     return settings;
   }
 

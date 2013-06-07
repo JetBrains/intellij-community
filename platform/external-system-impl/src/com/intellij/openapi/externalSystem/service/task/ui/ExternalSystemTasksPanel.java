@@ -30,11 +30,13 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskL
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Producer;
@@ -127,16 +129,13 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     }
 
     String projectPath = task.getLinkedExternalProjectPath();
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectPath);
-    if (vFile == null) {
-      return null;
-    }
+    String name = myExternalSystemId.getReadableName() + projectPath + task.getName();
+    // We create a dummy text file instead of re-using external system file in order to avoid clashing with other configuration producers.
+    // For example gradle files are enhanced groovy scripts but we don't want to run them via regular IJ groovy script runners.
+    // Gradle tooling api should be used for running gradle tasks instead. IJ execution sub-system operates on Location objects
+    // which encapsulate PsiElement and groovy runners are automatically applied if that PsiElement IS-A GroovyFile.
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name, PlainTextFileType.INSTANCE, "nichts");
 
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vFile);
-    if (psiFile == null) {
-      return null;
-    }
-
-    return new ExternalSystemTaskLocation(myProject, psiFile, task);
+    return new ExternalSystemTaskLocation(myProject, file, task);
   }
 }
