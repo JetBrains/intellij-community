@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 /**
  * @author peter
  */
@@ -36,7 +34,6 @@ public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
   @NonNls private static final String EMPTY = "";
   private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>> ourNameCache = new IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>(40000, 20000);
-  private static final ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
 
   public static int storeName(@NotNull String name) {
     final int idx = FSRecords.getNameId(name);
@@ -53,12 +50,8 @@ public class FileNameCache {
 
     Object rawName = convertToBytesIfAsciiString(name);
     IntObjectLinkedMap.MapEntry<Object> entry = new IntObjectLinkedMap.MapEntry<Object>(id, rawName);
-    ourLock.writeLock().lock();
-    try {
+    synchronized (ourNameCache) {
       return ourNameCache.cacheEntry(entry);
-    }
-    finally {
-      ourLock.writeLock().unlock();
     }
   }
 
@@ -79,21 +72,10 @@ public class FileNameCache {
 
   @NotNull
   private static IntObjectLinkedMap.MapEntry<Object> getEntry(int id) {
-    boolean allowMutation = ourLock.writeLock().tryLock();
-    if (!allowMutation) {
-      ourLock.readLock().lock();
-    }
-    try {
-      IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache.getCachedEntry(id, allowMutation);
+    synchronized (ourNameCache) {
+      IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache.getCachedEntry(id);
       if (entry != null) {
         return entry;
-      }
-    }
-    finally {
-      if (allowMutation) {
-        ourLock.writeLock().unlock();
-      } else {
-        ourLock.readLock().unlock();
       }
     }
 
