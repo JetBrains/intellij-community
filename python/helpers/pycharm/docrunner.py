@@ -240,7 +240,6 @@ def testFilesInFolderUsingPattern(folder, pattern = ".*"):
   ''' loads modules from folder ,
       check if module name matches given pattern'''
   modules = []
-  result = []
   prog = re.compile(pattern)
 
   for root, dirs, files in os.walk(folder):
@@ -249,14 +248,10 @@ def testFilesInFolderUsingPattern(folder, pattern = ".*"):
       if prog.match(name):
         if name.endswith(".py"):
           modules.append(loadSource(path))
-        elif not name.endswith(".pyc") and not name.endswith("$py.class")\
-        and os.path.isfile(path):
+        elif not name.endswith(".pyc") and not name.endswith("$py.class") and os.path.isfile(path):
           testfile(path)
 
-  for module in modules:
-    if prog.match(module.__name__):
-      result.append(module)
-  return result
+    return modules
 
 if __name__ == "__main__":
   finder = doctest.DocTestFinder()
