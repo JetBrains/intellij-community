@@ -247,6 +247,6 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
   @NotNull
   @Override
   public String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
-    return GradleUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
+    return ExternalSystemApiUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
   }
 }

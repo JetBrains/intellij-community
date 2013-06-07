@@ -4,6 +4,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+import posixpath
 import shlex
 from mercurial.i18n import _
 from mercurial import util
@@ -15,6 +16,13 @@ def rpairs(name):
         yield name[:e], name[e + 1:]
         e = name.rfind('/', 0, e)
     yield '.', name
+
+def normalize(path):
+    ''' We use posixpath.normpath to support cross-platform path format.
+    However, it doesn't handle None input. So we wrap it up. '''
+    if path is None:
+        return None
+    return posixpath.normpath(path)
 
 class filemapper(object):
     '''Map and filter filenames when importing.
@@ -33,9 +41,19 @@ class filemapper(object):
     def parse(self, path):
         errs = 0
         def check(name, mapping, listname):
+            if not name:
+                self.ui.warn(_('%s:%d: path to %s is missing\n') %
+                             (lex.infile, lex.lineno, listname))
+                return 1
             if name in mapping:
                 self.ui.warn(_('%s:%d: %r already in %s list\n') %
                              (lex.infile, lex.lineno, name, listname))
+                return 1
+            if (name.startswith('/') or
+                name.endswith('/') or
+                '//' in name):
+                self.ui.warn(_('%s:%d: superfluous / in %s %r\n') %
+                             (lex.infile, lex.lineno, listname, name))
                 return 1
             return 0
         lex = shlex.shlex(open(path), path, True)
@@ -43,21 +61,21 @@ class filemapper(object):
         cmd = lex.get_token()
         while cmd:
             if cmd == 'include':
-                name = lex.get_token()
+                name = normalize(lex.get_token())
                 errs += check(name, self.exclude, 'exclude')
                 self.include[name] = name
             elif cmd == 'exclude':
-                name = lex.get_token()
+                name = normalize(lex.get_token())
                 errs += check(name, self.include, 'include')
                 errs += check(name, self.rename, 'rename')
                 self.exclude[name] = name
             elif cmd == 'rename':
-                src = lex.get_token()
-                dest = lex.get_token()
+                src = normalize(lex.get_token())
+                dest = normalize(lex.get_token())
                 errs += check(src, self.exclude, 'exclude')
                 self.rename[src] = dest
             elif cmd == 'source':
-                errs += self.parse(lex.get_token())
+                errs += self.parse(normalize(lex.get_token()))
             else:
                 self.ui.warn(_('%s:%d: unknown directive %r\n') %
                              (lex.infile, lex.lineno, cmd))
@@ -66,6 +84,7 @@ class filemapper(object):
         return errs
 
     def lookup(self, name, mapping):
+        name = normalize(name)
         for pre, suf in rpairs(name):
             try:
                 return mapping[pre], pre, suf
@@ -89,6 +108,8 @@ class filemapper(object):
             if newpre == '.':
                 return suf
             if suf:
+                if newpre.endswith('/'):
+                    return newpre + suf
                 return newpre + '/' + suf
             return newpre
         return name
@@ -100,8 +121,7 @@ class filemapper(object):
 #
 # - Filter and rename files.  This is mostly wrapped by the filemapper
 #   class above. We hide the original filename in the revision that is
-#   returned by getchanges to be able to find things later in getfile
-#   and getmode.
+#   returned by getchanges to be able to find things later in getfile.
 #
 # - Return only revisions that matter for the files we're interested in.
 #   This involves rewriting the parents of the original revision to
@@ -200,6 +220,11 @@ class filemap_source(converter_source):
             self.children[p] = self.children.get(p, 0) + 1
         return c
 
+    def _cachedcommit(self, rev):
+        if rev in self.commits:
+            return self.commits[rev]
+        return self.base.getcommit(rev)
+
     def _discard(self, *revs):
         for r in revs:
             if r is None:
@@ -278,28 +303,47 @@ class filemap_source(converter_source):
         # A parent p is interesting if its mapped version (self.parentmap[p]):
         # - is not SKIPREV
         # - is still not in the list of parents (we don't want duplicates)
-        # - is not an ancestor of the mapped versions of the other parents
+        # - is not an ancestor of the mapped versions of the other parents or
+        #   there is no parent in the same branch than the current revision.
         mparents = []
-        wp = None
+        knownparents = set()
+        branch = self.commits[rev].branch
+        hasbranchparent = False
         for i, p1 in enumerate(parents):
             mp1 = self.parentmap[p1]
-            if mp1 == SKIPREV or mp1 in mparents:
+            if mp1 == SKIPREV or mp1 in knownparents:
                 continue
-            for p2 in parents:
-                if p1 == p2 or mp1 == self.parentmap[p2]:
-                    continue
-                if mp1 in self.wantedancestors[p2]:
-                    break
-            else:
-                mparents.append(mp1)
-                wp = i
-
-        if wp is None and parents:
+            isancestor = util.any(p2 for p2 in parents
+                                  if p1 != p2 and mp1 != self.parentmap[p2]
+                                  and mp1 in self.wantedancestors[p2])
+            if not isancestor and not hasbranchparent and len(parents) > 1:
+                # This could be expensive, avoid unnecessary calls.
+                if self._cachedcommit(p1).branch == branch:
+                    hasbranchparent = True
+            mparents.append((p1, mp1, i, isancestor))
+            knownparents.add(mp1)
+        # Discard parents ancestors of other parents if there is a
+        # non-ancestor one on the same branch than current revision.
+        if hasbranchparent:
+            mparents = [p for p in mparents if not p[3]]
+        wp = None
+        if mparents:
+            wp = max(p[2] for p in mparents)
+            mparents = [p[1] for p in mparents]
+        elif parents:
             wp = 0
 
         self.origparents[rev] = parents
 
-        if len(mparents) < 2 and not self.wanted(rev, wp):
+        closed = False
+        if 'close' in self.commits[rev].extra:
+            # A branch closing revision is only useful if one of its
+            # parents belong to the branch being closed
+            pbranches = [self._cachedcommit(p).branch for p in mparents]
+            if branch in pbranches:
+                closed = True
+
+        if len(mparents) < 2 and not closed and not self.wanted(rev, wp):
             # We don't want this revision.
             # Update our state and tell the convert process to map this
             # revision to the same revision its parent as mapped to.
@@ -318,18 +362,16 @@ class filemap_source(converter_source):
         self.convertedorder.append((rev, True, None))
         self._discard(*parents)
 
-        # Get the real changes and do the filtering/mapping.
-        # To be able to get the files later on in getfile and getmode,
-        # we hide the original filename in the rev part of the return
-        # value.
+        # Get the real changes and do the filtering/mapping. To be
+        # able to get the files later on in getfile, we hide the
+        # original filename in the rev part of the return value.
         changes, copies = self.base.getchanges(rev)
-        newnames = {}
-        files = []
+        files = {}
         for f, r in changes:
             newf = self.filemapper(f)
-            if newf:
-                files.append((newf, (f, r)))
-                newnames[f] = newf
+            if newf and (newf != f or newf not in files):
+                files[newf] = (f, r)
+        files = sorted(files.items())
 
         ncopies = {}
         for c in copies:
@@ -345,10 +387,6 @@ class filemap_source(converter_source):
         realname, realrev = rev
         return self.base.getfile(realname, realrev)
 
-    def getmode(self, name, rev):
-        realname, realrev = rev
-        return self.base.getmode(realname, realrev)
-
     def gettags(self):
         return self.base.gettags()
 
@@ -357,3 +395,6 @@ class filemap_source(converter_source):
 
     def lookuprev(self, rev):
         return self.base.lookuprev(rev)
+
+    def getbookmarks(self):
+        return self.base.getbookmarks()

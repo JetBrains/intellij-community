@@ -26,7 +26,10 @@ procfs_path = '/proc/sys/fs/inotify'
 def _read_procfs_value(name):
     def read_value():
         try:
-            return int(open(procfs_path + '/' + name).read())
+            fp = open(procfs_path + '/' + name)
+            r = int(fp.read())
+            fp.close()
+            return r
         except OSError:
             return None
 

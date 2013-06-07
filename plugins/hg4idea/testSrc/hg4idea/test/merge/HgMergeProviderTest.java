@@ -172,11 +172,14 @@ public class HgMergeProviderTest extends HgPlatformTest {
     touch(aFile, "basic");
     hg("add " + aFile);
     hg("commit -m 'create file' ");
+    hg("update");
+    final VirtualFile parentFile = myRepository.findChild(aFile);
+    assertNotNull("Can't find " + aFile + " in parent repo!", parentFile);
     cd(myChildRepo);
     hg("pull");
     hg("update");
     final VirtualFile childFile = myChildRepo.findChild(aFile);
-    return Pair.create(myRepository.findChild(aFile), childFile);
+    return Pair.create(parentFile, childFile);
   }
 
   private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer)

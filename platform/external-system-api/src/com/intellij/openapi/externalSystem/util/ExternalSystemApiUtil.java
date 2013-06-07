@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -368,5 +369,19 @@ public class ExternalSystemApiUtil {
     if (path != null) {
       PropertiesComponent.getInstance().setValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), path);
     }
+  }
+
+  @NotNull
+  public static String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
+    if (rootProjectPath == null) {
+      return new File(targetProjectPath).getParentFile().getName();
+    }
+    File rootProjectDir = new File(rootProjectPath).getParentFile();
+    StringBuilder buffer = new StringBuilder();
+    for (File f = new File(targetProjectPath).getParentFile(); f != null && !FileUtil.filesEqual(f, rootProjectDir); f = f.getParentFile()) {
+      buffer.insert(0, f.getName()).insert(0, ":");
+    }
+    buffer.insert(0, rootProjectDir.getName());
+    return buffer.toString();
   }
 }

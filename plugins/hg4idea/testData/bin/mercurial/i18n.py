@@ -9,7 +9,7 @@ import encoding
 import gettext, sys, os
 
 # modelled after templater.templatepath:
-if hasattr(sys, 'frozen'):
+if getattr(sys, 'frozen', None) is not None:
     module = sys.executable
 else:
     module = __file__
@@ -36,7 +36,10 @@ def gettext(message):
     if message is None:
         return message
 
-    u = t.ugettext(message)
+    paragraphs = message.split('\n\n')
+    # Be careful not to translate the empty string -- it holds the
+    # meta data of the .po file.
+    u = u'\n\n'.join([p and t.ugettext(p) or '' for p in paragraphs])
     try:
         # encoding.tolocal cannot be used since it will first try to
         # decode the Unicode string. Calling u.decode(enc) really
@@ -48,8 +51,13 @@ def gettext(message):
         # An unknown encoding results in a LookupError.
         return message
 
-if 'HGPLAIN' in os.environ:
+def _plain():
+    if 'HGPLAIN' not in os.environ and 'HGPLAINEXCEPT' not in os.environ:
+        return False
+    exceptions = os.environ.get('HGPLAINEXCEPT', '').strip().split(',')
+    return 'i18n' not in exceptions
+
+if _plain():
     _ = lambda message: message
 else:
     _ = gettext
-

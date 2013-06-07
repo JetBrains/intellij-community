@@ -18,16 +18,18 @@ configure it, set the following options in your hgrc::
   # Append a diffstat to the log message (optional)
   #diffstat = False
   # Template to use for log messages (optional)
-  #template = {desc}\\n{baseurl}/rev/{node}-- {diffstat}
+  #template = {desc}\\n{baseurl}{webroot}/rev/{node}-- {diffstat}
   # Style to use (optional)
   #style = foo
   # The URL of the CIA notification service (optional)
-  # You can use mailto: URLs to send by email, eg
+  # You can use mailto: URLs to send by email, e.g.
   # mailto:cia@cia.vc
   # Make sure to set email.from if you do this.
   #url = http://cia.vc/
   # print message instead of sending it (optional)
   #test = False
+  # number of slashes to strip for url paths
+  #strip = 0
 
   [hooks]
   # one of these:
@@ -40,21 +42,19 @@ configure it, set the following options in your hgrc::
 """
 
 from mercurial.i18n import _
-from mercurial.node import *
+from mercurial.node import bin, short
 from mercurial import cmdutil, patch, templater, util, mail
 import email.Parser
 
-import xmlrpclib
+import socket, xmlrpclib
 from xml.sax import saxutils
+testedwith = 'internal'
 
 socket_timeout = 30 # seconds
-try:
+if util.safehasattr(socket, 'setdefaulttimeout'):
     # set a timeout for the socket so you don't have to wait so looooong
     # when cia.vc is having problems. requires python >= 2.3:
-    import socket
     socket.setdefaulttimeout(socket_timeout)
-except:
-    pass
 
 HGCIA_VERSION = '0.1'
 HGCIA_URL = 'http://hg.kublai.com/mercurial/hgcia'
@@ -66,6 +66,8 @@ class ciamsg(object):
         self.cia = cia
         self.ctx = ctx
         self.url = self.cia.url
+        if self.url:
+            self.url += self.cia.root
 
     def fileelem(self, path, uri, action):
         if uri:
@@ -75,8 +77,10 @@ class ciamsg(object):
 
     def fileelems(self):
         n = self.ctx.node()
-        f = self.cia.repo.status(self.ctx.parents()[0].node(), n)
+        f = self.cia.repo.status(self.ctx.p1().node(), n)
         url = self.url or ''
+        if url and url[-1] == '/':
+            url = url[:-1]
         elems = []
         for path in f[0]:
             uri = '%s/diff/%s/%s' % (url, short(n), path)
@@ -107,20 +111,22 @@ class ciamsg(object):
                 # diffstat is stupid
                 self.name = 'cia'
             def write(self, data):
-                self.lines.append(data)
+                self.lines += data.splitlines(True)
             def close(self):
                 pass
 
         n = self.ctx.node()
         pbuf = patchbuf()
-        patch.export(self.cia.repo, [n], fp=pbuf)
+        cmdutil.export(self.cia.repo, [n], fp=pbuf)
         return patch.diffstat(pbuf.lines) or ''
 
     def logmsg(self):
         diffstat = self.cia.diffstat and self.diffstat() or ''
         self.cia.ui.pushbuffer()
         self.cia.templater.show(self.ctx, changes=self.ctx.changeset(),
-                                url=self.cia.url, diffstat=diffstat)
+                                baseurl=self.cia.ui.config('web', 'baseurl'),
+                                url=self.url, diffstat=diffstat,
+                                webroot=self.cia.root)
         return self.cia.ui.popbuffer()
 
     def xml(self):
@@ -135,8 +141,10 @@ class ciamsg(object):
         rev = '%d:%s' % (self.ctx.rev(), n)
         log = saxutils.escape(self.logmsg())
 
-        url = self.url and '<url>%s/rev/%s</url>' % (saxutils.escape(self.url),
-                                                     n) or ''
+        url = self.url
+        if url and url[-1] == '/':
+            url = url[:-1]
+        url = url and '<url>%s/rev/%s</url>' % (saxutils.escape(url), n) or ''
 
         msg = """
 <message>
@@ -184,6 +192,9 @@ class hgcia(object):
         self.emailfrom = self.ui.config('email', 'from')
         self.dryrun = self.ui.configbool('cia', 'test')
         self.url = self.ui.config('web', 'baseurl')
+        # Default to -1 for backward compatibility
+        self.stripcount = int(self.ui.config('cia', 'strip', -1))
+        self.root = self.strip(self.repo.root)
 
         style = self.ui.config('cia', 'style')
         template = self.ui.config('cia', 'template')
@@ -195,10 +206,25 @@ class hgcia(object):
         t.use_template(template)
         self.templater = t
 
+    def strip(self, path):
+        '''strip leading slashes from local path, turn into web-safe path.'''
+
+        path = util.pconvert(path)
+        count = self.stripcount
+        if count < 0:
+            return ''
+        while count > 0:
+            c = path.find('/')
+            if c == -1:
+                break
+            path = path[c + 1:]
+            count -= 1
+        return path
+
     def sendrpc(self, msg):
         srv = xmlrpclib.Server(self.ciaurl)
         res = srv.hub.deliver(msg)
-        if res is not True:
+        if res is not True and res != 'queued.':
             raise util.Abort(_('%s returned an error: %s') %
                              (self.ciaurl, res))
 

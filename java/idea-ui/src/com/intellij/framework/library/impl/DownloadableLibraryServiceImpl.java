@@ -17,6 +17,7 @@ package com.intellij.framework.library.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.RequiredFrameworkVersion;
+import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.library.*;
 import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;

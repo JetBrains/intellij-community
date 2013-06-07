@@ -20,8 +20,9 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setVisible(true);
-    e.getPresentation().setEnabled(true);
+    boolean enabled = SystemInfo.isUnix;
+    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabled(enabled);
   }
 
   public void actionPerformed(final AnActionEvent e) {

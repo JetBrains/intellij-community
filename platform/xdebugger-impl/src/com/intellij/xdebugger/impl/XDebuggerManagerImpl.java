@@ -27,7 +27,6 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -131,6 +130,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     });
   }
 
+  @Override
   @NotNull
   public XBreakpointManagerImpl getBreakpointManager() {
     return myBreakpointManager;
@@ -162,6 +162,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   public void disposeComponent() {
   }
 
+  @Override
   @NotNull
   public XDebugSession startSession(@NotNull final ProgramRunner runner,
                                     @NotNull final ExecutionEnvironment env,
@@ -170,6 +171,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return startSession(contentToReuse, processStarter, new XDebugSessionImpl(env, runner, this));
   }
 
+  @Override
   @NotNull
   public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
@@ -262,6 +264,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
   }
 
+  @Override
   @NotNull
   public XDebugSession[] getDebugSessions() {
     final Collection<XDebugSessionImpl> sessions = mySessions.values();
@@ -296,15 +299,18 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return list;
   }
 
+  @Override
   @Nullable
   public XDebugSessionImpl getCurrentSession() {
     return myActiveSession;
   }
 
+  @Override
   public XDebuggerState getState() {
     return new XDebuggerState(myBreakpointManager.getState());
   }
 
+  @Override
   public void loadState(final XDebuggerState state) {
     myBreakpointManager.loadState(state.myBreakpointManagerState);
   }
@@ -313,6 +319,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     myExecutionPointHighlighter.navigateTo();
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public static class XDebuggerState {
     private XBreakpointManagerImpl.BreakpointManagerState myBreakpointManagerState;
 

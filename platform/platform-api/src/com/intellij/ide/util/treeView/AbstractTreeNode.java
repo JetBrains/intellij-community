@@ -34,9 +34,9 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor implements NavigationItem, Queryable.Contributor {
+public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<AbstractTreeNode<T>> implements NavigationItem, Queryable.Contributor {
   private AbstractTreeNode myParent;
-  private T myValue;
+  private Object myValue;
   private NodeDescriptor myParentDescriptor;
 
   protected AbstractTreeNode(Project project, T value) {
@@ -97,16 +97,15 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
 
   @Override
   protected boolean shouldUpdateData() {
-    return !myProject.isDisposed() && getValue() != null;
+    return !myProject.isDisposed() && myValue != null;
   }
-
 
   public boolean isAlwaysShowPlus() {
     return false;
   }
 
   public boolean isAlwaysLeaf() {
-    return false;   
+    return false;
   }
 
   public boolean isAlwaysExpand() {
@@ -115,16 +114,16 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
 
   @Override
   @Nullable
-  public final Object getElement() {
-    return getValue() != null ? this : null;
+  public final AbstractTreeNode<T> getElement() {
+    return myValue != null ? this : null;
   }
 
   public boolean equals(Object object) {
-    return object instanceof AbstractTreeNode && Comparing.equal(getValue(), ((AbstractTreeNode)object).getValue());
+    return object instanceof AbstractTreeNode && Comparing.equal(myValue, ((AbstractTreeNode)object).myValue);
   }
 
   public int hashCode() {
-    T value = getValue();
+    Object value = myValue;
     return value == null ? 0 : value.hashCode();
   }
 
@@ -137,22 +136,31 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     myParentDescriptor = parent;
   }
 
-  public final AbstractTreeNode setParentDescriptor(NodeDescriptor parentDescriptor) {
-    myParentDescriptor = parentDescriptor;
-    return this;                        
-  }
-
   @Override
   public final NodeDescriptor getParentDescriptor() {
     return myParentDescriptor;
   }
 
   public final T getValue() {
-    return myValue;
+    if (myValue == null) {
+      return null;
+    }
+    else {
+      return (T)TreeAnchorizer.getService().retrieveElement(myValue);
+    }
   }
 
   public final void setValue(T value) {
-    myValue = value;
+    if (value == null) {
+      myValue = null;
+    }
+    else {
+      myValue = TreeAnchorizer.getService().createAnchor(value);
+    }
+  }
+
+  public final Object getEqualityObject() {
+    return myValue;
   }
 
   @Nullable

@@ -128,7 +128,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myProfileWrapper = profileToUse;
     assert myProfileWrapper != null;
     mySeverityRegistrar = ((SeverityProvider)myProfileWrapper.getInspectionProfile().getProfileManager()).getSeverityRegistrar();
-    LOG.assertTrue(mySeverityRegistrar != null);
 
     // initial guess
     setProgressLimit(300 * 2);

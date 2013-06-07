@@ -23,7 +23,7 @@ SYNTAX_CSS = ('\n<link rel="stylesheet" href="{url}highlightcss" '
 def pygmentize(field, fctx, style, tmpl):
 
     # append a <link ...> to the syntax highlighting css
-    old_header = ''.join(tmpl('header'))
+    old_header = tmpl.load('header')
     if SYNTAX_CSS not in old_header:
         new_header =  old_header + SYNTAX_CSS
         tmpl.cache['header'] = new_header
@@ -38,19 +38,20 @@ def pygmentize(field, fctx, style, tmpl):
 
     # To get multi-line strings right, we can't format line-by-line
     try:
-        lexer = guess_lexer_for_filename(fctx.path(), text[:1024])
+        lexer = guess_lexer_for_filename(fctx.path(), text[:1024],
+                                         stripnl=False)
     except (ClassNotFound, ValueError):
         try:
-            lexer = guess_lexer(text[:1024])
+            lexer = guess_lexer(text[:1024], stripnl=False)
         except (ClassNotFound, ValueError):
-            lexer = TextLexer()
+            lexer = TextLexer(stripnl=False)
 
     formatter = HtmlFormatter(style=style)
 
     colorized = highlight(text, lexer, formatter)
     # strip wrapping div
     colorized = colorized[:colorized.find('\n</pre>')]
-    colorized = colorized[colorized.find('<pre>')+5:]
+    colorized = colorized[colorized.find('<pre>') + 5:]
     coloriter = (s.encode(encoding.encoding, 'replace')
                  for s in colorized.splitlines())
 

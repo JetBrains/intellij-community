@@ -11,6 +11,7 @@ import cPickle as pickle
 from mercurial import util
 from mercurial.i18n import _
 from mercurial import hook
+from mercurial import util
 
 class logentry(object):
     '''Class logentry has the following attributes:
@@ -18,6 +19,7 @@ class logentry(object):
         .branch    - name of branch this revision is on
         .branches  - revision tuple of branches starting at this revision
         .comment   - commit message
+        .commitid  - CVS commitid or None
         .date      - the commit date as a (time, tz) tuple
         .dead      - true if file revision is dead
         .file      - Name of file
@@ -27,19 +29,17 @@ class logentry(object):
         .revision  - revision number as tuple
         .tags      - list of tags on the file
         .synthetic - is this a synthetic "file ... added on ..." revision?
-        .mergepoint- the branch that has been merged from
-                     (if present in rlog output)
-        .branchpoints- the branches that start at the current entry
+        .mergepoint - the branch that has been merged from (if present in
+                      rlog output) or None
+        .branchpoints - the branches that start at the current entry or empty
     '''
     def __init__(self, **entries):
         self.synthetic = False
         self.__dict__.update(entries)
 
     def __repr__(self):
-        return "<%s at 0x%x: %s %s>" % (self.__class__.__name__,
-                                        id(self),
-                                        self.file,
-                                        ".".join(map(str, self.revision)))
+        items = ("%s=%r"%(k, self.__dict__[k]) for k in sorted(self.__dict__))
+        return "%s(%s)"%(type(self).__name__, ", ".join(items))
 
 class logerror(Exception):
     pass
@@ -50,7 +50,7 @@ def getrepopath(cvspath):
     >>> getrepopath('/foo/bar')
     '/foo/bar'
     >>> getrepopath('c:/foo/bar')
-    'c:/foo/bar'
+    '/foo/bar'
     >>> getrepopath(':pserver:10/foo/bar')
     '/foo/bar'
     >>> getrepopath(':pserver:10c:/foo/bar')
@@ -58,30 +58,30 @@ def getrepopath(cvspath):
     >>> getrepopath(':pserver:/foo/bar')
     '/foo/bar'
     >>> getrepopath(':pserver:c:/foo/bar')
-    'c:/foo/bar'
+    '/foo/bar'
     >>> getrepopath(':pserver:truc@foo.bar:/foo/bar')
     '/foo/bar'
     >>> getrepopath(':pserver:truc@foo.bar:c:/foo/bar')
-    'c:/foo/bar'
+    '/foo/bar'
+    >>> getrepopath('user@server/path/to/repository')
+    '/path/to/repository'
     """
     # According to CVS manual, CVS paths are expressed like:
     # [:method:][[user][:password]@]hostname[:[port]]/path/to/repository
     #
-    # Unfortunately, Windows absolute paths start with a drive letter
-    # like 'c:' making it harder to parse. Here we assume that drive
-    # letters are only one character long and any CVS component before
-    # the repository path is at least 2 characters long, and use this
-    # to disambiguate.
+    # CVSpath is splitted into parts and then position of the first occurrence
+    # of the '/' char after the '@' is located. The solution is the rest of the
+    # string after that '/' sign including it
+
     parts = cvspath.split(':')
-    if len(parts) == 1:
-        return parts[0]
-    # Here there is an ambiguous case if we have a port number
-    # immediately followed by a Windows driver letter. We assume this
-    # never happens and decide it must be CVS path component,
-    # therefore ignoring it.
-    if len(parts[-2]) > 1:
-        return parts[-1].lstrip('0123456789')
-    return parts[-2] + ':' + parts[-1]
+    atposition = parts[-1].find('@')
+    start = 0
+
+    if atposition != -1:
+        start = atposition
+
+    repopath = parts[-1][parts[-1].find('/', start):]
+    return repopath
 
 def createlog(ui, directory=None, root="", rlog=True, cache=None):
     '''Collect the CVS rlog'''
@@ -112,6 +112,7 @@ def createlog(ui, directory=None, root="", rlog=True, cache=None):
     re_50 = re.compile('revision ([\\d.]+)(\s+locked by:\s+.+;)?$')
     re_60 = re.compile(r'date:\s+(.+);\s+author:\s+(.+);\s+state:\s+(.+?);'
                        r'(\s+lines:\s+(\+\d+)?\s+(-\d+)?;)?'
+                       r'(\s+commitid:\s+([^;]+);)?'
                        r'(.*mergepoint:\s+([^;]+);)?')
     re_70 = re.compile('branches: (.+);$')
 
@@ -155,8 +156,8 @@ def createlog(ui, directory=None, root="", rlog=True, cache=None):
         # The cvsps cache pickle needs a uniquified name, based on the
         # repository location. The address may have all sort of nasties
         # in it, slashes, colons and such. So here we take just the
-        # alphanumerics, concatenated in a way that does not mix up the
-        # various components, so that
+        # alphanumeric characters, concatenated in a way that does not
+        # mix up the various components, so that
         #    :pserver:user@server:/path
         # and
         #    /pserver/user/server/path
@@ -170,6 +171,14 @@ def createlog(ui, directory=None, root="", rlog=True, cache=None):
         try:
             ui.note(_('reading cvs log cache %s\n') % cachefile)
             oldlog = pickle.load(open(cachefile))
+            for e in oldlog:
+                if not (util.safehasattr(e, 'branchpoints') and
+                        util.safehasattr(e, 'commitid') and
+                        util.safehasattr(e, 'mergepoint')):
+                    ui.status(_('ignoring old cache\n'))
+                    oldlog = []
+                    break
+
             ui.note(_('cache has %d log entries\n') % len(oldlog))
         except Exception, e:
             ui.note(_('error reading cache: %r\n') % e)
@@ -239,12 +248,12 @@ def createlog(ui, directory=None, root="", rlog=True, cache=None):
                 continue
             match = re_01.match(line)
             if match:
-                raise Exception(match.group(1))
+                raise logerror(match.group(1))
             match = re_02.match(line)
             if match:
-                raise Exception(match.group(2))
+                raise logerror(match.group(2))
             if re_03.match(line):
-                raise Exception(line)
+                raise logerror(line)
 
         elif state == 1:
             # expect 'Working file' (only when using log instead of rlog)
@@ -295,9 +304,16 @@ def createlog(ui, directory=None, root="", rlog=True, cache=None):
             # as this state is re-entered for subsequent revisions of a file.
             match = re_50.match(line)
             assert match, _('expected revision number')
-            e = logentry(rcs=scache(rcs), file=scache(filename),
-                    revision=tuple([int(x) for x in match.group(1).split('.')]),
-                    branches=[], parent=None)
+            e = logentry(rcs=scache(rcs),
+                         file=scache(filename),
+                         revision=tuple([int(x) for x in
+                                         match.group(1).split('.')]),
+                         branches=[],
+                         parent=None,
+                         commitid=None,
+                         mergepoint=None,
+                         branchpoints=set())
+
             state = 6
 
         elif state == 6:
@@ -328,17 +344,20 @@ def createlog(ui, directory=None, root="", rlog=True, cache=None):
             else:
                 e.lines = None
 
-            if match.group(7): # cvsnt mergepoint
-                myrev = match.group(8).split('.')
+            if match.group(7): # cvs 1.12 commitid
+                e.commitid = match.group(8)
+
+            if match.group(9): # cvsnt mergepoint
+                myrev = match.group(10).split('.')
                 if len(myrev) == 2: # head
                     e.mergepoint = 'HEAD'
                 else:
                     myrev = '.'.join(myrev[:-2] + ['0', myrev[-2]])
                     branches = [b for b in branchmap if branchmap[b] == myrev]
-                    assert len(branches) == 1, 'unknown branch: %s' % e.mergepoint
+                    assert len(branches) == 1, ('unknown branch: %s'
+                                                % e.mergepoint)
                     e.mergepoint = branches[0]
-            else:
-                e.mergepoint = None
+
             e.comment = []
             state = 7
 
@@ -362,8 +381,14 @@ def createlog(ui, directory=None, root="", rlog=True, cache=None):
         elif state == 8:
             # store commit log message
             if re_31.match(line):
-                state = 5
-                store = True
+                cpeek = peek
+                if cpeek.endswith('\n'):
+                    cpeek = cpeek[:-1]
+                if re_50.match(cpeek):
+                    state = 5
+                    store = True
+                else:
+                    e.comment.append(line)
             elif re_32.match(line):
                 state = 0
                 store = True
@@ -461,32 +486,37 @@ class changeset(object):
         .author    - author name as CVS knows it
         .branch    - name of branch this changeset is on, or None
         .comment   - commit message
+        .commitid  - CVS commitid or None
         .date      - the commit date as a (time,tz) tuple
         .entries   - list of logentry objects in this changeset
         .parents   - list of one or two parent changesets
         .tags      - list of tags on this changeset
         .synthetic - from synthetic revision "file ... added on branch ..."
-        .mergepoint- the branch that has been merged from
-                     (if present in rlog output)
-        .branchpoints- the branches that start at the current entry
+        .mergepoint- the branch that has been merged from or None
+        .branchpoints- the branches that start at the current entry or empty
     '''
     def __init__(self, **entries):
         self.synthetic = False
         self.__dict__.update(entries)
 
     def __repr__(self):
-        return "<%s at 0x%x: %s>" % (self.__class__.__name__,
-                                     id(self),
-                                     getattr(self, 'id', "(no id)"))
+        items = ("%s=%r"%(k, self.__dict__[k]) for k in sorted(self.__dict__))
+        return "%s(%s)"%(type(self).__name__, ", ".join(items))
 
 def createchangeset(ui, log, fuzz=60, mergefrom=None, mergeto=None):
     '''Convert log into changesets.'''
 
     ui.status(_('creating changesets\n'))
 
-    # Merge changesets
+    # try to order commitids by date
+    mindate = {}
+    for e in log:
+        if e.commitid:
+            mindate[e.commitid] = min(e.date, mindate.get(e.commitid))
 
-    log.sort(key=lambda x: (x.comment, x.author, x.branch, x.date))
+    # Merge changesets
+    log.sort(key=lambda x: (mindate.get(x.commitid), x.commitid, x.comment,
+                            x.author, x.branch, x.date, x.branchpoints))
 
     changesets = []
     files = set()
@@ -495,7 +525,7 @@ def createchangeset(ui, log, fuzz=60, mergefrom=None, mergeto=None):
 
         # Check if log entry belongs to the current changeset or not.
 
-        # Since CVS is file centric, two different file revisions with
+        # Since CVS is file-centric, two different file revisions with
         # different branchpoints should be treated as belonging to two
         # different changesets (and the ordering is important and not
         # honoured by cvsps at this point).
@@ -509,22 +539,24 @@ def createchangeset(ui, log, fuzz=60, mergefrom=None, mergeto=None):
         # first changeset and bar the next and MYBRANCH and MYBRANCH2
         # should both start off of the bar changeset. No provisions are
         # made to ensure that this is, in fact, what happens.
-        if not (c and
-                  e.comment == c.comment and
-                  e.author == c.author and
-                  e.branch == c.branch and
-                  (not hasattr(e, 'branchpoints') or
-                    not hasattr (c, 'branchpoints') or
-                    e.branchpoints == c.branchpoints) and
-                  ((c.date[0] + c.date[1]) <=
-                   (e.date[0] + e.date[1]) <=
-                   (c.date[0] + c.date[1]) + fuzz) and
-                  e.file not in files):
+        if not (c and e.branchpoints == c.branchpoints and
+                (# cvs commitids
+                 (e.commitid is not None and e.commitid == c.commitid) or
+                 (# no commitids, use fuzzy commit detection
+                  (e.commitid is None or c.commitid is None) and
+                   e.comment == c.comment and
+                   e.author == c.author and
+                   e.branch == c.branch and
+                   ((c.date[0] + c.date[1]) <=
+                    (e.date[0] + e.date[1]) <=
+                    (c.date[0] + c.date[1]) + fuzz) and
+                   e.file not in files))):
             c = changeset(comment=e.comment, author=e.author,
-                          branch=e.branch, date=e.date, entries=[],
-                          mergepoint=getattr(e, 'mergepoint', None),
-                          branchpoints=getattr(e, 'branchpoints', set()))
+                          branch=e.branch, date=e.date,
+                          entries=[], mergepoint=e.mergepoint,
+                          branchpoints=e.branchpoints, commitid=e.commitid)
             changesets.append(c)
+
             files = set()
             if len(changesets) % 100 == 0:
                 t = '%d %s' % (len(changesets), repr(e.comment)[1:-1])
@@ -549,27 +581,25 @@ def createchangeset(ui, log, fuzz=60, mergefrom=None, mergeto=None):
 
     # Sort files in each changeset
 
-    for c in changesets:
-        def pathcompare(l, r):
-            'Mimic cvsps sorting order'
-            l = l.split('/')
-            r = r.split('/')
-            nl = len(l)
-            nr = len(r)
-            n = min(nl, nr)
-            for i in range(n):
-                if i + 1 == nl and nl < nr:
-                    return -1
-                elif i + 1 == nr and nl > nr:
-                    return +1
-                elif l[i] < r[i]:
-                    return -1
-                elif l[i] > r[i]:
-                    return +1
-            return 0
-        def entitycompare(l, r):
-            return pathcompare(l.file, r.file)
+    def entitycompare(l, r):
+        'Mimic cvsps sorting order'
+        l = l.file.split('/')
+        r = r.file.split('/')
+        nl = len(l)
+        nr = len(r)
+        n = min(nl, nr)
+        for i in range(n):
+            if i + 1 == nl and nl < nr:
+                return -1
+            elif i + 1 == nr and nl > nr:
+                return +1
+            elif l[i] < r[i]:
+                return -1
+            elif l[i] > r[i]:
+                return +1
+        return 0
 
+    for c in changesets:
         c.entries.sort(entitycompare)
 
     # Sort changesets by date
@@ -700,11 +730,11 @@ def createchangeset(ui, log, fuzz=60, mergefrom=None, mergeto=None):
         if mergeto:
             m = mergeto.search(c.comment)
             if m:
-                try:
+                if m.groups():
                     m = m.group(1)
                     if m == 'HEAD':
                         m = None
-                except:
+                else:
                     m = None   # if no group found then merge to HEAD
                 if m in branches and c.branch != m:
                     # insert empty changeset for merge
@@ -795,22 +825,22 @@ def debugcvsps(ui, *args, **opts):
             # Note: trailing spaces on several lines here are needed to have
             #       bug-for-bug compatibility with cvsps.
             ui.write('---------------------\n')
-            ui.write('PatchSet %d \n' % cs.id)
-            ui.write('Date: %s\n' % util.datestr(cs.date,
-                                                 '%Y/%m/%d %H:%M:%S %1%2'))
-            ui.write('Author: %s\n' % cs.author)
-            ui.write('Branch: %s\n' % (cs.branch or 'HEAD'))
-            ui.write('Tag%s: %s \n' % (['', 's'][len(cs.tags) > 1],
-                                  ','.join(cs.tags) or '(none)'))
-            branchpoints = getattr(cs, 'branchpoints', None)
-            if branchpoints:
-                ui.write('Branchpoints: %s \n' % ', '.join(branchpoints))
+            ui.write(('PatchSet %d \n' % cs.id))
+            ui.write(('Date: %s\n' % util.datestr(cs.date,
+                                                 '%Y/%m/%d %H:%M:%S %1%2')))
+            ui.write(('Author: %s\n' % cs.author))
+            ui.write(('Branch: %s\n' % (cs.branch or 'HEAD')))
+            ui.write(('Tag%s: %s \n' % (['', 's'][len(cs.tags) > 1],
+                                  ','.join(cs.tags) or '(none)')))
+            if cs.branchpoints:
+                ui.write(('Branchpoints: %s \n') %
+                         ', '.join(sorted(cs.branchpoints)))
             if opts["parents"] and cs.parents:
                 if len(cs.parents) > 1:
-                    ui.write('Parents: %s\n' %
-                             (','.join([str(p.id) for p in cs.parents])))
+                    ui.write(('Parents: %s\n' %
+                             (','.join([str(p.id) for p in cs.parents]))))
                 else:
-                    ui.write('Parent: %d\n' % cs.parents[0].id)
+                    ui.write(('Parent: %d\n' % cs.parents[0].id))
 
             if opts["ancestors"]:
                 b = cs.branch
@@ -819,11 +849,11 @@ def debugcvsps(ui, *args, **opts):
                     b, c = ancestors[b]
                     r.append('%s:%d:%d' % (b or "HEAD", c, branches[b]))
                 if r:
-                    ui.write('Ancestors: %s\n' % (','.join(r)))
+                    ui.write(('Ancestors: %s\n' % (','.join(r))))
 
-            ui.write('Log:\n')
+            ui.write(('Log:\n'))
             ui.write('%s\n\n' % cs.comment)
-            ui.write('Members: \n')
+            ui.write(('Members: \n'))
             for f in cs.entries:
                 fn = f.file
                 if fn.startswith(opts["prefix"]):

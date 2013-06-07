@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +68,23 @@ public class PersistentHashMapValueStorage {
 
     if (mySize == 0) {
       appendBytes(new ByteSequence("Header Record For PersistentHashMapValueStorage".getBytes()), 0);
+      // avoid corruption issue when disk fails to write first record synchronously, code depends on correct value of mySize (IDEA-106306)
+      CacheValue<DataOutputStream> streamCacheValue = ourAppendersCache.getIfCached(myPath);
+      if (streamCacheValue != null) {
+        try {
+          IOUtil.syncStream(streamCacheValue.get());
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        finally {
+          streamCacheValue.release();
+        }
+      }
+
+      long currentLength = myFile.length();
+      if (currentLength != mySize) Logger.getInstance(getClass().getName()).info("Avoided PSHM corruption due to write failure");
+      mySize = currentLength;  // volatile write
     }
   }
 

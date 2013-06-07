@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import org.intellij.lang.annotations.MagicConstant;
 
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,7 @@ public class JavaParametersUtil {
 
   public static void configureModule(final RunConfigurationModule runConfigurationModule,
                                      final JavaParameters parameters,
-                                     final int classPathType,
+                                     @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType,
                                      final String jreHome) throws CantRunException {
     Module module = runConfigurationModule.getModule();
     if (module == null) {
@@ -103,11 +104,11 @@ public class JavaParametersUtil {
     configureModule(module, parameters, classPathType, jreHome);
   }
 
-  public static void configureModule(Module module, JavaParameters parameters, int classPathType, String jreHome) throws CantRunException {
+  public static void configureModule(Module module, JavaParameters parameters, @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, String jreHome) throws CantRunException {
     parameters.configureByModule(module, classPathType, createModuleJdk(module, jreHome));
   }
 
-  public static void configureProject(Project project, final JavaParameters parameters, final int classPathType, final String jreHome)
+  public static void configureProject(Project project, final JavaParameters parameters, @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType, final String jreHome)
     throws CantRunException {
     parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
   }

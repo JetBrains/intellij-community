@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+package com.intellij.codeInsight.preview;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
- * @author nik
+ * User: zolotov
+ * Date: 6/5/13
  */
-public abstract class FrameworkAvailabilityCondition {
-  public static final FrameworkAvailabilityCondition ALWAYS_TRUE = new FrameworkAvailabilityCondition() {
-    @Override
-    public boolean isAvailableFor(@NotNull FrameworkSupportModel model) {
-      return true;
-    }
-  };
-
-  public abstract boolean isAvailableFor(@NotNull FrameworkSupportModel model);
+public interface PreviewHintComponent {
+  @TestOnly
+  boolean isEqualTo(@Nullable PreviewHintComponent other);
 }

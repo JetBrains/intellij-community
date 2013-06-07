@@ -1356,23 +1356,6 @@ class FooBar {
     assert !myFixture.editor.document.text.contains('fooBar')
   }
 
-  public void "test choose variable name by enter when selection by chars is disabled"() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
-    myFixture.configureByText 'a.java', '''
-class FooBar {
-  void foo() {
-    FooBar <caret>
-  }
-}
-'''
-    type 'f'
-    assert lookup
-    assert !lookup.focused
-    assert myFixture.lookupElementStrings == ['fooBar']
-    type '\n'
-    assert myFixture.editor.document.text.contains('fooBar')
-  }
-
   public void "test middle matching and overwrite"() {
     myFixture.configureByText 'a.java', '''
 class ListConfigKey {

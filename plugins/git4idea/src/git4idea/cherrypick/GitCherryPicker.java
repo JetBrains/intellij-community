@@ -24,8 +24,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -349,12 +353,13 @@ public class GitCherryPicker {
   }
 
   private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {
-    for (FilePath file : filePaths) {
-      VirtualFile vf = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByPath(file.getPath());
-      if (vf != null) {
-        vf.refresh(false, false);
+    List<VirtualFile> virtualFiles = ContainerUtil.skipNulls(ContainerUtil.map(filePaths, new Function<FilePath, VirtualFile>() {
+      @Override
+      public VirtualFile fun(FilePath file) {
+        return myPlatformFacade.getLocalFileSystem().refreshAndFindFileByPath(file.getPath());
       }
-    }
+    }));
+    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(virtualFiles, VirtualFile.class));
   }
 
   @NotNull

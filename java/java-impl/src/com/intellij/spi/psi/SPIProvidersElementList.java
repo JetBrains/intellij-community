@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework;
+package com.intellij.spi.psi;
 
-import com.intellij.framework.library.FrameworkAvailabilityCondition;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author nik
+ * User: anna
  */
-public interface FrameworkVersion {
-  @NotNull
-  String getId();
-
-  @NotNull
-  String getPresentableName();
-
-  @NotNull
-  FrameworkAvailabilityCondition getAvailabilityCondition();
+public class SPIProvidersElementList extends ASTWrapperPsiElement {
+  public SPIProvidersElementList(@NotNull ASTNode node) {
+    super(node);
+  }
 }

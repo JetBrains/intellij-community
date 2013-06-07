@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.icons.AllIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -25,7 +26,7 @@ import javax.swing.*;
  * @author max
  */
 public class EntryPointsNode extends InspectionNode {
-  public EntryPointsNode(UnusedDeclarationInspection tool) {
+  public EntryPointsNode(@NotNull UnusedDeclarationInspection tool) {
     super(new DummyEntryPointsTool(tool));
     getTool().updateContent();
   }

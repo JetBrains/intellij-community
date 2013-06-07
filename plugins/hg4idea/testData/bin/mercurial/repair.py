@@ -6,20 +6,24 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import changegroup
-from node import nullrev, short
-from i18n import _
+from mercurial import changegroup
+from mercurial.node import short
+from mercurial.i18n import _
 import os
+import errno
 
-def _bundle(repo, bases, heads, node, suffix, extranodes=None):
+def _bundle(repo, bases, heads, node, suffix, compress=True):
     """create a bundle with the specified revisions as a backup"""
-    cg = repo.changegroupsubset(bases, heads, 'strip', extranodes)
+    cg = repo.changegroupsubset(bases, heads, 'strip')
     backupdir = repo.join("strip-backup")
     if not os.path.isdir(backupdir):
         os.mkdir(backupdir)
-    name = os.path.join(backupdir, "%s-%s" % (short(node), suffix))
-    repo.ui.warn(_("saving bundle to %s\n") % name)
-    return changegroup.writebundle(cg, name, "HG10BZ")
+    name = os.path.join(backupdir, "%s-%s.hg" % (short(node), suffix))
+    if compress:
+        bundletype = "HG10BZ"
+    else:
+        bundletype = "HG10UN"
+    return changegroup.writebundle(cg, name, bundletype)
 
 def _collectfiles(repo, striprev):
     """find out the filelogs affected by the strip"""
@@ -30,45 +34,39 @@ def _collectfiles(repo, striprev):
 
     return sorted(files)
 
-def _collectextranodes(repo, files, link):
-    """return the nodes that have to be saved before the strip"""
+def _collectbrokencsets(repo, files, striprev):
+    """return the changesets which will be broken by the truncation"""
+    s = set()
     def collectone(revlog):
-        extra = []
-        startrev = count = len(revlog)
+        linkgen = (revlog.linkrev(i) for i in revlog)
         # find the truncation point of the revlog
-        for i in xrange(count):
-            lrev = revlog.linkrev(i)
-            if lrev >= link:
-                startrev = i + 1
+        for lrev in linkgen:
+            if lrev >= striprev:
                 break
+        # see if any revision after this point has a linkrev
+        # less than striprev (those will be broken by strip)
+        for lrev in linkgen:
+            if lrev < striprev:
+                s.add(lrev)
 
-        # see if any revision after that point has a linkrev less than link
-        # (we have to manually save these guys)
-        for i in xrange(startrev, count):
-            node = revlog.node(i)
-            lrev = revlog.linkrev(i)
-            if lrev < link:
-                extra.append((node, cl.node(lrev)))
-
-        return extra
-
-    extranodes = {}
-    cl = repo.changelog
-    extra = collectone(repo.manifest)
-    if extra:
-        extranodes[1] = extra
+    collectone(repo.manifest)
     for fname in files:
-        f = repo.file(fname)
-        extra = collectone(f)
-        if extra:
-            extranodes[fname] = extra
+        collectone(repo.file(fname))
 
-    return extranodes
+    return s
 
-def strip(ui, repo, node, backup="all"):
+def strip(ui, repo, nodelist, backup="all", topic='backup'):
+    repo = repo.unfiltered()
+    repo.destroying()
+
     cl = repo.changelog
-    # TODO delete the undo files, and handle undo of merge sets
-    striprev = cl.rev(node)
+    # TODO handle undo of merge sets
+    if isinstance(nodelist, str):
+        nodelist = [nodelist]
+    striplist = [cl.rev(node) for node in nodelist]
+    striprev = min(striplist)
+
+    keeppartialbundle = backup == 'strip'
 
     # Some revisions with rev > striprev may not be descendants of striprev.
     # We have to find these revisions and put them in a bundle, so that
@@ -77,69 +75,110 @@ def strip(ui, repo, node, backup="all"):
     # the list of heads and bases of the set of interesting revisions.
     # (head = revision in the set that has no descendant in the set;
     #  base = revision in the set that has no ancestor in the set)
-    tostrip = set((striprev,))
-    saveheads = set()
-    savebases = []
-    for r in xrange(striprev + 1, len(cl)):
-        parents = cl.parentrevs(r)
-        if parents[0] in tostrip or parents[1] in tostrip:
-            # r is a descendant of striprev
-            tostrip.add(r)
-            # if this is a merge and one of the parents does not descend
-            # from striprev, mark that parent as a savehead.
-            if parents[1] != nullrev:
-                for p in parents:
-                    if p not in tostrip and p > striprev:
-                        saveheads.add(p)
-        else:
-            # if no parents of this revision will be stripped, mark it as
-            # a savebase
-            if parents[0] < striprev and parents[1] < striprev:
-                savebases.append(cl.node(r))
+    tostrip = set(striplist)
+    for rev in striplist:
+        for desc in cl.descendants([rev]):
+            tostrip.add(desc)
 
-            saveheads.difference_update(parents)
-            saveheads.add(r)
-
-    saveheads = [cl.node(r) for r in saveheads]
     files = _collectfiles(repo, striprev)
+    saverevs = _collectbrokencsets(repo, files, striprev)
 
-    extranodes = _collectextranodes(repo, files, striprev)
+    # compute heads
+    saveheads = set(saverevs)
+    for r in xrange(striprev + 1, len(cl)):
+        if r not in tostrip:
+            saverevs.add(r)
+            saveheads.difference_update(cl.parentrevs(r))
+            saveheads.add(r)
+    saveheads = [cl.node(r) for r in saveheads]
+
+    # compute base nodes
+    if saverevs:
+        descendants = set(cl.descendants(saverevs))
+        saverevs.difference_update(descendants)
+    savebases = [cl.node(r) for r in saverevs]
+    stripbases = [cl.node(r) for r in tostrip]
+
+    # For a set s, max(parents(s) - s) is the same as max(heads(::s - s)), but
+    # is much faster
+    newbmtarget = repo.revs('max(parents(%ld) - (%ld))', tostrip, tostrip)
+    if newbmtarget:
+        newbmtarget = repo[newbmtarget[0]].node()
+    else:
+        newbmtarget = '.'
+
+    bm = repo._bookmarks
+    updatebm = []
+    for m in bm:
+        rev = repo[bm[m]].rev()
+        if rev in tostrip:
+            updatebm.append(m)
 
     # create a changegroup for all the branches we need to keep
+    backupfile = None
     if backup == "all":
-        _bundle(repo, [node], cl.heads(), node, 'backup')
-    if saveheads or extranodes:
+        backupfile = _bundle(repo, stripbases, cl.heads(), node, topic)
+        repo.ui.status(_("saved backup bundle to %s\n") % backupfile)
+        repo.ui.log("backupbundle", "saved backup bundle to %s\n", backupfile)
+    if saveheads or savebases:
+        # do not compress partial bundle if we remove it from disk later
         chgrpfile = _bundle(repo, savebases, saveheads, node, 'temp',
-                            extranodes)
+                            compress=keeppartialbundle)
 
     mfst = repo.manifest
 
-    tr = repo.transaction()
+    tr = repo.transaction("strip")
     offset = len(tr.entries)
 
-    tr.startgroup()
-    cl.strip(striprev, tr)
-    mfst.strip(striprev, tr)
-    for fn in files:
-        repo.file(fn).strip(striprev, tr)
-    tr.endgroup()
-
     try:
-        for i in xrange(offset, len(tr.entries)):
-            file, troffset, ignore = tr.entries[i]
-            repo.sopener(file, 'a').truncate(troffset)
-        tr.close()
-    except:
-        tr.abort()
-        raise
+        tr.startgroup()
+        cl.strip(striprev, tr)
+        mfst.strip(striprev, tr)
+        for fn in files:
+            repo.file(fn).strip(striprev, tr)
+        tr.endgroup()
 
-    if saveheads or extranodes:
-        ui.status(_("adding branch\n"))
-        f = open(chgrpfile, "rb")
-        gen = changegroup.readbundle(f, chgrpfile)
-        repo.addchangegroup(gen, 'strip', 'bundle:' + chgrpfile, True)
-        f.close()
-        if backup != "strip":
-            os.unlink(chgrpfile)
+        try:
+            for i in xrange(offset, len(tr.entries)):
+                file, troffset, ignore = tr.entries[i]
+                repo.sopener(file, 'a').truncate(troffset)
+            tr.close()
+        except: # re-raises
+            tr.abort()
+            raise
+
+        if saveheads or savebases:
+            ui.note(_("adding branch\n"))
+            f = open(chgrpfile, "rb")
+            gen = changegroup.readbundle(f, chgrpfile)
+            if not repo.ui.verbose:
+                # silence internal shuffling chatter
+                repo.ui.pushbuffer()
+            repo.addchangegroup(gen, 'strip', 'bundle:' + chgrpfile, True)
+            if not repo.ui.verbose:
+                repo.ui.popbuffer()
+            f.close()
+            if not keeppartialbundle:
+                os.unlink(chgrpfile)
+
+        # remove undo files
+        for undofile in repo.undofiles():
+            try:
+                os.unlink(undofile)
+            except OSError, e:
+                if e.errno != errno.ENOENT:
+                    ui.warn(_('error removing %s: %s\n') % (undofile, str(e)))
+
+        for m in updatebm:
+            bm[m] = repo[newbmtarget].node()
+        bm.write()
+    except: # re-raises
+        if backupfile:
+            ui.warn(_("strip failed, full bundle stored in '%s'\n")
+                    % backupfile)
+        elif saveheads:
+            ui.warn(_("strip failed, partial bundle stored in '%s'\n")
+                    % chgrpfile)
+        raise
 
     repo.destroyed()

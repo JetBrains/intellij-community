@@ -128,6 +128,7 @@ public class GenerateMembersUtil {
    */
   public static void positionCaret(@NotNull Editor editor, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
     LOG.assertTrue(firstMember.isValid());
+    Project project = firstMember.getProject();
 
     if (toEditMethodBody) {
       PsiMethod method = (PsiMethod)firstMember;
@@ -167,9 +168,9 @@ public class GenerateMembersUtil {
         } else if (adjustLineIndent) {
           Document document = editor.getDocument();
           RangeMarker marker = document.createRangeMarker(start, start);
-          PsiDocumentManager.getInstance(body.getProject()).doPostponedOperationsAndUnblockDocument(document);
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           if (marker.isValid()) {
-            CodeStyleManager.getInstance(body.getProject()).adjustLineIndent(document, marker.getStartOffset());
+            CodeStyleManager.getInstance(project).adjustLineIndent(document, marker.getStartOffset());
           }
         }
         return;

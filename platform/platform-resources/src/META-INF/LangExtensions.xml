@@ -835,6 +835,8 @@
     <favoritesListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsFavoriteListProvider"/>
     <applicationService serviceInterface="com.intellij.codeInsight.FileModificationService"
                         serviceImplementation="com.intellij.codeInsight.CodeInsightUtilBase"/>
+    <applicationService serviceInterface="com.intellij.ide.util.treeView.TreeAnchorizer"
+                        serviceImplementation="com.intellij.ide.projectView.impl.nodes.PsiTreeAnchorizer"/>
   </extensions>
 </idea-plugin>
 

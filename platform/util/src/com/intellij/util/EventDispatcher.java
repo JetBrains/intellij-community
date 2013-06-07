@@ -44,6 +44,7 @@ public class EventDispatcher<T extends EventListener> {
 
   private EventDispatcher(@NotNull Class<T> listenerClass) {
     InvocationHandler handler = new InvocationHandler() {
+      @Override
       @NonNls
       public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
@@ -88,7 +89,7 @@ public class EventDispatcher<T extends EventListener> {
       try {
         method.invoke(listener, args);
       }
-      catch (AbstractMethodError e) {
+      catch (AbstractMethodError ignored) {
         //Do nothing. This listener just does not implement something newly added yet.
       }
       catch (RuntimeException e) {
@@ -111,6 +112,7 @@ public class EventDispatcher<T extends EventListener> {
   public void addListener(@NotNull final T listener, @NotNull Disposable parentDisposable) {
     addListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeListener(listener);
       }

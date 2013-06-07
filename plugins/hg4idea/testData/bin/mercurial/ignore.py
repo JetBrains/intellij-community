@@ -46,11 +46,31 @@ def ignorepats(lines):
                 pat = line
                 break
             elif line.startswith(s+':'):
-                pat = rels + line[len(s)+1:]
+                pat = rels + line[len(s) + 1:]
                 break
         patterns.append(pat)
 
     return patterns, warnings
+
+def readpats(root, files, warn):
+    '''return a dict mapping ignore-file-name to list-of-patterns'''
+
+    pats = {}
+    for f in files:
+        if f in pats:
+            continue
+        try:
+            pats[f] = []
+            fp = open(f)
+            pats[f], warnings = ignorepats(fp)
+            fp.close()
+            for warning in warnings:
+                warn("%s: %s\n" % (f, warning))
+        except IOError, inst:
+            if f != files[0]:
+                warn(_("skipping unreadable ignore file '%s': %s\n") %
+                     (f, inst.strerror))
+    return [(f, pats[f]) for f in files if f in pats]
 
 def ignore(root, files, warn):
     '''return matcher covering patterns in 'files'.
@@ -72,21 +92,11 @@ def ignore(root, files, warn):
     glob:pattern   # non-rooted glob
     pattern        # pattern of the current default type'''
 
-    pats = {}
-    for f in files:
-        try:
-            pats[f] = []
-            fp = open(f)
-            pats[f], warnings = ignorepats(fp)
-            for warning in warnings:
-                warn("%s: %s\n" % (f, warning))
-        except IOError, inst:
-            if f != files[0]:
-                warn(_("skipping unreadable ignore file '%s': %s\n") %
-                     (f, inst.strerror))
+    pats = readpats(root, files, warn)
 
     allpats = []
-    [allpats.extend(patlist) for patlist in pats.values()]
+    for f, patlist in pats:
+        allpats.extend(patlist)
     if not allpats:
         return util.never
 
@@ -94,7 +104,7 @@ def ignore(root, files, warn):
         ignorefunc = match.match(root, '', [], allpats)
     except util.Abort:
         # Re-raise an exception where the src is the right file
-        for f, patlist in pats.iteritems():
+        for f, patlist in pats:
             try:
                 match.match(root, '', [], patlist)
             except util.Abort, inst:

@@ -358,9 +358,8 @@ class Browser extends JPanel {
     if (refEntity instanceof RefElement){
       PsiElement element = ((RefElement)refEntity).getElement();
       if (element == null) return tool;
-      final InspectionProfileWrapper profileWrapper = InspectionProjectProfileManagerImpl.getInstanceImpl(manager.getProject()).getProfileWrapper();
-      if (profileWrapper == null) return tool;
-      tool = profileWrapper.getInspectionTool(tool.getShortName(), element);
+      InspectionProfileWrapper profileWrapper = InspectionProjectProfileManagerImpl.getInstanceImpl(manager.getProject()).getProfileWrapper();
+      tool = (InspectionTool)profileWrapper.getInspectionTool(tool.getShortName(), element);
     }
     return tool;
   }

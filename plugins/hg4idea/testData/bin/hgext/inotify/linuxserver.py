@@ -7,7 +7,7 @@
 # GNU General Public License version 2 or any later version.
 
 from mercurial.i18n import _
-from mercurial import osutil, util
+from mercurial import osutil, util, error
 import server
 import errno, os, select, stat, sys, time
 
@@ -44,7 +44,7 @@ def walkrepodirs(dirstate, absroot):
 def _explain_watch_limit(ui, dirstate, rootabs):
     path = '/proc/sys/fs/inotify/max_user_watches'
     try:
-        limit = int(file(path).read())
+        limit = int(util.readfile(path))
     except IOError, err:
         if err.errno != errno.ENOENT:
             raise
@@ -117,7 +117,7 @@ class pollable(object):
             try:
                 events = cls.poll.poll(timeout)
             except select.error, err:
-                if err[0] == errno.EINTR:
+                if err.args[0] == errno.EINTR:
                     continue
                 raise
             if events:
@@ -405,14 +405,7 @@ class socketlistener(server.socketlistener, pollable):
 
     def shutdown(self):
         self.sock.close()
-        try:
-            os.unlink(self.sockpath)
-            if self.realsockpath:
-                os.unlink(self.realsockpath)
-                os.rmdir(os.path.dirname(self.realsockpath))
-        except OSError, err:
-            if err.errno != errno.ENOENT:
-                raise
+        self.sock.cleanup()
 
     def answer_stat_query(self, cs):
         if self.repowatcher.timeout:
@@ -431,7 +424,10 @@ class master(object):
 
     def shutdown(self):
         for obj in pollable.instances.itervalues():
-            obj.shutdown()
+            try:
+                obj.shutdown()
+            except error.SignalInterrupt:
+                pass
 
     def run(self):
         self.repowatcher.setup()

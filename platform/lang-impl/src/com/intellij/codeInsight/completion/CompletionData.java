@@ -251,8 +251,8 @@ public class CompletionData {
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }
-    else {
-      LOG.error("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));
+    if (s == null) {
+      throw new AssertionError("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));
     }
 
     LookupItem item = new LookupItem(object, s);

@@ -83,4 +83,38 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     result.setTaskNames(ContainerUtilRt.newArrayList(getTaskNames()));
     return result;
   }
+
+  @Override
+  public int hashCode() {
+    int result = myTaskNames != null ? myTaskNames.hashCode() : 0;
+    result = 31 * result + (myExternalSystemIdString != null ? myExternalSystemIdString.hashCode() : 0);
+    result = 31 * result + (myExternalProjectPath != null ? myExternalProjectPath.hashCode() : 0);
+    result = 31 * result + (myVmOptions != null ? myVmOptions.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ExternalSystemTaskExecutionSettings settings = (ExternalSystemTaskExecutionSettings)o;
+
+    if (myExternalProjectPath != null
+        ? !myExternalProjectPath.equals(settings.myExternalProjectPath)
+        : settings.myExternalProjectPath != null)
+    {
+      return false;
+    }
+    if (myExternalSystemIdString != null
+        ? !myExternalSystemIdString.equals(settings.myExternalSystemIdString)
+        : settings.myExternalSystemIdString != null)
+    {
+      return false;
+    }
+    if (myTaskNames != null ? !myTaskNames.equals(settings.myTaskNames) : settings.myTaskNames != null) return false;
+    if (myVmOptions != null ? !myVmOptions.equals(settings.myVmOptions) : settings.myVmOptions != null) return false;
+
+    return true;
+  }
 }
