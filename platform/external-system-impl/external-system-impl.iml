@@ -13,6 +13,8 @@
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="debugger-impl" />
+    <orderEntry type="module" module-name="execution-openapi" />
   </component>
 </module>
 
