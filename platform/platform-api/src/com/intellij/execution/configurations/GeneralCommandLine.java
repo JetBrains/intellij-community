@@ -198,12 +198,14 @@ public class GeneralCommandLine implements UserDataHolder {
    * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
    * (suitable e.g. for passing in an environment variable).
    *
+   * @param isWindows if target platform is windows
+   * @param separatorChar file separator on a target platform
    * @return command as a newline-separated list.
    */
   @NotNull
-  public String getPreparedCommandLine() {
+  public String getPreparedCommandLine(final boolean isWindows, final char separatorChar) {
     String exePath = myExePath != null ? myExePath : "";
-    return StringUtil.join(CommandLineUtil.toCommandLine(exePath, myProgramParams.getList()), "\n");
+    return StringUtil.join(CommandLineUtil.toCommandLine(exePath, myProgramParams.getList(), isWindows, separatorChar), "\n");
   }
 
   public Process createProcess() throws ExecutionException {
