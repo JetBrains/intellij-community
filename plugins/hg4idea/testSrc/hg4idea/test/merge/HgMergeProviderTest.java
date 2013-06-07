@@ -80,7 +80,6 @@ public class HgMergeProviderTest extends HgPlatformTest {
     verifyMergeData(myRepository.findChild(aFile), "base", "base modify with b", "base modify with a");
   }
 
-
   public void testMergeWithCommittedLocalChange() throws Exception {
     prepareSecondRepository();
     final Pair<VirtualFile, VirtualFile> files = prepareFileInBothRepositories();
@@ -139,7 +138,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     verifyMergeData(myChildRepo.findChild(bFile), "", "local", "server");
   }
 
-  public void testFileAddedNotCommited() throws Exception {
+  public void testFileAddedNotCommitted() throws Exception {
     // this is needed to have the same root changeset - otherwise conflicting root changeset will cause
     // an error during 'hg pull': "abort: repository is unrelated"
     prepareSecondRepository();
