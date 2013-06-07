@@ -60,8 +60,8 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
         new BinaryExprJoiner(), new ListLikeExprJoiner(),
         new CommentJoiner(),
       };
-      
-      Request request = new Request(document, left_element, left_expr, right_element, right_expr); 
+
+      Request request = new Request(document, left_element, left_expr, right_element, right_expr);
 
       for (Joiner joiner : joiners) {
         Result res = joiner.join(request);
@@ -79,10 +79,9 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
       if (request.leftElem() == request.rightElem()) {
         IElementType type = request.leftElem().getNode().getElementType();
         if (PyTokenTypes.SINGLE_QUOTED_STRING == type || PyTokenTypes.SINGLE_QUOTED_UNICODE == type) {
-          PyExpression element = leftExpression;
-          if (element == null) return CANNOT_JOIN;
-          if (removeBackSlash(document, element, false)) {
-            return element.getTextOffset();
+          if (leftExpression == null) return CANNOT_JOIN;
+          if (removeBackSlash(document, leftExpression, false)) {
+            return leftExpression.getTextOffset();
           }
         }
       }
@@ -102,17 +101,26 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     return CANNOT_JOIN;
   }
 
-  private boolean removeBackSlash(Document document, PsiElement element, boolean trim) {
+  private static boolean removeBackSlash(Document document, PsiElement element, boolean trim) {
     String[] substrings = element.getText().split("\n");
     if (substrings.length != 1) {
       StringBuilder replacement = new StringBuilder();
-      for (String string : substrings) {
-        if (trim)
+      for (int i = 0; i < substrings.length; i++) {
+        String string = substrings[i];
+        if (trim) {
           string = StringUtil.trimLeading(string);
-        if (string.trim().endsWith("\\"))
-          replacement.append(string.substring(0, string.length()-1));
-        else
+        }
+        if (string.trim().endsWith("\\")) {
+          replacement.append(string.substring(0, string.length() - 1));
+        }
+        else {
           replacement.append(string);
+        }
+
+        if (i != substrings.length - 1 && !(element instanceof PyReferenceExpression) &&
+            !(element instanceof PyStringLiteralExpression)) {
+          replacement.append(" ");
+        }
       }
       document.replaceString(element.getTextOffset(), element.getTextOffset()+element.getTextLength(), replacement);
       return true;

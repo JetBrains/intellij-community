@@ -1,0 +1,1 @@
+records = [select.query.decode(r) for r in records]

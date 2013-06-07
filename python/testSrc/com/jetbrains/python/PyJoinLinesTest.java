@@ -34,7 +34,7 @@ public class PyJoinLinesTest extends PyTestCase {
     new WriteAction() {
       @Override
       protected void run(Result result) throws Throwable {
-        int ret = handler.tryJoinRawLines(doc, myFixture.getFile(), start, end);
+        handler.tryJoinRawLines(doc, myFixture.getFile(), start, end);
       }
     }.execute().throwException();
     myFixture.checkResultByFile(path + getTestName(false) + "-after.py");
@@ -66,4 +66,5 @@ public class PyJoinLinesTest extends PyTestCase {
   public void testStringWithSlash() { doTest(); }
   public void testListOfStrings() { doTest(); }
   public void testLongExpression() { doTest(); }
+  public void testListComprehension() { doTest(); }
 }
