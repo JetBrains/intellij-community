@@ -16,12 +16,10 @@
 package com.intellij.spi.psi;
 
 import com.intellij.extapi.psi.PsiFileBase;
-import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
 import com.intellij.spi.SPIFileType;
-import com.intellij.spi.SPILanguage;
+import com.intellij.lang.spi.SPILanguage;
 import org.jetbrains.annotations.NotNull;
 
 /**

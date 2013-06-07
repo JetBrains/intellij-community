@@ -16,7 +16,7 @@
 package com.intellij.spi;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;

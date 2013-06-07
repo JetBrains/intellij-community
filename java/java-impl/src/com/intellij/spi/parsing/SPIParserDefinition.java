@@ -30,7 +30,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.spi.psi.SPIProviderElement;
 import com.intellij.spi.psi.SPIProvidersElementList;
 import com.intellij.spi.psi.SPIFile;
-import com.intellij.spi.SPILanguage;
+import com.intellij.lang.spi.SPILanguage;
 import org.jetbrains.annotations.NotNull;
 
 /**
