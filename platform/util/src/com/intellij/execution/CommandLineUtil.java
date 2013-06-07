@@ -15,13 +15,11 @@
  */
 package com.intellij.execution;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.List;
 
 public class CommandLineUtil {
@@ -38,20 +36,16 @@ public class CommandLineUtil {
   }
 
   public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
-    return toCommandLine(command, parameters, SystemInfo.isWindows, File.separatorChar);
+    return toCommandLine(command, parameters, Platform.current());
   }
 
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
-  public static @NotNull List<String> toCommandLine(
-    @NotNull final String command,
-    @NotNull final List<? extends String> parameters,
-    final boolean isWindows,
-    final char separatorChar)
-  {
+  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
     List<String> commandLine = ContainerUtil.newArrayListWithExpectedSize(parameters.size() + 1);
 
-    commandLine.add(FileUtilRt.toSystemDependentName(command, separatorChar));
+    commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 
+    boolean isWindows = platform == Platform.WINDOWS;
     boolean winShell = isWindows &&
                        ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
                        parameters.size() > 1 && "/c".equalsIgnoreCase(parameters.get(0));
