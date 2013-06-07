@@ -168,7 +168,7 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
       console.attachToProcess(processHandler);
       final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
       for (String taskName : mySettings.getTaskNames()) {
-        tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
+        tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null, null));
       }
       if (tasks.isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));

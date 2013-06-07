@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Producer;
@@ -89,6 +90,7 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
         scheduleCollapseStateAppliance(e.getTreePath());
       }
     });
+    new TreeSpeedSearch(this);
   }
 
   /**
