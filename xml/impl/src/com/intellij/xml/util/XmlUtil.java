@@ -36,7 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +63,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
@@ -292,7 +291,7 @@ public class XmlUtil {
 
       if (data != null) {
         String filePath = data + "/" + uri;
-        final VirtualFile path = LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
+        final VirtualFile path = StandardFileSystems.local().findFileByPath(filePath.replace(File.separatorChar, '/'));
         if (path != null) {
           result = base.getManager().findFile(path);
         }
