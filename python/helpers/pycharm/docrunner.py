@@ -1,7 +1,7 @@
 import imp
 import sys
 import datetime
-
+import os
 helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
 if sys.path[0] != helpers_dir:
     sys.path.insert(0, helpers_dir)
@@ -14,7 +14,6 @@ from pycharm_run_utils import adjust_sys_path, debug, getModuleName, PYTHON_VERS
 
 adjust_sys_path()
 
-os = import_system_module("os")
 re = import_system_module("re")
 doctest = import_system_module("doctest")
 traceback = import_system_module("traceback")

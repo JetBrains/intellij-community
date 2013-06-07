@@ -1,4 +1,5 @@
 import sys
+import os
 
 helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
 if sys.path[0] != helpers_dir:
