@@ -154,8 +154,9 @@ public class GrClosureSignatureUtil {
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
       PsiType type = TypeConversionUtil.erasure(param.getType());
-      closureParams[i] = new GrClosureParameterImpl(type, param.getName(), GrClosureParameterImpl.isParameterOptional(param),
-                                                    GrClosureParameterImpl.getDefaultInitializer(param));
+      closureParams[i] =
+        new GrClosureParameterImpl(type, GrClosureParameterImpl.getParameterName(param), GrClosureParameterImpl.isParameterOptional(param),
+                                   GrClosureParameterImpl.getDefaultInitializer(param));
     }
     return new GrClosureSignatureImpl(closureParams, null, GrClosureParameterImpl.isVararg(closureParams), false) {
       @Override
@@ -449,7 +450,7 @@ public class GrClosureSignatureUtil {
   }
 
   private static boolean isAssignableByConversion(@Nullable PsiType paramType, @Nullable PsiType argType, @NotNull PsiElement context) {
-    if (argType == null) {
+    if (argType == null || paramType == null) {
       return true;
     }
     if (TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {

@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -43,7 +40,7 @@ public class GrClosureParameterImpl implements GrClosureParameter {
   }
 
   public GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
-    this(substitutor.substitute(getParameterType(parameter)), parameter.getName(), isParameterOptional(parameter), getDefaultInitializer(parameter));
+    this(substitutor.substitute(getParameterType(parameter)), getParameterName(parameter), isParameterOptional(parameter), getDefaultInitializer(parameter));
   }
 
   @Nullable
@@ -62,6 +59,16 @@ public class GrClosureParameterImpl implements GrClosureParameter {
 
   public static boolean isVararg(GrClosureParameter[] closureParams) {
     return closureParams.length > 0 && closureParams[closureParams.length - 1].getType() instanceof PsiArrayType;
+  }
+
+  @Nullable
+  public static String getParameterName(@NotNull PsiParameter param) {
+    if (param instanceof PsiCompiledElement) { // don't try to find out a compiled parameter name
+      return null;
+    }
+    else {
+      return param.getName();
+    }
   }
 
 
