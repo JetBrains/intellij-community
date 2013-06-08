@@ -101,15 +101,17 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
   }
 
 
-
-  private static void doTest(final PsiClass aClass, final PsiField field, final String conflicts,
-                             final boolean generateGetters, final boolean  generateSetters) {
+  private static void doTest(final PsiClass aClass,
+                             final PsiField field,
+                             final String conflicts,
+                             final boolean generateGetters,
+                             final boolean generateSetters) {
     try {
       final Project project = aClass.getProject();
       EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, new EncapsulateFieldsDescriptor() {
         @Override
         public FieldDescriptor[] getSelectedFields() {
-          return new FieldDescriptor[] {new FieldDescriptorImpl(
+          return new FieldDescriptor[]{new FieldDescriptorImpl(
             field,
             PropertyUtil.suggestGetterName(project, field),
             PropertyUtil.suggestSetterName(project, field),
@@ -147,6 +149,11 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
         public int getJavadocPolicy() {
           return DocCommentPolicy.MOVE;
         }
+
+        @Override
+        public PsiClass getTargetClass() {
+          return aClass;
+        }
       });
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
@@ -156,7 +163,8 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
       if (conflicts != null) {
         Assert.assertEquals(conflicts, e.getMessage());
         return;
-      } else {
+      }
+      else {
         e.printStackTrace();
         fail(e.getMessage());
       }

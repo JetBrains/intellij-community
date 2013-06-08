@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 23-Oct-2009
- */
 package com.intellij.refactoring.encapsulateFields;
 
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
-public interface EncapsulateFieldsDescriptor {
-  FieldDescriptor[] getSelectedFields();
+/**
+* @author Max Medvedev
+*/
+public class EncapsulateFieldUsageInfo extends UsageInfo {
+  private final FieldDescriptor myFieldDescriptor;
 
-  boolean isToEncapsulateGet();
+  public EncapsulateFieldUsageInfo(PsiReference ref, @NotNull FieldDescriptor descriptor) {
+    super(ref);
+    myFieldDescriptor = descriptor;
+  }
 
-  boolean isToEncapsulateSet();
-
-  boolean isToUseAccessorsWhenAccessible();
-
-  @PsiModifier.ModifierConstant
-  String getFieldsVisibility();
-
-  @PsiModifier.ModifierConstant
-  String getAccessorsVisibility();
-
-  int getJavadocPolicy();
+  @NotNull
+  public FieldDescriptor getFieldDescriptor() {
+    return myFieldDescriptor;
+  }
 }

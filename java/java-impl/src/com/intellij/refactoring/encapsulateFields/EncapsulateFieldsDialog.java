@@ -15,14 +15,12 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
@@ -35,7 +33,6 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -51,14 +48,16 @@ import java.awt.event.*;
 import java.util.Set;
 
 public class EncapsulateFieldsDialog extends RefactoringDialog implements EncapsulateFieldsDescriptor {
-  private static final Logger LOG = Logger.getInstance(
-          "#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDialog"
-  );
+  private static final Logger LOG = Logger.getInstance(EncapsulateFieldsDialog.class);
+
+  private static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
 
   private static final int CHECKED_COLUMN = 0;
   private static final int FIELD_COLUMN = 1;
   private static final int GETTER_COLUMN = 2;
   private static final int SETTER_COLUMN = 3;
+
+  private final EncapsulateFieldHelper myHelper;
 
   private final Project myProject;
   private final PsiClass myClass;
@@ -86,7 +85,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private final JRadioButton myRbAccessorProtected = new JRadioButton();
   private final JRadioButton myRbAccessorPrivate = new JRadioButton();
   private final JRadioButton myRbAccessorPackageLocal = new JRadioButton();
-  private static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
   private DocCommentPanel myJavadocPolicy;
 
   {
@@ -101,10 +99,11 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     myRbFieldProtected.setFocusable(false);
   }
 
-  public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields) {
+  public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields, EncapsulateFieldHelper helper) {
     super(project, true);
     myProject = project;
     myClass = aClass;
+    myHelper = helper;
 
     String title = REFACTORING_NAME;
     String qName = myClass.getQualifiedName();
@@ -113,7 +112,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
     setTitle(title);
 
-    myFields = myClass.getFields();
+    myFields = myHelper.getApplicableFields(myClass);
     myFieldNames = new String[myFields.length];
     myCheckedMarks = new boolean[myFields.length];
     myFinalMarks = new boolean[myFields.length];
@@ -130,10 +129,10 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
                                            PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER,
                                            PsiSubstitutor.EMPTY
               );
-      myGetterNames[idx] = PropertyUtil.suggestGetterName(myProject, field);
-      mySetterNames[idx] = PropertyUtil.suggestSetterName(myProject, field);
-      myGetterPrototypes[idx] = generateMethodPrototype(field, myGetterNames[idx], true);
-      mySetterPrototypes[idx] = generateMethodPrototype(field, mySetterNames[idx], false);
+      myGetterNames[idx] = myHelper.suggestGetterName(field);
+      mySetterNames[idx] = myHelper.suggestSetterName(field);
+      myGetterPrototypes[idx] = myHelper.generateMethodPrototype(field, myGetterNames[idx], true);
+      mySetterPrototypes[idx] = myHelper.generateMethodPrototype(field, mySetterNames[idx], false);
     }
 
     init();
@@ -195,12 +194,17 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     return myJavadocPolicy.getPolicy();
   }
 
+  @Override
+  public PsiClass getTargetClass() {
+    return myClass;
+  }
+
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.encapsulateFields.EncalpsulateFieldsDialog";
   }
 
   @PsiModifier.ModifierConstant
-public String getAccessorsVisibility() {
+  public String getAccessorsVisibility() {
     if (myRbAccessorPublic.isSelected()) {
       return PsiModifier.PUBLIC;
     } else if (myRbAccessorProtected.isSelected()) {
@@ -476,22 +480,6 @@ public String getAccessorsVisibility() {
     return getCheckedRows().length > 0;
   }
 
-  private static PsiMethod generateMethodPrototype(PsiField field, String methodName, boolean isGetter) {
-    PsiMethod prototype = isGetter
-                          ? GenerateMembersUtil.generateGetterPrototype(field)
-                          : GenerateMembersUtil.generateSetterPrototype(field);
-    try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
-      PsiIdentifier identifier = factory.createIdentifier(methodName);
-      final PsiIdentifier originalIdentifier = prototype.getNameIdentifier();
-      assert originalIdentifier != null;
-      originalIdentifier.replace(identifier);
-      return prototype;
-    } catch (IncorrectOperationException e) {
-      return null;
-    }
-  }
-
   private int[] getCheckedRows() {
     int count = 0;
     for (boolean checkedMark : myCheckedMarks) {
@@ -580,12 +568,12 @@ public String getAccessorsVisibility() {
         switch (columnIndex) {
           case GETTER_COLUMN:
             myGetterNames[rowIndex] = name;
-            myGetterPrototypes[rowIndex] = generateMethodPrototype(field, name, true);
+            myGetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, true);
             break;
 
           case SETTER_COLUMN:
             mySetterNames[rowIndex] = name;
-            mySetterPrototypes[rowIndex] = generateMethodPrototype(field, name, false);
+            mySetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, false);
             break;
 
           default:
