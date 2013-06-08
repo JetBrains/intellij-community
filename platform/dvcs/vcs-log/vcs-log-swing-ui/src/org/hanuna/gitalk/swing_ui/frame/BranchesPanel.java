@@ -44,9 +44,7 @@ public class BranchesPanel extends JPanel {
       public void mouseClicked(MouseEvent e) {
         Ref ref = findRef(e);
         if (ref != null) {
-          Hash commitCash = ref.getCommitHash();
-          myUiController.updateVisibleBranches();
-          myUiController.jumpToCommit(commitCash);
+          myUiController.jumpToCommit(ref.getCommitHash());
         }
       }
     });
