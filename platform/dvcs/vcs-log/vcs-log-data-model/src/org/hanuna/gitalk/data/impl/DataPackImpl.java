@@ -3,9 +3,9 @@ package org.hanuna.gitalk.data.impl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
@@ -47,9 +47,9 @@ public class DataPackImpl implements DataPack {
     timer.clear("build printModel");
     final GraphPrintCellModel printCellModel = new GraphPrintCellModelImpl(graphModel.getGraph());
     timer.print();
-    graphModel.addUpdateListener(new Executor<UpdateRequest>() {
+    graphModel.addUpdateListener(new Consumer<UpdateRequest>() {
       @Override
-      public void execute(UpdateRequest key) {
+      public void consume(UpdateRequest key) {
         printCellModel.recalculate(key);
       }
     });

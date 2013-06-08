@@ -1,7 +1,8 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
+import com.intellij.util.Consumer;
 import com.intellij.vcs.log.CommitParents;
-import org.hanuna.gitalk.common.Executor;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
@@ -11,7 +12,6 @@ import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.fragment.FragmentManagerImpl;
-import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ public class GraphModelImpl implements GraphModel {
   private final List<Ref> myRefs;
   private final FragmentManagerImpl fragmentManager;
   private final BranchVisibleNodes visibleNodes;
-  private final List<Executor<UpdateRequest>> listeners = new ArrayList<Executor<UpdateRequest>>();
+  private final List<Consumer<UpdateRequest>> listeners = new ArrayList<Consumer<UpdateRequest>>();
   private final GraphBranchShowFixer branchShowFixer;
 
   private Function<Node, Boolean> isStartedBranchVisibilityNode = new Function<Node, Boolean>() {
@@ -116,13 +116,13 @@ public class GraphModelImpl implements GraphModel {
   }
 
   private void callUpdateListener(@NotNull UpdateRequest updateRequest) {
-    for (Executor<UpdateRequest> listener : listeners) {
-      listener.execute(updateRequest);
+    for (Consumer<UpdateRequest> listener : listeners) {
+      listener.consume(updateRequest);
     }
   }
 
   @Override
-  public void addUpdateListener(@NotNull Executor<UpdateRequest> listener) {
+  public void addUpdateListener(@NotNull Consumer<UpdateRequest> listener) {
     listeners.add(listener);
   }
 

@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graphmodel;
 
+import com.intellij.util.Consumer;
 import com.intellij.vcs.log.CommitParents;
-import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
@@ -25,7 +25,7 @@ public interface GraphModel {
   @NotNull
   public FragmentManager getFragmentManager();
 
-  public void addUpdateListener(@NotNull Executor<UpdateRequest> listener);
+  public void addUpdateListener(@NotNull Consumer<UpdateRequest> listener);
 
   public void removeAllListeners();
 }
