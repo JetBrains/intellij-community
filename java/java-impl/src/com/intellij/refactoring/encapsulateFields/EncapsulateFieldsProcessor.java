@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -42,6 +39,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +54,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private PsiClass myClass;
   @NotNull
   private final EncapsulateFieldsDescriptor myDescriptor;
-  private final PsiField[] myFields;
+  private final FieldDescriptor[] myFieldDescriptors;
 
   private HashMap<String,PsiMethod> myNameToGetter;
   private HashMap<String,PsiMethod> myNameToSetter;
@@ -64,14 +62,14 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   public EncapsulateFieldsProcessor(Project project, @NotNull EncapsulateFieldsDescriptor descriptor) {
     super(project);
     myDescriptor = descriptor;
-    myFields = myDescriptor.getSelectedFields();
-    myClass = myFields[0].getContainingClass();
+    myFieldDescriptors = myDescriptor.getSelectedFields();
+    myClass = myFieldDescriptors[0].getField().getContainingClass();
   }
 
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    PsiField[] fields = new PsiField[myFields.length];
-    System.arraycopy(myFields, 0, fields, 0, myFields.length);
+    FieldDescriptor[] fields = new FieldDescriptor[myFieldDescriptors.length];
+    System.arraycopy(myFieldDescriptors, 0, fields, 0, myFieldDescriptors.length);
     return new EncapsulateFieldsViewDescriptor(fields);
   }
 
@@ -82,28 +80,27 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
-    final PsiMethod[] getterPrototypes = myDescriptor.getGetterPrototypes();
-    final PsiMethod[] setterPrototypes = myDescriptor.getSetterPrototypes();
-
-    checkExistingMethods(getterPrototypes, conflicts, true);
-    checkExistingMethods(setterPrototypes, conflicts, false);
+    checkExistingMethods(conflicts, true);
+    checkExistingMethods(conflicts, false);
     final Collection<PsiClass> classes = ClassInheritorsSearch.search(myClass).findAll();
-    for (int i = 0; i < myFields.length; i++) {
-      final PsiField field = myFields[i];
+    for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       final Set<PsiMethod> setters = new HashSet<PsiMethod>();
       final Set<PsiMethod> getters = new HashSet<PsiMethod>();
 
       for (PsiClass aClass : classes) {
-        final PsiMethod getterOverrider = getterPrototypes != null ? aClass.findMethodBySignature(getterPrototypes[i], false) : null;
+        final PsiMethod getterOverrider =
+          myDescriptor.isToEncapsulateGet() ? aClass.findMethodBySignature(fieldDescriptor.getGetterPrototype(), false) : null;
         if (getterOverrider != null) {
           getters.add(getterOverrider);
         }
-        final PsiMethod setterOverrider = setterPrototypes != null ? aClass.findMethodBySignature(setterPrototypes[i], false) : null;
+        final PsiMethod setterOverrider =
+          myDescriptor.isToEncapsulateSet() ? aClass.findMethodBySignature(fieldDescriptor.getSetterPrototype(), false) : null;
         if (setterOverrider != null) {
           setters.add(setterOverrider);
         }
       }
       if (!getters.isEmpty() || !setters.isEmpty()) {
+        final PsiField field = fieldDescriptor.getField();
         for (PsiReference reference : ReferencesSearch.search(field)) {
           final PsiElement place = reference.getElement();
           LOG.assertTrue(place instanceof PsiReferenceExpression);
@@ -132,9 +129,16 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, refUsages.get());
   }
 
-  private void checkExistingMethods(PsiMethod[] prototypes, MultiMap<PsiElement, String> conflicts, boolean isGetter) {
-    if(prototypes == null) return;
-    for (PsiMethod prototype : prototypes) {
+  private void checkExistingMethods(MultiMap<PsiElement, String> conflicts, boolean isGetter) {
+    if (isGetter) {
+      if (!myDescriptor.isToEncapsulateGet()) return;
+    }
+    else {
+      if (!myDescriptor.isToEncapsulateSet()) return;
+    }
+
+    for (FieldDescriptor descriptor : myFieldDescriptors) {
+      PsiMethod prototype = isGetter?descriptor.getGetterPrototype():descriptor.getSetterPrototype();
       final PsiType prototypeReturnType = prototype.getReturnType();
       PsiMethod existing = myClass.findMethodBySignature(prototype, true);
       if (existing != null) {
@@ -142,8 +146,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         if (!RefactoringUtil.equivalentTypes(prototypeReturnType, returnType, myClass.getManager())) {
           final String descr = PsiFormatUtil.formatMethod(existing,
                                                           PsiSubstitutor.EMPTY,
-                                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
-                                                          PsiFormatUtil.SHOW_TYPE
+                                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE,
+                                                          PsiFormatUtilBase.SHOW_TYPE
           );
           String message = isGetter ?
                            RefactoringBundle.message("encapsulate.fields.getter.exists", CommonRefactoringUtil.htmlEmphasize(descr),
@@ -196,22 +200,19 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         LOG.error(e);
       }
     }
-    PsiMethod[] getterPrototypes = myDescriptor.getGetterPrototypes();
-    PsiMethod[] setterPrototypes = myDescriptor.getSetterPrototypes();
-    ArrayList<UsageInfo> array = new ArrayList<UsageInfo>();
-    PsiField[] fields = myFields;
-    for(int i = 0; i < fields.length; i++){
-      PsiField field = fields[i];
-      for (final PsiReference reference : ReferencesSearch.search(field)) {
+
+    ArrayList<EncapsulateFieldUsageInfo> array = ContainerUtil.newArrayList();
+    for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
+      for (final PsiReference reference : ReferencesSearch.search(fieldDescriptor.getField())) {
         if (!(reference instanceof PsiReferenceExpression)) continue;
         PsiReferenceExpression ref = (PsiReferenceExpression)reference;
         // [Jeka] to avoid recursion in the field's accessors
-        if (findGet && isUsedInExistingAccessor(getterPrototypes[i], ref)) continue;
-        if (findSet && isUsedInExistingAccessor(setterPrototypes[i], ref)) continue;
+        if (findGet && isUsedInExistingAccessor(fieldDescriptor.getGetterPrototype(), ref)) continue;
+        if (findSet && isUsedInExistingAccessor(fieldDescriptor.getSetterPrototype(), ref)) continue;
         if (!findGet) {
           if (!PsiUtil.isAccessedForWriting(ref)) continue;
         }
-        if (!findSet || field.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!findSet || fieldDescriptor.getField().hasModifierProperty(PsiModifier.FINAL)) {
           if (!PsiUtil.isAccessedForReading(ref)) continue;
         }
         if (!myDescriptor.isToUseAccessorsWhenAccessible()) {
@@ -220,88 +221,98 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           if (qualifier != null) {
             accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
-          if (facade.getResolveHelper()
-            .isAccessible(field, newModifierList, ref, accessObjectClass, null)) {
+          final PsiResolveHelper helper = JavaPsiFacade.getInstance(((PsiReferenceExpression)reference).getProject()).getResolveHelper();
+          if (helper.isAccessible(fieldDescriptor.getField(), newModifierList, ref, accessObjectClass, null)) {
             continue;
           }
         }
-        UsageInfo usageInfo = new MyUsageInfo(ref, i);
+        EncapsulateFieldUsageInfo usageInfo = new EncapsulateFieldUsageInfo(ref, fieldDescriptor);
         array.add(usageInfo);
       }
     }
-    MyUsageInfo[] usageInfos = array.toArray(new MyUsageInfo[array.size()]);
+    EncapsulateFieldUsageInfo[] usageInfos = array.toArray(new EncapsulateFieldUsageInfo[array.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
   protected void refreshElements(PsiElement[] elements) {
-    LOG.assertTrue(elements.length == myFields.length);
+    LOG.assertTrue(elements.length == myFieldDescriptors.length);
 
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
 
       LOG.assertTrue(element instanceof PsiField);
 
-      myFields[idx] = (PsiField)element;
+      myFieldDescriptors[idx].refreshField((PsiField)element);
     }
 
-    myClass = myFields[0].getContainingClass();
+    myClass = myFieldDescriptors[0].getField().getContainingClass();
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    // change visibility of fields
-    if (myDescriptor.getFieldsVisibility() != null){
-      // "as is"
-      for (PsiField field : myFields) {
-        setNewFieldVisibility(field);
-      }
-    }
+    updateFieldVisibility();
+    generateAccessors();
+    processUsagesPerFile(usages);
+  }
 
+  private void updateFieldVisibility() {
+    if (myDescriptor.getFieldsVisibility() == null) return;
+
+    for (FieldDescriptor descriptor : myFieldDescriptors) {
+      setNewFieldVisibility(descriptor.getField());
+    }
+  }
+
+  private void generateAccessors() {
     // generate accessors
     myNameToGetter = new HashMap<String, PsiMethod>();
     myNameToSetter = new HashMap<String, PsiMethod>();
-    for(int i = 0; i < myFields.length; i++){
+
+    for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       final DocCommentPolicy<PsiDocComment> commentPolicy = new DocCommentPolicy<PsiDocComment>(myDescriptor.getJavadocPolicy());
-      PsiField field = myFields[i];
+
+      PsiField field = fieldDescriptor.getField();
       final PsiDocComment docComment = field.getDocComment();
-      if (myDescriptor.isToEncapsulateGet()){
-        PsiMethod[] prototypes = myDescriptor.getGetterPrototypes();
-        assert prototypes != null;
-        final PsiMethod getter = addOrChangeAccessor(prototypes[i], myNameToGetter);
+      if (myDescriptor.isToEncapsulateGet()) {
+        final PsiMethod prototype = fieldDescriptor.getGetterPrototype();
+        assert prototype != null;
+        final PsiMethod getter = addOrChangeAccessor(prototype, myNameToGetter);
         if (docComment != null) {
           final PsiDocComment getterJavadoc = (PsiDocComment)getter.addBefore(docComment, getter.getFirstChild());
           commentPolicy.processNewJavaDoc(getterJavadoc);
         }
       }
-      if (myDescriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL)){
-        PsiMethod[] prototypes = myDescriptor.getSetterPrototypes();
-        assert prototypes != null;
-        addOrChangeAccessor(prototypes[i], myNameToSetter);
+      if (myDescriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL)) {
+        PsiMethod prototype = fieldDescriptor.getSetterPrototype();
+        assert prototype != null;
+        addOrChangeAccessor(prototype, myNameToSetter);
       }
 
       if (docComment != null) {
         commentPolicy.processOldJavaDoc(docComment);
       }
     }
+  }
 
-    Map<PsiFile, List<MyUsageInfo>> usagesInFiles = new HashMap<PsiFile, List<MyUsageInfo>>();
+  private void processUsagesPerFile(UsageInfo[] usages) {
+    Map<PsiFile, List<EncapsulateFieldUsageInfo>> usagesInFiles = new HashMap<PsiFile, List<EncapsulateFieldUsageInfo>>();
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
       if (element == null) continue;
       final PsiFile file = element.getContainingFile();
-      List<MyUsageInfo> usagesInFile = usagesInFiles.get(file);
+      List<EncapsulateFieldUsageInfo> usagesInFile = usagesInFiles.get(file);
       if (usagesInFile == null) {
-        usagesInFile = new ArrayList<MyUsageInfo>();
+        usagesInFile = new ArrayList<EncapsulateFieldUsageInfo>();
         usagesInFiles.put(file, usagesInFile);
       }
-      usagesInFile.add(((MyUsageInfo)usage));
+      usagesInFile.add(((EncapsulateFieldUsageInfo)usage));
     }
 
-    for (List<MyUsageInfo> usageInfos : usagesInFiles.values()) {
+    for (List<EncapsulateFieldUsageInfo> usageInfos : usagesInFiles.values()) {
       //this is to avoid elements to become invalid as a result of processUsage
-      final MyUsageInfo[] infos = usageInfos.toArray(new MyUsageInfo[usageInfos.size()]);
+      final EncapsulateFieldUsageInfo[] infos = usageInfos.toArray(new EncapsulateFieldUsageInfo[usageInfos.size()]);
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(infos);
 
-      for (MyUsageInfo info : infos) {
+      for (EncapsulateFieldUsageInfo info : infos) {
         processUsage(info);
       }
     }
@@ -351,8 +362,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private void processUsage(MyUsageInfo usage) {
-    PsiField field = myFields[usage.fieldIndex];
+  private void processUsage(EncapsulateFieldUsageInfo usage) {
+    final FieldDescriptor fieldDescriptor = usage.getFieldDescriptor();
+    PsiField field = fieldDescriptor.getField();
     boolean processGet = myDescriptor.isToEncapsulateGet();
     boolean processSet = myDescriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
     if (!processGet && !processSet) return;
@@ -370,10 +382,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         if (opType == JavaTokenType.EQ) {
           {
             if (!processSet) return;
-            final int fieldIndex = usage.fieldIndex;
             final PsiExpression setterArgument = assignment.getRExpression();
 
-            PsiMethodCallExpression methodCall = createSetterCall(fieldIndex, setterArgument, expr);
+            PsiMethodCallExpression methodCall = createSetterCall(fieldDescriptor, setterArgument, expr);
 
             if (methodCall != null) {
               assignment.replace(methodCall);
@@ -399,8 +410,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
             PsiExpression getExpr = expr;
             if (processGet) {
-              final int fieldIndex = usage.fieldIndex;
-              final PsiMethodCallExpression getterCall = createGetterCall(fieldIndex, expr);
+              final PsiMethodCallExpression getterCall = createGetterCall(fieldDescriptor, expr);
               if (getterCall != null) {
                 getExpr = getterCall;
               }
@@ -414,7 +424,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
             PsiExpression setExpr;
             if (processSet) {
-              setExpr = createSetterCall(usage.fieldIndex, binExpr, expr);
+              setExpr = createSetterCall(fieldDescriptor, binExpr, expr);
             }
             else {
               text = "a = b";
@@ -441,8 +451,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
         PsiExpression getExpr = expr;
         if (processGet){
-          final int fieldIndex = usage.fieldIndex;
-          final PsiMethodCallExpression getterCall = createGetterCall(fieldIndex, expr);
+          final PsiMethodCallExpression getterCall = createGetterCall(fieldDescriptor, expr);
           if(getterCall != null) {
             getExpr = getterCall;
           }
@@ -461,8 +470,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
         PsiExpression setExpr;
         if (processSet){
-          final int fieldIndex = usage.fieldIndex;
-          setExpr = createSetterCall(fieldIndex, binExpr, expr);
+          setExpr = createSetterCall(fieldDescriptor, binExpr, expr);
         }
         else{
           text = "a = b";
@@ -476,7 +484,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       }
       else{
         if (!processGet) return;
-        PsiMethodCallExpression methodCall = createGetterCall(usage.fieldIndex, expr);
+        PsiMethodCallExpression methodCall = createGetterCall(fieldDescriptor, expr);
 
         if (methodCall != null) {
           expr.replace(methodCall);
@@ -488,10 +496,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiMethodCallExpression createSetterCall(final int fieldIndex, final PsiExpression setterArgument, PsiReferenceExpression expr) throws IncorrectOperationException {
-    String[] setterNames = myDescriptor.getSetterNames();
+  private PsiMethodCallExpression createSetterCall(FieldDescriptor fieldDescriptor, final PsiExpression setterArgument, PsiReferenceExpression expr) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    final String setterName = setterNames[fieldIndex];
+    final String setterName = fieldDescriptor.getSetterName();
     @NonNls String text = setterName + "(a)";
     PsiExpression qualifier = expr.getQualifierExpression();
     if (qualifier != null){
@@ -507,17 +514,16 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     final PsiMethod targetMethod = myNameToSetter.get(setterName);
     methodCall = checkMethodResolvable(methodCall, targetMethod, expr);
     if (methodCall == null) {
-      VisibilityUtil.escalateVisibility(myFields[fieldIndex], expr);
+      VisibilityUtil.escalateVisibility(fieldDescriptor.getField(), expr);
     }
     return methodCall;
   }
 
   @Nullable
-  private PsiMethodCallExpression createGetterCall(final int fieldIndex, PsiReferenceExpression expr)
+  private PsiMethodCallExpression createGetterCall(FieldDescriptor fieldDescriptor, PsiReferenceExpression expr)
           throws IncorrectOperationException {
-    String[] getterNames = myDescriptor.getGetterNames();
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    final String getterName = getterNames[fieldIndex];
+    final String getterName = fieldDescriptor.getGetterName();
     @NonNls String text = getterName + "()";
     PsiExpression qualifier = expr.getQualifierExpression();
     if (qualifier != null){
@@ -533,7 +539,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     final PsiMethod targetMethod = myNameToGetter.get(getterName);
     methodCall = checkMethodResolvable(methodCall, targetMethod, expr);
     if(methodCall == null) {
-      VisibilityUtil.escalateVisibility(myFields[fieldIndex], expr);
+      VisibilityUtil.escalateVisibility(fieldDescriptor.getField(), expr);
     }
     return methodCall;
   }
@@ -561,16 +567,5 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       }
     }
     return methodCall;
-  }
-
-
-
-  private static class MyUsageInfo extends UsageInfo {
-    public final int fieldIndex;
-
-    public MyUsageInfo(PsiJavaCodeReferenceElement ref, int fieldIndex) {
-      super(ref);
-      this.fieldIndex = fieldIndex;
-    }
   }
 }

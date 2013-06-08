@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,11 @@ import org.jetbrains.annotations.NotNull;
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   private final PsiField[] myFields;
 
-  public EncapsulateFieldsViewDescriptor(PsiField[] fields) {
-    myFields = fields;
+  public EncapsulateFieldsViewDescriptor(FieldDescriptor[] descriptors) {
+    myFields = new PsiField[descriptors.length];
+    for (int i = 0; i < descriptors.length; i++) {
+      myFields[i] = descriptors[i].getField();
+    }
   }
 
   public String getProcessedElementsHeader() {

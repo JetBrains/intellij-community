@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -32,10 +33,10 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -126,7 +127,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
       myFinalMarks[idx] = field.hasModifierProperty(PsiModifier.FINAL);
       myFieldNames[idx] =
               PsiFormatUtil.formatVariable(field,
-                                           PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
+                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER,
                                            PsiSubstitutor.EMPTY
               );
       myGetterNames[idx] = PropertyUtil.suggestGetterName(myProject, field);
@@ -138,57 +139,24 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     init();
   }
 
-  public PsiField[] getSelectedFields() {
+  public FieldDescriptor[] getSelectedFields() {
     int[] rows = getCheckedRows();
-    PsiField[] selectedFields = new PsiField[rows.length];
+    FieldDescriptor[] descriptors = new FieldDescriptor[rows.length];
+
     for (int idx = 0; idx < rows.length; idx++) {
-      selectedFields[idx] = myFields[rows[idx]];
+      descriptors[idx] = new FieldDescriptorImpl(
+        myFields[rows[idx]],
+        myGetterNames[rows[idx]],
+        mySetterNames[rows[idx]],
+        isToEncapsulateGet()
+          ? myGetterPrototypes[rows[idx]]
+          : null,
+        isToEncapsulateSet()
+          ? mySetterPrototypes[rows[idx]]
+          : null
+      );
     }
-    return selectedFields;
-  }
-
-  public String[] getGetterNames() {
-    int[] rows = getCheckedRows();
-    String[] selectedGetters = new String[rows.length];
-    for (int idx = 0; idx < rows.length; idx++) {
-      selectedGetters[idx] = myGetterNames[rows[idx]];
-    }
-    return selectedGetters;
-  }
-
-  public String[] getSetterNames() {
-    int[] rows = getCheckedRows();
-    String[] selectedSetters = new String[rows.length];
-    for (int idx = 0; idx < rows.length; idx++) {
-      selectedSetters[idx] = mySetterNames[rows[idx]];
-    }
-    return selectedSetters;
-  }
-
-  public PsiMethod[] getGetterPrototypes() {
-    if (isToEncapsulateGet()) {
-      int[] rows = getCheckedRows();
-      PsiMethod[] selectedGetters = new PsiMethod[rows.length];
-      for (int idx = 0; idx < rows.length; idx++) {
-        selectedGetters[idx] = myGetterPrototypes[rows[idx]];
-      }
-      return selectedGetters;
-    } else {
-      return null;
-    }
-  }
-
-  public PsiMethod[] getSetterPrototypes() {
-    if (isToEncapsulateSet()) {
-      int[] rows = getCheckedRows();
-      PsiMethod[] selectedSetters = new PsiMethod[rows.length];
-      for (int idx = 0; idx < rows.length; idx++) {
-        selectedSetters[idx] = mySetterPrototypes[rows[idx]];
-      }
-      return selectedSetters;
-    } else {
-      return null;
-    }
+    return descriptors;
   }
 
   public boolean isToEncapsulateGet() {
@@ -376,7 +344,7 @@ public String getAccessorsVisibility() {
 
   private JComponent createTable() {
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     myTable.setSurrendersFocusOnKeystroke(true);
     MyTableRenderer renderer = new MyTableRenderer();
     TableColumnModel columnModel = myTable.getColumnModel();
@@ -508,15 +476,16 @@ public String getAccessorsVisibility() {
     return getCheckedRows().length > 0;
   }
 
-  private PsiMethod generateMethodPrototype(PsiField field, String methodName, boolean isGetter) {
+  private static PsiMethod generateMethodPrototype(PsiField field, String methodName, boolean isGetter) {
     PsiMethod prototype = isGetter
                           ? GenerateMembersUtil.generateGetterPrototype(field)
                           : GenerateMembersUtil.generateSetterPrototype(field);
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
       PsiIdentifier identifier = factory.createIdentifier(methodName);
-      prototype.getNameIdentifier().replace(identifier);
-      //prototype.getModifierList().setModifierProperty(getAccessorsVisibility(), true);
+      final PsiIdentifier originalIdentifier = prototype.getNameIdentifier();
+      assert originalIdentifier != null;
+      originalIdentifier.replace(identifier);
       return prototype;
     } catch (IncorrectOperationException e) {
       return null;
@@ -639,8 +608,8 @@ public String getAccessorsVisibility() {
         case FIELD_COLUMN:
           {
             Icon icon = field.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-            MyTableRenderer.this.setIcon(icon);
-            MyTableRenderer.this.setDisabledIcon(icon);
+            setIcon(icon);
+            setDisabledIcon(icon);
             configureColors(isSelected, table, hasFocus, row, column);
             break;
           }
@@ -670,21 +639,21 @@ public String getAccessorsVisibility() {
                 }
               }
             } else {
-              MyTableRenderer.this.setForeground(JBColor.RED);
+              setForeground(JBColor.RED);
             }
 
             RowIcon icon = new RowIcon(2);
             icon.setIcon(methodIcon, 0);
             icon.setIcon(overrideIcon, 1);
-            MyTableRenderer.this.setIcon(icon);
-            MyTableRenderer.this.setDisabledIcon(icon);
+            setIcon(icon);
+            setDisabledIcon(icon);
             break;
           }
 
         default:
           {
-            MyTableRenderer.this.setIcon(null);
-            MyTableRenderer.this.setDisabledIcon(null);
+            setIcon(null);
+            setDisabledIcon(null);
           }
       }
       boolean enabled = myCheckedMarks[row];
