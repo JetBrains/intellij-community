@@ -87,7 +87,6 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
         super.processMouseEvent(e);
       }
     };
-    myRecentTasksList.setEmptyText(ExternalSystemBundle.message("tasks.recent.empty.text"));
     myRecentTasksModel.setTasks(settings.getRecentTasks());
 
     myAllTasksModel = new ExternalSystemTasksTreeModel(externalSystemId);
@@ -108,23 +107,22 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     setToolbar(toolbar.getComponent());
     
     JPanel content = new JPanel(new GridBagLayout());
+    content.setOpaque(true);
+    content.setBackground(UIUtil.getListBackground());
     JComponent recentTasksWithTitle = wrap(myRecentTasksList, ExternalSystemBundle.message("tasks.recent.title"));
     content.add(recentTasksWithTitle, ExternalSystemUiUtil.getFillLineConstraints(0));
     JBScrollPane scrollPane = new JBScrollPane(myAllTasksTree);
     scrollPane.setBorder(null);
     JComponent allTasksWithTitle = wrap(scrollPane, ExternalSystemBundle.message("tasks.all.title"));
-    content.add(allTasksWithTitle, ExternalSystemUiUtil.getFillLineConstraints(0).weighty(1));
+    content.add(allTasksWithTitle, ExternalSystemUiUtil.getFillLineConstraints(0).weighty(1).fillCell());
     setContent(content);
-    
-    setOpaque(true);
-    setBackground(UIUtil.getListBackground());
   }
 
   private static JComponent wrap(@NotNull JComponent content, @NotNull String title) {
-    JPanel result = new JPanel(new BorderLayout());
+    JPanel result = new JPanel(new GridBagLayout());
     result.setOpaque(false);
     result.setBorder(IdeBorderFactory.createTitledBorder(title));
-    result.add(content, BorderLayout.CENTER);
+    result.add(content, ExternalSystemUiUtil.getFillLineConstraints(0).weighty(1).fillCell());
     return result;
   }
 
