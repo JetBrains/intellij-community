@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem;
 
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +41,15 @@ public interface ExternalSystemAutoImportAware {
    * <p/>
    * <b>Note:</b> there is no need to handle here {@link ExternalProjectSettings#getExternalProjectPath() external project config files}
    * known to the ide as that functionality is built-in. Only auxiliary files should be processed.
+   * <p/>
+   * <b>Note2:</b> this method is assume to be called rather often, that's why it's very important to return from it quickly.
+   * Caching and simple check algorithms are welcomed.
    * 
    * @param changedFileOrDirPath  changed file/dir path
+   * @param project               current project
    * @return                      <code>null</code> if target change should not trigger external project refresh;
    *                              path to config file of an external project which should be refreshed
    */
   @Nullable
-  String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath);
+  String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project);
 }

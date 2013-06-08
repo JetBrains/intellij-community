@@ -145,9 +145,9 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
     return new ExternalSystemAutoImportAware() {
       @Nullable
       @Override
-      public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath) {
-        String projectPath = aware1.getAffectedExternalProjectPath(changedFileOrDirPath);
-        return projectPath == null ? aware2.getAffectedExternalProjectPath(changedFileOrDirPath) : projectPath;
+      public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
+        String projectPath = aware1.getAffectedExternalProjectPath(changedFileOrDirPath, project);
+        return projectPath == null ? aware2.getAffectedExternalProjectPath(changedFileOrDirPath, project) : projectPath;
       }
     };
   }
@@ -157,7 +157,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
     return new ExternalSystemAutoImportAware() {
       @Nullable
       @Override
-      public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath) {
+      public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
         return systemSettings.getLinkedProjectSettings(changedFileOrDirPath) == null ? null : changedFileOrDirPath;
       }
     };
@@ -178,7 +178,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
 
     String path = ExternalSystemApiUtil.getLocalFileSystemPath(file);
     for (MyEntry entry : myAutoImportAware) {
-      if (entry.aware.getAffectedExternalProjectPath(path) != null) {
+      if (entry.aware.getAffectedExternalProjectPath(path, myProject) != null) {
         // Document save triggers VFS event but FileDocumentManager might be registered after the current listener, that's why
         // call to 'saveDocument()' might not produce the desired effect. That's why we reschedule document save if necessary.
         scheduleDocumentSave(document);
@@ -248,7 +248,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
     for (VFileEvent event : events) {
       String changedPath = event.getPath();
       for (MyEntry entry : myAutoImportAware) {
-        String projectPath = entry.aware.getAffectedExternalProjectPath(changedPath);
+        String projectPath = entry.aware.getAffectedExternalProjectPath(changedPath, myProject);
         if (projectPath == null) {
           continue;
         }
