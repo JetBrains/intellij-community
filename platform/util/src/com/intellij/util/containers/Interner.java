@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,27 @@
  */
 package com.intellij.util.containers;
 
-/**
- * @author max
- */
-public class StringInterner extends Interner<String> {
+import org.jetbrains.annotations.NotNull;
+
+public class Interner<T> {
+
+  private final OpenTHashSet<T> mySet = new OpenTHashSet<T>();
+
+  @NotNull
+  public T intern(@NotNull T name) {
+    T interned = mySet.get(name);
+    if (interned != null) {
+      return interned;
+    }
+
+    boolean added = mySet.add(name);
+    assert added;
+
+    return name;
+  }
+
+  public void clear() {
+    mySet.clear();
+  }
 
 }
