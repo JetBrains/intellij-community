@@ -24,14 +24,14 @@ public class TimestampCommitParents implements CommitParents {
 
   @NotNull
   @Override
-  public Hash getCommitHash() {
-    return commitParents.getCommitHash();
+  public Hash getHash() {
+    return commitParents.getHash();
   }
 
   @NotNull
   @Override
-  public List<Hash> getParentHashes() {
-    return commitParents.getParentHashes();
+  public List<Hash> getParents() {
+    return commitParents.getParents();
   }
 
 }

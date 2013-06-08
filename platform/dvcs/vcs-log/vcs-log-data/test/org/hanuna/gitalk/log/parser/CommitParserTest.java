@@ -12,9 +12,9 @@ import static junit.framework.Assert.assertEquals;
 public class CommitParserTest {
   private String toStr(CommitParents commitParentHashes) {
     StringBuilder s = new StringBuilder();
-    s.append(commitParentHashes.getCommitHash().toStrHash()).append("|-");
-    for (int i = 0; i < commitParentHashes.getParentHashes().size(); i++) {
-      Hash hash = commitParentHashes.getParentHashes().get(i);
+    s.append(commitParentHashes.getHash().toStrHash()).append("|-");
+    for (int i = 0; i < commitParentHashes.getParents().size(); i++) {
+      Hash hash = commitParentHashes.getParents().get(i);
       if (i != 0) {
         s.append(" ");
       }

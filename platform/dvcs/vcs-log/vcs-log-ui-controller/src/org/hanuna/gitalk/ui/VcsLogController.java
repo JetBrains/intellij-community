@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author erokhins
@@ -40,7 +40,7 @@ public interface VcsLogController {
 
   public void jumpToCommit(Hash commitHash);
 
-  List<Ref> getRefs();
+  Collection<Ref> getRefs();
 
   @NotNull
   DragDropListener getDragDropListener();

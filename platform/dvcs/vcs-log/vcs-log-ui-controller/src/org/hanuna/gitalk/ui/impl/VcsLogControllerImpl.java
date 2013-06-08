@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.ui.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,10 +18,8 @@ import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
-import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
-import org.hanuna.gitalk.data.impl.CacheCommitDataGetter;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
 import org.hanuna.gitalk.data.impl.FakeCommitsInfo;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
@@ -35,9 +32,9 @@ import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
+import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
-import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +105,6 @@ public class VcsLogControllerImpl implements VcsLogController {
     }
   };
 
-  private boolean myCommitDetailsPreloaded;
   private final CacheGet<Hash, CommitData> commitDataCache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
     @NotNull
     @Override
@@ -137,18 +133,6 @@ public class VcsLogControllerImpl implements VcsLogController {
     dataPack = dataLoader.getDataPack();
     graphTableModel = new GraphTableModel(dataPack);
     dataPackUtils = new DataPackUtils(dataPack);
-
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          preloadCommitDetails();
-        }
-        catch (VcsException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-
   }
 
   public void init() {
@@ -157,7 +141,7 @@ public class VcsLogControllerImpl implements VcsLogController {
         dataLoader = new DataLoaderImpl(VcsLogControllerImpl.this.myProject, commitDataCache, myLogProvider);
 
         try {
-          dataLoader.readNextPart(indicator, rebaseDelegate.getFakeCommitsInfo(), myRoot);
+          dataLoader.readNextPart(indicator, myRoot);
           dataInit();
         }
         catch (VcsException e) {
@@ -186,18 +170,6 @@ public class VcsLogControllerImpl implements VcsLogController {
     LOG.warn(e);
     VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
   }
-
-  private void preloadCommitDetails() throws VcsException {
-    if (myCommitDetailsPreloaded) {
-      return;
-    }
-    CommitDataGetter commitDataGetter = dataPack.getCommitDataGetter();
-    if (commitDataGetter instanceof CacheCommitDataGetter) {
-      ((CacheCommitDataGetter)commitDataGetter).initiallyPreloadCommitDetails();
-    }
-    myCommitDetailsPreloaded = true;
-  }
-
 
   // TODO is null before initial load
   @Override
@@ -268,7 +240,7 @@ public class VcsLogControllerImpl implements VcsLogController {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          dataLoader.readNextPart(indicator, rebaseDelegate.getFakeCommitsInfo(), myRoot);
+          dataLoader.readNextPart(indicator, myRoot);
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
             public void run() {
@@ -337,7 +309,7 @@ public class VcsLogControllerImpl implements VcsLogController {
   }
 
   @Override
-  public List<Ref> getRefs() {
+  public Collection<Ref> getRefs() {
     return dataPack == null ? Collections.<Ref>emptyList() : dataPack.getRefsModel().getAllRefs();
   }
 
@@ -450,7 +422,7 @@ public class VcsLogControllerImpl implements VcsLogController {
       if (resultRef == null) {
         this.subjectRef = subjectRef;
       }
-      this.resultRef = new Ref(fakeBranch.get(0).getCommitHash(), subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
+      this.resultRef = new Ref(fakeBranch.get(0).getHash(), subjectRef.getName(), Ref.RefType.BRANCH_UNDER_INTERACTIVE_REBASE);
     }
 
     @Override
@@ -461,7 +433,7 @@ public class VcsLogControllerImpl implements VcsLogController {
 
       this.fakeBranch = createFakeCommits(base, nodesToRebase);
 
-      selected.add(fakeBranch.get(0).getCommitHash());
+      selected.add(fakeBranch.get(0).getHash());
 
       setResultRef(subjectRef);
     }
@@ -491,7 +463,7 @@ public class VcsLogControllerImpl implements VcsLogController {
 
       if (!fakeBranch.isEmpty()) {
         FakeCommitParents lowestFakeCommit = fakeBranch.get(fakeBranch.size() - 1);
-        Node lowestFakeNode = du.getNodeByHash(lowestFakeCommit.getCommitHash());
+        Node lowestFakeNode = du.getNodeByHash(lowestFakeCommit.getHash());
 
         if (lowestFakeNode == branchBase || du.isAncestorOf(lowestFakeNode, branchBase)) {
           branchBase = getParent(lowestFakeNode);
@@ -563,7 +535,7 @@ public class VcsLogControllerImpl implements VcsLogController {
       Hash parent = base.getCommitHash();
       for (Node node : reversed) {
         FakeCommitParents fakeCommit = createFake(node.getCommitHash(), parent);
-        parent = fakeCommit.getCommitHash();
+        parent = fakeCommit.getHash();
         result.add(fakeCommit);
       }
       Collections.reverse(result);
@@ -585,7 +557,7 @@ public class VcsLogControllerImpl implements VcsLogController {
       List<RebaseCommand> result = new ArrayList<RebaseCommand>();
       int fixupPos = 0;
       for (FakeCommitParents fakeCommit : fakeBranch) {
-        Hash hash = fakeCommit.getCommitHash();
+        Hash hash = fakeCommit.getHash();
         String newMessage = reworded.get(hash);
         RebaseCommand command;
         if (fixedUp.contains(hash)) {

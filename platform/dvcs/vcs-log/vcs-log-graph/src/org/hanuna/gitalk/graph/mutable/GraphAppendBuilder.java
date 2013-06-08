@@ -88,14 +88,14 @@ class GraphAppendBuilder {
     return underdoneNodes;
   }
 
-  private void simpleAppend(@NotNull List<CommitParents> commitParentses,
+  private void simpleAppend(@NotNull List<? extends CommitParents> commitParentses,
                             @NotNull MutableNodeRow nextRow,
                             @NotNull Map<Hash, MutableNode> underdoneNodes) {
     int startIndex = nextRow.getRowIndex();
 
     Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
-      commitLogIndexes.put(commitParentses.get(i).getCommitHash(), i + startIndex);
+      commitLogIndexes.put(commitParentses.get(i).getHash(), i + startIndex);
     }
 
     GraphBuilder builder = new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow,
@@ -103,7 +103,7 @@ class GraphAppendBuilder {
     builder.runBuild(commitParentses);
   }
 
-  public void appendToGraph(@NotNull List<CommitParents> commitParentses) {
+  public void appendToGraph(@NotNull List<? extends CommitParents> commitParentses) {
     if (commitParentses.size() == 0) {
       throw new IllegalArgumentException("Empty list commitParentses");
     }
@@ -112,7 +112,7 @@ class GraphAppendBuilder {
       simpleAppend(commitParentses, new MutableNodeRow(graph, startIndex), new HashMap<Hash, MutableNode>());
     }
     else {
-      Map<Hash, MutableNode> underdoneNodes = fixUnderdoneNodes(commitParentses.get(0).getCommitHash());
+      Map<Hash, MutableNode> underdoneNodes = fixUnderdoneNodes(commitParentses.get(0).getHash());
       MutableNodeRow lastRow = getLastRowInGraph();
       graph.getAllRows().remove(graph.getAllRows().size() - 1);
       simpleAppend(commitParentses, lastRow, underdoneNodes);

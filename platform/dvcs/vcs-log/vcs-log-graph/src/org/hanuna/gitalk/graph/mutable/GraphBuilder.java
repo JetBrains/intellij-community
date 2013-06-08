@@ -18,16 +18,17 @@ import static org.hanuna.gitalk.graph.elements.Node.NodeType.*;
  */
 public class GraphBuilder {
 
-  public static MutableGraph build(@NotNull List<CommitParents> commitParentses, Collection<Ref> allRefs) {
+  public static MutableGraph build(@NotNull List<? extends CommitParents> commitParentses, Collection<Ref> allRefs) {
     Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
-      commitLogIndexes.put(commitParentses.get(i).getCommitHash(), i);
+      commitLogIndexes.put(commitParentses.get(i).getHash(), i);
     }
     GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, commitLogIndexes, allRefs);
     return builder.runBuild(commitParentses);
   }
 
-  public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<CommitParents> commitParentses, Collection<Ref> allRefs) {
+  public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<? extends CommitParents> commitParentses,
+                                       @NotNull Collection<Ref> allRefs) {
     new GraphAppendBuilder(graph, allRefs).appendToGraph(commitParentses);
   }
 
@@ -126,9 +127,9 @@ public class GraphBuilder {
   }
 
   private void append(@NotNull CommitParents commitParents) {
-    MutableNode node = addCurrentCommitAndFinishRow(commitParents.getCommitHash());
+    MutableNode node = addCurrentCommitAndFinishRow(commitParents.getHash());
 
-    List<Hash> parents = commitParents.getParentHashes();
+    List<Hash> parents = commitParents.getParents();
     if (parents.size() == 1) {
       addParent(node, parents.get(0), node.getBranch());
     }
@@ -155,7 +156,7 @@ public class GraphBuilder {
 
   // local package
   @NotNull
-  MutableGraph runBuild(@NotNull List<CommitParents> commitParentses) {
+  MutableGraph runBuild(@NotNull List<? extends CommitParents> commitParentses) {
     if (commitParentses.size() == 0) {
       throw new IllegalArgumentException("Empty list commitParentses");
     }

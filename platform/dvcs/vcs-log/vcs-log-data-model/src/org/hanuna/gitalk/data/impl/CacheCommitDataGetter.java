@@ -106,15 +106,4 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     }
   }
 
-
-  public void initiallyPreloadCommitDetails() throws VcsException {
-    List<Node> nodes = new ArrayList<Node>();
-    for (int i = 0; i < VcsLogProvider.COMMIT_BLOCK_SIZE; i++) {
-      Node commitNode = getCommitNodeInRow(i);
-      if (commitNode != null) {
-        nodes.add(commitNode);
-      }
-    }
-    preLoadCommitData(nodes);
-  }
 }

@@ -19,9 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
@@ -30,7 +28,6 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.log.commit.parents.SimpleCommitParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -55,20 +52,14 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<CommitParents> readNextBlock(@NotNull VirtualFile root) throws VcsException {
+  public List<? extends VcsCommit> readNextBlock(@NotNull VirtualFile root) throws VcsException {
     // TODO either don't query details here, or save them right away
     MyTimer timer = new MyTimer("Git Log ALL");
     List<GitCommit> history = GitHistoryUtils.history(myProject, root, "HEAD", "--branches", "--remotes", "--tags", "--date-order",
                                                       "--encoding=UTF-8", "--full-history", "--sparse",
                                                       "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE);
-    List<CommitParents> map = ContainerUtil.map(history, new Function<GitCommit, CommitParents>() {
-      @Override
-      public CommitParents fun(GitCommit gitCommit) {
-        return new SimpleCommitParents(Hash.build(gitCommit.getHash().toString()), gitCommit.getParents());
-      }
-    });
     timer.print();
-    return map;
+    return history;
   }
 
   @NotNull
@@ -88,7 +79,7 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public Collection<? extends Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException {
+  public Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);

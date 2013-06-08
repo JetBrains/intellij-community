@@ -20,7 +20,7 @@ public interface VcsLogProvider {
    * @return empty list, if all commits was readied
    */
   @NotNull
-  List<CommitParents> readNextBlock(@NotNull VirtualFile root) throws VcsException;
+  List<? extends VcsCommit> readNextBlock(@NotNull VirtualFile root) throws VcsException;
 
   /**
    * Read details of the given commits from the VCS
@@ -32,5 +32,5 @@ public interface VcsLogProvider {
   @NotNull
   List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
-  Collection<? extends Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException;
+  Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 }

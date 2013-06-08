@@ -21,22 +21,24 @@ import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
  * @author erokhins
  */
 public class DataPackImpl implements DataPack {
-  public static DataPackImpl buildDataPack(@NotNull List<CommitParents> commitParentsList,
-                                           @NotNull List<Ref> allRefs,
-                                           @NotNull ProgressIndicator indicator,
-                                           Project project,
-                                           CacheGet<Hash, CommitData> commitDataCache,
-                                           @NotNull VcsLogProvider logProvider, VirtualFile root) {
+  public static DataPackImpl buildDataPack(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
+                                           @NotNull ProgressIndicator indicator, Project project,
+                                           CacheGet<Hash, CommitData> commitDataCache, @NotNull VcsLogProvider logProvider,
+                                           VirtualFile root) {
+    for (VcsCommit commit : commits) {
+      commitDataCache.put(commit.getHash(), new CommitData(commit));
+    }
     indicator.setText("Build graph");
 
     MyTimer timer = new MyTimer("graph build");
-    MutableGraph graph = GraphBuilder.build(commitParentsList, allRefs);
+    MutableGraph graph = GraphBuilder.build(commits, allRefs);
     timer.print();
 
     timer.clear("graphModel build");
@@ -84,7 +86,7 @@ public class DataPackImpl implements DataPack {
     commitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache, logProvider, root);
   }
 
-  public void appendCommits(@NotNull List<CommitParents> commitParentsList) {
+  public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
     MyTimer timer = new MyTimer("append commits");
     graphModel.appendCommitsToGraph(commitParentsList);
     timer.print();

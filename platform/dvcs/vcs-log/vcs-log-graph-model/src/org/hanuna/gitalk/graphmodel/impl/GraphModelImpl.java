@@ -15,6 +15,7 @@ import org.hanuna.gitalk.graphmodel.fragment.FragmentManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ import java.util.Set;
  */
 public class GraphModelImpl implements GraphModel {
   private final MutableGraph graph;
-  private final List<Ref> myRefs;
+  private final Collection<Ref> myRefs;
   private final FragmentManagerImpl fragmentManager;
   private final BranchVisibleNodes visibleNodes;
   private final List<Consumer<UpdateRequest>> listeners = new ArrayList<Consumer<UpdateRequest>>();
@@ -37,7 +38,7 @@ public class GraphModelImpl implements GraphModel {
     }
   };
 
-  public GraphModelImpl(MutableGraph graph, List<Ref> allRefs) {
+  public GraphModelImpl(MutableGraph graph, Collection<Ref> allRefs) {
     this.graph = graph;
     myRefs = allRefs;
     this.fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {
@@ -89,7 +90,7 @@ public class GraphModelImpl implements GraphModel {
   }
 
   @Override
-  public void appendCommitsToGraph(@NotNull List<CommitParents> commitParentses) {
+  public void appendCommitsToGraph(@NotNull List<? extends CommitParents> commitParentses) {
     int oldSize = graph.getNodeRows().size();
     GraphBuilder.addCommitsToGraph(graph, commitParentses, myRefs);
     visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));

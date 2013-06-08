@@ -47,13 +47,13 @@ public class FakeCommitParents implements CommitParents {
 
   @NotNull
   @Override
-  public Hash getCommitHash() {
+  public Hash getHash() {
     return fakeHash;
   }
 
   @NotNull
   @Override
-  public List<Hash> getParentHashes() {
+  public List<Hash> getParents() {
     return Collections.singletonList(parent);
   }
 

@@ -14,7 +14,7 @@ import java.io.IOException;
  */
 public interface DataLoader {
 
-  void readNextPart(@NotNull ProgressIndicator indicator, @NotNull FakeCommitsInfo fakeCommits, VirtualFile root)
+  void readNextPart(@NotNull ProgressIndicator indicator, VirtualFile root)
     throws IOException, VcsException;
 
   @NotNull

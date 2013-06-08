@@ -15,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class BranchesPanel extends JPanel {
   }
 
   private List<Ref> getRefsToDisplayOnPanel() {
-    List<Ref> allRefs = myUiController.getRefs();
+    Collection<Ref> allRefs = myUiController.getRefs();
     final List<Ref> localRefs = ContainerUtil.filter(allRefs, new Condition<Ref>() {
       @Override
       public boolean value(Ref ref) {

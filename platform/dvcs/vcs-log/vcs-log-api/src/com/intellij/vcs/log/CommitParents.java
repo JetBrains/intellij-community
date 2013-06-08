@@ -10,9 +10,9 @@ import java.util.List;
 public interface CommitParents {
 
   @NotNull
-  public Hash getCommitHash();
+  Hash getHash();
 
   @NotNull
-  public List<Hash> getParentHashes();
+  List<Hash> getParents();
 
 }

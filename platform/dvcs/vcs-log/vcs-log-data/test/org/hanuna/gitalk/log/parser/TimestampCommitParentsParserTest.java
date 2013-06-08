@@ -14,9 +14,9 @@ public class TimestampCommitParentsParserTest {
   private String toStr(TimestampCommitParents commitParents) {
     StringBuilder s = new StringBuilder();
     s.append(commitParents.getTimestamp()).append("|-");
-    s.append(commitParents.getCommitHash().toStrHash()).append("|-");
-    for (int i = 0; i < commitParents.getParentHashes().size(); i++) {
-      Hash hash = commitParents.getParentHashes().get(i);
+    s.append(commitParents.getHash().toStrHash()).append("|-");
+    for (int i = 0; i < commitParents.getParents().size(); i++) {
+      Hash hash = commitParents.getParents().get(i);
       if (i != 0) {
         s.append(" ");
       }

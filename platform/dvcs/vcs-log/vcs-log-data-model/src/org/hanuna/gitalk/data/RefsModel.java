@@ -10,10 +10,10 @@ import java.util.*;
  * @author erokhins
  */
 public class RefsModel {
-  private final List<Ref> allRefs;
+  private final Collection<Ref> allRefs;
   private final Set<Hash> trackedCommitHashes = new HashSet<Hash>();
 
-  public RefsModel(List<Ref> allRefs) {
+  public RefsModel(Collection<Ref> allRefs) {
     this.allRefs = allRefs;
     computeTrackedCommitHash();
   }
@@ -52,8 +52,8 @@ public class RefsModel {
   }
 
   @NotNull
-  public List<Ref> getAllRefs() {
-    return Collections.unmodifiableList(allRefs);
+  public Collection<Ref> getAllRefs() {
+    return Collections.unmodifiableCollection(allRefs);
   }
 
 
