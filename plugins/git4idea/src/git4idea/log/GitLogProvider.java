@@ -27,7 +27,6 @@ import git4idea.GitRemoteBranch;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.hanuna.gitalk.common.MyTimer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -53,23 +52,15 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsCommit> readNextBlock(@NotNull VirtualFile root) throws VcsException {
-    // TODO either don't query details here, or save them right away
-    MyTimer timer = new MyTimer("Git Log ALL");
-    List<GitCommit> history = GitHistoryUtils.history(myProject, root, "HEAD", "--branches", "--remotes", "--tags", "--date-order",
+    return GitHistoryUtils.history(myProject, root, "HEAD", "--branches", "--remotes", "--tags", "--date-order",
                                                       "--encoding=UTF-8", "--full-history", "--sparse",
                                                       "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE);
-    timer.print();
-    return history;
   }
 
   @NotNull
   @Override
   public List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    List<GitCommit> gitCommits;
-    MyTimer timer = new MyTimer();
-    timer.clear();
-    gitCommits = GitHistoryUtils.commitsDetails(myProject, root, hashes);
-    System.out.println("Details loading took " + timer.get() + "ms for " + hashes.size() + " hashes");
+    List<GitCommit> gitCommits = GitHistoryUtils.commitsDetails(myProject, root, hashes);
 
     List<CommitData> result = new SmartList<CommitData>();
     for (GitCommit gitCommit : gitCommits) {
