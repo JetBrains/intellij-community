@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.MultiMap;
+import com.intellij.util.containers.MultiMap;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
@@ -28,7 +28,7 @@ public class GraphFragmentController implements FragmentManager.GraphPreDecorato
   @Override
   @Nullable
   public Edge getHideFragmentUpEdge(@NotNull Node node) {
-    List<Edge> edges = downNodeEdges.get(node);
+    Collection<Edge> edges = downNodeEdges.get(node);
     for (Edge edge : edges) {
       if (isVisibleNode(edge.getUpNode())) {
         return edge;
@@ -40,7 +40,7 @@ public class GraphFragmentController implements FragmentManager.GraphPreDecorato
   @Override
   @Nullable
   public Edge getHideFragmentDownEdge(@NotNull Node node) {
-    List<Edge> edges = upNodeEdges.get(node);
+    Collection<Edge> edges = upNodeEdges.get(node);
     for (Edge edge : edges) {
       if (isVisibleNode(edge.getDownNode())) {
         return edge;
@@ -66,8 +66,8 @@ public class GraphFragmentController implements FragmentManager.GraphPreDecorato
 
   public void show(@NotNull GraphFragment fragment) {
     Edge hideFragmentEdge = getHideFragmentEdge(fragment);
-    upNodeEdges.remove(hideFragmentEdge.getUpNode(), hideFragmentEdge);
-    downNodeEdges.remove(hideFragmentEdge.getDownNode(), hideFragmentEdge);
+    upNodeEdges.removeValue(hideFragmentEdge.getUpNode(), hideFragmentEdge);
+    downNodeEdges.removeValue(hideFragmentEdge.getDownNode(), hideFragmentEdge);
 
     GraphFragment hideFragment = hideFragments.remove(hideFragmentEdge);
     hideNodes.removeAll(hideFragment.getIntermediateNodes());
@@ -75,8 +75,8 @@ public class GraphFragmentController implements FragmentManager.GraphPreDecorato
 
   public void hide(@NotNull GraphFragment fragment) {
     Edge edge = new HideFragmentEdge(fragment.getUpNode(), fragment.getDownNode());
-    upNodeEdges.put(edge.getUpNode(), edge);
-    downNodeEdges.put(edge.getDownNode(), edge);
+    upNodeEdges.putValue(edge.getUpNode(), edge);
+    downNodeEdges.putValue(edge.getDownNode(), edge);
     hideNodes.addAll(fragment.getIntermediateNodes());
     hideFragments.put(edge, fragment);
   }
