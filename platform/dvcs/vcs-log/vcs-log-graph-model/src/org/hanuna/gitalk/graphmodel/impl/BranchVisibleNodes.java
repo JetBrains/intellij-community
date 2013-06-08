@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
-import org.hanuna.gitalk.common.Function;
+import com.intellij.util.Function;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
@@ -27,10 +27,10 @@ public class BranchVisibleNodes {
     Set<Node> visibleNodes = new HashSet<Node>();
     for (MutableNodeRow row : graph.getAllRows()) {
       for (MutableNode node : row.getInnerNodeList()) {
-        if (isStartedNode.get(node)) {
+        if (isStartedNode.fun(node)) {
           visibleNodes.add(node);
         }
-        if (isStartedNode.get(node) || visibleNodes.contains(node)) {
+        if (isStartedNode.fun(node) || visibleNodes.contains(node)) {
           for (Edge edge : node.getInnerDownEdges()) {
             visibleNodes.add(edge.getDownNode());
           }

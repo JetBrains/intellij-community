@@ -1,9 +1,8 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Function;
+import com.intellij.util.Function;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
-import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.graphmodel.fragment.elements.SimpleGraphFragment;
@@ -24,7 +23,7 @@ public class FragmentGenerator {
   private Function<Node, Boolean> isUnhiddenNodes = new Function<Node, Boolean>() {
     @NotNull
     @Override
-    public Boolean get(@NotNull Node key) {
+    public Boolean fun(@NotNull Node key) {
       return false;
     }
   };
@@ -130,7 +129,7 @@ public class FragmentGenerator {
     }
     Set<Node> intermediateNodes = new HashSet<Node>(fragment.getIntermediateNodes());
     Node endNode = fragment.getDownNode();
-    while ((fragment = shortFragmentGenerator.getDownShortFragment(endNode)) != null && !isUnhiddenNodes.get(endNode)) {
+    while ((fragment = shortFragmentGenerator.getDownShortFragment(endNode)) != null && !isUnhiddenNodes.fun(endNode)) {
       intermediateNodes.addAll(fragment.getIntermediateNodes());
       intermediateNodes.add(endNode);
       endNode = fragment.getDownNode();
@@ -152,7 +151,7 @@ public class FragmentGenerator {
     }
     Set<Node> intermediateNodes = new HashSet<Node>(fragment.getIntermediateNodes());
     Node endNode = fragment.getDownNode();
-    while ((fragment = shortFragmentGenerator.getUpShortFragment(endNode)) != null && !isUnhiddenNodes.get(endNode)) {
+    while ((fragment = shortFragmentGenerator.getUpShortFragment(endNode)) != null && !isUnhiddenNodes.fun(endNode)) {
       intermediateNodes.addAll(fragment.getIntermediateNodes());
       intermediateNodes.add(endNode);
       endNode = fragment.getUpNode();

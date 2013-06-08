@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Function;
+import com.intellij.util.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;

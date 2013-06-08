@@ -1,9 +1,9 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -32,7 +32,7 @@ public class GraphModelImpl implements GraphModel {
   private Function<Node, Boolean> isStartedBranchVisibilityNode = new Function<Node, Boolean>() {
     @NotNull
     @Override
-    public Boolean get(@NotNull Node key) {
+    public Boolean fun(@NotNull Node key) {
       return true;
     }
   };
@@ -57,7 +57,7 @@ public class GraphModelImpl implements GraphModel {
     graph.setGraphDecorator(new GraphDecoratorImpl(fragmentManager.getGraphPreDecorator(), new Function<Node, Boolean>() {
       @NotNull
       @Override
-      public Boolean get(@NotNull Node key) {
+      public Boolean fun(@NotNull Node key) {
         return visibleNodes.isVisibleNode(key);
       }
     }));

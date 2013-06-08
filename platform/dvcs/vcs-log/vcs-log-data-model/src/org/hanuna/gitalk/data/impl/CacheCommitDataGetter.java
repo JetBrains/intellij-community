@@ -56,13 +56,13 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     if (!cache.containsKey(hash)) {
       runLoadAroundCommitData(node);
     }
-    return cache.get(hash);
+    return cache.fun(hash);
   }
 
   @NotNull
   @Override
   public CommitData getCommitData(@NotNull Hash commitHash) {
-    return cache.get(commitHash);
+    return cache.fun(commitHash);
   }
 
   @Nullable

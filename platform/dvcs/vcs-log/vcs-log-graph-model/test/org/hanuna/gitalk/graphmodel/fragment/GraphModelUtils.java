@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Function;
+import com.intellij.util.Function;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
@@ -52,7 +52,7 @@ public class GraphModelUtils {
         return new Function<Node, Boolean>() {
             @NotNull
             @Override
-            public Boolean get(@NotNull Node key) {
+            public Boolean fun(@NotNull Node key) {
                 return unhiddenNodes.contains(key);
             }
         };

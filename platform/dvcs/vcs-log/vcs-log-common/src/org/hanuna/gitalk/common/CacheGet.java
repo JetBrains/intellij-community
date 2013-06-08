@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.common;
 
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -32,13 +33,13 @@ public class CacheGet<K, V> implements Function<K, V> {
 
   @NotNull
   @Override
-  public V get(@NotNull K key) {
+  public V fun(@NotNull K key) {
     V value = moreMap.get(key);
     if (value != null) {
       return value;
     }
     else {
-      value = getFunction.get(key);
+      value = getFunction.fun(key);
       addToCache(key, value);
       return value;
     }

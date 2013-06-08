@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.graphmodel;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.vcs.log.CommitParents;
-import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;

@@ -10,13 +10,13 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.CommitDataGetter;
@@ -119,7 +119,7 @@ public class UI_ControllerImpl implements UI_Controller {
   private final CacheGet<Hash, CommitData> commitDataCache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
     @NotNull
     @Override
-    public CommitData get(@NotNull Hash key) {
+    public CommitData fun(@NotNull Hash key) {
       // TODO
       try {
         return myLogProvider.readCommitsData(myRoot, Collections.singletonList(key.toStrHash())).get(0);
@@ -294,7 +294,7 @@ public class UI_ControllerImpl implements UI_Controller {
       dataPack.getGraphModel().setVisibleBranchesNodes(new Function<Node, Boolean>() {
         @NotNull
         @Override
-        public Boolean get(@NotNull Node key) {
+        public Boolean fun(@NotNull Node key) {
           return key.getType() == Node.NodeType.COMMIT_NODE && checkedCommitHashes.contains(key.getCommitHash());
         }
       });

@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Function;
+import com.intellij.util.Function;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.graph.GraphTestUtils;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
@@ -8,7 +9,6 @@ import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.impl.GraphModelImpl;
-import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
@@ -190,7 +190,7 @@ public class GraphModelTest {
         graphModel.setVisibleBranchesNodes(new Function<Node, Boolean>() {
             @NotNull
             @Override
-            public Boolean get(@NotNull Node key) {
+            public Boolean fun(@NotNull Node key) {
                 return startedNodes.contains(key.getCommitHash().toStrHash());
             }
         });

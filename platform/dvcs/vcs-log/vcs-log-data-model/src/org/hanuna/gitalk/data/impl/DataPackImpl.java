@@ -4,9 +4,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.CommitDataGetter;
@@ -58,7 +58,7 @@ public class DataPackImpl implements DataPack {
     graphModel.getFragmentManager().setUnconcealedNodeFunction(new Function<Node, Boolean>() {
       @NotNull
       @Override
-      public Boolean get(@NotNull Node key) {
+      public Boolean fun(@NotNull Node key) {
         if (key.getDownEdges().isEmpty() || key.getUpEdges().isEmpty() || refsModel.isBranchRef(key.getCommitHash())) {
           return true;
         }

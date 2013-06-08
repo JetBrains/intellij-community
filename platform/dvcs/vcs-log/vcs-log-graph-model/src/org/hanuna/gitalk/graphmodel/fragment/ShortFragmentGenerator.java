@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Function;
+import com.intellij.util.Function;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -22,7 +22,7 @@ public class ShortFragmentGenerator {
   private Function<Node, Boolean> isUnconcealedNodes = new Function<Node, Boolean>() {
     @NotNull
     @Override
-    public Boolean get(@NotNull Node key) {
+    public Boolean fun(@NotNull Node key) {
       return false;
     }
   };
@@ -85,7 +85,7 @@ public class ShortFragmentGenerator {
             break;
           }
           else {
-            if (!allUpNodeHere(upNodes, node) || isUnconcealedNodes.get(node)) {
+            if (!allUpNodeHere(upNodes, node) || isUnconcealedNodes.fun(node)) {
               isEnd = true;
             }
             upNodes.add(node);
@@ -148,7 +148,7 @@ public class ShortFragmentGenerator {
             break;
           }
           else {
-            if (!allDownNodeHere(downNodes, node) || isUnconcealedNodes.get(node)) {
+            if (!allDownNodeHere(downNodes, node) || isUnconcealedNodes.fun(node)) {
               isEnd = true;
             }
             downNodes.add(node);

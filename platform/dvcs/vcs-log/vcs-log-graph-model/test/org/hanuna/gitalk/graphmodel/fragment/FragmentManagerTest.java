@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Function;
+import com.intellij.util.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.GraphTestUtils;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -39,7 +39,7 @@ public class FragmentManagerTest {
         graph.setGraphDecorator(new GraphDecoratorImpl(fragmentManager.getGraphPreDecorator(), new Function<Node, Boolean>() {
             @NotNull
             @Override
-            public Boolean get(@NotNull Node key) {
+            public Boolean fun(@NotNull Node key) {
                 return true;
             }
         }));

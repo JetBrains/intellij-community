@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.common.compressedlist;
 
+import com.intellij.util.Function;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
   private final CacheGet<Integer, T> cache = new CacheGet<Integer, T>(new Function<Integer, T>() {
     @NotNull
     @Override
-    public T get(@NotNull Integer key) {
+    public T fun(@NotNull Integer key) {
       return RuntimeGenerateCompressedList.this.get(key);
     }
   });
@@ -73,7 +73,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     return new AbstractList<T>() {
       @Override
       public T get(int index) {
-        return cache.get(index);
+        return cache.fun(index);
       }
 
       @Override

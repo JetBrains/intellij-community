@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphDecorator;
@@ -27,7 +27,7 @@ public class GraphDecoratorImpl implements GraphDecorator {
 
   @Override
   public boolean isVisibleNode(@NotNull Node node) {
-    return preDecorator.isVisibleNode(node) && branchVisibleNodes.get(node);
+    return preDecorator.isVisibleNode(node) && branchVisibleNodes.fun(node);
   }
 
   @NotNull
