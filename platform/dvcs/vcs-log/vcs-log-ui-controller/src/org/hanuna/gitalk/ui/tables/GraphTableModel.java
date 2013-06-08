@@ -129,7 +129,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
-    return columnIndex == 0;
+    return false;
   }
 
   public void clearReworded() {
