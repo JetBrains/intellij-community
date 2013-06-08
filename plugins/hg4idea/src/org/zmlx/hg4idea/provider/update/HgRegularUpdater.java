@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.provider.update;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.FileGroup;
@@ -97,8 +98,8 @@ public class HgRegularUpdater implements HgUpdater {
 
     if (shouldUpdate()) {
 
-      List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repository);
-      if (parentsBeforeUpdate.size() > 1) {
+      Pair<HgRevisionNumber, HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repository);
+      if (null != parentsBeforeUpdate.second) {
         throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repository.getPath()));
       }
 

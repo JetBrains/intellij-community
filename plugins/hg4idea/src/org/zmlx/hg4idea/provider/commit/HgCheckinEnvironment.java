@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -130,13 +131,13 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   private boolean isMergeCommit(VirtualFile repo) {
-    return new HgWorkingCopyRevisionsCommand(myProject).parents(repo).size() > 1;
+    return new HgWorkingCopyRevisionsCommand(myProject).parents(repo).second != null;
   }
 
   private Set<HgFile> getChangedFilesNotInCommit(VirtualFile repo, Set<HgFile> selectedFiles) {
-    List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
+    Pair<HgRevisionNumber, HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
 
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.first).build(myProject);
     Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
 
     Set<HgFile> filesNotIncluded = new HashSet<HgFile>();

@@ -12,13 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.status;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 
-import java.util.List;
 
 public class HgCurrentBranchStatus {
 
@@ -29,16 +29,16 @@ public class HgCurrentBranchStatus {
   public HgCurrentBranchStatus() {
   }
 
-  public void updateFor(@Nullable String branch, @NotNull List<HgRevisionNumber> parents) {
+  public void updateFor(@Nullable String branch, @NotNull Pair<HgRevisionNumber, HgRevisionNumber> parents) {
     StringBuilder parentsBuffer = new StringBuilder();
-    for (HgRevisionNumber parent : parents) {
-      String rev = parent.getRevision();
-      parentsBuffer.append(rev).append(", ");
+    if (null != parents.first) {
+      parentsBuffer.append(parents.first).append(", ");
+
+      if ( null != parents.second) {
+        parentsBuffer.append(parents.second);
+      }
     }
-    int length = parentsBuffer.length();
-    if (length > 2) {
-      parentsBuffer.delete(length - 2, length);
-    }
+
     String parent = parentsBuffer.toString();
     String statusText =
       !StringUtil.isEmptyOrSpaces(branch) ? HgVcsMessages.message("hg4idea.status.currentSituationText", branch, parent) : "";
