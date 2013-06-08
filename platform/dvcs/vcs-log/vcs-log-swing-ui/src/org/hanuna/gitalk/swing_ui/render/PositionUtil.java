@@ -5,7 +5,7 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
-import org.hanuna.gitalk.ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.swing_ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

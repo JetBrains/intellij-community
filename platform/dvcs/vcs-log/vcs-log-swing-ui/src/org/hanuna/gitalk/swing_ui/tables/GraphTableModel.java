@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.ui.tables;
+package org.hanuna.gitalk.swing_ui.tables;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.vcs.log.Hash;

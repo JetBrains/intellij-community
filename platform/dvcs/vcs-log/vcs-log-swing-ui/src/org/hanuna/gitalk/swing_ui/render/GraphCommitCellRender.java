@@ -3,7 +3,7 @@ package org.hanuna.gitalk.swing_ui.render;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
-import org.hanuna.gitalk.ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.swing_ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
