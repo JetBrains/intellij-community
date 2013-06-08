@@ -35,7 +35,7 @@ import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
-import org.hanuna.gitalk.swing_ui.Swing_UI;
+import org.hanuna.gitalk.swing_ui.VcsLogUI;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
@@ -122,14 +122,14 @@ public class UI_ControllerImpl implements UI_Controller {
       }
     }
   }, 5000);
-  private final Swing_UI mySwingUi;
+  private final VcsLogUI mySwingUi;
 
   public UI_ControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
     myLogProvider = logProvider;
     myRoot = root;
     myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading history...");
-    mySwingUi = new Swing_UI(this);
+    mySwingUi = new VcsLogUI(this);
 
   }
 

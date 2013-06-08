@@ -9,7 +9,7 @@ import javax.swing.*;
 /**
  * @author erokhins
  */
-public class Swing_UI {
+public class VcsLogUI {
 
   private final UI_Controller ui_controller;
   private MainFrame mainFrame = null;
@@ -19,7 +19,7 @@ public class Swing_UI {
     return mainFrame;
   }
 
-  public Swing_UI(UI_Controller ui_controller) {
+  public VcsLogUI(UI_Controller ui_controller) {
     this.ui_controller = ui_controller;
     this.mainFrame = new MainFrame(ui_controller);
     myDragDropSupport = new VcsLogDragDropSupport(ui_controller, mainFrame);
