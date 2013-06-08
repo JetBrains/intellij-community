@@ -3,8 +3,6 @@ package org.hanuna.gitalk.log.parser;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.CommitParents;
-import org.hanuna.gitalk.log.commit.parents.SimpleCommitParents;
-import org.hanuna.gitalk.log.commit.parents.TimestampCommitParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

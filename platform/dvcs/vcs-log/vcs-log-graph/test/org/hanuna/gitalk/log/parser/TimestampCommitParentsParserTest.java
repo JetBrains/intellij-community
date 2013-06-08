@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.log.parser;
 
 import com.intellij.vcs.log.Hash;
-import org.hanuna.gitalk.log.commit.parents.TimestampCommitParents;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;

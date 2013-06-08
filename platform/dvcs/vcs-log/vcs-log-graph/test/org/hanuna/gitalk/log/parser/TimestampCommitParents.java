@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.log.commit.parents;
+package org.hanuna.gitalk.log.parser;
 
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.CommitParents;
