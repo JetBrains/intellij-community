@@ -34,7 +34,7 @@ public class MainFrame {
     myLoadingPanel.startLoading();
   }
 
-  public UI_GraphTable getGraphTable() {
+  public VcsLogGraphTable getGraphTable() {
     return myActiveSurface.getGraphTable();
   }
 

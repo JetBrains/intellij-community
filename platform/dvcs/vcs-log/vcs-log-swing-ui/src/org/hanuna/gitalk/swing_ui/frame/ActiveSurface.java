@@ -12,16 +12,16 @@ import java.awt.*;
  */
 public class ActiveSurface extends JPanel {
 
-  private final UI_GraphTable graphTable;
+  private final VcsLogGraphTable graphTable;
   private final BranchesPanel myBranchesPanel;
 
   ActiveSurface(UI_Controller ui_controller) {
-    this.graphTable = new UI_GraphTable(ui_controller);
+    this.graphTable = new VcsLogGraphTable(ui_controller);
     myBranchesPanel = new BranchesPanel(ui_controller);
     packTables();
   }
 
-  public UI_GraphTable getGraphTable() {
+  public VcsLogGraphTable getGraphTable() {
     return graphTable;
   }
 

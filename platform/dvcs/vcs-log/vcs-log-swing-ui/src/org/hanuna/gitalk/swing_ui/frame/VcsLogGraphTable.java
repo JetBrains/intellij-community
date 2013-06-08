@@ -35,7 +35,7 @@ import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
 /**
  * @author erokhins
  */
-public class UI_GraphTable extends JTable {
+public class VcsLogGraphTable extends JTable {
   private final UI_Controller ui_controller;
   private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
   private final MouseAdapter mouseAdapter = new MyMouseAdapter();
@@ -51,7 +51,7 @@ public class UI_GraphTable extends JTable {
   private int[][] selectionHistory = new int[2][];
   private boolean dragged = false;
 
-  public UI_GraphTable(UI_Controller ui_controller) {
+  public VcsLogGraphTable(UI_Controller ui_controller) {
     super();
     UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(new LineBorder(new Color(255, 0, 0, 0))));
     this.ui_controller = ui_controller;
