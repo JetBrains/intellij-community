@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graph.mutable.elements;
 
+import com.intellij.util.SmartList;
 import com.intellij.vcs.log.Hash;
-import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -18,8 +18,8 @@ public class MutableNode implements Node {
   private MutableNodeRow nodeRow = null;
   private NodeType type;
 
-  private final List<Edge> upEdges = new OneElementList<Edge>();
-  private final List<Edge> downEdges = new OneElementList<Edge>();
+  private final List<Edge> upEdges = new SmartList<Edge>();
+  private final List<Edge> downEdges = new SmartList<Edge>();
 
   public MutableNode(Branch branch, Hash hash) {
     this.branch = branch;

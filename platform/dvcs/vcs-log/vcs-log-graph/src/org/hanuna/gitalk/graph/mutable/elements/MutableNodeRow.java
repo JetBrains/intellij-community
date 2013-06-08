@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.mutable.elements;
 
-import org.hanuna.gitalk.common.OneElementList;
+import com.intellij.util.SmartList;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable.GraphDecorator;
@@ -14,7 +14,7 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableNodeRow implements NodeRow {
-  private final List<MutableNode> nodes = new OneElementList<MutableNode>();
+  private final List<MutableNode> nodes = new SmartList<MutableNode>();
   private final MutableGraph graph;
   private int rowIndex;
 

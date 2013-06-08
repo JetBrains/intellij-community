@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
+import com.intellij.util.SmartList;
 import org.hanuna.gitalk.common.Function;
-import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphDecorator;
@@ -35,7 +35,7 @@ public class GraphDecoratorImpl implements GraphDecorator {
   public List<Edge> getDownEdges(@NotNull Node node, @NotNull List<Edge> innerDownEdges) {
     Edge edge = preDecorator.getHideFragmentDownEdge(node);
     if (edge != null) {
-      return OneElementList.buildList(edge);
+      return new SmartList<Edge>(edge);
     }
     else {
       return Collections.unmodifiableList(innerDownEdges);
@@ -47,7 +47,7 @@ public class GraphDecoratorImpl implements GraphDecorator {
   public List<Edge> getUpEdges(@NotNull Node node, @NotNull List<Edge> innerUpEdges) {
     Edge hideFragmentUpEdge = preDecorator.getHideFragmentUpEdge(node);
     if (hideFragmentUpEdge != null) {
-      return OneElementList.buildList(hideFragmentUpEdge);
+      return new SmartList<Edge>(hideFragmentUpEdge);
     }
 
     List<Edge> edges = new ArrayList<Edge>();

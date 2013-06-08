@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.swing_ui.render;
 
-import org.hanuna.gitalk.common.OneElementList;
+import com.intellij.util.SmartList;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableNode;
 
@@ -24,7 +25,7 @@ public class RefTreeCellRender implements TreeCellRenderer {
         BufferedImage image = new BufferedImage(1000, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
         g2.setBackground(new Color(0, 0, 0, 0));
-        refPainter.draw(g2, OneElementList.buildList(node.getRef()), 0);
+        refPainter.draw(g2, new SmartList<Ref>(node.getRef()), 0);
         g.drawImage(image, 0, 0, null);
       }
       else {
