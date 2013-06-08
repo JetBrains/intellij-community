@@ -2,6 +2,7 @@ package org.hanuna.gitalk.log.commit.parents;
 
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.RebaseCommand;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

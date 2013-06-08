@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.log.commit.parents;
+package com.intellij.vcs.log;
 
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.Nullable;

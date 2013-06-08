@@ -28,7 +28,7 @@ import git4idea.repo.GitRepositoryFiles;
 import git4idea.update.GitUpdateResult;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
+import com.intellij.vcs.log.RebaseCommand;
 import org.hanuna.gitalk.ui.VcsLogController;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -29,7 +29,7 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
-import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
+import com.intellij.vcs.log.RebaseCommand;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui.DragDropListener;

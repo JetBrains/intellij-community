@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.data.rebase;
 
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
+import com.intellij.vcs.log.RebaseCommand;
 import com.intellij.vcs.log.Ref;
 
 import java.util.List;
