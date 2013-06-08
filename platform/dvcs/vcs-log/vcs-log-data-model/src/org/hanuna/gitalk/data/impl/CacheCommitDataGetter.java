@@ -53,16 +53,16 @@ public class CacheCommitDataGetter implements CommitDataGetter {
       CommitData originalData = getCommitData(originalHash);
       return new CommitData(originalData.getFullCommit());
     }
-    if (!cache.containsKey(hash)) {
+    if (!cache.isKeyCached(hash)) {
       runLoadAroundCommitData(node);
     }
-    return cache.fun(hash);
+    return cache.get(hash);
   }
 
   @NotNull
   @Override
   public CommitData getCommitData(@NotNull Hash commitHash) {
-    return cache.fun(commitHash);
+    return cache.get(commitHash);
   }
 
   @Nullable
@@ -102,7 +102,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     List<CommitData> commitDataList = myLogProvider.readCommitsData(myRoot, hashes);
 
     for (CommitData commitData : commitDataList) {
-      cache.addToCache(commitData.getCommitHash(), commitData);
+      cache.put(commitData.getCommitHash(), commitData);
     }
   }
 

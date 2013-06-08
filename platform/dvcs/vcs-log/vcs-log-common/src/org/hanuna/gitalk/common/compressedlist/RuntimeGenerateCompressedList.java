@@ -73,7 +73,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     return new AbstractList<T>() {
       @Override
       public T get(int index) {
-        return cache.fun(index);
+        return cache.get(index);
       }
 
       @Override

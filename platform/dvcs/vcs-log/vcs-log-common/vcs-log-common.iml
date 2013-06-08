@@ -28,6 +28,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="vcs-log-api" scope="TEST" />
     <orderEntry type="module" module-name="util-rt" />
+    <orderEntry type="module" module-name="util" />
   </component>
 </module>
 

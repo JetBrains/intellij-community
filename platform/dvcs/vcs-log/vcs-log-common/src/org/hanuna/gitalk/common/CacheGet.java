@@ -1,66 +1,34 @@
 package org.hanuna.gitalk.common;
 
 import com.intellij.util.Function;
+import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author erokhins
  */
-public class CacheGet<K, V> implements Function<K, V> {
-  private final Function<K, V> getFunction;
-  private final int size;
-  private Map<K, V> map;
-  private Map<K, V> moreMap;
+public class CacheGet<K, V> extends SLRUCache<K, V> {
+
+  public static final int DEFAULT_SIZE = 100;
+  private final Function<K, V> myFunction;
 
   public CacheGet(@NotNull Function<K, V> getFunction, int size) {
-    this.getFunction = getFunction;
-    this.size = size;
-    this.map = new HashMap<K, V>(2 * size);
-    this.moreMap = new HashMap<K, V>(2 * size);
+    super(2 * size, 2 * size);
+    myFunction = getFunction;
   }
 
   public CacheGet(@NotNull Function<K, V> getFunction) {
-    this(getFunction, 100);
-  }
-
-  public void clear() {
-    this.map.clear();
-    this.moreMap.clear();
+    this(getFunction, DEFAULT_SIZE);
   }
 
   @NotNull
   @Override
-  public V fun(@NotNull K key) {
-    V value = moreMap.get(key);
-    if (value != null) {
-      return value;
-    }
-    else {
-      value = getFunction.fun(key);
-      addToCache(key, value);
-      return value;
-    }
+  public V createValue(K key) {
+    return myFunction.fun(key);
   }
 
-  public boolean containsKey(@NotNull K key) {
-    return moreMap.containsKey(key);
+  public boolean isKeyCached(K key) {
+    return getIfCached(key) != null;
   }
 
-  public void addToCache(@NotNull K key, @NotNull V value) {
-    moreMap.put(key, value);
-    map.put(key, value);
-    checkSize();
-  }
-
-  private void checkSize() {
-    if (map.size() >= size) {
-      Map<K, V> tempMap = moreMap;
-      moreMap = map;
-      map = tempMap;
-      map.clear();
-    }
-  }
 }
