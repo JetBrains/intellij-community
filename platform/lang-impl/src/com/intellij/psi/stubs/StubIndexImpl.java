@@ -461,7 +461,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
 
-    msg += "\nindex stamp: " + IndexingStamp.getIndexStamp(file, StubUpdatingIndex.INDEX_ID);
+    //msg += "\nindex stamp: " + IndexingStamp.getIndexStamp(file, StubUpdatingIndex.INDEX_ID);
     msg += "; index creation stamp: " + IndexInfrastructure.getIndexCreationStamp(StubUpdatingIndex.INDEX_ID);
     LOG.error(msg);
   }

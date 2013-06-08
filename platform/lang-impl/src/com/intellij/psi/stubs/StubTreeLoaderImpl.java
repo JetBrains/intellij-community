@@ -107,7 +107,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
       }
       ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
-      tree.setDebugInfo("created from index, index creation stamp=" + IndexInfrastructure.getIndexCreationStamp(StubUpdatingIndex.INDEX_ID) + "; index stamp=" + IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID));
+      tree.setDebugInfo("created from index, index creation stamp=" + IndexInfrastructure.getIndexCreationStamp(StubUpdatingIndex.INDEX_ID)/* + "; index stamp=" + IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID)*/);
       return tree;
     }
     else if (size != 0) {
