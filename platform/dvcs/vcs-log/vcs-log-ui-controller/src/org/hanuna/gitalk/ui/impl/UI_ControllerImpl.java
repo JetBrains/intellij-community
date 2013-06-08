@@ -35,10 +35,10 @@ import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
-import org.hanuna.gitalk.swing_ui.VcsLogUI;
+import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
-import org.hanuna.gitalk.swing_ui.tables.GraphTableModel;
+import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

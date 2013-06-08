@@ -1,16 +1,16 @@
-package org.hanuna.gitalk.swing_ui.frame;
+package org.hanuna.gitalk.ui.frame;
 
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
-import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;
-import org.hanuna.gitalk.swing_ui.render.PositionUtil;
-import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
-import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphCellPainter;
+import org.hanuna.gitalk.ui.render.GraphCommitCellRender;
+import org.hanuna.gitalk.ui.render.PositionUtil;
+import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
+import org.hanuna.gitalk.ui.render.painters.SimpleGraphCellPainter;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
-import org.hanuna.gitalk.swing_ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,8 +29,8 @@ import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.EDGE_FIELD;
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
+import static org.hanuna.gitalk.ui.render.Print_Parameters.EDGE_FIELD;
+import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
 
 /**
  * @author erokhins

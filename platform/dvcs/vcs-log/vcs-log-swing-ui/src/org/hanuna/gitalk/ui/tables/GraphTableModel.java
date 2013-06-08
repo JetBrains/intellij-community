@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.tables;
+package org.hanuna.gitalk.ui.tables;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.vcs.log.Hash;
@@ -9,7 +9,7 @@ import com.intellij.vcs.log.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.swing_ui.render.PositionUtil;
+import org.hanuna.gitalk.ui.render.PositionUtil;
 import org.hanuna.gitalk.ui.impl.DateConverter;
 import org.jetbrains.annotations.NotNull;
 

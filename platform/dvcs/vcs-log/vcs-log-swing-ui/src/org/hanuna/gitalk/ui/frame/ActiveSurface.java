@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.frame;
+package org.hanuna.gitalk.ui.frame;
 
 import org.hanuna.gitalk.ui.UI_Controller;
 

@@ -1,18 +1,18 @@
-package org.hanuna.gitalk.swing_ui.render;
+package org.hanuna.gitalk.ui.render;
 
 import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
-import org.hanuna.gitalk.swing_ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 import java.awt.event.MouseEvent;
 
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.*;
+import static org.hanuna.gitalk.ui.render.Print_Parameters.*;
 
 public class PositionUtil {
   private static float distance(int x1, int y1, int x2, int y2) {

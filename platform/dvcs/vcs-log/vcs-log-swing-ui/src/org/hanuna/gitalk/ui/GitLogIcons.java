@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui;
+package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.util.IconLoader;
 

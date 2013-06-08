@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui;
+package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -10,9 +10,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.swing_ui.frame.MainFrame;
-import org.hanuna.gitalk.ui.DragDropListener;
-import org.hanuna.gitalk.ui.UI_Controller;
+import org.hanuna.gitalk.ui.frame.MainFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

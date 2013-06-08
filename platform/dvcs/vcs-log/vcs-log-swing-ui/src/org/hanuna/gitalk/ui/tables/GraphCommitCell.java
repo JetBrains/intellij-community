@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.tables;
+package org.hanuna.gitalk.ui.tables;
 
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.Ref;

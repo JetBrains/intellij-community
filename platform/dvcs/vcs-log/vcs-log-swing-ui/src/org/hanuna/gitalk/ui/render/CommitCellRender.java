@@ -1,8 +1,8 @@
-package org.hanuna.gitalk.swing_ui.render;
+package org.hanuna.gitalk.ui.render;
 
-import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
-import org.hanuna.gitalk.swing_ui.tables.CommitCell;
-import org.hanuna.gitalk.swing_ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.ui.render.painters.RefPainter;
+import org.hanuna.gitalk.ui.tables.CommitCell;
+import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

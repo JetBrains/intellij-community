@@ -1,11 +1,11 @@
-package org.hanuna.gitalk.swing_ui.frame;
+package org.hanuna.gitalk.ui.frame;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.components.JBLoadingPanel;
-import org.hanuna.gitalk.swing_ui.GitLogIcons;
+import org.hanuna.gitalk.ui.GitLogIcons;
 import org.hanuna.gitalk.ui.UI_Controller;
 
 import javax.swing.*;

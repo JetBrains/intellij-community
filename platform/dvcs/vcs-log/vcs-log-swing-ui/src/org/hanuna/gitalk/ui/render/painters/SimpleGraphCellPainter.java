@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.render.painters;
+package org.hanuna.gitalk.ui.render.painters;
 
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
@@ -6,13 +6,13 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
-import org.hanuna.gitalk.swing_ui.render.PositionUtil;
+import org.hanuna.gitalk.ui.render.PositionUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.*;
+import static org.hanuna.gitalk.ui.render.Print_Parameters.*;
 
 /**
  * @author erokhins

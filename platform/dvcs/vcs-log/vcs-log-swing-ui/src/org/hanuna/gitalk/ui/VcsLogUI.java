@@ -1,8 +1,7 @@
-package org.hanuna.gitalk.swing_ui;
+package org.hanuna.gitalk.ui;
 
 import com.intellij.vcs.log.Hash;
-import org.hanuna.gitalk.swing_ui.frame.MainFrame;
-import org.hanuna.gitalk.ui.UI_Controller;
+import org.hanuna.gitalk.ui.frame.MainFrame;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

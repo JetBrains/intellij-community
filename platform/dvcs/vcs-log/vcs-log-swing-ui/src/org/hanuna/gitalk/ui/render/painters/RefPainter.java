@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.render.painters;
+package org.hanuna.gitalk.ui.render.painters;
 
 import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
+import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
 
 /**
  * @author erokhins

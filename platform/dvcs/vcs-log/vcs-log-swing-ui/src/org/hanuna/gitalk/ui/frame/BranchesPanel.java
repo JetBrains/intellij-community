@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.frame;
+package org.hanuna.gitalk.ui.frame;
 
 import com.google.common.collect.Ordering;
 import com.intellij.openapi.util.Condition;
@@ -6,8 +6,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.swing_ui.render.Print_Parameters;
-import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
+import org.hanuna.gitalk.ui.render.Print_Parameters;
+import org.hanuna.gitalk.ui.render.painters.RefPainter;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.jetbrains.annotations.Nullable;
 

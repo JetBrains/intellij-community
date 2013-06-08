@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.render;
+package org.hanuna.gitalk.ui.render;
 
 /**
  * @author erokhins

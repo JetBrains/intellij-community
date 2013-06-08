@@ -1,9 +1,9 @@
-package org.hanuna.gitalk.swing_ui.render;
+package org.hanuna.gitalk.ui.render;
 
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
-import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
-import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
-import org.hanuna.gitalk.swing_ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
+import org.hanuna.gitalk.ui.render.painters.RefPainter;
+import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -11,8 +11,8 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.WIDTH_NODE;
+import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
+import static org.hanuna.gitalk.ui.render.Print_Parameters.WIDTH_NODE;
 
 /**
  * @author erokhins

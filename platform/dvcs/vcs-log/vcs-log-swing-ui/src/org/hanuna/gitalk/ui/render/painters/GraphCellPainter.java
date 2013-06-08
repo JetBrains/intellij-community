@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.render.painters;
+package org.hanuna.gitalk.ui.render.painters;
 
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
