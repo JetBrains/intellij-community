@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="vcs-log-ui-controller" />
-    <orderEntry type="module" module-name="vcs-log-swing-ui" />
+    <orderEntry type="module" module-name="vcs-log-ui" />
     <orderEntry type="module" module-name="vcs-log-api" />
   </component>
 </module>
