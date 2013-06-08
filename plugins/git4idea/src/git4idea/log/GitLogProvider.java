@@ -57,6 +57,7 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<CommitParents> readNextBlock(@NotNull VirtualFile root) throws VcsException {
     // TODO either don't query details here, or save them right away
+    MyTimer timer = new MyTimer("Git Log ALL");
     List<GitCommit> history = GitHistoryUtils.history(myProject, root, "HEAD", "--branches", "--remotes", "--tags", "--date-order",
                                                       "--encoding=UTF-8", "--full-history", "--sparse",
                                                       "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE);
@@ -66,6 +67,7 @@ public class GitLogProvider implements VcsLogProvider {
         return new SimpleCommitParents(Hash.build(gitCommit.getHash().toString()), gitCommit.getParents());
       }
     });
+    timer.print();
     return map;
   }
 
