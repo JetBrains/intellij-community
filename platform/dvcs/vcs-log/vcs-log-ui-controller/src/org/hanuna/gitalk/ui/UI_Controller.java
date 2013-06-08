@@ -34,8 +34,6 @@ public interface UI_Controller {
 
   public void setLongEdgeVisibility(boolean visibility);
 
-  public void updateVisibleBranches();
-
   public void doubleClick(int rowIndex);
 
   public void readNextPart();

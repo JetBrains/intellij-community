@@ -39,8 +39,6 @@ import org.hanuna.gitalk.swing_ui.Swing_UI;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
-import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
-import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModelImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,14 +58,12 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private DataPack dataPack;
   private DataPackUtils dataPackUtils;
-  private RefTreeModel refTreeModel;
 
   private GraphTableModel graphTableModel;
   private VcsLogProvider myLogProvider;
   @NotNull private final VirtualFile myRoot;
 
   private GraphElement prevGraphElement = null;
-  private Set<Hash> prevSelectionBranches;
 
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
   private VcsLogActionHandler myVcsLogActionHandler = VcsLogActionHandler.DO_NOTHING;
@@ -139,11 +135,8 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private void dataInit() {
     dataPack = dataLoader.getDataPack();
-    refTreeModel = new RefTreeModelImpl(dataPack.getRefsModel());
     graphTableModel = new GraphTableModel(dataPack);
     dataPackUtils = new DataPackUtils(dataPack);
-
-    prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
@@ -266,29 +259,6 @@ public class UI_ControllerImpl implements UI_Controller {
   public void doubleClick(int rowIndex) {
     if (rowIndex == graphTableModel.getRowCount() - 1) {
       readNextPart();
-    }
-  }
-
-  @Override
-  public void updateVisibleBranches() {
-    final Set<Hash> checkedCommitHashes = refTreeModel.getCheckedCommits();
-    if (!prevSelectionBranches.equals(checkedCommitHashes)) {
-      MyTimer timer = new MyTimer("update branch shows");
-
-      prevSelectionBranches = new HashSet<Hash>(checkedCommitHashes);
-      dataPack.getGraphModel().setVisibleBranchesNodes(new Function<Node, Boolean>() {
-        @NotNull
-        @Override
-        public Boolean fun(@NotNull Node key) {
-          return key.getType() == Node.NodeType.COMMIT_NODE && checkedCommitHashes.contains(key.getCommitHash());
-        }
-      });
-
-      mySwingUi.updateUI();
-      //TODO:
-      mySwingUi.jumpToRow(0);
-
-      timer.print();
     }
   }
 
