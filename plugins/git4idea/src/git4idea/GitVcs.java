@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -335,7 +336,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myVFSListener = new GitVFSListener(myProject, this, myGit);
     }
     NewGitUsersComponent.getInstance(myProject).activate();
-    GitProjectLogManager.getInstance(myProject).activate();
+    if (!Registry.is("git.new.log")) {
+      GitProjectLogManager.getInstance(myProject).activate();
+    }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myBranchWidget = new GitBranchWidget(myProject);
