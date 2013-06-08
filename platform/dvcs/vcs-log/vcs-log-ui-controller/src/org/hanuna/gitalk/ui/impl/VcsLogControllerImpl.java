@@ -35,9 +35,9 @@ import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
+import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.DragDropListener;
-import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,9 +49,9 @@ import java.util.*;
 /**
  * @author erokhins
  */
-public class UI_ControllerImpl implements UI_Controller {
+public class VcsLogControllerImpl implements VcsLogController {
 
-  private static final Logger LOG = Logger.getInstance(UI_Controller.class);
+  private static final Logger LOG = Logger.getInstance(VcsLogController.class);
   private volatile DataLoaderImpl dataLoader;
   private final Project myProject;
   private final BackgroundTaskQueue myDataLoaderQueue;
@@ -124,7 +124,7 @@ public class UI_ControllerImpl implements UI_Controller {
   }, 5000);
   private final VcsLogUI mySwingUi;
 
-  public UI_ControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
+  public VcsLogControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
     myLogProvider = logProvider;
     myRoot = root;
@@ -154,7 +154,7 @@ public class UI_ControllerImpl implements UI_Controller {
   public void init() {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        dataLoader = new DataLoaderImpl(UI_ControllerImpl.this.myProject, commitDataCache, myLogProvider);
+        dataLoader = new DataLoaderImpl(VcsLogControllerImpl.this.myProject, commitDataCache, myLogProvider);
 
         try {
           dataLoader.readNextPart(indicator, rebaseDelegate.getFakeCommitsInfo(), myRoot);

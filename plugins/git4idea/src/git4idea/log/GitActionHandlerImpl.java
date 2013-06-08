@@ -29,7 +29,7 @@ import git4idea.update.GitUpdateResult;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.parents.RebaseCommand;
-import org.hanuna.gitalk.ui.UI_Controller;
+import org.hanuna.gitalk.ui.VcsLogController;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,12 +47,12 @@ import java.util.List;
 public class GitActionHandlerImpl implements VcsLogActionHandler {
 
   private final Project myProject;
-  private final UI_Controller myUiController;
+  private final VcsLogController myUiController;
   private GitRepository myRepository;
   private final Git myGit;
   private final GitPlatformFacade myPlatformFacade;
 
-  public GitActionHandlerImpl(Project project, UI_Controller uiController) {
+  public GitActionHandlerImpl(Project project, VcsLogController uiController) {
     myProject = project;
     myUiController = uiController;
     //myLogComponent = ServiceManager.getService(project, GitLogComponent.class);

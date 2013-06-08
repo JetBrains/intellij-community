@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.vcs.log.VcsLogProvider;
-import org.hanuna.gitalk.ui.impl.UI_ControllerImpl;
+import org.hanuna.gitalk.ui.impl.VcsLogControllerImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +49,7 @@ public class VcsLogManager extends AbstractProjectComponent {
         }
         VirtualFile root = myVcsManager.getAllVcsRoots()[0].getPath();
 
-        UI_ControllerImpl myUiController = new UI_ControllerImpl(myProject, logProvider, root);
+        VcsLogControllerImpl myUiController = new VcsLogControllerImpl(myProject, logProvider, root);
         myUiController.init();
 
         Content vcsLogContentPane = new ContentImpl(myUiController.getMainComponent(), "VCS LOG", true);

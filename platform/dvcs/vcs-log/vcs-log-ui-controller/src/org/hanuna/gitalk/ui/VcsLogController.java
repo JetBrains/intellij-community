@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public interface UI_Controller {
+public interface VcsLogController {
 
   public TableModel getGraphTableModel();
 

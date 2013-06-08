@@ -4,12 +4,12 @@ import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
+import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.render.GraphCommitCellRender;
 import org.hanuna.gitalk.ui.render.PositionUtil;
 import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.ui.render.painters.SimpleGraphCellPainter;
 import org.hanuna.gitalk.ui.DragDropListener;
-import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
  * @author erokhins
  */
 public class VcsLogGraphTable extends JTable {
-  private final UI_Controller ui_controller;
+  private final VcsLogController myVcsLog_controller;
   private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
   private final MouseAdapter mouseAdapter = new MyMouseAdapter();
   private final DefaultCellEditor myCellEditor = new DefaultCellEditor(new JTextField()) {
@@ -51,10 +51,10 @@ public class VcsLogGraphTable extends JTable {
   private int[][] selectionHistory = new int[2][];
   private boolean dragged = false;
 
-  public VcsLogGraphTable(UI_Controller ui_controller) {
+  public VcsLogGraphTable(VcsLogController vcsLog_controller) {
     super();
     UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(new LineBorder(new Color(255, 0, 0, 0))));
-    this.ui_controller = ui_controller;
+    this.myVcsLog_controller = vcsLog_controller;
     prepare();
   }
 
@@ -83,7 +83,7 @@ public class VcsLogGraphTable extends JTable {
         }
         int selectedRow = getSelectedRow();
         if (selectedRow >= 0) {
-          ui_controller.click(selectedRow);
+          myVcsLog_controller.click(selectedRow);
         }
         System.out.println("Selection");
       }
@@ -96,7 +96,7 @@ public class VcsLogGraphTable extends JTable {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           if (myNodesBeingDragged != null && dragged) {
-            ui_controller.getDragDropListener().draggingCanceled(myNodesBeingDragged);
+            myVcsLog_controller.getDragDropListener().draggingCanceled(myNodesBeingDragged);
           }
           myNodesBeingDragged = null;
           myRowIndicesBeingDragged = null;
@@ -170,14 +170,14 @@ public class VcsLogGraphTable extends JTable {
           jumpToRow(jumpToNode.getRowIndex());
         }
         GraphElement graphElement = overCell(e);
-        ui_controller.click(graphElement);
+        myVcsLog_controller.click(graphElement);
         if (graphElement == null) {
-          ui_controller.click(PositionUtil.getRowIndex(e));
+          myVcsLog_controller.click(PositionUtil.getRowIndex(e));
         }
       }
       else {
         int rowIndex = PositionUtil.getRowIndex(e);
-        ui_controller.doubleClick(rowIndex);
+        myVcsLog_controller.doubleClick(rowIndex);
       }
     }
 
@@ -190,7 +190,7 @@ public class VcsLogGraphTable extends JTable {
       else {
         setCursor(DEFAULT_CURSOR);
       }
-      ui_controller.over(overCell(e));
+      myVcsLog_controller.over(overCell(e));
     }
 
     @Override
@@ -225,14 +225,14 @@ public class VcsLogGraphTable extends JTable {
         List<Node> commitsBeingDragged = nodes(relevantSelection);
         myNodesBeingDragged = commitsBeingDragged;
         myRowIndicesBeingDragged = relevantSelection;
-        ui_controller.getDragDropListener().draggingStarted(commitsBeingDragged);
+        myVcsLog_controller.getDragDropListener().draggingStarted(commitsBeingDragged);
       }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
       if (dragged && myNodesBeingDragged != null) {
-        handleEvent(e, ui_controller.getDragDropListener().drop(), myNodesBeingDragged);
+        handleEvent(e, myVcsLog_controller.getDragDropListener().drop(), myNodesBeingDragged);
       }
       dragged = false;
       myNodesBeingDragged = null;
@@ -250,7 +250,7 @@ public class VcsLogGraphTable extends JTable {
         }
       });
 
-      handleEvent(e, ui_controller.getDragDropListener().drag(), myNodesBeingDragged);
+      handleEvent(e, myVcsLog_controller.getDragDropListener().drag(), myNodesBeingDragged);
     }
 
     private void handleEvent(MouseEvent e, DragDropListener.Handler handler, List<Node> selectedNodes) {
@@ -319,7 +319,7 @@ public class VcsLogGraphTable extends JTable {
   @Override
   public void setValueAt(Object aValue, int row, int column) {
     if (column == 0 && aValue instanceof String) {
-      ui_controller.getDragDropListener().reword(row, aValue.toString());
+      myVcsLog_controller.getDragDropListener().reword(row, aValue.toString());
       return;
     }
     super.setValueAt(aValue, row, column);

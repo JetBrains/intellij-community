@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.components.JBLoadingPanel;
 import org.hanuna.gitalk.ui.GitLogIcons;
-import org.hanuna.gitalk.ui.UI_Controller;
+import org.hanuna.gitalk.ui.VcsLogController;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,21 +16,21 @@ import java.awt.*;
  */
 public class MainFrame {
 
-  private final UI_Controller ui_controller;
+  private final VcsLogController myVcsLog_controller;
   private final JPanel mainPanel = new JPanel();
   private final ActiveSurface myActiveSurface;
   private final JBLoadingPanel myLoadingPanel;
 
 
-  public MainFrame(final UI_Controller ui_controller) {
-    this.ui_controller = ui_controller;
-    myActiveSurface = new ActiveSurface(ui_controller);
+  public MainFrame(final VcsLogController vcsLog_controller) {
+    this.myVcsLog_controller = vcsLog_controller;
+    myActiveSurface = new ActiveSurface(vcsLog_controller);
 
     mainPanel.setLayout(new BorderLayout());
     mainPanel.add(createToolbar(), BorderLayout.NORTH);
     mainPanel.add(myActiveSurface, BorderLayout.CENTER);
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), ui_controller.getProject());
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), vcsLog_controller.getProject());
     myLoadingPanel.startLoading();
   }
 
@@ -42,21 +42,21 @@ public class MainFrame {
     AnAction hideBranchesAction = new DumbAwareAction("Collapse linear branches", "Collapse linear branches", GitLogIcons.SPIDER) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        ui_controller.hideAll();
+        myVcsLog_controller.hideAll();
       }
     };
 
     AnAction showBranchesAction = new DumbAwareAction("Expand all branches", "Expand all branches", GitLogIcons.WEB) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        ui_controller.showAll();
+        myVcsLog_controller.showAll();
       }
     };
 
     RefreshAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        ui_controller.refresh(false);
+        myVcsLog_controller.refresh(false);
       }
 
       @Override
@@ -69,12 +69,12 @@ public class MainFrame {
                                                     AllIcons.Actions.Expandall) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return !ui_controller.areLongEdgesHidden();
+        return !myVcsLog_controller.areLongEdgesHidden();
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        ui_controller.setLongEdgeVisibility(state);
+        myVcsLog_controller.setLongEdgeVisibility(state);
       }
     };
 

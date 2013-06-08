@@ -28,13 +28,13 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 public class VcsLogDragDropSupport {
 
-  private final UI_Controller myUiController;
+  private final VcsLogController myUiController;
   private final MainFrame myMainFrame;
   private final DragDropConditions myConditions = new DragDropConditions();
   private final DragDropListener myDragDropListener = new SwingDragDropListener();
 
-  public VcsLogDragDropSupport(UI_Controller ui_controller, MainFrame mainFrame) {
-    myUiController = ui_controller;
+  public VcsLogDragDropSupport(VcsLogController vcsLog_controller, MainFrame mainFrame) {
+    myUiController = vcsLog_controller;
     myMainFrame = mainFrame;
   }
   

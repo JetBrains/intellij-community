@@ -11,10 +11,10 @@ import javax.swing.*;
  */
 public class VcsLogUI {
 
-  @NotNull private final UI_Controller myUiController;
+  @NotNull private final VcsLogController myUiController;
   @NotNull private final MainFrame myMainFrame;
 
-  public VcsLogUI(@NotNull UI_Controller uiController) {
+  public VcsLogUI(@NotNull VcsLogController uiController) {
     myUiController = uiController;
     myMainFrame = new MainFrame(myUiController);
   }
