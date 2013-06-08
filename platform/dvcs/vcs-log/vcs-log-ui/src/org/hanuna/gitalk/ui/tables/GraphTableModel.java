@@ -1,16 +1,16 @@
 package org.hanuna.gitalk.ui.tables;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.graph.elements.Node;
-import com.intellij.vcs.log.CommitData;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
-import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.ui.render.PositionUtil;
-import org.hanuna.gitalk.ui.impl.DateConverter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
@@ -89,7 +89,7 @@ public class GraphTableModel extends AbstractTableModel {
           return "";
         }
         else {
-          return DateConverter.getStringOfDate(data.getTimeStamp());
+          return DateFormatUtil.formatDateTime(data.getTimeStamp());
         }
       default:
         throw new IllegalArgumentException("columnIndex > 2");
