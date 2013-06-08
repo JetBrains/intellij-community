@@ -163,7 +163,7 @@ public class UI_ControllerImpl implements UI_Controller {
   }
 
   public void init() {
-    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading...", false) {
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         dataLoader = new DataLoaderImpl(UI_ControllerImpl.this.myProject, commitDataCache, myLogProvider);
 
@@ -310,7 +310,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
   @Override
   public void readNextPart() {
-    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading...", false) {
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           dataLoader.readNextPart(indicator, rebaseDelegate.getFakeCommitsInfo(), myRoot);
