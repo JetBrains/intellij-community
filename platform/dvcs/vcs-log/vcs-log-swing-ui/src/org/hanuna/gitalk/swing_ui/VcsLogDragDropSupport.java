@@ -26,6 +26,8 @@ import java.util.List;
 /**
  * @author Kirill Likhodedov
  */
+// may be reused when interactivity will be added to the log
+@SuppressWarnings("UnusedDeclaration")
 public class VcsLogDragDropSupport {
 
   private final UI_Controller myUiController;
