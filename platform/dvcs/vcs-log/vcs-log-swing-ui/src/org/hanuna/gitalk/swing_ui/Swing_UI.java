@@ -10,9 +10,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
-import org.hanuna.gitalk.swing_ui.frame.ProgressFrame;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +27,6 @@ import java.util.List;
  * @author erokhins
  */
 public class Swing_UI {
-  private final ErrorModalDialog errorFrame = new ErrorModalDialog("error");
-  private final ProgressFrame progressFrame = new ProgressFrame("Begin load");
   private final DragDropListener myDragDropListener = new SwingDragDropListener();
   private final UI_Controller ui_controller;
   private final DragDropConditions myConditions = new DragDropConditions();

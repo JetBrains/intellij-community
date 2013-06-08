@@ -41,8 +41,6 @@ import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModelImpl;
-import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableModel;
-import org.jdesktop.swingx.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +60,6 @@ public class UI_ControllerImpl implements UI_Controller {
 
   private DataPack dataPack;
   private DataPackUtils dataPackUtils;
-  private RefTreeTableModel refTableModel;
   private RefTreeModel refTreeModel;
 
   private GraphTableModel graphTableModel;
@@ -143,7 +140,6 @@ public class UI_ControllerImpl implements UI_Controller {
   private void dataInit() {
     dataPack = dataLoader.getDataPack();
     refTreeModel = new RefTreeModelImpl(dataPack.getRefsModel());
-    refTableModel = new RefTreeTableModel(refTreeModel);
     graphTableModel = new GraphTableModel(dataPack);
     dataPackUtils = new DataPackUtils(dataPack);
 
@@ -215,12 +211,6 @@ public class UI_ControllerImpl implements UI_Controller {
   @NotNull
   public TableModel getGraphTableModel() {
     return graphTableModel;
-  }
-
-  @Override
-  @NotNull
-  public TreeTableModel getRefsTreeTableModel() {
-    return refTableModel;
   }
 
   @Override

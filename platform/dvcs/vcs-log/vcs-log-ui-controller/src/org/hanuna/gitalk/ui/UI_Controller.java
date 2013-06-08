@@ -38,8 +38,6 @@ public interface UI_Controller {
 
   public void updateVisibleBranches();
 
-  public TreeTableModel getRefsTreeTableModel();
-
   public RefTreeModel getRefTreeModel();
 
   public void doubleClick(int rowIndex);
