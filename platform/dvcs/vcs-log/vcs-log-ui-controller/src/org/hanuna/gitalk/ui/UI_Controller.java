@@ -2,14 +2,12 @@ package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
-import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
+import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.GraphElement;
-import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
-import org.jdesktop.swingx.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +35,6 @@ public interface UI_Controller {
   public void setLongEdgeVisibility(boolean visibility);
 
   public void updateVisibleBranches();
-
-  public RefTreeModel getRefTreeModel();
 
   public void doubleClick(int rowIndex);
 

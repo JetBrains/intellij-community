@@ -214,11 +214,6 @@ public class UI_ControllerImpl implements UI_Controller {
   }
 
   @Override
-  public RefTreeModel getRefTreeModel() {
-    return refTreeModel;
-  }
-
-  @Override
   public void over(@Nullable GraphElement graphElement) {
     SelectController selectController = dataPack.getPrintCellModel().getSelectController();
     FragmentManager fragmentManager = dataPack.getGraphModel().getFragmentManager();

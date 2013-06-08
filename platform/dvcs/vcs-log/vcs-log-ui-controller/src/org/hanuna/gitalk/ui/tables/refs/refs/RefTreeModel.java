@@ -9,8 +9,6 @@ import java.util.Set;
  */
 public interface RefTreeModel {
 
-  public RefTreeTableNode getRootNode();
-
   public Set<Hash> getCheckedCommits();
 
   public void inverseSelectCommit(Set<Hash> commits);
