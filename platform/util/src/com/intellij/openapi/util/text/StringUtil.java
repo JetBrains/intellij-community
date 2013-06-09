@@ -1280,6 +1280,16 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
+  public static String formatDuration(long duration) {
+    final long minutes = duration / 60000;
+    final long seconds = ((duration + 500L) % 60000) / 1000;
+    if (minutes > 0L) {
+      return minutes + " min " + seconds + " sec";
+    }
+    return seconds + " sec";
+  }
+
+  @NotNull
   private static String formatMinor(long number) {
     if (number > 0L && number <= 9L) {
       return "0" + number;
