@@ -1409,6 +1409,8 @@
                                      implementation="org.jetbrains.plugins.groovy.debugger.GroovyPositionManagerFactory"/>
     <debugger.positionManagerFactory order="after groovyPositionManager"
                                      implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
+    <codeStyle.ReferenceAdjusterFactory language="Groovy"
+                                        implementationClass="org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjusterFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

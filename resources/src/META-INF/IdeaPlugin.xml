@@ -139,6 +139,10 @@
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="codeStyle.ReferenceAdjusterFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.ReferenceAdjusterFactory"/>
+    </extensionPoint>
+
     <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
 
     <extensionPoint name="refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
@@ -925,6 +929,8 @@
     <lang.smartEnterProcessor language="JAVA"
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
+
+    <codeStyle.ReferenceAdjusterFactory language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjusterFactory"/>
 
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
