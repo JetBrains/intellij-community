@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
-import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -36,7 +36,7 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 5/13/13 4:18 PM
  */
-public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTaskPojo> {
+public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTaskExecutionInfo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
@@ -162,7 +162,7 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
 
   @Nullable
   @Override
-  public ExternalTaskPojo produce() {
+  public ExternalTaskExecutionInfo produce() {
     TreePath selectionPath = getLeadSelectionPath();
     if (selectionPath == null) {
       return null;
@@ -173,6 +173,6 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
     }
 
     Object element = ((ExternalSystemNode)component).getDescriptor().getElement();
-    return element instanceof ExternalTaskPojo ? ((ExternalTaskPojo)element) : null;
+    return element instanceof ExternalTaskExecutionInfo ? ((ExternalTaskExecutionInfo)element) : null;
   }
 }

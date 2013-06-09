@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
+ * a user opens run configuration editor for corresponding external system.
+ * 
  * @author Denis Zhdanov
  * @since 24.05.13 12:20
  */

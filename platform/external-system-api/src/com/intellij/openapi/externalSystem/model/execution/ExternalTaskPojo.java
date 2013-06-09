@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model.serialization;
+package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents {@link TaskData} at the ide side. Is required purely for IJ serialization because {@link TaskData} has only final
+ * fields which are initialized at constructor and ide serialization is not capable to handle such scenario properly.
+ * 
  * @author Denis Zhdanov
  * @since 5/18/13 11:28 PM
  */
@@ -29,28 +32,22 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   @NotNull private String myLinkedExternalProjectPath;
   
   @Nullable private String myDescription;
-  @Nullable private String myExecutorId;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalTaskPojo() {
     // Required for IJ serialization.
-    this("___DUMMY___", "___DUMMY___", null, null);
+    this("___DUMMY___", "___DUMMY___", null);
   }
 
-  public ExternalTaskPojo(@NotNull String name,
-                          @NotNull String linkedExternalProjectPath,
-                          @Nullable String description,
-                          @Nullable String executorId)
-  {
+  public ExternalTaskPojo(@NotNull String name, @NotNull String linkedExternalProjectPath, @Nullable String description) {
     myName = name;
     myLinkedExternalProjectPath = linkedExternalProjectPath;
     myDescription = description;
-    myExecutorId = executorId;
   }
 
   @NotNull
   public static ExternalTaskPojo from(@NotNull TaskData data) {
-    return new ExternalTaskPojo(data.getName(), data.getLinkedExternalProjectPath(), data.getDescription(), null);
+    return new ExternalTaskPojo(data.getName(), data.getLinkedExternalProjectPath(), data.getDescription());
   }
   
   @NotNull
@@ -82,24 +79,10 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
     myLinkedExternalProjectPath = linkedExternalProjectPath;
   }
 
-  @Nullable
-  public String getExecutorId() {
-    return myExecutorId;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setExecutorId(@Nullable String executorId) {
-    // Required for IJ serialization.
-    myExecutorId = executorId;
-  }
-
   @Override
   public int hashCode() {
     int result = myName.hashCode();
     result = 31 * result + myLinkedExternalProjectPath.hashCode();
-    if (myExecutorId != null) {
-      result = 31 * result + myExecutorId.hashCode();
-    }
     return result;
   }
 
@@ -112,7 +95,8 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
 
     if (!myLinkedExternalProjectPath.equals(that.myLinkedExternalProjectPath)) return false;
     if (!myName.equals(that.myName)) return false;
-    return myExecutorId == null ? that.myExecutorId == null : myExecutorId.equals(that.myExecutorId);
+    
+    return true;
   }
 
   @Override

@@ -15,14 +15,11 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
-import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,15 +28,15 @@ import java.util.List;
  */
 public class ExternalSystemRecentTaskListModel extends DefaultListModel {
 
-  public void setTasks(@NotNull List<ExternalTaskPojo> tasks) {
+  public void setTasks(@NotNull List<ExternalTaskExecutionInfo> tasks) {
     clear();
-    List<ExternalTaskPojo> tasksToUse = ContainerUtilRt.newArrayList(tasks);
-    for (ExternalTaskPojo descriptor : tasksToUse) {
-      addElement(descriptor);
+    List<ExternalTaskExecutionInfo> tasksToUse = ContainerUtilRt.newArrayList(tasks);
+    for (ExternalTaskExecutionInfo task : tasksToUse) {
+      addElement(task);
     }
   }
 
-  public void setFirst(@NotNull ExternalTaskPojo task) {
+  public void setFirst(@NotNull ExternalTaskExecutionInfo task) {
     insertElementAt(task, 0);
     for (int i = 1; i < size(); i++) {
       if (task.equals(getElementAt(i))) {
@@ -54,12 +51,12 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
   }
 
   @NotNull
-  public List<ExternalTaskPojo> getTasks() {
-    List<ExternalTaskPojo> result = ContainerUtilRt.newArrayList();
+  public List<ExternalTaskExecutionInfo> getTasks() {
+    List<ExternalTaskExecutionInfo> result = ContainerUtilRt.newArrayList();
     for (int i = 0; i < size(); i++) {
       Object e = getElementAt(i);
-      if (e instanceof ExternalTaskPojo) {
-        result.add((ExternalTaskPojo)e);
+      if (e instanceof ExternalTaskExecutionInfo) {
+        result.add((ExternalTaskExecutionInfo)e);
       }
     }
     return result;

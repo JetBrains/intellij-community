@@ -11,9 +11,6 @@
     </group>
 
     <!--Context menu action-->
-    <action id="ExternalSystem.RunTask"
-            class="com.intellij.openapi.externalSystem.action.RunExternalTaskAction"
-            icon="AllIcons.Toolwindows.ToolWindowRun"/>
     <group id="ExternalSystem.Tree.Context" popup="true">
       <reference ref="RunContextGroup"/>
     </group>

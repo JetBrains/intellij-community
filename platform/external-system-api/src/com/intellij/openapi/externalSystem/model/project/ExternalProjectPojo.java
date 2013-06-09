@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model.serialization;
+package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
-import com.intellij.openapi.externalSystem.model.project.Named;
 import org.jetbrains.annotations.NotNull;
 
 /**
