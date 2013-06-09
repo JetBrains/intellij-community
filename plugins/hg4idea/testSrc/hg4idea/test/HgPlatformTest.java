@@ -23,6 +23,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.File;
@@ -123,7 +124,21 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     cd(myChildRepo);
     hg("pull");
     hg("update");
+    File childHgrc = new File(new File(myChildRepo.getPath(), ".hg"), "hgrc");
+    switchOffMergeExternalTool(childHgrc);
     HgTestUtil.updateDirectoryMappings(myProject, myRepository);
     HgTestUtil.updateDirectoryMappings(myProject, myChildRepo);
+  }
+
+  /**
+   * External merge tools should be switched off to reproduce conflict situations.
+   * For Linux there are default merge tool.
+   *
+   * @param hgrcFile file to modify
+   * @throws IOException
+   */
+  public static void switchOffMergeExternalTool(@NotNull File hgrcFile) throws IOException {
+    FileUtil.appendToFile(hgrcFile, "[merge-patterns]\n" +
+                                    "** = internal:merge\n");
   }
 }
