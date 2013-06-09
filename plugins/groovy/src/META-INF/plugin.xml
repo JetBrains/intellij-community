@@ -212,6 +212,9 @@
     <safeDelete.importSearcher implementation="org.jetbrains.plugins.groovy.refactoring.safeDelete.GroovyImportSearcher"/>
     <refactoring.safeDelete.JavaSafeDeleteDelegate implementationClass="org.jetbrains.plugins.groovy.refactoring.safeDelete.JavaSafeDeleteDelegateForGroovy" language="Groovy"/>
 
+    <encapsulateFields.Helper language="Groovy"
+                              implementationClass="org.jetbrains.plugins.groovy.refactoring.encapsulateFields.GroovyEncapsulateFieldHelper"/>
+
     <constantExpressionEvaluator language="Groovy"
                                  implementationClass="org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator"/>
     <annotationSupport language="Groovy"

@@ -60,6 +60,18 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myClass = descriptor.getTargetClass();
   }
 
+  public static void setNewFieldVisibility(PsiField field, EncapsulateFieldsDescriptor descriptor) {
+    try {
+      if (descriptor.getFieldsVisibility() != null) {
+        field.normalizeDeclaration();
+        PsiUtil.setModifierProperty(field, descriptor.getFieldsVisibility(), true);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     FieldDescriptor[] fields = new FieldDescriptor[myFieldDescriptors.length];
@@ -223,7 +235,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     if (myDescriptor.getFieldsVisibility() == null) return;
 
     for (FieldDescriptor descriptor : myFieldDescriptors) {
-      JavaEncapsulateFieldHelper.setNewFieldVisibility(descriptor.getField(), myDescriptor);
+      setNewFieldVisibility(descriptor.getField(), myDescriptor);
     }
   }
 

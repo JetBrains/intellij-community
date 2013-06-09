@@ -54,16 +54,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
       if (!PsiUtil.isAccessedForReading(ref)) return null;
     }
     if (!descriptor.isToUseAccessorsWhenAccessible()) {
-      PsiModifierList newModifierList = null;
-      PsiElementFactory factory = JavaPsiFacade.getInstance(descriptor.getTargetClass().getProject()).getElementFactory();
-      try {
-        PsiField field = factory.createField("a", PsiType.INT);
-        setNewFieldVisibility(field, descriptor);
-        newModifierList = field.getModifierList();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      PsiModifierList newModifierList = createNewModifierList(descriptor);
 
       PsiClass accessObjectClass = null;
       PsiExpression qualifier = ref.getQualifierExpression();
@@ -75,23 +66,24 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
         return null;
       }
     }
-    EncapsulateFieldUsageInfo usageInfo = new EncapsulateFieldUsageInfo(ref, fieldDescriptor);
-    return usageInfo;
+    return new EncapsulateFieldUsageInfo(ref, fieldDescriptor);
   }
 
-  static void setNewFieldVisibility(PsiField field, EncapsulateFieldsDescriptor descriptor) {
+  public static PsiModifierList createNewModifierList(EncapsulateFieldsDescriptor descriptor) {
+    PsiModifierList newModifierList = null;
+    PsiElementFactory factory = JavaPsiFacade.getInstance(descriptor.getTargetClass().getProject()).getElementFactory();
     try {
-      if (descriptor.getFieldsVisibility() != null) {
-        field.normalizeDeclaration();
-        PsiUtil.setModifierProperty(field, descriptor.getFieldsVisibility(), true);
-      }
+      PsiField field = factory.createField("a", PsiType.INT);
+      EncapsulateFieldsProcessor.setNewFieldVisibility(field, descriptor);
+      newModifierList = field.getModifierList();
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    return newModifierList;
   }
 
-  private static boolean isUsedInExistingAccessor(PsiClass aClass, PsiMethod prototype, PsiElement element) {
+  public static boolean isUsedInExistingAccessor(PsiClass aClass, PsiMethod prototype, PsiElement element) {
     PsiMethod existingAccessor = aClass.findMethodBySignature(prototype, false);
     if (existingAccessor != null) {
       PsiElement parent = element;
