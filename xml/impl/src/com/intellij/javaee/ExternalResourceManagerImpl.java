@@ -109,11 +109,12 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     myPathMacros = pathMacros;
   }
 
-  public static boolean isStandardResource(VirtualFile file) {
+  public boolean isStandardResource(VirtualFile file) {
     VirtualFile parent = file.getParent();
     return parent != null && parent.getName().equals("standardSchemas");
   }
 
+  @Override
   public boolean isUserResource(VirtualFile file) {
     return myResourceLocations.contains(file.getUrl());
   }

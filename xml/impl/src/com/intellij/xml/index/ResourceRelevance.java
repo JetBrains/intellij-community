@@ -16,7 +16,7 @@
 package com.intellij.xml.index;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.javaee.ExternalResourceManagerImpl;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,11 +54,11 @@ public enum ResourceRelevance {
     else if (fileIndex.isInLibraryClasses(resource)) {
       return LIBRARY;
     }
-    ExternalResourceManagerImpl resourceManager = (ExternalResourceManagerImpl)ExternalResourceManager.getInstance();
+    ExternalResourceManagerEx resourceManager = (ExternalResourceManagerEx)ExternalResourceManager.getInstance();
     if (resourceManager.isUserResource(resource)) {
       return MAPPED;
     }
-    if (ExternalResourceManagerImpl.isStandardResource(resource)) {
+    if (resourceManager.isStandardResource(resource)) {
       return STANDARD;
     }
     return NONE;

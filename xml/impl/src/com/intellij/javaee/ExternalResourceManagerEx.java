@@ -16,6 +16,7 @@
 package com.intellij.javaee;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,9 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract void addExternalResourceListener(ExternalResourceListener listener);
 
   public abstract void removeExternalResourceListener(ExternalResourceListener listener);
+
+  public abstract boolean isUserResource(VirtualFile file);
+  public abstract boolean isStandardResource(VirtualFile file);
 
   @Nullable
   public abstract String getUserResource(Project project, String url, String version);
