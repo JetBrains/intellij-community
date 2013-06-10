@@ -19,6 +19,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,6 +126,7 @@ public class PythonSdkUpdater implements StartupActivity {
   private static void updateSysPath(final Sdk sdk) throws InvalidSdkException {
     long start_time = System.currentTimeMillis();
     final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
+    sysPath.add(PyUserSkeletonsUtil.getUserSkeletonsPath());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
