@@ -32,7 +32,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenc
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlBundle;
-import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import org.apache.xerces.xni.XMLResourceIdentifier;
 import org.apache.xerces.xni.XNIException;
@@ -62,9 +63,9 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private boolean myStopOnUnDeclaredResource;
   @NonNls
   public static final String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";
-  private final ValidateXmlActionHandler.ErrorReporter myErrorReporter;
+  private final ErrorReporter myErrorReporter;
 
-  public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ValidateXmlActionHandler.ErrorReporter errorReporter) {
+  public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ErrorReporter errorReporter) {
     myFile = _xmlFile;
     myProject = _project;
     myErrorReporter = errorReporter;

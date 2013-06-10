@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xml.actions;
+package com.intellij.xml.actions.validate;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,8 +38,7 @@ public class ValidateXmlAction extends AnAction {
   private ValidateXmlActionHandler getHandler(final @NotNull PsiFile file) {
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
     handler.setErrorReporter(
-      handler.new StdErrorReporter(
-        file.getProject(),
+      new StdErrorReporter(handler, file.getProject(),
         new Runnable() {
           public void run() {
             doRunAction(file);

@@ -13,31 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xml.actions;
+package com.intellij.xml.actions.validate;
 
-import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.javaee.UriUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
-import com.intellij.ui.content.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ErrorTreeView;
-import com.intellij.util.ui.MessageCategory;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.util.XmlResourceResolver;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.jaxp.JAXPConstants;
@@ -52,22 +41,17 @@ import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.swing.*;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.FileNotFoundException;
 import java.io.StringReader;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.Future;
+import java.util.Arrays;
 
 /**
  * @author Mike
  */
 public class ValidateXmlActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.ValidateXmlAction");
-  private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.ValidateXmlAction");
   @NonNls private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
 
@@ -110,49 +94,7 @@ public class ValidateXmlActionHandler {
 
   public enum ProblemType { WARNING, ERROR, FATAL }
 
-  public abstract class ErrorReporter {
-    protected final Set<String> ourErrorsSet = new HashSet<String>();
-    public abstract void processError(SAXParseException ex, ProblemType warning) throws SAXException;
-
-    public boolean filterValidationException(Exception ex) {
-      if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
-      if (ex instanceof XmlResourceResolver.IgnoredResourceException) throw (XmlResourceResolver.IgnoredResourceException)ex;
-
-      if (ex instanceof FileNotFoundException ||
-            ex instanceof MalformedURLException ||
-            ex instanceof NoRouteToHostException ||
-            ex instanceof SocketTimeoutException ||
-            ex instanceof UnknownHostException ||
-            ex instanceof ConnectException
-            ) {
-        // do not log problems caused by malformed and/or ignored external resources
-        return true;
-      }
-
-      if (ex instanceof NullPointerException) {
-        return true; // workaround for NPE at org.apache.xerces.impl.dtd.XMLDTDProcessor.checkDeclaredElements
-      }
-
-      return false;
-    }
-
-    public void startProcessing() {
-      doParse();
-    }
-
-    public boolean isStopOnUndeclaredResource() {
-      return false;
-    }
-
-    public boolean isUniqueProblem(final SAXParseException e) {
-      String error = buildMessageString(e);
-      if (ourErrorsSet.contains(error)) return false;
-      ourErrorsSet.add(error);
-      return true;
-    }
-  }
-
-  private String buildMessageString(SAXParseException ex) {
+  public String buildMessageString(SAXParseException ex) {
     String msg = "(" + ex.getLineNumber() + ":" + ex.getColumnNumber() + ") " + ex.getMessage();
     final VirtualFile file = getFile(ex.getPublicId(), ex.getSystemId());
 
@@ -160,194 +102,6 @@ public class ValidateXmlActionHandler {
       msg = file.getName() + ":" + msg;
     }
     return msg;
-  }
-
-  public class TestErrorReporter extends ErrorReporter {
-    private final ArrayList<String> errors = new ArrayList<String>(3);
-
-    public boolean isStopOnUndeclaredResource() {
-      return true;
-    }
-
-    public boolean filterValidationException(final Exception ex) {
-      if (ex instanceof XmlResourceResolver.IgnoredResourceException) throw (XmlResourceResolver.IgnoredResourceException)ex;
-      return errors.add(ex.getMessage());
-    }
-
-    public void processError(SAXParseException ex, ProblemType warning) {
-      errors.add(buildMessageString(ex));
-    }
-
-    public List<String> getErrors() {
-      return errors;
-    }
-  }
-
-  class StdErrorReporter extends ErrorReporter {
-    private final NewErrorTreeViewPanel myErrorsView;
-    private final String CONTENT_NAME = XmlBundle.message("xml.validate.tab.content.title");
-    private boolean myErrorsDetected = false;
-
-    StdErrorReporter(Project project, Runnable rerunAction) {
-      myErrorsView = new NewErrorTreeViewPanel(project, null, true, true, rerunAction);
-    }
-
-    public void startProcessing() {
-      final Runnable task = new Runnable() {
-        public void run() {
-          try {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                StdErrorReporter.super.startProcessing();
-              }
-            });
-
-            SwingUtilities.invokeLater(
-              new Runnable() {
-                  public void run() {
-                    if (!myErrorsDetected) {
-                      SwingUtilities.invokeLater(
-                          new Runnable() {
-                            public void run() {
-                              removeCompileContents(null);
-                              WindowManager.getInstance().getStatusBar(myProject).setInfo(
-                                XmlBundle.message("xml.validate.no.errors.detected.status.message"));
-                            }
-                          }
-                      );
-                    }
-                  }
-                }
-            );
-          }
-          finally {
-            boolean b = Thread.interrupted(); // reset interrupted
-          }
-        }
-      };
-
-      final MyProcessController processController = new MyProcessController();
-      myErrorsView.setProcessController(processController);
-      openMessageView();
-      processController.setFuture( ApplicationManager.getApplication().executeOnPooledThread(task) );
-
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
-    }
-
-    private void openMessageView() {
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      commandProcessor.executeCommand(
-          myProject, new Runnable() {
-            public void run() {
-              MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-              final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
-              content.putUserData(KEY, myErrorsView);
-              messageView.getContentManager().addContent(content);
-              messageView.getContentManager().setSelectedContent(content);
-              messageView.getContentManager().addContentManagerListener(new CloseListener(content, messageView.getContentManager()));
-              removeCompileContents(content);
-              messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
-            }
-          },
-          XmlBundle.message("validate.xml.open.message.view.command.name"),
-          null
-      );
-    }
-    private void removeCompileContents(Content notToRemove) {
-      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-
-      for (Content content : messageView.getContentManager().getContents()) {
-        if (content.isPinned()) continue;
-        if (CONTENT_NAME.equals(content.getDisplayName()) && content != notToRemove) {
-          ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-          if (listErrorView != null) {
-            if (messageView.getContentManager().removeContent(content, true)) {
-              content.release();
-            }
-          }
-        }
-      }
-    }
-
-    public void processError(final SAXParseException ex, final ProblemType problemType) {
-      if (LOG.isDebugEnabled()) {
-        String error = buildMessageString(ex);
-        LOG.debug("enter: processError(error='" + error + "')");
-      }
-
-      myErrorsDetected = true;
-
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        SwingUtilities.invokeLater(
-            new Runnable() {
-              public void run() {
-                final VirtualFile file = getFile(ex.getPublicId(), ex.getSystemId());
-                myErrorsView.addMessage(
-                    problemType == ProblemType.WARNING ? MessageCategory.WARNING : MessageCategory.ERROR,
-                    new String[]{ex.getLocalizedMessage()},
-                    file,
-                    ex.getLineNumber() - 1,
-                    ex.getColumnNumber() - 1,
-                    null
-                );
-              }
-            }
-        );
-      }
-    }
-
-    private class CloseListener extends ContentManagerAdapter {
-      private Content myContent;
-      private final ContentManager myContentManager;
-
-      public CloseListener(Content content, ContentManager contentManager) {
-        myContent = content;
-        myContentManager = contentManager;
-      }
-
-      public void contentRemoved(ContentManagerEvent event) {
-        if (event.getContent() == myContent) {
-          myErrorsView.stopProcess();
-
-          myContentManager.removeContentManagerListener(this);
-          myContent.release();
-          myContent = null;
-        }
-      }
-
-      public void contentRemoveQuery(ContentManagerEvent event) {
-        if (event.getContent() == myContent) {
-          if (!myErrorsView.isProcessStopped()) {
-            int result = Messages.showYesNoDialog(
-              XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.text"),
-              XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.title"),
-                Messages.getQuestionIcon()
-            );
-            if (result != 0) {
-              event.consume();
-            }
-          }
-        }
-      }
-    }
-
-    private class MyProcessController implements NewErrorTreeViewPanel.ProcessController {
-      private Future<?> myFuture;
-
-      public void setFuture(Future<?> future) {
-        myFuture = future;
-      }
-
-      public void stopProcess() {
-        if (myFuture != null) {
-          myFuture.cancel(true);
-        }
-      }
-
-      public boolean isProcessStopped() {
-        return myFuture != null && myFuture.isDone();
-      }
-    }
   }
 
   public void doValidate(XmlFile file) {
@@ -382,7 +136,7 @@ public class ValidateXmlActionHandler {
     }
   }
 
-  private void doParse() {
+  public void doParse() {
     try {
       myParser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
         public void warning(SAXParseException e) throws SAXException {
@@ -589,34 +343,4 @@ public class ValidateXmlActionHandler {
 
     return false;
   }
-  private static class MyContentDisposer implements ContentManagerListener {
-    private final Content myContent;
-    private final MessageView myMessageView;
-
-    public MyContentDisposer(final Content content, final MessageView messageView) {
-      myContent = content;
-      myMessageView = messageView;
-    }
-
-    public void contentRemoved(ContentManagerEvent event) {
-      final Content eventContent = event.getContent();
-      if (!eventContent.equals(myContent)) {
-        return;
-      }
-      myMessageView.getContentManager().removeContentManagerListener(this);
-      NewErrorTreeViewPanel errorTreeView = eventContent.getUserData(KEY);
-      if (errorTreeView != null) {
-        errorTreeView.dispose();
-      }
-      eventContent.putUserData(KEY, null);
-    }
-
-    public void contentAdded(ContentManagerEvent event) {
-    }
-    public void contentRemoveQuery(ContentManagerEvent event) {
-    }
-    public void selectionChanged(ContentManagerEvent event) {
-    }
-  }
-
 }

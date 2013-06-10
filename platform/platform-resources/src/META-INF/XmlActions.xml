@@ -2,7 +2,7 @@
   <actions>
 
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
-      <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
+      <action id="ValidateXml" class="com.intellij.xml.actions.validate.ValidateXmlAction"/>
       <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
       <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction" text="Generate XSD Schema from XML File..."/>
       <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction" text="Generate XML Document from XSD Schema..."/>
