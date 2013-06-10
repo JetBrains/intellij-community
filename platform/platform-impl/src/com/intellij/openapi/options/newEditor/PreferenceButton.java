@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -72,6 +73,7 @@ public class PreferenceButton extends JComponent {
     x = (getWidth() - insets.left - insets.right - metrics.stringWidth(myLabel)) / 2;
     y += 1.5 * metrics.getHeight();
     g.setColor(UIUtil.getLabelForeground());
+    GraphicsUtil.setupAAPainting(g);
     g.drawString(myLabel, x, y);
   }
 }
