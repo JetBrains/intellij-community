@@ -23,7 +23,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -614,5 +613,5 @@ public class HtmlParsing {
     myBuilder.error(message);
   }
 
-  private static final int MAGIC_FRAME_COUNT = IndentHelperImpl.TOO_BIG_WALK_THRESHOLD + (int)(Math.pow(Math.E, Math.PI) * Math.sin(Math.random()));
+  private static final int MAGIC_FRAME_COUNT = 450;
 }
