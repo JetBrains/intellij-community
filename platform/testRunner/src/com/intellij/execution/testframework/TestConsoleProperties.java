@@ -55,6 +55,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   private final Executor myExecutor;
   private ConsoleView myConsole;
   private boolean myUsePredefinedMessageFilter = true;
+  private GlobalSearchScope myScope;
 
   protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners =
     new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();
@@ -70,6 +71,13 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public GlobalSearchScope getScope() {
+    if (myScope == null) {
+      myScope = initScope();
+    }
+    return myScope;
+  }
+
+  protected GlobalSearchScope initScope() {
     Module[] modules = getConfiguration().getModules();
     if (modules.length == 0) return GlobalSearchScope.allScope(myProject);
 
