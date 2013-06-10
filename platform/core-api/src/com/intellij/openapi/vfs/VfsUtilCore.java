@@ -421,6 +421,63 @@ public class VfsUtilCore {
     return ideaUrl;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
+  public static VirtualFile findRelativeFile(@NotNull String uri, @Nullable VirtualFile base) {
+    if (base != null) {
+      if (!base.isValid()){
+        LOG.error("Invalid file name: " + base.getName() + ", url: " + uri);
+      }
+    }
+
+    uri = uri.replace('\\', '/');
+
+    if (uri.startsWith("file:///")) {
+      uri = uri.substring("file:///".length());
+      if (!SystemInfo.isWindows) uri = "/" + uri;
+    }
+    else if (uri.startsWith("file:/")) {
+      uri = uri.substring("file:/".length());
+      if (!SystemInfo.isWindows) uri = "/" + uri;
+    }
+    else if (uri.startsWith("file:")) {
+      uri = uri.substring("file:".length());
+    }
+
+    VirtualFile file = null;
+
+    if (uri.startsWith("jar:file:/")) {
+      uri = uri.substring("jar:file:/".length());
+      if (!SystemInfo.isWindows) uri = "/" + uri;
+      file = VirtualFileManager.getInstance().findFileByUrl(StandardFileSystems.JAR_PROTOCOL_PREFIX + uri);
+    }
+    else {
+      if (!SystemInfo.isWindows && StringUtil.startsWithChar(uri, '/')) {
+        file = StandardFileSystems.local().findFileByPath(uri);
+      }
+      else if (SystemInfo.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
+        file = StandardFileSystems.local().findFileByPath(uri);
+      }
+    }
+
+    if (file == null && uri.contains(StandardFileSystems.JAR_SEPARATOR)) {
+      file = StandardFileSystems.jar().findFileByPath(uri);
+      if (file == null && base == null) {
+        file = VirtualFileManager.getInstance().findFileByUrl(uri);
+      }
+    }
+
+    if (file == null) {
+      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
+      if (!base.isDirectory()) base = base.getParent();
+      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
+      file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
+      if (file == null) return null;
+    }
+
+    return file;
+  }
+
   /**
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */

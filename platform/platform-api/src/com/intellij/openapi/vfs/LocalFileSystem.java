@@ -35,7 +35,7 @@ import static java.util.Collections.singleton;
 
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
-  @NonNls public static final String PROTOCOL_PREFIX = PROTOCOL + "://";
+  @NonNls public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
 
   @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LocalFileSystemHolder {

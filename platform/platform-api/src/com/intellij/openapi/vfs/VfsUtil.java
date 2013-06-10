@@ -261,63 +261,6 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  @Nullable
-  public static VirtualFile findRelativeFile(@NotNull String uri, @Nullable VirtualFile base) {
-    if (base != null) {
-      if (!base.isValid()){
-        LOG.error("Invalid file name: " + base.getName() + ", url: " + uri);
-      }
-    }
-
-    uri = uri.replace('\\', '/');
-
-    if (uri.startsWith("file:///")) {
-      uri = uri.substring("file:///".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
-    }
-    else if (uri.startsWith("file:/")) {
-      uri = uri.substring("file:/".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
-    }
-    else if (uri.startsWith("file:")) {
-      uri = uri.substring("file:".length());
-    }
-
-    VirtualFile file = null;
-
-    if (uri.startsWith("jar:file:/")) {
-      uri = uri.substring("jar:file:/".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
-      file = VirtualFileManager.getInstance().findFileByUrl(JarFileSystem.PROTOCOL_PREFIX + uri);
-    }
-    else {
-      if (!SystemInfo.isWindows && StringUtil.startsWithChar(uri, '/')) {
-        file = LocalFileSystem.getInstance().findFileByPath(uri);
-      }
-      else if (SystemInfo.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
-        file = LocalFileSystem.getInstance().findFileByPath(uri);
-      }
-    }
-
-    if (file == null && uri.contains(JarFileSystem.JAR_SEPARATOR)) {
-      file = JarFileSystem.getInstance().findFileByPath(uri);
-      if (file == null && base == null) {
-        file = VirtualFileManager.getInstance().findFileByUrl(uri);
-      }
-    }
-
-    if (file == null) {
-      if (base == null) return LocalFileSystem.getInstance().findFileByPath(uri);
-      if (!base.isDirectory()) base = base.getParent();
-      if (base == null) return LocalFileSystem.getInstance().findFileByPath(uri);
-      file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
-      if (file == null) return null;
-    }
-
-    return file;
-  }
-
   @NonNls private static final String MAILTO = "mailto";
 
   /**
