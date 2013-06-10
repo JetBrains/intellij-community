@@ -108,7 +108,7 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
 
           boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
           LocalQuickFix[] quickfixes = new LocalQuickFix[maySwitchToHtml5 ? 3 : 2];
-          quickfixes[0] = new AddCustomTagOrAttributeIntentionAction(ATTRIBUTE_KEY, name, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
+          quickfixes[0] = new AddCustomTagOrAttributeIntentionAction(ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.attribute", name));
           quickfixes[1] = new RemoveAttributeIntentionAction(name);
           if (maySwitchToHtml5) {
             quickfixes[2] = new SwitchToHtml5WithHighPriorityAction();

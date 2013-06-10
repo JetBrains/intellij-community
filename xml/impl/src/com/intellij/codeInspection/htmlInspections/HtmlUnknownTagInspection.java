@@ -235,7 +235,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool implements
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
         final AddCustomTagOrAttributeIntentionAction action =
-          new AddCustomTagOrAttributeIntentionAction(TAG_KEY, name, XmlEntitiesInspection.UNKNOWN_TAG);
+          new AddCustomTagOrAttributeIntentionAction(TAG_KEY, name, XmlBundle.message("add.custom.html.tag", name));
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)

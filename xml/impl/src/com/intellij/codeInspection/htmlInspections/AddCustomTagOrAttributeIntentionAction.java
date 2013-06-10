@@ -32,31 +32,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
   private final String myName;
-  private final int myType;
+  private final String myText;
   @NotNull private final Key<HtmlUnknownTagInspection> myInspectionKey;
 
-  public AddCustomTagOrAttributeIntentionAction(@NotNull Key<HtmlUnknownTagInspection> inspectionKey, String name, int type) {
+  public AddCustomTagOrAttributeIntentionAction(@NotNull Key<HtmlUnknownTagInspection> inspectionKey, String name, String text) {
     myInspectionKey = inspectionKey;
     myName = name;
-    myType = type;
+    myText = text;
   }
 
   @Override
   @NotNull
   public String getName() {
-    if (myType == XmlEntitiesInspection.UNKNOWN_TAG) {
-      return XmlBundle.message("add.custom.html.tag", myName);
-    }
-
-    if (myType == XmlEntitiesInspection.UNKNOWN_ATTRIBUTE) {
-      return XmlBundle.message("add.custom.html.attribute", myName);
-    }
-
-    if (myType == XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE) {
-      return XmlBundle.message("add.optional.html.attribute", myName);
-    }
-
-    return getFamilyName();
+    return myText;
   }
 
   @Override
