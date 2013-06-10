@@ -17,11 +17,15 @@ package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -60,7 +64,7 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
     if (icon == null) {
       icon = DefaultExternalSystemUiAware.INSTANCE.getTaskIcon();
     }
-    setCellRenderer(new MyRenderer(project, icon));
+    setCellRenderer(new MyRenderer(project, icon, ExternalSystemUtil.findConfigurationType(externalSystemId)));
     setVisibleRowCount(ExternalSystemConstants.RECENT_TASKS_NUMBER);
     model.ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
     
@@ -116,13 +120,15 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
   }
 
   private static class MyRenderer extends DefaultListCellRenderer {
-    
+
     @NotNull private final Icon myGenericTaskIcon;
     @NotNull private final Project myProject;
+    @Nullable private ConfigurationType myConfigurationType;
 
-    MyRenderer(@NotNull Project project, @NotNull Icon genericTaskIcon) {
+    MyRenderer(@NotNull Project project, @NotNull Icon genericTaskIcon, @Nullable ConfigurationType configurationType) {
       myProject = project;
       myGenericTaskIcon = genericTaskIcon;
+      myConfigurationType = configurationType;
     }
 
     @Override
@@ -133,7 +139,24 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
       }
       else if (value instanceof ExternalTaskExecutionInfo) {
         ExternalTaskExecutionInfo taskInfo = (ExternalTaskExecutionInfo)value;
-        setText(AbstractExternalSystemTaskConfigurationType.generateName(myProject, taskInfo.getSettings()));
+        String text = null;
+        if (myConfigurationType != null) {
+          RunConfiguration[] configurations = RunManager.getInstance(myProject).getConfigurations(myConfigurationType);
+          for (RunConfiguration configuration : configurations) {
+            if (!(configuration instanceof ExternalSystemRunConfiguration)) {
+              continue;
+            }
+            ExternalSystemRunConfiguration c = (ExternalSystemRunConfiguration)configuration;
+            if (c.getSettings().equals(taskInfo.getSettings())) {
+              text = c.getName();
+            }
+          }
+        }
+        if (StringUtil.isEmpty(text)) {
+          text = AbstractExternalSystemTaskConfigurationType.generateName(myProject, taskInfo.getSettings());
+        }
+        
+        setText(text);
         Icon icon = null;
         String executorId = taskInfo.getExecutorId();
         if (!StringUtil.isEmpty(executorId)) {
@@ -148,7 +171,7 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
         }
         setIcon(icon);
       }
-      
+
       return renderer;
     }
 
