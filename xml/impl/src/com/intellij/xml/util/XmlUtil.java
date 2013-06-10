@@ -15,7 +15,7 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -1166,7 +1166,7 @@ public class XmlUtil {
 
   public static String generateElementDTD(String name, List<String> tags, List<MyAttributeInfo> attributes) {
     if (name == null || "".equals(name)) return "";
-    if (name.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
+    if (name.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) return "";
 
     @NonNls final StringBuilder buffer = new StringBuilder();
     buffer.append("<!ELEMENT ").append(name).append(" ");
@@ -1199,7 +1199,7 @@ public class XmlUtil {
   }
 
   private static String generateAttributeDTD(MyAttributeInfo info) {
-    if (info.myName.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
+    if (info.myName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) return "";
     return info.myName + " " + "CDATA" + (info.myRequired ? " #REQUIRED" : " #IMPLIED");
   }
 
