@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -115,7 +115,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
               if (vFile == null) {
                 try {
-                  vFile = VfsUtil.findFileByURL(new URL(baseSystemId));
+                  vFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.convertFromUrl(new URL(baseSystemId)));
                 } catch(MalformedURLException ignore) {}
               }
             }
@@ -260,7 +260,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
     if (xmlResourceIdentifier.getLiteralSystemId() == null) {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        final String url = VfsUtil.fixIDEAUrl(virtualFile.getUrl());
+        final String url = VfsUtilCore.fixIDEAUrl(virtualFile.getUrl());
         source.setBaseSystemId(url);
         source.setSystemId(url);
       }

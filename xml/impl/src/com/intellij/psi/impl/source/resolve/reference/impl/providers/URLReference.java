@@ -9,7 +9,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -173,7 +173,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       // TODO: this should work!
       final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       assert virtualFile != null;
-      handleElementRename(VfsUtil.fixIDEAUrl(virtualFile.getPresentableUrl()));
+      handleElementRename(VfsUtilCore.fixIDEAUrl(virtualFile.getPresentableUrl()));
     }
     return myElement;
   }

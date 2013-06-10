@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StandardPatterns;
@@ -174,7 +173,7 @@ public class XmlUtil {
 
   static {
     final URL xhtml4SchemaLocationUrl = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "xhtml1-transitional.xsd");
-    XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm())));
+    XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.toIdeaUrl(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm()), false));
   }
 
   @Nullable
