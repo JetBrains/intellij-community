@@ -12,8 +12,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.xml.DefaultXmlTagNameProvider;
 import com.intellij.psi.impl.source.xml.TagNameReference;
+import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -81,7 +81,7 @@ public class JavaFxTagNameReference extends TagNameReference{
     final XmlTag xmlTag = (XmlTag)element;
 
     final List<XmlElementDescriptor>
-      variants = DefaultXmlTagNameProvider
+      variants = TagNameVariantCollector
       .<XmlElementDescriptor>getTagNameVariants(xmlTag, Arrays.asList(xmlTag.knownNamespaces()), new ArrayList<String>(), Function.ID);
     final List<LookupElement> elements = new ArrayList<LookupElement>(variants.size());
     for (XmlElementDescriptor descriptor : variants) {
