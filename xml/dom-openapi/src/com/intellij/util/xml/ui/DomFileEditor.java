@@ -114,6 +114,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   protected DomElement getSelectedDomElement() {
+    if (myComponent == null) return null;
     return DomUINavigationProvider.findDomElement(myComponent);
   }
 
