@@ -164,9 +164,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     myRemotes = config.parseRemotes();
     readRepository(myRemotes);
     myBranchTrackInfos = config.parseTrackInfos(myBranches.getLocalBranches(), myBranches.getRemoteBranches());
-    if (!Disposer.isDisposed(getProject()) && getMessageBus() != null) {
-      getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(this);
-    }
+    notifyListeners();
   }
 
   private void readRepository(@NotNull Collection<GitRemote> remotes) {
@@ -174,6 +172,12 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     myCurrentRevision = myReader.readCurrentRevision();
     myCurrentBranch = myReader.readCurrentBranch();
     myBranches = myReader.readBranches(remotes);
+  }
+
+  protected void notifyListeners() {
+    if (!Disposer.isDisposed(getProject())) {
+      getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(this);
+    }
   }
 
   @Override

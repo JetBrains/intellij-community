@@ -45,6 +45,9 @@ class GitTestInitUtil {
     // the constructor and notifyListeners() should probably be private
     // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
     GitRepository repository = new GitRepositoryImpl(new MockVirtualFile(rootDir), platformFacade, project, project, true) {
+      @Override
+      protected void notifyListeners() {
+      }
 
       @NotNull
       @Override

@@ -98,7 +98,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   public void update() {
     readRepository();
     if (!Disposer.isDisposed(getProject())) {
-      getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
+      getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
   }
 
