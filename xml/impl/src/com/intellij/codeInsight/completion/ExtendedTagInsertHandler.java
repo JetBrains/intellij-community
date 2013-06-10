@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlSchemaProvider;
@@ -77,8 +78,8 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
     caretMarker.setGreedyToRight(true);
 
-    final XmlExtension.Runner<String, IncorrectOperationException> runAfter =
-      new XmlExtension.Runner<String, IncorrectOperationException>() {
+    final XmlNamespaceHelper.Runner<String, IncorrectOperationException> runAfter =
+      new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
 
         public void run(final String namespacePrefix) {
 
@@ -98,7 +99,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
       final String prefixByNamespace = getPrefixByNamespace(file, myNamespace);
       if (myNamespacePrefix != null || StringUtil.isEmpty(prefixByNamespace)) {
         final String nsPrefix = myNamespacePrefix == null ? suggestPrefix(file, myNamespace) : myNamespacePrefix;
-        extension.insertNamespaceDeclaration(file, editor, Collections.singleton(myNamespace), nsPrefix, runAfter);
+        XmlNamespaceHelper.getHelper(file).insertNamespaceDeclaration(file, editor, Collections.singleton(myNamespace), nsPrefix, runAfter);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(XmlCompletionContributor.TAG_NAME_COMPLETION_FEATURE);
       } else {
         runAfter.run(prefixByNamespace);    // qualify && complete
@@ -144,7 +145,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   }
 
   protected Set<String> getNamespaces(final XmlFile file) {
-    return XmlExtension.getExtension(file).getNamespacesByTagName(myElementName, file);
+    return XmlNamespaceHelper.getHelper(file).getNamespacesByTagName(myElementName, file);
   }
 
   protected void qualifyWithPrefix(final String namespacePrefix, final PsiElement element, final Document document) {

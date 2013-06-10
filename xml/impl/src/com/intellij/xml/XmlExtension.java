@@ -20,8 +20,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
@@ -36,14 +34,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -76,11 +71,6 @@ public abstract class XmlExtension {
   @NotNull
   public abstract List<Pair<String,String>> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context);
 
-  @NotNull
-  public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
-  @NotNull
-  public abstract Set<String> guessUnboundNamespaces(@NotNull PsiElement element, final XmlFile file);
-
   @Nullable
   public TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
     return new TagNameReference(nameElement, startTagFlag);
@@ -89,44 +79,6 @@ public abstract class XmlExtension {
   @Nullable
   public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
     return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
-  }
-
-  public interface Runner<P, T extends Throwable> {
-    void run(P param) throws T;
-  }
-
-  public abstract void insertNamespaceDeclaration(@NotNull final XmlFile file,
-                                                    @Nullable final Editor editor,
-                                                    @NonNls @NotNull final Set<String> possibleNamespaces,
-                                                    @NonNls @Nullable final String nsPrefix,
-                                                    @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;
-
-  @Nullable
-  public String getNamespacePrefix(PsiElement element) {
-    final PsiElement tag = element instanceof XmlTag ? element : element.getParent();
-    if (tag instanceof XmlTag) {
-      return ((XmlTag)tag).getNamespacePrefix();
-    } else {
-      return null;
-    }
-  }
-
-  public boolean qualifyWithPrefix(final String namespacePrefix, final PsiElement element, final Document document) throws
-                                                                                                                 IncorrectOperationException {
-    final PsiElement tag = element instanceof XmlTag ? element : element.getParent();
-    if (tag instanceof XmlTag) {
-      final String prefix = ((XmlTag)tag).getNamespacePrefix();
-      if (!prefix.equals(namespacePrefix)) {
-        final String name = namespacePrefix + ":" + ((XmlTag)tag).getLocalName();
-        ((XmlTag)tag).setName(name);
-      }
-      return true;
-    }
-    return false;
-  }
-
-  public String getNamespaceAlias(@NotNull final XmlFile file) {
-    return XmlBundle.message("namespace.alias");
   }
 
   public void createAddAttributeFix(@NotNull final XmlAttribute attribute, final HighlightInfo highlightInfo) {
