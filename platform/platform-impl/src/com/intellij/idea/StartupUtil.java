@@ -54,8 +54,6 @@ public class StartupUtil {
 
   public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false);
 
-  static boolean isHeadless;
-
   private static SocketLock ourLock;
   private static String myDefaultLAF;
 
@@ -73,12 +71,14 @@ public class StartupUtil {
     return !Arrays.asList(args).contains(NO_SPLASH);
   }
 
+  /** @deprecated use {@link Main#isHeadless()} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
   public static boolean isHeadless() {
-    return isHeadless;
+    return Main.isHeadless();
   }
 
   public static void showError(final String title, final String message) {
-    if (isHeadless()) {
+    if (Main.isHeadless()) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(message);
     }
@@ -146,7 +146,7 @@ public class StartupUtil {
     }
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      if (isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+      if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
         showError("Error", "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
       }
       return false;
@@ -231,7 +231,7 @@ public class StartupUtil {
       IdeaWin32.isAvailable();  // logging is done there
     }
 
-    if (SystemInfo.isWin2kOrNewer && !isHeadless) {
+    if (SystemInfo.isWin2kOrNewer && !Main.isHeadless()) {
       try {
         System.loadLibrary(SystemInfo.isAMD64 ? "focusKiller64" : "focusKiller");
         log.info("Using \"FocusKiller\" library to prevent focus stealing.");

@@ -15,16 +15,12 @@
  */
 package com.intellij.idea;
 
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.text.DateFormatUtilRt;
+import com.intellij.util.PlatformUtilsCore;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -39,10 +35,9 @@ public class MainImpl {
    * Called from PluginManager via reflection.
    */
   protected static void start(final String[] args) {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.COMMUNITY_PREFIX));
+    System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.COMMUNITY_PREFIX));
 
-    StartupUtil.isHeadless = Main.isHeadless(args);
-    if (!StartupUtil.isHeadless) {
+    if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();

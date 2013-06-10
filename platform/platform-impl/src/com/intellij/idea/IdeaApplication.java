@@ -24,6 +24,7 @@ import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -79,14 +80,15 @@ public class IdeaApplication {
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
 
+    boolean headless = Main.isHeadless();
+    if (!headless) {
+      patchSystem();
+    }
+
     if (Main.isCommandLine(args)) {
-      boolean headless = Main.isHeadless(args);
-      if (!headless) patchSystem();
       new CommandLineApplication(isInternal, false, headless);
     }
     else {
-      patchSystem();
-
       Splash splash = null;
       if (myArgs.length == 0) {
         myStarter = getStarter();
@@ -159,7 +161,7 @@ public class IdeaApplication {
 
   protected ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
-      PluginManager.getPlugins();
+      PluginManagerCore.getPlugins();
 
       ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
       final ApplicationStarter[] starters = point.getExtensions();
@@ -268,7 +270,7 @@ public class IdeaApplication {
         final AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
         lifecyclePublisher.appFrameCreated(args, willOpenProject);
         LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
-        PluginManager.dumpPluginClassStatistics();
+        PluginManagerCore.dumpPluginClassStatistics();
         if (!willOpenProject.get()) {
           WelcomeFrame.showNow();
           lifecyclePublisher.welcomeScreenDisplayed();
