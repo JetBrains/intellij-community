@@ -491,6 +491,10 @@
 
     <xml.tagNameProvider implementation="com.intellij.psi.impl.source.xml.DefaultXmlTagNameProvider"/>
     <xml.fileNSInfoProvider implementation="com.intellij.xml.util.HtmlFileNSInfoProvider"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferenceQuickFixProvider"/>
+
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
