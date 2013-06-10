@@ -21,6 +21,7 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
 
   def visit_field_body(self, node):
     self.body.append(self.starttag(node, 'td', '', CLASS='field-body'))
+    parent_text = node.parent[0][0].astext()
     if hasattr(node.parent, "type"):
       self.body.append("(")
       self.body.append(self.starttag(node, 'a', '',
@@ -28,12 +29,12 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
       self.body.append(node.parent.type)
       self.body.append("</a>")
       self.body.append(") ")
-    elif node.parent[0][0].astext().startswith("type "):
-      index = node.parent[0][0].astext().index("type ")
-      type_string = node.parent[0][0].astext()[index + 5]
+    elif parent_text.startswith("type "):
+      index = parent_text.index("type ")
+      type_string = parent_text[index + 5]
       self.body.append(self.starttag(node, 'a', '',
                                      **{"href": 'psi_element://#typename#' + type_string}))
-    elif node.parent[0][0].astext().startswith("rtype"):
+    elif parent_text.startswith("rtype"):
       type_string = node.children[0][0].astext()
       self.body.append(self.starttag(node, 'a', '',
                                      **{"href": 'psi_element://#typename#' + type_string}))
