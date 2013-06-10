@@ -16,7 +16,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +24,6 @@ import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,8 +100,9 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
             final PsiElement element = location.getPsiElement();
 
             if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
-              String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
-              String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
+              final Module module = location.getModule();
+              final String appName = DjangoTestUtil.getAppNameForLocation(module, location.getPsiElement());
+              final String target = DjangoTestUtil.buildTargetFromLocation(module, appName, element);
               if (target != null)
                 specs.add(target);
             }
@@ -112,7 +111,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
               PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
               final VirtualFile virtualFile = location.getVirtualFile();
               if (virtualFile != null) {
-                String path = location.getVirtualFile().getCanonicalPath();
+                String path = virtualFile.getCanonicalPath();
                 if (pyClass != null)
                   path += "::" + pyClass.getName();
                 if (pyFunction != null)
