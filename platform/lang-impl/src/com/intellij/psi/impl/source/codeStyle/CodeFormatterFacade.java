@@ -399,7 +399,7 @@ public class CodeFormatterFacade {
         return;
       }
       editorFactory = EditorFactory.getInstance();
-      editor = editorFactory.createEditor(document);
+      editor = editorFactory.createEditor(document, file.getProject());
     }
     try {
       final Editor editorToUse = editor;
