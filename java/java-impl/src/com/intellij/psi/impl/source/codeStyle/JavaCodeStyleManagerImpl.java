@@ -84,15 +84,22 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if (SourceTreeToPsiMap.hasTreeElement(element)) {
-      final ReferenceAdjuster adjuster = ReferenceAdjusterFactory.Extension.getFactory(element.getLanguage()).createReferenceAdjuster(myProject);
-      adjuster.processRange(element.getNode(), startOffset, endOffset);
+      final ReferenceAdjusterFactory factory = ReferenceAdjusterFactory.Extension.getFactory(element.getLanguage());
+      if (factory != null) {
+        final ReferenceAdjuster adjuster = factory.createReferenceAdjuster(myProject);
+        adjuster.processRange(element.getNode(), startOffset, endOffset);
+      }
     }
   }
 
   @Override
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
-    final ASTNode reference = new JavaReferenceAdjuster(true, true).process(element.getNode(), false, false);
-    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    final ReferenceAdjusterFactory factory = ReferenceAdjusterFactory.Extension.getFactory(element.getLanguage());
+    if (factory != null) {
+      final ASTNode reference = factory.createReferenceAdjuster(true, true).process(element.getNode(), false, false);
+      return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    }
+    return element;
   }
 
   @Override

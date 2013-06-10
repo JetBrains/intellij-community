@@ -19,17 +19,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.codeStyle.ReferenceAdjusterFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
 public class JavaReferenceAdjusterFactory implements ReferenceAdjusterFactory {
 
+  @NotNull
   @Override
   public ReferenceAdjuster createReferenceAdjuster(boolean useFqInJavadoc, boolean useFqInCode) {
     return new JavaReferenceAdjuster(useFqInJavadoc, useFqInCode);
   }
 
+  @NotNull
   @Override
   public ReferenceAdjuster createReferenceAdjuster(Project project) {
     return new JavaReferenceAdjuster(CodeStyleSettingsManager.getSettings(project));

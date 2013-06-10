@@ -18,14 +18,17 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
 public interface ReferenceAdjusterFactory {
 
+  @NotNull
   ReferenceAdjuster createReferenceAdjuster(boolean useFqInJavadoc, boolean useFqInCode);
 
+  @NotNull
   ReferenceAdjuster createReferenceAdjuster(Project project);
 
   class Extension extends LanguageExtension<ReferenceAdjusterFactory> {
