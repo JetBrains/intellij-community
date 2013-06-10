@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
@@ -116,7 +117,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
       return false;
     }
     if (myTaskNames != null ? !myTaskNames.equals(settings.myTaskNames) : settings.myTaskNames != null) return false;
-    if (myVmOptions != null ? !myVmOptions.equals(settings.myVmOptions) : settings.myVmOptions != null) return false;
+    if (StringUtil.isEmpty(myVmOptions) ^ StringUtil.isEmpty(settings.myVmOptions)) return false;
 
     return true;
   }
