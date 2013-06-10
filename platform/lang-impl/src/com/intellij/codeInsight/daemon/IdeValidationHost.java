@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Maxim.Mossienko
+ * @author yole
  */
-public interface Validator<T extends PsiElement> {
-  interface ValidationHost {
-    int WARNING = 0;
-    int ERROR = 1;
-    int INFO = 2;
-
-    enum ErrorType {
-      WARNING, ERROR, INFO
-    }
-
-    void addMessage(PsiElement context, String message, int type);
-    void addMessage(PsiElement context, String message, ErrorType type, IntentionAction... fixes);
-  }
-  
-
-  void validate(@NotNull T context,@NotNull ValidationHost host);
+public interface IdeValidationHost extends Validator.ValidationHost {
+  void addMessageWithFixes(PsiElement context, String message, ErrorType type, IntentionAction... fixes);
 }

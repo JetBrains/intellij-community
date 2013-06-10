@@ -17,7 +17,6 @@ package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.ide.highlighter.XHtmlFileType;
@@ -41,8 +40,8 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.actions.validate.ErrorReporter;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlResourceResolver;
 import com.intellij.xml.util.XmlUtil;
@@ -120,7 +119,7 @@ public class ExternalDocumentValidator {
         o.type = type;
       }
 
-      public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+      public void addMessage(final PsiElement context, final String message, final ErrorType type) {
         addMessage(context, message, type.ordinal());
       }
     };

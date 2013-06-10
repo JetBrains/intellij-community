@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.xml;
 
+import com.intellij.codeInsight.daemon.IdeValidationHost;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
@@ -55,7 +56,7 @@ public class XMLExternalAnnotator extends ExternalAnnotator {
     }
   }
 
-  private static class MyHost implements Validator.ValidationHost {
+  private static class MyHost implements IdeValidationHost {
 
     private final AnnotationHolder myHolder;
 
@@ -68,7 +69,12 @@ public class XMLExternalAnnotator extends ExternalAnnotator {
       addMessage(context, message, types[type]);
     }
 
-    public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+    @Override
+    public void addMessage(PsiElement context, String message, ErrorType type) {
+      addMessageWithFixes(context, message, type);
+    }
+
+    public void addMessageWithFixes(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
       if (message != null && message.length() > 0) {
         if (context instanceof XmlTag) {
           addMessagesForTag((XmlTag)context, message, type, fixes);

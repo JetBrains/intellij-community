@@ -65,7 +65,7 @@ import java.util.StringTokenizer;
 /**
  * @author Mike
  */
-public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
+public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, IdeValidationHost {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
   private static final UserDataCache<Boolean, PsiElement, Object> DO_NOT_VALIDATE =
     new UserDataCache<Boolean, PsiElement, Object>("do not validate") {
@@ -675,7 +675,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+  public void addMessage(PsiElement context, String message, ErrorType type) {
+    addMessageWithFixes(context, message, type);
+  }
+
+  @Override
+  public void addMessageWithFixes(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
     if (message != null && !message.isEmpty()) {
       final PsiFile containingFile = context.getContainingFile();
       final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
