@@ -37,6 +37,12 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
 
   private static final Logger LOG = Logger.getInstance("#" + ExternalSystemTaskDebugRunner.class.getName());
 
+  @NotNull
+  @Override
+  public String getRunnerId() {
+    return "ExternalSystemTaskDebugRunner";
+  }
+  
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return profile instanceof ExternalSystemRunConfiguration && ToolWindowId.DEBUG.equals(executorId);
