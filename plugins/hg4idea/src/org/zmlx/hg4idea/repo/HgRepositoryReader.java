@@ -22,8 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,8 +78,8 @@ public class HgRepositoryReader {
   }
 
   @NotNull
-  public List<String> readBranches() {
-    List<String> branches = new ArrayList<String>();
+  public Collection<String> readBranches() {
+    Set<String> branches = new HashSet<String>();
     if (!checkIsFresh()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
