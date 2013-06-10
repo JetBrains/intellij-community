@@ -124,7 +124,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           if (type instanceof PyNoneType) {
             return null;
           }
-          return type;
+          if (type instanceof PyFunctionType) {
+            return type;
+          }
+          // We are unsure about the type since it may be inferred from the stub based on incomplete information
+          return PyUnionType.createWeakType(type);
         }
         return null;
       }
