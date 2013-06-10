@@ -155,7 +155,7 @@ public class MavenSelectProjectPopup {
         projectTree.addKeyListener(new KeyAdapter() {
           @Override
           public void keyPressed(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
               clickCallBack.run();
               e.consume();
             }
