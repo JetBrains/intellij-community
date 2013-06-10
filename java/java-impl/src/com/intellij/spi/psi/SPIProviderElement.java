@@ -122,4 +122,8 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiRefer
   public boolean isSoft() {
     return false;
   }
+  
+  public boolean isDestination() {
+    return true;
+  }
 }

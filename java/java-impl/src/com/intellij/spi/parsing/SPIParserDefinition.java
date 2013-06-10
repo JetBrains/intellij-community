@@ -115,9 +115,9 @@ public class SPIParserDefinition implements ParserDefinition {
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
-  
+
   public static void parseProvider(PsiBuilder builder) {
-    if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+    if (builder.getTokenType() == SPITokenType.IDENTIFIER) {
       final PsiBuilder.Marker prop = builder.mark();
 
       parseProviderChar(builder, builder.mark());
@@ -130,15 +130,16 @@ public class SPIParserDefinition implements ParserDefinition {
   }
 
   private static void parseProviderChar(final PsiBuilder builder, PsiBuilder.Marker pack) {
-    final IElementType initialTokenType = builder.getTokenType();
-    if (initialTokenType == null) return;
-    LOG.assertTrue(initialTokenType == JavaTokenType.IDENTIFIER);
     builder.advanceLexer();
-    pack.done(SPIElementTypes.PACK);
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT || tokenType == SPITokenType.DOLLAR) {
+      pack.done(SPIElementTypes.PACK);
       builder.advanceLexer();
+      final IElementType initialTokenType = builder.getTokenType();
+      if (initialTokenType == null) return;
       parseProviderChar(builder, pack.precede());
+    } else {
+      pack.drop();
     }
   }
 }

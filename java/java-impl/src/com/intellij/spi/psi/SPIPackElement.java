@@ -17,8 +17,10 @@ package com.intellij.spi.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -62,5 +64,10 @@ public class SPIPackElement extends SPIProviderElement {
   @Override
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public boolean isDestination() {
+    return false;
   }
 }
