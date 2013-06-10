@@ -137,13 +137,11 @@ public class FilePathImpl implements FilePath {
   }
 
   @Override
-  public VirtualFile refresh() {
-    VirtualFile virtualFile = myVirtualFile;
+  public void refresh() {
     if (myLocal) {
       VirtualFile virtualParent = getVirtualFileParent();
-      myVirtualFile = virtualFile = virtualParent == null ? LocalFileSystem.getInstance().findFileByIoFile(myFile) : virtualParent.findChild(myName);
+      myVirtualFile = virtualParent == null ? LocalFileSystem.getInstance().findFileByIoFile(myFile) : virtualParent.findChild(myName);
     }
-    return virtualFile;
   }
 
   @Override
@@ -214,7 +212,8 @@ public class FilePathImpl implements FilePath {
       myVirtualFile = virtualFile = null;
     }
     if (virtualFile == null) {
-      virtualFile = refresh();
+      refresh();
+      virtualFile = myVirtualFile;
     }
     detectFileType(virtualFile);
     return virtualFile;
