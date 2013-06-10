@@ -67,7 +67,13 @@ public class PsiInvalidElementAccessException extends RuntimeException {
     FileViewProvider provider = file.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
     if (!vFile.isValid()) return vFile+" is invalid";
-    if (!provider.isPhysical()) return "non-physical provider"; // "dummy" file
+    if (!provider.isPhysical()) {
+      PsiElement context = file.getContext();
+      if (context != null && !context.isValid()) {
+        return "invalid context: " + reason(context);
+      }
+      return "non-physical provider: " + provider; // "dummy" file?
+    }
     PsiManager manager = file.getManager();
     if (manager.getProject().isDisposed()) return "project is disposed";
     Language language = file.getLanguage();

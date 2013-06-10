@@ -186,6 +186,10 @@ public class ExternalSystemApiUtil {
     return MANAGERS.getValue().get(externalSystemId);
   }
 
+  public static Collection<ExternalSystemManager<?, ?, ?, ?, ?>> getAllManagers() {
+    return MANAGERS.getValue().values();
+  }
+
   @NotNull
   public static Map<Key<?>, List<DataNode<?>>> group(@NotNull Collection<DataNode<?>> nodes) {
     if (nodes.isEmpty()) {

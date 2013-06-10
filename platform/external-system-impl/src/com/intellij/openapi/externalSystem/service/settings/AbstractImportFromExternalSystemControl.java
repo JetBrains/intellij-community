@@ -62,8 +62,8 @@ public abstract class AbstractImportFromExternalSystemControl<
     myExternalSystemId = externalSystemId;
     mySystemSettings = systemSettings;
     myProjectSettings = projectSettings;
-    myProjectSettingsControl = createProjectSettingsControl(myProjectSettings);
-    mySystemSettingsControl = createSystemSettingsControl(mySystemSettings);
+    myProjectSettingsControl = createProjectSettingsControl(projectSettings);
+    mySystemSettingsControl = createSystemSettingsControl(systemSettings);
 
     JLabel linkedProjectPathLabel =
       new JLabel(ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()));

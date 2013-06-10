@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -31,14 +29,6 @@ import org.jetbrains.annotations.NotNull;
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(FileViewProvider file) {
     super(JavaStubElementTypes.JAVA_FILE, JavaStubElementTypes.JAVA_FILE, file);
-  }
-
-  public String toString(){
-    return "PsiJavaFile:" + getName();
-  }
-
-  public Lexer createLexer() {
-    return new JavaLexer(getLanguageLevel());
   }
 
   @NotNull
@@ -58,5 +48,10 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   @NotNull
   public FileType getFileType() {
     return JavaFileType.INSTANCE;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiJavaFile:" + getName();
   }
 }

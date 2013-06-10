@@ -64,15 +64,21 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  private static PsiElement[] findSuperElements(PsiFile file, int offset) {
+  private PsiElement[] findSuperElements(PsiFile file, int offset) {
+    PsiNameIdentifierOwner parent = getElement(file, offset);
+    if (parent == null) return null;
+
+    return FindSuperElementsHelper.findSuperElements(parent);
+  }
+
+  protected PsiNameIdentifierOwner getElement(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
     PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     if (parent == null)
       return null;
-
-    return FindSuperElementsHelper.findSuperElements(parent);
+    return parent;
   }
 
   @Override

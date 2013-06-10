@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,24 @@
 package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.importProject.RootDetectionProcessor;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class JavaSourceRootDetectionUtil {
   private static final TokenSet JAVA_FILE_FIRST_TOKEN_SET = TokenSet.orSet(
@@ -76,10 +69,9 @@ public class JavaSourceRootDetectionUtil {
     return result.values();
   }
 
-
   @Nullable
   public static String getPackageName(CharSequence text) {
-    Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
+    Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.JDK_1_3);
     lexer.start(text);
     skipWhiteSpaceAndComments(lexer);
     final IElementType firstToken = lexer.getTokenType();

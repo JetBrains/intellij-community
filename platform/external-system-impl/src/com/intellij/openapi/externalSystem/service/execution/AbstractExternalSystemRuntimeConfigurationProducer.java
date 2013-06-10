@@ -22,12 +22,11 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -61,9 +60,9 @@ public abstract class AbstractExternalSystemRuntimeConfigurationProducer extends
     RunnerAndConfigurationSettings settings = runManager.createConfiguration("", getConfigurationFactory());
     ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
-    ExternalTaskPojo task = taskLocation.getTask();
-    taskExecutionSettings.setExternalProjectPath(task.getLinkedExternalProjectPath());
-    taskExecutionSettings.setTaskNames(Collections.singletonList(task.getName()));
+    ExternalTaskExecutionInfo task = taskLocation.getTaskInfo();
+    taskExecutionSettings.setExternalProjectPath(task.getSettings().getExternalProjectPath());
+    taskExecutionSettings.setTaskNames(task.getSettings().getTaskNames());
     configuration.setName(AbstractExternalSystemTaskConfigurationType.generateName(location.getProject(), taskExecutionSettings));
     return settings;
   }
@@ -76,29 +75,26 @@ public abstract class AbstractExternalSystemRuntimeConfigurationProducer extends
     if (!(location instanceof ExternalSystemTaskLocation)) {
       return null;
     }
-    ExternalTaskPojo taskPojo = ((ExternalSystemTaskLocation)location).getTask();
+    ExternalTaskExecutionInfo taskInfo = ((ExternalSystemTaskLocation)location).getTaskInfo();
 
     for (RunnerAndConfigurationSettings settings : existingConfigurationsSettings) {
       RunConfiguration runConfiguration = settings.getConfiguration();
       if (!(runConfiguration instanceof ExternalSystemRunConfiguration)) {
         continue;
       }
-      if (match(taskPojo, ((ExternalSystemRunConfiguration)runConfiguration).getSettings())) {
+      if (match(taskInfo, ((ExternalSystemRunConfiguration)runConfiguration).getSettings())) {
         return settings;
       }
     }
     return null;
   }
 
-  private static boolean match(@NotNull ExternalTaskPojo task, @NotNull ExternalSystemTaskExecutionSettings settings) {
-    if (!task.getLinkedExternalProjectPath().equals(settings.getExternalProjectPath())) {
+  private static boolean match(@NotNull ExternalTaskExecutionInfo task, @NotNull ExternalSystemTaskExecutionSettings settings) {
+    if (!task.getSettings().getExternalProjectPath().equals(settings.getExternalProjectPath())) {
       return false;
     }
     List<String> taskNames = settings.getTaskNames();
-    if (taskNames.size() != 1) {
-      return false;
-    }
-    return task.getName().equals(taskNames.get(0));
+    return task.getSettings().getTaskNames().equals(taskNames);
   }
 
   @Override

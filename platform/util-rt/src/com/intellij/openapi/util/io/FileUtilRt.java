@@ -84,7 +84,12 @@ public class FileUtilRt {
 
   @NotNull
   public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
-    return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
+    return toSystemDependentName(aFileName, File.separatorChar);
+  }
+
+  @NotNull
+  public static String toSystemDependentName(@NonNls @NotNull String aFileName, final char separatorChar) {
+    return aFileName.replace('/', separatorChar).replace('\\', separatorChar);
   }
 
   @NotNull

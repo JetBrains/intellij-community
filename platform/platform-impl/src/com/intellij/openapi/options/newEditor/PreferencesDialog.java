@@ -44,7 +44,12 @@ public class PreferencesDialog extends DialogWrapper {
     super(project);
     init();
     ((JDialog)getPeer().getWindow()).setUndecorated(true);
-    ((JComponent)((JDialog)getPeer().getWindow()).getContentPane()).setBorder(new LineBorder(Gray._140, 1));
+    if (SystemInfo.isMac) {
+      ((JComponent)((JDialog)getPeer().getWindow()).getContentPane()).setBorder(new EmptyBorder(0, 0, 0, 0));
+    }
+    else {
+      ((JComponent)((JDialog)getPeer().getWindow()).getContentPane()).setBorder(new LineBorder(Gray._140, 1));
+    }
 
     setTitle("Preferences");
   }
@@ -64,7 +69,11 @@ public class PreferencesDialog extends DialogWrapper {
     return myRoot;
   }
 
-
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return mySearchTextField.getTextEditor();
+  }
 
   private static JComponent createEditorSettings() {
     final LabeledButtonsPanel panel = new LabeledButtonsPanel("Editor");
@@ -107,8 +116,6 @@ public class PreferencesDialog extends DialogWrapper {
   }
 
 
-
-
   @Nullable
   @Override
   protected JComponent createSouthPanel() {
@@ -126,16 +133,21 @@ public class PreferencesDialog extends DialogWrapper {
     myTopPanel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0,0, Gray._206, 0, getHeight() - 1, Gray._172));
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, Gray._206, 0, getHeight() - 1, Gray._172));
         g.fillRect(0, 0, getWidth(), getHeight());
         g.setColor(Gray._145);
         g.drawLine(0, getHeight() - 2, getWidth(), getHeight() - 2);
         g.setColor(Gray._103);
-        g.drawLine(0, getHeight()- 1, getWidth(), getHeight() - 1);
+        g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
       }
     };
     final JLabel title = new JLabel("Preferences");
-    title.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 14));
+    if (!SystemInfo.isMac) {
+      title.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 14));
+    }
+    else {
+      title.setFont(new Font("Lucuda Grande", Font.PLAIN, 12));
+    }
     title.setHorizontalTextPosition(SwingConstants.CENTER);
     title.setHorizontalAlignment(SwingConstants.CENTER);
     title.setVerticalAlignment(SwingConstants.TOP);

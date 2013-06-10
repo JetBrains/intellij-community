@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,12 +29,12 @@ import java.util.List;
  *         Date: 3/2/12
  */
 public class InspectionRunningUtil {
-  public static List<CommonProblemDescriptor> runInspectionOnFile(final PsiFile file,
-                                                                  final LocalInspectionTool inspectionTool) {
+  public static List<CommonProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
+                                                                  @NotNull LocalInspectionTool inspectionTool) {
     return runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool));
   }
 
-  public static List<CommonProblemDescriptor> runInspectionOnFile(final PsiFile file, final InspectionTool tool) {
+  public static List<CommonProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file, @NotNull InspectionToolWrapper tool) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     tool.initialize(context);
@@ -41,15 +42,15 @@ public class InspectionRunningUtil {
     try {
       if (tool instanceof LocalInspectionToolWrapper) {
         ((LocalInspectionToolWrapper)tool).processFile(file, true, managerEx, false);
-        return new ArrayList<CommonProblemDescriptor>(((LocalInspectionToolWrapper)tool).getProblemDescriptors());
+        return new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
       }
       else if (tool instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)tool).getTool();
         if (globalInspectionTool instanceof GlobalSimpleInspectionTool) {
           ProblemsHolder problemsHolder = new ProblemsHolder(managerEx, file, false);
           ((GlobalSimpleInspectionTool)globalInspectionTool)
-            .checkFile(file, managerEx, problemsHolder, context, (GlobalInspectionToolWrapper)tool);
-          return new ArrayList<CommonProblemDescriptor>(((GlobalInspectionToolWrapper)tool).getProblemDescriptors());
+            .checkFile(file, managerEx, problemsHolder, context, tool);
+          return new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
         }
       }
       return Collections.emptyList();

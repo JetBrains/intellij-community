@@ -1012,4 +1012,13 @@ public final class PsiUtil extends PsiUtilCore {
     }
     return parent;
   }
+
+  public static void ensureValidType(@NotNull PsiType type) {
+    if (!type.isValid()) {
+      if (type instanceof PsiClassType) {
+        ((PsiClassType)type).resolve(); // should throw exception
+      }
+      throw new AssertionError("Invalid type: " + type + " of class " + type.getClass());
+    }
+  }
 }

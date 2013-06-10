@@ -66,6 +66,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -1084,7 +1085,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     super.setVisible(aFlag);
   }
 
-  private void setNewHighlightingLevel(final HighlightDisplayLevel level) {
+  private void setNewHighlightingLevel(@NotNull HighlightDisplayLevel level) {
     final int[] rows = myTree.getSelectionRows();
     final boolean showOptionsAndDescriptorPanels = rows != null && rows.length == 1;
     for (int i = 0; rows != null && i < rows.length; i++) {
@@ -1109,7 +1110,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     repaintTableData();
   }
 
-  private void updateErrorLevelUpInHierarchy(HighlightDisplayLevel level,
+  private void updateErrorLevelUpInHierarchy(@NotNull HighlightDisplayLevel level,
                                              boolean showOptionsAndDescriptorPanels,
                                              InspectionConfigTreeNode node) {
     node.dropCache();
@@ -1126,25 +1127,13 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void updateErrorLevel(final InspectionConfigTreeNode child,
-                                final boolean showOptionsAndDescriptorPanels, final HighlightDisplayLevel level) {
+                                final boolean showOptionsAndDescriptorPanels,
+                                @NotNull HighlightDisplayLevel level) {
     final HighlightDisplayKey key = child.getDescriptor().getKey();
     mySelectedProfile.setErrorLevel(key, level, child.isInspectionNode() || child.isByDefault() ? -1 : child.getParent().getIndex(child));
     child.dropCache();
     if (showOptionsAndDescriptorPanels) {
       updateOptionsAndDescriptionPanel(new TreePath(child.getPath()));
-    }
-  }
-
-  private class LevelSelection implements ActionListener {
-    private final HighlightDisplayLevel myLevel;
-
-    public LevelSelection(HighlightDisplayLevel level) {
-      myLevel = level;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      setNewHighlightingLevel(myLevel);
     }
   }
 

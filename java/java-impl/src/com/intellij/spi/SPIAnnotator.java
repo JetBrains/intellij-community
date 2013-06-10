@@ -42,7 +42,7 @@ public class SPIAnnotator implements Annotator{
         if (psiClass == null) {
           holder.createErrorAnnotation(element, "No service provider \"" + serviceProviderName + "\' found").setFileLevelAnnotation(true);
         }
-      } else if (element instanceof SPIProviderElement) {
+      } else if (element instanceof SPIProviderElement && ((SPIProviderElement)element).isDestination()) {
         final PsiElement resolve = ((SPIProviderElement)element).resolve();
         if (resolve == null) {
           holder.createErrorAnnotation(element, "Cannot resolve symbol " + element.getText());

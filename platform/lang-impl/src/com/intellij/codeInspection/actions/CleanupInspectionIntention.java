@@ -48,7 +48,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   private final InspectionToolWrapper myTool;
   private final Class myQuickfixClass;
 
-  public CleanupInspectionIntention(final InspectionToolWrapper tool, Class quickFixClass) {
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper tool, Class quickFixClass) {
     myTool = tool;
     myQuickfixClass = quickFixClass;
   }

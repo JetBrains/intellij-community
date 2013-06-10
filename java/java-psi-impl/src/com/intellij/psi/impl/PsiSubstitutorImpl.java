@@ -18,6 +18,8 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,7 +99,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       //noinspection ConstantConditions
       return null;
     }
-    assert type.isValid();
+    PsiUtil.ensureValidType(type);
     PsiType substituted = type.accept(myAddingBoundsSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type);
   }
@@ -271,20 +273,18 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
-      assert classType.isValid();
-      assert aClass.isValid();
+
+      PsiUtilCore.ensureValid(aClass);
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
         if (containsInMap(typeParameter)) {
           PsiType result = substituteTypeParameter(typeParameter);
           if (result != null) {
-            assert result.isValid();
+            PsiUtil.ensureValidType(result);
           }
           return result;
         }
-        else {
-          return classType;
-        }
+        return classType;
       }
       final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<PsiTypeParameter, PsiType>(2);
       if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {

@@ -1,8 +1,23 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.psi;
 
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderImpl;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -17,7 +32,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import junit.framework.AssertionFailedError;
 
 /**
- * Date: Jan 21, 2005
+ * @since Jan 21, 2005
  * @author max
  */
 public class PsiBuilderTest extends LightIdeaTestCase {
@@ -66,7 +81,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assertNotNull(parserDefinition);
     PsiFile psiFile = createFile("x.java", text);
-    return new PsiBuilderImpl(getProject(), psiFile, parserDefinition, new JavaLexer(LanguageLevel.JDK_1_5),
+    return new PsiBuilderImpl(getProject(), psiFile, parserDefinition, JavaParserDefinition.createLexer(LanguageLevel.JDK_1_5),
                               SharedImplUtil.findCharTableByTree(psiFile.getNode()), text, originalTree, null);
   }
 
@@ -152,8 +167,8 @@ public class PsiBuilderTest extends LightIdeaTestCase {
   public void testAssertionFailureOnUnbalancedMarkers() {
     myBuilder = createBuilder("foo");
     myBuilder.setDebugMode(true);
-    final PsiBuilder.Marker m = myBuilder.mark();
-    final PsiBuilder.Marker m1 = myBuilder.mark();
+    PsiBuilder.Marker m = myBuilder.mark();
+    @SuppressWarnings("UnusedDeclaration") PsiBuilder.Marker m1 = myBuilder.mark();
     myBuilder.getTokenType();
     myBuilder.advanceLexer();
     try {
@@ -227,6 +242,4 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     myBuilder.advanceLexer();
     root.done(JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
-
-
 }

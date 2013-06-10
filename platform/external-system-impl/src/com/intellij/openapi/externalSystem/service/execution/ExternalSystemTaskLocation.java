@@ -16,7 +16,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.PsiLocation;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -26,16 +26,16 @@ import org.jetbrains.annotations.NotNull;
  * @since 6/5/13 8:11 PM
  */
 public class ExternalSystemTaskLocation extends PsiLocation<PsiFile> {
-  
-  @NotNull private final ExternalTaskPojo myTask;
 
-  public ExternalSystemTaskLocation(@NotNull Project project, @NotNull PsiFile psiElement, @NotNull ExternalTaskPojo task) {
+  @NotNull private final ExternalTaskExecutionInfo myTaskInfo;
+
+  public ExternalSystemTaskLocation(@NotNull Project project, @NotNull PsiFile psiElement, @NotNull ExternalTaskExecutionInfo taskInfo) {
     super(project, psiElement);
-    myTask = task;
+    myTaskInfo = taskInfo;
   }
 
   @NotNull
-  public ExternalTaskPojo getTask() {
-    return myTask;
+  public ExternalTaskExecutionInfo getTaskInfo() {
+    return myTaskInfo;
   }
 }

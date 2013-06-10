@@ -125,14 +125,18 @@ public abstract class TokenSets {
 
   public static final TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
-      mREGEX_CONTENT,
-      mDOLLAR_SLASH_REGEX_CONTENT,
       mGSTRING_LITERAL,
-      mGSTRING_CONTENT,
       mGSTRING_BEGIN,
+      mGSTRING_CONTENT,
       mGSTRING_END,
       mREGEX_LITERAL,
-      mDOLLAR_SLASH_REGEX_LITERAL
+      mREGEX_BEGIN,
+      mREGEX_CONTENT,
+      mREGEX_END,
+      mDOLLAR_SLASH_REGEX_LITERAL,
+      mDOLLAR_SLASH_REGEX_BEGIN,
+      mDOLLAR_SLASH_REGEX_CONTENT,
+      mDOLLAR_SLASH_REGEX_END
   );
 
   public static final TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);

@@ -15,28 +15,9 @@
  */
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author max
  */
-public class StringInterner {
-  private final OpenTHashSet<String> mySet = new OpenTHashSet<String>();
+public class StringInterner extends Interner<String> {
 
-  @NotNull
-  public String intern(@NotNull String name) {
-    String interned = mySet.get(name);
-    if (interned != null) {
-      return interned;
-    }
-
-    boolean added = mySet.add(name);
-    assert added;
-
-    return name;
-  }
-
-  public void clear() {
-    mySet.clear();
-  }
 }

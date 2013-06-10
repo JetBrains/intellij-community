@@ -133,9 +133,6 @@ public class GradleExecutionHelper {
     throws IllegalStateException
   {
     File projectFile = new File(projectPath);
-    if (!projectFile.isFile()) {
-      throw new IllegalArgumentException(GradleBundle.message("gradle.import.text.error.invalid.path", projectPath));
-    }
     File projectDir = projectFile.getParentFile();
     GradleConnector connector = GradleConnector.newConnector();
     if (settings != null) {

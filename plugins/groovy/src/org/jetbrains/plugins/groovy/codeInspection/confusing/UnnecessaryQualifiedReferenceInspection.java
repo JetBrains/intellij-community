@@ -31,8 +31,8 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -122,7 +122,8 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
         final PsiElement startElement = descriptor.getStartElement();
         LOG.assertTrue(startElement instanceof GrReferenceElement<?>);
-        GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)startElement);
+        final GrReferenceAdjuster adjuster = GrReferenceAdjuster.getInstance(project);
+        adjuster.shortenReference((GrQualifiedReference<?>)startElement);
       }
 
       @NotNull

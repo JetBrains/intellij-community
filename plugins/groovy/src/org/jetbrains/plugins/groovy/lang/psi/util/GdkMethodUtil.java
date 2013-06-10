@@ -32,23 +32,34 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -206,11 +217,121 @@ public class GdkMethodUtil {
         final DelegatingScopeProcessor delegate = new MixinMemberContributor.MixinProcessor(processor, subjectType, qualifier);
         mixin.processDeclarations(delegate, state, null, place);
       }
+      else {
+        Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>> closureResult = getClosureMixins(statement);
+        if (closureResult != null) {
+          final PsiClassType subjectType = closureResult.first;
+          final GrReferenceExpression qualifier = closureResult.second;
+          final List<GrMethod> methods = closureResult.third;
+
+          final DelegatingScopeProcessor delegate = new MixinMemberContributor.MixinProcessor(processor, subjectType, qualifier);
+          for (GrMethod method : methods) {
+            delegate.execute(method, ResolveState.initial());
+          }
+        }
+      }
     }
 
     return true;
   }
 
+  @NotNull
+  private static GrMethod createMethod(@NotNull GrClosureSignature signature,
+                                       @NotNull String name,
+                                       @NotNull GrAssignmentExpression statement,
+                                       @NotNull PsiClass closure) {
+    final GrLightMethodBuilder builder = new GrLightMethodBuilder(statement.getManager(), name);
+
+    GrClosureParameter[] parameters = signature.getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      GrClosureParameter parameter = parameters[i];
+      final String parameterName = parameter.getName() != null ? parameter.getName() : "p" + i;
+      final PsiType type = parameter.getType() != null ? parameter.getType() : TypesUtil.getJavaLangObject(statement);
+      builder.addParameter(parameterName, type, parameter.isOptional());
+    }
+
+    builder.setNavigationElement(statement.getLValue());
+    builder.setReturnType(signature.getReturnType());
+    builder.setContainingClass(closure);
+    return builder;
+  }
+
+  private static Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>> getClosureMixins(final GrStatement statement) {
+    if (!(statement instanceof GrAssignmentExpression)) return null;
+
+    final GrAssignmentExpression assignment = (GrAssignmentExpression)statement;
+    final CachedValuesManager manager = CachedValuesManager.getManager(statement.getProject());
+    return manager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>>>() {
+      @Nullable
+      @Override
+      public Result<Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>>> compute() {
+
+        Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(assignment);
+        if (original == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+
+        final Pair<GrSignature, String> signatures = getTypeToMix(assignment);
+        if (signatures == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+
+        final String name = signatures.second;
+
+        final List<GrMethod> methods = ContainerUtil.newArrayList();
+        final PsiClass closure = GroovyPsiManager.getInstance(statement.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
+        if (closure == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+
+        signatures.first.accept(new GrSignatureVisitor() {
+          @Override
+          public void visitClosureSignature(GrClosureSignature signature) {
+            super.visitClosureSignature(signature);
+            GrMethod method = createMethod(signature, name, assignment, closure);
+            methods.add(method);
+          }
+        });
+
+        return Result.create(Trinity.create(original.first, original.second, methods), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  @Nullable
+  private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrAssignmentExpression assignment) {
+    final GrExpression lvalue = assignment.getLValue();
+    if (lvalue instanceof GrReferenceExpression) {
+      final GrExpression metaClassRef = ((GrReferenceExpression)lvalue).getQualifier();
+      if (metaClassRef instanceof GrReferenceExpression &&
+          (GrImportUtil.acceptName((GrReferenceElement)metaClassRef, "metaClass") ||
+           GrImportUtil.acceptName((GrReferenceElement)metaClassRef, "getMetaClass"))) {
+        final PsiElement resolved = ((GrReferenceElement)metaClassRef).resolve();
+        if (resolved instanceof PsiMethod && isMetaClassMethod((PsiMethod)resolved)) {
+          return getPsiClassFromReference(((GrReferenceExpression)metaClassRef).getQualifier());
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Pair<GrSignature, String> getTypeToMix(GrAssignmentExpression assignment) {
+    GrExpression mixinRef = assignment.getRValue();
+    if (mixinRef == null) return null;
+
+    final PsiType type = mixinRef.getType();
+    if (type instanceof GrClosureType) {
+      final GrSignature signature = ((GrClosureType)type).getSignature();
+
+      final GrExpression lValue = assignment.getLValue();
+      assert lValue instanceof GrReferenceExpression;
+      final String name = ((GrReferenceExpression)lValue).getReferenceName();
+
+      return Pair.create(signature, name);
+    }
+
+    return null;
+  }
+
+  /**
+   * @param call
+   * @return (type[1] in which methods mixed, reference to type[1], type[2] to mixin)
+   */
   @Nullable
   private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(final GrStatement statement) {
     if (!(statement instanceof GrMethodCall)) return null;
@@ -297,11 +418,21 @@ public class GdkMethodUtil {
     return null;
   }
 
-  private static boolean isMixinMethod(PsiMethod method) {
+  private static boolean isMixinMethod(@NotNull PsiMethod method) {
     if (method instanceof GrGdkMethod) method = ((GrGdkMethod)method).getStaticMethod();
     PsiClass containingClass = method.getContainingClass();
     String name = method.getName();
     return "mixin".equals(name) && containingClass != null && GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
+  }
+
+  private static boolean isMetaClassMethod(@NotNull PsiMethod method) {
+    if (method instanceof GrGdkMethod) method = ((GrGdkMethod)method).getStaticMethod();
+    PsiClass containingClass = method.getContainingClass();
+    String name = method.getName();
+    return "getMetaClass".equals(name) &&
+           containingClass != null &&
+           (method.getParameterList().getParametersCount() == 0 ^
+            GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName()));
   }
 
   private static boolean isMetaClass(PsiType qualifierType) {

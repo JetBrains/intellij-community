@@ -104,7 +104,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private final ModificationTracker myModificationTracker;
   private final Project myProject;
   private long myModificationCount;
-  
+
   public DomElementAnnotationsManagerImpl(Project project) {
     myProject = project;
     myModificationTracker = new ModificationTracker() {
@@ -113,7 +113,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       }
     };
     final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
-      public void profileActivated(Profile oldProfile, Profile profile) {
+      public void profileActivated(@NotNull Profile oldProfile, Profile profile) {
         dropAnnotationsCache();
       }
 

@@ -17,8 +17,10 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.parser.*;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.ReferenceParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -167,7 +169,7 @@ public interface JavaElementType {
 
     @Override
     public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
-      final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+      Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
 
       lexer.start(seq);
       if (lexer.getTokenType() != JavaTokenType.LBRACE) return IErrorCounterReparseableElementType.FATAL_ERROR;

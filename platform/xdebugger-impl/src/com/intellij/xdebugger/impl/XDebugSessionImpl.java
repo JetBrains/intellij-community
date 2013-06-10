@@ -748,9 +748,11 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentStackFrame = null;
     mySuspendContext = null;
     myDebuggerManager.setActiveSession(this, null, false, null);
-    XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
-    breakpointManager.removeBreakpointListener(myBreakpointListener);
-    breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
+    if (breakpointsInitialized) {
+      XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
+      breakpointManager.removeBreakpointListener(myBreakpointListener);
+      breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
+    }
     myStopped = true;
     myDebuggerManager.removeSession(this);
     myDispatcher.getMulticaster().sessionStopped();

@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
  * 
  * @author Rustam Vishnyakov
  */
-@SuppressWarnings("deprecation") // Later SyntaxHighlighterColors will be moved here.
+@SuppressWarnings("deprecation")
 public class JavaHighlightingColors {
   public static final TextAttributesKey LINE_COMMENT = SyntaxHighlighterColors.LINE_COMMENT;
   public static final TextAttributesKey JAVA_BLOCK_COMMENT = SyntaxHighlighterColors.JAVA_BLOCK_COMMENT;
@@ -32,7 +32,7 @@ public class JavaHighlightingColors {
   public static final TextAttributesKey NUMBER = SyntaxHighlighterColors.NUMBER;
   public static final TextAttributesKey STRING = SyntaxHighlighterColors.STRING;
   public static final TextAttributesKey OPERATION_SIGN = SyntaxHighlighterColors.OPERATION_SIGN;
-  public static final TextAttributesKey PARENTHS = SyntaxHighlighterColors.PARENTHS;
+  public static final TextAttributesKey PARENTHESES = SyntaxHighlighterColors.PARENTHS;
   public static final TextAttributesKey BRACKETS = SyntaxHighlighterColors.BRACKETS;
   public static final TextAttributesKey BRACES = SyntaxHighlighterColors.BRACES;
   public static final TextAttributesKey COMMA = SyntaxHighlighterColors.COMMA;
@@ -42,4 +42,8 @@ public class JavaHighlightingColors {
   public static final TextAttributesKey DOC_COMMENT_MARKUP = SyntaxHighlighterColors.DOC_COMMENT_MARKUP;
   public static final TextAttributesKey VALID_STRING_ESCAPE = SyntaxHighlighterColors.VALID_STRING_ESCAPE;
   public static final TextAttributesKey INVALID_STRING_ESCAPE = SyntaxHighlighterColors.INVALID_STRING_ESCAPE;
+
+  /** @deprecated use {@link #PARENTHESES} (to remove in IDEA 14) */
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final TextAttributesKey PARENTHS = PARENTHESES;
 }

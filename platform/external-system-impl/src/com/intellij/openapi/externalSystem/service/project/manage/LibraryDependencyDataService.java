@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.util.BooleanFunction;
@@ -133,12 +134,24 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           myLibraryManager.importData(librariesToImport, module.getProject(), synchronous);
         }
 
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        Map<String /* library name */, LibraryOrderEntry> toRemove = ContainerUtilRt.newHashMap();
+        for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+          if (entry instanceof LibraryOrderEntry) {
+            LibraryOrderEntry e = (LibraryOrderEntry)entry;
+            String libraryName = e.getLibraryName();
+            if (libraryName != null) {
+              toRemove.put(libraryName, e);
+            }
+          }
+        }
+
         for (DataNode<LibraryDependencyData> dependencyNode : nodesToImport) {
-          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
           final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
           try {
             libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
             final LibraryDependencyData dependencyData = dependencyNode.getData();
+            toRemove.remove(dependencyData.getName());
             final Library library = libraryTable.getLibraryByName(dependencyData.getName());
             if (library == null) {
               assert false;
@@ -160,6 +173,10 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           finally {
             moduleRootModel.commit();
           }
+        }
+
+        if (!toRemove.isEmpty()) {
+          removeData(toRemove.values(), module, synchronous);
         }
       }
     });

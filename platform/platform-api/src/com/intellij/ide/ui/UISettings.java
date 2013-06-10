@@ -265,15 +265,18 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     fireUISettingsChanged();
   }
 
-  private static final boolean DEFAULT_ALIASING = SystemProperties.getBooleanProperty("idea.use.default.antialiasing.in.editor", false);
+  private static final boolean DEFAULT_ALIASING             =
+    SystemProperties.getBooleanProperty("idea.use.default.antialiasing.in.editor", false);
+  private static final boolean FORCE_USE_FRACTIONAL_METRICS =
+    SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false);
 
   public static void setupAntialiasing(final Graphics g) {
     if (DEFAULT_ALIASING) return;
 
-    Graphics2D g2d=(Graphics2D)g;
-    UISettings uiSettings=getInstance();
+    Graphics2D g2d = (Graphics2D)g;
+    UISettings uiSettings = getInstance();
 
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     if (!isRemoteDesktopConnected() && UIUtil.isRetina()) {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
@@ -293,6 +296,9 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
         else {
           g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
+        if (FORCE_USE_FRACTIONAL_METRICS) {
+          g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        }
       }
       else {
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
@@ -305,7 +311,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
    */
   // TODO[neuro]: move to UIUtil
   public static boolean isRemoteDesktopConnected() {
-    if(System.getProperty("os.name").contains("Windows")) {
+    if (System.getProperty("os.name").contains("Windows")) {
       final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
       return map != null && RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(map.get(RenderingHints.KEY_TEXT_ANTIALIASING));
     }

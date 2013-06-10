@@ -20,9 +20,11 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
@@ -50,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
 import org.jetbrains.plugins.gradle.remote.impl.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
@@ -69,16 +72,22 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 4/10/13 1:19 PM
  */
-public class GradleManager implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemManager<
+public class GradleManager
+  implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, ExternalSystemManager<
   GradleProjectSettings,
   GradleSettingsListener,
   GradleSettings,
   GradleLocalSettings,
-  GradleExecutionSettings> {
+  GradleExecutionSettings>
+{
 
   private static final Logger LOG = Logger.getInstance("#" + GradleManager.class.getName());
 
-  @NotNull private final GradleInstallationManager myInstallationManager;
+  @NotNull private final ExternalSystemAutoImportAware myAutoImportDelegate =
+    new CachingExternalSystemAutoImportAware(new GradleAutoImportAware());
+
+  @NotNull
+  private final GradleInstallationManager myInstallationManager;
 
   @NotNull private static final NotNullLazyValue<List<GradleProjectResolverExtension>> RESOLVER_EXTENSIONS =
     new NotNullLazyValue<List<GradleProjectResolverExtension>>() {
@@ -151,7 +160,7 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
                                                                      useWrapper);
-        
+
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(extension.getClass().getName());
         }
@@ -168,7 +177,7 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
   @Override
   public void enhanceParameters(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
     PathsList classPath = parameters.getClassPath();
-    
+
     // Gradle i18n bundle.
     ExternalSystemApiUtil.addBundle(classPath, GradleBundle.PATH_TO_BUNDLE, GradleBundle.class);
 
@@ -248,5 +257,11 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
   @Override
   public String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
     return ExternalSystemApiUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
+  }
+
+  @Nullable
+  @Override
+  public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
+    return myAutoImportDelegate.getAffectedExternalProjectPath(changedFileOrDirPath, project);
   }
 }

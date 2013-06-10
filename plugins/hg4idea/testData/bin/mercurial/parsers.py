@@ -5,9 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from mercurial.node import bin, nullid, nullrev
+from mercurial.node import bin, nullid
 from mercurial import util
-import struct, zlib
+import struct, zlib, cStringIO
 
 _pack = struct.pack
 _unpack = struct.unpack
@@ -24,7 +24,7 @@ def parse_manifest(mfdict, fdict, lines):
         else:
             mfdict[f] = bin(n)
 
-def parse_index(data, inline):
+def parse_index2(data, inline):
     def gettype(q):
         return int(q & 0xFFFF)
 
@@ -36,42 +36,41 @@ def parse_index(data, inline):
     s = struct.calcsize(indexformatng)
     index = []
     cache = None
-    nodemap = {nullid: nullrev}
-    n = off = 0
-    # if we're not using lazymap, always read the whole index
+    off = 0
+
     l = len(data) - s
     append = index.append
     if inline:
         cache = (0, data)
         while off <= l:
             e = _unpack(indexformatng, data[off:off + s])
-            nodemap[e[7]] = n
             append(e)
-            n += 1
             if e[1] < 0:
                 break
             off += e[1] + s
     else:
         while off <= l:
             e = _unpack(indexformatng, data[off:off + s])
-            nodemap[e[7]] = n
             append(e)
-            n += 1
             off += s
 
-    e = list(index[0])
-    type = gettype(e[0])
-    e[0] = offset_type(0, type)
-    index[0] = tuple(e)
+    if off != len(data):
+        raise ValueError('corrupt index file')
+
+    if index:
+        e = list(index[0])
+        type = gettype(e[0])
+        e[0] = offset_type(0, type)
+        index[0] = tuple(e)
 
     # add the magic null revision at -1
     index.append((0, 0, 0, -1, -1, -1, -1, nullid))
 
-    return index, nodemap, cache
+    return index, cache
 
 def parse_dirstate(dmap, copymap, st):
     parents = [st[:20], st[20: 40]]
-    # deref fields so they will be local in loop
+    # dereference fields so they will be local in loop
     format = ">cllll"
     e_size = struct.calcsize(format)
     pos1 = 40
@@ -88,3 +87,29 @@ def parse_dirstate(dmap, copymap, st):
             copymap[f] = c
         dmap[f] = e[:4]
     return parents
+
+def pack_dirstate(dmap, copymap, pl, now):
+    now = int(now)
+    cs = cStringIO.StringIO()
+    write = cs.write
+    write("".join(pl))
+    for f, e in dmap.iteritems():
+        if e[0] == 'n' and e[3] == now:
+            # The file was last modified "simultaneously" with the current
+            # write to dirstate (i.e. within the same second for file-
+            # systems with a granularity of 1 sec). This commonly happens
+            # for at least a couple of files on 'update'.
+            # The user could change the file without changing its size
+            # within the same second. Invalidate the file's stat data in
+            # dirstate, forcing future 'status' calls to compare the
+            # contents of the file. This prevents mistakenly treating such
+            # files as clean.
+            e = (e[0], 0, -1, -1)   # mark entry as 'unset'
+            dmap[f] = e
+
+        if f in copymap:
+            f = "%s\0%s" % (f, copymap[f])
+        e = _pack(">cllll", e[0], e[1], e[2], e[3], len(f))
+        write(e)
+        write(f)
+    return cs.getvalue()

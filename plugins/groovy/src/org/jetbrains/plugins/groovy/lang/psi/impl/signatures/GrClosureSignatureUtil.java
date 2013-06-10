@@ -98,7 +98,7 @@ public class GrClosureSignatureUtil {
     ContainerUtil.map(types, new Function<PsiType, GrClosureParameter>() {
       @Override
       public GrClosureParameter fun(PsiType type) {
-        return new GrClosureParameterImpl(type, false, null);
+        return new GrClosureParameterImpl(type, null, false, null);
       }
     }, parameters);
     return new GrClosureSignatureImpl(parameters, null, false, false);
@@ -154,8 +154,9 @@ public class GrClosureSignatureUtil {
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
       PsiType type = TypeConversionUtil.erasure(param.getType());
-      closureParams[i] = new GrClosureParameterImpl(type, GrClosureParameterImpl.isParameterOptional(param),
-                                                    GrClosureParameterImpl.getDefaultInitializer(param));
+      closureParams[i] =
+        new GrClosureParameterImpl(type, GrClosureParameterImpl.getParameterName(param), GrClosureParameterImpl.isParameterOptional(param),
+                                   GrClosureParameterImpl.getDefaultInitializer(param));
     }
     return new GrClosureSignatureImpl(closureParams, null, GrClosureParameterImpl.isVararg(closureParams), false) {
       @Override
@@ -183,7 +184,7 @@ public class GrClosureSignatureUtil {
     for (int i = 0; i < params.length; i++) {
       GrClosureParameter param = params[i];
       PsiType type = TypeConversionUtil.erasure(param.getType());
-      closureParams[i] = new GrClosureParameterImpl(type, param.isOptional(), param.getDefaultInitializer());
+      closureParams[i] = new GrClosureParameterImpl(type, param.getName(), param.isOptional(), param.getDefaultInitializer());
     }
     return new GrClosureSignatureImpl(closureParams, null, GrClosureParameterImpl.isVararg(closureParams), false) {
       @Override
@@ -449,7 +450,7 @@ public class GrClosureSignatureUtil {
   }
 
   private static boolean isAssignableByConversion(@Nullable PsiType paramType, @Nullable PsiType argType, @NotNull PsiElement context) {
-    if (argType == null) {
+    if (argType == null || paramType == null) {
       return true;
     }
     if (TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
@@ -998,7 +999,7 @@ public class GrClosureSignatureUtil {
         final ArrayList<GrClosureParameter> parameters = new ArrayList<GrClosureParameter>(original.length);
 
         for (GrClosureParameter parameter : original) {
-          parameters.add(new GrClosureParameterImpl(parameter.getType(), false, null));
+          parameters.add(new GrClosureParameterImpl(parameter.getType(), parameter.getName(), false, null));
         }
 
         final int pcount = signature.isVarargs() ? signature.getParameterCount() - 2 : signature.getParameterCount() - 1;

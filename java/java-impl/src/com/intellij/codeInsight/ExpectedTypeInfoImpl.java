@@ -19,6 +19,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
@@ -83,8 +84,8 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     this.defaultType = defaultType;
 
-    assert type.isValid();
-    assert defaultType.isValid();
+    PsiUtil.ensureValidType(type);
+    PsiUtil.ensureValidType(defaultType);
   }
 
   @Override

@@ -48,8 +48,8 @@ public class ProgramRunnerUtil {
   }
 
   @Nullable
-  public static ProgramRunner getRunner(final String executorId, final RunnerAndConfigurationSettings configuration) {
-    return RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
+  public static ProgramRunner getRunner(@NotNull final String executorId, final RunnerAndConfigurationSettings configuration) {
+    return configuration == null ? null : RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
   public static void executeConfiguration(@NotNull final Project project,

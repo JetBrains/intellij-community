@@ -41,9 +41,9 @@ def fix_newline(hunk, a, b):
         hline = l[:-1]
     c = hline[0]
 
-    if c == " " or c == "+":
+    if c in " +":
         b[-1] = hline[1:]
-    if c == " " or c == "-":
+    if c in " -":
         a[-1] = hline
     hunk[-1] = hline
     return 0

@@ -15,8 +15,7 @@
  */
 package com.intellij.execution;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,18 +35,23 @@ public class CommandLineUtil {
     return toCommandLine(command.get(0), command.subList(1, command.size()));
   }
 
-  // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
   public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
+    return toCommandLine(command, parameters, Platform.current());
+  }
+
+  // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
+  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
     List<String> commandLine = ContainerUtil.newArrayListWithExpectedSize(parameters.size() + 1);
 
-    commandLine.add(FileUtil.toSystemDependentName(command));
+    commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 
-    boolean winShell = SystemInfo.isWindows &&
+    boolean isWindows = platform == Platform.WINDOWS;
+    boolean winShell = isWindows &&
                        ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
                        parameters.size() > 1 && "/c".equalsIgnoreCase(parameters.get(0));
 
     for (String parameter : parameters) {
-      if (SystemInfo.isWindows) {
+      if (isWindows) {
         if (parameter.contains("\"")) {
           parameter = StringUtil.replace(parameter, "\"", "\\\"");
         }

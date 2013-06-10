@@ -43,7 +43,7 @@ public interface ModifiableModel extends Profile {
 
   void disableTool(String inspectionTool, NamedScope namedScope);
 
-  void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level);
+  void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level);
 
   HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey, PsiElement element);
 

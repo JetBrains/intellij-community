@@ -15,47 +15,30 @@
  */
 package com.intellij.spi.psi;
 
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.ClassCandidateInfo;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.spi.SPIFileType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
  */
-public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaReference {
+public class SPIProviderElement extends ASTWrapperPsiElement implements PsiReference {
   public SPIProviderElement(ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public void processVariants(PsiScopeProcessor processor) {}
-
-  @NotNull
-  @Override
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
-    final PsiElement resolve = resolve();
-    if (resolve instanceof PsiClass) {
-      return new ClassCandidateInfo(resolve, PsiSubstitutor.EMPTY);
-    }
-    return JavaResolveResult.EMPTY;
-  }
-
-  @NotNull
-  @Override
-  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final PsiElement resolve = resolve();
-    if (resolve instanceof PsiClass) {
-      return new JavaResolveResult[] {new ClassCandidateInfo(resolve, PsiSubstitutor.EMPTY)};
-    }
-    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   @Override
@@ -65,7 +48,8 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
 
   @Override
   public TextRange getRangeInElement() {
-    return new TextRange(0, getTextLength());
+    final PsiElement last = PsiTreeUtil.getDeepestLast(this);
+    return new TextRange(last.getStartOffsetInParent(), getTextLength());
   }
 
   @Nullable
@@ -82,11 +66,20 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return null;
+    final SPIProvidersElementList firstChild =
+      (SPIProvidersElementList)PsiFileFactory.getInstance(getProject())
+        .createFileFromText("spi_dummy", SPIFileType.INSTANCE, newElementName).getFirstChild();
+    return replace(firstChild.getElements().get(0));
   }
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (element instanceof PsiClass) {
+      final String className = ClassUtil.getJVMClassName((PsiClass)element);
+      if (className != null) {
+        return handleElementRename(className);
+      }
+    }
     return null;
   }
 
@@ -101,6 +94,22 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
   @NotNull
   @Override
   public Object[] getVariants() {
+    final String name = getContainingFile().getName();
+    final PsiClass superProvider = JavaPsiFacade.getInstance(getProject()).findClass(name, getResolveScope());
+    if (superProvider != null) {
+      final List<Object> result = new ArrayList<Object>();
+      ClassInheritorsSearch.search(superProvider).forEach(new Processor<PsiClass>() {
+        @Override
+        public boolean process(PsiClass psiClass) {
+          final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
+          if (jvmClassName != null) {
+            result.add(LookupElementBuilder.create(psiClass, jvmClassName));
+          }
+          return false;
+        }
+      });
+      return result.toArray(new Object[result.size()]);
+    }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
@@ -112,5 +121,9 @@ public class SPIProviderElement extends ASTWrapperPsiElement implements PsiJavaR
   @Override
   public boolean isSoft() {
     return false;
+  }
+  
+  public boolean isDestination() {
+    return true;
   }
 }

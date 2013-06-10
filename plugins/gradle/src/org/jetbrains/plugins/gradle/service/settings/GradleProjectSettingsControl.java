@@ -59,9 +59,10 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   @NotNull private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   @NotNull private LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
-  
+
   @NotNull private final GradleInstallationManager myInstallationManager;
-  
+
+  @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
   private JLabel                    myGradleHomeLabel;
   private TextFieldWithBrowseButton myGradleHomePathField;
   private JBRadioButton             myUseWrapperButton;
@@ -80,7 +81,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     content.setPaintCallback(new Consumer<Graphics>() {
       @Override
       public void consume(Graphics graphics) {
-        showBalloonIfNecessary(); 
+        showBalloonIfNecessary();
       }
     });
 
@@ -100,7 +101,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
         }
       }
     });
-    
+
     myGradleHomeLabel = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
     initGradleHome();
 
@@ -114,7 +115,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   private void initWrapperControls() {
     ActionListener listener = new ActionListener() {
-            @Override
+      @Override
       public void actionPerformed(ActionEvent e) {
         boolean enabled = e.getSource() == myUseLocalDistributionButton;
         myGradleHomePathField.setEnabled(enabled);
@@ -177,6 +178,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       }
       else {
         settings.setGradleHome(gradleHomePath);
+        GradleUtil.storeLastUsedGradleHome(gradleHomePath);
       }
     }
     else {
@@ -226,6 +228,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       deduceGradleHomeIfPossible();
     }
     else {
+      assert gradleHome != null;
       myGradleHomeSettingType = myInstallationManager.isGradleSdkHome(new File(gradleHome)) ?
                                 LocationSettingType.EXPLICIT_CORRECT :
                                 LocationSettingType.EXPLICIT_INCORRECT;

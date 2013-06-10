@@ -44,7 +44,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testMergeState() {
-    hg("merge --tool internal:merge branchB");
+    hg("merge branchB");
     assertEquals(myRepositoryReader.readState(), Repository.State.MERGING);
   }
 
@@ -59,7 +59,6 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   public void testBranches() {
     TestRepositoryUtil.assertEqualCollections(myRepositoryReader.readBranches(), Arrays.asList("default", "branchA", "branchB"));
   }
-
 
   private void createBranches() {
     cd(myRepository);

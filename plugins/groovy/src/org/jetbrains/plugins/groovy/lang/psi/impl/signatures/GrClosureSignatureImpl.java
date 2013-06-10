@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +172,8 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
       for (int i = 0; i < params.length; i++) {
         final PsiType type = GenericsUtil.getGreatestLowerBound(parameters1[i].getType(), parameters2[i].getType());
         boolean opt = parameters1[i].isOptional() && parameters2[i].isOptional();
-        params[i] = new GrClosureParameterImpl(type, opt, null);
+        String name = StringUtil.equals(parameters1[i].getName(), parameters2[i].getName()) ? parameters1[i].getName() : null;
+        params[i] = new GrClosureParameterImpl(type, name, opt, null);
       }
       final PsiType s1type = signature1.getReturnType();
       final PsiType s2type = signature2.getReturnType();

@@ -73,11 +73,11 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return new LocalInspectionToolWrapper(this);
   }
 
-  public void processFile(PsiFile file, final boolean filterSuppressed, final InspectionManager manager) {
+  public void processFile(@NotNull PsiFile file, final boolean filterSuppressed, @NotNull InspectionManager manager) {
     processFile(file, filterSuppressed, manager, false);
   }
 
-  public void processFile(final PsiFile file, final boolean filterSuppressed, final InspectionManager manager, final boolean isOnTheFly) {
+  public void processFile(@NotNull PsiFile file, final boolean filterSuppressed, @NotNull InspectionManager manager, final boolean isOnTheFly) {
     final ProblemsHolder holder = new ProblemsHolder(manager, file, isOnTheFly);
     LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
     final PsiElementVisitor customVisitor = getTool().buildVisitor(holder, isOnTheFly, session);

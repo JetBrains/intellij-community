@@ -15,12 +15,10 @@
  */
 package com.intellij.spi.parsing;
 
-import com.intellij.lang.Language;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.spi.SPILanguage;
+import com.intellij.lang.spi.SPILanguage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna

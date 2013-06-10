@@ -27,10 +27,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.spi.psi.SPIPackElement;
 import com.intellij.spi.psi.SPIProviderElement;
 import com.intellij.spi.psi.SPIProvidersElementList;
 import com.intellij.spi.psi.SPIFile;
-import com.intellij.spi.SPILanguage;
+import com.intellij.lang.spi.SPILanguage;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -99,6 +100,9 @@ public class SPIParserDefinition implements ParserDefinition {
     if (elementType == SPIElementTypes.PROVIDER) {
       return new SPIProviderElement(node);
     }
+    if (elementType == SPIElementTypes.PACK) {
+      return new SPIPackElement(node);
+    }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 
@@ -111,12 +115,12 @@ public class SPIParserDefinition implements ParserDefinition {
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
-  
+
   public static void parseProvider(PsiBuilder builder) {
-    if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+    if (builder.getTokenType() == SPITokenType.IDENTIFIER) {
       final PsiBuilder.Marker prop = builder.mark();
 
-      parseProviderChar(builder);
+      parseProviderChar(builder, builder.mark());
       prop.done(SPIElementTypes.PROVIDER);
     }
     else {
@@ -125,13 +129,17 @@ public class SPIParserDefinition implements ParserDefinition {
     }
   }
 
-  private static void parseProviderChar(final PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == JavaTokenType.IDENTIFIER);
+  private static void parseProviderChar(final PsiBuilder builder, PsiBuilder.Marker pack) {
     builder.advanceLexer();
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT || tokenType == SPITokenType.DOLLAR) {
+      pack.done(SPIElementTypes.PACK);
       builder.advanceLexer();
-      parseProviderChar(builder);
+      final IElementType initialTokenType = builder.getTokenType();
+      if (initialTokenType == null) return;
+      parseProviderChar(builder, pack.precede());
+    } else {
+      pack.drop();
     }
   }
 }

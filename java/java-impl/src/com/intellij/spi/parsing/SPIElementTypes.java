@@ -18,13 +18,14 @@ package com.intellij.spi.parsing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.spi.SPILanguage;
+import com.intellij.lang.spi.SPILanguage;
 
-interface SPIElementTypes {
+public interface SPIElementTypes {
 
   IFileElementType FILE = new IFileElementType(SPILanguage.INSTANCE);
   IElementType PROVIDER = new IElementType("PROVIDER", SPILanguage.INSTANCE);
+  IElementType PACK = new IElementType("PACK", SPILanguage.INSTANCE);
 
-  IElementType PROVIDERS_LIST = new IElementType("ROVIDER_LIST", SPILanguage.INSTANCE);
+  IElementType PROVIDERS_LIST = new IElementType("PROVIDER_LIST", SPILanguage.INSTANCE);
   TokenSet PROVIDERS = TokenSet.create(PROVIDER);
 }

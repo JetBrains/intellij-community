@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -47,7 +46,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.CharTable;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -386,7 +388,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       else if (resolve instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)resolve;
         ret = method.getReturnType();
-        LOG.assertTrue(ret == null || ret.isValid());
+        if (ret != null) {
+          PsiUtil.ensureValidType(ret);
+        }
         owner = method;
       }
       if (ret == null) return null;
@@ -400,9 +404,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         final PsiSubstitutor substitutor = result.getSubstitutor();
         if (owner == null || !PsiUtil.isRawSubstitutor(owner, substitutor)) {
           PsiType substitutedType = substitutor.substitute(ret);
-          LOG.assertTrue(substitutedType.isValid());
+          PsiUtil.ensureValidType(substitutedType);
           PsiType normalized = PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
-          LOG.assertTrue(normalized.isValid());
+          PsiUtil.ensureValidType(normalized);
           return normalized;
         }
       }

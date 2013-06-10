@@ -449,6 +449,8 @@
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>
+    
+    <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider$GroovyExtensionVetoSPI"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
@@ -1020,6 +1022,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.GrRedundantElseIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.control.FlipIfIntention</className>
     </intentionAction>
     <intentionAction>
@@ -1402,6 +1409,8 @@
                                      implementation="org.jetbrains.plugins.groovy.debugger.GroovyPositionManagerFactory"/>
     <debugger.positionManagerFactory order="after groovyPositionManager"
                                      implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
+    <codeStyle.ReferenceAdjusterFactory language="Groovy"
+                                        implementationClass="org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjusterFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

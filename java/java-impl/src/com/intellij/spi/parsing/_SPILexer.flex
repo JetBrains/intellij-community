@@ -45,23 +45,18 @@ import com.intellij.lexer.FlexLexer;
 
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
 
-IDENTIFIER=[:jletter:] [:jletterdigit:]*
+IDENTIFIER=(_|[:letter:]) (_|[:letter:]|[:digit:])*
 
 END_OF_LINE_COMMENT="#"[^\r\n]*
 
-DIGIT = [0-9]
-DIGIT_OR_UNDERSCORE = [_0-9]
-DIGITS = {DIGIT} | {DIGIT} {DIGIT_OR_UNDERSCORE}*
-
 %%
 
-<YYINITIAL> {WHITE_SPACE_CHAR}+ { return JavaTokenType.WHITE_SPACE; }
+<YYINITIAL> {WHITE_SPACE_CHAR}+   { return JavaTokenType.WHITE_SPACE; }
 
 <YYINITIAL> {END_OF_LINE_COMMENT} { return JavaTokenType.END_OF_LINE_COMMENT; }
-<YYINITIAL> {IDENTIFIER} { return JavaTokenType.IDENTIFIER; }
+<YYINITIAL> "$"                   { return SPITokenType.DOLLAR; }
+<YYINITIAL> {IDENTIFIER}          { return SPITokenType.IDENTIFIER; }
 
-<YYINITIAL> "."   { return JavaTokenType.DOT; }
+<YYINITIAL> "."                   { return JavaTokenType.DOT; }
 
-<YYINITIAL> "$" { return SPITokenType.DOLLAR; }
-
-<YYINITIAL> . { return JavaTokenType.BAD_CHARACTER; }
+<YYINITIAL> .                     { return JavaTokenType.BAD_CHARACTER; }

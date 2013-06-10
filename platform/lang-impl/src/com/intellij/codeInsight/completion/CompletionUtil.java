@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -93,7 +94,9 @@ public class CompletionUtil {
   public static CompletionData getCompletionDataByElement(@Nullable final PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
 
-    final FileType fileType = position.getParent().getLanguage().getAssociatedFileType();
+    PsiElement parent = position.getParent();
+    Language language = parent == null ? position.getLanguage() : parent.getLanguage();
+    final FileType fileType = language.getAssociatedFileType();
     if (fileType != null) {
       final CompletionData mainData = getCompletionDataByFileType(fileType);
       if (mainData != null) {
