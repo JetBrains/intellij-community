@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 * @author Denis Zhdanov
 * @since 5/18/13 10:51 PM
 */
-public class ExternalProjectPojo {
+public class ExternalProjectPojo implements Comparable<ExternalProjectPojo> {
   
   @NotNull private String myName;
   @NotNull private String myPath;
@@ -58,6 +58,11 @@ public class ExternalProjectPojo {
 
   public void setPath(@NotNull String path) {
     myPath = path;
+  }
+
+  @Override
+  public int compareTo(@NotNull ExternalProjectPojo that) {
+    return myName.compareTo(that.myName);
   }
 
   @Override
