@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,18 +95,17 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
     return panel;
   }
 
-  @Override
   public IntentionAction getIntentionAction(String name, int type) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, type);
+    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, type, XmlBundle.message("add.optional.html.attribute", name));
   }
 
   @Override
-  public String getAdditionalEntries(int type) {
+  public String getAdditionalEntries() {
     return myAdditionalRequiredHtmlAttributes;
   }
 
   @Override
-  public void setAdditionalEntries(int type, String additionalEntries) {
+  public void setAdditionalEntries(String additionalEntries) {
     myAdditionalRequiredHtmlAttributes = additionalEntries;
   }
 

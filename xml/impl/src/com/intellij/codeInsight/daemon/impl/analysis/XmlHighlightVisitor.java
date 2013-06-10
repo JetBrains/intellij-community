@@ -330,7 +330,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
               insertRequiredAttributeIntention,
               HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME),
               inspection,
-              XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE
+              inspection.getIntentionAction(attrName, XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE)
             );
           }
         }
@@ -344,16 +344,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
                                    final IntentionAction basicIntention,
                                    final HighlightDisplayKey key,
                                    final XmlEntitiesInspection inspection,
-                                   final int type) {
+                                   final IntentionAction addAttributeFix) {
     boolean htmlTag = false;
 
     if (tag instanceof HtmlTag) {
       htmlTag = true;
-      if(isAdditionallyDeclared(inspection.getAdditionalEntries(type), name)) return;
+      if(isAdditionallyDeclared(inspection.getAdditionalEntries(), name)) return;
     }
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
-    final IntentionAction intentionAction = inspection.getIntentionAction(name, type);
     if (htmlTag && profile.isToolEnabled(key, tag)) {
       addElementsForTagWithManyQuickFixes(
         tag,
@@ -361,7 +360,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag) ?
           HighlightInfoType.INFORMATION :
           SeverityUtil.getSeverityRegistrar(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
-        intentionAction,
+        addAttributeFix,
         basicIntention);
     } else if (!htmlTag) {
       addElementsForTag(

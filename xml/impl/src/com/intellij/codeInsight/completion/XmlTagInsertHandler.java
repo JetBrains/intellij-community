@@ -202,7 +202,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         RequiredAttributesInspection.SHORT_NAME, tag);
 
       if (inspection != null) {
-        StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries(0));
+        StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries());
         notRequiredAttributes = new HashSet<String>();
 
         while(tokenizer.hasMoreElements()) notRequiredAttributes.add(tokenizer.nextToken());
