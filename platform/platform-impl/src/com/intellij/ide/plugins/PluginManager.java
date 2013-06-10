@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.StartupUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -38,13 +39,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
 /**
  * @author mike
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"}) // No logger is loaded at this time so we have to use these.
 public class PluginManager extends PluginManagerCore {
   @NonNls public static final String INSTALLED_TXT = "installed.txt";
 
@@ -55,11 +56,10 @@ public class PluginManager extends PluginManagerCore {
   /**
    * Called via reflection
    */
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
   protected static void start(final String mainClass, final String methodName, final String[] args) {
     startupStart = System.nanoTime();
     try {
-      //noinspection HardCodedStringLiteral
       ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
         @Override
         public void uncaughtException(Thread t, Throwable e) {
@@ -82,21 +82,20 @@ public class PluginManager extends PluginManagerCore {
             //noinspection RedundantArrayCreation
             method.invoke(null, new Object[]{args});
           }
-          catch (Exception e) {
-            e.printStackTrace(System.err);
-            String message = "Error while accessing " + mainClass + "." + methodName + " with arguments: " + Arrays.asList(args);
-            if ("true".equals(System.getProperty("java.awt.headless"))) {
-              //noinspection UseOfSystemOutOrSystemErr
-              System.err.println(message);
+          catch (Throwable t) {
+            //noinspection InstanceofCatchParameter
+            if (t instanceof InvocationTargetException) {
+              t = t.getCause();
             }
-            else {
-              JOptionPane.showMessageDialog(null, message + ": " + e.getClass().getName() + ": " + e.getMessage() + "\n" + ExceptionUtil.getThrowableText(e), "Error starting IntelliJ Platform", JOptionPane.ERROR_MESSAGE);
-            }
+
+            String message = "Error while accessing " + mainClass + "." + methodName + " with arguments: " + Arrays.asList(args) +
+                             "\n" + ExceptionUtil.getThrowableText(t);
+            StartupUtil.showError("Error starting IntelliJ Platform", message);
+            System.exit(1);
           }
         }
       };
 
-      //noinspection HardCodedStringLiteral
       new Thread(threadGroup, runnable, "Idea Main Thread").start();
     }
     catch (Exception e) {

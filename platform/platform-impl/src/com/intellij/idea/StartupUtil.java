@@ -77,7 +77,7 @@ public class StartupUtil {
     return isHeadless;
   }
 
-  private static void showError(final String title, final String message) {
+  public static void showError(final String title, final String message) {
     if (isHeadless()) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(message);
