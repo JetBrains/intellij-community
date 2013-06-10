@@ -30,6 +30,7 @@ import com.intellij.codeInspection.util.RefFilter;
 import org.jetbrains.annotations.NotNull;
 
 public class RefUnreachableFilter extends RefFilter {
+  @NotNull
   protected InspectionTool myTool;
 
   public RefUnreachableFilter(@NotNull InspectionTool tool) {
