@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -45,6 +46,7 @@ public class PyClassHasNoInitInspection extends PyInspection {
       for (PyExpression pyClass : classes) {
         final PsiReference reference = pyClass.getReference();
         if (reference == null || reference.resolve() == null) return;
+        if (reference.getCanonicalText().contains(PyNames.TEST_CASE)) return;
       }
       final PyFunction init = node.findInitOrNew(true);
       if (init == null) {

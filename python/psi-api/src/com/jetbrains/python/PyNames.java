@@ -128,6 +128,8 @@ public class PyNames {
   public static final String AT_TEST = "Attest";
   public static final String AT_TEST_IMPORT = "attest";
 
+  public static final String TEST_CASE = "TestCase";
+
   public static final String PYCACHE =  "__pycache__";
 
   public static final String NOT_IMPLEMENTED_ERROR = "NotImplementedError";
