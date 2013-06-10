@@ -43,8 +43,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   private final InspectionTool myTool;
   private final HTMLJavaHTMLComposer myComposer;
 
-  public DeadHTMLComposer(InspectionTool tool) {
-    super();
+  public DeadHTMLComposer(@NotNull InspectionTool tool) {
     myTool = tool;
     myComposer = getExtension(HTMLJavaHTMLComposer.COMPOSER);
   }
@@ -340,7 +339,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
   private void appendCallesList(RefElement element, StringBuffer buf, Set<RefElement> mentionedElements, boolean appendCallees){
     final Set<RefElement> possibleChildren = getPossibleChildren(new RefElementNode(element, myTool), element);
-    if (possibleChildren.size() > 0) {
+    if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
       }
