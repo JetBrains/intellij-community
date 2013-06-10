@@ -156,7 +156,7 @@ public class ExternalSystemApiUtil {
     }
     return new ArtifactInfo(matcher.group(1), null, matcher.group(2));
   }
-  
+
   public static void orderAwareSort(@NotNull List<?> data) {
     Collections.sort(data, ORDER_AWARE_COMPARATOR);
   }

@@ -24,6 +24,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class ExternalSystemTaskRunner extends GenericProgramRunner {
   @NotNull
   @Override
   public String getRunnerId() {
-    return "ExternalSystemTaskRunner";
+    return ExternalSystemConstants.RUNNER_ID;
   }
 
   @Override

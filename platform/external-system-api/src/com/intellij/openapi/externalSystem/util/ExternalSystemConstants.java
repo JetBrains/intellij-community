@@ -34,6 +34,9 @@ public class ExternalSystemConstants {
   @NonNls @NotNull public static final String TOOL_WINDOW_PLACE = "ExternalSystem.ToolWindow";
   @NonNls @NotNull public static final String TREE_PLACE        = "ExternalSystem.Tree";
 
+  @NotNull public static final String DEBUG_RUNNER_ID = "ExternalSystemTaskDebugRunner";
+  @NotNull public static final String RUNNER_ID = "ExternalSystemTaskRunner";
+
   public static final boolean VERBOSE_PROCESSING       = SystemProperties.getBooleanProperty("external.system.verbose.processing", false);
   public static final int     RECENT_TASKS_NUMBER      = SystemProperties.getIntProperty("external.system.recent.tasks.number", 7);
   public static final int     AUTO_IMPORT_DELAY_MILLIS = SystemProperties.getIntProperty("external.system.auto.import.delay.ms", 3000);
