@@ -29,8 +29,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -705,8 +703,8 @@ public class XmlUtil {
     final XmlTag tag = document.getRootTag();
     if (tag == null) return null;
 
+    @NotNull final XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
     if (file != null) {
-      @NotNull final XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
 
       NextProvider:
       for (XmlFileNSInfoProvider nsProvider : nsProviders) {
@@ -730,9 +728,12 @@ public class XmlUtil {
       boolean overrideNamespaceFromDocType = false;
 
       if (file != null) {
-        final FileType fileType = file.getFileType();
-        overrideNamespaceFromDocType =
-          fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML || fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP;
+        for (XmlFileNSInfoProvider provider : nsProviders) {
+          if (provider.overrideNamespaceFromDocType(file)) {
+            overrideNamespaceFromDocType = true;
+            break;
+          }
+        }
       }
 
       if (!overrideNamespaceFromDocType) return new String[][]{new String[]{"", namespace}};
