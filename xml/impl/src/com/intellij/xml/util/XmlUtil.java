@@ -25,6 +25,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -965,7 +966,7 @@ public class XmlUtil {
                                  ? " xmlns=\"" + namespace + "\""
                                  : "");
       Language language = xmlTag.getLanguage();
-      if (!(language instanceof HTMLLanguage)) language = StdFileTypes.XML.getLanguage();
+      if (!(language instanceof HTMLLanguage)) language = XMLLanguage.INSTANCE;
       XmlTag retTag;
       if (bodyText != null) {
         retTag = XmlElementFactory.getInstance(xmlTag.getProject())
