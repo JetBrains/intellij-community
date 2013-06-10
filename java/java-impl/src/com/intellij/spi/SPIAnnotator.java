@@ -18,13 +18,12 @@ package com.intellij.spi;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.spi.psi.SPIProviderElement;
+import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,8 +41,8 @@ public class SPIAnnotator implements Annotator{
         if (psiClass == null) {
           holder.createErrorAnnotation(element, "No service provider \"" + serviceProviderName + "\' found").setFileLevelAnnotation(true);
         }
-      } else if (element instanceof SPIProviderElement && ((SPIProviderElement)element).isDestination()) {
-        final PsiElement resolve = ((SPIProviderElement)element).resolve();
+      } else if (element instanceof SPIClassProviderReferenceElement) {
+        final PsiElement resolve = ((SPIClassProviderReferenceElement)element).resolve();
         if (resolve == null) {
           holder.createErrorAnnotation(element, "Cannot resolve symbol " + element.getText());
         } else if (resolve instanceof PsiClass && psiClass != null) {

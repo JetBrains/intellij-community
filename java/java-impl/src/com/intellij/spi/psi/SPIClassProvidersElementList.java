@@ -17,7 +17,6 @@ package com.intellij.spi.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.spi.parsing.SPIElementType;
 import com.intellij.spi.parsing.SPIElementTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,12 +25,12 @@ import java.util.List;
 /**
  * User: anna
  */
-public class SPIProvidersElementList extends ASTWrapperPsiElement {
-  public SPIProvidersElementList(@NotNull ASTNode node) {
+public class SPIClassProvidersElementList extends ASTWrapperPsiElement {
+  public SPIClassProvidersElementList(@NotNull ASTNode node) {
     super(node);
   }
   
-  public List<SPIProviderElement> getElements() {
+  public List<SPIClassProviderReferenceElement> getElements() {
     return findChildrenByType(SPIElementTypes.PROVIDER);
   }
 }
