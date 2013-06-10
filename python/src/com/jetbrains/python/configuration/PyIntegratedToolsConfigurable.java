@@ -8,6 +8,7 @@ import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.FileContentUtilCore;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -221,11 +223,29 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     }
     myModel.apply();
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
-    ReSTService.getInstance(myModule).setWorkdir(myWorkDir.getText());
-    ReSTService.getInstance(myModule).setTxtIsRst(txtIsRst.isSelected());
+    final ReSTService reSTService = ReSTService.getInstance(myModule);
+    reSTService.setWorkdir(myWorkDir.getText());
+    if (txtIsRst.isSelected() != reSTService.txtIsRst()) {
+      reSTService.setTxtIsRst(txtIsRst.isSelected());
+      reparseRstFiles();
+    }
     myDocumentationSettings.analyzeDoctest = analyzeDoctest.isSelected();
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
+  }
+
+  public void reparseRstFiles() {
+    final List<VirtualFile> filesToReparse = Lists.newArrayList();
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
+      @Override
+      public boolean processFile(VirtualFile fileOrDir) {
+        if (!fileOrDir.isDirectory() && PlainTextFileType.INSTANCE.getDefaultExtension().equals(fileOrDir.getExtension())) {
+          filesToReparse.add(fileOrDir);
+        }
+        return true;
+      }
+    });
+    FileContentUtilCore.reparseFiles(filesToReparse);
   }
 
   @Override
