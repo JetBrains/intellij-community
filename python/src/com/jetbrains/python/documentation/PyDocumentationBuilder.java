@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -357,8 +358,8 @@ class PyDocumentationBuilder {
   private static void addFormattedDocString(PsiElement element, @NotNull String docstring,
                                             ChainIterable<String> formattedOutput, ChainIterable<String> unformattedOutput) {
     final Project project = element.getProject();
-    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) return;
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) module = ModuleManager.getInstance(project).getModules()[0];
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     List<String> result = new ArrayList<String>();
     String[] lines = removeCommonIndentation(docstring);
