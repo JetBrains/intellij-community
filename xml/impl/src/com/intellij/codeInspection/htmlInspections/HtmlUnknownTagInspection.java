@@ -57,7 +57,7 @@ import java.util.StringTokenizer;
 /**
  * @author spleaner
  */
-public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
+public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection");
 
   public JDOMExternalizableStringList myValues;
@@ -186,7 +186,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
     return myValues.contains(value.toLowerCase());
   }
 
-  public void addCustomPropertyName(@NotNull final String text) {
+  public void addEntry(@NotNull final String text) {
     final String s = text.trim().toLowerCase();
     if (!isCustomValue(s)) {
       myValues.add(s);

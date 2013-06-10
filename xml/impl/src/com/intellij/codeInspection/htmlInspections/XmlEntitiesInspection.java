@@ -10,5 +10,5 @@ public interface XmlEntitiesInspection {
   int NOT_REQUIRED_ATTRIBUTE = 3;
   
   String getAdditionalEntries();
-  void setAdditionalEntries(String additionalEntries);
+  void addEntry(String text);
 }

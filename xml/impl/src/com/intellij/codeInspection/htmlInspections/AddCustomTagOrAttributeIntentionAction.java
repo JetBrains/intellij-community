@@ -73,7 +73,7 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
     profile.modifyToolSettings(myInspectionKey, element, new Consumer<HtmlUnknownTagInspection>() {
       @Override
       public void consume(HtmlUnknownTagInspection tool) {
-        tool.addCustomPropertyName(myName);
+        tool.addEntry(myName);
       }
     });
   }

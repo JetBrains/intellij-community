@@ -37,7 +37,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
   private final String myText;
   private final Key<InspectionProfileEntry> myInspectionKey;
 
-  public AddHtmlTagOrAttributeToCustomsIntention(Key<InspectionProfileEntry> inspectionKey, String name, int type, String text) {
+  public AddHtmlTagOrAttributeToCustomsIntention(Key<InspectionProfileEntry> inspectionKey, String name, String text) {
     myInspectionKey = inspectionKey;
     myName = name;
     myText = text;
@@ -67,7 +67,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
       @Override
       public void consume(InspectionProfileEntry entry) {
         XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection) entry;
-        xmlEntitiesInspection.setAdditionalEntries(appendName(xmlEntitiesInspection.getAdditionalEntries()));
+        xmlEntitiesInspection.addEntry(myName);
       }
     });
   }
@@ -76,15 +76,4 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
   public boolean startInWriteAction() {
     return false;
   }
-
-  private String appendName(String toAppend) {
-    if (toAppend.length() > 0) {
-      toAppend += "," + myName;
-    }
-    else {
-      toAppend = myName;
-    }
-    return toAppend;
-  }
-
 }

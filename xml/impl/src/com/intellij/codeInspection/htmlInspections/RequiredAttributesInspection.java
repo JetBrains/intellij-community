@@ -96,7 +96,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   }
 
   public IntentionAction getIntentionAction(String name, int type) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, type, XmlBundle.message("add.optional.html.attribute", name));
+    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlBundle.message("add.optional.html.attribute", name));
   }
 
   @Override
@@ -105,8 +105,18 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   }
 
   @Override
-  public void setAdditionalEntries(String additionalEntries) {
-    myAdditionalRequiredHtmlAttributes = additionalEntries;
+  public void addEntry(String text) {
+    myAdditionalRequiredHtmlAttributes = appendName(getAdditionalEntries(), text);
+  }
+
+  private static String appendName(String toAppend, String text) {
+    if (toAppend.length() > 0) {
+      toAppend += "," + text;
+    }
+    else {
+      toAppend = text;
+    }
+    return toAppend;
   }
 
   @Override
