@@ -45,8 +45,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   public String myAdditionalRequiredHtmlAttributes = "";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection");
-  @NonNls public static final String SHORT_NAME = "RequiredAttributes";
-  @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(SHORT_NAME);
+  @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
 
   @Override
   @NotNull
@@ -64,7 +63,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   @NotNull
   @NonNls
   public String getShortName() {
-    return SHORT_NAME;
+    return REQUIRED_ATTRIBUTES_SHORT_NAME;
   }
 
   @Override
@@ -95,7 +94,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
     return panel;
   }
 
-  public IntentionAction getIntentionAction(String name, int type) {
+  public IntentionAction getIntentionAction(String name) {
     return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlBundle.message("add.optional.html.attribute", name));
   }
 

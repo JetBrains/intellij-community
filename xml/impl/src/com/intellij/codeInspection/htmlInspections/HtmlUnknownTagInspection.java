@@ -62,7 +62,6 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool implements
 
   public JDOMExternalizableStringList myValues;
   public boolean myCustomValuesEnabled = true;
-  @NonNls public static final String TAG_SHORT_NAME = "HtmlUnknownTag";
   public static final Key<HtmlUnknownTagInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
 
   public HtmlUnknownTagInspection() {

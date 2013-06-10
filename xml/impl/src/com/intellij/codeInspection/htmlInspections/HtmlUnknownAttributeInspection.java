@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection");
-  @NonNls public static final String ATTRIBUTE_SHORT_NAME = "HtmlUnknownAttribute";
   public static final Key<HtmlUnknownTagInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
 
   public HtmlUnknownAttributeInspection() {

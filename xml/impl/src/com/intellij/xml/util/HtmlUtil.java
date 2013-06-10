@@ -16,8 +16,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
-import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -237,7 +235,7 @@ public class HtmlUtil {
   }
 
   public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
-    String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
+    String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
 
     StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
@@ -265,7 +263,7 @@ public class HtmlUtil {
   }
 
   public static XmlElementDescriptor[] getCustomTagDescriptors(XmlElement context) {
-    String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_TAG);
+    String entitiesString = getEntitiesString(context, XmlEntitiesInspection.TAG_SHORT_NAME);
     if (entitiesString == null) return XmlElementDescriptor.EMPTY_ARRAY;
 
     StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
@@ -298,31 +296,15 @@ public class HtmlUtil {
   }
 
   @Nullable
-  public static String getEntitiesString(XmlElement context, int type) {
+  public static String getEntitiesString(XmlElement context, String inspectionName) {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile().getOriginalFile();
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile();
-
-    switch (type) {
-      case XmlEntitiesInspection.UNKNOWN_TAG:
-        HtmlUnknownTagInspection unknownTagInspection =
-          (HtmlUnknownTagInspection)profile.getUnwrappedTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
-                                                             containingFile);
-        if (unknownTagInspection != null) {
-          return unknownTagInspection.getAdditionalEntries();
-        }
-        break;
-      case XmlEntitiesInspection.UNKNOWN_ATTRIBUTE:
-        HtmlUnknownAttributeInspection unknownAttributeInspection =
-          (HtmlUnknownAttributeInspection)profile.getUnwrappedTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME,
-                                                                   containingFile);
-        if (unknownAttributeInspection != null) {
-          return unknownAttributeInspection.getAdditionalEntries();
-        }
-        break;
+    XmlEntitiesInspection inspection = (XmlEntitiesInspection)profile.getUnwrappedTool(inspectionName, containingFile);
+    if (inspection != null) {
+      return inspection.getAdditionalEntries();
     }
-
     return null;
   }
 

@@ -321,16 +321,16 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
           RequiredAttributesInspection inspection =
-            (RequiredAttributesInspection)profile.getUnwrappedTool(RequiredAttributesInspection.SHORT_NAME, tag);
+            (RequiredAttributesInspection)profile.getUnwrappedTool(XmlEntitiesInspection.REQUIRED_ATTRIBUTES_SHORT_NAME, tag);
           if (inspection != null) {
             reportOneTagProblem(
               tag,
               attrName,
               localizedMessage,
               insertRequiredAttributeIntention,
-              HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME),
+              HighlightDisplayKey.find(XmlEntitiesInspection.REQUIRED_ATTRIBUTES_SHORT_NAME),
               inspection,
-              inspection.getIntentionAction(attrName, XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE)
+              inspection.getIntentionAction(attrName)
             );
           }
         }
