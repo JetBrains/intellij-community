@@ -44,6 +44,7 @@ public final class UrlImpl implements Url {
     return scheme;
   }
 
+  @Override
   @Nullable
   public String getAuthority() {
     return authority;
