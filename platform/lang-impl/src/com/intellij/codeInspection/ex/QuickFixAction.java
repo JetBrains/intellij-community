@@ -105,7 +105,6 @@ public class QuickFixAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
-    final InspectionTool tool = tree.getSelectedTool();
     if (isProblemDescriptorsAcceptable()) {
       final CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
       if (descriptors.length > 0) {

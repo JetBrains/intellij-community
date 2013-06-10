@@ -19,29 +19,30 @@
  * User: max
  * Date: Jan 21, 2002
  * Time: 1:16:43 AM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.export;
 
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.List;
 
 public class HTMLExportFrameMaker {
   private final String myRootFolder;
   private final Project myProject;
-  private final ArrayList myInspectionTools;
+  private final List<InspectionTool> myInspectionTools;
 
   public HTMLExportFrameMaker(String rootFolder, Project project) {
     myRootFolder = rootFolder;
     myProject = project;
-    myInspectionTools = new ArrayList();
+    myInspectionTools = new ArrayList<InspectionTool>();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -55,8 +56,7 @@ public class HTMLExportFrameMaker {
   public void done() {
     StringBuffer buf = new StringBuffer();
 
-    for (int i = 0; i < myInspectionTools.size(); i++) {
-      InspectionTool tool = (InspectionTool) myInspectionTools.get(i);
+    for (InspectionTool tool : myInspectionTools) {
       buf.append("<A HREF=\"");
       buf.append(tool.getFolderName());
       buf.append("-index.html\">");
@@ -67,7 +67,7 @@ public class HTMLExportFrameMaker {
     HTMLExporter.writeFile(myRootFolder, "index.html", buf, myProject);
   }
 
-  public void startInspection(InspectionTool tool) {
+  public void startInspection(@NotNull InspectionTool tool) {
     myInspectionTools.add(tool);
     @NonNls StringBuffer buf = new StringBuffer();
     buf.append("<HTML><HEAD><TITLE>");

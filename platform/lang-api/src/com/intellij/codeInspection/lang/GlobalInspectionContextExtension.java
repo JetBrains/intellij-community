@@ -24,6 +24,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public interface GlobalInspectionContextExtension<T> {
                                final List<Tools> localTools,
                                final GlobalInspectionContext context);
 
-  void performPostRunActivities(final List<InspectionProfileEntry> inspections, final GlobalInspectionContext context);
+  void performPostRunActivities(@NotNull List<InspectionProfileEntry> inspections, final GlobalInspectionContext context);
 
   void cleanup();
 }
