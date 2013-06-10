@@ -6,6 +6,7 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -92,10 +94,15 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     final CoverageView oldView = myViews.get(displayName);
     if (oldView != null) {
       final Content content = myContentManager.getContent(oldView);
-      if (content != null) {
-        myContentManager.removeContent(content, true);
-      }
-      Disposer.dispose(oldView);
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          if (content != null) {
+            myContentManager.removeContent(content, true);
+          }
+          Disposer.dispose(oldView);
+        }
+      };
+      ApplicationManager.getApplication().invokeLater(runnable);
     }
     setReady(false);
   }
