@@ -15,15 +15,11 @@
  */
 package com.intellij.xml;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
@@ -79,21 +75,6 @@ public abstract class XmlExtension {
   @Nullable
   public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
     return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
-  }
-
-  public void createAddAttributeFix(@NotNull final XmlAttribute attribute, final HighlightInfo highlightInfo) {
-    final XmlTag tag = attribute.getParent();
-    String namespace = attribute.getNamespace();
-
-    if(StringUtil.isEmptyOrSpaces(namespace)) namespace = tag.getNamespace();
-
-    final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
-    if (nsDescriptor instanceof XmlUndefinedElementFixProvider) {
-      final IntentionAction[] actions = ((XmlUndefinedElementFixProvider)nsDescriptor).createFixes(attribute);
-      for (IntentionAction action : actions) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, action);
-      }
-    }
   }
 
   public boolean canBeDuplicated(XmlAttribute attribute) {

@@ -33,6 +33,7 @@ import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -50,6 +51,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlUndefinedElementFixProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.AnchorReference;
 import com.intellij.xml.util.HtmlUtil;
@@ -454,7 +456,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (highlightInfo != null) {
           PsiFile file = tag.getContainingFile();
           if (file != null) {
-            XmlExtension.getExtension(file).createAddAttributeFix(attribute, highlightInfo);
+            for (XmlUndefinedElementFixProvider fixProvider : Extensions.getExtensions(XmlUndefinedElementFixProvider.EP_NAME)) {
+              IntentionAction[] fixes = fixProvider.createFixes(attribute);
+              if (fixes != null) {
+                for (IntentionAction action : fixes) {
+                  QuickFixAction.registerQuickFixAction(highlightInfo, action);
+                }
+                break;
+              }
+            }
           }
         }
       }
