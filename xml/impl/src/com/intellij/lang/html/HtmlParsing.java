@@ -19,7 +19,7 @@
  */
 package com.intellij.lang.html;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,7 +44,7 @@ public class HtmlParsing {
   private final PsiBuilder myBuilder;
   private final Stack<String> myTagNamesStack = new Stack<String>();
   private final Stack<PsiBuilder.Marker> myTagMarkersStack = new Stack<PsiBuilder.Marker>();
-  @NonNls private static final String COMPLETION_NAME = CompletionUtil.DUMMY_IDENTIFIER_TRIMMED.toLowerCase();
+  @NonNls private static final String COMPLETION_NAME = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.toLowerCase();
 
   public HtmlParsing(final PsiBuilder builder) {
     myBuilder = builder;
