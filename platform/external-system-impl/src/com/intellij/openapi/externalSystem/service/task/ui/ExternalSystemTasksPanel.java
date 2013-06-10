@@ -80,6 +80,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
 
     ExternalSystemRecentTaskListModel recentTasksModel = new ExternalSystemRecentTaskListModel();
+    recentTasksModel.setTasks(settings.getRecentTasks());
     myRecentTasksList = new ExternalSystemRecentTasksList(recentTasksModel, externalSystemId, project) {
       @Override
       protected void processMouseEvent(MouseEvent e) {
@@ -87,7 +88,6 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
         super.processMouseEvent(e);
       }
     };
-    recentTasksModel.setTasks(settings.getRecentTasks());
 
     myAllTasksModel = new ExternalSystemTasksTreeModel(externalSystemId);
     myAllTasksTree = new ExternalSystemTasksTree(myAllTasksModel, settings.getExpandStates()) {
@@ -119,10 +119,10 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
   }
 
   private static JComponent wrap(@NotNull JComponent content, @NotNull String title) {
-    JPanel result = new JPanel(new GridBagLayout());
+    JPanel result = new JPanel(new BorderLayout());
     result.setOpaque(false);
     result.setBorder(IdeBorderFactory.createTitledBorder(title));
-    result.add(content, ExternalSystemUiUtil.getFillLineConstraints(0).weighty(1).fillCell());
+    result.add(content, BorderLayout.CENTER);
     return result;
   }
 

@@ -51,7 +51,7 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
                                        @NotNull final Project project)
   {
     super(model);
-    
+    setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     Icon icon = null;
     if (manager instanceof ExternalSystemUiAware) {
@@ -127,6 +127,7 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      Component renderer = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof ExternalSystemRecentTaskListModel.MyEmptyDescriptor) {
         return EMPTY_RENDERER;
       }
@@ -147,7 +148,8 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
         }
         setIcon(icon);
       }
-      return this;
+      
+      return renderer;
     }
 
     @Override
