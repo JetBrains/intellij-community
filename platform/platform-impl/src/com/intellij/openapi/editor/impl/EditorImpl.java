@@ -72,7 +72,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.*;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -4388,9 +4391,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.setColor(myScheme.getColor(EditorColors.CARET_COLOR));
 
       if (!paintBlockCaret()) {
-        for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
-          UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
+        if (UIUtil.isRetina()) {
+          g.fillRect(x, y, mySettings.getLineCursorWidth(), lineHeight);
+        } else {
+          for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
+            UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
+          }
         }
+
       }
       else {
         Color caretColor = myScheme.getColor(EditorColors.CARET_COLOR);
