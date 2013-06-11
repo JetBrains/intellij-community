@@ -19,10 +19,7 @@ package com.intellij.patterns;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author nik
@@ -83,40 +80,6 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
         return pathPattern.accepts(virtualFile.getPath(), context);
-      }
-    });
-  }
-
-  public VirtualFilePattern xmlWithRootTag(final ElementPattern<String> tagNamePattern) {
-    return with(new PatternCondition<VirtualFile>("xmlWithRootTag") {
-      @Override
-      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
-        try {
-          String tagName = NanoXmlUtil.parseHeaderWithException(virtualFile).getRootTagLocalName();
-          return tagName != null && tagNamePattern.getCondition().accepts(tagName, context);
-        }
-        catch (IOException e) {
-          return false;
-        }
-      }
-    });
-  }
-  public VirtualFilePattern xmlWithRootTagNamespace(final String... namespace) {
-    StringPattern namespacePattern = StandardPatterns.string().oneOf(namespace);
-    return xmlWithRootTagNamespace(namespacePattern);
-  }
-
-  public VirtualFilePattern xmlWithRootTagNamespace(final ElementPattern<String> namespacePattern) {
-    return with(new PatternCondition<VirtualFile>("xmlWithRootTagNamespace") {
-      @Override
-      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
-        try {
-          String rootTagNamespace = NanoXmlUtil.parseHeaderWithException(virtualFile).getRootTagNamespace();
-          return rootTagNamespace != null && namespacePattern.getCondition().accepts(rootTagNamespace, context);
-        }
-        catch (IOException e) {
-          return false;
-        }
       }
     });
   }
