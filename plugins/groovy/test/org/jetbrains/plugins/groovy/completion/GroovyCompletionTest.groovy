@@ -1119,13 +1119,28 @@ class X {
 public class KeyVO {
   { this.fo<caret>x }
   static void foo() {}
+  static void foox() {}
 }
 """);
     myFixture.complete(CompletionType.BASIC, 1)
-    assert !myFixture.lookupElementStrings
-    myFixture.complete(CompletionType.BASIC, 2)
-    assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
+    assertOrderedEquals(myFixture.lookupElementStrings, ['foo', 'foox'])
   }
+
+  public void testPreferInstanceMethodViaInstanceSecond() {
+    myFixture.configureByText("a.groovy", """
+public class KeyVO {
+  { this.fo<caret>x }
+  static void foo() {}
+  static void foox() {}
+
+  void fooy() {}
+  void fooz() {}
+}
+""");
+    myFixture.complete(CompletionType.BASIC, 1)
+    assertOrderedEquals(myFixture.lookupElementStrings, ['fooy', 'fooz'])
+  }
+
 
   public void testNoRepeatingModifiers() {
     myFixture.configureByText 'a.groovy', 'class A { public static <caret> }'

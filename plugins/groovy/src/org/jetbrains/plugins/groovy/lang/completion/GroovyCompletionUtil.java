@@ -248,6 +248,20 @@ public class GroovyCompletionUtil {
     return result;
   }
 
+  public static List<LookupElement> getCompletionVariants(List<GroovyResolveResult> candidates,
+                                                          boolean afterNew,
+                                                          PrefixMatcher matcher,
+                                                          PsiElement position) {
+    List<LookupElement> result = ContainerUtil.newArrayList();
+    for (GroovyResolveResult candidate : candidates) {
+      result.addAll(createLookupElements(candidate, afterNew, matcher, position));
+      ProgressManager.checkCanceled();
+    }
+
+    return result;
+  }
+
+
   public static List<? extends LookupElement> createLookupElements(GroovyResolveResult candidate,
                                                                    boolean afterNew,
                                                                    PrefixMatcher matcher,
