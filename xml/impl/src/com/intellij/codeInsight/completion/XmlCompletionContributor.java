@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.XmlPatterns.xmlAttribute;
 
 /**
  * @author Dmitry Avdeev
@@ -115,8 +114,6 @@ public class XmlCompletionContributor extends CompletionContributor {
                }
              }
            });
-
-    extend(CompletionType.BASIC, psiElement().inside(xmlAttribute()), new XmlAttributeReferenceCompletionProvider());
   }
 
   public static boolean isXmlNameCompletion(final CompletionParameters parameters) {

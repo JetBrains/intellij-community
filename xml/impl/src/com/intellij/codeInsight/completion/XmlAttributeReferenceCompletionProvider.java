@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiReference;
@@ -29,10 +30,11 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
-class XmlAttributeReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
+public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
   private static final Logger LOG = Logger.getInstance(XmlAttributeReferenceCompletionProvider.class);
 
   @Override
@@ -41,11 +43,12 @@ class XmlAttributeReferenceCompletionProvider extends CompletionProvider<Complet
                                 @NotNull CompletionResultSet result) {
     PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
     if (reference instanceof XmlAttributeReference) {
-      addAttributeReferenceCompletionVariants((XmlAttributeReference)reference, result);
+      addAttributeReferenceCompletionVariants((XmlAttributeReference)reference, result, null);
     }
   }
 
-  private static void addAttributeReferenceCompletionVariants(XmlAttributeReference reference, CompletionResultSet result) {
+  public static void addAttributeReferenceCompletionVariants(XmlAttributeReference reference, CompletionResultSet result,
+                                                             @Nullable InsertHandler<LookupElement> replacementInsertHandler) {
     final XmlTag declarationTag = reference.getElement().getParent();
     LOG.assertTrue(declarationTag.isValid());
     final XmlElementDescriptor parentDescriptor = declarationTag.getDescriptor();
@@ -55,13 +58,15 @@ class XmlAttributeReferenceCompletionProvider extends CompletionProvider<Complet
 
       descriptors = HtmlUtil.appendHtmlSpecificAttributeCompletions(declarationTag, descriptors, reference.getElement());
 
-      addVariants(result, attributes, descriptors, reference.getElement());
+      addVariants(result, attributes, descriptors, reference.getElement(), replacementInsertHandler);
     }
   }
 
   private static void addVariants(final CompletionResultSet result,
                                   final XmlAttribute[] attributes,
-                                  final XmlAttributeDescriptor[] descriptors, XmlAttribute attribute) {
+                                  final XmlAttributeDescriptor[] descriptors,
+                                  XmlAttribute attribute,
+                                  @Nullable InsertHandler<LookupElement> replacementInsertHandler) {
     final XmlTag tag = attribute.getParent();
     final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
     final String prefix = attribute.getName().contains(":") && ((XmlAttributeImpl) attribute).getRealLocalName().length() > 0
@@ -87,7 +92,9 @@ class XmlAttributeReferenceCompletionProvider extends CompletionProvider<Complet
           if (separator > 0) {
             element = element.withLookupString(name.substring(separator + 1));
           }
-          element = element.withCaseSensitivity(caseSensitive).withInsertHandler(XmlAttributeInsertHandler.INSTANCE);
+          element = element
+            .withCaseSensitivity(caseSensitive)
+            .withInsertHandler(replacementInsertHandler != null ? replacementInsertHandler : XmlAttributeInsertHandler.INSTANCE);
           result.addElement(
             descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) : element);
         }
