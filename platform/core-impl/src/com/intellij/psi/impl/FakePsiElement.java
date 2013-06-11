@@ -16,12 +16,12 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.extapi.psi.PsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -157,5 +157,51 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     return null;
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement copy() {
+    return (PsiElement)clone();
+  }
+
+  @Override
+  public PsiManager getManager() {
+    final PsiElement parent = getParent();
+    return parent != null ? parent.getManager() : null;
   }
 }
