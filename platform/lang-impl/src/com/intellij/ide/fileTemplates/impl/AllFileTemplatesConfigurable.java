@@ -460,9 +460,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     boolean errorInName = true;
     String errorString = null;
     for (FileTemplate template : templates) {
-      if (isInternalTemplateName(template.getName())) {
-        continue;
-      }
       final String currName = template.getName();
       final String currExt = template.getExtension();
       if (currName.length() == 0) {
