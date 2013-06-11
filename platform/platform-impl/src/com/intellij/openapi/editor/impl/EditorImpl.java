@@ -2202,7 +2202,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         if (hEnd >= lEnd) {
           FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
-          if (collapsedFolderAt == null || collapsedFolderAt.getEndOffset() == lEnd) {
+          if (collapsedFolderAt == null) {
             position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
                                                      defaultBackground, clip, softWrapsToSkip, caretRowPainted);
 
@@ -2224,6 +2224,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (position.y > clip.y + clip.height) break;
             position.y += lineHeight;
             start = lEnd;
+          }
+          else if (collapsedFolderAt.getEndOffset() == end) {
+            softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
+            if (softWrap != null) {
+              position.x = drawSoftWrapAwareBackground(
+                g, backColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
+                defaultBackground, clip, softWrapsToSkip, caretRowPainted
+              );
+            }
+            char[] chars = collapsedFolderAt.getPlaceholderText().toCharArray();
+            position.x = drawBackground(g, backColor, chars, 0, chars.length, position, fontType, defaultBackground, clip);
           }
 
           lIterator.advance();
