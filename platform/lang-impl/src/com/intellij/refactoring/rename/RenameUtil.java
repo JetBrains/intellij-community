@@ -77,7 +77,7 @@ public class RenameUtil {
       PsiElement referenceElement = ref.getElement();
       result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                          ref.getRangeInElement().getEndOffset(), element,
-                                         ref.resolve() == null));
+                                         ref.resolve() == null && !(ref instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)ref).multiResolve(true).length > 0)));
     }
 
     processor.findCollisions(element, newName, allRenames, result);
