@@ -122,8 +122,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
         final PsiElement startElement = descriptor.getStartElement();
         LOG.assertTrue(startElement instanceof GrReferenceElement<?>);
-        final GrReferenceAdjuster adjuster = GrReferenceAdjuster.getInstance(project);
-        adjuster.shortenReference((GrQualifiedReference<?>)startElement);
+        GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)startElement);
       }
 
       @NotNull

@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 
@@ -31,16 +31,13 @@ public class GrReferenceAdjuster {
    * @deprecated use com.intellij.psi.codeStyle.JavaCodeStyleManager#shortenReferences(PsiElement) instead
    */
   public static void shortenReferences(@NotNull PsiElement element) {
-    final TextRange range = element.getTextRange();
-    final org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster adjuster = org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.getInstance(element.getProject());
-    adjuster.processRange(element.getNode(), range.getStartOffset(), range.getEndOffset());
+    JavaCodeStyleManager.getInstance(element.getProject()).shortenClassReferences(element);
   }
 
   /**
    * @deprecated use org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster#shortenReference(PsiElement) instead
    */
   public static <T extends PsiElement> boolean shortenReference(@NotNull GrQualifiedReference<T> ref) {
-    final org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster adjuster = org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.getInstance(ref.getProject());
-    return adjuster.shortenReference(ref);
+    return org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference(ref);
   }
 }

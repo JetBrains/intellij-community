@@ -74,9 +74,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     final boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
     final boolean incompleteCode = (flags & UNCOMPLETE_CODE) != 0;
-    final ReferenceAdjuster adjuster = ReferenceAdjusterFactory.Extension.getFactory(element.getLanguage()).createReferenceAdjuster(myProject);
-    final ASTNode reference = adjuster.process(element.getNode(), addImports, incompleteCode);
-    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster != null) {
+      final ASTNode reference = adjuster.process(element.getNode(), addImports, incompleteCode, myProject);
+      return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    }
+    else {
+      return element;
+    }
   }
 
   @Override
@@ -84,19 +90,18 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if (SourceTreeToPsiMap.hasTreeElement(element)) {
-      final ReferenceAdjusterFactory factory = ReferenceAdjusterFactory.Extension.getFactory(element.getLanguage());
-      if (factory != null) {
-        final ReferenceAdjuster adjuster = factory.createReferenceAdjuster(myProject);
-        adjuster.processRange(element.getNode(), startOffset, endOffset);
+      final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+      if (adjuster != null) {
+        adjuster.processRange(element.getNode(), startOffset, endOffset, myProject);
       }
     }
   }
 
   @Override
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
-    final ReferenceAdjusterFactory factory = ReferenceAdjusterFactory.Extension.getFactory(element.getLanguage());
-    if (factory != null) {
-      final ASTNode reference = factory.createReferenceAdjuster(true, true).process(element.getNode(), false, false);
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster != null) {
+      final ASTNode reference = adjuster.process(element.getNode(), false, false, true, true);
       return SourceTreeToPsiMap.treeToPsiNotNull(reference);
     }
     return element;

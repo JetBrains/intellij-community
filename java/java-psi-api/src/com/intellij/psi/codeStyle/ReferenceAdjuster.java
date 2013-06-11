@@ -16,12 +16,29 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author Max Medvedev
  */
 public interface ReferenceAdjuster {
-  ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode);
+  ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode);
+  ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, Project project);
 
-  void processRange(ASTNode element, int startOffset, int endOffset);
+  void processRange(ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode);
+  void processRange(ASTNode element, int startOffset, int endOffset, Project project);
+
+  class Extension extends LanguageExtension<ReferenceAdjuster> {
+    private static final Extension INSTANCE = new Extension();
+
+    public Extension() {
+      super("com.intellij.codeStyle.ReferenceAdjuster");
+    }
+
+    public static ReferenceAdjuster getReferenceAdjuster(Language language) {
+      return INSTANCE.forLanguage(language);
+    }
+  }
 }
