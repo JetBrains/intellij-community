@@ -40,6 +40,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     else {
       namespaces = new ArrayList<String>(Collections.singletonList(tag.getNamespace()));
     }
+    XmlExtension xmlExtension = XmlExtension.getExtension(tag.getContainingFile());
     List<String> nsInfo = new ArrayList<String>();
     final String[] variants = getTagNameVariants(tag, namespaces, nsInfo);
     for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
@@ -56,7 +57,12 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (StringUtil.isNotEmpty(ns)) {
         lookupElement = lookupElement.withTypeText(ns, true);
       }
-      elements.add(lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE));
+      if (xmlExtension.useXmlTagInsertHandler()) {
+        elements.add(lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE));
+      }
+      else {
+        elements.add(lookupElement);
+      }
     }
   }
 

@@ -144,4 +144,7 @@ public abstract class XmlExtension {
     return true;
   }
 
+  public boolean useXmlTagInsertHandler() {
+    return true;
+  }
 }
