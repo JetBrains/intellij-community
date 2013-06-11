@@ -91,7 +91,6 @@ public class MacMessagesImpl extends MacMessages {
       }
 
       if (defaultOptionIndex != -1) {
-        invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", defaultOptionIndex), "setKeyEquivalent:", nsString(" "));
         invoke(invoke(alert, "window"), "setDefaultButtonCell:",
                invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", defaultOptionIndex), "cell"));
       }
@@ -135,8 +134,6 @@ public class MacMessagesImpl extends MacMessages {
 
       final ID alert = invoke("NSAlert", "alertWithMessageText:defaultButton:alternateButton:otherButton:informativeTextWithFormat:",
                               title, defaultText, alternateExist ? alternateText : null, otherExist ? otherText : null, message);
-
-      invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", 0), "setKeyEquivalent:", nsString(" "));
 
       if ("error".equals(toStringViaUTF8(alertStyle))) {
         invoke(alert, "setAlertStyle:", 2); // NSCriticalAlertStyle = 2
