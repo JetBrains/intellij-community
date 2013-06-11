@@ -17,9 +17,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -37,7 +35,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlTextLiteralEscaper;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.tree.IElementType;
@@ -50,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
@@ -365,11 +361,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     myGapPhysicalStarts = null;
   }
 
-  @Nullable
-  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(this);
-  }
-
   public TextRange getCDATAInterior() {
     PsiElement[] elements = getChildren();
     int start = 0;
@@ -520,8 +511,5 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   @NotNull
   public LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
     return new XmlTextLiteralEscaper(this);
-  }
-  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }
