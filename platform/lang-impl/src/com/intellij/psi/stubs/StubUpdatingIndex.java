@@ -44,6 +44,8 @@ import java.util.concurrent.Callable;
  */
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
+
+  // todo remove once we don't need this for stub-ast mismatch debug info
   private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 0, false);
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
@@ -159,6 +161,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
       long stamp = stream.readLong();
       long size = stream.readLong();
+      stream.close();
       return "indexed at " + stamp + " with size " + size;
     }
     catch (IOException e) {
