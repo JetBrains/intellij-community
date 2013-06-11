@@ -405,7 +405,7 @@ public class GitUIUtil {
       }
     }
 
-    return repositoryPath.isEmpty() ? "<Project>" : repositoryPath;
+    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
   }
 
   @NotNull
