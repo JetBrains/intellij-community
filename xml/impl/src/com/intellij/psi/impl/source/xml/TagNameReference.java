@@ -166,7 +166,8 @@ public class TagNameReference implements PsiReference {
       return getTagElement().setName(newElementName);
     }
 
-    throw new IncorrectOperationException("Cant bind to not a xml element definition!"+element+","+metaData);
+    final XmlTag tag = getTagElement();
+    throw new IncorrectOperationException("Cant bind to not a xml element definition!"+element+","+metaData + "," + tag + "," + (tag != null ? tag.getDescriptor() : "unknown descriptor"));
   }
 
   public boolean isReferenceTo(PsiElement element) {
