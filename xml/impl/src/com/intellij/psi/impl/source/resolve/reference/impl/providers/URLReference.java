@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.extensions.Extensions;
@@ -34,7 +31,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
 */
-public class URLReference implements PsiReference, QuickFixProvider, EmptyResolveMessageProvider {
+public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   @NonNls private static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
 
   private final PsiElement myElement;
@@ -212,17 +209,6 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
 
   public boolean isSoft() {
     return mySoft;
-  }
-
-  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-    QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
-    QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
-    QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
-
-    final PsiElement parentElement = reference.getElement().getParent();
-    if (parentElement instanceof XmlAttribute && ((XmlAttribute)parentElement).isNamespaceDeclaration()) {
-      QuickFixAction.registerQuickFixAction(info, new AddXsiSchemaLocationForExtResourceAction());
-    }
   }
 
   @NotNull
