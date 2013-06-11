@@ -643,7 +643,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&
-                          SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false);
+                          (SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false) ||
+                           ApplicationManager.getApplication().isHeadlessEnvironment()
+                          );
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
     // current document lines number is roughly above 5000. This makes sense in situations when external change is performed
@@ -654,13 +656,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     if (commitNecessary) {
       myUncommittedDocuments.add(document);
-      if (!forceCommit && !((DocumentEx)document).isInBulkUpdate()) {
+      if (forceCommit) {
+        commitDocument(document);
+      } else if (!((DocumentEx)document).isInBulkUpdate()) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document, event);
       }
-    }
-
-    if (commitNecessary && forceCommit) {
-      commitDocument(document);
     }
   }
 
