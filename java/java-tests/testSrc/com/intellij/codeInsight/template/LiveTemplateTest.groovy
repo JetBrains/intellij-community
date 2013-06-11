@@ -370,6 +370,8 @@ class Foo {
     assertTrue(isApplicable("class Foo { <caret>xxx void foo(String bar, xxx goo ) {} }", template));
     assertTrue(isApplicable("class Foo { void foo(<caret>String[] bar) {} }", template));
     assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
+    
+    assertTrue(isApplicable("<caret>xxx package foo; class Foo {}", template));
   }
 
   public void testOtherContext() throws IOException {
