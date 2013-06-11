@@ -292,6 +292,22 @@ cl { return 'b' }
 ''')
     }
 
+    void testNull() {
+      doTest('''\
+def foo() {
+    print <selection>null</selection>
+}
+
+foo()
+''', '''\
+def foo(Closure closure) {
+    print closure()
+}
+
+foo { return null }
+''')
+    }
+
   }
 
   static class ClosureTest extends ExtractClosureTest {
