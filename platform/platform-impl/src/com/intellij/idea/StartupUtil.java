@@ -52,8 +52,7 @@ import java.util.List;
 public class StartupUtil {
   @NonNls public static final String NO_SPLASH = "nosplash";
 
-  public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false) ||
-                                          SystemInfo.isMac && SystemInfo.is32Bit;  // todo[maxim] drop once available
+  public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false);
 
   static boolean isHeadless;
 
