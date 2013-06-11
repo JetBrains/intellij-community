@@ -570,4 +570,17 @@ class Foo {{
 }}''' 
   }
 
+  public void "test inner class name"() {
+    myFixture.configureByText "a.java", '''
+class Outer {
+    class Inner {
+        void foo() {
+            soutm<caret>
+        }
+    }
+}'''
+    myFixture.type('\t')
+    assert myFixture.editor.document.text.contains("Outer.Inner.foo")
+  }
+
 }
