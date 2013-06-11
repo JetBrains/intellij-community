@@ -555,4 +555,19 @@ class Foo {
     myFixture.checkResult "class Foo {{\n    System.out.println(<caret>); }}"
   }
 
+  public void "_test multi-dimensional toar"() {
+    myFixture.configureByText "a.java", '''
+class Foo {{
+  java.util.List<String[]> list;
+  String[][] s = toar<caret>
+}}'''
+    myFixture.type('\t')
+    //state.gotoEnd()
+    myFixture.checkResult '''
+class Foo {{
+  java.util.List<String[]> list;
+  String[][] s = list.toArray(new String[list.size()][])<caret>
+}}''' 
+  }
+
 }
