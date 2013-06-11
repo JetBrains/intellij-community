@@ -337,6 +337,8 @@ class Foo {
     assertFalse(isApplicable("class Foo {{ \"<caret>\" }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>a.b(); ) }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>a(); ) }}", template));
+    assertTrue(isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template));
+    assertTrue(isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template));
   }
 
   public void testJavaExpressionContext() throws Exception {
@@ -345,6 +347,8 @@ class Foo {
     assertTrue(isApplicable("class Foo {{ <caret>toar }}", template));
     assertTrue(isApplicable("class Foo {{ return (<caret>toar) }}", template));
     assertFalse(isApplicable("class Foo {{ return (aaa <caret>toar) }}", template));
+    assertTrue(isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template));
+    assertTrue(isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template));
   }
 
   public void testJavaDeclarationContext() throws Exception {
