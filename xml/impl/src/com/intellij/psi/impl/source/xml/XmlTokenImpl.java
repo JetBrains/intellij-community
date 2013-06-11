@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -80,11 +80,14 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
+    if (descriptor != null) {
+      descriptor.navigate(requestFocus);
+    }
   }
 
   public boolean canNavigate() {
-    return getTokenType() == XmlTokenType.XML_NAME && EditSourceUtil.canNavigate(this);
+    return getTokenType() == XmlTokenType.XML_NAME && PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

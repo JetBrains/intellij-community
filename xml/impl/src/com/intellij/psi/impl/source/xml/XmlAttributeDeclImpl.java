@@ -15,10 +15,9 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -168,17 +167,18 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
       return;
     }
     final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this);
-    Navigatable navigatable = EditSourceUtil.getDescriptor(psiNamedElement);
+    Navigatable navigatable = PsiNavigationSupport.getInstance().getDescriptor(psiNamedElement);
 
     if (psiNamedElement instanceof XmlEntityDecl) {
-      final OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
-      navigatable = new OpenFileDescriptor(
-        fileDescriptor.getProject(),
-        fileDescriptor.getFile(),
+      navigatable = PsiNavigationSupport.getInstance().createNavigatable(
+        psiNamedElement.getProject(),
+        psiNamedElement.getContainingFile().getVirtualFile(),
         psiNamedElement.getTextRange().getStartOffset() + psiNamedElement.getText().indexOf(getName())
       );
     }
-    navigatable.navigate(requestFocus);
+    if (navigatable != null) {
+      navigatable.navigate(requestFocus);
+    }
   }
 
   @NotNull
