@@ -28,6 +28,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -92,8 +93,8 @@ public class HighlightInfo implements Segment {
   boolean fromInjection;
 
   private GutterIconRenderer gutterIconRenderer;
-  private String myProblemGroup;
   volatile boolean bijective;
+  private ProblemGroup myProblemGroup;
 
   public HighlightSeverity getSeverity() {
     return severity;
@@ -549,14 +550,13 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public String getProblemGroup() {
+  public ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 
-  private void setProblemGroup(@Nullable String problemGroup) {
+  public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
-
 
   @NotNull
   public static HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
@@ -646,6 +646,7 @@ public class HighlightInfo implements Segment {
     private final IntentionAction myAction;
     private volatile List<IntentionAction> myOptions;
     private volatile HighlightDisplayKey myKey;
+    private final ProblemGroup myProblemGroup;
     private final String myDisplayName;
     private final Icon myIcon;
 
@@ -658,15 +659,16 @@ public class HighlightInfo implements Segment {
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon) {
-      this(action, options, displayName, icon, null);
+      this(action, options, displayName, icon, null, null);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon, @Nullable HighlightDisplayKey key) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon, @Nullable HighlightDisplayKey key, @Nullable ProblemGroup problemGroup) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
       myIcon = icon;
       myKey = key;
+      myProblemGroup = problemGroup;
     }
 
     @NotNull
@@ -681,6 +683,12 @@ public class HighlightInfo implements Segment {
       }
       List<IntentionAction> options = myOptions;
       HighlightDisplayKey key = myKey;
+      if (myProblemGroup != null) {
+        HighlightDisplayKey problemGroupKey = HighlightDisplayKey.findById(myProblemGroup.getProblemName());
+        if (problemGroupKey != null) {
+          key = problemGroupKey;
+        }
+      }
       if (options != null || key == null) {
         return options;
       }
@@ -717,6 +725,10 @@ public class HighlightInfo implements Segment {
         if (suppressActions != null) {
           ContainerUtil.addAll(newOptions, suppressActions);
         }
+      }
+      if (myProblemGroup instanceof SuppressableProblemGroup) {
+        final IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);
+        ContainerUtil.addAll(newOptions, suppressActions);
       }
 
       synchronized (this) {
