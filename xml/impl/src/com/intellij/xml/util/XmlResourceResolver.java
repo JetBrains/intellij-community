@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.util;
 
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
@@ -31,9 +32,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.actions.validate.ErrorReporter;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import org.apache.xerces.xni.XMLResourceIdentifier;
 import org.apache.xerces.xni.XNIException;
@@ -243,7 +243,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
       if (publicId != null && publicId.contains(":/")) {
         try {
           myErrorReporter.processError(
-            new SAXParseException(XmlBundle.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), ValidateXmlActionHandler.ProblemType.ERROR);
+            new SAXParseException(XmlErrorMessages.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), ValidateXmlActionHandler.ProblemType.ERROR);
         }
         catch (SAXException ignore) {
 
