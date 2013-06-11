@@ -25,12 +25,12 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.xml.*;
-import com.intellij.psi.templateLanguages.TemplateDataElementType;
+import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
+
 import static com.intellij.psi.xml.XmlElementType.*;
-import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_GROUP;
 
 public class XmlASTFactory extends ASTFactory {
   public CompositeElement createComposite(final IElementType type) {
@@ -106,7 +106,7 @@ public class XmlASTFactory extends ASTFactory {
     else if (type == XML_CDATA) {
       return new CompositePsiElement(XML_CDATA) {};
     }
-    else if (type instanceof TemplateDataElementType) {
+    else if (type instanceof ITemplateDataElementType) {
       return new XmlFileElement(type, null);
     }
 
@@ -127,7 +127,7 @@ public class XmlASTFactory extends ASTFactory {
     else if (type == HTML_FILE) {
       return new HtmlFileElement(text);
     }
-    else if (type instanceof TemplateDataElementType) {
+    else if (type instanceof ITemplateDataElementType) {
       return new XmlFileElement(type, text);
     }
     return null;
