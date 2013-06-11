@@ -76,7 +76,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException("Corrupted file '" + vFile.getPath() + "': " + e.getMessage(), e);
+      LOG.info(e); // content can be not cached yet, and the file can be deleted on disk already, without refresh
     }
 
     return null;
