@@ -182,6 +182,11 @@ public class IndexingStamp {
     }
   }
 
+  public static void flushCaches() {
+    flushCache(null);
+    myTimestampsCache.clear();
+  }
+
   public static void flushCache(@Nullable VirtualFile finishedFile) {
     if (finishedFile == null || !myFinishedFiles.offer(finishedFile)) {
       VirtualFile[] files = null;

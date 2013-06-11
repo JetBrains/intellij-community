@@ -67,7 +67,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -217,6 +216,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
 
       private void rebuildAllIndices() {
+        IndexingStamp.flushCaches();
         for (ID<?, ?> indexId : myIndices.keySet()) {
           try {
             clearIndex(indexId);
@@ -733,7 +733,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       LOG.info("START INDEX SHUTDOWN");
       try {
         myChangedFilesCollector.forceUpdate(null, null, null, true);
-        IndexingStamp.flushCache(null);
+        IndexingStamp.flushCaches();
 
         for (ID<?, ?> indexId : myIndices.keySet()) {
           final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -757,7 +757,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
       return;
     }
-    IndexingStamp.flushCache(null);
+    IndexingStamp.flushCaches();
     for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
       if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
         return; // do not interfere with 'main' jobs
@@ -1984,7 +1984,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           return true;
         }
       });
-      IndexingStamp.flushCache(null);
+      IndexingStamp.flushCaches();
       if (!contentChange) {
         if (myUpdatingFiles.decrementAndGet() == 0) {
           ++myFilesModCount;
@@ -2394,7 +2394,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
     myChangedFilesCollector.forceUpdate(null, null, null, true);
-    IndexingStamp.flushCache(null);
+    IndexingStamp.flushCaches();
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
   }
