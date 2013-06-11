@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -43,7 +44,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
@@ -328,7 +328,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     for (GrParameter oldParameter : toRemove) {
       oldParameter.delete();
     }
-    GrReferenceAdjuster.shortenReferences(parameterList);
+    JavaCodeStyleManager.getInstance(parameterList.getProject()).shortenClassReferences(parameterList);
     CodeStyleManager.getInstance(parameterList.getProject()).reformat(parameterList);
 
     if (changeInfo.isExceptionSetOrOrderChanged()) {
@@ -341,7 +341,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
       PsiReferenceList thrownList = GroovyPsiElementFactory.getInstance(method.getProject()).createThrownList(exceptionTypes);
       thrownList = (PsiReferenceList)method.getThrowsList().replace(thrownList);
-      GrReferenceAdjuster.shortenReferences(thrownList);
+      JavaCodeStyleManager.getInstance(thrownList.getProject()).shortenClassReferences(thrownList);
       CodeStyleManager.getInstance(method.getProject()).reformat(method.getThrowsList());
     }
     return true;
@@ -528,7 +528,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                 argument.delete();
               }
               anchor = argumentList.addAfter(arg, anchor);
-              GrReferenceAdjuster.shortenReferences(anchor);
+              JavaCodeStyleManager.getInstance(anchor.getProject()).shortenClassReferences(anchor);
             }
           }
           else {  //arguments for simple parameters
@@ -743,7 +743,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final GrStatement printStackTrace = factory.createStatementFromText(names[0] + ".printStackTrace()");
       catchClause.getBody().addStatementBefore(printStackTrace, null);
       anchor = tryCatch.addCatchClause(catchClause, anchor);
-      GrReferenceAdjuster.shortenReferences(anchor);
+      JavaCodeStyleManager.getInstance(anchor.getProject()).shortenClassReferences(anchor);
     }
     return tryCatch;
   }

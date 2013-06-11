@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -370,7 +370,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         block.addAfter(factory.createLineTerminator(text), arrow);
       }
     }
-    GrReferenceAdjuster.shortenReferences(parameter);
+    JavaCodeStyleManager.getInstance(parameter.getProject()).shortenClassReferences(parameter);
 
     fieldConflictsResolver.fix();
   }
@@ -440,7 +440,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
       //newarg can be replaced by OldReferenceResolve
       if (newArg.isValid()) {
-        GrReferenceAdjuster.shortenReferences(newArg);
+        JavaCodeStyleManager.getInstance(newArg.getProject()).shortenClassReferences(newArg);
         CodeStyleManager.getInstance(settings.getProject()).reformat(newArg);
       }
     }

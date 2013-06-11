@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.intentions.declaration;
 import com.intellij.codeInsight.intention.impl.CreateFieldFromParameterActionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -87,7 +87,7 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
       String[] modifiers = getModifiers(methodStatic, isFinal);
       GrVariableDeclaration fieldDeclaration = factory.createFieldDeclaration(modifiers, fieldName, null, type);
       GrVariableDeclaration inserted = (GrVariableDeclaration)targetClass.add(fieldDeclaration);
-      GrReferenceAdjuster.shortenReferences(inserted);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
     }
 
     GrOpenBlock block = ((GrMethod)method).getBlock();
@@ -97,7 +97,7 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
     GrStatement anchor = getAnchor(block);
 
     GrStatement statement = block.addStatementBefore(assignment, anchor);
-    GrReferenceAdjuster.shortenReferences(statement);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(statement);
   }
 
   private static GrAssignmentExpression createAssignment(PsiClass targetClass,
