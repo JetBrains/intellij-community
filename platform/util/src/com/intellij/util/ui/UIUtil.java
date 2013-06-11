@@ -49,6 +49,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -223,9 +224,28 @@ public class UIUtil {
         if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple")) {
           if (!"false".equals(System.getProperty("ide.mac.retina"))) {
             ourRetina.set(IsRetina.isRetina());
+            return ourRetina.get();
           }
+        } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && vendor != null && StringUtil.containsIgnoreCase(vendor, "Oracle")) {
+            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            final GraphicsDevice device = env.getDefaultScreenDevice();
+            try {
+              Field field = device.getClass().getDeclaredField("scale");
+              if (field != null) {
+                field.setAccessible(true);
+                Object scale = field.get(device);
+                if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
+                  ourRetina.set(true);
+                  return true;
+                }
+              }
+            }
+            catch (Exception ignore) {
+            }
         }
+        ourRetina.set(false);
       }
+
       return ourRetina.get();
     }
   }
@@ -1476,10 +1496,26 @@ public class UIUtil {
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
-      return RetinaImage.create(width, height, type);
+      if (SystemInfo.isAppleJvm()) {
+        return RetinaImage.create(width, height, type);
+      } else if (SystemInfo.isOracleJvm()) {
+        //todo[kb] provide some hidpi scaled image
+      }
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
+  }
+
+  public static void drawImage(Graphics g, Image image, int x, int y, ImageObserver observer) {
+    if (image instanceof JBHiDPIScaledImage) {
+      final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(observer), image.getHeight(observer));
+      newG.scale(0.5, 0.5);
+      newG.drawImage(((JBHiDPIScaledImage)image).getDelegate(), 0, 0, observer);
+      newG.scale(1, 1);
+      newG.dispose();
+    } else {
+      g.drawImage(image, x, y, observer);
+    }
   }
 
   public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
