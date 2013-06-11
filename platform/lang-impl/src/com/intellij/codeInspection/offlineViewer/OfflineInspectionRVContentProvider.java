@@ -45,8 +45,8 @@ import java.util.*;
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
 
-  public OfflineInspectionRVContentProvider(final Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
-                                            final Project project) {
+  public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
+                                            @NotNull Project project) {
     super(project);
     myContent = content;
   }
