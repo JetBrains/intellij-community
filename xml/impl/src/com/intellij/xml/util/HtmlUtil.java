@@ -37,7 +37,6 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -310,7 +309,7 @@ public class HtmlUtil {
 
   public static XmlAttributeDescriptor[] appendHtmlSpecificAttributeCompletions(final XmlTag declarationTag,
                                                                                 XmlAttributeDescriptor[] descriptors,
-                                                                                final XmlAttributeImpl context) {
+                                                                                final XmlAttribute context) {
     if (declarationTag instanceof HtmlTag) {
       descriptors = ArrayUtil.mergeArrays(
         descriptors,

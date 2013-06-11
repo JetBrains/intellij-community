@@ -15,16 +15,9 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -35,8 +28,6 @@ import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -44,19 +35,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
-import com.intellij.xml.impl.XmlAttributeDescriptorEx;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 import static com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
@@ -332,7 +317,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final PsiElement parentElement = getParent();
     if (!(parentElement instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
     final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttribute.class);
-    if (referencesFromProviders == null) return new PsiReference[]{new MyPsiReference()};
+    if (referencesFromProviders == null) return new PsiReference[]{new XmlAttributeReference(this)};
     PsiReference[] refs;
     if (isNamespaceDeclaration()) {
       refs = new PsiReference[referencesFromProviders.length + 1];
@@ -347,11 +332,11 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       if (prefix.length() > 0 && getLocalName().length() > 0) {
         refs = new PsiReference[referencesFromProviders.length + 2];
         refs[0] = new SchemaPrefixReference(this, TextRange.from(0, prefix.length()), prefix, null);
-        refs[1] = new MyPsiReference();
+        refs[1] = new XmlAttributeReference(this);
       }
       else {
         refs = new PsiReference[referencesFromProviders.length + 1];
-        refs[0] = new MyPsiReference();
+        refs[0] = new XmlAttributeReference(this);
       }
     }
     System.arraycopy(referencesFromProviders, 0, refs, refs.length - referencesFromProviders.length, referencesFromProviders.length);
@@ -369,147 +354,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return attributeDescr == null ? descr.getAttributeDescriptor(getName(), tag) : attributeDescr;
   }
 
-  private class MyPsiReference implements PsiReference, QuickFixProvider {
-
-    private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
-      protected XmlAttributeDescriptor compute() {
-        XmlTag parent = getParent();
-        final XmlElementDescriptor descr = parent.getDescriptor();
-        if (descr != null) {
-          return descr.getAttributeDescriptor(XmlAttributeImpl.this);
-        }
-        return null;
-      }
-    };
-
-    public PsiElement getElement() {
-      return XmlAttributeImpl.this;
-    }
-
-    public TextRange getRangeInElement() {
-      final int parentOffset = getNameElement().getStartOffsetInParent();
-      int nsLen = getNamespacePrefix().length();
-      nsLen += nsLen > 0 && getRealLocalName().length() > 0 ? 1 : -nsLen;
-      return new TextRange(parentOffset + nsLen, parentOffset + getNameElement().getTextLength());
-    }
-
-    public PsiElement resolve() {
-      final XmlAttributeDescriptor descriptor = getDescriptor();
-      return descriptor != null ? descriptor.getDeclaration() : null;
-    }
-
-    @NotNull
-    public String getCanonicalText() {
-      return getName();
-    }
-
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      String newName = newElementName;
-      if (getDescriptor() instanceof XmlAttributeDescriptorEx) {
-        final XmlAttributeDescriptorEx xmlAttributeDescriptorEx = (XmlAttributeDescriptorEx)getDescriptor();
-        final String s = xmlAttributeDescriptorEx.handleTargetRename(newElementName);
-        if (s != null) {
-          final String prefix = getNamespacePrefix();
-          newName = StringUtil.isEmpty(prefix) ? s : prefix + ":" + s;
-        }
-      }
-      return setName(newName);
-    }
-
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      if (element instanceof PsiMetaOwner) {
-        final PsiMetaOwner owner = (PsiMetaOwner)element;
-        if (owner.getMetaData() instanceof XmlElementDescriptor) {
-          setName(owner.getMetaData().getName());
-        }
-      }
-      throw new IncorrectOperationException("Cant bind to not a xml element definition!");
-    }
-
-    public boolean isReferenceTo(PsiElement element) {
-      return getManager().areElementsEquivalent(element, resolve());
-    }
-
-    @NotNull
-    public Object[] getVariants() {
-      final List<LookupElement> variants = new ArrayList<LookupElement>();
-
-      final XmlTag declarationTag = getParent();
-      LOG.assertTrue(declarationTag.isValid());
-      final XmlElementDescriptor parentDescriptor = declarationTag.getDescriptor();
-      if (parentDescriptor != null) {
-        final XmlAttribute[] attributes = declarationTag.getAttributes();
-        XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors(declarationTag);
-
-        descriptors = HtmlUtil.appendHtmlSpecificAttributeCompletions(declarationTag, descriptors, XmlAttributeImpl.this);
-
-        addVariants(variants, attributes, descriptors);
-      }
-      return variants.toArray();
-    }
-
-    private void addVariants(final Collection<LookupElement> variants,
-                             final XmlAttribute[] attributes,
-                             final XmlAttributeDescriptor[] descriptors) {
-      final XmlTag tag = getParent();
-      final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
-      final String prefix = getName().contains(":") && getRealLocalName().length() > 0 ? getNamespacePrefix() + ":" : null;
-
-      CompletionData completionData = CompletionUtil.getCompletionDataByElement(XmlAttributeImpl.this, getContainingFile().getOriginalFile());
-      boolean caseSensitive = !(completionData instanceof HtmlCompletionData) || ((HtmlCompletionData)completionData).isCaseSensitive();
-
-      for (XmlAttributeDescriptor descriptor : descriptors) {
-        if (isValidVariant(descriptor, attributes, extension)) {
-          String name = descriptor.getName(tag);
-          if (prefix == null || name.startsWith(prefix)) {
-            if (prefix != null && name.length() > prefix.length()) {
-              name = descriptor.getName(tag).substring(prefix.length());
-            }
-            LookupElementBuilder element = LookupElementBuilder.create(name);
-            if (descriptor instanceof PsiPresentableMetaData) {
-              element = element.withIcon(((PsiPresentableMetaData)descriptor).getIcon());
-            }
-            final int separator = name.indexOf(':');
-            if (separator > 0) {
-              element = element.withLookupString(name.substring(separator + 1));
-            }
-            element = element.withCaseSensitivity(caseSensitive).withInsertHandler(XmlAttributeInsertHandler.INSTANCE);
-            variants.add(descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) : element);
-          }
-        }
-      }
-    }
-
-    private boolean isValidVariant(@NotNull XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes, final XmlExtension extension) {
-      if (extension.isIndirectSyntax(descriptor)) return false;
-      String descriptorName = descriptor.getName(getParent());
-      if (descriptorName == null) {
-        LOG.error("Null descriptor name for " + descriptor + " " + descriptor.getClass() + " ");
-        return false;
-      }
-      for (final XmlAttribute attribute : attributes) {
-        if (attribute != XmlAttributeImpl.this && attribute.getName().equals(descriptorName)) return false;
-      }
-      return !descriptorName.contains(DUMMY_IDENTIFIER_TRIMMED);
-    }
-
-    public boolean isSoft() {
-      return getDescriptor() == null;
-    }
-
-    public void registerQuickfix(final HighlightInfo info, final PsiReference reference) {
-      if (getDescriptor() instanceof QuickFixProvider) {
-        ((QuickFixProvider)getDescriptor()).registerQuickfix(info, reference);
-      }
-    }
-
-    @Nullable
-    private XmlAttributeDescriptor getDescriptor() {
-      return myDescriptor.getValue();
-    }
-  }
-
-  private String getRealLocalName() {
+  public String getRealLocalName() {
     final String name = getLocalName();
     return name.endsWith(DUMMY_IDENTIFIER_TRIMMED) ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length()) : name;
   }

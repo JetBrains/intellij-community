@@ -22,38 +22,45 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
+import com.intellij.psi.impl.source.xml.XmlAttributeReference;
+import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.util.HtmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.XmlPatterns.xmlAttribute;
 
 /**
  * @author Dmitry Avdeev
  */
 public class XmlCompletionContributor extends CompletionContributor {
+  private static final Logger LOG = Logger.getInstance(XmlCompletionContributor.class);
+
   public static final Key<Boolean> WORD_COMPLETION_COMPATIBLE = Key.create("WORD_COMPLETION_COMPATIBLE");
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
@@ -81,7 +88,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   public XmlCompletionContributor() {
     extend(CompletionType.BASIC,
-           PlatformPatterns.psiElement().inside(XmlPatterns.xmlAttributeValue()),
+           psiElement().inside(XmlPatterns.xmlAttributeValue()),
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -113,6 +120,84 @@ public class XmlCompletionContributor extends CompletionContributor {
                }
              }
            });
+
+    extend(CompletionType.BASIC, psiElement().inside(xmlAttribute()), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
+        if (reference instanceof XmlAttributeReference) {
+          addAttributeReferenceCompletionVariants((XmlAttributeReference) reference, result);
+        }
+      }
+    });
+  }
+
+  private static void addAttributeReferenceCompletionVariants(XmlAttributeReference reference, CompletionResultSet result) {
+    final XmlTag declarationTag = reference.getElement().getParent();
+    LOG.assertTrue(declarationTag.isValid());
+    final XmlElementDescriptor parentDescriptor = declarationTag.getDescriptor();
+    if (parentDescriptor != null) {
+      final XmlAttribute[] attributes = declarationTag.getAttributes();
+      XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors(declarationTag);
+
+      descriptors = HtmlUtil.appendHtmlSpecificAttributeCompletions(declarationTag, descriptors, reference.getElement());
+
+      addVariants(result, attributes, descriptors, reference.getElement());
+    }
+  }
+
+  private static void addVariants(final CompletionResultSet result,
+                                  final XmlAttribute[] attributes,
+                                  final XmlAttributeDescriptor[] descriptors, XmlAttribute attribute) {
+    final XmlTag tag = attribute.getParent();
+    final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
+    final String prefix = attribute.getName().contains(":") && ((XmlAttributeImpl) attribute).getRealLocalName().length() > 0
+                          ? attribute.getNamespacePrefix() + ":"
+                          : null;
+
+    CompletionData
+      completionData = CompletionUtil.getCompletionDataByElement(attribute, attribute.getContainingFile().getOriginalFile());
+    boolean caseSensitive = !(completionData instanceof HtmlCompletionData) || ((HtmlCompletionData)completionData).isCaseSensitive();
+
+    for (XmlAttributeDescriptor descriptor : descriptors) {
+      if (isValidVariant(attribute, descriptor, attributes, extension)) {
+        String name = descriptor.getName(tag);
+        if (prefix == null || name.startsWith(prefix)) {
+          if (prefix != null && name.length() > prefix.length()) {
+            name = descriptor.getName(tag).substring(prefix.length());
+          }
+          LookupElementBuilder element = LookupElementBuilder.create(name);
+          if (descriptor instanceof PsiPresentableMetaData) {
+            element = element.withIcon(((PsiPresentableMetaData)descriptor).getIcon());
+          }
+          final int separator = name.indexOf(':');
+          if (separator > 0) {
+            element = element.withLookupString(name.substring(separator + 1));
+          }
+          element = element.withCaseSensitivity(caseSensitive).withInsertHandler(XmlAttributeInsertHandler.INSTANCE);
+          result.addElement(
+            descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) : element);
+        }
+      }
+    }
+  }
+
+  private static boolean isValidVariant(XmlAttribute attribute,
+                                        @NotNull XmlAttributeDescriptor descriptor,
+                                        final XmlAttribute[] attributes,
+                                        final XmlExtension extension) {
+    if (extension.isIndirectSyntax(descriptor)) return false;
+    String descriptorName = descriptor.getName(attribute.getParent());
+    if (descriptorName == null) {
+      LOG.error("Null descriptor name for " + descriptor + " " + descriptor.getClass() + " ");
+      return false;
+    }
+    for (final XmlAttribute otherAttr : attributes) {
+      if (otherAttr != attribute && otherAttr.getName().equals(descriptorName)) return false;
+    }
+    return !descriptorName.contains(DUMMY_IDENTIFIER_TRIMMED);
   }
 
   public static boolean isXmlNameCompletion(final CompletionParameters parameters) {
