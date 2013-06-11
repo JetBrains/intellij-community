@@ -73,7 +73,7 @@ public class EditorWindow {
 
   private boolean myIsDisposed = false;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
-  private Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>(UISettings.getInstance().EDITOR_TAB_LIMIT) {
+  private Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
     @Override
     public void push(Pair<String, Integer> pair) {
       if (size() >= UISettings.getInstance().EDITOR_TAB_LIMIT) {
