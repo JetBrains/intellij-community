@@ -48,7 +48,7 @@ import java.util.Locale;
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
 public class SimpleColoredComponent extends JComponent implements Accessible {
-  private static final boolean isOracleRetina = UIUtil.isRetina() && SystemInfo.isOracleJvm();
+  private static final boolean isOracleRetina = UIUtil.isRetina() && SystemInfo.isOracleJvm;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 

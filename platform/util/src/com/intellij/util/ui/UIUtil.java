@@ -1496,9 +1496,9 @@ public class UIUtil {
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
-      if (SystemInfo.isAppleJvm()) {
+      if (SystemInfo.isAppleJvm) {
         return RetinaImage.create(width, height, type);
-      } else if (SystemInfo.isOracleJvm()) {
+      } else if (SystemInfo.isOracleJvm) {
         //todo[kb] provide some hidpi scaled image
       }
     }

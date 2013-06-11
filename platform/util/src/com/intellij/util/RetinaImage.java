@@ -26,14 +26,12 @@ import java.awt.image.BufferedImage;
  */
 public class RetinaImage {
 
-  private static boolean isAppleJvm = SystemInfo.isAppleJvm();
-
   public static Image createFrom(Image image, final int scale, Component ourComponent) {
     int w = image.getWidth(ourComponent);
     int h = image.getHeight(ourComponent);
 
     Image hidpi = create(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
-    if (isAppleJvm) {
+    if (SystemInfo.isAppleJvm) {
       Graphics2D g = (Graphics2D)hidpi.getGraphics();
       g.scale(1f / scale, 1f / scale);
       g.drawImage(image, 0, 0, null);
@@ -49,7 +47,7 @@ public class RetinaImage {
 
 
   public static BufferedImage create(Image image, final int width, int height, int type) {
-    return isAppleJvm ? AppleHiDPIScaledImage.create(width, height, type)
+    return SystemInfo.isAppleJvm ? AppleHiDPIScaledImage.create(width, height, type)
                       : new JBHiDPIScaledImage(image, width, height, type);
   }
 }
