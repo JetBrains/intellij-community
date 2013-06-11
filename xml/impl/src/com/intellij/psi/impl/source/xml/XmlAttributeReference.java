@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +31,7 @@ import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlAttributeReference implements PsiReference, QuickFixProvider {
+public class XmlAttributeReference implements PsiReference {
   private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
     protected XmlAttributeDescriptor compute() {
       XmlTag parent = myAttribute.getParent();
@@ -105,12 +103,6 @@ public class XmlAttributeReference implements PsiReference, QuickFixProvider {
 
   public boolean isSoft() {
     return getDescriptor() == null;
-  }
-
-  public void registerQuickfix(final HighlightInfo info, final PsiReference reference) {
-    if (getDescriptor() instanceof QuickFixProvider) {
-      ((QuickFixProvider)getDescriptor()).registerQuickfix(info, reference);
-    }
   }
 
   @Nullable
