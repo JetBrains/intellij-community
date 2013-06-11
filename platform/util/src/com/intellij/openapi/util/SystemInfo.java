@@ -216,4 +216,14 @@ public class SystemInfo extends SystemInfoRt {
   public static int getIntProperty(@NotNull final String key, final int defaultValue) {
     return SystemProperties.getIntProperty(key, defaultValue);
   }
+
+  public static boolean isOracleJvm() {
+    final String vendor = SystemProperties.getJavaVmVendor();
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Oracle");
+  }
+
+  public static boolean isAppleJvm() {
+    final String vendor = SystemProperties.getJavaVmVendor();
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple");
+  }
 }
