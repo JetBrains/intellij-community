@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeInsight.template.macro.ClassNameCompleteMacro
 import com.intellij.codeInsight.template.macro.CompleteMacro
+import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -581,6 +582,25 @@ class Outer {
 }'''
     myFixture.type('\t')
     assert myFixture.editor.document.text.contains("Outer.Inner.foo")
+  }
+
+  public void "test do not strip type argument containing class"() {
+    myFixture.configureByText 'a.java', '''
+import java.util.*;
+class Foo {
+  List<Map.Entry<String, Integer>> foo() { 
+    <caret> 
+  }
+}
+'''
+    
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("result", "user", '$T$ result;');
+    template.addVariable('T', new MacroCallNode(new MethodReturnTypeMacro()), new EmptyNode(), false)
+    template.toReformat = true
+    
+    manager.startTemplate(getEditor(), template);
+    assert myFixture.editor.document.text.contains('List<Map.Entry<String, Integer>> result;')
   }
 
 }
