@@ -187,8 +187,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                          final short searchContext,
                                                                          final boolean caseSensitively,
                                                                          final ProgressIndicator progress) {
-    LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK),
-                   "You must not run search from within updating PSI activity. Please consider invokeLatering it instead.");
+    if (Thread.holdsLock(PsiLock.LOCK)) {
+      throw new AssertionError("You must not run search from within updating PSI activity. Please consider invokeLatering it instead.");
+    }
     if (progress != null) {
       progress.pushState();
       progress.setText(PsiBundle.message("psi.scanning.files.progress"));
