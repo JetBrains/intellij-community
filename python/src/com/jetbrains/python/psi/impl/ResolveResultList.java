@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.impl.light.LightElement;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class ResolveResultList extends ArrayList<RatedResolveResult> {
 
   public boolean poke(final PsiElement what, final int rate) {
     if (what == null) return false;
-    if (!what.isValid()) {
+    if (!(what instanceof LightElement) && !what.isValid()) {
       throw new PsiInvalidElementAccessException(what, "Trying to resolve a reference to an invalid element");
     }
     super.add(new RatedResolveResult(rate, what));
