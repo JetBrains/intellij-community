@@ -363,12 +363,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static String fixURLforIDEA(@NotNull String url) {
-    // removeLocalhostPrefix - false due to backward compatibility reasons
-    return toIdeaUrl(url, false);
-  }
-
-  @NotNull
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
   }

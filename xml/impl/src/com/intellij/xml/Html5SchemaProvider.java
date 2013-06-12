@@ -3,7 +3,6 @@ package com.intellij.xml;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,11 +46,11 @@ public abstract class Html5SchemaProvider {
       xhtmlSchemaLocationURL = htmlSchemaLocationURL;
     }
 
-    HTML5_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtil.fixURLforIDEA(
+    HTML5_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(
       URLUtil.unescapePercentSequences(htmlSchemaLocationURL.toExternalForm())));
     LOG.info("HTML5_SCHEMA_LOCATION = " + HTML5_SCHEMA_LOCATION);
 
-    XHTML5_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtil.fixURLforIDEA(
+    XHTML5_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(
       URLUtil.unescapePercentSequences(xhtmlSchemaLocationURL.toExternalForm())));
     LOG.info("XHTML5_SCHEMA_LOCATION = " + XHTML5_SCHEMA_LOCATION);
   }

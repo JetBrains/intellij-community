@@ -379,6 +379,12 @@ public class VfsUtilCore {
   }
 
   @NotNull
+  public static String fixURLforIDEA(@NotNull String url) {
+    // removeLocalhostPrefix - false due to backward compatibility reasons
+    return toIdeaUrl(url, false);
+  }
+
+  @NotNull
   public static String convertFromUrl(@NotNull URL url) {
     String protocol = url.getProtocol();
     String path = url.getPath();
