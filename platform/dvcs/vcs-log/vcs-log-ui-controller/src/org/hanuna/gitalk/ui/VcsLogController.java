@@ -20,25 +20,25 @@ import java.util.Collection;
  */
 public interface VcsLogController {
 
-  public TableModel getGraphTableModel();
+  TableModel getGraphTableModel();
 
-  public void click(@Nullable GraphElement graphElement);
+  void click(@Nullable GraphElement graphElement);
 
-  public void click(int rowIndex);
+  void click(int rowIndex);
 
-  public void over(@Nullable GraphElement graphElement);
+  void over(@Nullable GraphElement graphElement);
 
-  public void hideAll();
+  void hideAll();
 
-  public void showAll();
+  void showAll();
 
-  public void setLongEdgeVisibility(boolean visibility);
+  void setLongEdgeVisibility(boolean visibility);
 
-  public void doubleClick(int rowIndex);
+  void doubleClick(int rowIndex);
 
-  public void readNextPart();
+  void readNextPart();
 
-  public void jumpToCommit(Hash commitHash);
+  void jumpToCommit(Hash commitHash);
 
   Collection<Ref> getRefs();
 
