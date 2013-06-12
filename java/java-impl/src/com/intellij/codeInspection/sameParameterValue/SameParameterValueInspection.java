@@ -46,9 +46,12 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
 
   @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, @NotNull GlobalInspectionContext globalContext,
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                @NotNull AnalysisScope scope,
+                                                @NotNull InspectionManager manager,
+                                                @NotNull GlobalInspectionContext globalContext,
                                                 @NotNull ProblemDescriptionsProcessor processor) {
-    ArrayList<ProblemDescriptor> problems = null;
+    List<ProblemDescriptor> problems = null;
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 

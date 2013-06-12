@@ -70,7 +70,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
       PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
-      ArrayList<ProblemDescriptor> problems = null;
+      List<ProblemDescriptor> problems = null;
 
       final PsiManager psiManager = psiMethod.getManager();
       for (int i = 0; i < throwsList.length; i++) {
@@ -105,7 +105,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       }
 
       if (problems != null) {
-        return problems.toArray(new ProblemDescriptorBase[problems.size()]);
+        return problems.toArray(new CommonProblemDescriptor[problems.size()]);
       }
     }
 
