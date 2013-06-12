@@ -56,7 +56,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
   @Override
   @NotNull
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
-    return new JobDescriptor[0];
+    return JobDescriptor.EMPTY_ARRAY;
   }
 
   @Override

@@ -51,7 +51,8 @@ public abstract class InspectionRVContentProvider {
     @Nullable
     UserObjectContainer<T> getOwner();
 
-    RefElementNode createNode(InspectionTool tool);
+    @NotNull
+    RefElementNode createNode(@NotNull InspectionTool tool);
 
     T getUserObject();
 
@@ -63,10 +64,10 @@ public abstract class InspectionRVContentProvider {
     boolean supportStructure();
   }
 
-  public abstract boolean checkReportedProblems(final InspectionTool tool);
+  public abstract boolean checkReportedProblems(@NotNull InspectionTool tool);
 
   @Nullable
-  public abstract QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree);
+  public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionTool tool, @NotNull InspectionTree tree);
 
 
   public void appendToolNodeContent(@NotNull InspectionNode toolNode,
@@ -210,8 +211,8 @@ public abstract class InspectionRVContentProvider {
     return content;
   }
 
-  protected static RefElementNode addNodeToParent(UserObjectContainer container,
-                                                  final InspectionTool tool,
+  protected static RefElementNode addNodeToParent(@NotNull UserObjectContainer container,
+                                                  @NotNull InspectionTool tool,
                                                   final InspectionTreeNode parentNode) {
     final RefElementNode nodeToBeAdded = container.createNode(tool);
     final Ref<Boolean> firstLevel = new Ref<Boolean>(true);

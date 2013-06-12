@@ -124,7 +124,7 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
   }
 
   @Override
-  public InspectionNode createToolNode(InspectionRVContentProvider provider,
+  public InspectionNode createToolNode(@NotNull InspectionRVContentProvider provider,
                                        InspectionTreeNode parentNode,
                                        boolean showStructure) {
     return getTool().createToolNode(provider, parentNode, showStructure);

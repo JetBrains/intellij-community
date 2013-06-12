@@ -1100,7 +1100,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   }
 
   @Override
-  public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
+  public InspectionNode createToolNode(@NotNull final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
     final InspectionNode toolNode = super.createToolNode(provider, parentNode, showStructure);
     final EntryPointsNode entryPointsNode = new EntryPointsNode(this);
     provider.appendToolNodeContent(entryPointsNode, toolNode, showStructure);
