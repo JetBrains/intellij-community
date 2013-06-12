@@ -68,31 +68,31 @@ public class VcsLogControllerImpl implements VcsLogController {
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
       rebaseDelegate.startRebase(subjectRef, onto);
-      refresh(true);
+      init();
     }
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
       rebaseDelegate.startRebaseOnto(subjectRef, base, nodesToRebase);
-      refresh(true);
+      init();
     }
 
     @Override
     public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
       rebaseDelegate.moveCommits(subjectRef, base, position, nodesToInsert);
-      refresh(true);
+      init();
     }
 
     @Override
     public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
       rebaseDelegate.fixUp(subjectRef, target, nodesToFixUp);
-      refresh(true);
+      init();
     }
 
     @Override
     public void reword(Ref subjectRef, Node commitToReword, String newMessage) {
       rebaseDelegate.reword(subjectRef, commitToReword, newMessage);
-      refresh(true);
+      init();
     }
 
     @Override
@@ -208,7 +208,6 @@ public class VcsLogControllerImpl implements VcsLogController {
     }
     UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
     mySwingUi.updateUI();
-    //TODO:
     mySwingUi.jumpToRow(updateRequest.from());
   }
 
@@ -351,11 +350,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   }
 
   @Override
-  public void refresh(boolean reusePreviousGitOutput) {
-    init();
-  }
-
-  @Override
   public void applyInteractiveRebase() {
     if (rebaseDelegate.resultRef == null) {
       return;
@@ -368,7 +362,7 @@ public class VcsLogControllerImpl implements VcsLogController {
   @Override
   public void cancelInteractiveRebase() {
     rebaseDelegate.reset();
-    refresh(true);
+    init();
   }
 
   @Override

@@ -56,7 +56,7 @@ public class MainFrame {
     RefreshAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myVcsLog_controller.refresh(false);
+        myVcsLog_controller.refresh();
       }
 
       @Override

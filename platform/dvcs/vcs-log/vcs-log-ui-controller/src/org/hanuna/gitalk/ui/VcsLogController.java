@@ -57,8 +57,6 @@ public interface VcsLogController {
 
   Project getProject();
 
-  void refresh(boolean dontReadFromGit);
-
   void applyInteractiveRebase();
 
   VcsLogActionHandler.Callback getCallback();
