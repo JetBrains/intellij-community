@@ -42,7 +42,7 @@ public class BackwardDependenciesAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
+  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     scope.setSearchInLibraries(true); //find library usages in project
     final SearchScope selectedScope = myPanel.myCombo.getSelectedScope();
     new BackwardDependenciesHandler(project, scope, selectedScope != null ? new AnalysisScope(selectedScope, project) : new AnalysisScope(project)).analyze();

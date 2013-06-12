@@ -43,9 +43,9 @@ public class SuppressActionWrapper extends ActionGroup {
   private final InspectionTool myTool;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
 
-  public SuppressActionWrapper(final Project project,
-                                  final InspectionTool tool,
-                                  final TreePath[] paths) {
+  public SuppressActionWrapper(@NotNull final Project project,
+                               @NotNull final InspectionTool tool,
+                               @NotNull final TreePath[] paths) {
     super(InspectionsBundle.message("suppress.inspection.problem"), false);
     myProject = project;
     myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);

@@ -125,7 +125,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   protected void canceled() {
   }
 
-  protected abstract void analyze(@NotNull Project project, AnalysisScope scope);
+  protected abstract void analyze(@NotNull Project project, @NotNull AnalysisScope scope);
 
   @Nullable
   private AnalysisScope getInspectionScope(@NotNull DataContext dataContext) {
