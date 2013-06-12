@@ -15,11 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -93,7 +89,7 @@ public class TagNameReference implements PsiReference {
     }
   }
 
-  private ASTNode getNameElement() {
+  public ASTNode getNameElement() {
     return myNameElement;
   }
 
@@ -178,18 +174,9 @@ public class TagNameReference implements PsiReference {
   public LookupElement[] getVariants(){
     final PsiElement element = getElement();
     if(!myStartTagFlag){
-      if (element instanceof XmlTag) {
-        return new LookupElement[]{createClosingTagLookupElement((XmlTag)element, false)};
-      }
       return LookupElement.EMPTY_ARRAY;
     }
     return getTagNameVariants((XmlTag)element, ((XmlTag)element).getNamespacePrefix());
-  }
-
-  public LookupElement createClosingTagLookupElement(XmlTag tag, boolean includePrefix) {
-    LookupElementBuilder builder = LookupElementBuilder.create(includePrefix || !myNameElement.getText().contains(":") ? tag.getName() : tag.getLocalName());
-    return TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder),
-                                      TailType.createSimpleTailType('>'));
   }
 
   public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {

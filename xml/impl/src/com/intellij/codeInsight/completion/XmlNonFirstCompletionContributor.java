@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.XmlPatterns.xmlAttribute;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 /**
  * @author yole
@@ -24,5 +25,6 @@ import static com.intellij.patterns.XmlPatterns.xmlAttribute;
 public class XmlNonFirstCompletionContributor extends CompletionContributor {
   public XmlNonFirstCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inside(xmlAttribute()), new XmlAttributeReferenceCompletionProvider());
+    extend(CompletionType.BASIC, psiElement().inside(xmlTag()), new TagNameReferenceCompletionProvider());
   }
 }

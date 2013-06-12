@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -75,7 +76,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   @NotNull
   public Object[] getVariants() {
     if (myTagNameReference != null) {
-      return new LookupElement[]{ myTagNameReference.createClosingTagLookupElement(myTagNameReference.getTagElement(), true)};
+      return new LookupElement[]{ TagNameReferenceCompletionProvider.createClosingTagLookupElement(myTagNameReference.getTagElement(), true, myTagNameReference.getNameElement())};
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
