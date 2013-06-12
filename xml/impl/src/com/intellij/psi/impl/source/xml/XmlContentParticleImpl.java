@@ -17,7 +17,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlToken;
@@ -73,6 +73,6 @@ public class XmlContentParticleImpl implements XmlContentParticle, XmlTokenType 
 
   @Override
   public XmlElementDescriptor getElementDescriptor() {
-    return DtdReferencesProvider.resolveElementReference(myToken.getText(), myToken);
+    return DtdResolveUtil.resolveElementReference(myToken.getText(), myToken);
   }
 }

@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.actions.validate.ErrorReporter;
@@ -91,7 +90,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
       throw new IgnoredResourceException();
     }
 
-    final int length = URIReferenceProvider.getPrefixLength(_systemId);
+    final int length = XmlUtil.getPrefixLength(_systemId);
     final String systemId = _systemId.substring(length);
 
     final PsiFile[] result = new PsiFile[] { null };

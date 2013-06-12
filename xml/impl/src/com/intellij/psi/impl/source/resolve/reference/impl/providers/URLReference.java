@@ -166,7 +166,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     assert element instanceof PsiFile;
 
-    if (!URIReferenceProvider.isUrlText(getCanonicalText(), element.getProject())) {
+    if (!XmlUtil.isUrlText(getCanonicalText(), element.getProject())) {
       // TODO: this should work!
       final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       assert virtualFile != null;

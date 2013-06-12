@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -144,7 +143,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
           return xmlFile;
         }
 
-        final int i = URIReferenceProvider.getPrefixLength(value);
+        final int i = XmlUtil.getPrefixLength(value);
         if (i > 0) {
           return XmlUtil.findNamespaceByLocation(baseFile, value.substring(i));
         }

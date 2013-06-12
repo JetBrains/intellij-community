@@ -169,6 +169,9 @@ public class XmlUtil {
 
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+  @NonNls private static final String FILE = "file:";
+  @NonNls private static final String CLASSPATH = "classpath:/";
+  @NonNls private static final String URN = "urn:";
 
   private XmlUtil() {
   }
@@ -1115,6 +1118,21 @@ public class XmlUtil {
     }
 
     return null;
+  }
+
+  public static int getPrefixLength(@NotNull final String s) {
+    if (s.startsWith(TAG_DIR_NS_PREFIX)) return TAG_DIR_NS_PREFIX.length();
+    if (s.startsWith(FILE)) return FILE.length();
+    if (s.startsWith(CLASSPATH)) return CLASSPATH.length();
+    return 0;
+  }
+
+  public static boolean isUrlText(final String s, Project project) {
+    final boolean surelyUrl = HtmlUtil.hasHtmlPrefix(s) || s.startsWith(URN);
+    if (surelyUrl) return surelyUrl;
+    int protocolIndex = s.indexOf(":/");
+    if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
+    return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
   }
 
   private static class MyAttributeInfo implements Comparable {
