@@ -113,7 +113,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, RefactoringBundle.message("to.delete.with.usage.search"),
                                                  allElementsToDelete);
       if (methods.length == 0) return null;
-      return Arrays.asList(methods);
+      final ArrayList<PsiMethod> psiMethods = new ArrayList<PsiMethod>(Arrays.asList(methods));
+      psiMethods.add((PsiMethod)element);
+      return psiMethods;
     }
     else if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
