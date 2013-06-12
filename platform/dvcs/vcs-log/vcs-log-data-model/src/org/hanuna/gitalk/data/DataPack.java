@@ -25,13 +25,16 @@ import java.util.List;
  * @author erokhins
  */
 public class DataPack {
-  public static DataPack build(@NotNull List<? extends VcsCommit> commits,
-                               @NotNull Collection<Ref> allRefs,
-                               @NotNull ProgressIndicator indicator,
-                               Project project,
-                               CacheGet<Hash, VcsCommit> commitDataCache,
-                               @NotNull VcsLogProvider logProvider,
-                               VirtualFile root) {
+
+  @NotNull private final GraphModel myGraphModel;
+  @NotNull private final RefsModel myRefsModel;
+  @NotNull private final GraphPrintCellModel myPrintCellModel;
+  @NotNull private final CommitDataGetter myCommitDataGetter;
+
+  @NotNull
+  public static DataPack build(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
+                               @NotNull ProgressIndicator indicator, @NotNull Project project, CacheGet<Hash, VcsCommit> commitDataCache,
+                               @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     for (VcsCommit commit : commits) {
       commitDataCache.put(commit.getHash(), commit);
     }
@@ -65,47 +68,38 @@ public class DataPack {
     return new DataPack(graphModel, refsModel, printCellModel, project, commitDataCache, logProvider, root);
   }
 
-
-  private final GraphModel graphModel;
-  private final RefsModel refsModel;
-  private final GraphPrintCellModel printCellModel;
-  private final CommitDataGetter commitDataGetter;
-
-  private DataPack(GraphModel graphModel,
-                   RefsModel refsModel,
-                   GraphPrintCellModel printCellModel,
-                   Project project,
-                   CacheGet<Hash, VcsCommit> commitDataCache,
-                   @NotNull VcsLogProvider logProvider,
-                   VirtualFile root) {
-    this.graphModel = graphModel;
-    this.refsModel = refsModel;
-    this.printCellModel = printCellModel;
-    commitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache, logProvider, root);
+  private DataPack(@NotNull GraphModel graphModel, @NotNull RefsModel refsModel, @NotNull GraphPrintCellModel printCellModel,
+                   @NotNull Project project, @NotNull CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider,
+                   @NotNull VirtualFile root) {
+    myGraphModel = graphModel;
+    myRefsModel = refsModel;
+    myPrintCellModel = printCellModel;
+    myCommitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache, logProvider, root);
   }
 
   public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
     MyTimer timer = new MyTimer("append commits");
-    graphModel.appendCommitsToGraph(commitParentsList);
+    myGraphModel.appendCommitsToGraph(commitParentsList);
     timer.print();
   }
 
+  @NotNull
   public CommitDataGetter getCommitDataGetter() {
-    return commitDataGetter;
+    return myCommitDataGetter;
   }
 
   @NotNull
   public RefsModel getRefsModel() {
-    return refsModel;
+    return myRefsModel;
   }
 
   @NotNull
   public GraphModel getGraphModel() {
-    return graphModel;
+    return myGraphModel;
   }
 
   @NotNull
   public GraphPrintCellModel getPrintCellModel() {
-    return printCellModel;
+    return myPrintCellModel;
   }
 }
