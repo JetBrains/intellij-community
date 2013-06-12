@@ -27,10 +27,6 @@ public interface VcsLogController {
 
   void over(@Nullable GraphElement graphElement);
 
-  void hideAll();
-
-  void showAll();
-
   void setLongEdgeVisibility(boolean visibility);
 
   void readNextPart();

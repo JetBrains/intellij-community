@@ -223,20 +223,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   }
 
   @Override
-  public void showAll() {
-    dataPack.getGraphModel().getFragmentManager().showAll();
-    mySwingUi.updateUI();
-    mySwingUi.jumpToRow(0);
-  }
-
-  @Override
-  public void hideAll() {
-    dataPack.getGraphModel().getFragmentManager().hideAll();
-    mySwingUi.updateUI();
-    mySwingUi.jumpToRow(0);
-  }
-
-  @Override
   public void setLongEdgeVisibility(boolean visibility) {
     dataPack.getPrintCellModel().setLongEdgeVisibility(visibility);
     mySwingUi.updateUI();

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.components.JBLoadingPanel;
 import org.hanuna.gitalk.ui.GitLogIcons;
 import org.hanuna.gitalk.ui.VcsLogController;
+import org.hanuna.gitalk.ui.VcsLogUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,13 +18,14 @@ import java.awt.*;
 public class MainFrame {
 
   private final VcsLogController myVcsLog_controller;
+  private final VcsLogUI myUI;
   private final JPanel mainPanel = new JPanel();
   private final ActiveSurface myActiveSurface;
   private final JBLoadingPanel myLoadingPanel;
 
-
-  public MainFrame(final VcsLogController vcsLog_controller) {
+  public MainFrame(final VcsLogController vcsLog_controller, VcsLogUI vcsLogUI) {
     this.myVcsLog_controller = vcsLog_controller;
+    myUI = vcsLogUI;
     myActiveSurface = new ActiveSurface(vcsLog_controller);
 
     mainPanel.setLayout(new BorderLayout());
@@ -42,14 +44,14 @@ public class MainFrame {
     AnAction hideBranchesAction = new DumbAwareAction("Collapse linear branches", "Collapse linear branches", GitLogIcons.SPIDER) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myVcsLog_controller.hideAll();
+        myUI.hideAll();
       }
     };
 
     AnAction showBranchesAction = new DumbAwareAction("Expand all branches", "Expand all branches", GitLogIcons.WEB) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myVcsLog_controller.showAll();
+        myUI.showAll();
       }
     };
 

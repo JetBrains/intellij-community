@@ -16,7 +16,7 @@ public class VcsLogUI {
 
   public VcsLogUI(@NotNull VcsLogController uiController) {
     myUiController = uiController;
-    myMainFrame = new MainFrame(myUiController);
+    myMainFrame = new MainFrame(myUiController, this);
   }
 
   @NotNull
@@ -59,4 +59,17 @@ public class VcsLogUI {
       }
     });
   }
+
+  public void showAll() {
+    myUiController.getDataPack().getGraphModel().getFragmentManager().showAll();
+    updateUI();
+    jumpToRow(0);
+  }
+
+  public void hideAll() {
+    myUiController.getDataPack().getGraphModel().getFragmentManager().hideAll();
+    updateUI();
+    jumpToRow(0);
+  }
+
 }
