@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -27,16 +26,13 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlTagNameProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class TagNameReference implements PsiReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.TagNameReference");
@@ -171,20 +167,8 @@ public class TagNameReference implements PsiReference {
   }
 
   @NotNull
-  public LookupElement[] getVariants(){
-    final PsiElement element = getElement();
-    if(!myStartTagFlag){
-      return LookupElement.EMPTY_ARRAY;
-    }
-    return getTagNameVariants((XmlTag)element, ((XmlTag)element).getNamespacePrefix());
-  }
-
-  public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
-    List<LookupElement> elements = new ArrayList<LookupElement>();
-    for (XmlTagNameProvider tagNameProvider : XmlTagNameProvider.EP_NAME.getExtensions()) {
-      tagNameProvider.addTagNameVariants(elements, tag, prefix);
-    }
-    return elements.toArray(new LookupElement[elements.size()]);
+  public Object[] getVariants(){
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean isSoft() {

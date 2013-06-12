@@ -26,12 +26,25 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.XmlTagNameProvider;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class TagNameReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
+  public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
+    List<LookupElement> elements = new ArrayList<LookupElement>();
+    for (XmlTagNameProvider tagNameProvider : XmlTagNameProvider.EP_NAME.getExtensions()) {
+      tagNameProvider.addTagNameVariants(elements, tag, prefix);
+    }
+    return elements.toArray(new LookupElement[elements.size()]);
+  }
+
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
@@ -39,10 +52,15 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
     PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
     if (reference instanceof TagNameReference) {
       TagNameReference tagNameReference = (TagNameReference)reference;
-      if (!tagNameReference.isStartTagFlag()) {
-        PsiElement element = tagNameReference.getElement();
-        if (element instanceof XmlTag) {
+      PsiElement element = tagNameReference.getElement();
+      if (element instanceof XmlTag) {
+        if (!tagNameReference.isStartTagFlag()) {
           result.addElement(createClosingTagLookupElement((XmlTag)element, false, tagNameReference.getNameElement()));
+        }
+        else {
+          XmlTag tag = (XmlTag) element;
+          LookupElement[] variants = getTagNameVariants(tag, tag.getNamespacePrefix());
+          result.addAllElements(Arrays.asList(variants));
         }
       }
     }
