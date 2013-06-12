@@ -67,7 +67,7 @@ public class DefaultArrangementEntryMatcherSerializer {
         return WEIGHTS.get(atom1.getValue()) - WEIGHTS.get(atom2.getValue());
       }
       else {
-        return 0;
+        return atom1.getValue().toString().compareTo(atom2.getValue().toString());
       }
     }
   };
