@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.render.painters;
 
+import com.intellij.ui.JBColor;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -18,13 +19,15 @@ import static org.hanuna.gitalk.ui.render.PrintParameters.*;
  * @author erokhins
  */
 public class SimpleGraphCellPainter implements GraphCellPainter {
+
+  private static final Color MARK_COLOR = JBColor.BLACK;
+
   private Graphics2D g2;
+
   private final Stroke usual = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   private final Stroke hide = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
   private final Stroke selectUsual = new BasicStroke(SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   private final Stroke selectHide = new BasicStroke(SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
-
-  private final Color markColor = Color.BLACK;
 
   private void paintUpLine(int from, int to, Color color) {
     int x1 = WIDTH_NODE * from + WIDTH_NODE / 2;
@@ -116,10 +119,10 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     void print(Color color);
   }
 
-  private void drawLogick(boolean selected, boolean marked, boolean isUsual, Color usualColor, LitePrinter printer) {
+  private void drawLogic(boolean selected, boolean marked, boolean isUsual, Color usualColor, LitePrinter printer) {
     if (selected) {
       setStroke(isUsual, true);
-      printer.print(markColor);
+      printer.print(MARK_COLOR);
       setStroke(isUsual, false);
       printer.print(usualColor);
     } else {
@@ -135,22 +138,20 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     for (final ShortEdge edge : row.getUpEdges()) {
-      drawLogick(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()),
-                 new LitePrinter() {
-                   @Override
-                   public void print(Color color) {
-                     paintUpLine(edge.getDownPosition(), edge.getUpPosition(), color);
-                   }
-                 });
+      drawLogic(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()), new LitePrinter() {
+        @Override
+        public void print(Color color) {
+          paintUpLine(edge.getDownPosition(), edge.getUpPosition(), color);
+        }
+      });
     }
     for (final ShortEdge edge : row.getDownEdges()) {
-      drawLogick(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()),
-                 new LitePrinter() {
-                   @Override
-                   public void print(Color color) {
-                     paintDownLine(edge.getUpPosition(), edge.getDownPosition(), color);
-                   }
-                 });
+      drawLogic(edge.isSelected(), edge.isMarked(), edge.isUsual(), ColorGenerator.getColor(edge.getEdge().getBranch()), new LitePrinter() {
+        @Override
+        public void print(Color color) {
+          paintDownLine(edge.getUpPosition(), edge.getDownPosition(), color);
+        }
+      });
 
     }
     for (final SpecialPrintElement printElement : row.getSpecialPrintElements()) {
@@ -160,7 +161,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
           Node node = printElement.getGraphElement().getNode();
           assert node != null;
           if (printElement.isSelected()) {
-            paintCircle(printElement.getPosition(), markColor, true);
+            paintCircle(printElement.getPosition(), MARK_COLOR, true);
             paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), false);
           } else {
             paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), printElement.isMarked());
@@ -169,26 +170,24 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         case UP_ARROW:
           edge = printElement.getGraphElement().getEdge();
           assert edge != null;
-          drawLogick(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL,
-                     ColorGenerator.getColor(edge.getBranch()),
-                     new LitePrinter() {
-                       @Override
-                       public void print(Color color) {
-                         paintShow(printElement.getPosition(), color);
-                       }
-                     });
+          drawLogic(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL, ColorGenerator.getColor(
+            edge.getBranch()), new LitePrinter() {
+            @Override
+            public void print(Color color) {
+              paintShow(printElement.getPosition(), color);
+            }
+          });
           break;
         case DOWN_ARROW:
           edge = printElement.getGraphElement().getEdge();
           assert edge != null;
-          drawLogick(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL,
-                     ColorGenerator.getColor(edge.getBranch()),
-                     new LitePrinter() {
-                       @Override
-                       public void print(Color color) {
-                         paintHide(printElement.getPosition(), color);
-                       }
-                     });
+          drawLogic(printElement.isSelected(), printElement.isMarked(), edge.getType() == Edge.EdgeType.USUAL, ColorGenerator.getColor(
+            edge.getBranch()), new LitePrinter() {
+            @Override
+            public void print(Color color) {
+              paintHide(printElement.getPosition(), color);
+            }
+          });
           break;
         default:
           throw new IllegalStateException();
