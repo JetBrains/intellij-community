@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
@@ -39,20 +37,16 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   private final SchemaPrefix myPrefix;
 
   private final String myName;
-  @Nullable
-  private final TagNameReference myTagNameReference;
 
   /**
    *
    * @param element XmlAttribute || XmlAttributeValue
    * @param range
    * @param name
-   * @param tagNameReference
    */
-  public SchemaPrefixReference(XmlElement element, TextRange range, String name, @Nullable TagNameReference tagNameReference) {
+  public SchemaPrefixReference(XmlElement element, TextRange range, String name) {
     super(element, range);
     myName = name;
-    myTagNameReference = tagNameReference;
     if (myElement instanceof XmlAttribute && (((XmlAttribute)myElement).isNamespaceDeclaration())) {
       myPrefix = new SchemaPrefix((XmlAttribute)myElement, getRangeInElement(), myName);
     }
@@ -75,9 +69,6 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
 
   @NotNull
   public Object[] getVariants() {
-    if (myTagNameReference != null) {
-      return new LookupElement[]{ TagNameReferenceCompletionProvider.createClosingTagLookupElement(myTagNameReference.getTagElement(), true, myTagNameReference.getNameElement())};
-    }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
