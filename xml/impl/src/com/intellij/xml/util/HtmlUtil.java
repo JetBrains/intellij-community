@@ -25,13 +25,11 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
@@ -559,12 +557,5 @@ public class HtmlUtil {
       return language == XHTMLLanguage.INSTANCE;
     }
     return false;
-  }
-
-  public static boolean isPureHtmlFile(@NotNull PsiFile file) {
-    FileType fileTypeByName = FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName());
-    return file.getLanguage() == HTMLLanguage.INSTANCE &&
-           fileTypeByName == HtmlFileType.INSTANCE &&
-           !(file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider);
   }
 }
