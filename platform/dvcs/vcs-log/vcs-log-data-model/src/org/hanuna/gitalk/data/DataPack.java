@@ -25,10 +25,13 @@ import java.util.List;
  * @author erokhins
  */
 public class DataPack {
-  public static DataPack buildDataPack(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
-                                           @NotNull ProgressIndicator indicator, Project project,
-                                           CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider,
-                                           VirtualFile root) {
+  public static DataPack build(@NotNull List<? extends VcsCommit> commits,
+                               @NotNull Collection<Ref> allRefs,
+                               @NotNull ProgressIndicator indicator,
+                               Project project,
+                               CacheGet<Hash, VcsCommit> commitDataCache,
+                               @NotNull VcsLogProvider logProvider,
+                               VirtualFile root) {
     for (VcsCommit commit : commits) {
       commitDataCache.put(commit.getHash(), commit);
     }

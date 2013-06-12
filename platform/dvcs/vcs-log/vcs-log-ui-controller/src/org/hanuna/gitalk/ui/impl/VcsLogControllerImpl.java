@@ -129,9 +129,8 @@ public class VcsLogControllerImpl implements VcsLogController {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           MyTimer timer = new MyTimer("Read all history");
-          dataPack = DataPack
-            .buildDataPack(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot), indicator, myProject, commitDataCache,
-                           myLogProvider, myRoot);
+          dataPack = DataPack.build(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot), indicator,
+                                    myProject, commitDataCache, myLogProvider, myRoot);
           timer.print();
           graphTableModel = new GraphTableModel(dataPack);
           dataPackUtils = new DataPackUtils(dataPack);
