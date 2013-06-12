@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataPack;
@@ -30,9 +31,9 @@ public class VcsLogUI {
   @Nullable private GraphElement prevGraphElement;
   @NotNull  private TableModel myGraphModel;
 
-  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder) {
+  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project) {
     myLogDataHolder = logDataHolder;
-    myMainFrame = new MainFrame(myLogDataHolder, this);
+    myMainFrame = new MainFrame(myLogDataHolder, this, project);
     reloadModel();
     updateUI();
   }

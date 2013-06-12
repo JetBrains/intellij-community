@@ -289,7 +289,7 @@ public class VcsLogGraphTable extends JTable {
     }
   }
 
-  private List<Node> getSelectedNodes() {
+  public List<Node> getSelectedNodes() {
     int[] selectedRows = getSelectedRows();
     return nodes(selectedRows);
   }

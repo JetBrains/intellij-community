@@ -65,7 +65,7 @@ public class VcsLogManager extends AbstractProjectComponent {
         VcsLogDataHolder.init(myProject, logProvider, root, new Consumer<VcsLogDataHolder>() {
           @Override
           public void consume(VcsLogDataHolder vcsLogDataHolder) {
-            VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder);
+            VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject);
             mainPanel.init(logUI.getMainFrame().getMainComponent());
           }
         });

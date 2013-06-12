@@ -108,11 +108,13 @@ public final class GitCommit implements VcsCommit {
     return myFullMessage;
   }
 
+  @Override
   @NotNull
   public List<Hash> getParents() {
     return myParents;
   }
 
+  @Override
   @NotNull
   public List<Change> getChanges() {
     return myChanges;

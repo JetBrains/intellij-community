@@ -3,9 +3,12 @@ package org.hanuna.gitalk.log.parser;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
+import com.intellij.openapi.vcs.changes.Change;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -129,6 +132,11 @@ public class CommitParser {
       @NotNull
       @Override
       public List<Hash> getParents() {
+        throw new UnsupportedOperationException();
+      }
+
+      @NotNull
+      public Collection<Change> getChanges() {
         throw new UnsupportedOperationException();
       }
     };

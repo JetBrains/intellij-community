@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.GitLogIcons;
 import org.hanuna.gitalk.ui.VcsLogUI;
@@ -22,10 +23,10 @@ public class MainFrame {
   @NotNull private final JPanel myMainPanel;
   @NotNull private final ActiveSurface myActiveSurface;
 
-  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI) {
+  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project) {
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
-    myActiveSurface = new ActiveSurface(logDataHolder, vcsLogUI);
+    myActiveSurface = new ActiveSurface(logDataHolder, vcsLogUI, project);
 
     myMainPanel = new JPanel();
     myMainPanel.setLayout(new BorderLayout());

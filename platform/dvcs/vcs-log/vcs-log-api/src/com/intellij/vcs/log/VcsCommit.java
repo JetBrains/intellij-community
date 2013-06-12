@@ -1,7 +1,9 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,4 +29,7 @@ public interface VcsCommit extends CommitParents {
   @Override
   @NotNull
   List<Hash> getParents();
+
+  @NotNull
+  Collection<Change> getChanges();
 }
