@@ -15,9 +15,8 @@ import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
-import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
-import org.hanuna.gitalk.data.impl.DataPackImpl;
+import org.hanuna.gitalk.data.impl.DataPack;
 import org.hanuna.gitalk.data.impl.FakeCommitsInfo;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
@@ -130,7 +129,7 @@ public class VcsLogControllerImpl implements VcsLogController {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           MyTimer timer = new MyTimer("Read all history");
-          dataPack = DataPackImpl
+          dataPack = DataPack
             .buildDataPack(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot), indicator, myProject, commitDataCache,
                            myLogProvider, myRoot);
           timer.print();

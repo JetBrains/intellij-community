@@ -10,7 +10,6 @@ import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.CommitDataGetter;
-import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.RefsModel;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
@@ -27,8 +26,8 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class DataPackImpl implements DataPack {
-  public static DataPackImpl buildDataPack(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
+public class DataPack {
+  public static DataPack buildDataPack(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
                                            @NotNull ProgressIndicator indicator, Project project,
                                            CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider,
                                            VirtualFile root) {
@@ -62,7 +61,7 @@ public class DataPackImpl implements DataPack {
         }
       }
     });
-    return new DataPackImpl(graphModel, refsModel, printCellModel, project, commitDataCache, logProvider, root);
+    return new DataPack(graphModel, refsModel, printCellModel, project, commitDataCache, logProvider, root);
   }
 
 
@@ -71,40 +70,40 @@ public class DataPackImpl implements DataPack {
   private final GraphPrintCellModel printCellModel;
   private final CommitDataGetter commitDataGetter;
 
-  private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel, Project project,
-                       CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider, VirtualFile root) {
+  private DataPack(GraphModel graphModel,
+                   RefsModel refsModel,
+                   GraphPrintCellModel printCellModel,
+                   Project project,
+                   CacheGet<Hash, VcsCommit> commitDataCache,
+                   @NotNull VcsLogProvider logProvider,
+                   VirtualFile root) {
     this.graphModel = graphModel;
     this.refsModel = refsModel;
     this.printCellModel = printCellModel;
     commitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache, logProvider, root);
   }
 
-  @Override
   public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
     MyTimer timer = new MyTimer("append commits");
     graphModel.appendCommitsToGraph(commitParentsList);
     timer.print();
   }
 
-  @Override
   public CommitDataGetter getCommitDataGetter() {
     return commitDataGetter;
   }
 
   @NotNull
-  @Override
   public RefsModel getRefsModel() {
     return refsModel;
   }
 
   @NotNull
-  @Override
   public GraphModel getGraphModel() {
     return graphModel;
   }
 
   @NotNull
-  @Override
   public GraphPrintCellModel getPrintCellModel() {
     return printCellModel;
   }

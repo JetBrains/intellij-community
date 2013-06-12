@@ -10,7 +10,6 @@ import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.data.CommitDataGetter;
-import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
