@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import org.hanuna.gitalk.ui.GitLogIcons;
 import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,22 +18,23 @@ import java.awt.*;
  */
 public class MainFrame {
 
-  private final VcsLogController myVcsLog_controller;
-  private final VcsLogUI myUI;
-  private final JPanel mainPanel = new JPanel();
-  private final ActiveSurface myActiveSurface;
-  private final JBLoadingPanel myLoadingPanel;
+  @NotNull private final VcsLogController myLogController;
+  @NotNull private final VcsLogUI myUI;
+  @NotNull private final JPanel myMainPanel;
+  @NotNull private final ActiveSurface myActiveSurface;
+  @NotNull private final JBLoadingPanel myLoadingPanel;
 
-  public MainFrame(final VcsLogController vcsLog_controller, VcsLogUI vcsLogUI) {
-    this.myVcsLog_controller = vcsLog_controller;
+  public MainFrame(@NotNull VcsLogController logController, @NotNull VcsLogUI vcsLogUI) {
+    myLogController = logController;
     myUI = vcsLogUI;
-    myActiveSurface = new ActiveSurface(vcsLog_controller, vcsLogUI);
+    myActiveSurface = new ActiveSurface(logController, vcsLogUI);
 
-    mainPanel.setLayout(new BorderLayout());
-    mainPanel.add(createToolbar(), BorderLayout.NORTH);
-    mainPanel.add(myActiveSurface, BorderLayout.CENTER);
+    myMainPanel = new JPanel();
+    myMainPanel.setLayout(new BorderLayout());
+    myMainPanel.add(createToolbar(), BorderLayout.NORTH);
+    myMainPanel.add(myActiveSurface, BorderLayout.CENTER);
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), vcsLog_controller.getProject());
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logController.getProject());
     myLoadingPanel.startLoading();
   }
 
@@ -58,7 +60,7 @@ public class MainFrame {
     RefreshAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myVcsLog_controller.refresh();
+        myLogController.refresh();
       }
 
       @Override
@@ -80,7 +82,7 @@ public class MainFrame {
       }
     };
 
-    refreshAction.registerShortcutOn(mainPanel);
+    refreshAction.registerShortcutOn(myMainPanel);
 
     DefaultActionGroup toolbarGroup = new DefaultActionGroup(hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction);
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true).getComponent();
@@ -95,7 +97,7 @@ public class MainFrame {
   }
 
   public void initialLoadingCompleted() {
-    myLoadingPanel.add(mainPanel);
+    myLoadingPanel.add(myMainPanel);
     myLoadingPanel.stopLoading();
   }
 }
