@@ -22,11 +22,11 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -60,6 +60,7 @@ public class DebuggerUIUtil {
 
   public static void enableEditorOnCheck(final JCheckBox checkbox, final JComponent textfield) {
     checkbox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         boolean selected = checkbox.isSelected();
         textfield.setEnabled(selected);
@@ -70,11 +71,13 @@ public class DebuggerUIUtil {
 
   public static void focusEditorOnCheck(final JCheckBox checkbox, final JComponent component) {
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         component.requestFocus();
       }
     };
     checkbox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (checkbox.isSelected()) {
           SwingUtilities.invokeLater(runnable);
@@ -83,35 +86,8 @@ public class DebuggerUIUtil {
     });
   }
 
-  public static void invokeLater(final Runnable runnable) {
+  public static void invokeLater(Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(runnable);
-  }
-
-  public static void invokeOnEventDispatch(final Runnable runnable) {
-    invokeOnEventDispatch(runnable, null);
-  }
-
-  public static void invokeOnEventDispatchIfProjectNotDisposed(final Runnable runnable, final Project project) {
-    invokeOnEventDispatch(runnable, new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return project.isDisposed();
-      }
-    });
-  }
-
-  private static void invokeOnEventDispatch(final Runnable runnable,
-                                           @Nullable Condition<Object> expired) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      if (expired == null) {
-        ApplicationManager.getApplication().invokeLater(runnable);
-      } else {
-        ApplicationManager.getApplication().invokeLater(runnable, expired);
-      }
-    }
   }
 
   public static RelativePoint calcPopupLocation(Editor editor, final int line) {
@@ -148,6 +124,7 @@ public class DebuggerUIUtil {
       .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
       .setRequestFocus(false)
       .setCancelCallback(new Computable<Boolean>() {
+        @Override
         public Boolean compute() {
           callback.setObsolete();
           return true;
@@ -317,12 +294,15 @@ public class DebuggerUIUtil {
       myTextArea = textArea;
     }
 
+    @Override
     public void evaluated(@NotNull final String fullValue) {
       evaluated(fullValue, null);
     }
 
+    @Override
     public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-      invokeOnEventDispatch(new Runnable() {
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
         public void run() {
           myTextArea.setText(fullValue);
           if (font != null) {
@@ -333,8 +313,10 @@ public class DebuggerUIUtil {
       });
     }
 
+    @Override
     public void errorOccurred(@NotNull final String errorMessage) {
-      invokeOnEventDispatch(new Runnable() {
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
         public void run() {
           myTextArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
           myTextArea.setText(errorMessage);
@@ -346,6 +328,7 @@ public class DebuggerUIUtil {
       myObsolete.set(true);
     }
 
+    @Override
     public boolean isObsolete() {
       return myObsolete.get();
     }

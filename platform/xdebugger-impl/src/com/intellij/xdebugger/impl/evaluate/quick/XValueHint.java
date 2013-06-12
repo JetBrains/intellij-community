@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
@@ -35,7 +36,6 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
@@ -114,7 +114,7 @@ public class XValueHint extends AbstractValueHint {
 
           private void doSetPresentation(@Nullable Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
                                       @NonNls @Nullable final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren) {
-            DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+            AppUIUtil.invokeOnEdt(new Runnable() {
               public void run() {
                 doShowHint(result, separator, value, type, valuePresenter == null ? XValueNodeImpl.DEFAULT_VALUE_PRESENTER : valuePresenter, hasChildren);
               }
