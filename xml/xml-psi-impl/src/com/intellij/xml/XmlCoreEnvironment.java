@@ -18,6 +18,8 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.impl.cache.impl.id.IdIndexers;
+import com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
@@ -41,6 +43,9 @@ public class XmlCoreEnvironment {
     appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, HTMLLanguage.INSTANCE, astFactory);
     appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, XHTMLLanguage.INSTANCE, astFactory);
     appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, DTDLanguage.INSTANCE, astFactory);
+
+    appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, XmlFileType.INSTANCE, new XmlIdIndexer());
+    appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, DTDFileType.INSTANCE, new XmlIdIndexer());
 
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlChildRole.EP_NAME, XmlChildRole.StartTagEndTokenProvider.class);
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSuppressionProvider.EP_NAME, XmlSuppressionProvider.class);
