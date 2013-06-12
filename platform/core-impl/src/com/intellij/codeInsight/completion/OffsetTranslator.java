@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.Nullable;
@@ -30,12 +31,14 @@ import java.util.LinkedList;
  * @author peter
  */
 public class OffsetTranslator implements Disposable {
+  static final Key<OffsetTranslator> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
+
   private final Document myCopyDocument;
   private final LinkedList<DocumentEvent> myTranslation = new LinkedList<DocumentEvent>();
 
   public OffsetTranslator(final Document originalDocument, final PsiFile originalFile, Document copyDocument) {
     myCopyDocument = copyDocument;
-    myCopyDocument.putUserData(CompletionUtil.RANGE_TRANSLATION, this);
+    myCopyDocument.putUserData(RANGE_TRANSLATION, this);
 
     final LinkedList<DocumentEvent> sinceCommit = new LinkedList<DocumentEvent>();
     originalDocument.addDocumentListener(new DocumentAdapter() {
@@ -72,13 +75,13 @@ public class OffsetTranslator implements Disposable {
   }
 
   private boolean isUpToDate() {
-    return this == myCopyDocument.getUserData(CompletionUtil.RANGE_TRANSLATION);
+    return this == myCopyDocument.getUserData(RANGE_TRANSLATION);
   }
 
   @Override
   public void dispose() {
     if (isUpToDate()) {
-      myCopyDocument.putUserData(CompletionUtil.RANGE_TRANSLATION, null);
+      myCopyDocument.putUserData(RANGE_TRANSLATION, null);
     }
   }
 
