@@ -15,7 +15,7 @@ import java.net.URL;
 public abstract class Html5SchemaProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.Html5SchemaProvider");
 
-  private static final ExtensionPointName<Html5SchemaProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.html5SchemaProvider");
+  public static final ExtensionPointName<Html5SchemaProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.html5SchemaProvider");
 
   public static final String HTML5_SCHEMA_LOCATION;
   public static final String XHTML5_SCHEMA_LOCATION;
