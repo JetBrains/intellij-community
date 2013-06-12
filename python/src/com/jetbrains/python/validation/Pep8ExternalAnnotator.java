@@ -167,7 +167,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       if (problemElement != null) {
         TextRange problemRange = problemElement.getTextRange();
         if (crossesLineBoundary(document, text, problemRange)) {
-          int lineEndOffset = document != null ? document.getLineEndOffset(line) : StringUtil.lineColToOffset(text, line+1, 0) - 1;
+          int lineEndOffset;
+          if (document != null) {
+            lineEndOffset = line >= document.getLineCount() ? document.getTextLength()-1 : document.getLineEndOffset(line);
+          }
+          else {
+            lineEndOffset = StringUtil.lineColToOffset(text, line+1, 0) - 1;
+          }
           problemRange = new TextRange(offset, lineEndOffset);
         }
         final Annotation annotation;
