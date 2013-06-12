@@ -80,7 +80,7 @@ public class GraphCommitCellRender implements TableCellRenderer {
     g.drawImage(image, 0, 0, null);
   }
 
-  protected boolean isMarked(@Nullable Object value) {
+  public static boolean isMarked(@Nullable Object value) {
     GraphCommitCell cell = (GraphCommitCell)value;
     if (cell == null) {
       return false;

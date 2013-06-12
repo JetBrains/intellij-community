@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.frame;
 
+import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
@@ -15,8 +16,10 @@ import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,6 +43,8 @@ public class VcsLogGraphTable extends JBTable {
 
     setTableHeader(null);
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter));
+    setDefaultRenderer(String.class, new StringCellRenderer());
+
     setRowHeight(HEIGHT_CELL);
     setShowHorizontalLines(false);
     setIntercellSpacing(new Dimension(0, 0));
@@ -158,4 +163,21 @@ public class VcsLogGraphTable extends JBTable {
     return result;
   }
 
+  private class StringCellRenderer extends DefaultTableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      Object commit = getValueAt(row, 0);
+      if (commit instanceof GraphCommitCell) {
+        if (GraphCommitCellRender.isMarked(commit) && !isSelected) {
+          rendererComponent.setBackground(GraphCommitCellRender.MARKED_BACKGROUND);
+        }
+        else {
+          setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
+        }
+      }
+      return rendererComponent;
+    }
+
+  }
 }
