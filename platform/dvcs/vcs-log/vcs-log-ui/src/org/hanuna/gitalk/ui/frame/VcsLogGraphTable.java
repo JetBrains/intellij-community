@@ -15,11 +15,8 @@ import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,7 +37,6 @@ public class VcsLogGraphTable extends JBTable {
   public VcsLogGraphTable(@NotNull VcsLogUI UI) {
     super();
     myUI = UI;
-    UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(new LineBorder(new Color(255, 0, 0, 0))));
 
     setTableHeader(null);
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter));
