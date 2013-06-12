@@ -14,7 +14,6 @@ import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataPack;
-import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.FakeCommitsInfo;
 import org.hanuna.gitalk.data.VcsCommitCache;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
@@ -47,7 +46,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   private final BackgroundTaskQueue myDataLoaderQueue;
 
   private DataPack dataPack;
-  private DataPackUtils dataPackUtils;
 
   private GraphTableModel graphTableModel;
   private VcsLogProvider myLogProvider;
@@ -120,7 +118,6 @@ public class VcsLogControllerImpl implements VcsLogController {
                                     indicator, myCommitCache, myLogProvider, myRoot);
           timer.print();
           graphTableModel = new GraphTableModel(dataPack);
-          dataPackUtils = new DataPackUtils(dataPack);
         }
         catch (VcsException e) {
           notifyError(e);
@@ -195,7 +192,7 @@ public class VcsLogControllerImpl implements VcsLogController {
 
   public void click(int rowIndex) {
     dataPack.getPrintCellModel().getCommitSelectController().deselectAll();
-    Node node = dataPackUtils.getNode(rowIndex);
+    Node node = dataPack.getNode(rowIndex);
     if (node != null) {
       FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
       dataPack.getPrintCellModel().getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
@@ -280,7 +277,7 @@ public class VcsLogControllerImpl implements VcsLogController {
 
   @Override
   public void jumpToCommit(Hash commitHash) {
-    int row = dataPackUtils.getRowByHash(commitHash);
+    int row = dataPack.getRowByHash(commitHash);
     if (row != -1) {
       mySwingUi.jumpToRow(row);
     }
@@ -320,11 +317,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   @Override
   public DataPack getDataPack() {
     return dataPack;
-  }
-
-  @Override
-  public DataPackUtils getDataPackUtils() {
-    return dataPackUtils;
   }
 
   @Override
@@ -387,7 +379,7 @@ public class VcsLogControllerImpl implements VcsLogController {
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
       List<Node> commitsToRebase =
-        getDataPackUtils().getCommitsDownToCommon(onto, getDataPackUtils().getNodeByHash(subjectRef.getCommitHash()));
+        getDataPack().getCommitsDownToCommon(onto, getDataPack().getNodeByHash(subjectRef.getCommitHash()));
       startRebaseOnto(subjectRef, onto, commitsToRebase.subList(0, commitsToRebase.size() - 1));
     }
 
@@ -416,7 +408,6 @@ public class VcsLogControllerImpl implements VcsLogController {
       if (resultRef != null && resultRef != subjectRef) {
         reset();
       }
-      DataPackUtils du = getDataPackUtils();
       if (position == InsertPosition.BELOW) {
         //insertAfter = base.getRowIndex() + 1;
         // TODO: what if many edges?
@@ -426,7 +417,7 @@ public class VcsLogControllerImpl implements VcsLogController {
         //insertAfter = base.getRowIndex();
       }
       Node lowestInserted = nodesToInsert.get(nodesToInsert.size() - 1);
-      if (du.isAncestorOf(base, lowestInserted)) {
+      if (dataPack.isAncestorOf(base, lowestInserted)) {
         this.branchBase = base;
       }
       else {
@@ -436,15 +427,15 @@ public class VcsLogControllerImpl implements VcsLogController {
 
       if (!fakeBranch.isEmpty()) {
         FakeCommitParents lowestFakeCommit = fakeBranch.get(fakeBranch.size() - 1);
-        Node lowestFakeNode = du.getNodeByHash(lowestFakeCommit.getHash());
+        Node lowestFakeNode = dataPack.getNodeByHash(lowestFakeCommit.getHash());
 
-        if (lowestFakeNode == branchBase || du.isAncestorOf(lowestFakeNode, branchBase)) {
+        if (lowestFakeNode == branchBase || dataPack.isAncestorOf(lowestFakeNode, branchBase)) {
           branchBase = getParent(lowestFakeNode);
         }
       }
 
       Set<Node> nodesToRemove = new HashSet<Node>(nodesToInsert);
-      List<Node> branch = du.getCommitsInBranchAboveBase(this.branchBase, du.getNodeByHash(subjectRef.getCommitHash()));
+      List<Node> branch = dataPack.getCommitsInBranchAboveBase(this.branchBase, dataPack.getNodeByHash(subjectRef.getCommitHash()));
       List<Node> result = new ArrayList<Node>();
       boolean baseFound = false;
       for (Node node : branch) {

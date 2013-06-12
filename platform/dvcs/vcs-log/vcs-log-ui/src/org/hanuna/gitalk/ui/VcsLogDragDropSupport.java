@@ -236,7 +236,7 @@ public class VcsLogDragDropSupport {
     }
 
     private List<Ref> getLocalRefsAbove(Node commit) {
-      Set<Node> upRefNodes = myUiController.getDataPackUtils().getUpRefNodes(commit);
+      Set<Node> upRefNodes = myUiController.getDataPack().getUpRefNodes(commit);
       List<Ref> refs = new ArrayList<Ref>();
       for (Node refNode : upRefNodes) {
         if (refNode.getType() == Node.NodeType.COMMIT_NODE) {
@@ -370,7 +370,7 @@ public class VcsLogDragDropSupport {
           @Override
           public void run() {
             for (Node node : commitsBeingDragged) {
-              Node newNode = myUiController.getDataPackUtils().getFakeNodeByHash(node.getCommitHash(), true);
+              Node newNode = myUiController.getDataPack().getFakeNodeByHash(node.getCommitHash(), true);
               if (newNode == null) {
                 System.out.println("No node for " + node.getCommitHash());
               }
@@ -463,7 +463,7 @@ public class VcsLogDragDropSupport {
 
     @Override
     public void reword(final int row, final String message) {
-      final Node node = myUiController.getDataPackUtils().getNode(row);
+      final Node node = myUiController.getDataPack().getNode(row);
       if (node == null) {
         return;
       }
@@ -514,7 +514,7 @@ public class VcsLogDragDropSupport {
 
     public boolean sameBranch(Node commit, List<Node> commitsBeingDragged) {
       for (Node dragged : commitsBeingDragged) {
-        if (!myUiController.getDataPackUtils().isSameBranch(commit, dragged)) return false;
+        if (!myUiController.getDataPack().isSameBranch(commit, dragged)) return false;
       }
       return true;
     }

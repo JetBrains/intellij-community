@@ -54,7 +54,7 @@ public class VcsLogUI {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        int row = myUiController.getDataPackUtils().getRowByHash(hash);
+        int row = myUiController.getDataPack().getRowByHash(hash);
         myMainFrame.getGraphTable().getSelectionModel().addSelectionInterval(row, row);
       }
     });

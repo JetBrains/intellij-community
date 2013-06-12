@@ -5,7 +5,6 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsCommit;
-import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.data.rebase.FakeCommitParents;
@@ -153,6 +152,6 @@ public class GraphTableModel extends AbstractTableModel {
 
   public void addApplied(Hash commit) {
     applied.add(commit);
-    fireTableCellUpdated(new DataPackUtils(dataPack).getRowByHash(commit), 0);
+    fireTableCellUpdated(dataPack.getRowByHash(commit), 0);
   }
 }

@@ -194,7 +194,7 @@ public class GitActionHandlerImpl implements VcsLogActionHandler {
 
   private void handleRebaseResult(GitUpdateResult result, Node onto, Ref subjectRef) {
     // TODO branch name if available
-    Ref ref = myUiController.getDataPackUtils().findRefOfNode(onto);
+    Ref ref = myUiController.getDataPack().findRefOfNode(onto);
     String target = ref == null ? onto.getCommitHash().toStrHash() : ref.getName();
 
     switch (result) {
