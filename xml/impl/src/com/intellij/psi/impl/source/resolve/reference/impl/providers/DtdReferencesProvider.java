@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.completion.CompletionUtilCore;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
@@ -148,7 +148,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   @Nullable
   private static XmlNSDescriptor getNsDescriptor(XmlElement element) {
     final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(
-      CompletionUtilCore.getOriginalElement(element),
+      CompletionUtilCoreImpl.getOriginalElement(element),
       XmlDocument.class,
       XmlMarkupDecl.class
     );

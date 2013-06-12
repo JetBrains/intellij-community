@@ -239,7 +239,7 @@ public class CompletionUtil {
 
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
-    return CompletionUtilCore.getOriginalElement(psi);
+    return CompletionUtilCoreImpl.getOriginalElement(psi);
   }
 
   @NotNull
