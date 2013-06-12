@@ -29,12 +29,12 @@ import java.util.Map;
  */
 public class XmlElementsGroupImpl extends XmlElementsGroupBase {
 
-  private final static Map<String, Type> TYPES = new HashMap<String, Type>();
+  private final static Map<String, XmlElementsGroup.Type> TYPES = new HashMap<String, XmlElementsGroup.Type>();
   static {
-    TYPES.put("sequence", Type.SEQUENCE);
-    TYPES.put("choice", Type.CHOICE);
-    TYPES.put("all", Type.ALL);
-    TYPES.put("group", Type.GROUP);
+    TYPES.put("sequence", XmlElementsGroup.Type.SEQUENCE);
+    TYPES.put("choice", XmlElementsGroup.Type.CHOICE);
+    TYPES.put("all", XmlElementsGroup.Type.ALL);
+    TYPES.put("group", XmlElementsGroup.Type.GROUP);
   }
 
   private final List<XmlElementsGroup> mySubGroups = new ArrayList<XmlElementsGroup>();
@@ -44,11 +44,11 @@ public class XmlElementsGroupImpl extends XmlElementsGroupBase {
   }
 
   @Override
-  public Type getGroupType() {
+  public XmlElementsGroup.Type getGroupType() {
     return getTagType(myTag);
   }
 
-  public static Type getTagType(XmlTag tag) {
+  public static XmlElementsGroup.Type getTagType(XmlTag tag) {
     return TYPES.get(tag.getLocalName());
   }
 

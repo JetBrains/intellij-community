@@ -41,8 +41,8 @@ public class XmlElementsGroupProcessor extends XmlSchemaTagsProcessor {
     super(nsDescriptor, "attribute");
     myGroups.push(new XmlElementsGroupImpl(null, null, null) {
       @Override
-      public Type getGroupType() {
-        return Type.GROUP;
+      public XmlElementsGroup.Type getGroupType() {
+        return XmlElementsGroup.Type.GROUP;
       }
 
       @Override
