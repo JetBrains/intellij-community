@@ -294,10 +294,6 @@ public class VcsLogControllerImpl implements VcsLogController {
     return dragDropListener;
   }
 
-  public void setDragDropListener(@NotNull DragDropListener dragDropListener) {
-    this.dragDropListener = dragDropListener;
-  }
-
   @NotNull
   @Override
   public InteractiveRebaseBuilder getInteractiveRebaseBuilder() {
@@ -308,10 +304,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   @Override
   public VcsLogActionHandler getVcsLogActionHandler() {
     return myVcsLogActionHandler;
-  }
-
-  public void setVcsLogActionHandler(@NotNull VcsLogActionHandler vcsLogActionHandler) {
-    myVcsLogActionHandler = vcsLogActionHandler;
   }
 
   @Override
