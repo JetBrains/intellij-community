@@ -198,4 +198,45 @@ private int testMethod() {
 }
 ''')
   }
+
+  void testExtractMethodFromStaticFieldClosureInitializer() {
+    doTest('''\
+class Foo {
+    static constraints = {
+        bar validator: { val, obj ->
+            <begin>println "validating ${obj}.$val"<end>
+        }
+    }
+}
+''', '''\
+class Foo {
+    static constraints = {
+        bar validator: { val, obj ->
+            testMethod(obj, val)
+        }
+    }
+
+    private static testMethod(obj, val) {
+        println "validating ${obj}.$val"
+    }
+}
+''')
+  }
+
+  void testExtractMethodFromStaticFieldInitializer() {
+    doTest('''\
+class Foo {
+    static constraints = <begin>2<end>
+}
+''', '''\
+class Foo {
+    static constraints = testMethod()
+
+    private static int testMethod() {
+        return 2
+    }
+}
+''')
+  }
+
 }
