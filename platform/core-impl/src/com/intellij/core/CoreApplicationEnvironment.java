@@ -106,7 +106,7 @@ public class CoreApplicationEnvironment {
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, new MessageBusImpl(myApplication, null));
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
-    myApplication.registerService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
+    registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
@@ -122,6 +122,10 @@ public class CoreApplicationEnvironment {
     ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
     myApplication.registerService(JobLauncher.class, createJobLauncher());
+  }
+
+  public <T> void registerApplicationService(Class<T> serviceInterface, T serviceImplementation) {
+    myApplication.registerService(serviceInterface, serviceImplementation);
   }
 
   protected VirtualFilePointerManager createVirtualFilePointerManager() {

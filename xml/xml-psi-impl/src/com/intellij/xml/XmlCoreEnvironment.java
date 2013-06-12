@@ -7,6 +7,8 @@ import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.javaee.CoreExternalResourceManager;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ImplicitNamespaceDescriptorProvider;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -63,5 +65,7 @@ public class XmlCoreEnvironment {
 
     appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
     appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
+
+    appEnvironment.registerApplicationService(ExternalResourceManager.class, new CoreExternalResourceManager());
   }
 }
