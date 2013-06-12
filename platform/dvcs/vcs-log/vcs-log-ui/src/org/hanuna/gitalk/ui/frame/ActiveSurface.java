@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.ui.frame;
 
 import org.hanuna.gitalk.ui.VcsLogController;
+import org.hanuna.gitalk.ui.VcsLogUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,8 +16,8 @@ public class ActiveSurface extends JPanel {
   private final VcsLogGraphTable graphTable;
   private final BranchesPanel myBranchesPanel;
 
-  ActiveSurface(VcsLogController vcsLog_controller) {
-    this.graphTable = new VcsLogGraphTable(vcsLog_controller);
+  ActiveSurface(VcsLogController vcsLog_controller, VcsLogUI vcsLogUI) {
+    this.graphTable = new VcsLogGraphTable(vcsLog_controller, vcsLogUI);
     myBranchesPanel = new BranchesPanel(vcsLog_controller);
     packTables();
   }

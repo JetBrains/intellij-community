@@ -26,7 +26,7 @@ public class MainFrame {
   public MainFrame(final VcsLogController vcsLog_controller, VcsLogUI vcsLogUI) {
     this.myVcsLog_controller = vcsLog_controller;
     myUI = vcsLogUI;
-    myActiveSurface = new ActiveSurface(vcsLog_controller);
+    myActiveSurface = new ActiveSurface(vcsLog_controller, vcsLogUI);
 
     mainPanel.setLayout(new BorderLayout());
     mainPanel.add(createToolbar(), BorderLayout.NORTH);

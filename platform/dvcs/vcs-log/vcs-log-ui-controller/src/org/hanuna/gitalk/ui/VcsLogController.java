@@ -6,9 +6,7 @@ import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
-import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -20,12 +18,6 @@ import java.util.Collection;
 public interface VcsLogController {
 
   TableModel getGraphTableModel();
-
-  void click(@Nullable GraphElement graphElement);
-
-  void click(int rowIndex);
-
-  void over(@Nullable GraphElement graphElement);
 
   void setLongEdgeVisibility(boolean visibility);
 

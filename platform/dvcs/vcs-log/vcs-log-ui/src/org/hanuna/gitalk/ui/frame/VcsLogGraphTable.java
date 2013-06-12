@@ -5,6 +5,7 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.ui.VcsLogController;
+import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.render.GraphCommitCellRender;
 import org.hanuna.gitalk.ui.render.PositionUtil;
 import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
@@ -45,14 +46,16 @@ public class VcsLogGraphTable extends JTable {
       return super.getTableCellEditorComponent(table, value == null ? "null" : ((GraphCommitCell)value).getText(), isSelected, row, column);
     }
   };
+  private final VcsLogUI myUI;
 
   private List<Node> myNodesBeingDragged = null;
   private int[] myRowIndicesBeingDragged = null;
   private int[][] selectionHistory = new int[2][];
   private boolean dragged = false;
 
-  public VcsLogGraphTable(VcsLogController vcsLog_controller) {
+  public VcsLogGraphTable(VcsLogController vcsLog_controller, VcsLogUI UI) {
     super();
+    myUI = UI;
     UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(new LineBorder(new Color(255, 0, 0, 0))));
     this.myVcsLog_controller = vcsLog_controller;
     prepare();
@@ -83,7 +86,7 @@ public class VcsLogGraphTable extends JTable {
         }
         int selectedRow = getSelectedRow();
         if (selectedRow >= 0) {
-          myVcsLog_controller.click(selectedRow);
+          myUI.click(selectedRow);
         }
         System.out.println("Selection");
       }
@@ -170,9 +173,9 @@ public class VcsLogGraphTable extends JTable {
           jumpToRow(jumpToNode.getRowIndex());
         }
         GraphElement graphElement = overCell(e);
-        myVcsLog_controller.click(graphElement);
+        myUI.click(graphElement);
         if (graphElement == null) {
-          myVcsLog_controller.click(PositionUtil.getRowIndex(e));
+          myUI.click(PositionUtil.getRowIndex(e));
         }
       }
     }
@@ -186,7 +189,7 @@ public class VcsLogGraphTable extends JTable {
       else {
         setCursor(DEFAULT_CURSOR);
       }
-      myVcsLog_controller.over(overCell(e));
+      myUI.over(overCell(e));
     }
 
     @Override

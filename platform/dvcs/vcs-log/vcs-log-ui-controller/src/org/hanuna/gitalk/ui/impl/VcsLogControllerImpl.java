@@ -51,8 +51,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   private VcsLogProvider myLogProvider;
   @NotNull private final VirtualFile myRoot;
 
-  private GraphElement prevGraphElement = null;
-
   private DragDropListener dragDropListener = DragDropListener.EMPTY;
   private VcsLogActionHandler myVcsLogActionHandler = VcsLogActionHandler.DO_NOTHING;
   private final VcsLogActionHandler.Callback myCallback = new Callback();
@@ -151,53 +149,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   @NotNull
   public TableModel getGraphTableModel() {
     return graphTableModel;
-  }
-
-  @Override
-  public void over(@Nullable GraphElement graphElement) {
-    SelectController selectController = dataPack.getPrintCellModel().getSelectController();
-    FragmentManager fragmentManager = dataPack.getGraphModel().getFragmentManager();
-    if (graphElement == prevGraphElement) {
-      return;
-    }
-    else {
-      prevGraphElement = graphElement;
-    }
-    selectController.deselectAll();
-    if (graphElement == null) {
-      mySwingUi.updateUI();
-    }
-    else {
-      GraphFragment graphFragment = fragmentManager.relateFragment(graphElement);
-      selectController.select(graphFragment);
-      mySwingUi.updateUI();
-    }
-  }
-
-  public void click(@Nullable GraphElement graphElement) {
-    SelectController selectController = dataPack.getPrintCellModel().getSelectController();
-    FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
-    selectController.deselectAll();
-    if (graphElement == null) {
-      return;
-    }
-    GraphFragment fragment = fragmentController.relateFragment(graphElement);
-    if (fragment == null) {
-      return;
-    }
-    UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
-    mySwingUi.updateUI();
-    mySwingUi.jumpToRow(updateRequest.from());
-  }
-
-  public void click(int rowIndex) {
-    dataPack.getPrintCellModel().getCommitSelectController().deselectAll();
-    Node node = dataPack.getNode(rowIndex);
-    if (node != null) {
-      FragmentManager fragmentController = dataPack.getGraphModel().getFragmentManager();
-      dataPack.getPrintCellModel().getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
-    }
-    mySwingUi.updateUI();
   }
 
   @Override
