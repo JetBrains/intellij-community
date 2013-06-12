@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
@@ -25,6 +26,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Graph + the panel with branch labels above it.
@@ -57,19 +59,18 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
           setDefaultEmptyText(changesBrowser);
           changesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
         }
-        else if (rows > 1) {
-          changesBrowser.getViewer().setEmptyText("Multiple commits selection is not supported yet");
-          changesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
-        }
         else {
-          Node node = myGraphTable.getSelectedNodes().get(0);
-          try {
-            VcsCommit commitData = myLogDataHolder.getDataPack().getCommitDataGetter().getCommitData(node);
-            changesBrowser.setChangesToDisplay(new ArrayList<Change>(commitData.getChanges()));
+          List<Change> changes = new ArrayList<Change>();
+          for (Node node : myGraphTable.getSelectedNodes()) {
+            try {
+              VcsCommit commitData = myLogDataHolder.getDataPack().getCommitDataGetter().getCommitData(node);
+              changes.addAll(commitData.getChanges());
+            }
+            catch (VcsException ex) {
+              LOG.error(ex);
+            }
           }
-          catch (VcsException e1) {
-            LOG.error(e1);
-          }
+          changesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
         }
       }
     });
