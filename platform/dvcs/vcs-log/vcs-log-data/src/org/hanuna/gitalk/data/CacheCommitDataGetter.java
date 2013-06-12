@@ -10,7 +10,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
-import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
+import org.hanuna.gitalk.data.rebase.FakeCommitParents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

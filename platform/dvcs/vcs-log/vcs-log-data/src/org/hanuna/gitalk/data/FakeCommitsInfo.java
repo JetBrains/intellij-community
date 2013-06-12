@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.data;
 
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
+import org.hanuna.gitalk.data.rebase.FakeCommitParents;
 import com.intellij.vcs.log.Ref;
 
 import java.util.List;
