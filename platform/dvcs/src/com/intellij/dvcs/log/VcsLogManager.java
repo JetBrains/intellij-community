@@ -50,7 +50,7 @@ public class VcsLogManager extends AbstractProjectComponent {
         VirtualFile root = myVcsManager.getAllVcsRoots()[0].getPath();
 
         VcsLogControllerImpl myUiController = new VcsLogControllerImpl(myProject, logProvider, root);
-        myUiController.init();
+        myUiController.refresh();
 
         Content vcsLogContentPane = new ContentImpl(myUiController.getMainComponent(), "VCS LOG", true);
         ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);

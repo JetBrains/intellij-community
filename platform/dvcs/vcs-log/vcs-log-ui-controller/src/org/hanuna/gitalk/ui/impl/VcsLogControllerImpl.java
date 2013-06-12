@@ -17,7 +17,7 @@ import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
-import org.hanuna.gitalk.data.impl.DataLoaderImpl;
+import org.hanuna.gitalk.data.impl.DataPackImpl;
 import org.hanuna.gitalk.data.impl.FakeCommitsInfo;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
@@ -45,7 +45,6 @@ import java.util.*;
 public class VcsLogControllerImpl implements VcsLogController {
 
   private static final Logger LOG = Logger.getInstance(VcsLogController.class);
-  private volatile DataLoaderImpl dataLoader;
   private final Project myProject;
   private final BackgroundTaskQueue myDataLoaderQueue;
 
@@ -68,31 +67,31 @@ public class VcsLogControllerImpl implements VcsLogController {
     @Override
     public void startRebase(Ref subjectRef, Node onto) {
       rebaseDelegate.startRebase(subjectRef, onto);
-      init();
+      refresh();
     }
 
     @Override
     public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
       rebaseDelegate.startRebaseOnto(subjectRef, base, nodesToRebase);
-      init();
+      refresh();
     }
 
     @Override
     public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
       rebaseDelegate.moveCommits(subjectRef, base, position, nodesToInsert);
-      init();
+      refresh();
     }
 
     @Override
     public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
       rebaseDelegate.fixUp(subjectRef, target, nodesToFixUp);
-      init();
+      refresh();
     }
 
     @Override
     public void reword(Ref subjectRef, Node commitToReword, String newMessage) {
       rebaseDelegate.reword(subjectRef, commitToReword, newMessage);
-      init();
+      refresh();
     }
 
     @Override
@@ -125,20 +124,18 @@ public class VcsLogControllerImpl implements VcsLogController {
 
   }
 
-  private void dataInit() {
-    dataPack = dataLoader.getDataPack();
-    graphTableModel = new GraphTableModel(dataPack);
-    dataPackUtils = new DataPackUtils(dataPack);
-  }
-
-  public void init() {
+  @Override
+  public void refresh() {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        dataLoader = new DataLoaderImpl(VcsLogControllerImpl.this.myProject, commitDataCache, myLogProvider);
-
         try {
-          dataLoader.readNextPart(indicator, myRoot);
-          dataInit();
+          MyTimer timer = new MyTimer("Read all history");
+          dataPack = DataPackImpl
+            .buildDataPack(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot), indicator, myProject, commitDataCache,
+                           myLogProvider, myRoot);
+          timer.print();
+          graphTableModel = new GraphTableModel(dataPack);
+          dataPackUtils = new DataPackUtils(dataPack);
         }
         catch (VcsException e) {
           notifyError(e);
@@ -235,7 +232,8 @@ public class VcsLogControllerImpl implements VcsLogController {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          dataLoader.readNextPart(indicator, myRoot);
+          List<? extends VcsCommit> nextPart = myLogProvider.readNextBlock(myRoot);
+          dataPack.appendCommits(nextPart);
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
             public void run() {
@@ -362,7 +360,7 @@ public class VcsLogControllerImpl implements VcsLogController {
   @Override
   public void cancelInteractiveRebase() {
     rebaseDelegate.reset();
-    init();
+    refresh();
   }
 
   @Override

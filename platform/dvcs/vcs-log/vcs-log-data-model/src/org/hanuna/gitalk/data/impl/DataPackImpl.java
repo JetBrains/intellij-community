@@ -79,6 +79,7 @@ public class DataPackImpl implements DataPack {
     commitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache, logProvider, root);
   }
 
+  @Override
   public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
     MyTimer timer = new MyTimer("append commits");
     graphModel.appendCommitsToGraph(commitParentsList);

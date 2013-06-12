@@ -69,4 +69,6 @@ public interface VcsLogController {
 
   @NotNull
   JComponent getMainComponent();
+
+  void refresh();
 }
