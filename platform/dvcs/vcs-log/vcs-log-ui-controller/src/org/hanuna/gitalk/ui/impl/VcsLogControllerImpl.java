@@ -9,15 +9,14 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
-import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.data.FakeCommitsInfo;
+import org.hanuna.gitalk.data.VcsCommitCache;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.GraphElement;
@@ -99,20 +98,8 @@ public class VcsLogControllerImpl implements VcsLogController {
     }
   };
 
-  private final CacheGet<Hash, VcsCommit> commitDataCache = new CacheGet<Hash, VcsCommit>(new Function<Hash, VcsCommit>() {
-    @NotNull
-    @Override
-    public VcsCommit fun(@NotNull Hash key) {
-      // TODO
-      try {
-        return myLogProvider.readCommitsData(myRoot, Collections.singletonList(key.toStrHash())).get(0);
-      }
-      catch (VcsException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }, 5000);
-  private final VcsLogUI mySwingUi;
+  @NotNull private final VcsCommitCache myCommitCache;
+  @NotNull private final VcsLogUI mySwingUi;
 
   public VcsLogControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
@@ -120,7 +107,7 @@ public class VcsLogControllerImpl implements VcsLogController {
     myRoot = root;
     myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading history...");
     mySwingUi = new VcsLogUI(this);
-
+    myCommitCache  = new VcsCommitCache(myLogProvider, myRoot);
   }
 
   @Override
@@ -129,8 +116,8 @@ public class VcsLogControllerImpl implements VcsLogController {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           MyTimer timer = new MyTimer("Read all history");
-          dataPack = DataPack.build(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot), indicator,
-                                    myProject, commitDataCache, myLogProvider, myRoot);
+          dataPack = DataPack.build(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot),
+                                    indicator, myCommitCache, myLogProvider, myRoot);
           timer.print();
           graphTableModel = new GraphTableModel(dataPack);
           dataPackUtils = new DataPackUtils(dataPack);

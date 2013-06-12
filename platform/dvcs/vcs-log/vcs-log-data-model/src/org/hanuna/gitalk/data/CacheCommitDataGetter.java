@@ -7,7 +7,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
-import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
@@ -31,11 +30,11 @@ public class CacheCommitDataGetter {
 
   private final DataPack dataPack;
 
-  private final CacheGet<Hash, VcsCommit> cache;
+  private final VcsCommitCache cache;
   private final VcsLogProvider myLogProvider;
   private VirtualFile myRoot;
 
-  public CacheCommitDataGetter(DataPack dataPack, CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider,
+  public CacheCommitDataGetter(DataPack dataPack, VcsCommitCache commitDataCache, @NotNull VcsLogProvider logProvider,
                                VirtualFile root) {
     this.dataPack = dataPack;
     cache = commitDataCache;

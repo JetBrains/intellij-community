@@ -1,12 +1,13 @@
 package org.hanuna.gitalk.data;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.*;
-import org.hanuna.gitalk.common.CacheGet;
+import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -33,7 +34,7 @@ public class DataPack {
 
   @NotNull
   public static DataPack build(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
-                               @NotNull ProgressIndicator indicator, @NotNull Project project, CacheGet<Hash, VcsCommit> commitDataCache,
+                               @NotNull ProgressIndicator indicator, @NotNull VcsCommitCache commitDataCache,
                                @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     for (VcsCommit commit : commits) {
       commitDataCache.put(commit.getHash(), commit);
@@ -65,12 +66,11 @@ public class DataPack {
         }
       }
     });
-    return new DataPack(graphModel, refsModel, printCellModel, project, commitDataCache, logProvider, root);
+    return new DataPack(graphModel, refsModel, printCellModel, commitDataCache, logProvider, root);
   }
 
   private DataPack(@NotNull GraphModel graphModel, @NotNull RefsModel refsModel, @NotNull GraphPrintCellModel printCellModel,
-                   @NotNull Project project, @NotNull CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider,
-                   @NotNull VirtualFile root) {
+                   @NotNull VcsCommitCache commitDataCache, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myGraphModel = graphModel;
     myRefsModel = refsModel;
     myPrintCellModel = printCellModel;
