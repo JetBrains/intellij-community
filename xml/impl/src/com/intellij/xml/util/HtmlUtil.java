@@ -26,7 +26,7 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -648,7 +648,7 @@ public class HtmlUtil {
   }
 
   public static boolean isPureHtmlFile(@NotNull PsiFile file) {
-    FileType fileTypeByName = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    FileType fileTypeByName = FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName());
     return file.getLanguage() == HTMLLanguage.INSTANCE &&
            fileTypeByName == HtmlFileType.INSTANCE &&
            !(file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider);
