@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.data.impl;
+package org.hanuna.gitalk.data;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -9,8 +9,6 @@ import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
-import org.hanuna.gitalk.data.CommitDataGetter;
-import org.hanuna.gitalk.data.RefsModel;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;

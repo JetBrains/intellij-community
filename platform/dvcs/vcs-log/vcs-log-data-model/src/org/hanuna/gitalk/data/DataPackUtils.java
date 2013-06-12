@@ -2,7 +2,6 @@ package org.hanuna.gitalk.data;
 
 import com.intellij.util.containers.Predicate;
 import com.intellij.vcs.log.Hash;
-import org.hanuna.gitalk.data.impl.DataPack;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;

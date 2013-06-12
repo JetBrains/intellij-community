@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.DataPackUtils;
-import org.hanuna.gitalk.data.impl.DataPack;
+import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.GraphElement;

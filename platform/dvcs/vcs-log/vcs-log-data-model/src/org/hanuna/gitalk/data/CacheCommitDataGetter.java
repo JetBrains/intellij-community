@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.data.impl;
+package org.hanuna.gitalk.data;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -9,7 +9,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;

@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.data.impl;
+package org.hanuna.gitalk.data;
 
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;

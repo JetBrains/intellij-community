@@ -6,7 +6,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsCommit;
 import org.hanuna.gitalk.data.DataPackUtils;
-import org.hanuna.gitalk.data.impl.DataPack;
+import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
