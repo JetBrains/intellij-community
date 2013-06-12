@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.PlatformUtilsCore;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
@@ -42,8 +41,6 @@ public class MainImpl {
       AppUIUtil.updateFrameClass();
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
-
-      UIUtil.initDefaultLAF();
 
       boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
       if (isNewConfigFolder) {
