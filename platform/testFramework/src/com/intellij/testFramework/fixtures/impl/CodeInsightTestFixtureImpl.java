@@ -96,6 +96,7 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -1410,7 +1411,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final Project project = getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ((PsiFileImpl)myFile).calcTreeElement(); //to load text
+    FileElement hardRefToFileElement = ((PsiFileImpl)myFile).calcTreeElement();//to load text
 
     //to initialize caches
     if (!DumbService.isDumb(project)) {
@@ -1435,6 +1436,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
 
     data.checkResult(infos, myEditor.getDocument().getText());
+    hardRefToFileElement.hashCode(); // use it so gc won't collect it
   }
 
   private static void removeDuplicatedRangesForInjected(List<HighlightInfo> infos) {
