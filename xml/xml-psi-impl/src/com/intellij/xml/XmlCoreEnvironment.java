@@ -24,6 +24,8 @@ import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlApplicationComponent;
 
 /**
@@ -60,5 +62,6 @@ public class XmlCoreEnvironment {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlExtension.EP_NAME, XmlExtension.class);
 
     appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
+    appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
   }
 }
