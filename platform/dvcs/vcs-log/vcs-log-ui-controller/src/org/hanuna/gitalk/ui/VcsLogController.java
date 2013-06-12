@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
@@ -22,9 +21,6 @@ public interface VcsLogController {
   void readNextPart();
 
   Collection<Ref> getRefs();
-
-  @NotNull
-  DragDropListener getDragDropListener();
 
   @NotNull
   InteractiveRebaseBuilder getInteractiveRebaseBuilder();

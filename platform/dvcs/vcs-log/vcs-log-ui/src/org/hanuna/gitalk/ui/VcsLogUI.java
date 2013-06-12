@@ -22,6 +22,8 @@ public class VcsLogUI {
   @NotNull private final VcsLogController myUiController;
   @NotNull private final MainFrame myMainFrame;
 
+  @NotNull private DragDropListener dragDropListener = DragDropListener.EMPTY;
+
   @Nullable private GraphElement prevGraphElement;
 
   public VcsLogUI(@NotNull VcsLogController uiController) {
@@ -143,6 +145,11 @@ public class VcsLogUI {
     if (row != -1) {
       jumpToRow(row);
     }
+  }
+
+  @NotNull
+  public DragDropListener getDragDropListener() {
+    return dragDropListener;
   }
 
 }

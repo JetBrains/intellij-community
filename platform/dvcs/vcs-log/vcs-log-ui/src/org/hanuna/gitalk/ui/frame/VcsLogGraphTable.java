@@ -4,14 +4,14 @@ import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
-import org.hanuna.gitalk.ui.VcsLogController;
+import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.render.GraphCommitCellRender;
 import org.hanuna.gitalk.ui.render.PositionUtil;
 import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.ui.render.painters.SimpleGraphCellPainter;
-import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +37,8 @@ import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
  * @author erokhins
  */
 public class VcsLogGraphTable extends JTable {
-  private final VcsLogController myVcsLog_controller;
+  @NotNull private final VcsLogUI myUI;
+
   private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
   private final MouseAdapter mouseAdapter = new MyMouseAdapter();
   private final DefaultCellEditor myCellEditor = new DefaultCellEditor(new JTextField()) {
@@ -46,18 +47,16 @@ public class VcsLogGraphTable extends JTable {
       return super.getTableCellEditorComponent(table, value == null ? "null" : ((GraphCommitCell)value).getText(), isSelected, row, column);
     }
   };
-  private final VcsLogUI myUI;
 
   private List<Node> myNodesBeingDragged = null;
   private int[] myRowIndicesBeingDragged = null;
   private int[][] selectionHistory = new int[2][];
   private boolean dragged = false;
 
-  public VcsLogGraphTable(VcsLogController vcsLog_controller, VcsLogUI UI) {
+  public VcsLogGraphTable(@NotNull VcsLogUI UI) {
     super();
     myUI = UI;
     UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(new LineBorder(new Color(255, 0, 0, 0))));
-    this.myVcsLog_controller = vcsLog_controller;
     prepare();
   }
 
@@ -99,7 +98,7 @@ public class VcsLogGraphTable extends JTable {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           if (myNodesBeingDragged != null && dragged) {
-            myVcsLog_controller.getDragDropListener().draggingCanceled(myNodesBeingDragged);
+            myUI.getDragDropListener().draggingCanceled(myNodesBeingDragged);
           }
           myNodesBeingDragged = null;
           myRowIndicesBeingDragged = null;
@@ -224,14 +223,14 @@ public class VcsLogGraphTable extends JTable {
         List<Node> commitsBeingDragged = nodes(relevantSelection);
         myNodesBeingDragged = commitsBeingDragged;
         myRowIndicesBeingDragged = relevantSelection;
-        myVcsLog_controller.getDragDropListener().draggingStarted(commitsBeingDragged);
+        myUI.getDragDropListener().draggingStarted(commitsBeingDragged);
       }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
       if (dragged && myNodesBeingDragged != null) {
-        handleEvent(e, myVcsLog_controller.getDragDropListener().drop(), myNodesBeingDragged);
+        handleEvent(e, myUI.getDragDropListener().drop(), myNodesBeingDragged);
       }
       dragged = false;
       myNodesBeingDragged = null;
@@ -249,7 +248,7 @@ public class VcsLogGraphTable extends JTable {
         }
       });
 
-      handleEvent(e, myVcsLog_controller.getDragDropListener().drag(), myNodesBeingDragged);
+      handleEvent(e, myUI.getDragDropListener().drag(), myNodesBeingDragged);
     }
 
     private void handleEvent(MouseEvent e, DragDropListener.Handler handler, List<Node> selectedNodes) {
@@ -318,7 +317,7 @@ public class VcsLogGraphTable extends JTable {
   @Override
   public void setValueAt(Object aValue, int row, int column) {
     if (column == 0 && aValue instanceof String) {
-      myVcsLog_controller.getDragDropListener().reword(row, aValue.toString());
+      myUI.getDragDropListener().reword(row, aValue.toString());
       return;
     }
     super.setValueAt(aValue, row, column);

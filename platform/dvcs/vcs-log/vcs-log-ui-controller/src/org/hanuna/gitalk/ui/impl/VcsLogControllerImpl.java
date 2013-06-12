@@ -44,7 +44,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   private VcsLogProvider myLogProvider;
   @NotNull private final VirtualFile myRoot;
 
-  private DragDropListener dragDropListener = DragDropListener.EMPTY;
   private VcsLogActionHandler myVcsLogActionHandler = VcsLogActionHandler.DO_NOTHING;
   private final VcsLogActionHandler.Callback myCallback = new Callback();
 
@@ -175,12 +174,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   @Override
   public Collection<Ref> getRefs() {
     return dataPack == null ? Collections.<Ref>emptyList() : dataPack.getRefsModel().getAllRefs();
-  }
-
-  @NotNull
-  @Override
-  public DragDropListener getDragDropListener() {
-    return dragDropListener;
   }
 
   @NotNull
