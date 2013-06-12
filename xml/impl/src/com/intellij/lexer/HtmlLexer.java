@@ -18,9 +18,9 @@ package com.intellij.lexer;
 import com.intellij.lang.HtmlInlineScriptTokenTypesProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageHtmlInlineScriptTokenTypesProvider;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
@@ -77,7 +77,7 @@ public class HtmlLexer extends BaseHtmlLexer {
       }
     } else if (hasSeenScript()) {
       Language scriptLanguage = getScriptLanguage();
-      boolean canInject = scriptLanguage == null || InjectedLanguageUtil.isInjectableLanguage(scriptLanguage);
+      boolean canInject = scriptLanguage == null || LanguageUtil.isInjectableLanguage(scriptLanguage);
       if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType) && canInject) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
         IElementType currentScriptElementType = getCurrentScriptElementType();
