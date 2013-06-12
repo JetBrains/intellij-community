@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "UnusedDeclaration"})
+@SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
 public class MainImpl {
   private static final String LOG_CATEGORY = "#com.intellij.idea.Main";
 
@@ -44,42 +45,39 @@ public class MainImpl {
 
       UIUtil.initDefaultLAF();
 
-      final boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
+      boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
       if (isNewConfigFolder) {
         ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
       }
     }
 
     if (!StartupUtil.checkStartupPossible(args)) {   // It uses config folder!
-      System.exit(-1);
+      System.exit(Main.STARTUP_IMPOSSIBLE);
     }
 
     Logger.setFactory(LoggerFactory.getInstance());
-
-    final Logger LOG = Logger.getInstance(LOG_CATEGORY);
-
+    Logger LOG = Logger.getInstance(LOG_CATEGORY);
     StartupUtil.startLogging(LOG);
 
-    _main(args);
-  }
-
-  protected static void _main(final String[] args) {
     // http://weblogs.java.net/blog/shan_man/archive/2005/06/improved_drag_g.html
     System.setProperty("sun.swing.enableImprovedDragGesture", "");
 
-    Logger LOG = Logger.getInstance(LOG_CATEGORY);
     StartupUtil.fixProcessEnvironment(LOG);
     StartupUtil.loadSystemLibraries(LOG);
 
-    startApplication(args);
-  }
-
-  private static void startApplication(final String[] args) {
-    final IdeaApplication app = new IdeaApplication(args);
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
-        app.run();
+        try {
+          new IdeaApplication(args).run();
+        }
+        catch (PluginManager.StartupAbortedException e) {
+          throw e;
+        }
+        catch (Throwable t) {
+          throw new PluginManager.StartupAbortedException(t);
+        }
       }
     });
   }

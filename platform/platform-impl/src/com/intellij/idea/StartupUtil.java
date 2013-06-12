@@ -15,7 +15,7 @@
  */
 package com.intellij.idea;
 
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.xerial.snappy.Snappy;
 import org.xerial.snappy.SnappyLoader;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -77,14 +76,8 @@ public class StartupUtil {
     return Main.isHeadless();
   }
 
-  public static void showError(final String title, final String message) {
-    if (Main.isHeadless()) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println(message);
-    }
-    else {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, title, JOptionPane.ERROR_MESSAGE);
-    }
+  public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {
+    ourLock.setActivateListener(consumer);
   }
 
   /**
@@ -97,17 +90,9 @@ public class StartupUtil {
         Class.forName("com.sun.jdi.Field");
       }
       catch (ClassNotFoundException e) {
-        showError("Error", "'tools.jar' is not in " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
-                           "Please ensure JAVA_HOME points to JDK rather than JRE.");
-        return false;
-      }
-    }
-
-    if (!"true".equals(System.getProperty("idea.no.jdk.check"))) {
-      final String version = System.getProperty("java.version");
-      if (!SystemInfo.isJavaVersionAtLeast("1.6")) {
-        showError("Java Version Mismatch", "The JDK version is " + version + ".\n" +
-                                           ApplicationNamesInfo.getInstance().getProductName() + " requires JDK 1.6 or higher.");
+        String message = "'tools.jar' seems to be not in " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
+                         "Please ensure JAVA_HOME points to JDK rather than JRE.";
+        Main.showMessage("JDK Required", message, true);
         return false;
       }
     }
@@ -117,18 +102,20 @@ public class StartupUtil {
 
   private synchronized static boolean checkSystemFolders() {
     final String configPath = PathManager.getConfigPath();
-    if (configPath == null || !new File(configPath).isDirectory()) {
-      showError("Invalid config path", "Config path '" + configPath + "' is invalid.\n" +
-                                       "If you have modified the 'idea.config.path' property please make sure it is correct,\n" +
-                                       "otherwise please re-install the IDE.");
+    if (!new File(configPath).isDirectory()) {
+      String message = "Config path '" + configPath + "' is invalid.\n" +
+                       "If you have modified the 'idea.config.path' property please make sure it is correct,\n" +
+                       "otherwise please re-install the IDE.";
+      Main.showMessage("Invalid Config Path", message, true);
       return false;
     }
 
     final String systemPath = PathManager.getSystemPath();
     if (systemPath == null || !new File(systemPath).isDirectory()) {
-      showError("Invalid system path", "System path '" + systemPath + "' is invalid.\n" +
-                                       "If you have modified the 'idea.system.path' property please make sure it is correct,\n" +
-                                       "otherwise please re-install the IDE.");
+      String message = "System path '" + systemPath + "' is invalid.\n" +
+                       "If you have modified the 'idea.system.path' property please make sure it is correct,\n" +
+                       "otherwise please re-install the IDE.";
+      Main.showMessage("Invalid System Path", message, true);
       return false;
     }
 
@@ -147,7 +134,8 @@ public class StartupUtil {
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
       if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-        showError("Error", "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
+        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
+        Main.showMessage("Too Many Instances", message, true);
       }
       return false;
     }
@@ -167,14 +155,9 @@ public class StartupUtil {
       final StartupWizard startupWizard = new StartupWizard(pages);
       startupWizard.setCancelText("Skip");
       startupWizard.show();
-      PluginManager.invalidatePlugins();
+      PluginManagerCore.invalidatePlugins();
     }
   }
-
-  public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {
-    ourLock.setActivateListener(consumer);
-  }
-
 
   static void fixProcessEnvironment(Logger log) {
     boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
@@ -182,7 +165,6 @@ public class StartupUtil {
       log.info("initializing environment");
     }
   }
-
 
   private static final String JAVA_IO_TEMP_DIR = "java.io.tmpdir";
 
@@ -280,7 +262,7 @@ public class StartupUtil {
     loadNativeLibrary.invoke(null, loaderClass);
   }
 
-  public static void startLogging(final Logger log) {
+  static void startLogging(final Logger log) {
     Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
       public void run() {
         log.info(
