@@ -7,6 +7,9 @@ import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
@@ -17,9 +20,12 @@ import static org.hanuna.gitalk.ui.render.PrintParameters.WIDTH_NODE;
 /**
  * @author erokhins
  */
-public class GraphCommitCellRender extends AbstractPaddingCellRender {
+public class GraphCommitCellRender implements TableCellRenderer {
+  public static final Color MARKED_BACKGROUND = new Color(0xB6, 0xE4, 0xFF);
+  public static final Color APPLIED_BACKGROUND = new Color(0x92, 0xF5, 0x8F);
   private final GraphCellPainter graphPainter;
   private final RefPainter refPainter = new RefPainter();
+  private ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
 
   public GraphCommitCellRender(GraphCellPainter graphPainter) {
     this.graphPainter = graphPainter;
@@ -29,7 +35,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     return (GraphCommitCell)value;
   }
 
-  @Override
   protected int getLeftPadding(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
 
@@ -46,7 +51,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     return refPadding + graphPadding;
   }
 
-  @Override
   protected String getCellText(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
     if (cell == null) {
@@ -57,7 +61,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     }
   }
 
-  @Override
   protected void additionPaint(Graphics g, JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
     if (cell == null) {
@@ -77,7 +80,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     g.drawImage(image, 0, 0, null);
   }
 
-  @Override
   protected boolean isMarked(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
     if (cell == null) {
@@ -91,7 +93,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     return false;
   }
 
-  @Override
   protected GraphCommitCell.Kind getKind(JTable table, @Nullable Object value) {
     GraphCommitCell cell = getAssertGraphCommitCell(value);
     if (cell == null) {
@@ -99,5 +100,61 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     }
 
     return cell.getKind();
+  }
+
+  @Override
+  public Component getTableCellRendererComponent(JTable table, @Nullable Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    return cellRender.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+  }
+
+  public class ExtDefaultCellRender extends DefaultTableCellRenderer {
+    private JTable table;
+    private Object value;
+
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      this.table = table;
+      this.value = value;
+      super.getTableCellRendererComponent(table, getCellText(table, value), isSelected, hasFocus, row, column);
+      if (isMarked(table, value) && !isSelected) {
+        setBackground(MARKED_BACKGROUND);
+      }
+      else {
+        setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+      }
+      Border paddingBorder = BorderFactory.createEmptyBorder(0, getLeftPadding(table, value), 0, 0);
+      this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
+
+      GraphCommitCell.Kind kind = getKind(table, value);
+      Color textColor = isSelected ? table.getSelectionForeground() : Color.BLACK;
+      switch (kind) {
+        case APPLIED:
+          setBackground(APPLIED_BACKGROUND);
+          break;
+        case NORMAL:
+          setForeground(textColor);
+          break;
+        case PICK:
+          setFont(getFont().deriveFont(Font.BOLD));
+          setForeground(textColor);
+          break;
+        case FIXUP:
+          setFont(getFont().deriveFont(Font.BOLD));
+          setForeground(Color.GRAY);
+          break;
+        case REWORD:
+          setFont(getFont().deriveFont(Font.BOLD));
+          setForeground(Color.blue);
+          break;
+      }
+
+      return this;
+    }
+
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      additionPaint(g, table, value);
+    }
   }
 }
