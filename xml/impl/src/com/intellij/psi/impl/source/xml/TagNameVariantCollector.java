@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +40,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TagNameVariantCollector {
+  public static String[] getTagNameVariants(final XmlTag element,
+                                            final Collection<String> namespaces,
+                                            @Nullable List<String> nsInfo) {
+
+    final List<String> variants = getTagNameVariants(element, namespaces, nsInfo, new Function<XmlElementDescriptor, String>() {
+      @Override
+      public String fun(XmlElementDescriptor descriptor) {
+        return descriptor.getName(element);
+      }
+    });
+    return ArrayUtil.toStringArray(variants);
+  }
+
   public static <T> List<T> getTagNameVariants(final XmlTag element,
                                                final Collection<String> namespaces,
                                                @Nullable List<String> nsInfo,

@@ -20,12 +20,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,7 +39,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
     XmlExtension xmlExtension = XmlExtension.getExtension(tag.getContainingFile());
     List<String> nsInfo = new ArrayList<String>();
-    final String[] variants = getTagNameVariants(tag, namespaces, nsInfo);
+    final String[] variants = TagNameVariantCollector.getTagNameVariants(tag, namespaces, nsInfo);
     for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
       String qname = variants[i];
       if (!prefix.isEmpty() && qname.startsWith(prefix + ":")) {
@@ -66,17 +63,4 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
   }
 
-  public static String[] getTagNameVariants(final XmlTag element,
-                                            final Collection<String> namespaces,
-                                            @Nullable List<String> nsInfo) {
-
-    final List<String> variants = TagNameVariantCollector
-      .getTagNameVariants(element, namespaces, nsInfo, new Function<XmlElementDescriptor, String>() {
-        @Override
-        public String fun(XmlElementDescriptor descriptor) {
-          return descriptor.getName(element);
-        }
-      });
-    return ArrayUtil.toStringArray(variants);
-  }
 }
