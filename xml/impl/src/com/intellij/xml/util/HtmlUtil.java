@@ -30,17 +30,18 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -93,7 +94,6 @@ public class HtmlUtil {
       , "multipart/alternative", "multipart/appledouble", "multipart/digest", "multipart/mixed", "multipart/parallel", "text/html"
       , "text/plain", "text/richtext", "text/tab-separated-values", "text/x-setext", "text/x-sgml", "video/mpeg"
       , "video/quicktime", "video/x-msvideo", "video/x-sgi-movie", "x-conference/x-cooltalk", "x-world/x-vrml"};
-  @NonNls public static final String LINK = "link";
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -414,82 +414,6 @@ public class HtmlUtil {
 
   public static boolean isCustomHtml5Attribute(String attributeName) {
     return attributeName.startsWith(HTML5_DATA_ATTR_PREFIX);
-  }
-
-  public static void processLinks(@NotNull final XmlFile xhtmlFile,
-                                  @NotNull Processor<XmlTag> tagProcessor) {
-    final XmlDocument doc = getRealXmlDocument(xhtmlFile.getDocument());
-    if (doc == null) return;
-
-    final XmlTag rootTag = doc.getRootTag();
-    if (rootTag == null) return;
-
-    if (LINK.equalsIgnoreCase(rootTag.getName())) {
-      tagProcessor.process(rootTag);
-    }
-    else {
-      findLinkStylesheets(rootTag, tagProcessor);
-    }
-  }
-
-  public static void findLinkStylesheets(@NotNull final XmlTag tag,
-                                         @NotNull Processor<XmlTag> tagProcessor) {
-    processInjectedContent(tag, tagProcessor);
-
-    for (XmlTag subTag : tag.getSubTags()) {
-      findLinkStylesheets(subTag, tagProcessor);
-    }
-
-    if (LINK.equalsIgnoreCase(tag.getName())) {
-      tagProcessor.process(tag);
-    }
-  }
-
-  public static void processInjectedContent(final XmlTag element,
-                                            @NotNull final Processor<XmlTag> tagProcessor) {
-    final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        if (injectedPsi instanceof XmlFile) {
-          final XmlDocument injectedDocument = ((XmlFile)injectedPsi).getDocument();
-          if (injectedDocument != null) {
-            final XmlTag rootTag = injectedDocument.getRootTag();
-            if (rootTag != null) {
-              for (PsiElement element = rootTag; element != null; element = element.getNextSibling()) {
-                if (element instanceof XmlTag) {
-                  final XmlTag tag = (XmlTag)element;
-                  String tagName = tag.getLocalName();
-                  if (element instanceof HtmlTag || tag.getNamespacePrefix().length() > 0) tagName = tagName.toLowerCase();
-                  if (LINK.equalsIgnoreCase(tagName)) {
-                    tagProcessor.process((XmlTag)element);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    };
-
-    final XmlText[] texts = PsiTreeUtil.getChildrenOfType(element, XmlText.class);
-    if (texts != null && texts.length > 0) {
-      for (final XmlText text : texts) {
-        for (PsiElement _element : text.getChildren()) {
-          if (_element instanceof PsiLanguageInjectionHost) {
-            InjectedLanguageUtil.enumerate(_element, injectedPsiVisitor);
-          }
-        }
-      }
-    }
-
-    final XmlComment[] comments = PsiTreeUtil.getChildrenOfType(element, XmlComment.class);
-    if (comments != null && comments.length > 0) {
-      for (final XmlComment comment : comments) {
-        if (comment instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageUtil.enumerate(comment, injectedPsiVisitor);
-        }
-      }
-    }
   }
 
   private static class TerminateException extends RuntimeException {
