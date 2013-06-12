@@ -18,6 +18,7 @@ package com.intellij.xml.util;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
@@ -26,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -607,7 +607,7 @@ public class HtmlUtil {
 
   public static boolean isHtmlFile(@NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
-    return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
+    return fileType == HtmlFileType.INSTANCE || fileType == XHtmlFileType.INSTANCE;
   }
 
   public static boolean isHtmlTagContainingFile(PsiElement element) {
