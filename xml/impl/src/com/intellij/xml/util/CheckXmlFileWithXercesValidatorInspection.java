@@ -21,6 +21,7 @@ import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.impl.ExternalDocumentValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.xml.impl.ExternalDocumentValidator
  */
 public class CheckXmlFileWithXercesValidatorInspection extends XmlSuppressableInspectionTool implements UnfairLocalInspectionTool {
-  public static final @NonNls String SHORT_NAME = "CheckXmlFileWithXercesValidator";
 
   public boolean isEnabledByDefault() {
     return true;
@@ -53,6 +53,6 @@ public class CheckXmlFileWithXercesValidatorInspection extends XmlSuppressableIn
   @NotNull
   @NonNls
   public String getShortName() {
-    return SHORT_NAME;
+    return ExternalDocumentValidator.INSPECTION_SHORT_NAME;
   }
 }

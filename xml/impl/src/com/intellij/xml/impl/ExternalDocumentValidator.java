@@ -42,7 +42,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
-import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlResourceResolver;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,6 +57,9 @@ import java.util.List;
 public class ExternalDocumentValidator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");
   private static final Key<SoftReference<ExternalDocumentValidator>> validatorInstanceKey = Key.create("validatorInstance");
+
+  public static final @NonNls String INSPECTION_SHORT_NAME = "CheckXmlFileWithXercesValidator";
+
   private ValidateXmlActionHandler myHandler;
   private Validator.ValidationHost myHost;
 
@@ -359,10 +361,10 @@ public class ExternalDocumentValidator {
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final InspectionProfileEntry toolWrapper =
-      profile.getInspectionTool(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME, containingFile);
+      profile.getInspectionTool(INSPECTION_SHORT_NAME, containingFile);
 
     if (toolWrapper == null) return;
-    if (!profile.isToolEnabled(HighlightDisplayKey.find(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME), containingFile)) return;
+    if (!profile.isToolEnabled(HighlightDisplayKey.find(INSPECTION_SHORT_NAME), containingFile)) return;
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
     ExternalDocumentValidator validator = validatorReference != null? validatorReference.get() : null;
