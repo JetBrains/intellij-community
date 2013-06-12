@@ -209,4 +209,8 @@ public class TagNameReference implements PsiReference {
     final XmlExtension extension = XmlExtension.getExtensionByElement(element);
     return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }
+
+  public boolean isStartTagFlag() {
+    return myStartTagFlag;
+  }
 }
