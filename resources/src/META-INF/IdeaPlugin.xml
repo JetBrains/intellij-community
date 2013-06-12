@@ -617,7 +617,7 @@
     <localInspection language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection" />
-    <localInspection language="JAVA" shortName="CodeBlock2Expr" displayName="Lambda code block can be replaced with expression"
+    <localInspection language="JAVA" shortName="CodeBlock2Expr" displayName="Statement lambda can be replaced with expression lambda"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection" />
     <localInspection language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
