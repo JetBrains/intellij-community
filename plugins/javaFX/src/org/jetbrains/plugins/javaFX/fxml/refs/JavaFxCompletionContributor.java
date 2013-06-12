@@ -37,8 +37,8 @@ public class JavaFxCompletionContributor extends CompletionContributor {
       PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
       if (reference instanceof JavaFxTagNameReference) {
         addJavaFxTagVariants((JavaFxTagNameReference)reference, result);
+        result.stopHere();
       }
-
     }
 
     private static void addJavaFxTagVariants(JavaFxTagNameReference reference, CompletionResultSet result) {

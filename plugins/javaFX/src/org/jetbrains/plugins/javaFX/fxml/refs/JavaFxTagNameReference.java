@@ -1,9 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,12 +9,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.TagNameReference;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
 
 /**
  * User: anna
@@ -62,15 +56,6 @@ public class JavaFxTagNameReference extends TagNameReference{
       }
     }
     return super.bindToElement(element);
-  }
-
-  @NotNull
-  @Override
-  public LookupElement[] getVariants() {
-    if(!myStartTagFlag){
-      return super.getVariants();
-    }
-    return LookupElement.EMPTY_ARRAY;
   }
 
   public static class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
