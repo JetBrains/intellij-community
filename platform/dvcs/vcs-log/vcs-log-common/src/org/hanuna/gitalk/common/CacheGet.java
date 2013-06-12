@@ -17,10 +17,6 @@ public class CacheGet<K, V> extends SLRUCache<K, V> {
     myFunction = getFunction;
   }
 
-  public CacheGet(@NotNull Function<K, V> getFunction) {
-    this(getFunction, DEFAULT_SIZE);
-  }
-
   @NotNull
   @Override
   public V createValue(K key) {

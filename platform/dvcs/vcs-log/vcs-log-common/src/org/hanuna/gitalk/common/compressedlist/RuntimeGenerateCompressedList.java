@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.common.compressedlist;
 
-import com.intellij.util.Function;
-import org.hanuna.gitalk.common.CacheGet;
+import com.intellij.util.containers.SLRUCache;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,13 +14,14 @@ import java.util.List;
  *         index is index positionElement in positionItems
  */
 public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
-  private final CacheGet<Integer, T> cache = new CacheGet<Integer, T>(new Function<Integer, T>() {
+  private final SLRUCache<Integer, T> cache = new SLRUCache<Integer, T>(200, 200) {
+
     @NotNull
     @Override
-    public T fun(@NotNull Integer key) {
+    public T createValue(Integer key) {
       return RuntimeGenerateCompressedList.this.get(key);
     }
-  });
+  };
 
   private final Generator<T> generator;
   private final int intervalSave;
