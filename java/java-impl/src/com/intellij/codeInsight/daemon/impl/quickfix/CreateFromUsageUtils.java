@@ -793,10 +793,13 @@ public class CreateFromUsageUtils {
         WeighingComparable<PsiElement,ProximityLocation> proximity1 = PsiProximityComparator.getProximity(m1, expression);
         WeighingComparable<PsiElement,ProximityLocation> proximity2 = PsiProximityComparator.getProximity(m2, expression);
         if (proximity1 != null && proximity2 != null) {
-          return proximity2.compareTo(proximity1);
+          result = proximity2.compareTo(proximity1);
+          if (result != 0) return result;
         }
 
-        return 0;
+        String name1 = StaticImportMethodFix.getMemberQualifiedName(m1);
+        String name2 = StaticImportMethodFix.getMemberQualifiedName(m2);
+        return name1 == null || name2 == null ? 0 : name1.compareTo(name2);
       }
     });
 
