@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
@@ -37,10 +39,10 @@ import org.jetbrains.annotations.NonNls;
 import org.xerial.snappy.Snappy;
 import org.xerial.snappy.SnappyLoader;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -78,6 +80,48 @@ public class StartupUtil {
 
   public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {
     ourLock.setActivateListener(consumer);
+  }
+
+  interface AppStarter {
+    void start(boolean newConfigFolder);
+  }
+
+  static void prepareAndStart(String[] args, AppStarter appStarter) {
+    boolean newConfigFolder = false;
+
+    if (!Main.isHeadless()) {
+      AppUIUtil.updateFrameClass();
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+      AppUIUtil.registerBundledFonts();
+
+      newConfigFolder = PathManager.ensureConfigFolderExists(true);
+      if (newConfigFolder) {
+        ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+      }
+    }
+
+    boolean canStart = checkJdkVersion() && checkSystemFolders() && lockSystemFolders(args);  // note: uses config folder!
+    if (!canStart) {
+      System.exit(Main.STARTUP_IMPOSSIBLE);
+    }
+
+    Logger.setFactory(LoggerFactory.getInstance());
+    Logger log = Logger.getInstance(Main.class);
+    startLogging(log);
+    fixProcessEnvironment(log);
+    loadSystemLibraries(log);
+
+    appStarter.start(newConfigFolder);
+  }
+
+  static void runStartupWizard() {
+    final List<ApplicationInfoEx.PluginChooserPage> pages = ApplicationInfoImpl.getShadowInstance().getPluginChooserPages();
+    if (!pages.isEmpty()) {
+      final StartupWizard startupWizard = new StartupWizard(pages);
+      startupWizard.setCancelText("Skip");
+      startupWizard.show();
+      PluginManagerCore.invalidatePlugins();
+    }
   }
 
   /**
@@ -143,23 +187,7 @@ public class StartupUtil {
     return true;
   }
 
-  static boolean checkStartupPossible(String[] args) {
-    return checkJdkVersion() &&
-           checkSystemFolders() &&
-           lockSystemFolders(args);
-  }
-
-  static void runStartupWizard() {
-    final List<ApplicationInfoEx.PluginChooserPage> pages = ApplicationInfoImpl.getShadowInstance().getPluginChooserPages();
-    if (!pages.isEmpty()) {
-      final StartupWizard startupWizard = new StartupWizard(pages);
-      startupWizard.setCancelText("Skip");
-      startupWizard.show();
-      PluginManagerCore.invalidatePlugins();
-    }
-  }
-
-  static void fixProcessEnvironment(Logger log) {
+  private static void fixProcessEnvironment(Logger log) {
     boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
     if (!envReady) {
       log.info("initializing environment");
@@ -168,7 +196,7 @@ public class StartupUtil {
 
   private static final String JAVA_IO_TEMP_DIR = "java.io.tmpdir";
 
-  static void loadSystemLibraries(final Logger log) {
+  private static void loadSystemLibraries(final Logger log) {
     // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
     final File ideaTempDir = new File(PathManager.getSystemPath(), "tmp");
     if (!(ideaTempDir.mkdirs() || ideaTempDir.exists())) {
@@ -262,28 +290,25 @@ public class StartupUtil {
     loadNativeLibrary.invoke(null, loaderClass);
   }
 
-  static void startLogging(final Logger log) {
+  private static void startLogging(final Logger log) {
     Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
       public void run() {
-        log.info(
-          "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
+        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
       }
     });
-    log.info(
-      "------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 
-    final ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-    final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
+    ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
+    ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " +
                    DateFormatUtilRt.formatBuildDate(appInfo.getBuildDate()) + ")");
     log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ")");
-
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.vendor", "-") + ")");
 
-    RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-    List<String> arguments = RuntimemxBean.getInputArguments();
-
-    if (arguments != null) log.info("JVM Args: " + StringUtil.join(arguments, " "));
+    List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    if (arguments != null) {
+      log.info("JVM Args: " + StringUtil.join(arguments, " "));
+    }
   }
 }
