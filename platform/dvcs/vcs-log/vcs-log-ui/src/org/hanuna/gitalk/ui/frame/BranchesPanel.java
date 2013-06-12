@@ -10,6 +10,7 @@ import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.render.Print_Parameters;
 import org.hanuna.gitalk.ui.render.painters.RefPainter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,13 +31,14 @@ public class BranchesPanel extends JPanel {
 
   private final VcsLogController myUiController;
   private final VcsLogUI myUI;
+
   private List<Ref> myRefs;
   private final RefPainter myRefPainter;
 
   private Map<Integer, Ref> myRefPositions = new HashMap<Integer, Ref>();
 
-  public BranchesPanel(VcsLogController vcsLog_controller, VcsLogUI UI) {
-    myUiController = vcsLog_controller;
+  public BranchesPanel(@NotNull VcsLogController logController, @NotNull VcsLogUI UI) {
+    myUiController = logController;
     myUI = UI;
     myRefs = getRefsToDisplayOnPanel();
     myRefPainter = new RefPainter();
@@ -79,7 +81,7 @@ public class BranchesPanel extends JPanel {
   }
 
   private List<Ref> getRefsToDisplayOnPanel() {
-    Collection<Ref> allRefs = myUiController.getRefs();
+    Collection<Ref> allRefs = myUiController.getDataPack().getRefsModel().getAllRefs();
     final List<Ref> localRefs = ContainerUtil.filter(allRefs, new Condition<Ref>() {
       @Override
       public boolean value(Ref ref) {

@@ -19,7 +19,6 @@ import org.hanuna.gitalk.data.rebase.FakeCommitParents;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
@@ -169,11 +168,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   @Override
   public JComponent getMainComponent() {
     return mySwingUi.getMainFrame().getMainComponent();
-  }
-
-  @Override
-  public Collection<Ref> getRefs() {
-    return dataPack == null ? Collections.<Ref>emptyList() : dataPack.getRefsModel().getAllRefs();
   }
 
   @NotNull
