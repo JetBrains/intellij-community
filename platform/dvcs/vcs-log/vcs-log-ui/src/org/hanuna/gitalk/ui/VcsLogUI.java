@@ -138,4 +138,11 @@ public class VcsLogUI {
     updateUI();
   }
 
+  public void jumpToCommit(Hash commitHash) {
+    int row = myUiController.getDataPack().getRowByHash(commitHash);
+    if (row != -1) {
+      jumpToRow(row);
+    }
+  }
+
 }

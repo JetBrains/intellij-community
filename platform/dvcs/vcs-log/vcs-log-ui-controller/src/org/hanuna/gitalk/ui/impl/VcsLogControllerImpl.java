@@ -173,14 +173,6 @@ public class VcsLogControllerImpl implements VcsLogController {
   }
 
   @Override
-  public void jumpToCommit(Hash commitHash) {
-    int row = dataPack.getRowByHash(commitHash);
-    if (row != -1) {
-      mySwingUi.jumpToRow(row);
-    }
-  }
-
-  @Override
   public Collection<Ref> getRefs() {
     return dataPack == null ? Collections.<Ref>emptyList() : dataPack.getRefsModel().getAllRefs();
   }

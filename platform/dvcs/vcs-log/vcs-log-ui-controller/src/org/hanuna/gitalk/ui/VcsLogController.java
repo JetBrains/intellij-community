@@ -21,8 +21,6 @@ public interface VcsLogController {
 
   void readNextPart();
 
-  void jumpToCommit(Hash commitHash);
-
   Collection<Ref> getRefs();
 
   @NotNull

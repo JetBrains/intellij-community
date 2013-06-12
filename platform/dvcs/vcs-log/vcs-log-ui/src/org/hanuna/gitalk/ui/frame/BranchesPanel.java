@@ -7,6 +7,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.ui.VcsLogController;
+import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.render.Print_Parameters;
 import org.hanuna.gitalk.ui.render.painters.RefPainter;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +29,15 @@ import java.util.Map;
 public class BranchesPanel extends JPanel {
 
   private final VcsLogController myUiController;
+  private final VcsLogUI myUI;
   private List<Ref> myRefs;
   private final RefPainter myRefPainter;
 
   private Map<Integer, Ref> myRefPositions = new HashMap<Integer, Ref>();
 
-  public BranchesPanel(VcsLogController vcsLog_controller) {
+  public BranchesPanel(VcsLogController vcsLog_controller, VcsLogUI UI) {
     myUiController = vcsLog_controller;
+    myUI = UI;
     myRefs = getRefsToDisplayOnPanel();
     myRefPainter = new RefPainter();
 
@@ -45,7 +48,7 @@ public class BranchesPanel extends JPanel {
       public void mouseClicked(MouseEvent e) {
         Ref ref = findRef(e);
         if (ref != null) {
-          myUiController.jumpToCommit(ref.getCommitHash());
+          myUI.jumpToCommit(ref.getCommitHash());
         }
       }
     });

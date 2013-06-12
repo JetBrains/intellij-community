@@ -18,7 +18,7 @@ public class ActiveSurface extends JPanel {
 
   ActiveSurface(VcsLogController vcsLog_controller, VcsLogUI vcsLogUI) {
     this.graphTable = new VcsLogGraphTable(vcsLog_controller, vcsLogUI);
-    myBranchesPanel = new BranchesPanel(vcsLog_controller);
+    myBranchesPanel = new BranchesPanel(vcsLog_controller, vcsLogUI);
     packTables();
   }
 
