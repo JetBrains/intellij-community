@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.data;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -34,12 +33,10 @@ public class CacheCommitDataGetter {
 
   private final CacheGet<Hash, VcsCommit> cache;
   private final VcsLogProvider myLogProvider;
-  private Project myProject;
   private VirtualFile myRoot;
 
-  public CacheCommitDataGetter(Project project, DataPack dataPack, CacheGet<Hash, VcsCommit> commitDataCache,
-                               @NotNull VcsLogProvider logProvider, VirtualFile root) {
-    myProject = project;
+  public CacheCommitDataGetter(DataPack dataPack, CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider,
+                               VirtualFile root) {
     this.dataPack = dataPack;
     cache = commitDataCache;
     myLogProvider = logProvider;

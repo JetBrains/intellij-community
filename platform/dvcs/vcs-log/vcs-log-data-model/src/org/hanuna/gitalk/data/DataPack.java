@@ -74,7 +74,7 @@ public class DataPack {
     myGraphModel = graphModel;
     myRefsModel = refsModel;
     myPrintCellModel = printCellModel;
-    myCommitDataGetter = new CacheCommitDataGetter(project, this, commitDataCache, logProvider, root);
+    myCommitDataGetter = new CacheCommitDataGetter(this, commitDataCache, logProvider, root);
   }
 
   public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
