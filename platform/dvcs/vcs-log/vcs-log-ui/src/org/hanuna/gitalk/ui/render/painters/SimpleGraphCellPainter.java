@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
-import static org.hanuna.gitalk.ui.render.Print_Parameters.*;
+import static org.hanuna.gitalk.ui.render.PrintParameters.*;
 
 /**
  * @author erokhins

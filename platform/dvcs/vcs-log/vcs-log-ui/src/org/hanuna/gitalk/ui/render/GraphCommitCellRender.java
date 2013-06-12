@@ -11,8 +11,8 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 
-import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
-import static org.hanuna.gitalk.ui.render.Print_Parameters.WIDTH_NODE;
+import static org.hanuna.gitalk.ui.render.PrintParameters.HEIGHT_CELL;
+import static org.hanuna.gitalk.ui.render.PrintParameters.WIDTH_NODE;
 
 /**
  * @author erokhins

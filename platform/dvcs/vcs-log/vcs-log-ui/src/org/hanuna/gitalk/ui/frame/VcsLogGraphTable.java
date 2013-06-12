@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 
-import static org.hanuna.gitalk.ui.render.Print_Parameters.EDGE_FIELD;
-import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
+import static org.hanuna.gitalk.ui.render.PrintParameters.EDGE_FIELD;
+import static org.hanuna.gitalk.ui.render.PrintParameters.HEIGHT_CELL;
 
 /**
  * @author erokhins

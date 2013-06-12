@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.TableModel;
 import java.awt.event.MouseEvent;
 
-import static org.hanuna.gitalk.ui.render.Print_Parameters.*;
+import static org.hanuna.gitalk.ui.render.PrintParameters.*;
 
 public class PositionUtil {
   private static float distance(int x1, int y1, int x2, int y2) {

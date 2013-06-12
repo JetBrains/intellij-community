@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hanuna.gitalk.ui.render.Print_Parameters.HEIGHT_CELL;
+import static org.hanuna.gitalk.ui.render.PrintParameters.HEIGHT_CELL;
 
 /**
  * @author erokhins

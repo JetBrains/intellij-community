@@ -3,7 +3,7 @@ package org.hanuna.gitalk.ui.render;
 /**
  * @author erokhins
  */
-public class Print_Parameters {
+public class PrintParameters {
   public static final int HEIGHT_CELL = 22;
   public static final int EDGE_FIELD = 5;
 

@@ -8,7 +8,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.VcsLogUI;
-import org.hanuna.gitalk.ui.render.Print_Parameters;
+import org.hanuna.gitalk.ui.render.PrintParameters;
 import org.hanuna.gitalk.ui.render.painters.RefPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ public class BranchesPanel extends JPanel {
     myRefs = getRefsToDisplayOnPanel();
     myRefPainter = new RefPainter();
 
-    setPreferredSize(new Dimension(-1, Print_Parameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
+    setPreferredSize(new Dimension(-1, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
 
     addMouseListener(new MouseAdapter() {
       @Override
