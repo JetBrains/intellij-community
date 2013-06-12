@@ -201,13 +201,6 @@ public class VcsLogControllerImpl implements VcsLogController {
 
   }
 
-  @Override
-  public void doubleClick(int rowIndex) {
-    if (rowIndex == graphTableModel.getRowCount() - 1) {
-      readNextPart();
-    }
-  }
-
 
   @Override
   public void readNextPart() {

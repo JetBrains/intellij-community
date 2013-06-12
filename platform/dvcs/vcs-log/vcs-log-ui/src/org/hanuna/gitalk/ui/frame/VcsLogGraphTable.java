@@ -175,10 +175,6 @@ public class VcsLogGraphTable extends JTable {
           myVcsLog_controller.click(PositionUtil.getRowIndex(e));
         }
       }
-      else {
-        int rowIndex = PositionUtil.getRowIndex(e);
-        myVcsLog_controller.doubleClick(rowIndex);
-      }
     }
 
     @Override

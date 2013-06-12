@@ -33,8 +33,6 @@ public interface VcsLogController {
 
   void setLongEdgeVisibility(boolean visibility);
 
-  void doubleClick(int rowIndex);
-
   void readNextPart();
 
   void jumpToCommit(Hash commitHash);
