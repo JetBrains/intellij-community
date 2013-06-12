@@ -198,9 +198,7 @@ public class VcsLogControllerImpl implements VcsLogController {
       dataPack.getPrintCellModel().getCommitSelectController().select(fragmentController.allCommitsCurrentBranch(node));
     }
     mySwingUi.updateUI();
-
   }
-
 
   @Override
   public void readNextPart() {
@@ -233,22 +231,9 @@ public class VcsLogControllerImpl implements VcsLogController {
 
   @Override
   public void hideAll() {
-    new Task.Backgroundable(myProject, "Hiding long branches...", false) {
-      public void run(@NotNull final ProgressIndicator indicator) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            MyTimer timer = new MyTimer("hide All");
-            dataPack.getGraphModel().getFragmentManager().hideAll();
-
-            mySwingUi.updateUI();
-            //TODO:
-            mySwingUi.jumpToRow(0);
-            timer.print();
-          }
-        });
-      }
-    }.queue();
+    dataPack.getGraphModel().getFragmentManager().hideAll();
+    mySwingUi.updateUI();
+    mySwingUi.jumpToRow(0);
   }
 
   @Override
