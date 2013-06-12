@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -175,7 +174,7 @@ public class XmlUtil {
   }
 
   static {
-    final URL xhtml4SchemaLocationUrl = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "xhtml1-transitional.xsd");
+    final URL xhtml4SchemaLocationUrl = XmlUtil.class.getResource(ExternalResourceManagerEx.STANDARD_SCHEMAS + "xhtml1-transitional.xsd");
     XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.toIdeaUrl(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm()), false));
   }
 

@@ -1,6 +1,6 @@
 package com.intellij.xml;
 
-import com.intellij.javaee.ExternalResourceManagerImpl;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -43,7 +43,7 @@ public abstract class Html5SchemaProvider {
       xhtmlSchemaLocationURL = providers[0].getXhtmlSchemaLocation();
     }
     else {
-      htmlSchemaLocationURL = Html5SchemaProvider.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
+      htmlSchemaLocationURL = Html5SchemaProvider.class.getResource(ExternalResourceManagerEx.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
       xhtmlSchemaLocationURL = htmlSchemaLocationURL;
     }
 

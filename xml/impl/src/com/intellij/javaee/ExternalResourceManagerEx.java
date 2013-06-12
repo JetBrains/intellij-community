@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
  * author: lesya
  */
 public abstract class ExternalResourceManagerEx extends ExternalResourceManager {
+  @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
+
   public static ExternalResourceManagerEx getInstanceEx(){
     return (ExternalResourceManagerEx)getInstance();
   }

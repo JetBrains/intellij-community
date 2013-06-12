@@ -103,7 +103,6 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
   @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
   private static final String DEFAULT_VERSION = null;
-  @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
