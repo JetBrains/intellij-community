@@ -24,7 +24,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Ref;
@@ -636,15 +635,6 @@ public class HtmlUtil {
       return language == XHTMLLanguage.INSTANCE;
     }
     return false;
-  }
-
-  public static boolean isHtmlTagContainingFile(final Editor editor, final PsiFile file) {
-    if (editor == null || file == null || !(file instanceof XmlFile)) {
-      return false;
-    }
-    final int offset = editor.getCaretModel().getOffset();
-    final PsiElement element = file.findElementAt(offset);
-    return isHtmlTagContainingFile(element);
   }
 
   public static boolean isPureHtmlFile(@NotNull PsiFile file) {
