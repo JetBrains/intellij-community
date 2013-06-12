@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class CommonInspectionToolWrapper extends InspectionToolWrapper<InspectionTool, InspectionEP> {
-  public CommonInspectionToolWrapper(InspectionEP ep) {
+  public CommonInspectionToolWrapper(@NotNull InspectionEP ep) {
     super(ep);
   }
 

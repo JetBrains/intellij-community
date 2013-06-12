@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -42,7 +43,7 @@ public abstract class InspectionRVContentProvider {
   private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
   private final Project myProject;
 
-  public InspectionRVContentProvider(final Project project) {
+  public InspectionRVContentProvider(@NotNull Project project) {
     myProject = project;
   }
 
@@ -68,7 +69,7 @@ public abstract class InspectionRVContentProvider {
   public abstract QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree);
 
 
-  public void appendToolNodeContent(final InspectionNode toolNode,
+  public void appendToolNodeContent(@NotNull InspectionNode toolNode,
                                     final InspectionTreeNode parentNode,
                                     final boolean showStructure) {
     final InspectionTool tool = toolNode.getTool();
