@@ -4,7 +4,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -21,12 +20,12 @@ import java.util.List;
  */
 public class DataLoaderImpl implements DataLoader {
   private final Project myProject;
-  private final CacheGet<Hash, CommitData> myCommitDataCache;
+  private final CacheGet<Hash, VcsCommit> myCommitDataCache;
   @NotNull private final VcsLogProvider myLogProvider;
   private State state = State.UNINITIALIZED;
   private volatile DataPackImpl dataPack;
 
-  public DataLoaderImpl(Project project, CacheGet<Hash, CommitData> commitDataCache, @NotNull VcsLogProvider logProvider) {
+  public DataLoaderImpl(Project project, CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider) {
     myProject = project;
     myCommitDataCache = commitDataCache;
     myLogProvider = logProvider;

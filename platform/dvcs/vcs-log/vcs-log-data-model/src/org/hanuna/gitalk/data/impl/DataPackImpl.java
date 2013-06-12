@@ -30,10 +30,10 @@ import java.util.List;
 public class DataPackImpl implements DataPack {
   public static DataPackImpl buildDataPack(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
                                            @NotNull ProgressIndicator indicator, Project project,
-                                           CacheGet<Hash, CommitData> commitDataCache, @NotNull VcsLogProvider logProvider,
+                                           CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider,
                                            VirtualFile root) {
     for (VcsCommit commit : commits) {
-      commitDataCache.put(commit.getHash(), new CommitData(commit));
+      commitDataCache.put(commit.getHash(), commit);
     }
     indicator.setText("Build graph");
 
@@ -79,7 +79,7 @@ public class DataPackImpl implements DataPack {
   private final CommitDataGetter commitDataGetter;
 
   private DataPackImpl(GraphModel graphModel, RefsModel refsModel, GraphPrintCellModel printCellModel, Project project,
-                       CacheGet<Hash, CommitData> commitDataCache, @NotNull VcsLogProvider logProvider, VirtualFile root) {
+                       CacheGet<Hash, VcsCommit> commitDataCache, @NotNull VcsLogProvider logProvider, VirtualFile root) {
     this.graphModel = graphModel;
     this.refsModel = refsModel;
     this.printCellModel = printCellModel;

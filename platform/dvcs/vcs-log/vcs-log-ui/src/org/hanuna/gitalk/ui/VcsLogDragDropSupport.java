@@ -268,7 +268,7 @@ public class VcsLogDragDropSupport {
         Node node = commitsBeingDragged.get(0);
         String message = null;
         try {
-          message = myUiController.getDataPack().getCommitDataGetter().getCommitData(node).getMessage();
+          message = myUiController.getDataPack().getCommitDataGetter().getCommitData(node).getFullMessage();
         }
         catch (VcsException e) {
           throw new RuntimeException(e);

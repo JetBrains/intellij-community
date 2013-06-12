@@ -25,12 +25,14 @@ public interface VcsLogProvider {
   /**
    * Read details of the given commits from the VCS
    *
+   *
+   *
    * @param root
    * @param hashes
    * @return
    */
   @NotNull
-  List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  List<? extends VcsCommit> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
   Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 }

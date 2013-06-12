@@ -2,9 +2,9 @@ package org.hanuna.gitalk.ui.tables;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsCommit;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.DataPackUtils;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -44,7 +44,7 @@ public class GraphTableModel extends AbstractTableModel {
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     Node commitNode = dataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-    CommitData data;
+    VcsCommit data;
     if (commitNode == null) {
       data = null;
     }
@@ -67,8 +67,8 @@ public class GraphTableModel extends AbstractTableModel {
             message = reworded.get(commitNode.getCommitHash());
           }
           else {
-            message = data.getMessage();
-            refs = dataPack.getRefsModel().refsToCommit(data.getCommitHash());
+            message = data.getFullMessage();
+            refs = dataPack.getRefsModel().refsToCommit(data.getHash());
           }
         }
         else {
@@ -82,14 +82,14 @@ public class GraphTableModel extends AbstractTableModel {
           return "";
         }
         else {
-          return data.getAuthor();
+          return data.getAuthorName();
         }
       case 2:
         if (data == null) {
           return "";
         }
         else {
-          return DateFormatUtil.formatDateTime(data.getTimeStamp());
+          return DateFormatUtil.formatDateTime(data.getAuthorTime());
         }
       default:
         throw new IllegalArgumentException("columnIndex > 2");

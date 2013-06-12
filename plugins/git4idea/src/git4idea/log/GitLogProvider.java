@@ -19,9 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
-import com.intellij.vcs.log.*;
-import git4idea.GitCommit;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsLogProvider;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.history.GitHistoryUtils;
@@ -59,14 +60,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<CommitData> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    List<GitCommit> gitCommits = GitHistoryUtils.commitsDetails(myProject, root, hashes);
-
-    List<CommitData> result = new SmartList<CommitData>();
-    for (GitCommit gitCommit : gitCommits) {
-      result.add(new CommitData(gitCommit));
-    }
-    return result;
+  public List<? extends VcsCommit> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+    return GitHistoryUtils.commitsDetails(myProject, root, hashes);
   }
 
   @Override

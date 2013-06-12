@@ -11,10 +11,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.CommitData;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
-import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
@@ -29,7 +26,6 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.log.commit.parents.FakeCommitParents;
-import com.intellij.vcs.log.RebaseCommand;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui.DragDropListener;
@@ -105,10 +101,10 @@ public class VcsLogControllerImpl implements VcsLogController {
     }
   };
 
-  private final CacheGet<Hash, CommitData> commitDataCache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
+  private final CacheGet<Hash, VcsCommit> commitDataCache = new CacheGet<Hash, VcsCommit>(new Function<Hash, VcsCommit>() {
     @NotNull
     @Override
-    public CommitData fun(@NotNull Hash key) {
+    public VcsCommit fun(@NotNull Hash key) {
       // TODO
       try {
         return myLogProvider.readCommitsData(myRoot, Collections.singletonList(key.toStrHash())).get(0);

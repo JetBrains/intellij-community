@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.log.parser;
 
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -74,20 +74,20 @@ public class CommitParser {
    *             hash|-author name|-123124|-commit message
    */
   @NotNull
-  public static CommitData parseCommitData(@NotNull String line) {
+  public static VcsCommit parseCommitData(@NotNull String line) {
     int prevIndex = 0;
     int nextIndex = nextSeparatorIndex(line, 0);
-    String hashStr = line.substring(0, nextIndex);
+    final String hashStr = line.substring(0, nextIndex);
 
     prevIndex = nextIndex;
     nextIndex = nextSeparatorIndex(line, prevIndex + 1);
-    String authorName = line.substring(prevIndex + 2, nextIndex);
+    final String authorName = line.substring(prevIndex + 2, nextIndex);
 
     prevIndex = nextIndex;
     nextIndex = nextSeparatorIndex(line, prevIndex + 1);
 
     String timestampStr = line.substring(prevIndex + 2, nextIndex);
-    long timestamp;
+    final long timestamp;
     try {
       if (timestampStr.isEmpty()) {
         timestamp = 0;
@@ -100,10 +100,38 @@ public class CommitParser {
       throw new IllegalArgumentException("bad timestamp format: " + timestampStr + " in this Str: " + line);
     }
 
-    String commitMessage = line.substring(nextIndex + 2);
+    final String commitMessage = line.substring(nextIndex + 2);
 
-    // TODO left here to avoid fixing the test.
-    return new CommitData(null);
+    return new VcsCommit() {
+      @NotNull
+      @Override
+      public String getFullMessage() {
+        return commitMessage;
+      }
+
+      @NotNull
+      @Override
+      public Hash getHash() {
+        return Hash.build(hashStr);
+      }
+
+      @NotNull
+      @Override
+      public String getAuthorName() {
+        return authorName;
+      }
+
+      @Override
+      public long getAuthorTime() {
+        return timestamp;
+      }
+
+      @NotNull
+      @Override
+      public List<Hash> getParents() {
+        throw new UnsupportedOperationException();
+      }
+    };
   }
 
 

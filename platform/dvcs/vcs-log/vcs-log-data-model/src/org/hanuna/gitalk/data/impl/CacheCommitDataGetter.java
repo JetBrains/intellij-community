@@ -5,8 +5,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitData;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.data.CommitDataGetter;
@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Gets commit details from cache.
+ * If commit details are not in the cache, requests it from Git,
+ * and loads several commits around the requested one.
+ *
  * @author erokhins
  */
 public class CacheCommitDataGetter implements CommitDataGetter {
@@ -30,12 +34,12 @@ public class CacheCommitDataGetter implements CommitDataGetter {
 
   private final DataPack dataPack;
 
-  private final CacheGet<Hash, CommitData> cache;
+  private final CacheGet<Hash, VcsCommit> cache;
   private final VcsLogProvider myLogProvider;
   private Project myProject;
   private VirtualFile myRoot;
 
-  public CacheCommitDataGetter(Project project, DataPack dataPack, CacheGet<Hash, CommitData> commitDataCache,
+  public CacheCommitDataGetter(Project project, DataPack dataPack, CacheGet<Hash, VcsCommit> commitDataCache,
                                @NotNull VcsLogProvider logProvider, VirtualFile root) {
     myProject = project;
     this.dataPack = dataPack;
@@ -46,12 +50,11 @@ public class CacheCommitDataGetter implements CommitDataGetter {
 
   @NotNull
   @Override
-  public CommitData getCommitData(@NotNull Node node) throws VcsException {
+  public VcsCommit getCommitData(@NotNull Node node) throws VcsException {
     Hash hash = node.getCommitHash();
     if (FakeCommitParents.isFake(hash)) {
       Hash originalHash = FakeCommitParents.getOriginal(hash);
-      CommitData originalData = getCommitData(originalHash);
-      return new CommitData(originalData.getFullCommit());
+      return getCommitData(originalHash);
     }
     if (!cache.isKeyCached(hash)) {
       runLoadAroundCommitData(node);
@@ -61,7 +64,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
 
   @NotNull
   @Override
-  public CommitData getCommitData(@NotNull Hash commitHash) {
+  public VcsCommit getCommitData(@NotNull Hash commitHash) {
     return cache.get(commitHash);
   }
 
@@ -99,10 +102,10 @@ public class CacheCommitDataGetter implements CommitDataGetter {
         return FakeCommitParents.getOriginal(node.getCommitHash()).toStrHash();
       }
     });
-    List<CommitData> commitDataList = myLogProvider.readCommitsData(myRoot, hashes);
+    List<? extends VcsCommit> commitDataList = myLogProvider.readCommitsData(myRoot, hashes);
 
-    for (CommitData commitData : commitDataList) {
-      cache.put(commitData.getCommitHash(), commitData);
+    for (VcsCommit commitData : commitDataList) {
+      cache.put(commitData.getHash(), commitData);
     }
   }
 
