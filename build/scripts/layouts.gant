@@ -765,6 +765,8 @@ def layout_core_upsource(String home, String target) {
       module("java-analysis-api")
       module("java-analysis-impl")
       module("InspectionGadgetsAnalysis")
+      module("xml-psi-api")
+      module("xml-psi-impl")
     }
 
     jar("annotations.jar") {
@@ -784,6 +786,7 @@ def layout_core_upsource(String home, String target) {
       include(name: "xstream-1.4.3.jar")
       include(name: "xpp3-1.1.4-min.jar")
       include(name: "jdom.jar")
+      include(name: "nanoxml*.jar")
     }
   }
 }
