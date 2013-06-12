@@ -5,16 +5,12 @@ import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.table.TableModel;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author erokhins
  */
 public interface VcsLogController {
-
-  TableModel getGraphTableModel();
 
   void readNextPart();
 
@@ -24,6 +20,7 @@ public interface VcsLogController {
   @NotNull
   VcsLogActionHandler getVcsLogActionHandler();
 
+  @Nullable
   DataPack getDataPack();
 
   Project getProject();
@@ -35,9 +32,6 @@ public interface VcsLogController {
   void cancelInteractiveRebase();
 
   boolean isInteractiveRebaseInProgress();
-
-  @NotNull
-  JComponent getMainComponent();
 
   void refresh();
 }

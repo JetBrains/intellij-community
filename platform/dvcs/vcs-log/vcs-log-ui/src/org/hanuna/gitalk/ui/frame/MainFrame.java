@@ -4,9 +4,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.ui.components.JBLoadingPanel;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.GitLogIcons;
-import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,24 +17,20 @@ import java.awt.*;
  */
 public class MainFrame {
 
-  @NotNull private final VcsLogController myLogController;
+  @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUI myUI;
   @NotNull private final JPanel myMainPanel;
   @NotNull private final ActiveSurface myActiveSurface;
-  @NotNull private final JBLoadingPanel myLoadingPanel;
 
-  public MainFrame(@NotNull VcsLogController logController, @NotNull VcsLogUI vcsLogUI) {
-    myLogController = logController;
+  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI) {
+    myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
-    myActiveSurface = new ActiveSurface(logController, vcsLogUI);
+    myActiveSurface = new ActiveSurface(logDataHolder, vcsLogUI);
 
     myMainPanel = new JPanel();
     myMainPanel.setLayout(new BorderLayout());
     myMainPanel.add(createToolbar(), BorderLayout.NORTH);
     myMainPanel.add(myActiveSurface, BorderLayout.CENTER);
-
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logController.getProject());
-    myLoadingPanel.startLoading();
   }
 
   public VcsLogGraphTable getGraphTable() {
@@ -60,7 +55,13 @@ public class MainFrame {
     RefreshAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myLogController.refresh();
+        myLogDataHolder.refresh(new Runnable() {
+          @Override
+          public void run() {
+            myUI.reloadModel();
+            myUI.updateUI();
+          }
+        });
       }
 
       @Override
@@ -89,15 +90,11 @@ public class MainFrame {
   }
 
   public JPanel getMainComponent() {
-    return myLoadingPanel;
+    return myMainPanel;
   }
 
   public void refresh() {
     myActiveSurface.getBranchesPanel().rebuild();
   }
 
-  public void initialLoadingCompleted() {
-    myLoadingPanel.add(myMainPanel);
-    myLoadingPanel.stopLoading();
-  }
 }

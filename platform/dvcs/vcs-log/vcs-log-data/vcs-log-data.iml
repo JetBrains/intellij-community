@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="vcs-log-graph" />
+    <orderEntry type="module" module-name="platform-impl" />
   </component>
 </module>
 

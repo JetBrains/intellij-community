@@ -1,7 +1,10 @@
 package org.hanuna.gitalk.ui.frame;
 
+import com.intellij.ui.components.JBScrollPane;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,25 +16,27 @@ import java.awt.*;
  */
 public class ActiveSurface extends JPanel {
 
-  private final VcsLogGraphTable graphTable;
-  private final BranchesPanel myBranchesPanel;
+  @NotNull private final VcsLogGraphTable myGraphTable;
+  @NotNull private final BranchesPanel myBranchesPanel;
 
-  ActiveSurface(VcsLogController vcsLog_controller, VcsLogUI vcsLogUI) {
-    this.graphTable = new VcsLogGraphTable(vcsLogUI);
-    myBranchesPanel = new BranchesPanel(vcsLog_controller, vcsLogUI);
+  ActiveSurface(@NotNull VcsLogDataHolder logController, @NotNull VcsLogUI vcsLogUI) {
+    myGraphTable = new VcsLogGraphTable(vcsLogUI);
+    myBranchesPanel = new BranchesPanel(logController, vcsLogUI);
     packTables();
   }
 
+  @NotNull
   public VcsLogGraphTable getGraphTable() {
-    return graphTable;
+    return myGraphTable;
   }
 
   private void packTables() {
     setLayout(new BorderLayout());
     add(myBranchesPanel, BorderLayout.NORTH);
-    add(new JScrollPane(graphTable), BorderLayout.CENTER);
+    add(new JBScrollPane(myGraphTable), BorderLayout.CENTER);
   }
 
+  @NotNull
   public BranchesPanel getBranchesPanel() {
     return myBranchesPanel;
   }

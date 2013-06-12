@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -20,17 +21,16 @@ import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.ui.VcsLogController;
-import org.hanuna.gitalk.ui.VcsLogUI;
-import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.table.TableModel;
 import java.util.*;
 
 /**
  * @author erokhins
  */
+
+// TODO this class is not used anymore, but it remains here to preserve interactive rebase stuff for a while
+
 public class VcsLogControllerImpl implements VcsLogController {
 
   private static final Logger LOG = Logger.getInstance(VcsLogController.class);
@@ -39,7 +39,6 @@ public class VcsLogControllerImpl implements VcsLogController {
 
   private DataPack dataPack;
 
-  private GraphTableModel graphTableModel;
   private VcsLogProvider myLogProvider;
   @NotNull private final VirtualFile myRoot;
 
@@ -86,15 +85,15 @@ public class VcsLogControllerImpl implements VcsLogController {
   };
 
   @NotNull private final VcsCommitCache myCommitCache;
-  @NotNull private final VcsLogUI mySwingUi;
 
   public VcsLogControllerImpl(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
     myLogProvider = logProvider;
     myRoot = root;
     myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading history...");
-    mySwingUi = new VcsLogUI(this);
     myCommitCache  = new VcsCommitCache(myLogProvider, myRoot);
+    dataPack = DataPack.build(Collections.<VcsCommit>emptyList(), Collections.<Ref>emptyList(), new EmptyProgressIndicator(), myCommitCache,
+                              myLogProvider, myRoot);
   }
 
   @Override
@@ -106,23 +105,22 @@ public class VcsLogControllerImpl implements VcsLogController {
           dataPack = DataPack.build(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot),
                                     indicator, myCommitCache, myLogProvider, myRoot);
           timer.print();
-          graphTableModel = new GraphTableModel(dataPack);
         }
         catch (VcsException e) {
           notifyError(e);
         }
 
-        ((GraphTableModel) getGraphTableModel()).addReworded(rebaseDelegate.reworded);
-        ((GraphTableModel) getGraphTableModel()).addFixedUp(rebaseDelegate.fixedUp);
+        //((GraphTableModel) getGraphTableModel()).addReworded(rebaseDelegate.reworded);
+        //((GraphTableModel) getGraphTableModel()).addFixedUp(rebaseDelegate.fixedUp);
 
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            mySwingUi.loadingCompleted();
-            mySwingUi.updateUI();
-            for (Hash hash : rebaseDelegate.selected) {
-              mySwingUi.addToSelection(hash);
-            }
+            //mySwingUi.loadingCompleted();
+            //mySwingUi.updateUI();
+            //for (Hash hash : rebaseDelegate.selected) {
+            //  mySwingUi.addToSelection(hash);
+            //}
           }
         });
       }
@@ -135,13 +133,6 @@ public class VcsLogControllerImpl implements VcsLogController {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
   }
 
-  // TODO is null before initial load
-  @Override
-  @NotNull
-  public TableModel getGraphTableModel() {
-    return graphTableModel;
-  }
-
   @Override
   public void readNextPart() {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
@@ -152,7 +143,7 @@ public class VcsLogControllerImpl implements VcsLogController {
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
             public void run() {
-              mySwingUi.updateUI();
+              //mySwingUi.updateUI();
             }
           });
 
@@ -162,12 +153,6 @@ public class VcsLogControllerImpl implements VcsLogController {
         }
       }
     });
-  }
-
-  @NotNull
-  @Override
-  public JComponent getMainComponent() {
-    return mySwingUi.getMainFrame().getMainComponent();
   }
 
   @NotNull
@@ -182,6 +167,7 @@ public class VcsLogControllerImpl implements VcsLogController {
     return myVcsLogActionHandler;
   }
 
+  @NotNull
   @Override
   public DataPack getDataPack() {
     return dataPack;
@@ -414,7 +400,7 @@ public class VcsLogControllerImpl implements VcsLogController {
     }
 
     public void applied(RebaseCommand command) {
-      ((GraphTableModel)getGraphTableModel()).addApplied(command.getCommit());
+      //((GraphTableModel)getGraphTableModel()).addApplied(command.getCommit());
     }
   }
 

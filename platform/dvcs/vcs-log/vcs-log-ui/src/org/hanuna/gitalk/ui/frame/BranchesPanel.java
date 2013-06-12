@@ -6,7 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
-import org.hanuna.gitalk.ui.VcsLogController;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.render.Print_Parameters;
 import org.hanuna.gitalk.ui.render.painters.RefPainter;
@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class BranchesPanel extends JPanel {
 
-  private final VcsLogController myUiController;
+  private final VcsLogDataHolder myUiController;
   private final VcsLogUI myUI;
 
   private List<Ref> myRefs;
@@ -37,7 +37,7 @@ public class BranchesPanel extends JPanel {
 
   private Map<Integer, Ref> myRefPositions = new HashMap<Integer, Ref>();
 
-  public BranchesPanel(@NotNull VcsLogController logController, @NotNull VcsLogUI UI) {
+  public BranchesPanel(@NotNull VcsLogDataHolder logController, @NotNull VcsLogUI UI) {
     myUiController = logController;
     myUI = UI;
     myRefs = getRefsToDisplayOnPanel();

@@ -1,34 +1,40 @@
 package org.hanuna.gitalk.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui.frame.MainFrame;
+import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.table.TableModel;
 
 /**
  * @author erokhins
  */
 public class VcsLogUI {
 
-  @NotNull private final VcsLogController myUiController;
+  @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
 
   @NotNull private DragDropListener dragDropListener = DragDropListener.EMPTY;
 
   @Nullable private GraphElement prevGraphElement;
+  @NotNull  private TableModel myGraphModel;
 
-  public VcsLogUI(@NotNull VcsLogController uiController) {
-    myUiController = uiController;
-    myMainFrame = new MainFrame(myUiController, this);
+  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder) {
+    myLogDataHolder = logDataHolder;
+    myMainFrame = new MainFrame(myLogDataHolder, this);
+    reloadModel();
+    updateUI();
   }
 
   @NotNull
@@ -36,12 +42,8 @@ public class VcsLogUI {
     return myMainFrame;
   }
 
-  public void loadingCompleted() {
-    myMainFrame.initialLoadingCompleted();
-  }
-
   public void jumpToRow(final int rowIndex) {
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         myMainFrame.getGraphTable().jumpToRow(rowIndex);
@@ -50,11 +52,15 @@ public class VcsLogUI {
     });
   }
 
+  public void reloadModel() {
+    myGraphModel = new GraphTableModel(myLogDataHolder.getDataPack());
+  }
+
   public void updateUI() {
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        myMainFrame.getGraphTable().setModel(myUiController.getGraphTableModel());
+        myMainFrame.getGraphTable().setModel(myGraphModel);
         myMainFrame.getGraphTable().setPreferredColumnWidths();
         myMainFrame.getGraphTable().repaint();
         myMainFrame.refresh();
@@ -63,39 +69,39 @@ public class VcsLogUI {
   }
 
   public void addToSelection(final Hash hash) {
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        int row = myUiController.getDataPack().getRowByHash(hash);
+        int row = myLogDataHolder.getDataPack().getRowByHash(hash);
         myMainFrame.getGraphTable().getSelectionModel().addSelectionInterval(row, row);
       }
     });
   }
 
   public void showAll() {
-    myUiController.getDataPack().getGraphModel().getFragmentManager().showAll();
+    myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().showAll();
     updateUI();
     jumpToRow(0);
   }
 
   public void hideAll() {
-    myUiController.getDataPack().getGraphModel().getFragmentManager().hideAll();
+    myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().hideAll();
     updateUI();
     jumpToRow(0);
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
-    myUiController.getDataPack().getPrintCellModel().setLongEdgeVisibility(visibility);
+    myLogDataHolder.getDataPack().getPrintCellModel().setLongEdgeVisibility(visibility);
     updateUI();
   }
 
   public boolean areLongEdgesHidden() {
-    return myUiController.getDataPack().getPrintCellModel().areLongEdgesHidden();
+    return myLogDataHolder.getDataPack().getPrintCellModel().areLongEdgesHidden();
   }
 
   public void over(@Nullable GraphElement graphElement) {
-    SelectController selectController = myUiController.getDataPack().getPrintCellModel().getSelectController();
-    FragmentManager fragmentManager = myUiController.getDataPack().getGraphModel().getFragmentManager();
+    SelectController selectController = myLogDataHolder.getDataPack().getPrintCellModel().getSelectController();
+    FragmentManager fragmentManager = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
     if (graphElement == prevGraphElement) {
       return;
     }
@@ -114,8 +120,8 @@ public class VcsLogUI {
   }
 
   public void click(@Nullable GraphElement graphElement) {
-    SelectController selectController = myUiController.getDataPack().getPrintCellModel().getSelectController();
-    FragmentManager fragmentController = myUiController.getDataPack().getGraphModel().getFragmentManager();
+    SelectController selectController = myLogDataHolder.getDataPack().getPrintCellModel().getSelectController();
+    FragmentManager fragmentController = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
     selectController.deselectAll();
     if (graphElement == null) {
       return;
@@ -130,7 +136,7 @@ public class VcsLogUI {
   }
 
   public void click(int rowIndex) {
-    DataPack dataPack = myUiController.getDataPack();
+    DataPack dataPack = myLogDataHolder.getDataPack();
     dataPack.getPrintCellModel().getCommitSelectController().deselectAll();
     Node node = dataPack.getNode(rowIndex);
     if (node != null) {
@@ -141,7 +147,7 @@ public class VcsLogUI {
   }
 
   public void jumpToCommit(Hash commitHash) {
-    int row = myUiController.getDataPack().getRowByHash(commitHash);
+    int row = myLogDataHolder.getDataPack().getRowByHash(commitHash);
     if (row != -1) {
       jumpToRow(row);
     }

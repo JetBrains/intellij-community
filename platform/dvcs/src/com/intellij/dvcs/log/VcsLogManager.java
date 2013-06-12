@@ -1,5 +1,6 @@
 package com.intellij.dvcs.log;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -11,11 +12,17 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.Consumer;
 import com.intellij.vcs.log.VcsLogProvider;
-import org.hanuna.gitalk.ui.impl.VcsLogControllerImpl;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
+import org.hanuna.gitalk.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Kirill Likhodedov
@@ -42,6 +49,12 @@ public class VcsLogManager extends AbstractProjectComponent {
           return;
         }
 
+        final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
+        Content vcsLogContentPane = new ContentImpl(mainPanel, "VCS LOG", true);
+        ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
+        changesView.addContent(vcsLogContentPane);
+        vcsLogContentPane.setCloseable(false);
+
         // TODO multi-roots (including Git + Hg roots within a single project & multiple providers (or just pass root in params)
         VcsLogProvider logProvider = null;
         for (VcsLogProvider provider : Extensions.getExtensions(LOG_PROVIDER_EP, myProject)) {
@@ -49,13 +62,14 @@ public class VcsLogManager extends AbstractProjectComponent {
         }
         VirtualFile root = myVcsManager.getAllVcsRoots()[0].getPath();
 
-        VcsLogControllerImpl myUiController = new VcsLogControllerImpl(myProject, logProvider, root);
-        myUiController.refresh();
+        VcsLogDataHolder.init(myProject, logProvider, root, new Consumer<VcsLogDataHolder>() {
+          @Override
+          public void consume(VcsLogDataHolder vcsLogDataHolder) {
+            VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder);
+            mainPanel.init(logUI.getMainFrame().getMainComponent());
+          }
+        });
 
-        Content vcsLogContentPane = new ContentImpl(myUiController.getMainComponent(), "VCS LOG", true);
-        ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
-        changesView.addContent(vcsLogContentPane);
-        vcsLogContentPane.setCloseable(false);
       }
     });
 
@@ -69,6 +83,23 @@ public class VcsLogManager extends AbstractProjectComponent {
           }
         });
      */
+  }
+
+  private static class VcsLogContainer extends JPanel {
+
+    private final JBLoadingPanel myLoadingPanel;
+
+    VcsLogContainer(@NotNull Disposable disposable) {
+      setLayout(new BorderLayout());
+      myLoadingPanel = new JBLoadingPanel(new BorderLayout(), disposable);
+      add(myLoadingPanel);
+      myLoadingPanel.startLoading();
+    }
+
+    void init(@NotNull JPanel mainComponent) {
+      myLoadingPanel.add(mainComponent);
+      myLoadingPanel.stopLoading();
+    }
   }
 
 }
