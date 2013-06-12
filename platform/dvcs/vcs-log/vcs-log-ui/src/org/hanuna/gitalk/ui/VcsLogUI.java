@@ -82,6 +82,15 @@ public class VcsLogUI {
     jumpToRow(0);
   }
 
+  public void setLongEdgeVisibility(boolean visibility) {
+    myUiController.getDataPack().getPrintCellModel().setLongEdgeVisibility(visibility);
+    updateUI();
+  }
+
+  public boolean areLongEdgesHidden() {
+    return myUiController.getDataPack().getPrintCellModel().areLongEdgesHidden();
+  }
+
   public void over(@Nullable GraphElement graphElement) {
     SelectController selectController = myUiController.getDataPack().getPrintCellModel().getSelectController();
     FragmentManager fragmentManager = myUiController.getDataPack().getGraphModel().getFragmentManager();

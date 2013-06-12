@@ -19,8 +19,6 @@ public interface VcsLogController {
 
   TableModel getGraphTableModel();
 
-  void setLongEdgeVisibility(boolean visibility);
-
   void readNextPart();
 
   void jumpToCommit(Hash commitHash);
@@ -47,8 +45,6 @@ public interface VcsLogController {
   void cancelInteractiveRebase();
 
   boolean isInteractiveRebaseInProgress();
-
-  boolean areLongEdgesHidden();
 
   @NotNull
   JComponent getMainComponent();

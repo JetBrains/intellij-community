@@ -71,12 +71,12 @@ public class MainFrame {
                                                     AllIcons.Actions.Expandall) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return !myVcsLog_controller.areLongEdgesHidden();
+        return !myUI.areLongEdgesHidden();
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        myVcsLog_controller.setLongEdgeVisibility(state);
+        myUI.setLongEdgeVisibility(state);
       }
     };
 

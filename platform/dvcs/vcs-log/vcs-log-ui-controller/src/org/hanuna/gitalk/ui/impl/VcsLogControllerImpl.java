@@ -12,25 +12,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.FakeCommitsInfo;
 import org.hanuna.gitalk.data.VcsCommitCache;
+import org.hanuna.gitalk.data.rebase.FakeCommitParents;
 import org.hanuna.gitalk.data.rebase.InteractiveRebaseBuilder;
 import org.hanuna.gitalk.data.rebase.VcsLogActionHandler;
-import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.graphmodel.FragmentManager;
-import org.hanuna.gitalk.graphmodel.GraphFragment;
-import org.hanuna.gitalk.data.rebase.FakeCommitParents;
-import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
-import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui.DragDropListener;
 import org.hanuna.gitalk.ui.VcsLogController;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -171,17 +164,6 @@ public class VcsLogControllerImpl implements VcsLogController {
         }
       }
     });
-  }
-
-  @Override
-  public void setLongEdgeVisibility(boolean visibility) {
-    dataPack.getPrintCellModel().setLongEdgeVisibility(visibility);
-    mySwingUi.updateUI();
-  }
-
-  @Override
-  public boolean areLongEdgesHidden() {
-    return dataPack == null ? GraphPrintCellModel.HIDE_LONG_EDGES_DEFAULT : dataPack.getPrintCellModel().areLongEdgesHidden();
   }
 
   @NotNull
