@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -157,11 +156,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
     if (reference != null && !namespace.isEmpty() && !namespacePrefix.isEmpty()) {
       // fallback to simple completion
-      final Set<LookupElement> set = new HashSet<LookupElement>();
-      new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
-      for (final LookupElement item : set) {
-        result.addElement(item);
-      }
+      result.runRemainingContributors(parameters, true);
     }
     else {
 
