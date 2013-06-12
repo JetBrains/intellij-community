@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.frame;
 
+import com.intellij.ui.table.JBTable;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -31,22 +32,18 @@ import static org.hanuna.gitalk.ui.render.PrintParameters.HEIGHT_CELL;
 /**
  * @author erokhins
  */
-public class VcsLogGraphTable extends JTable {
-  @NotNull private final VcsLogUI myUI;
+public class VcsLogGraphTable extends JBTable {
 
-  private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
-  private final MouseAdapter mouseAdapter = new MyMouseAdapter();
+  @NotNull private final VcsLogUI myUI;
+  @NotNull private final GraphCellPainter myGraphPainter = new SimpleGraphCellPainter();
 
   public VcsLogGraphTable(@NotNull VcsLogUI UI) {
     super();
     myUI = UI;
     UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(new LineBorder(new Color(255, 0, 0, 0))));
-    prepare();
-  }
 
-  private void prepare() {
     setTableHeader(null);
-    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(graphPainter));
+    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter));
     setRowHeight(HEIGHT_CELL);
     setShowHorizontalLines(false);
     setIntercellSpacing(new Dimension(0, 0));
@@ -61,8 +58,9 @@ public class VcsLogGraphTable extends JTable {
       }
     });
 
-    addMouseMotionListener(mouseAdapter);
-    addMouseListener(mouseAdapter);
+    MouseAdapter myMouseAdapter = new MyMouseAdapter();
+    addMouseMotionListener(myMouseAdapter);
+    addMouseListener(myMouseAdapter);
   }
 
   public void setPreferredColumnWidths() {
@@ -90,7 +88,7 @@ public class VcsLogGraphTable extends JTable {
       int y = PositionUtil.getYInsideRow(e);
       int x = e.getX();
       GraphPrintCell row = getGraphPrintCell(e);
-      return graphPainter.mouseOver(row, x, y);
+      return myGraphPainter.mouseOver(row, x, y);
     }
 
     @Nullable
@@ -98,7 +96,7 @@ public class VcsLogGraphTable extends JTable {
       int y = PositionUtil.getYInsideRow(e);
       int x = e.getX();
       GraphPrintCell row = getGraphPrintCell(e);
-      SpecialPrintElement printElement = graphPainter.mouseOverArrow(row, x, y);
+      SpecialPrintElement printElement = myGraphPainter.mouseOverArrow(row, x, y);
       if (printElement != null) {
         Edge edge = printElement.getGraphElement().getEdge();
         if (edge == null) {
