@@ -19,6 +19,9 @@ import java.util.*;
  * @author erokhins
  */
 public class GraphTableModel extends AbstractTableModel {
+  public static final int COMMIT_COLUMN = 0;
+  public static final int AUTHOR_COLUMN = 1;
+  public static final int DATE_COLUMN = 2;
   private final String[] columnNames = {"Subject", "Author", "Date"};
   private final DataPack dataPack;
 
@@ -56,7 +59,7 @@ public class GraphTableModel extends AbstractTableModel {
       }
     }
     switch (columnIndex) {
-      case 0:
+      case COMMIT_COLUMN:
         GraphPrintCell graphPrintCell = dataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
         GraphCommitCell.Kind cellKind = getCellKind(PositionUtil.getNode(graphPrintCell));
         String message = "";
@@ -76,14 +79,14 @@ public class GraphTableModel extends AbstractTableModel {
           }
         }
         return new GraphCommitCell(graphPrintCell, cellKind, message, refs);
-      case 1:
+      case AUTHOR_COLUMN:
         if (data == null) {
           return "";
         }
         else {
           return data.getAuthorName();
         }
-      case 2:
+      case DATE_COLUMN:
         if (data == null) {
           return "";
         }

@@ -13,6 +13,7 @@ import org.hanuna.gitalk.ui.render.PositionUtil;
 import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.ui.render.painters.SimpleGraphCellPainter;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,7 +168,7 @@ public class VcsLogGraphTable extends JBTable {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      Object commit = getValueAt(row, 0);
+      Object commit = getValueAt(row, GraphTableModel.COMMIT_COLUMN);
       if (commit instanceof GraphCommitCell) {
         if (GraphCommitCellRender.isMarked(commit) && !isSelected) {
           rendererComponent.setBackground(GraphCommitCellRender.MARKED_BACKGROUND);
