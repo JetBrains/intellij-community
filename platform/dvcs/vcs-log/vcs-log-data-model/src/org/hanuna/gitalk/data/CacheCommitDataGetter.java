@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @author erokhins
  */
-public class CacheCommitDataGetter implements CommitDataGetter {
+public class CacheCommitDataGetter {
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
@@ -47,7 +47,6 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   }
 
   @NotNull
-  @Override
   public VcsCommit getCommitData(@NotNull Node node) throws VcsException {
     Hash hash = node.getCommitHash();
     if (FakeCommitParents.isFake(hash)) {
@@ -61,7 +60,6 @@ public class CacheCommitDataGetter implements CommitDataGetter {
   }
 
   @NotNull
-  @Override
   public VcsCommit getCommitData(@NotNull Hash commitHash) {
     return cache.get(commitHash);
   }

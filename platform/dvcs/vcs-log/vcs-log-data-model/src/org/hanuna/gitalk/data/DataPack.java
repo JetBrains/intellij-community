@@ -29,7 +29,7 @@ public class DataPack {
   @NotNull private final GraphModel myGraphModel;
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final GraphPrintCellModel myPrintCellModel;
-  @NotNull private final CommitDataGetter myCommitDataGetter;
+  @NotNull private final CacheCommitDataGetter myCommitDataGetter;
 
   @NotNull
   public static DataPack build(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
@@ -84,7 +84,7 @@ public class DataPack {
   }
 
   @NotNull
-  public CommitDataGetter getCommitDataGetter() {
+  public CacheCommitDataGetter getCommitDataGetter() {
     return myCommitDataGetter;
   }
 
