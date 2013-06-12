@@ -60,9 +60,9 @@ public class VcsLogGraphTable extends JBTable {
       }
     });
 
-    MouseAdapter myMouseAdapter = new MyMouseAdapter();
-    addMouseMotionListener(myMouseAdapter);
-    addMouseListener(myMouseAdapter);
+    MouseAdapter mouseAdapter = new MyMouseAdapter();
+    addMouseMotionListener(mouseAdapter);
+    addMouseListener(mouseAdapter);
   }
 
   public void setPreferredColumnWidths() {
