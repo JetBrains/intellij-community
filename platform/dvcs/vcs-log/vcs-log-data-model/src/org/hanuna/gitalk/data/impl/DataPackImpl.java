@@ -35,20 +35,13 @@ public class DataPackImpl implements DataPack {
     for (VcsCommit commit : commits) {
       commitDataCache.put(commit.getHash(), commit);
     }
-    indicator.setText("Build graph");
+    indicator.setText("Building graph...");
 
-    MyTimer timer = new MyTimer("graph build");
     MutableGraph graph = GraphBuilder.build(commits, allRefs);
-    timer.print();
 
-    timer.clear("graphModel build");
     GraphModel graphModel = new GraphModelImpl(graph, allRefs);
-    timer.print();
 
-    indicator.setText("Build print model");
-    timer.clear("build printModel");
     final GraphPrintCellModel printCellModel = new GraphPrintCellModelImpl(graphModel.getGraph());
-    timer.print();
     graphModel.addUpdateListener(new Consumer<UpdateRequest>() {
       @Override
       public void consume(UpdateRequest key) {
