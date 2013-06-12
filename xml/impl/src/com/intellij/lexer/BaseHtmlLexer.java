@@ -15,7 +15,7 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageHtmlScriptContentProvider;
@@ -311,7 +311,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
 
           if((hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
              (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
-             CompletionUtil.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name)) {
+             CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name)) {
             break; // really found end
           }
         }
