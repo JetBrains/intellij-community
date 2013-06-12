@@ -21,8 +21,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
 import com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
+import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
+import com.intellij.xml.util.XmlApplicationComponent;
 
 /**
  * @author yole
@@ -56,5 +58,7 @@ public class XmlCoreEnvironment {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), Html5SchemaProvider.EP_NAME, Html5SchemaProvider.class);
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlAttributeDescriptorsProvider.EP_NAME, XmlAttributeDescriptorsProvider.class);
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlExtension.EP_NAME, XmlExtension.class);
+
+    appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
   }
 }
