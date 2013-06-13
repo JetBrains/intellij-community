@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.django.facet.DjangoFacetType;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
@@ -155,6 +156,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   public boolean visitRoot(final VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
     if (!root.isValid()) {
+      return true;
+    }
+    if (root.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
       return true;
     }
     PsiElement resolveResult = resolveInRoot(root);
@@ -331,7 +335,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
    * @param directory where to start from; top qualifier will be searched for here.
    */
   @Nullable
-  private PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
+  public PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
     // prerequisites
     if (directory == null || !directory.isValid()) return null;
 
