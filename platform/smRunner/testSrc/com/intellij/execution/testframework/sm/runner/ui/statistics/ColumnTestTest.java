@@ -90,18 +90,13 @@ public class ColumnTestTest extends BaseColumnRenderingTest {
     final SMTestProxy newRootSuite = createSuiteProxy("root_suite");
     mySuite.setParent(newRootSuite);
     doRender(mySuite, 0);
-    assertFragmentsSize(2);
-    assertEquals(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
-    assertEquals("..", myFragmentsContainer.getTextAt(0));
-    assertEquals(SimpleTextAttributes.GRAYED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(1));
-    assertEquals(" (suite)", myFragmentsContainer.getTextAt(1));
+    assertFragmentsSize(1);
   }
 
   public void testTotal_TotalRootSuite() {
     doRender(mySuite, 0);
     assertFragmentsSize(1);
-    assertEquals(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
-    assertEquals("Total:", myFragmentsContainer.getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
   }
 
   @Override
