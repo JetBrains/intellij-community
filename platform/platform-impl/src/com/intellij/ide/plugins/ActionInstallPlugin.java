@@ -148,6 +148,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
             installedPluginsToModel(list);
             if (!installed.isDisposed()) {
               getPluginTable().updateUI();
+              installed.setRequireShutdown(true);
             }
             else {
               boolean needToRestart = false;

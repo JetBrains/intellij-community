@@ -219,19 +219,10 @@ public class StatisticsPanel implements DataProvider {
         final int i = myStatisticsTableView.getSelectedRow();
         assert i >= 0; //because something is selected
 
-        // If first line is selected we should go to parent suite
-        if (ColumnTest.TestsCellRenderer.isFirstLine(i)) {
-          final SMTestProxy parentSuite = selectedProxy.getParent();
-          if (parentSuite != null) {
-            // go to parent and current suit in it
-            showInTableAndSelectRow(parentSuite, selectedProxy);
-          }
-        } else {
-          // if selected element is suite - we should expand it
-          if (selectedProxy.isSuite()) {
-            // expand and select first (Total) row
-            showInTableAndSelectRow(selectedProxy, selectedProxy);
-          }
+        // if selected element is suite - we should expand it
+        if (selectedProxy.isSuite()) {
+          // expand and select first (Total) row
+          showInTableAndSelectRow(selectedProxy, selectedProxy);
         }
       }
     };

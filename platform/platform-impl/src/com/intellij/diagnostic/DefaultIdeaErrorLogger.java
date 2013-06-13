@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,13 +34,14 @@ import java.lang.reflect.InvocationTargetException;
  * @author kir
  */
 public class DefaultIdeaErrorLogger implements ErrorLogger {
-  private static boolean ourOomOccured = false;
+  private static boolean ourOomOccurred = false;
   private static boolean ourLoggerBroken = false;
-  private static boolean mappingFailedNotificationPosted = false;
+  private static boolean ourMappingFailedNotificationPosted = false;
+
   @NonNls private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
   @NonNls private static final String DISABLED_VALUE = "disabled";
   @NonNls private static final String ENABLED_VALUE = "enabled";
-  @NonNls private static final String PARAM_PERMGEN = "PermGen";
+  @NonNls private static final String PARAM_PERM_GEN = "PermGen";
 
   public boolean canHandle(IdeaLoggingEvent event) {
     if (ourLoggerBroken) return false;
@@ -56,7 +56,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       return notificationEnabled ||
              showPluginError ||
              ApplicationManagerEx.getApplicationEx().isInternal() ||
-             isOOMError(event.getThrowable())     ||
+             isOOMError(event.getThrowable()) ||
              event.getThrowable() instanceof MappingFailedException;
     }
     catch (LinkageError e) {
@@ -68,13 +68,8 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  /**
-   * @noinspection CallToPrintStackTrace
-   */
   public void handle(IdeaLoggingEvent event) {
-    if (ourLoggerBroken) {
-      return;
-    }
+    if (ourLoggerBroken) return;
 
     try {
       Throwable throwable = event.getThrowable();
@@ -84,11 +79,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       else if (throwable instanceof MappingFailedException) {
         processMappingFailed(event);
       }
-      else if (!ourOomOccured) {
+      else if (!ourOomOccurred) {
         MessagePool messagePool = MessagePool.getInstance();
         LogMessage message = messagePool.addIdeFatalMessage(event);
         if (message != null && ApplicationManager.getApplication() != null) {
-          notifyUi(messagePool, message);
+          ErrorNotifier.notifyUi(message, messagePool);
         }
       }
     }
@@ -99,12 +94,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourLoggerBroken = true;
       }
-      e.printStackTrace();
     }
-  }
-
-  private static void notifyUi(MessagePool messagePool, LogMessage message) {
-    ErrorNotifier.notifyUi(message, messagePool);
   }
 
   private static boolean isOOMError(Throwable throwable) {
@@ -114,17 +104,13 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
          throwable.getMessage().contains("CodeCache"));
   }
 
-  /**
-   * @noinspection CallToPrintStackTrace
-   */
   private static void processOOMError(final Throwable throwable) throws InterruptedException, InvocationTargetException {
-    ourOomOccured = true;
-    throwable.printStackTrace();
+    ourOomOccurred = true;
 
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
         String message = throwable.getMessage();
-        OutOfMemoryDialog.MemoryKind k = message != null && message.contains(PARAM_PERMGEN)
+        OutOfMemoryDialog.MemoryKind k = message != null && message.contains(PARAM_PERM_GEN)
                                          ? OutOfMemoryDialog.MemoryKind.PERM_GEN
                                          : message != null && message.contains("CodeCache")
                                            ? OutOfMemoryDialog.MemoryKind.CODE_CACHE
@@ -135,13 +121,13 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   private static void processMappingFailed(final IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
-    if (!mappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
-      mappingFailedNotificationPosted = true;
-      final String exceptionMessage = event.getThrowable().getMessage();
-      final String text = exceptionMessage + 
-        "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>Reducing JVM's maximum heap size (-Xmx) may help."; 
-      Notifications.Bus.notify(new Notification("Memory", "Memory Mapping Failed", text, NotificationType.WARNING), NotificationDisplayType.BALLOON, null);      
+    if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
+      ourMappingFailedNotificationPosted = true;
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") String exceptionMessage = event.getThrowable().getMessage();
+      String text = exceptionMessage +
+        "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>" +
+        "Reducing JVM maximum heap size (-Xmx) may help.";
+      Notifications.Bus.notify(new Notification("Memory", "Memory Mapping Failed", text, NotificationType.WARNING), null);
     }
   }
-  
 }

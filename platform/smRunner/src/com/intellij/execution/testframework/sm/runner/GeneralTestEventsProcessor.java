@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,6 @@ import javax.swing.*;
  * and name of test method
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
-  private boolean myDisposed = false;
   private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
     new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
       @Override
@@ -99,16 +99,18 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposed = true;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myTransferToEDTQueue.drain();
+        }
+      });
+    }
   }
 
   public Condition getDisposedCondition() {
-    return new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return myDisposed;
-      }
-    };
+    return Condition.FALSE;
   }
 
   /**
@@ -119,7 +121,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
    */
   public void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
-    if (application.isHeadlessEnvironment() && !application.isUnitTestMode() || SwingUtilities.isEventDispatchThread()) {
+    final boolean unitTestMode = application.isUnitTestMode();
+    if (unitTestMode) {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    } else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {

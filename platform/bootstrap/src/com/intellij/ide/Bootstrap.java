@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.util.lang.UrlClassLoader;
 
-import javax.swing.*;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -29,31 +28,19 @@ import java.util.List;
 public class Bootstrap {
   private static final String PLUGIN_MANAGER = "com.intellij.ide.plugins.PluginManager";
 
-  private Bootstrap() {}
+  private Bootstrap() { }
 
-  public static void main(final String[] args, final String mainClass, final String methodName) {
+  public static void main(String[] args, String mainClass, String methodName) throws Exception {
     main(args, mainClass, methodName, new ArrayList<URL>());
   }
 
-  public static void main(final String[] args, final String mainClass, final String methodName, final List<URL> classpathElements) {
-    final UrlClassLoader newClassLoader = ClassloaderUtil.initClassloader(classpathElements);
-    try {
-      WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
+  public static void main(String[] args, String mainClass, String methodName, List<URL> classpathElements) throws Exception {
+    UrlClassLoader newClassLoader = ClassloaderUtil.initClassloader(classpathElements);
+    WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 
-      final Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);
-
-      final Method startMethod = klass.getDeclaredMethod("start", String.class, String.class, String[].class);
-      startMethod.setAccessible(true);
-      startMethod.invoke(null, mainClass, methodName, args);
-    }
-    catch (Exception e) {
-      if ("true".equals(System.getProperty("java.awt.headless"))) {
-        //noinspection UseOfSystemOutOrSystemErr
-        e.printStackTrace(System.err);
-      }
-      else {
-        JOptionPane.showMessageDialog(null, e.getClass().getName() + ": " + e.getMessage(), "Error starting IntelliJ Platform", JOptionPane.ERROR_MESSAGE);
-      }
-    }
+    Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);
+    Method startMethod = klass.getDeclaredMethod("start", String.class, String.class, String[].class);
+    startMethod.setAccessible(true);
+    startMethod.invoke(null, mainClass, methodName, args);
   }
 }
