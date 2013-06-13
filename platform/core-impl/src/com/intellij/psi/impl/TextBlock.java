@@ -115,4 +115,14 @@ public class TextBlock {
 
     return textBlock;
   }
+
+  @Override
+  public String toString() {
+    return "TextBlock{" +
+           "myStartOffset=" + myStartOffset +
+           ", myTextEndOffset=" + myTextEndOffset +
+           ", myPsiEndOffset=" + myPsiEndOffset +
+           ", myIsLocked=" + myIsLocked +
+           '}';
+  }
 }
