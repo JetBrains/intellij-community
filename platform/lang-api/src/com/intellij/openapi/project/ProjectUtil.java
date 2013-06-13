@@ -73,9 +73,7 @@ public class ProjectUtil {
     if (project == null) {
       return url;
     }
-    else {
-      return ProjectUtilCore.displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft);
-    }
+    return ProjectUtilCore.displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft);
   }
 
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {

@@ -123,9 +123,10 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     return getTool().getQuickFixes(refElements);
   }
 
+  @NotNull
   @Override
   public InspectionNode createToolNode(@NotNull InspectionRVContentProvider provider,
-                                       InspectionTreeNode parentNode,
+                                       @NotNull InspectionTreeNode parentNode,
                                        boolean showStructure) {
     return getTool().createToolNode(provider, parentNode, showStructure);
   }

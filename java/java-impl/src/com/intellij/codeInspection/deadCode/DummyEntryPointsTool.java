@@ -30,19 +30,15 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class DummyEntryPointsTool extends FilteringInspectionTool {
-  private RefEntryPointFilter myFilter;
-  private final UnusedDeclarationInspection myOwner;
+  private static final RefEntryPointFilter myFilter = new RefEntryPointFilter();
   private QuickFixAction[] myQuickFixActions;
 
   public DummyEntryPointsTool(@NotNull UnusedDeclarationInspection owner) {
-    myOwner = owner;
+    initialize(owner.getContext());
   }
 
   @Override
   public RefFilter getFilter() {
-    if (myFilter == null) {
-      myFilter = new RefEntryPointFilter();
-    }
     return myFilter;
   }
 
@@ -81,12 +77,6 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
   @NotNull
   public HTMLComposerImpl getComposer() {
     return new DeadHTMLComposer(this);
-  }
-
-  @Override
-  @NotNull
-  public GlobalInspectionContextImpl getContext() {
-    return myOwner.getContext();
   }
 
   @Override
