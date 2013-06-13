@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.ArrayList;
@@ -95,5 +98,12 @@ public class GroovyNamesUtil {
         return StringUtil.decapitalize(s);
       }
     }, "-");
+  }
+
+  public static boolean isKeyword(@NotNull String name) {
+    final GroovyLexer lexer = new GroovyLexer();
+    lexer.start(name);
+    final IElementType type = lexer.getTokenType();
+    return TokenSets.KEYWORDS.contains(type);
   }
 }
