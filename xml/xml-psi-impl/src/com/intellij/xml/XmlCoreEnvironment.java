@@ -36,7 +36,7 @@ import com.intellij.xml.util.XmlApplicationComponent;
  * @author yole
  */
 public class XmlCoreEnvironment {
-  public static void register(CoreApplicationEnvironment appEnvironment, CoreProjectEnvironment projectEnvironment) {
+  public static void registerApplication(CoreApplicationEnvironment appEnvironment) {
     appEnvironment.registerFileType(HtmlFileType.INSTANCE, "html;htm;sht;shtm;shtml");
     appEnvironment.registerFileType(XHtmlFileType.INSTANCE, "xhtml");
     appEnvironment.registerFileType(DTDFileType.INSTANCE, "dtd;ent;mod;elt");
@@ -71,5 +71,8 @@ public class XmlCoreEnvironment {
     appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
 
     appEnvironment.registerApplicationService(ExternalResourceManager.class, new CoreExternalResourceManager());
+  }
+
+  public static void registerProject(CoreProjectEnvironment projectEnvironment) {
   }
 }

@@ -73,7 +73,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return IndexedRelevantResource.getAllResources(NAME, module, project, chooser);
   }
   
-  private static final ID<String,XsdNamespaceBuilder> NAME = ID.create("XmlNamespaces");
+  public static final ID<String,XsdNamespaceBuilder> NAME = ID.create("XmlNamespaces");
 
   @Override
   @NotNull
