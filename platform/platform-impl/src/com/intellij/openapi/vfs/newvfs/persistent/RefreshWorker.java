@@ -194,7 +194,7 @@ public class RefreshWorker {
         }
 
         if (SystemInfo.isWindows) {
-          boolean currentHidden = persistence.isHidden(file);
+          boolean currentHidden = file.is(VirtualFile.PROP_HIDDEN);
           boolean upToDateHidden = attributes.isHidden();
           if (currentHidden != upToDateHidden) {
             scheduleAttributeChange(file, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
@@ -222,7 +222,7 @@ public class RefreshWorker {
                                                    @NotNull FileAttributes childAttributes) {
     boolean currentIsDirectory = child.isDirectory();
     boolean currentIsSymlink = child.isSymLink();
-    boolean currentIsSpecial = child.isSpecialFile();
+    boolean currentIsSpecial = child.is(VirtualFile.PROP_SPECIAL);
     boolean upToDateIsDirectory = childAttributes.isDirectory();
     boolean upToDateIsSymlink = childAttributes.isSymLink();
     boolean upToDateIsSpecial = childAttributes.isSpecial();

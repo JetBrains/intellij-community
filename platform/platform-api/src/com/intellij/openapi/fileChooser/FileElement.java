@@ -97,7 +97,7 @@ public class FileElement {
   }
 
   public static boolean isFileHidden(@Nullable VirtualFile file) {
-    return file != null && file.isValid() && file.isInLocalFileSystem() && file.isPropertySet(VirtualFile.PROP_HIDDEN);
+    return file != null && file.isValid() && file.isInLocalFileSystem() && file.is(VirtualFile.PROP_HIDDEN);
   }
 
   public static boolean isArchive(@Nullable VirtualFile file) {

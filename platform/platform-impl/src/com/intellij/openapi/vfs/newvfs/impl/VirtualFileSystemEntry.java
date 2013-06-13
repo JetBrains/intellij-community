@@ -410,10 +410,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean isPropertySet(String property) {
+  public boolean is(String property) {
     if (property == PROP_SPECIAL) return getFlagInt(IS_SPECIAL_FLAG);
     if (property == PROP_HIDDEN) return ourPersistence.isHidden(this);
-    return super.isPropertySet(property);
+    return super.is(property);
   }
 
   @Override

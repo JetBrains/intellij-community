@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class FileContentQueue {
   private void addLast(VirtualFile file, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     FileContent content = new FileContent(file);
 
-    if (file.isValid() && !file.isDirectory() && !file.isSpecialFile() && !VfsUtilCore.isBrokenLink(file)) {
+    if (file.isValid() && !file.isDirectory() && !file.is(VirtualFile.PROP_SPECIAL) && !VfsUtilCore.isBrokenLink(file)) {
       if (!doLoadContent(content, indicator)) {
         content.setEmptyContent();
       }
@@ -135,6 +135,7 @@ public class FileContentQueue {
         LOG.info(e);
       }
       else if (ApplicationManager.getApplication().isUnitTestMode()) {
+        //noinspection CallToPrintStackTrace
         e.printStackTrace();
       }
       else {
