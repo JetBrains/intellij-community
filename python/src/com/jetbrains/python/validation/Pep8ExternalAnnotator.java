@@ -36,8 +36,10 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +88,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
   }
 
+  private boolean myReportedMissingInterpreter;
+
   @Nullable
   @Override
   public State collectionInformation(@NotNull PsiFile file) {
@@ -94,9 +98,21 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return null;
     }
     Sdk sdk = PythonSdkType.findLocalCPython(ModuleUtilCore.findModuleForPsiElement(file));
-    if (sdk == null) return null;
+    if (sdk == null) {
+      if (!myReportedMissingInterpreter) {
+        myReportedMissingInterpreter = true;
+        reportMissingInterpreter();
+      }
+      return null;
+    }
     final String homePath = sdk.getHomePath();
-    if (homePath == null) return null;
+    if (homePath == null) {
+      if (!myReportedMissingInterpreter) {
+        myReportedMissingInterpreter = true;
+        LOG.info("Could not find home path for interpreter " + homePath);
+      }
+      return null;
+    }
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
     final HighlightDisplayKey key = HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME);
     if (!profile.isToolEnabled(key)) {
@@ -106,6 +122,16 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     final List<String> ignoredErrors = inspection.ignoredErrors;
     final int margin = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().RIGHT_MARGIN;
     return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors, margin);
+  }
+
+  private static void reportMissingInterpreter() {
+    LOG.info("Found no suitable interpreter to run pep.py. Available interpreters are: [");
+    List<Sdk> allSdks = PythonSdkType.getAllSdks();
+    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
+    for (Sdk sdk : allSdks) {
+      LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkType.isRemote(sdk));
+    }
+    LOG.info("]");
   }
 
   @Nullable
@@ -167,7 +193,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       if (problemElement != null) {
         TextRange problemRange = problemElement.getTextRange();
         if (crossesLineBoundary(document, text, problemRange)) {
-          int lineEndOffset = document != null ? document.getLineEndOffset(line) : StringUtil.lineColToOffset(text, line+1, 0) - 1;
+          int lineEndOffset;
+          if (document != null) {
+            lineEndOffset = line >= document.getLineCount() ? document.getTextLength()-1 : document.getLineEndOffset(line);
+          }
+          else {
+            lineEndOffset = StringUtil.lineColToOffset(text, line+1, 0) - 1;
+          }
           problemRange = new TextRange(offset, lineEndOffset);
         }
         final Annotation annotation;
