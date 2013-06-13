@@ -120,7 +120,7 @@ public class ColumnTestTest extends BaseColumnRenderingTest {
 
     public MyRenderer(final SMTestProxy proxy,
                       final UITestUtil.FragmentsContainer fragmentsContainer) {
-      super(proxy);
+      super();
       myFragmentsContainer = fragmentsContainer;
     }
 
