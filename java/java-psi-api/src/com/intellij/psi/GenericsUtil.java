@@ -23,7 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,8 @@ public class GenericsUtil {
 
   private GenericsUtil() {}
 
-  public static PsiType getGreatestLowerBound(PsiType type1, PsiType type2) {
+  public static PsiType getGreatestLowerBound(@Nullable PsiType type1, @Nullable PsiType type2) {
+    if (type1 == null || type2 == null) return null;
     return PsiIntersectionType.createIntersection(type1, type2);
   }
 
