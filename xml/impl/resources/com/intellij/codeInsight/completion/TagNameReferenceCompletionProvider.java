@@ -25,12 +25,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlTagNameProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -52,15 +52,21 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
     PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
     if (reference instanceof TagNameReference) {
       TagNameReference tagNameReference = (TagNameReference)reference;
-      PsiElement element = tagNameReference.getElement();
-      if (element instanceof XmlTag) {
-        if (!tagNameReference.isStartTagFlag()) {
-          result.addElement(createClosingTagLookupElement((XmlTag)element, false, tagNameReference.getNameElement()));
-        }
-        else {
-          XmlTag tag = (XmlTag) element;
-          LookupElement[] variants = getTagNameVariants(tag, tag.getNamespacePrefix());
-          result.addAllElements(Arrays.asList(variants));
+      collectCompletionVariants(tagNameReference, result);
+    }
+  }
+
+  public static void collectCompletionVariants(TagNameReference tagNameReference,
+                                               Consumer<LookupElement> consumer) {
+    PsiElement element = tagNameReference.getElement();
+    if (element instanceof XmlTag) {
+      if (!tagNameReference.isStartTagFlag()) {
+        consumer.consume(createClosingTagLookupElement((XmlTag)element, false, tagNameReference.getNameElement()));
+      }
+      else {
+        XmlTag tag = (XmlTag) element;
+        for(LookupElement variant: getTagNameVariants(tag, tag.getNamespacePrefix())) {
+          consumer.consume(variant);
         }
       }
     }
