@@ -17,16 +17,25 @@ public abstract class Html5SchemaProvider {
 
   public static final ExtensionPointName<Html5SchemaProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.html5SchemaProvider");
 
-  public static final String HTML5_SCHEMA_LOCATION;
-  public static final String XHTML5_SCHEMA_LOCATION;
+  private static String HTML5_SCHEMA_LOCATION;
+  private static String XHTML5_SCHEMA_LOCATION;
 
-  @NotNull
-  public abstract URL getHtmlSchemaLocation();
+  private static boolean ourInitialized;
 
-  @NotNull
-  public abstract URL getXhtmlSchemaLocation();
+  public static String getHtml5SchemaLocation() {
+    ensureInitialized();
+    return HTML5_SCHEMA_LOCATION;
+  }
 
-  static {
+  public static String getXhtml5SchemaLocation() {
+    ensureInitialized();
+    return XHTML5_SCHEMA_LOCATION;
+  }
+
+  private synchronized static void ensureInitialized() {
+    if (ourInitialized) return;
+    ourInitialized = true;
+
     final Html5SchemaProvider[] providers = EP_NAME.getExtensions();
     final URL htmlSchemaLocationURL;
     final URL xhtmlSchemaLocationURL;
@@ -48,11 +57,20 @@ public abstract class Html5SchemaProvider {
 
     HTML5_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(
       URLUtil.unescapePercentSequences(htmlSchemaLocationURL.toExternalForm())));
-    LOG.info("HTML5_SCHEMA_LOCATION = " + HTML5_SCHEMA_LOCATION);
+    LOG.info("HTML5_SCHEMA_LOCATION = " + getHtml5SchemaLocation());
 
     XHTML5_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(
       URLUtil.unescapePercentSequences(xhtmlSchemaLocationURL.toExternalForm())));
-    LOG.info("XHTML5_SCHEMA_LOCATION = " + XHTML5_SCHEMA_LOCATION);
+    LOG.info("XHTML5_SCHEMA_LOCATION = " + getXhtml5SchemaLocation());
+  }
+
+  @NotNull
+  public abstract URL getHtmlSchemaLocation();
+
+  @NotNull
+  public abstract URL getXhtmlSchemaLocation();
+
+  static {
   }
 
   private static <T> String getClassesListString(T[] a) {

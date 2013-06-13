@@ -218,7 +218,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       if (nsDescriptor == null) {
         String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
         if (htmlns.length() == 0) {
-          htmlns = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
+          htmlns = Html5SchemaProvider.getHtml5SchemaLocation();
         }
         nsDescriptor = getDefaultNSDescriptor(htmlns, false);
       }
@@ -227,7 +227,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     else if (XmlUtil.XHTML_URI.equals(namespace)) {
       String xhtmlNamespace = XmlUtil.getDefaultXhtmlNamespace(getProject());
       if (xhtmlNamespace == null || xhtmlNamespace.length() == 0) {
-        xhtmlNamespace = Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
+        xhtmlNamespace = Html5SchemaProvider.getXhtml5SchemaLocation();
       }
       return getDefaultNSDescriptor(xhtmlNamespace, false);
     }
