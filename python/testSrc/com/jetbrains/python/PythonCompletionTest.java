@@ -644,4 +644,9 @@ public class PythonCompletionTest extends PyTestCase {
   public void testParameterFromUsages() {
     doTest();
   }
+
+  // PY-1219
+  public void testReCompileMatch() {
+    doTest();
+  }
 }

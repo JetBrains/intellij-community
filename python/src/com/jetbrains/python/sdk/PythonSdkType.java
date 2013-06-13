@@ -46,6 +46,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -573,6 +574,7 @@ public class PythonSdkType extends SdkType {
       }
     }
 
+    PyUserSkeletonsUtil.addUserSkeletonsRoot(sdkModificator);
     addSkeletonsRoot(sdkModificator, bin_path);
 
     if (not_in_unit_test_mode) {

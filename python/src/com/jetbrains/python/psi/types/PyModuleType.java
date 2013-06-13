@@ -63,11 +63,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
-      final PsiElement element = provider.resolveMember(myModule, name);
-      if (element != null) {
-        return ResolveResultList.to(element);
-      }
+    final PsiElement overridingMember = resolveByOverridingMembersProviders(myModule, name);
+    if (overridingMember != null) {
+      return ResolveResultList.to(overridingMember);
     }
     final PsiElement attribute = myModule.getElementNamed(name);
     if (attribute != null) {
@@ -93,6 +91,36 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       final List<? extends RatedResolveResult> implicitMembers = resolveImplicitPackageMember(name, importElements);
       if (implicitMembers != null) {
         return implicitMembers;
+      }
+    }
+    final PsiElement member = resolveByMembersProviders(myModule, name);
+    if (member != null) {
+      return ResolveResultList.to(member);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolveByMembersProviders(PyFile module, String name) {
+    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+      if (!(provider instanceof PyOverridingModuleMembersProvider)) {
+        final PsiElement element = provider.resolveMember(module, name);
+        if (element != null) {
+          return element;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolveByOverridingMembersProviders(@NotNull PyFile module, @NotNull String name) {
+    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+      if (provider instanceof PyOverridingModuleMembersProvider) {
+        final PsiElement element = provider.resolveMember(module, name);
+        if (element != null) {
+          return element;
+        }
       }
     }
     return null;

@@ -6,10 +6,20 @@ import com.jetbrains.python.fixtures.PyTestCase;
  * @author vlan
  */
 public class PyTypeCheckerInspectionTest extends PyTestCase {
+  public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
+
   private void doTest() {
-    myFixture.configureByFile("inspections/PyTypeCheckerInspection/" + getTestName(false) + ".py");
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting(true, false, true);
+  }
+
+  private void doMultiFileTest() {
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
+    myFixture.configureFromTempProjectFile("a.py");
+    myFixture.enableInspections(PyTypeCheckerInspection.class);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   public void testSimple() {
@@ -164,5 +174,10 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   // PY-9118
   public void testNegativeIsInstance() {
     doTest();
+  }
+
+  // PY-7340
+  public void testFieldWithNoneInStub() {
+    doMultiFileTest();
   }
 }
