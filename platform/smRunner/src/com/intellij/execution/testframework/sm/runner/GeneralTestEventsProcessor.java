@@ -98,7 +98,16 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   public abstract void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
 
   @Override
-  public void dispose() {}
+  public void dispose() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myTransferToEDTQueue.drain();
+        }
+      });
+    }
+  }
 
   public Condition getDisposedCondition() {
     return Condition.FALSE;
