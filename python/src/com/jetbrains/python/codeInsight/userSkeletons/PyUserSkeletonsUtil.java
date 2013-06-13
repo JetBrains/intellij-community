@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -38,10 +39,10 @@ public class PyUserSkeletonsUtil {
   @NotNull
   public static String getUserSkeletonsPath() {
     if (ApplicationManager.getApplication().isInternal()) {
-      return StringUtil.join(new String[] {PathManager.getHomePath(), "python", "skeletons", "user-skeletons"}, File.separator);
+      return StringUtil.join(new String[] {PathManager.getHomePath(), "python", "helpers", "user-skeletons"}, File.separator);
     }
-    // TODO: Copy user skeletons to this path
-    return PathManager.getSystemPath() + File.separator + "user-skeletons";
+    // TODO: Add the possibility to put skeletons into PathManager.getSystemPath() + "/user-skeletons"
+    return PythonHelpersLocator.getHelperPath("user-skeletons");
   }
 
   @Nullable
@@ -98,7 +99,9 @@ public class PyUserSkeletonsUtil {
 
   public static void addUserSkeletonsRoot(@NotNull SdkModificator sdkModificator) {
     final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(getUserSkeletonsPath());
-    sdkModificator.addRoot(root, OrderRootType.CLASSES);
+    if (root != null) {
+      sdkModificator.addRoot(root, OrderRootType.CLASSES);
+    }
   }
 
   @Nullable
