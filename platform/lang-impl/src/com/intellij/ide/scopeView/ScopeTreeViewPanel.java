@@ -685,7 +685,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
           }, false);
         }
         else if (propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
-          queueRefreshScope(scope, (PsiDirectory)element);
+          final PackageSet value = getCurrentScope().getValue();
+          if (!(value instanceof PackageSetBase) || ((PackageSetBase)value).contains(((PsiDirectory)element).getVirtualFile(), myProject, myDependencyValidationManager)) {
+            queueRefreshScope(scope, (PsiDirectory)element);
+          }
         }
       }
     }
