@@ -66,7 +66,6 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
     }
     setCellRenderer(new MyRenderer(project, icon, ExternalSystemUtil.findConfigurationType(externalSystemId)));
     setVisibleRowCount(ExternalSystemConstants.RECENT_TASKS_NUMBER);
-    model.ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
     
     addMouseListener(new MouseAdapter() {
       @Override
@@ -94,7 +93,6 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
     ExternalTaskExecutionInfo selected = produce();
     ExternalSystemRecentTaskListModel model = getModel();
     model.setFirst(task);
-    model.ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
     clearSelection();
     if (selected == null) {
       return;

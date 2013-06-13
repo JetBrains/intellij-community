@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentTasksList;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ public class ExternalSystemDataKeys {
   @NotNull public static final DataKey<NotificationGroup>            NOTIFICATION_GROUP = DataKey.create("external.system.notification");
   @NotNull public static final DataKey<ExternalSystemTasksTreeModel> ALL_TASKS_MODEL    = DataKey.create("external.system.all.tasks.model");
   @NotNull public static final DataKey<ExternalTaskPojo>             SELECTED_TASK      = DataKey.create("external.system.selected.task");
+  @NotNull public static final DataKey<ExternalProjectPojo>          SELECTED_PROJECT   = DataKey.create("external.system.selected.project");
 
   @NotNull public static final DataKey<ExternalSystemRecentTasksList> RECENT_TASKS_LIST
     = DataKey.create("external.system.recent.tasks.list");

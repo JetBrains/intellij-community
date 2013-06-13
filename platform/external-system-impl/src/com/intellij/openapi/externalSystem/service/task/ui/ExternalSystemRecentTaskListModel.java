@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +32,16 @@ import java.util.List;
  */
 public class ExternalSystemRecentTaskListModel extends DefaultListModel {
 
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private final Project         myProject;
+
+  public ExternalSystemRecentTaskListModel(@NotNull ProjectSystemId externalSystemId, @NotNull Project project) {
+    myExternalSystemId = externalSystemId;
+    myProject = project;
+    ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
+  }
+
+  @SuppressWarnings("unchecked")
   public void setTasks(@NotNull List<ExternalTaskExecutionInfo> tasks) {
     clear();
     List<ExternalTaskExecutionInfo> tasksToUse = ContainerUtilRt.newArrayList(tasks);
@@ -36,6 +50,7 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public void setFirst(@NotNull ExternalTaskExecutionInfo task) {
     insertElementAt(task, 0);
     if (size() > 1) {
@@ -44,9 +59,10 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
     for (int i = 1; i < size(); i++) {
       if (task.equals(getElementAt(i))) {
         remove(i);
-        return;
+        break;
       }
     }
+    ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
   }
 
   @NotNull
@@ -61,6 +77,7 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
     return result;
   }
 
+  @SuppressWarnings("unchecked")
   public void ensureSize(int elementsNumber) {
     int toAdd = elementsNumber - size();
     if (toAdd <= 0) {
@@ -69,6 +86,26 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
     while (--toAdd >= 0) {
       addElement(new MyEmptyDescriptor());
     }
+  }
+
+  /**
+   * Asks current model to remove all 'recent task info' entries which point to tasks from external project with the given path.
+   * 
+   * @param externalProjectPath  target external project's path
+   */
+  public void forgetTasksFrom(@NotNull String externalProjectPath) {
+    for (int i = size() - 1; i >= 0; i--) {
+      Object e = getElementAt(i);
+      if (e instanceof ExternalTaskExecutionInfo) {
+        String path = ((ExternalTaskExecutionInfo)e).getSettings().getExternalProjectPath();
+        if (externalProjectPath.equals(path)
+            || externalProjectPath.equals(ExternalSystemApiUtil.getRootProjectPath(path, myExternalSystemId, myProject)))
+        {
+          removeElementAt(i);
+        }
+      }
+    }
+    ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
   }
 
   static class MyEmptyDescriptor {

@@ -19,11 +19,13 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -53,7 +55,8 @@ import java.util.regex.Pattern;
  */
 public class ExternalSystemApiUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemApiUtil.class.getName());
+  private static final Logger LOG                           =
+    Logger.getInstance("#" + ExternalSystemApiUtil.class.getName());
   private static final String LAST_USED_PROJECT_PATH_PREFIX = "LAST_EXTERNAL_PROJECT_PATH_";
 
   @NotNull public static final String PATH_SEPARATOR = "/";
@@ -74,6 +77,7 @@ public class ExternalSystemApiUtil {
     };
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
+
     @Override
     public int compare(Object o1, Object o2) {
       int order1 = getOrder(o1);
@@ -100,6 +104,20 @@ public class ExternalSystemApiUtil {
     }
   };
 
+  @NotNull private static final Function<DataNode<?>, Key<?>> GROUPER = new Function<DataNode<?>, Key<?>>() {
+    @Override
+    public Key<?> fun(DataNode<?> node) {
+      return node.getKey();
+    }
+  };
+
+  @NotNull private static final Comparator<Object> COMPARABLE_GLUE = new Comparator<Object>() {
+    @SuppressWarnings("unchecked")
+    @Override
+    public int compare(Object o1, Object o2) {
+      return ((Comparable)o1).compareTo(o2);
+    }
+  };
 
   private ExternalSystemApiUtil() {
   }
@@ -192,18 +210,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static Map<Key<?>, List<DataNode<?>>> group(@NotNull Collection<DataNode<?>> nodes) {
-    if (nodes.isEmpty()) {
-      return Collections.emptyMap();
-    }
-    Map<Key<?>, List<DataNode<?>>> result = ContainerUtilRt.newHashMap();
-    for (DataNode<?> node : nodes) {
-      List<DataNode<?>> n = result.get(node.getKey());
-      if (n == null) {
-        result.put(node.getKey(), n = ContainerUtilRt.newArrayList());
-      }
-      n.add(node);
-    }
-    return result;
+    return groupBy(nodes, GROUPER);
   }
 
   @NotNull
@@ -236,9 +243,19 @@ public class ExternalSystemApiUtil {
       }
       grouped.add(data);
     }
+
+    if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
+      List<K> ordered = ContainerUtilRt.newArrayList(result.keySet());
+      Collections.sort(ordered, COMPARABLE_GLUE);
+      Map<K, List<V>> orderedResult = ContainerUtilRt.newLinkedHashMap();
+      for (K k : ordered) {
+        orderedResult.put(k, result.get(k));
+      }
+      return orderedResult;
+    }
     return result;
   }
-
+  
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
@@ -387,5 +404,33 @@ public class ExternalSystemApiUtil {
     }
     buffer.insert(0, rootProjectDir.getName());
     return buffer.toString();
+  }
+
+  /**
+   * There is a possible case that external project linked to an ide project is a multi-project, i.e. contains more than one
+   * module.
+   * <p/>
+   * This method tries to find root project's config path assuming that given path points to a sub-project's config path.
+   * 
+   * @param externalProjectPath  external sub-project's config path
+   * @param externalSystemId     target external system
+   * @param project              target ide project
+   * @return                     root external project's path if given path is considered to point to a known sub-project's config;
+   *                             <code>null</code> if it's not possible to find a root project's config path on the basis of the
+   *                             given path
+   */
+  @Nullable
+  public static String getRootProjectPath(@NotNull String externalProjectPath,
+                                          @NotNull ProjectSystemId externalSystemId,
+                                          @NotNull Project project)
+  {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
+    if (manager == null) {
+      return null;
+    }
+    if (manager instanceof ExternalSystemAutoImportAware) {
+      return ((ExternalSystemAutoImportAware)manager).getAffectedExternalProjectPath(externalProjectPath, project);
+    }
+    return null;
   }
 }
