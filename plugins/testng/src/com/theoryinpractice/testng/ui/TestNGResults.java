@@ -23,11 +23,13 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
@@ -41,6 +43,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.config.ToggleBooleanProperty;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -148,7 +151,21 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myRunnerSettings, myConfigurationSettings, this);
+    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myRunnerSettings, myConfigurationSettings, this){
+      @Override
+      protected void appendAdditionalActions(DefaultActionGroup actionGroup,
+                                             TestConsoleProperties properties,
+                                             RunnerSettings runnerSettings,
+                                             ConfigurationPerRunnerSettings configurationSettings,
+                                             JComponent parent) {
+        super.appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
+        actionGroup.addAction(new ToggleBooleanProperty(
+          ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
+                                                    null,
+                                                    null,
+                                                    properties, TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED)).setAsSecondary(true);
+      }
+    };
     panel.setModel(this);
     return panel;
   }
