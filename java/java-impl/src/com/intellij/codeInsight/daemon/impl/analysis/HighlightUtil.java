@@ -1936,6 +1936,11 @@ public class HighlightUtil extends HighlightUtilBase {
             !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
           return null;
         }
+
+        if (expression instanceof PsiJavaCodeReferenceElement && !aClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class))) {
+          return null;
+        }
+
         final HighlightInfo highlightInfo = createMemberReferencedError(resolvedName, expression.getTextRange());
         if (expression instanceof PsiReferenceExpression && PsiUtil.isInnerClass(aClass)) {
           final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();

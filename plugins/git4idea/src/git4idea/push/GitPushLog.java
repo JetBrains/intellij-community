@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -34,7 +35,6 @@ import git4idea.GitBranch;
 import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -362,7 +362,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         renderer.setToolTipText(getHashString(commit) + " " + getDateString(commit));
       }
       else if (userObject instanceof GitRepository) {
-        String repositoryPath = GitUIUtil.getShortRepositoryName((GitRepository)userObject);
+        String repositoryPath = DvcsUtil.getShortRepositoryName((GitRepository)userObject);
         renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       else if (userObject instanceof GitPushBranchInfo) {

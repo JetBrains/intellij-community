@@ -16,11 +16,9 @@
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.DefaultRoleFinder;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.RoleFinder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -28,12 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlChildRole {
-
-  interface StartTagEndTokenProvider {
-    IElementType[] getTypes();
-  }
-
-  ExtensionPointName<StartTagEndTokenProvider> EP_NAME = new ExtensionPointName<StartTagEndTokenProvider>("com.intellij.xml.startTagEndToken");
 
   RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
     public ASTNode findChild(@NotNull ASTNode parent) {
@@ -65,7 +57,7 @@ public interface XmlChildRole {
   RoleFinder ATTRIBUTE_VALUE_VALUE_FINDER = new DefaultRoleFinder(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
   RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_TAG_END) {
     {
-      final StartTagEndTokenProvider[] tokenProviders = Extensions.getExtensions(EP_NAME);
+      final StartTagEndTokenProvider[] tokenProviders = Extensions.getExtensions(StartTagEndTokenProvider.EP_NAME);
       for (StartTagEndTokenProvider tokenProvider : tokenProviders) {
         myElementTypes = ArrayUtil.mergeArrays(myElementTypes, tokenProvider.getTypes());
       }

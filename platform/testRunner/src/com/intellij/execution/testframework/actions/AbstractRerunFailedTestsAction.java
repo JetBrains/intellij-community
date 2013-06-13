@@ -150,6 +150,9 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   @NotNull
   protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
+    if (TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED.value(myConsoleProperties)) {
+      return Filter.NOT_PASSED.or(Filter.FAILED_OR_INTERRUPTED);
+    }
     return Filter.FAILED_OR_INTERRUPTED;
   }
 

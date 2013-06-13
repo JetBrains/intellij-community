@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,8 @@ import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Jan 8, 2004
- * Time: 3:06:43 PM
- * To change this template use Options | File Templates.
+ * @author stathik
+ * @since Jan 8, 2004
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;

@@ -143,7 +143,7 @@ public class XmlUtil {
   @NonNls public static final String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   @NonNls public static final String SCHEMA_LOCATION_ATT = "schemaLocation";
   @NonNls public static final String[] WEB_XML_URIS =
-    {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
+    {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://xmlns.jcp.org/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
 
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
@@ -613,8 +613,8 @@ public class XmlUtil {
 
   public static String getDefaultXhtmlNamespace(Project project) {
     final String doctype = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(project);
-    return Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(doctype)
-           ? Html5SchemaProvider.XHTML5_SCHEMA_LOCATION
+    return Html5SchemaProvider.getHtml5SchemaLocation().equals(doctype)
+           ? Html5SchemaProvider.getXhtml5SchemaLocation()
            : doctype;
   }
 
@@ -782,8 +782,8 @@ public class XmlUtil {
         }
         else if (HtmlUtil.isHtml5Doctype(doctype)) {
           docType = doctype.getLanguage() instanceof HTMLLanguage
-                    ? Html5SchemaProvider.HTML5_SCHEMA_LOCATION
-                    : Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
+                    ? Html5SchemaProvider.getHtml5SchemaLocation()
+                    : Html5SchemaProvider.getXhtml5SchemaLocation();
         }
       }
       return docType;

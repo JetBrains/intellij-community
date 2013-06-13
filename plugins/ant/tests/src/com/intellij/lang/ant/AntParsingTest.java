@@ -23,7 +23,7 @@ import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.testFramework.ParsingTestCase;
 
 public class AntParsingTest extends ParsingTestCase {
@@ -36,8 +36,8 @@ public class AntParsingTest extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
-    registerExtensionPoint(new ExtensionPointName<XmlChildRole.StartTagEndTokenProvider>("com.intellij.xml.startTagEndToken"),
-                           XmlChildRole.StartTagEndTokenProvider.class);
+    registerExtensionPoint(new ExtensionPointName<StartTagEndTokenProvider>("com.intellij.xml.startTagEndToken"),
+                           StartTagEndTokenProvider.class);
   }
 
   @Override

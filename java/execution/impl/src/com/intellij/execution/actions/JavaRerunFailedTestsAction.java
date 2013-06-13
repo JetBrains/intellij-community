@@ -37,7 +37,7 @@ public class JavaRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   @NotNull
   @Override
   protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
-    return Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project, searchScope));
+    return super.getFilter(project, searchScope).and(JavaAwareFilter.METHOD(project, searchScope));
   }
 
 }

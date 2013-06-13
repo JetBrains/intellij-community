@@ -220,13 +220,12 @@ public class UIUtil {
       if (ourRetina.isNull()) {
         ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
 
-        String vendor = SystemProperties.getJavaVmVendor();
-        if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple")) {
+        if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
           if (!"false".equals(System.getProperty("ide.mac.retina"))) {
             ourRetina.set(IsRetina.isRetina());
             return ourRetina.get();
           }
-        } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && vendor != null && StringUtil.containsIgnoreCase(vendor, "Oracle")) {
+        } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             final GraphicsDevice device = env.getDefaultScreenDevice();
             try {
@@ -1496,11 +1495,7 @@ public class UIUtil {
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
-      if (SystemInfo.isAppleJvm) {
-        return RetinaImage.create(width, height, type);
-      } else if (SystemInfo.isOracleJvm) {
-        //todo[kb] provide some hidpi scaled image
-      }
+      return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);

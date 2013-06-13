@@ -58,7 +58,7 @@ public abstract class PsiAnchor {
 
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-      if (virtualFile != null) return new PsiFileReference(virtualFile, element.getProject(), element.getLanguage());
+      if (virtualFile != null) return new PsiFileReference(virtualFile, (PsiFile)element);
       return new HardReference(element);
     }
     if (element instanceof PsiDirectory) {
@@ -262,12 +262,23 @@ public abstract class PsiAnchor {
   private static class PsiFileReference extends PsiAnchor {
     private final VirtualFile myFile;
     private final Project myProject;
-    @Nullable private final Language myLanguage;
+    @NotNull private final Language myLanguage;
 
-    private PsiFileReference(@NotNull VirtualFile file, @NotNull Project project, @NotNull Language language) {
+    private PsiFileReference(@NotNull VirtualFile file, @NotNull PsiFile psiFile) {
       myFile = file;
-      myProject = project;
-      myLanguage = language;
+      myProject = psiFile.getProject();
+      myLanguage = findLanguage(psiFile);
+    }
+
+    private static Language findLanguage(PsiFile file) {
+      FileViewProvider vp = file.getViewProvider();
+      Set<Language> languages = vp.getLanguages();
+      for (Language language : languages) {
+        if (file.equals(vp.getPsi(language))) {
+          return language;
+        }
+      }
+      throw new AssertionError("Non-retrievable file: " + file.getClass() + "; " + file.getLanguage() + "; " + languages);
     }
 
     @Override
@@ -299,7 +310,7 @@ public abstract class PsiAnchor {
       PsiFileReference reference = (PsiFileReference)o;
 
       if (!myFile.equals(reference.myFile)) return false;
-      if (myLanguage != null ? !myLanguage.equals(reference.myLanguage) : reference.myLanguage != null) return false;
+      if (!myLanguage.equals(reference.myLanguage)) return false;
       if (!myProject.equals(reference.myProject)) return false;
 
       return true;
@@ -307,9 +318,7 @@ public abstract class PsiAnchor {
 
     @Override
     public int hashCode() {
-      int result = myFile.hashCode();
-      result = 31 * result + (myLanguage != null ? myLanguage.hashCode() : 0);
-      return result;
+      return 31 * myFile.hashCode() + (myLanguage.hashCode());
     }
   }
   

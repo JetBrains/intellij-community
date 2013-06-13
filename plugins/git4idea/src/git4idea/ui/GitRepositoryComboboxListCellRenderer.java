@@ -15,9 +15,9 @@
  */
 package git4idea.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
 
@@ -37,7 +37,7 @@ public class GitRepositoryComboboxListCellRenderer extends ListCellRendererWrapp
 
   @Override
   public void customize(JList list, GitRepository value, int index, boolean selected, boolean hasFocus) {
-    setText(GitUIUtil.getShortRepositoryName(value));
+    setText(DvcsUtil.getShortRepositoryName(value));
   }
 
 }

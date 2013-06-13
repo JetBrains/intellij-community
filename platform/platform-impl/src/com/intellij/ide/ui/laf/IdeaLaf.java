@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.plaf.beg.*;
+import com.intellij.util.ui.UIUtil;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import com.sun.java.swing.plaf.windows.WindowsTreeUI;
 
@@ -38,7 +40,14 @@ public final class IdeaLaf extends MetalLookAndFeel {
     super.initComponentDefaults(defaults);
     LafManagerImpl.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
-    LafManagerImpl.initFontDefaults(defaults, "Tahoma", 11);
+
+    Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
+    if (systemFont != null) {
+      LafManagerImpl.initFontDefaults(defaults, systemFont.first, systemFont.second);
+    }
+    else {
+      LafManagerImpl.initFontDefaults(defaults, "Tahoma", 11);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

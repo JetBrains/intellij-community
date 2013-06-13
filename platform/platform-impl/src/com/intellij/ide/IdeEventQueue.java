@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -903,11 +903,11 @@ public class IdeEventQueue extends EventQueue {
           myWaiterScheduled = false;
         }
         else {
-          Application app = ApplicationManager.getApplication();
-          if (app == null ||
+          if (ApplicationManager.getApplication() == null ||
+              UISettings.getInstance() == null ||
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
-              (!UISettings.getInstance().HIDE_TOOL_STRIPES && !UISettings.getInstance().PRESENTATION_MODE)) {
+              !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
             return !dispatch;
           }
 

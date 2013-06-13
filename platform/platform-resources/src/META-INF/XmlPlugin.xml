@@ -13,7 +13,7 @@
   <extensionPoints>
 
     <extensionPoint name="xml.startTagEndToken"
-                    interface="com.intellij.psi.xml.XmlChildRole$StartTagEndTokenProvider"/>
+                    interface="com.intellij.psi.xml.StartTagEndTokenProvider"/>
     <extensionPoint name="xml.schemaProvider"
                     interface="com.intellij.xml.XmlSchemaProvider"/>
     <extensionPoint name="xml.xmlExtension"
