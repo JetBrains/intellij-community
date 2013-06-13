@@ -146,9 +146,8 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;link rel=&quot;stylesheet&quot; href=&quot;...&quot;&gt;" name="link" toReformat="true" toShortenFQNames="true"
-            value="&lt;link rel=&quot;stylesheet&quot; href=&quot;$END$&quot;/&gt;">
-    <context>
+  <template description="&lt;link rel=&quot;stylesheet&quot; href=&quot;...&quot;&gt;" name="link" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; href=&quot;$END$&quot;/&gt;">
+  <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
@@ -247,10 +246,8 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;script src=&quot;...&quot;&gt;...&lt;/script&gt;" name="script:src" toReformat="true" toShortenFQNames="true"
-            value="&lt;script src=&quot;$SRC$&quot;&gt;$END$&lt;/script&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="SRC"/>
-    <context>
+  <template description="&lt;script src=&quot;...&quot;&gt;...&lt;/script&gt;" name="script:src" toReformat="true" toShortenFQNames="true" value="&lt;script src=&quot;$END$&quot;&gt;&lt;/script&gt;">
+  <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
