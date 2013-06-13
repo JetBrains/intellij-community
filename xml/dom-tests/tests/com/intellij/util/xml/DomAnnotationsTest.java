@@ -23,13 +23,14 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.highlighting.*;
+import com.intellij.util.xml.impl.DomTestCase;
 
 import java.util.Arrays;
 
 /**
  * @author peter
  */
-public class DomAnnotationsTest extends DomTestCase{
+public class DomAnnotationsTest extends DomTestCase {
 
   @Override
   protected <T extends DomElement> T createElement(final String xml, final Class<T> aClass) {

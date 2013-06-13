@@ -26,6 +26,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.impl.DomTestCase;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
