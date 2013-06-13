@@ -29,13 +29,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface GlobalInspectionContextExtension<T> {
+  @NotNull
   Key<T> getID();
 
   void performPreRunActivities(@NotNull List<Tools> globalTools,
                                @NotNull List<Tools> localTools,
                                @NotNull GlobalInspectionContext context);
-
-  void performPostRunActivities(@NotNull List<InspectionProfileEntry> inspections, final GlobalInspectionContext context);
+                                              //InspectionToolWrapper
+  void performPostRunActivities(@NotNull List<InspectionProfileEntry> inspections, @NotNull GlobalInspectionContext context);
 
   void cleanup();
 }

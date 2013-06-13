@@ -55,7 +55,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   private Map<RefEntity, Set<QuickFix>> myQuickFixActions;
   private Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements;
 
-  private HashMap<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
+  private Map<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
 
   @Override
@@ -411,30 +411,29 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return extractActiveFixes(refElements, getQuickFixActions());
   }
 
-  public QuickFixAction[] extractActiveFixes(final RefEntity[] refElements, final Map<RefEntity, Set<QuickFix>> actions) {
+  public QuickFixAction[] extractActiveFixes(final RefEntity[] refElements, @NotNull Map<RefEntity, Set<QuickFix>> actions) {
     if (refElements == null) return null;
     Map<Class, QuickFixAction> result = new java.util.HashMap<Class, QuickFixAction>();
     for (RefEntity refElement : refElements) {
       final Set<QuickFix> localQuickFixes = actions.get(refElement);
-      if (localQuickFixes != null){
-        for (QuickFix fix : localQuickFixes) {
-          if (fix == null) continue;
-          final Class klass = fix instanceof IntentionWrapper ? ((IntentionWrapper) fix).getAction().getClass() : fix.getClass();
-          final QuickFixAction quickFixAction = result.get(klass);
-          if (quickFixAction != null){
-            try {
-              String familyName = fix.getFamilyName();
-              familyName = familyName != null && familyName.length() > 0 ? "\'" + familyName + "\'" : familyName;
-              ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
-            }
-            catch (AbstractMethodError e) {
-              //for plugin compatibility
-              ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", ""));
-            }
-          } else {
-            LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, this);
-            result.put(klass, quickFixWrapper);
+      if (localQuickFixes == null) continue;
+      for (QuickFix fix : localQuickFixes) {
+        if (fix == null) continue;
+        final Class klass = fix instanceof ActionClassHolder ? ((ActionClassHolder ) fix).getActionClass() : fix.getClass();
+        final QuickFixAction quickFixAction = result.get(klass);
+        if (quickFixAction != null){
+          try {
+            String familyName = fix.getFamilyName();
+            familyName = !familyName.isEmpty() ? "\'" + familyName + "\'" : familyName;
+            ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
           }
+          catch (AbstractMethodError e) {
+            //for plugin compatibility
+            ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", ""));
+          }
+        } else {
+          LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, this);
+          result.put(klass, quickFixWrapper);
         }
       }
     }
@@ -550,10 +549,11 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   @Nullable
-  public HashMap<RefEntity, CommonProblemDescriptor[]> getOldProblemElements() {
+  public Map<RefEntity, CommonProblemDescriptor[]> getOldProblemElements() {
     return myOldProblemElements;
   }
 
+  @NotNull
   private Map<CommonProblemDescriptor, RefEntity> getProblemToElements() {
     synchronized (lock) {
       if (myProblemToElements == null) {

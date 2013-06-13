@@ -31,6 +31,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class GlobalJavaInspectionContext implements GlobalInspectionContextExtension<GlobalJavaInspectionContext> {
   public static final Key<GlobalJavaInspectionContext> CONTEXT = Key.create("GlobalJavaInspectionContext");
@@ -91,6 +92,7 @@ public abstract class GlobalJavaInspectionContext implements GlobalInspectionCon
 
   public abstract EntryPointsManager getEntryPointsManager(RefManager manager);
 
+  @NotNull
   @Override
   public Key<GlobalJavaInspectionContext> getID() {
     return CONTEXT;
