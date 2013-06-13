@@ -38,8 +38,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -143,7 +147,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     });
 
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new MyVirtualFileListener()));
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyVirtualFileListener());
   }
 
   private void markContentRootsForRefresh() {
@@ -162,7 +166,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     myConnection.deliverImmediately();
   }
 
-  private class MyVirtualFileListener extends VirtualFileAdapter {
+  private class MyVirtualFileListener extends VirtualFileAdapter implements BulkFileListener {
+    private static final int MAX_DEPTH_TO_COUNT = 20;
+    private static final int DIRECTORIES_CHANGED_THRESHOLD = 50;
+
     @Override
     public void fileCreated(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
@@ -176,7 +183,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       IndexState newState = updateStateWithNewFile((NewVirtualFile)file, (NewVirtualFile)parent);
       replaceState(newState);
     }
-
 
     @NotNull
     private IndexState updateStateWithNewFile(@NotNull NewVirtualFile file, @NotNull NewVirtualFile parent) {
@@ -306,11 +312,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     @Override
-    public void beforeFileMovement(VirtualFileMoveEvent event) {
-      super.beforeFileMovement(event);
-    }
-
-    @Override
     public void fileMoved(VirtualFileMoveEvent event) {
       VirtualFile file = event.getFile();
       if (file.isDirectory()) {
@@ -328,6 +329,64 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
       }
       myState.assertAncestorsConsistent();
+    }
+
+    private boolean myBatchChangePlanned;
+    private static final boolean ourCanHaveBatchUpdate = true;
+
+    @Override
+    public void before(@NotNull List<? extends VFileEvent> events) {
+      myBatchChangePlanned = false;
+      int directoriesRemoved = 0;
+      int directoriesCreated = 0;
+
+      for(VFileEvent event:events) {
+        if (event instanceof VFileDeleteEvent) {
+          VirtualFile file = event.getFile();
+          if (file != null && file.isDirectory()) {
+            directoriesRemoved += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+          }
+        } else if(event instanceof VFileCreateEvent) {
+          VirtualFile file = event.getFile();
+          if (file != null && file.isDirectory()) directoriesCreated += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+        }
+      }
+
+      final boolean willDoBatchUpdate = directoriesCreated + directoriesRemoved > DIRECTORIES_CHANGED_THRESHOLD;
+
+      if (willDoBatchUpdate && ourCanHaveBatchUpdate) {
+        myBatchChangePlanned = true;
+        LOG.info("Too many directories created / deleted: " + directoriesCreated + "," + directoriesRemoved  + ", will rebuild indexstate");
+      } else {
+        for (VFileEvent event : events) {
+          BulkVirtualFileListenerAdapter.fireBefore(this, event);
+        }
+      }
+    }
+
+    private int countDirectories(VirtualFile file, int depth) {
+      if (!(file instanceof NewVirtualFile)) return 0;
+
+      int counter = 0;
+      for(VirtualFile child:((NewVirtualFile)file).iterInDbChildren()) {
+        if (child.isDirectory()) counter += 1 + (depth > 0 ? countDirectories(child, depth - 1):0);
+      }
+      return counter;
+    }
+
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      if (myBatchChangePlanned) {
+        myBatchChangePlanned = false;
+        long started = System.currentTimeMillis();
+        doInitialize();
+        LOG.info("Rebuilt indexstate for " + (System.currentTimeMillis() - started));
+      }
+      else {
+        for (VFileEvent event : events) {
+          BulkVirtualFileListenerAdapter.fireAfter(this, event);
+        }
+      }
     }
   }
 
