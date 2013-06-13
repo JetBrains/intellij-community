@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +120,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
    */
   public void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
-    if (application.isHeadlessEnvironment() && !application.isUnitTestMode() || SwingUtilities.isEventDispatchThread()) {
+    final boolean unitTestMode = application.isUnitTestMode();
+    if (unitTestMode) {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    } else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {
