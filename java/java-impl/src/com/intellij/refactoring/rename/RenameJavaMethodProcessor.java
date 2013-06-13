@@ -209,8 +209,10 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
           final PsiElement element = info.getElement();
           if (element instanceof PsiReferenceExpression) {
             if (((PsiReferenceExpression)element).resolve() == methodToRename) {
+              final PsiElement parent = element.getParent();
+              LOG.assertTrue(parent instanceof PsiMethodCallExpression, parent.getText());
               final PsiMethodCallExpression copy = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(element.getProject())
-                .createExpressionFromText(element.getParent().getText(), element);
+                .createExpressionFromText(parent.getText(), element);
               final PsiReferenceExpression expression = (PsiReferenceExpression)processRef(copy.getMethodExpression(), newName);
               if (expression == null) continue;
               final JavaResolveResult resolveResult = expression.advancedResolve(true);

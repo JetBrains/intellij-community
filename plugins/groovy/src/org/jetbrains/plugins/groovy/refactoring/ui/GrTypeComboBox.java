@@ -111,10 +111,10 @@ public class GrTypeComboBox extends ComboBox {
     }
   }
 
-  public void addClosureTypesFrom(PsiType type, PsiElement context) {
+  public void addClosureTypesFrom(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiType cl;
-    if (type == null) {
+    if (type == null || type == PsiType.NULL) {
       cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context);
     }
     else {

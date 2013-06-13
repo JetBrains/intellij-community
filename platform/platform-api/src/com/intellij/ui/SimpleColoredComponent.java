@@ -48,6 +48,8 @@ import java.util.Locale;
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
 public class SimpleColoredComponent extends JComponent implements Accessible {
+  private static final boolean isOracleRetina = UIUtil.isRetina() && SystemInfo.isOracleJvm;
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
   public static final Color SHADOW_COLOR = new JBColor(new Color(250, 250, 250, 140), Gray._0.withAlpha(50));
@@ -362,6 +364,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     if (insets != null) {
       width += insets.left + insets.right;
       height += insets.top + insets.bottom;
+    }
+
+    if (isOracleRetina) {
+      width++; //todo[kb] remove when IDEA-108760 will be fixed
     }
 
     return new Dimension(width, height);

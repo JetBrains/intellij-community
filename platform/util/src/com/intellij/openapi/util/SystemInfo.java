@@ -40,6 +40,9 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
+  public static final boolean isAppleJvm = isAppleJvm();
+  public static final boolean isOracleJvm = isOracleJvm();
+
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
@@ -215,5 +218,15 @@ public class SystemInfo extends SystemInfoRt {
   /** @deprecated use {@linkplain SystemProperties#getIntProperty(String, int)} (to remove in IDEA 13) */
   public static int getIntProperty(@NotNull final String key, final int defaultValue) {
     return SystemProperties.getIntProperty(key, defaultValue);
+  }
+
+  private static boolean isOracleJvm() {
+    final String vendor = SystemProperties.getJavaVmVendor();
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Oracle");
+  }
+
+  private static boolean isAppleJvm() {
+    final String vendor = SystemProperties.getJavaVmVendor();
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple");
   }
 }

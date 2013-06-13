@@ -99,7 +99,14 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
       
-      PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+      PsiElement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiLambdaExpression.class);
+      if (statement instanceof PsiLambdaExpression) {
+        PsiElement body = ((PsiLambdaExpression)statement).getBody();
+        if (body != null && PsiTreeUtil.isAncestor(body, element, false)) {
+          statement = body;
+        }
+      }
+
       return statement != null && statement.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }
   }

@@ -413,18 +413,32 @@ public class AnnotationsHighlightUtil {
           }
 
           @Override
+          public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+            super.visitClassObjectAccessExpression(expression);
+            final PsiTypeElement operand = expression.getOperand();
+            final PsiClass classType = PsiUtil.resolveClassInType(operand.getType());
+            if (classType != null) {
+              checkAccessibility(expression, classType, HighlightUtil.formatClass(classType));
+            }
+          }
+
+          @Override
           public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement resolve = expression.resolve();
-            if (resolve instanceof PsiField &&
-                ((PsiMember)resolve).hasModifierProperty(PsiModifier.PRIVATE) &&
+            if (resolve instanceof PsiField) {
+              checkAccessibility(expression, (PsiMember)resolve, HighlightUtil.formatField((PsiField)resolve));
+            }
+          }
+
+          private void checkAccessibility(PsiExpression expression, PsiMember resolve, String memberString) {
+            if (resolve.hasModifierProperty(PsiModifier.PRIVATE) &&
                 PsiTreeUtil.isAncestor(parent, resolve, true)) {
               String description = JavaErrorMessages.message("private.symbol",
-                                                             HighlightUtil.formatField((PsiField)resolve),
+                                                             memberString,
                                                              HighlightUtil.formatClass((PsiClass)parent));
-              HighlightInfo result =
+              infos[0] =
                 HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-              infos[0] = result;
             }
           }
         });

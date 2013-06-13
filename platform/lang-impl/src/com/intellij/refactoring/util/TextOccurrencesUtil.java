@@ -29,7 +29,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PairProcessor;
@@ -145,7 +147,7 @@ public class TextOccurrencesUtil {
       offset = text.indexOf(stringToSearch, offset);
       if (offset < 0) break;
       final PsiReference referenceAt = scope.findReferenceAt(offset);
-      if (!ignoreReferences && referenceAt != null && referenceAt.resolve() != null) continue;
+      if (!ignoreReferences && referenceAt != null && (referenceAt.resolve() != null || (referenceAt instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)referenceAt).multiResolve(true).length > 0))) continue;
 
       if (offset > 0) {
         char c = text.charAt(offset - 1);

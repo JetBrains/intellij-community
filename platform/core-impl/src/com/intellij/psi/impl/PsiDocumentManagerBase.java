@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -640,14 +641,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
       commitNecessary = true;
     }
-    boolean fromRefresh = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
 
-    if (commitNecessary) {
-      myUncommittedDocuments.add(document);
-      if (!fromRefresh && !((DocumentEx)document).isInBulkUpdate()) {
-        myDocumentCommitProcessor.commitAsynchronously(myProject, document, event);
-      }
-    }
+    boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&
+                          (SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false) ||
+                           ApplicationManager.getApplication().isHeadlessEnvironment()
+                          );
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
     // current document lines number is roughly above 5000. This makes sense in situations when external change is performed
@@ -656,8 +654,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
     }
 
-    if (commitNecessary && fromRefresh) {
-      commitDocument(document);
+    if (commitNecessary) {
+      myUncommittedDocuments.add(document);
+      if (forceCommit) {
+        commitDocument(document);
+      } else if (!((DocumentEx)document).isInBulkUpdate()) {
+        myDocumentCommitProcessor.commitAsynchronously(myProject, document, event);
+      }
     }
   }
 

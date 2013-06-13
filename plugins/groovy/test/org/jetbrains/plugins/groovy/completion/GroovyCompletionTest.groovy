@@ -15,6 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.completion
+
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -26,8 +27,8 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -1119,13 +1120,28 @@ class X {
 public class KeyVO {
   { this.fo<caret>x }
   static void foo() {}
+  static void foox() {}
 }
 """);
     myFixture.complete(CompletionType.BASIC, 1)
-    assert !myFixture.lookupElementStrings
-    myFixture.complete(CompletionType.BASIC, 2)
-    assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
+    assertOrderedEquals(myFixture.lookupElementStrings, ['foo', 'foox'])
   }
+
+  public void testPreferInstanceMethodViaInstanceSecond() {
+    myFixture.configureByText("a.groovy", """
+public class KeyVO {
+  { this.fo<caret>x }
+  static void foo() {}
+  static void foox() {}
+
+  void fooy() {}
+  void fooz() {}
+}
+""");
+    myFixture.complete(CompletionType.BASIC, 1)
+    assertOrderedEquals(myFixture.lookupElementStrings, ['fooy', 'fooz'])
+  }
+
 
   public void testNoRepeatingModifiers() {
     myFixture.configureByText 'a.groovy', 'class A { public static <caret> }'

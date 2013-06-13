@@ -34,6 +34,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -44,8 +45,8 @@ import java.util.*;
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
 
-  public OfflineInspectionRVContentProvider(final Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
-                                            final Project project) {
+  public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
+                                            @NotNull Project project) {
     super(project);
     myContent = content;
   }
@@ -135,7 +136,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   @Nullable
   @SuppressWarnings({"UnusedAssignment"})
-  private Map<String, Set<OfflineProblemDescriptor>> getFilteredContent(final InspectionTool tool) {
+  private Map<String, Set<OfflineProblemDescriptor>> getFilteredContent(@NotNull InspectionTool tool) {
     Map<String, Set<OfflineProblemDescriptor>> content = myContent.get(tool.getShortName());
     if (content == null) return null;
     if (tool.getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {

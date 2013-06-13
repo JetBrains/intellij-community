@@ -515,7 +515,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   }
 
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
-    private StrictUnreferencedFilter(final InspectionTool tool) {
+    private StrictUnreferencedFilter(@NotNull InspectionTool tool) {
       super(tool);
     }
 

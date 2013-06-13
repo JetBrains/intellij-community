@@ -72,7 +72,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.*;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -2199,7 +2202,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         if (hEnd >= lEnd) {
           FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
-          if (collapsedFolderAt == null || collapsedFolderAt.getEndOffset() == lEnd) {
+          if (collapsedFolderAt == null) {
             position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
                                                      defaultBackground, clip, softWrapsToSkip, caretRowPainted);
 
@@ -2221,6 +2224,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (position.y > clip.y + clip.height) break;
             position.y += lineHeight;
             start = lEnd;
+          }
+          else if (collapsedFolderAt.getEndOffset() == end) {
+            softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
+            if (softWrap != null) {
+              position.x = drawSoftWrapAwareBackground(
+                g, backColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
+                defaultBackground, clip, softWrapsToSkip, caretRowPainted
+              );
+            }
+            char[] chars = collapsedFolderAt.getPlaceholderText().toCharArray();
+            position.x = drawBackground(g, backColor, chars, 0, chars.length, position, fontType, defaultBackground, clip);
           }
 
           lIterator.advance();
@@ -4388,9 +4402,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.setColor(myScheme.getColor(EditorColors.CARET_COLOR));
 
       if (!paintBlockCaret()) {
-        for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
-          UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
+        if (UIUtil.isRetina()) {
+          g.fillRect(x, y, mySettings.getLineCursorWidth(), lineHeight);
+        } else {
+          for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
+            UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
+          }
         }
+
       }
       else {
         Color caretColor = myScheme.getColor(EditorColors.CARET_COLOR);

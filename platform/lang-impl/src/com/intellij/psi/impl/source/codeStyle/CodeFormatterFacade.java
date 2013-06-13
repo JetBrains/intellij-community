@@ -399,7 +399,7 @@ public class CodeFormatterFacade {
         return;
       }
       editorFactory = EditorFactory.getInstance();
-      editor = editorFactory.createEditor(document);
+      editor = editorFactory.createEditor(document, file.getProject());
     }
     try {
       final Editor editorToUse = editor;
@@ -441,6 +441,9 @@ public class CodeFormatterFacade {
       tabSize = 1;
     }
     int spaceSize = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
+    int[] shifts = new int[2];
+    // shifts[0] - lines shift.
+    // shift[1] - offset shift.
 
     for (int line = startLine; line < maxLine; line++) {
       int startLineOffset = document.getLineStartOffset(line);
@@ -470,10 +473,11 @@ public class CodeFormatterFacade {
 
       // Move caret to the target position and emulate pressing <enter>.
       editor.getCaretModel().moveToOffset(wrapOffset);
-      int addedLinesNumber = emulateEnter(editor, project);
+      emulateEnter(editor, project, shifts);
 
       // We know that number of lines is just increased, hence, update the data accordingly.
-      maxLine += addedLinesNumber;
+      maxLine += shifts[0];
+      endOffsetToUse += shifts[1];
     }
   }
 
@@ -481,9 +485,12 @@ public class CodeFormatterFacade {
    * Emulates pressing <code>Enter</code> at current caret position.
    *
    * @param editor       target editor
-   * @return             number of lines added during <code>Enter</code> processing
+   * @param project      target project
+   * @param shifts       two-elements array which is expected to be filled with the following info:
+   *                       1. The first element holds added lines number;
+   *                       2. The second element holds added symbols number;  
    */
-  private static int emulateEnter(@NotNull final Editor editor, @NotNull Project project) {
+  private static void emulateEnter(@NotNull final Editor editor, @NotNull Project project, int[] shifts) {
     final DataContext dataContext = prepareContext(editor.getComponent(), project);
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
@@ -518,8 +525,8 @@ public class CodeFormatterFacade {
     finally {
       DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, null);
     }
+    int symbolsDiff = document.getTextLength() - textLengthBeforeWrap;
     if (restoreSelection) {
-      int symbolsDiff = document.getTextLength() - textLengthBeforeWrap;
       int newSelectionStart = startSelectionOffset;
       int newSelectionEnd = endSelectionOffset;
       if (startSelectionOffset >= caretOffset) {
@@ -530,7 +537,8 @@ public class CodeFormatterFacade {
       }
       selectionModel.setSelection(newSelectionStart, newSelectionEnd);
     }
-    return document.getLineCount() - lineCountBeforeWrap;
+    shifts[0] = document.getLineCount() - lineCountBeforeWrap;
+    shifts[1] = symbolsDiff;
   }
 
   /**

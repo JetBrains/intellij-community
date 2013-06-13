@@ -31,4 +31,11 @@ public class RestartInfoAction extends AnAction implements DumbAware {
       app.restart();
     }
   }
+
+  @Override
+  public void update(AnActionEvent e) {
+    boolean restartCapable = ApplicationManager.getApplication().isRestartCapable();
+    e.getPresentation().setEnabled(restartCapable);
+    e.getPresentation().setVisible(restartCapable);
+  }
 }

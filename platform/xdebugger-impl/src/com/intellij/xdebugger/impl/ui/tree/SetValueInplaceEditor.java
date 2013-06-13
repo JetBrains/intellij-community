@@ -18,10 +18,10 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myValueNode.setValueModificationStarted();
     myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
       public void valueModified() {
-        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+        AppUIUtil.invokeOnEdt(new Runnable() {
           public void run() {
             myTree.rebuildAndRestore(treeState);
           }
@@ -80,14 +80,15 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
       }
 
       public void errorOccurred(@NotNull final String errorMessage) {
-        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+        AppUIUtil.invokeOnEdt(new Runnable() {
           public void run() {
             myTree.rebuildAndRestore(treeState);
 
             Editor editor = myExpressionEditor.getEditor();
             if (editor != null) {
               HintManager.getInstance().showErrorHint(editor, errorMessage);
-            } else {
+            }
+            else {
               Messages.showErrorDialog(myTree, errorMessage);
             }
           }

@@ -21,12 +21,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.WindowManager;
@@ -200,6 +202,13 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
         };
         myHolder.addScopeListener(myScopeListener);
         myLocalScopesHolder.addScopeListener(myScopeListener);
+        Disposer.register(myProject, new Disposable() {
+          @Override
+          public void dispose() {
+              myHolder.removeScopeListener(myScopeListener);
+              myLocalScopesHolder.removeScopeListener(myScopeListener);
+          }
+        });
       }
     });
   }
@@ -230,8 +239,6 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
       app.executeOnPooledThread(cleanupInspectionProfilesRunnable);
     }
     HighlightingSettingsPerFile.getInstance(myProject).cleanProfileSettings();
-    myHolder.removeScopeListener(myScopeListener);
-    myLocalScopesHolder.removeScopeListener(myScopeListener);
   }
 
   @NotNull

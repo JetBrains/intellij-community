@@ -51,6 +51,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.CheckBoxList;
@@ -68,10 +69,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -80,6 +79,12 @@ import java.util.Set;
 public class ExternalSystemUtil {
 
   private static final Logger LOG = Logger.getInstance("#" + ExternalSystemUtil.class.getName());
+  
+  @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
+  static {
+    RUNNER_IDS.put(ToolWindowId.RUN, ExternalSystemConstants.RUNNER_ID);
+    RUNNER_IDS.put(ToolWindowId.DEBUG, ExternalSystemConstants.DEBUG_RUNNER_ID);
+  }
 
   private ExternalSystemUtil() {
   }
@@ -173,7 +178,7 @@ public class ExternalSystemUtil {
       @NotNull
       private final Set<String> myExternalModuleNames = ContainerUtilRt.newHashSet();
       private int myCounter = projectsSettings.size();
-      
+
       @Override
       public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
         if (externalProject == null) {
@@ -368,7 +373,11 @@ public class ExternalSystemUtil {
     if (executor == null) {
       return;
     }
-    ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(executorId);
+    String runnerId = getRunnerId(executorId);
+    if (runnerId == null) {
+      return;
+    }
+    ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(runnerId);
     if (runner == null) {
       return;
     }
@@ -431,6 +440,11 @@ public class ExternalSystemUtil {
     assert manager != null;
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
     settings.setRecentTasks(recentTasksList.getModel().getTasks());
+  }
+
+  @Nullable
+  public static String getRunnerId(@NotNull String executorId) {
+    return RUNNER_IDS.get(executorId);
   }
   
   private interface TaskUnderProgress {

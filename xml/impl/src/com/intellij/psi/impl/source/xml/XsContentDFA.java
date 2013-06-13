@@ -25,7 +25,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ErrorReporter;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.SubstitutionGroupHandler;
 import org.apache.xerces.impl.xs.XSComplexTypeDecl;
@@ -183,7 +184,7 @@ class XsContentDFA extends XmlContentDFA {
         return parser;
       }
     };
-    handler.setErrorReporter(handler.new ErrorReporter() {
+    handler.setErrorReporter(new ErrorReporter(handler) {
 
       int count;
       @Override

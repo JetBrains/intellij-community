@@ -39,7 +39,7 @@ public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties {
     }
 
   @Override
-  public GlobalSearchScope getScope() {
+  protected GlobalSearchScope initScope() {
     return myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration).getLibrariesScope();
   }
 }

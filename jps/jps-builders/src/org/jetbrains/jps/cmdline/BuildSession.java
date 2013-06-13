@@ -95,7 +95,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myInitialFSDelta = delta;
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null);
-    myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildMain.FORCE_MODEL_LOADING_PARAMETER.toString()));
+    myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
     myBuildRunner = new BuildRunner(loader, filePaths, builderParams);
   }
 

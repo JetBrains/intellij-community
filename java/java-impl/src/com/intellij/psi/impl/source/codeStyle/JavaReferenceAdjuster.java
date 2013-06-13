@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -35,20 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaReferenceAdjuster implements ReferenceAdjuster {
-  private final boolean myUseFqClassNamesInJavadoc;
-  private final boolean myUseFqClassNames;
-
-  public JavaReferenceAdjuster(boolean useFqInJavadoc, boolean useFqInCode) {
-    myUseFqClassNamesInJavadoc = useFqInJavadoc;
-    myUseFqClassNames = useFqInCode;
-  }
-
-  public JavaReferenceAdjuster(CodeStyleSettings settings) {
-    this(settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
-  }
-
   @Override
-  public ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode) {
+  public ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode) {
     IElementType elementType = element.getElementType();
     if ((elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) && !isAnnotated(element)) {
       IElementType parentType = element.getTreeParent().getElementType();
@@ -60,7 +49,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         if (parameterList != null) {
           PsiTypeElement[] typeParameters = parameterList.getTypeParameterElements();
           for (PsiTypeElement typeParameter : typeParameters) {
-            process(typeParameter.getNode(), addImports, incompleteCode);
+            process(typeParameter.getNode(), addImports, incompleteCode, useFqInJavadoc, useFqInCode);
           }
         }
 
@@ -73,7 +62,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         if (rightKind) {
           boolean isInsideDocComment = TreeUtil.findParent(element, JavaDocElementType.DOC_COMMENT) != null;
           boolean isShort = !ref.isQualified();
-          if (!makeFQ(isInsideDocComment)) {
+          if (isInsideDocComment ? !useFqInJavadoc : !useFqInCode) {
             if (isShort) return element; // short name already, no need to change
           }
 
@@ -89,7 +78,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
 
           if (refElement instanceof PsiClass) {
             PsiClass psiClass = (PsiClass)refElement;
-            if (makeFQ(isInsideDocComment)) {
+            if (isInsideDocComment ? useFqInJavadoc : useFqInCode) {
               String qName = psiClass.getQualifiedName();
               if (qName == null) return element;
 
@@ -116,7 +105,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
               if (treeElement.getTextLength() == oldLength && psiClass.getContainingClass() != null) {
                 PsiElement qualifier = ref.getQualifier();
                 if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
-                  process(qualifier.getNode(), addImports, incompleteCode);
+                  process(qualifier.getNode(), addImports, incompleteCode, useFqInJavadoc, useFqInCode);
                 }
               }
               return treeElement;
@@ -128,10 +117,16 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
 
     for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       //noinspection AssignmentToForLoopParameter
-      child = process(child, addImports, incompleteCode);
+      child = process(child, addImports, incompleteCode, useFqInJavadoc, useFqInCode);
     }
 
     return element;
+  }
+
+  @Override
+  public ASTNode process(ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    return process(element, addImports, incompleteCode, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }
 
   private static boolean isAnnotated(ASTNode element) {
@@ -154,19 +149,21 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     return false;
   }
 
-  private boolean makeFQ(boolean isInsideDocComment) {
-    return isInsideDocComment ? myUseFqClassNamesInJavadoc : myUseFqClassNames;
-  }
-
   @Override
-  public void processRange(ASTNode element, int startOffset, int endOffset) {
+  public void processRange(ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode) {
     List<ASTNode> array = new ArrayList<ASTNode>();
     addReferencesInRange(array, element, startOffset, endOffset);
     for (ASTNode ref : array) {
       if (ref.getPsi().isValid()) {
-        process(ref, true, true);
+        process(ref, true, true, useFqInJavadoc, useFqInCode);
       }
     }
+  }
+
+  @Override
+  public void processRange(ASTNode element, int startOffset, int endOffset, Project project) {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    processRange(element, startOffset, endOffset, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }
 
   private static void addReferencesInRange(List<ASTNode> array, ASTNode parent, int startOffset, int endOffset) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -43,7 +43,7 @@ public class GrVariableInplaceRenamer extends VariableInplaceRenamer {
       final PsiType type = ((ClosureSyntheticParameter)elementToRename).getTypeGroovy();
       final GrParameter newParam = factory.createParameter(newName, TypesUtil.unboxPrimitiveTypeWrapper(type));
       final GrParameter added = closure.addParameter(newParam);
-      GrReferenceAdjuster.shortenReferences(added);
+      JavaCodeStyleManager.getInstance(added.getProject()).shortenClassReferences(added);
     }
   }
 }

@@ -42,7 +42,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Lambda code block can be replaced with expression";
+    return "Statement lambda can be replaced with expression lambda";
   }
 
   @Override
@@ -74,7 +74,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
             } else {
               errorElement = body.getFirstChild();
             }
-            holder.registerProblem(errorElement, "Lambda code block can be replaced with one line expression",
+            holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
           }
         }
@@ -111,7 +111,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
     @NotNull
     @Override
     public String getName() {
-      return "Replace with one line expression";
+      return "Replace with expression lambda";
     }
 
     @NotNull

@@ -71,7 +71,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public void addInternalResource(@NonNls String resource, @Nullable @NonNls String version, @NonNls String fileName, @Nullable Class clazz) {
-    addStdResource(resource, version, ExternalResourceManagerImpl.STANDARD_SCHEMAS + fileName, clazz);
+    addStdResource(resource, version, ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName, clazz);
   }
 
   public Map<String, Map<String, ExternalResourceManagerImpl.Resource>> getResources() {

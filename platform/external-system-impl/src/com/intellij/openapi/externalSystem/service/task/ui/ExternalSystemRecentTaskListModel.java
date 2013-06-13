@@ -38,15 +38,14 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
 
   public void setFirst(@NotNull ExternalTaskExecutionInfo task) {
     insertElementAt(task, 0);
+    if (size() > 1) {
+      remove(size() - 1);
+    }
     for (int i = 1; i < size(); i++) {
       if (task.equals(getElementAt(i))) {
         remove(i);
         return;
       }
-    }
-
-    if (size() > 1) {
-      remove(size() - 1);
     }
   }
 

@@ -199,7 +199,8 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return LangBundle.message("java.terms.of.anonymous.class", formatted);
     }
     else {
-      String className = aClass.getName();
+      final String qualifiedName = aClass.getQualifiedName();
+      final String className = qualifiedName != null ? qualifiedName : aClass.getName();
       if (aClass.isInterface()) {
         return LangBundle.message("java.terms.of.interface", formatted, className);
       }

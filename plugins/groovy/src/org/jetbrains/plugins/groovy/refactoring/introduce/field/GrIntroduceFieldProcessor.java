@@ -19,12 +19,12 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -88,7 +88,7 @@ public class GrIntroduceFieldProcessor {
         break;
     }
 
-    GrReferenceAdjuster.shortenReferences(declaration);
+    JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
 
     if (settings.removeLocalVar()) {
       GrIntroduceHandlerBase.deleteLocalVar(context);
@@ -300,7 +300,7 @@ public class GrIntroduceFieldProcessor {
     }
 
     if (replaced instanceof GrQualifiedReference<?>) {
-      GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)replaced);
+      org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)replaced);
     }
     if (isOriginal) {
       updateCaretPosition(replaced);

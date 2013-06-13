@@ -23,14 +23,12 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.lang.UrlClassLoader;
@@ -53,8 +51,6 @@ import java.util.*;
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
   public static final char VFS_PATH_SEPARATOR = '/';
-
-  public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
@@ -265,65 +261,7 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  @Nullable
-  public static VirtualFile findRelativeFile(@NotNull String uri, @Nullable VirtualFile base) {
-    if (base != null) {
-      if (!base.isValid()){
-        LOG.error("Invalid file name: " + base.getName() + ", url: " + uri);
-      }
-    }
-
-    uri = uri.replace('\\', '/');
-
-    if (uri.startsWith("file:///")) {
-      uri = uri.substring("file:///".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
-    }
-    else if (uri.startsWith("file:/")) {
-      uri = uri.substring("file:/".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
-    }
-    else if (uri.startsWith("file:")) {
-      uri = uri.substring("file:".length());
-    }
-
-    VirtualFile file = null;
-
-    if (uri.startsWith("jar:file:/")) {
-      uri = uri.substring("jar:file:/".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
-      file = VirtualFileManager.getInstance().findFileByUrl(JarFileSystem.PROTOCOL_PREFIX + uri);
-    }
-    else {
-      if (!SystemInfo.isWindows && StringUtil.startsWithChar(uri, '/')) {
-        file = LocalFileSystem.getInstance().findFileByPath(uri);
-      }
-      else if (SystemInfo.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
-        file = LocalFileSystem.getInstance().findFileByPath(uri);
-      }
-    }
-
-    if (file == null && uri.contains(JarFileSystem.JAR_SEPARATOR)) {
-      file = JarFileSystem.getInstance().findFileByPath(uri);
-      if (file == null && base == null) {
-        file = VirtualFileManager.getInstance().findFileByUrl(uri);
-      }
-    }
-
-    if (file == null) {
-      if (base == null) return LocalFileSystem.getInstance().findFileByPath(uri);
-      if (!base.isDirectory()) base = base.getParent();
-      if (base == null) return LocalFileSystem.getInstance().findFileByPath(uri);
-      file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
-      if (file == null) return null;
-    }
-
-    return file;
-  }
-
   @NonNls private static final String MAILTO = "mailto";
-  private static final String PROTOCOL_DELIMITER = ":";
 
   /**
    * Searches for the file specified by given java,net.URL.
@@ -401,34 +339,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static String convertFromUrl(@NotNull URL url) {
-    String protocol = url.getProtocol();
-    String path = url.getPath();
-    if (protocol.equals(StandardFileSystems.JAR_PROTOCOL)) {
-      if (StringUtil.startsWithConcatenationOf(path, StandardFileSystems.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
-        try {
-          URL subURL = new URL(path);
-          path = subURL.getPath();
-        }
-        catch (MalformedURLException e) {
-          throw new RuntimeException(VfsBundle.message("url.parse.unhandled.exception"), e);
-        }
-      }
-      else {
-        throw new RuntimeException(new IOException(VfsBundle.message("url.parse.error", url.toExternalForm())));
-      }
-    }
-    if (SystemInfo.isWindows || SystemInfo.isOS2) {
-      while (!path.isEmpty() && path.charAt(0) == '/') {
-        path = path.substring(1, path.length());
-      }
-    }
-
-    path = URLUtil.unescapePercentSequences(path);
-    return protocol + "://" + path;
-  }
-
-  @NotNull
   public static IFile virtualToIFile(@NotNull VirtualFile file) {
     return FileSystem.FILE_SYSTEM.createFile(PathUtil.toPresentableUrl(file.getUrl()));
   }
@@ -453,67 +363,8 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static String fixIDEAUrl(@NotNull String ideaUrl ) {
-    int idx = ideaUrl.indexOf("://");
-    if( idx >= 0 ) {
-      String s = ideaUrl.substring(0, idx);
-
-      if (s.equals(JarFileSystem.PROTOCOL)) {
-        //noinspection HardCodedStringLiteral
-        s = "jar:file";
-      }
-      ideaUrl = s+":/"+ideaUrl.substring(idx+3);
-    }
-    return ideaUrl;
-  }
-
-  @NotNull
-  public static String fixURLforIDEA(@NotNull String url) {
-    // removeLocalhostPrefix - false due to backward compatibility reasons
-    return toIdeaUrl(url, false);
-  }
-
-  @NotNull
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
-  }
-
-  @NotNull
-  public static String toIdeaUrl(@NotNull String url, boolean removeLocalhostPrefix) {
-    int index = url.indexOf(":/");
-    if (index < 0 || (index + 2) >= url.length()) {
-      return url;
-    }
-
-    if (url.charAt(index + 2) != '/') {
-      String prefix = url.substring(0, index);
-      String suffix = url.substring(index + 2);
-
-      if (SystemInfoRt.isWindows) {
-        return prefix + "://" + suffix;
-      }
-      else if (removeLocalhostPrefix && prefix.equals(StandardFileSystems.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
-        // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
-        return prefix + ":///" + suffix.substring(LOCALHOST_URI_PATH_PREFIX.length());
-      }
-      else {
-        return prefix + ":///" + suffix;
-      }
-    }
-    else if (url.charAt(index + 3) == '/' && SystemInfoRt.isWindows && url.regionMatches(0, LocalFileSystem.PROTOCOL_PREFIX, 0, LocalFileSystem.PROTOCOL_PREFIX.length())) {
-      // file:///C:/test/file.js -> file://C:/test/file.js
-      for (int i = index + 4; i < url.length(); i++) {
-        char c = url.charAt(i);
-        if (c == '/') {
-          break;
-        }
-        else if (c == ':') {
-          return LocalFileSystem.PROTOCOL_PREFIX + url.substring(index + 4);
-        }
-      }
-      return url;
-    }
-    return url;
   }
 
   /**

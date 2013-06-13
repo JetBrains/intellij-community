@@ -51,10 +51,17 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
 
     dialog.setWorkDirectory(lastWorkingDirectory);
 
+    if (historyService.getCanceledCommand() != null) {
+      dialog.setGoals(historyService.getCanceledCommand());
+    }
+
     dialog.show();
     if (!dialog.isOK()) {
+      historyService.setCanceledCommand(dialog.getGoals());
       return;
     }
+
+    historyService.setCanceledCommand(null);
 
     String goals = dialog.getGoals();
     goals = goals.trim();

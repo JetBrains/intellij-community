@@ -97,30 +97,20 @@ public abstract class SourceScope {
   public static SourceScope modulesWithDependencies(final Module[] modules) {
     if (modules == null || modules.length == 0) return null;
     return new ModuleSourceScope(modules[0].getProject()) {
-
-      private GlobalSearchScope myGlobalSearchScope;
-      private GlobalSearchScope myLibScope;
-
       public GlobalSearchScope getGlobalSearchScope() {
-        if (myGlobalSearchScope == null) {
-          myGlobalSearchScope = evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-            public GlobalSearchScope evaluate(final Module module) {
-              return GlobalSearchScope.moduleWithDependenciesScope(module);
-            }
-          });
-        }
-        return myGlobalSearchScope;
+        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
+          public GlobalSearchScope evaluate(final Module module) {
+            return GlobalSearchScope.moduleWithDependenciesScope(module);
+          }
+        });
       }
 
       public GlobalSearchScope getLibrariesScope() {
-        if (myLibScope == null) {
-          myLibScope = evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-            public GlobalSearchScope evaluate(final Module module) {
-              return new ModuleWithDependenciesAndLibsDependencies(module);
-            }
-          });
-        }
-        return myLibScope;
+        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
+          public GlobalSearchScope evaluate(final Module module) {
+            return new ModuleWithDependenciesAndLibsDependencies(module);
+          }
+        });
       }
 
       public Module[] getModulesToCompile() {
@@ -145,30 +135,20 @@ public abstract class SourceScope {
   public static SourceScope modules(final Module[] modules) {
     if (modules == null || modules.length == 0) return null;
     return new ModuleSourceScope(modules[0].getProject()) {
-
-      private GlobalSearchScope myLibScope;
-      private GlobalSearchScope myGlobalSearchScope;
-
       public GlobalSearchScope getGlobalSearchScope() {
-        if (myGlobalSearchScope == null) {
-          myGlobalSearchScope = evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-            public GlobalSearchScope evaluate(final Module module) {
-              return GlobalSearchScope.moduleScope(module);
-            }
-          });
-        }
-        return myGlobalSearchScope;
+        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
+          public GlobalSearchScope evaluate(final Module module) {
+            return GlobalSearchScope.moduleScope(module);
+          }
+        });
       }
 
       public GlobalSearchScope getLibrariesScope() {
-        if (myLibScope == null) {
-          myLibScope = evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-            public GlobalSearchScope evaluate(final Module module) {
-              return GlobalSearchScope.moduleWithLibrariesScope(module);
-            }
-          });
-        }
-        return myLibScope;
+        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
+          public GlobalSearchScope evaluate(final Module module) {
+            return GlobalSearchScope.moduleWithLibrariesScope(module);
+          }
+        });
       }
 
       public Module[] getModulesToCompile() {

@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +45,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   public String myAdditionalRequiredHtmlAttributes = "";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection");
-  @NonNls public static final String SHORT_NAME = "RequiredAttributes";
-  @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(SHORT_NAME);
+  @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
 
   @Override
   @NotNull
@@ -63,7 +63,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   @NotNull
   @NonNls
   public String getShortName() {
-    return SHORT_NAME;
+    return REQUIRED_ATTRIBUTES_SHORT_NAME;
   }
 
   @Override
@@ -94,19 +94,28 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
     return panel;
   }
 
-  @Override
-  public IntentionAction getIntentionAction(String name, int type) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, type);
+  public IntentionAction getIntentionAction(String name) {
+    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlBundle.message("add.optional.html.attribute", name));
   }
 
   @Override
-  public String getAdditionalEntries(int type) {
+  public String getAdditionalEntries() {
     return myAdditionalRequiredHtmlAttributes;
   }
 
   @Override
-  public void setAdditionalEntries(int type, String additionalEntries) {
-    myAdditionalRequiredHtmlAttributes = additionalEntries;
+  public void addEntry(String text) {
+    myAdditionalRequiredHtmlAttributes = appendName(getAdditionalEntries(), text);
+  }
+
+  private static String appendName(String toAppend, String text) {
+    if (toAppend.length() > 0) {
+      toAppend += "," + text;
+    }
+    else {
+      toAppend = text;
+    }
+    return toAppend;
   }
 
   @Override

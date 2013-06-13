@@ -76,7 +76,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
       if (refMethod.isAppMain()) return null;
 
-      final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+      final List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
 
       if (unusedParameters.isEmpty()) return null;
 
@@ -111,14 +111,14 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     }
 
     final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(project);
-    final AnalysisScope scope = ((RefManagerImpl)manager).getScope();
+    final AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
           final PsiModifierListOwner element = refMethod.getElement();
-          if (element instanceof PsiMethod) { //implicit construcors are invisible
+          if (element instanceof PsiMethod) { //implicit constructors are invisible
             PsiMethod psiMethod = (PsiMethod)element;
             if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
               final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);

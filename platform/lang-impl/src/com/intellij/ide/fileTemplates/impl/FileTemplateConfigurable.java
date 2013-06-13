@@ -49,6 +49,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -101,6 +102,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();;
   private Splitter mySplitter;
   private final FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
+  private JPanel myDescriptionPanel;
 
   public FileTemplateConfigurable() {
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
@@ -180,13 +182,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
     myTopPanel = new JPanel(new GridBagLayout());
 
-    JPanel secondPanel = new JPanel(new GridBagLayout());
-    secondPanel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.description"), null),
-                    new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                           new Insets(0, 0, 2, 0), 0, 0));
-    secondPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionComponent),
-                    new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                           new Insets(2, 0, 0, 0), 0, 0));
+    myDescriptionPanel = new JPanel(new GridBagLayout());
+    myDescriptionPanel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.description"), null),
+                           new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                  new Insets(0, 0, 2, 0), 0, 0));
+    myDescriptionPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionComponent),
+                           new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                                  new Insets(2, 0, 0, 0), 0, 0));
 
     myMainPanel.add(myTopPanel,
                     new GridBagConstraints(0, 0, 4, 1, 1.0, 0.0, GridBagConstraints.CENTER,
@@ -198,7 +200,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(2, 0, 0, 0), 0, 0));
 
-    mySplitter.setSecondComponent(secondPanel);
+    mySplitter.setSecondComponent(myDescriptionPanel);
     setShowInternalMessage(null);
 
     myNameField.addFocusListener(new FocusAdapter() {
@@ -360,6 +362,8 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myDescriptionComponent.setText(desc);
     myDescriptionComponent.setCaretPosition(0);
     myDescriptionComponent.setEditable(false);
+    
+    myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     myNameField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
     myExtensionField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));

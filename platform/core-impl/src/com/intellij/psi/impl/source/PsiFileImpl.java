@@ -192,6 +192,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       LOG.error("Access to tree elements not allowed in tests. path='" + viewProvider.getVirtualFile().getPresentableUrl()+"'");
     }
 
+    Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(getViewProvider().getVirtualFile());
+
     final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
     FileElement treeElement = createFileElement(viewProvider.getContents());
     if (document != null) {
@@ -199,7 +201,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     treeElement.setPsi(this);
 
-    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement);
+    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument);
 
     synchronized (PsiLock.LOCK) {
       FileElement existing = derefTreeElement();
@@ -258,7 +260,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  private List<Pair<StubBasedPsiElementBase, CompositeElement>> calcStubAstBindings(final ASTNode root) {
+  private List<Pair<StubBasedPsiElementBase, CompositeElement>> calcStubAstBindings(final ASTNode root, final Document cachedDocument) {
     final StubTree stubTree = derefStub();
     if (stubTree == null) {
       return Collections.emptyList();
@@ -281,13 +283,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         IElementType type = node.getElementType();
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
           if (!stubs.hasNext()) {
-            reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree);
+            reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree, cachedDocument);
           }
 
           final StubElement stub = stubs.next();
           if (stub.getStubType() != node.getElementType()) {
             reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
-                                  node.getElementType() + "; " + node, stubTree);
+                                  node.getElementType() + "; " + node, stubTree, cachedDocument);
           }
 
           PsiElement psi = stub.getPsi();
@@ -299,17 +301,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
     });
     if (stubs.hasNext()) {
-      reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree);
+      reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree, cachedDocument);
     }
     return result;
   }
 
-  private void reportStubAstMismatch(String message, StubTree stubTree) {
+  private void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
     String msg = message;
     msg += "\n file=" + this;
     msg += "\n name=" + getName();
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
+    msg += "\n document before=" + cachedDocument;
 
     FileViewProvider viewProvider = getViewProvider();
     msg += "\n viewProvider=" + viewProvider;

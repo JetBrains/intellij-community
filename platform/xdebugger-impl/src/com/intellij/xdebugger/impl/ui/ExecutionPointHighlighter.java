@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -50,15 +51,15 @@ public class ExecutionPointHighlighter {
 
   public void show(final @NotNull XSourcePosition position, final boolean useSelection,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
-    DebuggerUIUtil.invokeOnEventDispatchIfProjectNotDisposed(new Runnable() {
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
       public void run() {
         doShow(position, useSelection, gutterIconRenderer);
       }
-    }, myProject);
+    });
   }
 
   public void hide() {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       public void run() {
         doHide();
       }
@@ -81,7 +82,7 @@ public class ExecutionPointHighlighter {
   }
 
   public void updateGutterIcon(@NotNull final GutterIconRenderer renderer) {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
         if (myRangeHighlighter != null && myGutterIconRenderer != null) {

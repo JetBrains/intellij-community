@@ -25,12 +25,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -95,7 +95,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
       GroovyChangeContextUtil.decodeContextInfo(((GrMethod)member).getParameterList(), null, null);
     }
 
-    GrReferenceAdjuster.shortenReferences(member);
+    JavaCodeStyleManager.getInstance(member.getProject()).shortenClassReferences(member);
 
     adjustDocCommentIfExists(member);
   }

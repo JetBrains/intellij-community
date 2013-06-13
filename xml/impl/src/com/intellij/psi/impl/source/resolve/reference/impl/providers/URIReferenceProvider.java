@@ -15,30 +15,18 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,43 +51,8 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return true;
     }
   };
-  @NonNls private static final String URN = "urn:";
-  @NonNls private static final String FILE = "file:";
-  @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls
   private static final String NAMESPACE_ATTR_NAME = "namespace";
-
-  public static class DependentNSReference extends BasicAttributeValueReference implements QuickFixProvider {
-    private final URLReference myReference;
-
-    public DependentNSReference(final PsiElement element, TextRange range, URLReference ref) {
-      super(element, range);
-      myReference = ref;
-    }
-
-    @Nullable
-    public PsiElement resolve() {
-      final String canonicalText = getCanonicalText();
-      final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getContainingFile(), null);
-      if (file != null) return file;
-      return myReference.resolve();
-    }
-
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    public boolean isSoft() {
-      return false;
-    }
-
-    public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-      QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
-      QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
-      QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
-    }
-  }
 
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
@@ -122,7 +75,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         String url = tokenizer.nextToken();
 
         offset = text.indexOf(url);
-        if (isUrlText(url, element.getProject())) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), urlReference));
+        if (XmlUtil.isUrlText(url, element.getProject())) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), urlReference));
         else {
           ContainerUtil.addAll(refs, new FileReferenceSet(url, element, offset, this, false).getAllReferences());
         }
@@ -132,7 +85,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     }
 
 
-    if (isUrlText(s, element.getProject()) ||
+    if (XmlUtil.isUrlText(s, element.getProject()) ||
         (parent instanceof XmlAttribute &&
           ( ((XmlAttribute)parent).isNamespaceDeclaration() ||
             NAMESPACE_ATTR_NAME.equals(((XmlAttribute)parent).getName())
@@ -150,22 +103,8 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       }
     }
 
-    s = s.substring(getPrefixLength(s));
+    s = s.substring(XmlUtil.getPrefixLength(s));
     return new FileReferenceSet(s,element,text.indexOf(s), this,true).getAllReferences();
   }
 
-  public static int getPrefixLength(@NotNull final String s) {
-    if (s.startsWith(XmlUtil.TAG_DIR_NS_PREFIX)) return XmlUtil.TAG_DIR_NS_PREFIX.length();
-    if (s.startsWith(FILE)) return FILE.length();
-    if (s.startsWith(CLASSPATH)) return CLASSPATH.length();
-    return 0;
-  }
-
-  static boolean isUrlText(final String s, Project project) {
-    final boolean surelyUrl = HtmlUtil.hasHtmlPrefix(s) || s.startsWith(URN);
-    if (surelyUrl) return surelyUrl;
-    int protocolIndex = s.indexOf(":/");
-    if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
-    return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
-  }
 }

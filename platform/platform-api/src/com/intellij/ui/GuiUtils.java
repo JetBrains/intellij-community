@@ -54,6 +54,7 @@ public class GuiUtils {
 
   public static final int lengthForFileField = 25;
   private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = new CharFilter() {
+    @Override
     public boolean accept(char ch) {
       return ch != '&' && ch != UIUtil.MNEMONIC;
     }
@@ -80,6 +81,7 @@ public class GuiUtils {
 
   public static JPanel constructDirectoryBrowserField(final JTextField aTextField, final String aSearchedObjectName) {
     return constructFieldWithBrowseButton(aTextField, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(aSearchedObjectName);
         VirtualFile file = FileChooser.chooseFile(descriptor, aTextField, null, null);
@@ -94,6 +96,7 @@ public class GuiUtils {
   public static JPanel constructFileURLBrowserField(final TextFieldWithHistory aFieldWithHistory,
                                                     final String aSearchedObjectName) {
     return constructFieldWithBrowseButton(aFieldWithHistory, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getFileChooserDescriptor(aSearchedObjectName);
         VirtualFile file = FileChooser.chooseFile(descriptor, aFieldWithHistory, null, null);
@@ -237,6 +240,7 @@ public class GuiUtils {
       if (pane.getDividerLocation() > 0) {
 // let the component chance to resize itself
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             double proportion;
             if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
@@ -308,6 +312,7 @@ public class GuiUtils {
 
   public static void enableChildren(Component container, final boolean enabled, JComponent... excludeComponents) {
     iterateChildren(container, new Consumer<Component>() {
+      @Override
       public void consume(final Component t) {
         enableComponent(t, enabled);
       }

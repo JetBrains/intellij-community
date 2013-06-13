@@ -76,7 +76,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException("Corrupted file '" + vFile.getPath() + "': " + e.getMessage(), e);
+      LOG.info(e); // content can be not cached yet, and the file can be deleted on disk already, without refresh
     }
 
     return null;
@@ -107,7 +107,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
       }
       ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
-      tree.setDebugInfo("created from index, index creation stamp=" + IndexInfrastructure.getIndexCreationStamp(StubUpdatingIndex.INDEX_ID)/* + "; index stamp=" + IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID)*/);
+      tree.setDebugInfo("created from index: " + StubUpdatingIndex.getIndexingStampInfo(vFile));
       return tree;
     }
     else if (size != 0) {

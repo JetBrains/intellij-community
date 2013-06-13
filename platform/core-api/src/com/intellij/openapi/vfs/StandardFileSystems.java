@@ -25,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class StandardFileSystems {
   public static String FILE_PROTOCOL = "file";
+  public static String FILE_PROTOCOL_PREFIX = "file://";
   public static String JAR_PROTOCOL = "jar";
+  public static String JAR_PROTOCOL_PREFIX = "jar://";
   public static String JAR_SEPARATOR = "!/";
   public static String HTTP_PROTOCOL = "http";
 

@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -46,9 +45,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author Dmitry Avdeev
@@ -81,7 +81,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   public XmlCompletionContributor() {
     extend(CompletionType.BASIC,
-           PlatformPatterns.psiElement().inside(XmlPatterns.xmlAttributeValue()),
+           psiElement().inside(XmlPatterns.xmlAttributeValue()),
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -156,11 +156,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
     if (reference != null && !namespace.isEmpty() && !namespacePrefix.isEmpty()) {
       // fallback to simple completion
-      final Set<LookupElement> set = new HashSet<LookupElement>();
-      new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
-      for (final LookupElement item : set) {
-        result.addElement(item);
-      }
+      result.runRemainingContributors(parameters, true);
     }
     else {
 
@@ -210,5 +206,4 @@ public class XmlCompletionContributor extends CompletionContributor {
       context.setDummyIdentifier("");
     }
   }
-
 }

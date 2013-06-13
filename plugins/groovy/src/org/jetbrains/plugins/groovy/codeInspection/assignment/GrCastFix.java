@@ -22,10 +22,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -86,7 +86,7 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
     cast.getCastTypeElement().replace(typeElement);
 
     final GrExpression replaced = expr.replaceWithExpression(cast, true);
-    GrReferenceAdjuster.shortenReferences(replaced);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
   }
 
   @NotNull

@@ -18,13 +18,13 @@ package org.jetbrains.plugins.groovy.intentions.other;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
@@ -60,7 +60,7 @@ public class GrCreateMissingSwitchBranchesIntention extends Intention {
 
       element.addBefore(factory.createLineTerminator(1), anchor);
 
-      GrReferenceAdjuster.shortenReferences(added);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(added);
     }
   }
 

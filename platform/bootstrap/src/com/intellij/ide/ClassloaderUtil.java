@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -44,76 +43,33 @@ import java.util.regex.Pattern;
 public class ClassloaderUtil extends ClassUtilCore {
   @NonNls public static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String ERROR = "Error";
-
   private ClassloaderUtil() {}
 
   public static Logger getLogger() {
     return Logger.getInstance("ClassloaderUtil");
   }
 
-  public static UrlClassLoader initClassloader(final List<URL> classpathElements) {
+  public static UrlClassLoader initClassloader(final List<URL> classpathElements) throws Exception {
     PathManager.loadProperties();
 
-    try {
-      addParentClasspath(classpathElements);
-      addIDEALibraries(classpathElements);
-      addAdditionalClassPath(classpathElements);
-    }
-    catch (IllegalArgumentException e) {
-      if (Main.isHeadless()) {
-        getLogger().error(e);
-      } else {
-        JOptionPane
-          .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), ERROR, JOptionPane.INFORMATION_MESSAGE);
-      }
-      System.exit(1);
-    }
-    catch (MalformedURLException e) {
-      if (Main.isHeadless()) {
-        getLogger().error(e.getMessage());
-      } else {
-        JOptionPane
-          .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), ERROR, JOptionPane.INFORMATION_MESSAGE);
-      }
-      System.exit(1);
-    }
+    addParentClasspath(classpathElements);
+    addIDEALibraries(classpathElements);
+    addAdditionalClassPath(classpathElements);
 
     filterClassPath(classpathElements);
+    UrlClassLoader newClassLoader = new UrlClassLoader(classpathElements, null, true, true);
 
-    UrlClassLoader newClassLoader = null;
-    try {
-      newClassLoader = new UrlClassLoader(classpathElements, null, true, true);
-
-      // prepare plugins
-      if (!isLoadingOfExternalPluginsDisabled()) {
-        try {
-          StartupActionScriptManager.executeActionScript();
-        }
-        catch (IOException e) {
-          final String errorMessage = "Error executing plugin installation script: " + e.getMessage();
-          if (Main.isHeadless()) {
-            System.out.println(errorMessage);
-          } else {
-            JOptionPane
-              .showMessageDialog(JOptionPane.getRootFrame(), errorMessage, ERROR, JOptionPane.INFORMATION_MESSAGE);
-          }
-        }
+    // prepare plugins
+    if (!isLoadingOfExternalPluginsDisabled()) {
+      try {
+        StartupActionScriptManager.executeActionScript();
       }
-
-      Thread.currentThread().setContextClassLoader(newClassLoader);
-
-    }
-    catch (Exception e) {
-      Logger logger = getLogger();
-      if (logger == null) {
-        e.printStackTrace(System.err);
-      }
-      else {
-        logger.error(e);
+      catch (IOException e) {
+        Main.showMessage("Plugin Installation Error", e);
       }
     }
+
+    Thread.currentThread().setContextClassLoader(newClassLoader);
     return newClassLoader;
   }
 

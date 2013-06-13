@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 
 /**
@@ -40,7 +40,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull private final VirtualFile myHgDir;
 
   @NotNull private volatile String myCurrentBranch = DEFAULT_BRANCH;
-  @NotNull private volatile List<String> myBranches = Collections.emptyList();
+  @NotNull private volatile Collection<String> myBranches = Collections.emptySet();
   private boolean myIsFresh = true;
 
 
@@ -84,7 +84,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @Override
   @NotNull
-  public List<String> getBranches() {
+  public Collection<String> getBranches() {
     return myBranches;
   }
 
@@ -98,7 +98,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   public void update() {
     readRepository();
     if (!Disposer.isDisposed(getProject())) {
-      getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
+      getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
   }
 

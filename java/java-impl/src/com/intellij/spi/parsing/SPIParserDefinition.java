@@ -27,9 +27,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.spi.psi.SPIPackElement;
-import com.intellij.spi.psi.SPIProviderElement;
-import com.intellij.spi.psi.SPIProvidersElementList;
+import com.intellij.spi.psi.SPIClassProviderReferenceElement;
+import com.intellij.spi.psi.SPIClassProvidersElementList;
+import com.intellij.spi.psi.SPIPackageOrClassReferenceElement;
 import com.intellij.spi.psi.SPIFile;
 import com.intellij.lang.spi.SPILanguage;
 import org.jetbrains.annotations.NotNull;
@@ -95,13 +95,13 @@ public class SPIParserDefinition implements ParserDefinition {
   public PsiElement createElement(ASTNode node) {
     final IElementType elementType = node.getElementType();
     if (elementType == SPIElementTypes.PROVIDERS_LIST) {
-      return new SPIProvidersElementList(node);
+      return new SPIClassProvidersElementList(node);
     }
     if (elementType == SPIElementTypes.PROVIDER) {
-      return new SPIProviderElement(node);
+      return new SPIClassProviderReferenceElement(node);
     }
     if (elementType == SPIElementTypes.PACK) {
-      return new SPIPackElement(node);
+      return new SPIPackageOrClassReferenceElement(node);
     }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }

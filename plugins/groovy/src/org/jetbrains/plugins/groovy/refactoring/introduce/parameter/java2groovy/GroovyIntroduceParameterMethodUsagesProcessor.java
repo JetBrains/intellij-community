@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +38,6 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -128,7 +128,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
       //newArg can be replaced by OldReferenceResolver
       if (newArg.isValid()) {
-        GrReferenceAdjuster.shortenReferences(newArg);
+        JavaCodeStyleManager.getInstance(newArg.getProject()).shortenClassReferences(newArg);
         CodeStyleManager.getInstance(data.getProject()).reformat(newArg);
       }
     }
@@ -259,7 +259,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     final PsiParameter anchorParameter = getAnchorParameter(method);
     final GrParameterList parameterList = method.getParameterList();
     parameter = (GrParameter)parameterList.addAfter(parameter, anchorParameter);
-    GrReferenceAdjuster.shortenReferences(parameter);
+    JavaCodeStyleManager.getInstance(parameter.getProject()).shortenClassReferences(parameter);
     final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
     javaDocHelper.addParameterAfter(data.getParameterName(), tagForAnchorParameter);
 

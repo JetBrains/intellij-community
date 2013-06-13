@@ -75,13 +75,32 @@ public class CompleteReferenceExpression {
   private CompleteReferenceExpression() {
   }
 
-  public static void processVariants(PrefixMatcher matcher, Consumer<LookupElement> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
+  public static void processVariants(PrefixMatcher matcher,
+                                     final Consumer<LookupElement> consumer,
+                                     GrReferenceExpressionImpl refExpr,
+                                     CompletionParameters parameters) {
     processRefInAnnotation(refExpr, matcher, consumer);
 
-    final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
+    final int[] count = new int[]{0};
+    final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        count[0]++;
+        consumer.consume(element);
+      }
+    }, matcher, parameters);
+
     getVariantsImpl(refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
-    for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(candidates, JavaClassNameCompletionContributor.AFTER_NEW.accepts(refExpr), matcher, refExpr)) {
+    List<LookupElement> results =
+      GroovyCompletionUtil.getCompletionVariants(candidates,
+                                                 JavaClassNameCompletionContributor.AFTER_NEW.accepts(refExpr), matcher, refExpr);
+
+    if (count[0] == 0 && results.size() == 0) {
+      results = GroovyCompletionUtil.getCompletionVariants(processor.getInapplicableResults(),
+                                                           JavaClassNameCompletionContributor.AFTER_NEW.accepts(refExpr), matcher, refExpr);
+    }
+    for (LookupElement o : results) {
       consumer.consume(o);
     }
   }
@@ -389,16 +408,22 @@ public class CompleteReferenceExpression {
     private final Consumer<LookupElement> myConsumer;
     private final PrefixMatcher myMatcher;
     private final CompletionParameters myParameters;
-    private Collection<String> myPreferredFieldNames;
+
     private final boolean mySkipPackages;
     private final PsiClass myEventListener;
+    private final boolean myMethodPointerOperator;
+    private final boolean myFieldPointerOperator;
+    private final boolean myIsMap;
+
+    private final SubstitutorComputer mySubstitutorComputer;
+
+    private Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
     private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
-    private final boolean myFieldPointerOperator;
-    private final boolean myMethodPointerOperator;
-    private final boolean myIsMap;
-    private final SubstitutorComputer mySubstitutorComputer;
+
+    private List<GroovyResolveResult> myInapplicable;
+    private GroovyResolveResult[] myInapplicableResults;
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<LookupElement> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -456,8 +481,13 @@ public class CompleteReferenceExpression {
       }
 
       GroovyResolveResult result = (GroovyResolveResult)o;
-      if (!result.isStaticsOK()) return;
+      if (!result.isStaticsOK()) {
+        if (myInapplicable == null) myInapplicable = ContainerUtil.newArrayList();
+        myInapplicable.add(result);
+        return;
+      }
       if (!result.isAccessible() && myParameters.getInvocationCount() < 2) return;
+
       if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
 
       PsiElement element = result.getElement();
@@ -570,6 +600,11 @@ public class CompleteReferenceExpression {
         list.add(result);
       }
       return list.toArray(new GroovyResolveResult[list.size()]);
+    }
+
+    private List<GroovyResolveResult> getInapplicableResults() {
+      if (myInapplicable == null) return Collections.emptyList();
+      return myInapplicable;
     }
   }
 }

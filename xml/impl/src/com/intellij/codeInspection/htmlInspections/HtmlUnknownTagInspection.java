@@ -57,12 +57,11 @@ import java.util.StringTokenizer;
 /**
  * @author spleaner
  */
-public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
+public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection");
 
   public JDOMExternalizableStringList myValues;
   public boolean myCustomValuesEnabled = true;
-  @NonNls public static final String TAG_SHORT_NAME = "HtmlUnknownTag";
   public static final Key<HtmlUnknownTagInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
 
   public HtmlUnknownTagInspection() {
@@ -186,7 +185,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
     return myValues.contains(value.toLowerCase());
   }
 
-  public void addCustomPropertyName(@NotNull final String text) {
+  public void addEntry(@NotNull final String text) {
     final String s = text.trim().toLowerCase();
     if (!isCustomValue(s)) {
       myValues.add(s);
@@ -236,7 +235,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
         final AddCustomTagOrAttributeIntentionAction action =
-          new AddCustomTagOrAttributeIntentionAction(TAG_KEY, name, XmlEntitiesInspection.UNKNOWN_TAG);
+          new AddCustomTagOrAttributeIntentionAction(TAG_KEY, name, XmlBundle.message("add.custom.html.tag", name));
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)

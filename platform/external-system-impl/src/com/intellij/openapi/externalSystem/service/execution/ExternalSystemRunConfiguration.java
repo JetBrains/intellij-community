@@ -107,17 +107,17 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
     return new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId());
   }
 
+  @SuppressWarnings("deprecation")
   @Nullable
   @Override
   public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-    // TODO den implement
     return null;
   }
 
+  @SuppressWarnings("deprecation")
   @Nullable
   @Override
   public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
-    // TODO den implement
     return null;
   }
 
@@ -129,7 +129,6 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    // TODO den implement
   }
   
   public static class MyRunnableState implements RunnableState {

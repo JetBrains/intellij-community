@@ -54,7 +54,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(@NotNull Project project, AnalysisScope scope) {
+  protected void analyze(@NotNull Project project, @NotNull AnalysisScope scope) {
     try {
       scope.setSearchInLibraries(false);
       FileDocumentManager.getInstance().saveAllDocuments();

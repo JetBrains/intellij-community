@@ -29,6 +29,7 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,12 +49,14 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -62,6 +65,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -70,6 +74,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.HideableTitledPanel;
 import com.intellij.util.*;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -124,6 +130,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Runnable               myFinishProgress;
   private boolean myAllowHeavyFilters = false;
   private final int myFlushDelay = DEFAULT_FLUSH_DELAY;
+
+  private boolean mySpareTimeUpdateStarted = false;
 
   public Editor getEditor() {
     return myEditor;
@@ -733,14 +741,31 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
-      final int lineCount = LineTokenizer.calcLineCount(text, true);
-      for (Iterator<RangeHighlighter> it = myHyperlinks.getHyperlinks().keySet().iterator(); it.hasNext();) {
-        if (!it.next().isValid()) {
-          it.remove();
-        }
+      clearHyperlinkAndFoldings();
+      if (!mySpareTimeUpdateStarted) {
+        mySpareTimeUpdateStarted = true;
+        final EditorNotificationPanel comp = new EditorNotificationPanel() {
+          {
+            myLabel.setIcon(AllIcons.General.ExclMark);
+            myLabel.setText("Too many output to process");
+          }
+        };
+        add(comp, BorderLayout.NORTH);
+        performWhenNoDeferredOutput(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              myHyperlinks.clearHyperlinks();
+              clearHyperlinkAndFoldings();
+              highlightHyperlinksAndFoldings(0, document.getLineCount() - 1);
+            }
+            finally {
+              mySpareTimeUpdateStarted = false;
+              remove(comp);
+            }
+          }
+        });
       }
-      cancelHeavyAlarm();
-      highlightHyperlinksAndFoldings(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
     }
     else if (oldLineCount < newLineCount) {
       highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
@@ -749,6 +774,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (isAtEndOfDocument) {
       EditorUtil.scrollToTheEnd(myEditor);
     }
+  }
+
+  private void clearHyperlinkAndFoldings() {
+    for (Iterator<RangeHighlighter> it = myHyperlinks.getHyperlinks().keySet().iterator(); it.hasNext();) {
+      if (!it.next().isValid()) {
+        it.remove();
+      }
+    }
+
+    myPendingFoldRegions.clear();
+    myFolding.clear();
+    myFoldingAlarm.cancelAllRequests();
+
+    cancelHeavyAlarm();
   }
 
   private void cancelHeavyAlarm() {

@@ -103,17 +103,17 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
   @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
   private static final String DEFAULT_VERSION = null;
-  @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
   }
 
-  public static boolean isStandardResource(VirtualFile file) {
+  public boolean isStandardResource(VirtualFile file) {
     VirtualFile parent = file.getParent();
     return parent != null && parent.getName().equals("standardSchemas");
   }
 
+  @Override
   public boolean isUserResource(VirtualFile file) {
     return myResourceLocations.contains(file.getUrl());
   }
@@ -159,9 +159,9 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   @Override
   @Nullable
-  public String getUserResourse(Project project, String url, String version) {
-    String resourse = getProjectResources(project).getUserResource(url, version);
-    return resourse == null ? getUserResource(url, version) : resourse;
+  public String getUserResource(Project project, String url, String version) {
+    String resource = getProjectResources(project).getUserResource(url, version);
+    return resource == null ? getUserResource(url, version) : resource;
   }
 
   @Override
