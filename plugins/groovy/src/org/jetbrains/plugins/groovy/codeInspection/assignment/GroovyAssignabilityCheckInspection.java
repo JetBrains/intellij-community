@@ -75,6 +75,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
@@ -122,7 +123,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {
-    private void checkAssignability(@NotNull PsiType expectedType, @NotNull GrExpression expression, PsiElement toHightlight) {
+    private void checkAssignability(@NotNull PsiType expectedType, @NotNull GrExpression expression, PsiElement toHighlight) {
       if (PsiUtil.isRawClassMemberAccess(expression)) return;
       if (checkForImplicitEnumAssigning(expectedType, expression, expression)) return;
       final PsiType rType = expression.getType();
@@ -131,9 +132,21 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (!TypesUtil.isAssignable(expectedType, rType, expression)) {
         final LocalQuickFix[] fixes = {new GrCastFix(expectedType)};
         final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText());
-        registerError(toHightlight, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        registerError(toHighlight, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }
+
+    private void checkAssignability(@NotNull PsiType lType,
+                                    @Nullable PsiType rType,
+                                    @NotNull GroovyPsiElement context,
+                                    @NotNull final PsiElement elementToHighlight) {
+      if (rType == null) return;
+      if (!TypesUtil.isAssignable(lType, rType, context)) {
+        final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), lType.getPresentableText());
+        registerError(elementToHighlight, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
+    }
+
 
     private boolean checkForImplicitEnumAssigning(PsiType expectedType, GrExpression expression, GroovyPsiElement element) {
       if (!(expectedType instanceof PsiClassType)) return false;
@@ -308,11 +321,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         }
       }
       else if (parent instanceof GrForInClause) {
-        PsiType iteratedType = PsiUtil.extractIteratedType((GrForInClause)parent);
+        GrExpression iterated = ((GrForInClause)parent).getIteratedExpression();
+        if (iterated == null) return;
+
+        PsiType iteratedType = ClosureParameterEnhancer.findTypeForIteration(iterated, parent);
         if (iteratedType == null) return;
 
-        GrExpression iteratedExpression = ((GrForInClause)parent).getIteratedExpression();
-        checkAssignability(varType, iteratedType, iteratedExpression, variable.getNameIdentifierGroovy());
+        checkAssignability(varType, iteratedType, iterated, variable.getNameIdentifierGroovy());
         return;
       }
 
@@ -346,17 +361,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
 
       checkAssignability(varType, initializer, variable.getNameIdentifierGroovy());
-    }
-
-    private void checkAssignability(@NotNull PsiType lType,
-                                    @Nullable PsiType rType,
-                                    @NotNull GroovyPsiElement context,
-                                    @NotNull final PsiElement elementToHighlight) {
-      if (rType == null) return;
-      if (!TypesUtil.isAssignable(lType, rType, context)) {
-        final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), lType.getPresentableText());
-        registerError(elementToHighlight, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      }
     }
 
     private static boolean isNewInstanceInitialingByTuple(GrExpression initializer) {
