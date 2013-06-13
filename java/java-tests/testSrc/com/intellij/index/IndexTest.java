@@ -1,8 +1,20 @@
 package com.intellij.index;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.indexing.MapIndexStorage;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -168,6 +180,37 @@ public class IndexTest extends IdeaTestCase {
   
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
     assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
+  }
+
+  public void _testCollectedPsiWithChangedDocument() throws IOException {
+    VirtualFile dir = getVirtualFile(createTempDirectory());
+    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+    
+    final VirtualFile vFile = createChildData(dir, "Foo.java");
+    VfsUtil.saveText(vFile, "class Foo {}");
+
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    assertNotNull(facade.findClass("Foo", scope));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+        assertNotNull(psiFile);
+        
+        Document document = FileDocumentManager.getInstance().getDocument(vFile);
+        document.deleteString(0, document.getTextLength());
+        assertNotNull(facade.findClass("Foo", scope));
+        
+        psiFile = null;
+        PlatformTestUtil.tryGcSoftlyReachableObjects();
+        assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
+
+        // should be assertNull(facade.findClass("Foo", scope));
+        // or the file should not be allowed to be gc'ed
+        facade.findClass("Foo", scope).getText();
+      }
+    });
   }
   
 }
