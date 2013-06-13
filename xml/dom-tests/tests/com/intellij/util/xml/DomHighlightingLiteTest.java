@@ -34,7 +34,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.MockSchemesManagerFactory;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.impl.DefaultDomAnnotator;
-import com.intellij.util.xml.impl.DomTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

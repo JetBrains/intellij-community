@@ -22,7 +22,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.ui.DomUIFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

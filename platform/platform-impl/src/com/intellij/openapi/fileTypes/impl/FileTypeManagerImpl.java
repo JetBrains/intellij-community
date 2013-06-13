@@ -149,12 +149,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     };
 
-    for (FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
+    for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
       try {
         factory.createFileTypes(consumer);
       }
-      catch (Throwable t) {
-        PluginManager.handleComponentError(t, factory.getClass().getName(), null);
+      catch (final Error ex) {
+        PluginManager.disableIncompatiblePlugin(factory, ex);
       }
     }
   }
@@ -191,6 +191,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
 
         return null;
+
       }
 
       @Override
@@ -217,6 +218,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
 
         return new Document(root);
+
       }
 
       @Override

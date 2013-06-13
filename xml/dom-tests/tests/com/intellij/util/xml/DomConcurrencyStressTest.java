@@ -28,7 +28,6 @@ import com.intellij.semantic.SemService;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.xml.impl.DomFileElementImpl;
-import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtenderEP;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;

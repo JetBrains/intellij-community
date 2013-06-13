@@ -21,7 +21,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ParameterizedTypeImpl;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTestCase;
 import com.intellij.util.xml.SubTag;
 import com.intellij.util.xml.events.DomEvent;
 

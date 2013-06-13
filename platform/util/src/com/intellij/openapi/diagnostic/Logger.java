@@ -26,21 +26,15 @@ public abstract class Logger {
     Logger getLoggerInstance(String category);
   }
 
-  private static class DefaultFactory implements Factory {
+  public static Factory ourFactory = new Factory() {
     @Override
     public Logger getLoggerInstance(String category) {
       return new DefaultLogger(category);
     }
-  }
-
-  public static Factory ourFactory = new DefaultFactory();
+  };
 
   public static void setFactory(Factory factory) {
     ourFactory = factory;
-  }
-
-  public static boolean isInitialized() {
-    return !(ourFactory instanceof DefaultFactory);
   }
 
   public static Logger getInstance(@NonNls String category) {
@@ -54,28 +48,8 @@ public abstract class Logger {
   public abstract boolean isDebugEnabled();
 
   public abstract void debug(@NonNls String message);
-
   public abstract void debug(@Nullable Throwable t);
-
   public abstract void debug(@NonNls String message, @Nullable Throwable t);
-
-  public void info(@NotNull Throwable t) {
-    info(t.getMessage(), t);
-  }
-
-  public abstract void info(@NonNls String message);
-
-  public abstract void info(@NonNls String message, @Nullable Throwable t);
-
-  public void warn(@NonNls String message) {
-    warn(message, null);
-  }
-
-  public void warn(@NotNull Throwable t) {
-    warn(t.getMessage(), t);
-  }
-
-  public abstract void warn(@NonNls String message, @Nullable Throwable t);
 
   public void error(@NonNls String message) {
     error(message, new Throwable(), ArrayUtil.EMPTY_STRING_ARRAY);
@@ -96,7 +70,26 @@ public abstract class Logger {
     error(t.getMessage(), t, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
+  public void warn(@NonNls String message) {
+    warn(message, null);
+  }
+
+  public void warn(@NotNull Throwable t) {
+    warn(t.getMessage(), t);
+  }
+
+
   public abstract void error(@NonNls String message, @Nullable Throwable t, @NonNls @NotNull String... details);
+
+  public abstract void info(@NonNls String message);
+
+  public abstract void info(@NonNls String message, @Nullable Throwable t);
+
+  public abstract void warn(@NonNls String message, @Nullable Throwable t);
+
+  public void info(@NotNull Throwable t) {
+    info(t.getMessage(), t);
+  }
 
   public boolean assertTrue(boolean value, @NonNls Object message) {
     if (!value) {
@@ -114,4 +107,5 @@ public abstract class Logger {
   }
 
   public abstract void setLevel(Level level);
+
 }

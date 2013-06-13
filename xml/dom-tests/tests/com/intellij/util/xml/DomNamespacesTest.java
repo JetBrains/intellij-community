@@ -20,7 +20,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomFileElementImpl;
-import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 
 import java.util.List;

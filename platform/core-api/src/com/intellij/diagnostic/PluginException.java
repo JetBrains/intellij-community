@@ -19,8 +19,11 @@ import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * @author stathik
- * @since Jan 8, 2004
+ * Created by IntelliJ IDEA.
+ * User: stathik
+ * Date: Jan 8, 2004
+ * Time: 3:06:43 PM
+ * To change this template use Options | File Templates.
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.impl;
+package com.intellij.util.xml;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,8 +25,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.impl.DomApplicationComponent;
+import com.intellij.util.xml.impl.DomFileElementImpl;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +87,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
     return element;
   }
 
-  public static <T extends DomElement> T createElement(final DomManager domManager, final String xml, final Class<T> aClass)
+  protected static <T extends DomElement> T createElement(final DomManager domManager, final String xml, final Class<T> aClass)
     throws IncorrectOperationException {
     final String name = "a.xml";
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(domManager.getProject()).createFileFromText(name, xml);

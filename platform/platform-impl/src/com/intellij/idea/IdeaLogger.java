@@ -44,6 +44,7 @@ public class IdeaLogger extends Logger {
 
   public static String ourLastActionId = "";
 
+  private final org.apache.log4j.Logger myLogger;
   /** If not null - it means that errors occurred and it is the first of them. */
   public static Exception ourErrorsOccurred;
 
@@ -58,23 +59,24 @@ public class IdeaLogger extends Logger {
   static {
     InputStream stream = Logger.class.getResourceAsStream(COMPILATION_TIMESTAMP_RESOURCE_NAME);
     if (stream != null) {
+      LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
       try {
-        LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
-        try {
-          String s = reader.readLine();
-          if (s != null) {
-            ourCompilationTimestamp = s.trim();
-          }
-        }
-        finally {
-          reader.close();
+        String s = reader.readLine();
+        if (s != null) {
+          ourCompilationTimestamp = s.trim();
         }
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
+      finally {
+        try {
+          stream.close();
+        }
+        catch (IOException ignored) {
+        }
+      }
     }
   }
-
-  private final org.apache.log4j.Logger myLogger;
 
   IdeaLogger(org.apache.log4j.Logger logger) {
     myLogger = logger;
@@ -132,6 +134,9 @@ public class IdeaLogger extends Logger {
 
     myLogger.error(message + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
     logErrorHeader();
+    if (t != null && t.getCause() != null) {
+      myLogger.error("Original exception: ", t.getCause());
+    }
   }
 
   private void logErrorHeader() {
