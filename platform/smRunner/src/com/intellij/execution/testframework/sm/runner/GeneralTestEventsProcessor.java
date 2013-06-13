@@ -39,7 +39,6 @@ import javax.swing.*;
  * and name of test method
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
-  private boolean myDisposed = false;
   private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
     new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
       @Override
@@ -99,17 +98,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   public abstract void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
 
   @Override
-  public void dispose() {
-    myDisposed = true;
-  }
+  public void dispose() {}
 
   public Condition getDisposedCondition() {
-    return new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return myDisposed;
-      }
-    };
+    return Condition.FALSE;
   }
 
   /**
