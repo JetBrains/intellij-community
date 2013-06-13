@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -59,7 +59,7 @@ public class HgBranchPopupActions {
 
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
-    popupGroup.addAction(new NewBranchAction(myProject, Collections.singletonList(myRepository)));
+    popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository)));
 
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
@@ -76,14 +76,10 @@ public class HgBranchPopupActions {
     return popupGroup;
   }
 
-  static class NewBranchAction extends DumbAwareAction {
-    private final Project myProject;
-    private final List<HgRepository> myRepositories;
+  public static class HgNewBranchAction extends NewBranchAction<HgRepository> {
 
-    NewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories) {
-      super("New Branch", "Create and checkout new branch", IconUtil.getAddIcon());
-      myProject = project;
-      myRepositories = repositories;
+    HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories) {
+      super(project, repositories);
     }
 
     @Override
@@ -105,23 +101,6 @@ public class HgBranchPopupActions {
       catch (HgCommandException exception) {
         HgAbstractGlobalAction.handleException(myProject, exception);
       }
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      if (anyRepositoryIsFresh()) {
-        e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
-      }
-    }
-
-    private boolean anyRepositoryIsFresh() {
-      for (HgRepository repository : myRepositories) {
-        if (repository.isFresh()) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 

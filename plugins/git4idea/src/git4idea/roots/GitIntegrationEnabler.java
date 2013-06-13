@@ -31,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.dvcs.DvcsUtil.joinRootsPaths;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
-import static git4idea.util.GitUIUtil.joinRootsPaths;
 
 /**
  * @author Kirill Likhodedov

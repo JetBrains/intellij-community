@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -35,7 +36,6 @@ import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -275,9 +275,9 @@ class GitMergeOperation extends GitBranchOperation {
       }
     }
 
-    LOG.info("for smart rollback: " + GitUIUtil.getShortNames(repositoriesForSmartRollback) +
-             "; for simple rollback: " + GitUIUtil.getShortNames(repositoriesForSimpleRollback) +
-             "; for merge rollback: " + GitUIUtil.getShortNames(repositoriesForMergeRollback));
+    LOG.info("for smart rollback: " + DvcsUtil.getShortNames(repositoriesForSmartRollback) +
+             "; for simple rollback: " + DvcsUtil.getShortNames(repositoriesForSimpleRollback) +
+             "; for merge rollback: " + DvcsUtil.getShortNames(repositoriesForMergeRollback));
 
     GitCompoundResult result = smartRollback(repositoriesForSmartRollback);
     for (GitRepository repository : repositoriesForSimpleRollback) {

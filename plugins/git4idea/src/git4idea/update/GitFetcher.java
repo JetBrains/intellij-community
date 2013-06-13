@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -351,7 +352,7 @@ public class GitFetcher {
     StringBuilder info = new StringBuilder();
     if (myRepositoryManager.moreThanOneRoot()) {
       for (Map.Entry<VirtualFile, String> entry : additionalInfo.entrySet()) {
-        info.append(entry.getValue()).append(" in ").append(GitUIUtil.getShortRepositoryName(myProject, entry.getKey())).append("<br/>");
+        info.append(entry.getValue()).append(" in ").append(DvcsUtil.getShortRepositoryName(myProject, entry.getKey())).append("<br/>");
       }
     }
     else {
