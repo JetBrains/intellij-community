@@ -415,6 +415,22 @@
             icon="MavenIcons.ExecuteMavenGoal">
     </action>
 
+    <action id="Maven.GroupProjects"
+            class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
+            text="Group Modules"
+            description="Group projects according to Maven structure"
+            icon="AllIcons.Nodes.Folder"/>
+    <action id="Maven.ShowIgnored"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
+            text="Show Ignored Projects"
+            description="Show ignored projects"
+            icon="AllIcons.Actions.ShowHiddens"/>
+    <action id="Maven.ShowBasicPhasesOnly"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
+            text="Show Basic Phases Only"
+            description="Show basic phases only"
+            icon="AllIcons.General.Filter"/>
+
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
@@ -460,24 +476,6 @@
       <separator/>
       <reference id="Maven.ShowSettings"/>
       <reference id="Maven.Help"/>
-      <action id="Maven.GroupProjects"
-              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
-              text="Group Modules"
-              description="Group projects according to Maven structure"
-              secondary="true"
-              icon="AllIcons.Nodes.Folder"/>
-      <action id="Maven.ShowIgnored"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-              text="Show Ignored Projects"
-              description="Show ignored projects"
-              secondary="true"
-              icon="AllIcons.Actions.ShowHiddens"/>
-      <action id="Maven.ShowBasicPhasesOnly"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
-              text="Show Basic Phases Only"
-              description="Show basic phases only"
-              secondary="true"
-              icon="AllIcons.General.Filter"/>
     </group>
 
     <group id="Maven.DependencyMenu">
