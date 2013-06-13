@@ -143,7 +143,7 @@ public class XmlUtil {
   @NonNls public static final String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   @NonNls public static final String SCHEMA_LOCATION_ATT = "schemaLocation";
   @NonNls public static final String[] WEB_XML_URIS =
-    {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
+    {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://xmlns.jcp.org/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
 
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
