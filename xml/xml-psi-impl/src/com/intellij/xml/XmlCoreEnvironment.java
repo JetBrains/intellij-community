@@ -26,7 +26,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexers;
 import com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
 import com.intellij.psi.meta.MetaDataContributor;
-import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.xml.index.XmlNamespaceIndex;
@@ -57,7 +57,7 @@ public class XmlCoreEnvironment {
     appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, XmlFileType.INSTANCE, new XmlIdIndexer());
     appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, DTDFileType.INSTANCE, new XmlIdIndexer());
 
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlChildRole.EP_NAME, XmlChildRole.StartTagEndTokenProvider.class);
+    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSuppressionProvider.EP_NAME, XmlSuppressionProvider.class);
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlFileNSInfoProvider.EP_NAME, XmlFileNSInfoProvider.class);
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSchemaProvider.EP_NAME, XmlSchemaProvider.class);
