@@ -22,7 +22,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
         return;
       }
     }
-    final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
     if (module != null) {
       final RefModuleImpl refModule = (RefModuleImpl)refManager.getRefModule(module);
       if (refModule != null) {

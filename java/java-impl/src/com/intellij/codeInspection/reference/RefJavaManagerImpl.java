@@ -17,10 +17,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.EntryPointsManager;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -112,9 +109,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private static final UserDataCache<Ref<UnusedDeclarationInspection>, PsiFile, RefManagerImpl> DEAD_CODE_TOOL = new UserDataCache<Ref<UnusedDeclarationInspection>, PsiFile, RefManagerImpl>("DEAD_CODE_TOOL") {
     @Override
     protected Ref<UnusedDeclarationInspection> compute(PsiFile file, RefManagerImpl refManager) {
-      Tools tools = refManager.getContext().getTools().get(UnusedDeclarationInspection.SHORT_NAME);
-      InspectionProfileEntry tool = tools != null ? tools.getEnabledTool(file) : null;
-      if (tool instanceof InspectionToolWrapper) tool = ((InspectionToolWrapper)tool).getTool();
+      Tools tools = ((GlobalInspectionContextImpl)refManager.getContext()).getTools().get(UnusedDeclarationInspection.SHORT_NAME);
+      InspectionToolWrapper toolWrapper = tools != null ? (InspectionToolWrapper)tools.getEnabledTool(file) : null;
+      InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
       return Ref.create(tool instanceof UnusedDeclarationInspection ? (UnusedDeclarationInspection)tool : null);
     }
   };

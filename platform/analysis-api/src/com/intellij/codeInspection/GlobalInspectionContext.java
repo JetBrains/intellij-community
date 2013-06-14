@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.codeInspection.ex.StdJobDescriptors;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.project.Project;
@@ -78,4 +79,7 @@ public interface GlobalInspectionContext extends UserDataHolder {
   <T> T getExtension(Key<T> key);
 
   void incrementJobDoneAmount(JobDescriptor job, String message);
+
+  @NotNull
+  StdJobDescriptors getStdJobDescriptors();
 }

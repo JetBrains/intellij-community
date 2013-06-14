@@ -448,17 +448,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testInspection(String testDir, InspectionTool tool) {
+  public void testInspection(String testDir, @NotNull InspectionToolWrapper toolWrapper) {
     VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "src");
     AnalysisScope scope = new AnalysisScope(getPsiManager().findDirectory(sourceDir));
 
     scope.invalidate();
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, tool);
+    GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
 
-    InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
-    InspectionTestUtil.compareToolResults(tool, false, new File(getTestDataPath(), testDir).getPath());
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
+    InspectionTestUtil.compareToolResults(toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
   }
 
   public static GlobalInspectionContextImpl createGlobalContextForTool(AnalysisScope scope,
