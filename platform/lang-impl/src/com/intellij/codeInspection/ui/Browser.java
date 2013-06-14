@@ -512,7 +512,7 @@ class Browser extends JPanel {
             //CCE here means QuickFix was incorrectly inherited
             fix.applyFix(myView.getProject(), descriptor);
             if (startCount != tracker.getModificationCount()) {
-              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
+              final DescriptorProviderInspection tool = (DescriptorProviderInspection)myView.getTree().getSelectedTool();
               if (tool != null) {
                 tool.ignoreProblem(element, descriptor, idx);
               }

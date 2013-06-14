@@ -117,9 +117,12 @@ public class QuickFixAction extends AnAction {
   }
 
 
-  protected void applyFix(Project project, CommonProblemDescriptor[] descriptors, Set<PsiElement> ignoredElements) {}
-  private void doApplyFix(final Project project,
-                          final CommonProblemDescriptor[] descriptors) {
+  protected void applyFix(@NotNull Project project,
+                          @NotNull CommonProblemDescriptor[] descriptors,
+                          @NotNull Set<PsiElement> ignoredElements) {
+  }
+
+  private void doApplyFix(@NotNull final Project project, @NotNull final CommonProblemDescriptor[] descriptors) {
     final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
@@ -133,7 +136,7 @@ public class QuickFixAction extends AnAction {
       if (operationStatus.hasReadonlyFiles()) return;
     }
 
-    final RefManagerImpl refManager = ((RefManagerImpl)myTool.getContext().getRefManager());
+    final RefManagerImpl refManager = (RefManagerImpl)myTool.getContext().getRefManager();
 
     final boolean initial = refManager.isInProcess();
 
@@ -167,7 +170,7 @@ public class QuickFixAction extends AnAction {
   }
 
   public void doApplyFix(final RefElement[] refElements, InspectionResultsView view) {
-    final RefManagerImpl refManager = ((RefManagerImpl)myTool.getContext().getRefManager());
+    final RefManagerImpl refManager = (RefManagerImpl)myTool.getContext().getRefManager();
 
     final boolean initial = refManager.isInProcess();
 
@@ -294,19 +297,21 @@ public class QuickFixAction extends AnAction {
   }
 
   private class PerformFixesTask implements SequentialTask {
+    @NotNull
     private final Project myProject;
     private final CommonProblemDescriptor[] myDescriptors;
+    @NotNull
     private final Set<PsiElement> myIgnoredElements;
     private final SequentialModalProgressTask myTask;
     private int myCount = 0;
 
-    public PerformFixesTask(Project project,
-                            CommonProblemDescriptor[] descriptors,
-                            Set<PsiElement> elements,
-                            SequentialModalProgressTask task) {
+    public PerformFixesTask(@NotNull Project project,
+                            @NotNull CommonProblemDescriptor[] descriptors,
+                            @NotNull Set<PsiElement> ignoredElements,
+                            @NotNull SequentialModalProgressTask task) {
       myProject = project;
       myDescriptors = descriptors;
-      myIgnoredElements = elements;
+      myIgnoredElements = ignoredElements;
       myTask = task;
     }
 
@@ -324,7 +329,7 @@ public class QuickFixAction extends AnAction {
       final CommonProblemDescriptor descriptor = myDescriptors[myCount++];
       ProgressIndicator indicator = myTask.getIndicator();
       if (indicator != null) {
-        indicator.setFraction(((double)myCount) / myDescriptors.length);
+        indicator.setFraction((double)myCount / myDescriptors.length);
         if (descriptor instanceof ProblemDescriptor) {
           final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
           if (psiElement != null) {
