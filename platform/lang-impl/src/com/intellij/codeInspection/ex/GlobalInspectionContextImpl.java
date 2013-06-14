@@ -209,7 +209,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void contentRemoved(ContentManagerEvent event) {
-        if (event.getContent() == myContent){
+        if (event.getContent() == myContent) {
           if (myView != null) {
             close(false);
           }
@@ -795,7 +795,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     return myTools;
   }
 
-  private void appendJobDescriptor(@NotNull JobDescriptor job) {
+  public void appendJobDescriptor(@NotNull JobDescriptor job) {
     if (!myJobDescriptors.contains(job)) {
       myJobDescriptors.add(job);
       job.setDoneAmount(0);
