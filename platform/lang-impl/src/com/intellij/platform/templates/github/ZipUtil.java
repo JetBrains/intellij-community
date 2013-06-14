@@ -133,11 +133,11 @@ public class ZipUtil {
     LOG.info("Extract: " + relativeExtractPath);
   }
 
-  private static String createRelativeExtractPath(ZipEntry zipEntry) {
+  @NotNull
+  private static String createRelativeExtractPath(@NotNull ZipEntry zipEntry) {
     String name = zipEntry.getName();
-    int ind = name.indexOf('/');
-    if (ind >= 0) {
-      name = name.substring(ind + 1);
+    if (name.startsWith("/")) {
+      name = name.substring(1);
     }
     return StringUtil.trimEnd(name, "/");
   }
