@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 
+ *
  * @author Kirill Likhodedov
  */
 public class MockProject implements Project {
@@ -106,17 +106,17 @@ public class MockProject implements Project {
   }
 
   @Override
-  public BaseComponent getComponent(String name) {
+  public BaseComponent getComponent(@NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent) {
     throw new UnsupportedOperationException();
   }
 
@@ -127,7 +127,7 @@ public class MockProject implements Project {
 
   @NotNull
   @Override
-  public <T> T[] getComponents(Class<T> baseClass) {
+  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
     throw new UnsupportedOperationException();
   }
 
@@ -137,9 +137,10 @@ public class MockProject implements Project {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public MessageBus getMessageBus() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -147,8 +148,9 @@ public class MockProject implements Project {
     return false;
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException();
   }
 

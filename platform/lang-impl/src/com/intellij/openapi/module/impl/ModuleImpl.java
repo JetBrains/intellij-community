@@ -329,8 +329,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return StringUtil.trimEnd(fileName, ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 

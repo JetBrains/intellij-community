@@ -90,6 +90,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     initComponents();
   }
 
+  @NotNull
   @Override
   public MessageBus getMessageBus() {
     assert !myDisposeCompleted && !myDisposed : "Already disposed";
@@ -185,13 +186,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     assert !myDisposeCompleted : "Already disposed: "+this;
     return getComponent(interfaceClass, null);
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
     final T fromContainer = getComponentFromContainer(interfaceClass);
     if (fromContainer != null) return fromContainer;
     if (defaultImplementation != null) return defaultImplementation;
@@ -255,7 +256,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   @SuppressWarnings({"unchecked"})
   @NotNull
-  public synchronized <T> T[] getComponents(Class<T> baseClass) {
+  public synchronized <T> T[] getComponents(@NotNull Class<T> baseClass) {
     return myComponentsRegistry.getComponentsByType(baseClass);
   }
 
@@ -280,7 +281,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public synchronized BaseComponent getComponent(String name) {
+  public synchronized BaseComponent getComponent(@NotNull String name) {
     return myComponentsRegistry.getComponentByName(name);
   }
 

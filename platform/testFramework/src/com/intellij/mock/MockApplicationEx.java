@@ -71,7 +71,7 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
 
   @Override
   public boolean isDoNotSave() {
-    return false; 
+    return false;
   }
 
   @Override
@@ -104,8 +104,9 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
