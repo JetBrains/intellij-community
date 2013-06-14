@@ -22,6 +22,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.java.JavaCommenter;
 import com.intellij.openapi.extensions.Extensions;
@@ -57,6 +58,7 @@ import java.util.Set;
 public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
+  public boolean IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = true;
 
   @Override
   @NotNull
@@ -78,7 +80,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (!EXCLUDE_ANNOS.isEmpty()) {
+    if (!EXCLUDE_ANNOS.isEmpty() || !IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS) {
       super.writeSettings(node);
     }
   }
@@ -90,6 +92,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(new SingleCheckboxOptionsPanel("Ignore fields used in multiple methods", this, "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS"), BorderLayout.NORTH);
     panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }
@@ -101,13 +104,16 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
         for (PsiClass aClass : file.getClasses()) {
-          doCheckClass(aClass, holder, EXCLUDE_ANNOS);
+          doCheckClass(aClass, holder, EXCLUDE_ANNOS, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
         }
       }
     };
   }
 
-  private static void doCheckClass(final PsiClass aClass, ProblemsHolder holder, final List<String> excludeAnnos) {
+  private static void doCheckClass(final PsiClass aClass,
+                                   ProblemsHolder holder,
+                                   final List<String> excludeAnnos,
+                                   boolean ignoreFieldsUsedInMultipleMethods) {
     if (aClass.isInterface()) return;
     final PsiField[] fields = aClass.getFields();
     final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
@@ -125,7 +131,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     if (candidates.isEmpty()) return;
 
     final Set<PsiField> usedFields = new THashSet<PsiField>();
-    removeReadFields(aClass, candidates, usedFields);
+    removeReadFields(aClass, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
 
     if (candidates.isEmpty()) return;
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
@@ -138,7 +144,10 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     }
   }
 
-  private static void removeReadFields(PsiClass aClass, final Set<PsiField> candidates, final Set<PsiField> usedFields) {
+  private static void removeReadFields(PsiClass aClass,
+                                       final Set<PsiField> candidates,
+                                       final Set<PsiField> usedFields,
+                                       final boolean ignoreFieldsUsedInMultipleMethods) {
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -151,7 +160,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
         final PsiCodeBlock body = method.getBody();
         if (body != null) {
-          checkCodeBlock(body, candidates, usedFields);
+          checkCodeBlock(body, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
         }
       }
 
@@ -160,26 +169,29 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         super.visitLambdaExpression(expression);
         final PsiElement body = expression.getBody();
         if (body != null) {
-          checkCodeBlock(body, candidates, usedFields);
+          checkCodeBlock(body, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
         }
       }
 
       @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
-        checkCodeBlock(initializer.getBody(), candidates, usedFields);
+        checkCodeBlock(initializer.getBody(), candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
       }
     });
   }
 
-  private static void checkCodeBlock(final PsiElement body, final Set<PsiField> candidates, Set<PsiField> usedFields) {
+  private static void checkCodeBlock(final PsiElement body,
+                                     final Set<PsiField> candidates,
+                                     Set<PsiField> usedFields,
+                                     boolean ignoreFieldsUsedInMultipleMethods) {
     try {
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
       final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
       for (PsiVariable usedVariable : usedVars) {
         if (usedVariable instanceof PsiField) {
           final PsiField usedField = (PsiField)usedVariable;
-          if (!usedFields.add(usedField)) {
+          if (!usedFields.add(usedField) && ignoreFieldsUsedInMultipleMethods) {
             candidates.remove(usedField); //used in more than one code block
           }
         }

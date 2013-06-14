@@ -20,6 +20,11 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   public void testSimple () throws Exception { doTest(); }
 
   public void testTwoMethods () throws Exception { doTest(); }
+  public void testTwoMethodsNotIgnoreMultipleMethods () throws Exception {
+    final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
+    inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
+    doTestConfigured(inspection); 
+  }
 
   public void testConstructor () throws Exception { doTest(); }
   public void testStaticFinal() throws Exception { doTest(); }
@@ -35,6 +40,10 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   public void testFieldUsedForWritingInLambda() throws Exception {doTest();}
   public void testIgnoreAnnotated() throws Exception {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
+    doTestConfigured(inspection);
+  }
+
+  private void doTestConfigured(FieldCanBeLocalInspection inspection) {
     inspection.EXCLUDE_ANNOS.add(Deprecated.class.getName());
     doTest("fieldCanBeLocal/" + getTestName(true), inspection);
   }
