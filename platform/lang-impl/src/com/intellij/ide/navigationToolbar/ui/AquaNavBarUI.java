@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.navigationToolbar.ui;
 
-import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
@@ -25,11 +24,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class AquaNavBarUI extends AbstractNavBarUI {
-  @Override
-  public Font getElementFont(NavBarItem navBarItem) {
-    return UIUtil.getLabelFont().deriveFont(11.0f);
-  }
-
   @Override
   public boolean isDrawMacShadow(boolean selected, boolean focused) {
     return !selected;
