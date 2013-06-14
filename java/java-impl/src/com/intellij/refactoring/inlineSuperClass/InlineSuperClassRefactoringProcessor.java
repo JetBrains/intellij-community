@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
@@ -39,11 +40,13 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -51,16 +54,18 @@ import java.util.Map;
 public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactoringProcessor {
   public static final Logger LOG = Logger.getInstance("#" + InlineSuperClassRefactoringProcessor.class.getName());
 
+  private final PsiClass myCurrentInheritor;
   private final PsiClass mySuperClass;
   private final int myPolicy;
   private final PsiClass[] myTargetClasses;
   private final MemberInfo[] myMemberInfos;
 
-  public InlineSuperClassRefactoringProcessor(Project project, PsiClass superClass, int policy, final PsiClass... targetClasses) {
+  public InlineSuperClassRefactoringProcessor(Project project, PsiClass currentInheritor, PsiClass superClass, int policy, final PsiClass... targetClasses) {
     super(project);
+    myCurrentInheritor = currentInheritor;
     mySuperClass = superClass;
     myPolicy = policy;
-    myTargetClasses = targetClasses;
+    myTargetClasses = currentInheritor != null ? new PsiClass[] {currentInheritor} : targetClasses;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(mySuperClass, element, true);
@@ -88,6 +93,21 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       public boolean process(final PsiReference reference) {
         final PsiElement element = reference.getElement();
         if (element instanceof PsiJavaCodeReferenceElement) {
+          if (myCurrentInheritor != null) {
+            final PsiElement parent = element.getParent();
+            if (parent instanceof PsiReferenceList) {
+              final PsiElement pparent = parent.getParent();
+              if (pparent instanceof PsiClass) {
+                final PsiClass inheritor = (PsiClass)pparent;
+                if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
+                  if (myCurrentInheritor.equals(inheritor)) {
+                    usages.add(new ReplaceExtendsListUsageInfo((PsiJavaCodeReferenceElement)element, mySuperClass, inheritor));
+                  }
+                }
+              }
+            }
+            return true;
+          }
           final PsiImportStaticStatement staticImportStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
           if (staticImportStatement != null) {
             usages.add(new ReplaceStaticImportUsageInfo(staticImportStatement, myTargetClasses));
@@ -204,8 +224,54 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     for (PsiElement element : conflictsMap.keySet()) {
       conflicts.put(element, conflictsMap.get(element));
     }
+    if (myCurrentInheritor != null) {
+      ReferencesSearch.search(myCurrentInheritor).forEach(new Processor<PsiReference>() {
+        @Override
+        public boolean process(PsiReference reference) {
+          final PsiElement element = reference.getElement();
+          if (element != null) {
+            final PsiElement parent = element.getParent();
+            if (parent instanceof PsiNewExpression) {
+              final PsiClass aClass = PsiUtil.resolveClassInType(getPlaceExpectedType(parent));
+              if (aClass == mySuperClass) {
+                conflicts.putValue(parent, "Instance of target type is passed to a place where super class is expected.");
+                return false;
+              }
+            }
+          }
+          return true;
+        }
+      });
+    }
     checkConflicts(refUsages, conflicts);
     return showConflicts(conflicts, refUsages.get());
+  }
+
+  @Nullable
+  private static PsiType getPlaceExpectedType(PsiElement parent) {
+    PsiType type = PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent);
+    if (type == null) {
+      final PsiElement arg = PsiUtil.skipParenthesizedExprUp(parent);
+      final PsiElement gParent = arg.getParent();
+      if (gParent instanceof PsiExpressionList) {
+        int i = ArrayUtilRt.find(((PsiExpressionList)gParent).getExpressions(), arg);
+        final PsiElement pParent = gParent.getParent();
+        if (pParent instanceof PsiCallExpression) {
+          final PsiMethod method = ((PsiCallExpression)pParent).resolveMethod();
+          if (method != null) {
+            final PsiParameter[] parameters = method.getParameterList().getParameters();
+            if (i >= parameters.length) {
+              if (method.isVarArgs()) {
+                return ((PsiEllipsisType)parameters[parameters.length - 1].getType()).getComponentType();
+              }
+            } else {
+              return parameters[i].getType();
+            }
+          }
+        }
+      }
+    }
+    return type;
   }
 
   protected void performRefactoring(final UsageInfo[] usages) {
@@ -218,7 +284,12 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
       @Override
       protected void performRefactoring(UsageInfo[] pushDownUsages) {
-        super.performRefactoring(pushDownUsages);
+        if (myCurrentInheritor != null) {
+           encodeRefs();
+           pushDownToClass(myCurrentInheritor);
+        } else {
+          super.performRefactoring(pushDownUsages);
+        }
         RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
         for (UsageInfo usageInfo : usages) {
           if (!(usageInfo instanceof ReplaceExtendsListUsageInfo || usageInfo instanceof RemoveImportUsageInfo)) {
@@ -238,11 +309,13 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             ((FixableUsageInfo)usage).fixUsage();
           }
         }
-        try {
-          mySuperClass.delete();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        if (myCurrentInheritor == null) {
+          try {
+            mySuperClass.delete();
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
       }
     }.run();
