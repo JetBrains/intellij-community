@@ -22,6 +22,7 @@ import com.intellij.lang.xhtml.XHTMLParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
 import com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer;
@@ -68,6 +69,7 @@ public class XmlCoreEnvironment {
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), Html5SchemaProvider.EP_NAME, Html5SchemaProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlAttributeDescriptorsProvider.EP_NAME, XmlAttributeDescriptorsProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlExtension.EP_NAME, XmlExtension.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), HtmlEmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, HtmlEmbeddedTokenTypesProvider.class);
 
       appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
