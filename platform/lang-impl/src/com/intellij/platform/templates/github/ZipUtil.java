@@ -135,10 +135,7 @@ public class ZipUtil {
 
   @NotNull
   private static String createRelativeExtractPath(@NotNull ZipEntry zipEntry) {
-    String name = zipEntry.getName();
-    if (name.startsWith("/")) {
-      name = name.substring(1);
-    }
+    String name = StringUtil.trimStart(zipEntry.getName(), "/");
     return StringUtil.trimEnd(name, "/");
   }
 
