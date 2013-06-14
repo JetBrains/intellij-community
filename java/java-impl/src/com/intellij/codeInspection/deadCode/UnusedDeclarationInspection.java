@@ -721,7 +721,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   @NotNull
   @Override
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
-    return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH, context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH,
+      context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
   private static void commentOutDead(PsiElement psiElement) {
