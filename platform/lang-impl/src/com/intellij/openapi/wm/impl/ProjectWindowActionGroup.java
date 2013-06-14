@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.ModuleAttachProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     if (projectLocation == null) {
       return;
     }
-    final String projectName = project.getName();
+    final String projectName = getProjectDisplayName(project);
     final ProjectWindowAction windowAction = new ProjectWindowAction(projectName, projectLocation, latest);
     final List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
     if (!duplicateWindowActions.isEmpty()) {
@@ -51,6 +52,12 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     }
     add(windowAction);
     latest = windowAction;
+  }
+
+  @NotNull
+  private static String getProjectDisplayName(@NotNull final Project project) {
+    final String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
+    return name != null ? name : project.getName();
   }
 
   public void removeProject(@NotNull Project project) {
@@ -67,7 +74,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
       }
     }
     remove(windowAction);
-    final String projectName = project.getName();
+    final String projectName = getProjectDisplayName(project);
     final List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
     if (duplicateWindowActions.size() == 1) {
       duplicateWindowActions.get(0).getTemplatePresentation().setText(projectName);
