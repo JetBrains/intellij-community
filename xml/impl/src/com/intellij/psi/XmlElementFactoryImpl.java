@@ -42,6 +42,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public XmlTag createTagFromText(@NotNull @NonNls String text, @NotNull Language language) throws IncorrectOperationException {
     assert language instanceof XMLLanguage:"Tag can be created only for xml language";
@@ -53,11 +54,13 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return tag;
   }
 
+  @Override
   @NotNull
   public XmlTag createTagFromText(@NotNull String text) throws IncorrectOperationException {
     return createTagFromText(text, StdFileTypes.XML.getLanguage());
   }
 
+  @Override
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
     final char quoteChar;
@@ -78,6 +81,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return attributes[0];
   }
 
+  @Override
   @NotNull
   public XmlText createDisplayText(@NotNull String s) throws IncorrectOperationException {
     final XmlTag tagFromText = createTagFromText("<a>" + XmlTagUtil.getCDATAQuote(s) + "</a>");
@@ -86,6 +90,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return textElements[0];
   }
 
+  @Override
   @NotNull
   public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
     final XmlDocument document = createXmlDocument(text, "dummy.xhtml", XHtmlFileType.INSTANCE);
