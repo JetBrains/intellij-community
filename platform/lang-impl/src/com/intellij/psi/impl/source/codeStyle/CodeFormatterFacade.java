@@ -128,16 +128,18 @@ public class CodeFormatterFacade {
           final PsiElement at = file.findElementAt(rangeMarker.getStartOffset());
           final PsiElement result = PsiTreeUtil.getParentOfType(at, psiElement.getClass(), false);
           assert result != null;
+          rangeMarker.dispose();
           return result.getNode();
         } else {
           assert false;
         }
       }
-
 //      return SourceTreeToPsiMap.psiElementToTree(pointer.getElement());
-
     }
 
+    if (rangeMarker != null) {
+      rangeMarker.dispose();
+    }
     return element;
   }
 
