@@ -40,7 +40,7 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none",
+    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source",
     /*eclipse options*/"-noExit"
   ));
 
@@ -211,6 +211,7 @@ public class JavacMain {
   private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {
     final List<String> result = new ArrayList<String>();
     if (usingJavac) {
+      result.add("-Xprefer:source"); 
       result.add("-implicit:class"); // the option supported by javac only
     }
     else { // is Eclipse

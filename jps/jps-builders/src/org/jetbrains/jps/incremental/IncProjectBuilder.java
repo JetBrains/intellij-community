@@ -935,7 +935,21 @@ public class IncProjectBuilder {
         final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         // actually delete outputs associated with removed paths
-        for (String deletedSource : deletedPaths) {
+        final Collection<String> pathsForIteration;
+        if (Utils.IS_TEST_MODE) {
+          // ensure predictable order in test logs
+          pathsForIteration = new ArrayList<String>(deletedPaths);
+          Collections.sort((List<String>)pathsForIteration, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+              return o1.compareTo(o2);
+            }
+          });
+        }
+        else {
+          pathsForIteration = deletedPaths;
+        }
+        for (String deletedSource : pathsForIteration) {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
 

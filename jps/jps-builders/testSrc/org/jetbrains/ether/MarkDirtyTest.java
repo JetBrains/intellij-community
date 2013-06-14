@@ -52,4 +52,8 @@ public class MarkDirtyTest extends IncrementalTestCase {
     JpsModuleRootModificationUtil.addDependency(util, lib);
     doTestBuild(1).assertSuccessful();
   }
+  
+  public void testRecompileTwinDependencies() {
+    doTest().assertSuccessful();
+  }
 }

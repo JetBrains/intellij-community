@@ -50,14 +50,15 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.java.LanguageLevel;
+import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import javax.tools.*;
 import java.io.*;
@@ -247,6 +248,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         exitCode = ExitCode.OK;
 
         final Set<File> srcPath = new HashSet<File>();
+        collectSourceRoots(chunk, srcPath, chunk.containsTests()? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
         final BuildRootIndex index = pd.getBuildRootIndex();
         for (ModuleBuildTarget target : chunk.getTargets()) {
           for (JavaSourceRootDescriptor rd : index.getTempTargetRoots(target, context)) {
@@ -299,6 +301,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     return exitCode;
+  }
+
+  private static void collectSourceRoots(ModuleChunk chunk, Set<File> srcPath, final JavaSourceRootType rootType) {
+    for (JpsModule module : chunk.getModules()) {
+      for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> root : module.getSourceRoots(rootType)) {
+        srcPath.add(JpsPathUtil.urlToFile(root.getUrl()));
+      }
+    }
   }
 
   private boolean compileJava(
