@@ -227,22 +227,22 @@ public abstract class DocumentCommitProcessor {
     int startOffset = textBlock.getStartOffset();
     int psiEndOffset = textBlock.getPsiEndOffset();
     if (oldPsiText != null) {
-      @NonNls String msg = "PSI/document inconsistency before reparse: ";
+      @NonNls String msg = "PSI/document inconsistency before reparse: file=" + file + " of class " + file.getClass();
       if (startOffset >= oldPsiText.length()) {
-        msg += "startOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
+        msg += "\nstartOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
         startOffset = oldPsiText.length();
       }
 
       String psiPrefix = oldPsiText.substring(0, startOffset);
       String docPrefix = chars.subSequence(0, startOffset).toString();
-      String psiSuffix = oldPsiText.substring(psiEndOffset);
+      String psiSuffix = psiEndOffset > oldPsiText.length() ? "<psiEndOffset too large>" : oldPsiText.substring(psiEndOffset);
       String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
       if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
         if (!psiPrefix.equals(docPrefix)) {
-          msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
+          msg = msg + "\n\npsiPrefix=" + psiPrefix + "\n\ndocPrefix=" + docPrefix;
         }
         if (!psiSuffix.equals(docSuffix)) {
-          msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
+          msg = msg + "\n\npsiSuffix=" + psiSuffix + "\n\ndocSuffix=" + docSuffix;
         }
         LOG.error(msg);
         return false;
