@@ -431,7 +431,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public boolean isValid(Document document) {
       if (!myTargetElement.isValid()) return false;
       if (!myElementAtPointer.isValid()) return false;
-      if (myTargetElement == myElementAtPointer || myTargetElement == myElementAtPointer.getParent()) return false;
+      if (myTargetElement == myElementAtPointer) return false;
 
       return rangesAreCorrect(document);
     }
@@ -488,7 +488,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset, false);
-      final PsiElement elementAtPointer = file.findElementAt(offset);
+      final PsiElement elementAtPointer = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
 
       if (targetElements != null) {
         if (targetElements.length == 0) {
