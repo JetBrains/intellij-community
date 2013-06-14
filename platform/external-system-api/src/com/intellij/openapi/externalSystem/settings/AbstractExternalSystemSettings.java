@@ -54,7 +54,7 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
   public S getLinkedProjectSettings(@NotNull String linkedProjectPath) {
     return myLinkedProjectsSettings.get(linkedProjectPath);
   }
-
+  
   /**
    * Un-links given external project from the current ide project.
    * 

@@ -95,7 +95,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   @NotNull
-  public C getControl() {
+  public C getControl(@Nullable Project currentProject) {
+    myControl.setCurrentProject(currentProject);
     return myControl;
   }
 

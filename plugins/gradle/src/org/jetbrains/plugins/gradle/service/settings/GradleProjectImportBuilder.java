@@ -64,7 +64,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     if (!pathToUse.endsWith(GradleConstants.DEFAULT_SCRIPT_NAME)) {
       pathToUse = new File(pathToUse, GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath();
     }
-    getControl().setLinkedProjectPath(pathToUse);
+    getControl(context.getProject()).setLinkedProjectPath(pathToUse);
   }
 
   @Override

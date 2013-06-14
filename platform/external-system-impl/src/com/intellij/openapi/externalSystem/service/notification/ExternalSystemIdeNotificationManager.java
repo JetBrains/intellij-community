@@ -16,6 +16,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,6 +41,34 @@ public class ExternalSystemIdeNotificationManager {
                                                  @NotNull String externalProjectName,
                                                  @NotNull ProjectSystemId externalSystemId)
   {
+    ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+    if (!(manager instanceof ExternalSystemConfigurableAware)) {
+      return;
+    }
+    final Configurable configurable = ((ExternalSystemConfigurableAware)manager).getConfigurable(project);
+
+    EditorNotifications.getInstance(project).updateAllNotifications();
+    String title = ExternalSystemBundle.message("notification.project.refresh.fail.description",
+                                                externalSystemId.getReadableName(), externalProjectName, message);
+    String messageToShow = ExternalSystemBundle.message("notification.action.show.settings", externalSystemId.getReadableName());
+    showNotification(title, messageToShow, NotificationType.WARNING, project, externalSystemId, new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+          return;
+        }
+        ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+      }
+    });
+  }
+
+  public void showNotification(@NotNull String title,
+                               @NotNull String message,
+                               @NotNull NotificationType type,
+                               @NotNull Project project,
+                               @NotNull ProjectSystemId externalSystemId,
+                               @Nullable NotificationListener listener)
+  {
     NotificationGroup group = ExternalSystemUtil.getToolWindowElement(NotificationGroup.class,
                                                                       project,
                                                                       ExternalSystemDataKeys.NOTIFICATION_GROUP,
@@ -48,30 +77,7 @@ public class ExternalSystemIdeNotificationManager {
       return;
     }
 
-    ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-    if (!(manager instanceof ExternalSystemConfigurableAware)) {
-      return;
-    }
-    final Configurable configurable = ((ExternalSystemConfigurableAware)manager).getConfigurable(project);
-
-    EditorNotifications.getInstance(project).updateAllNotifications();
-    
-    final Notification notification = group.createNotification(
-      ExternalSystemBundle.message("notification.project.refresh.fail.description",
-                                   externalSystemId.getReadableName(), externalProjectName, message),
-      ExternalSystemBundle.message("notification.action.show.settings", externalSystemId.getReadableName()),
-      NotificationType.WARNING,
-      new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
-            return;
-          }
-          ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-        }
-      }
-    );
-
+    Notification notification = group.createNotification(title, message, type, listener);
     applyNotification(notification, project);
   }
   

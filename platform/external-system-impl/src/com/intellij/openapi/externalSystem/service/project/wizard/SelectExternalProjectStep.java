@@ -20,7 +20,7 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 8/1/11 4:15 PM
  */
-public class SelectExternalProjectStepBase extends AbstractImportFromExternalSystemWizardStep {
+public class SelectExternalProjectStep extends AbstractImportFromExternalSystemWizardStep {
 
   private final JPanel myComponent = new JPanel(new BorderLayout());
 
@@ -28,7 +28,7 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
 
   private boolean myGradleSettingsInitialised;
 
-  public SelectExternalProjectStepBase(@NotNull WizardContext context) {
+  public SelectExternalProjectStep(@NotNull WizardContext context) {
     super(context);
   }
 
@@ -40,7 +40,7 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
   @Override
   public void updateStep() {
     if (!myGradleSettingsInitialised) {
-      initGradleSettingsControl();
+      initExternalProjectSettingsControl();
     }
   }
 
@@ -65,13 +65,13 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
     return true;
   }
 
-  private void initGradleSettingsControl() {
+  private void initExternalProjectSettingsControl() {
     AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
       return;
     }
     builder.prepare(getWizardContext());
-    myControl = builder.getControl();
+    myControl = builder.getControl(getWizardContext().getProject());
     myComponent.add(myControl.getComponent());
     myGradleSettingsInitialised = true;
   }

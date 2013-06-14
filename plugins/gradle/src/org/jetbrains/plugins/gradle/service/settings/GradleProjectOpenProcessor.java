@@ -18,7 +18,7 @@ package org.jetbrains.plugins.gradle.service.settings;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.Step;
-import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternalProjectStepBase;
+import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternalProjectStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
@@ -49,12 +49,12 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
     AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), new GradleProjectImportProvider(getBuilder()));
     getBuilder().prepare(wizardContext);
-    getBuilder().getControl().setLinkedProjectPath(file.getPath());
+    getBuilder().getControl(null).setLinkedProjectPath(file.getPath());
     dialog.getWizardContext().setProjectBuilder(getBuilder());
     dialog.navigateToStep(new Function<Step, Boolean>() {
       @Override
       public Boolean fun(Step step) {
-        return step instanceof SelectExternalProjectStepBase;
+        return step instanceof SelectExternalProjectStep;
       }
     });
     dialog.doNextAction();

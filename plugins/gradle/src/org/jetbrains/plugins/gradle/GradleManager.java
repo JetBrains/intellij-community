@@ -264,4 +264,10 @@ public class GradleManager
   public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
     return myAutoImportDelegate.getAffectedExternalProjectPath(changedFileOrDirPath, project);
   }
+
+  @NotNull
+  @Override
+  public FileChooserDescriptor getExternalProjectDescriptor() {
+    return GradleUtil.getGradleProjectFileChooserDescriptor();
+  }
 }

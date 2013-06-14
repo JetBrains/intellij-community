@@ -1,19 +1,24 @@
 <component>
   <actions>
     
-    <!--Tool window actions-->
+    
     <action id="ExternalSystem.RefreshAllProjects"
             class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction"
             icon="AllIcons.Actions.Refresh"/>
+    <action id="ExternalSystem.AttachProject"
+            class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
+    <action id="ExternalSystem.DetachProject"
+            class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"/>
 
+    <!--Tool window actions-->
     <group id="ExternalSystem.ToolWindow.Toolbar">
       <reference id="ExternalSystem.RefreshAllProjects"/>
+      <reference id="ExternalSystem.AttachProject"/>
     </group>
 
     <!--Context menu action-->
     <group id="ExternalSystem.Tree.Context" popup="true">
-      <action id="ExternalSystem.DetachProject"
-              class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"/>
+      <reference ref="ExternalSystem.DetachProject"/>
       <reference ref="RunContextGroup"/>
     </group>
     
