@@ -434,19 +434,22 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     String msg = "Invalid stub element type in index: " + file;
     msg += "; found: " + psi;
-    msg += "; file stamp: " + file.getModificationStamp();
+    msg += "\nfile stamp: " + file.getModificationStamp();
+    msg += "; file size: " + file.getLength();
     msg += "; file modCount: " + file.getModificationCount();
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document != null) {
       msg += "\nsaved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
       msg += "; doc stamp: " + document.getModificationStamp();
+      msg += "; doc size: " + document.getTextLength();
       msg += "; committed: " + PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
     }
 
     PsiFile psiFile = psi.getManager().findFile(file);
     if (psiFile != null) {
-      msg += "\nviewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
+      msg += "\npsiFile size: " + psiFile.getTextLength();
+      msg += "; viewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
       if (psiFile instanceof PsiFileImpl) {
         StubTree stub = ((PsiFileImpl)psiFile).getStubTree();
         if (stub == null) {
@@ -454,6 +457,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           msg += "; ast loaded: " + (treeElement != null);
           if (treeElement != null) {
             msg += "; ast parsed: " + treeElement.isParsed();
+            msg += "; ast size: " + treeElement.getTextLength();
           }
         } else {
           msg += "\nstub info=" + stub.getDebugInfo();
