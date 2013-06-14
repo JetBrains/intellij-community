@@ -122,7 +122,8 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
       getGithubRepositoryName(),
       retryOnError
     );
-    LOG.info("Downloaded " + zipArchiveFile.getAbsolutePath() + " of size " + zipArchiveFile.length() + " bytes");
+    LOG.info("Content of " + url + " has been successfully downloaded to " + zipArchiveFile.getAbsolutePath()
+             + ", size " + zipArchiveFile.length() + " bytes");
     ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
   }
 
