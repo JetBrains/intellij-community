@@ -81,6 +81,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -130,10 +131,35 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (rType == null || rType == PsiType.VOID) return;
 
       if (!TypesUtil.isAssignable(expectedType, rType, expression)) {
-        final LocalQuickFix[] fixes = {new GrCastFix(expectedType)};
+        final List<LocalQuickFix> fixes = ContainerUtil.newArrayList();
+        fixes.add(new GrCastFix(expectedType));
+
+        String varName = getLValueVarName(toHighlight);
+        if (varName != null) {
+          fixes.add(new GrChangeVariableType(rType, varName));
+        }
+
         final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText());
-        registerError(toHighlight, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        registerError(toHighlight, message, fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
+    }
+
+    @Nullable
+    private static String getLValueVarName(PsiElement highlight) {
+      final PsiElement parent = highlight.getParent();
+      if (parent instanceof GrVariable) {
+        return ((GrVariable)parent).getName();
+      }
+      else if (highlight instanceof GrReferenceExpression &&
+               parent instanceof GrAssignmentExpression &&
+               ((GrAssignmentExpression)parent).getLValue() == highlight) {
+        final PsiElement resolved = ((GrReferenceExpression)highlight).resolve();
+        if (resolved instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable(resolved)) {
+          return ((GrVariable)resolved).getName();
+        }
+      }
+
+      return null;
     }
 
     private void checkAssignability(@NotNull PsiType lType,
