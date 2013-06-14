@@ -570,18 +570,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void fireBeforeApplicationLoaded() {
-    ExtensionPoint<ApplicationLoadListener> point = Extensions.getRootArea().getExtensionPoint("com.intellij.ApplicationLoadListener");
-    final ApplicationLoadListener[] objects = point.getExtensions();
-    for (ApplicationLoadListener object : objects) {
+    ExtensionPoint<ApplicationLoadListener> point = Extensions.getRootArea().getExtensionPoint(ApplicationLoadListener.EP_NAME);
+    for (ApplicationLoadListener listener : point.getExtensions()) {
       try {
-        object.beforeApplicationLoaded(this);
+        listener.beforeApplicationLoaded(this);
       }
-      catch(Exception e) {
+      catch (Exception e) {
         LOG.error(e);
       }
     }
   }
-
 
   @Override
   public void dispose() {
