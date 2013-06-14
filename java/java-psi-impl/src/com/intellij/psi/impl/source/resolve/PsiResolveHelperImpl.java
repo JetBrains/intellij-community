@@ -1048,6 +1048,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         if (expectedType == null) {
           return null;
         }
+        expectedType = GenericsUtil.eliminateWildcards(expectedType);
       } else if (parent instanceof PsiConditionalExpression) {
         if (PsiUtil.isLanguageLevel8OrHigher(parent)) {
           try {
