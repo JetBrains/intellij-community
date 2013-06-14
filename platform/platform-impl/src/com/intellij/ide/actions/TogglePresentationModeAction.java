@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Enumeration;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,6 +55,28 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
     settings.fireUISettingsChanged();
 
+    UIDefaults defaults = UIManager.getDefaults();
+    Enumeration<Object> keys = defaults.keys();
+    if (settings.PRESENTATION_MODE) {
+      while (keys.hasMoreElements()) {
+        Object key = keys.nextElement();
+        if (key instanceof String && !((String)key).startsWith("old.") && ((String)key).endsWith(".font")) {
+          Font font = defaults.getFont(key);
+          defaults.put("old." + key, font);
+          defaults.put(key, font.deriveFont((float)Math.min(20, settings.PRESENTATION_MODE_FONT_SIZE)));
+        }
+      }
+    } else {
+      while (keys.hasMoreElements()) {
+        Object key = keys.nextElement();
+        if (key instanceof String && ((String)key).startsWith("old.") && ((String)key).endsWith(".font")) {
+          Font font = defaults.getFont(key);
+          defaults.put(((String)key).substring(4), font);
+          defaults.put(key, font);
+        }
+      }
+    }
+
     if (project != null) {
       Window frame = IdeFrameImpl.getActiveFrame();
       if (frame instanceof IdeFrameImpl) {
@@ -67,16 +90,8 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
         }
       }
     }
-    Font tooltipFont = UIManager.getFont("ToolTip.font");
-    if (settings.PRESENTATION_MODE) {
-      Font font = new Font(tooltipFont.getName(), tooltipFont.getStyle(), settings.PRESENTATION_MODE_FONT_SIZE);
-      UIManager.put("old.tooltip.font", tooltipFont);
-      UIManager.put("ToolTip.font", font);
-    } else {
-      UIManager.put("ToolTip.font", UIManager.getFont("old.tooltip.font"));
-    }
 
-
+    UISettings.getInstance().fireUISettingsChanged();
     LafManager.getInstance().updateUI();
 
     EditorUtil.reinitSettings();
