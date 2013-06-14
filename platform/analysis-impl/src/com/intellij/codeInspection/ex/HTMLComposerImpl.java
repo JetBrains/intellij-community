@@ -33,7 +33,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -230,7 +230,8 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       if (element != null) {
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
         if (virtualFile != null) {
-          refElementName = ProjectUtil.calcRelativeToProjectPath(virtualFile, element.getProject());
+          refElementName = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), element.getProject(),
+                                                                       true, false);
         }
       }
       buf.append(refElementName);
@@ -292,15 +293,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     // Default appends nothing.
   }
 
-  protected void appendResolution(StringBuffer buf, @NotNull InspectionTool tool, RefEntity where) {
+  protected void appendResolution(StringBuffer buf, RefEntity where, String[] quickFixes) {
     if (myExporter != null) return;
     if (where instanceof RefElement && !where.isValid()) return;
-    QuickFixAction[] quickFixes = tool.getQuickFixes(new RefEntity[] {where});
     if (quickFixes != null) {
       boolean listStarted = false;
       for (int i = 0; i < quickFixes.length; i++) {
-        QuickFixAction quickFix = quickFixes[i];
-        final String text = quickFix.getText(where);
+        final String text = quickFixes[i];
         if (text == null) continue;
         if (!listStarted) {
           appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
@@ -317,6 +316,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       }
     }
   }
+
 
   @Override
   public void startList(@NonNls final StringBuffer buf) {

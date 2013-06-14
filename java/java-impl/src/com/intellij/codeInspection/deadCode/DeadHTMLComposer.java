@@ -26,6 +26,7 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
@@ -63,7 +64,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
         //noinspection HardCodedStringLiteral
         buf.append("<br><br>");
-        appendResolution(buf, myTool, refElement);
+        appendResolution(buf, refElement, DescriptorComposer.quickFixTexts(refElement, myTool));
         refElement.accept(new RefJavaVisitor() {
           @Override public void visitClass(@NotNull RefClass aClass) {
             appendClassInstantiations(buf, aClass);

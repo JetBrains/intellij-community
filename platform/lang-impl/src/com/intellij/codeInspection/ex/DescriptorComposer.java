@@ -19,17 +19,19 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.injected.editor.VirtualFileWindow;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -63,11 +65,26 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
       doneList(buf);
 
-      appendResolution(buf, myTool, refEntity);
+      appendResolution(buf,refEntity, quickFixTexts(refEntity, myTool));
     }
     else {
       appendNoProblems(buf);
     }
+  }
+
+  public static String[] quickFixTexts(RefEntity where, InspectionTool tool){
+    QuickFixAction[] quickFixes = tool.getQuickFixes(new RefEntity[] {where});
+    if (quickFixes == null) {
+      return null;
+    }
+    List<String> texts = new ArrayList<String>();
+    for (int i = 0; i < quickFixes.length; i++) {
+      QuickFixAction quickFix = quickFixes[i];
+      final String text = quickFix.getText(where);
+      if (text == null) continue;
+      texts.add(text);
+    }
+    return texts.toArray(new String[texts.size()]);
   }
 
   protected void composeAdditionalDescription(@NotNull StringBuffer buf, @NotNull RefEntity refEntity) {}
@@ -197,4 +214,6 @@ public class DescriptorComposer extends HTMLComposerImpl {
     buf.append(BR).append(BR);
     composeAdditionalDescription(buf, refElement);
   }
+
+
 }
