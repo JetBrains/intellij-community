@@ -17,7 +17,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -49,7 +49,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     super.setUp();
 
     IdeaTestApplication application = LightPlatformTestCase.initApplication();
-    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, new THashMap<String, InspectionTool>());
+    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, new THashMap<String, InspectionToolWrapper>());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
     storeSettings();
     application.setDataProvider(new TestDataProvider(getProject()));

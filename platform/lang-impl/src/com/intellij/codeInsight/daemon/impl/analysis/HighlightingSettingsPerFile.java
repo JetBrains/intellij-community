@@ -18,9 +18,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
@@ -45,6 +46,15 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
 
   private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlightingSetting[]>();
   private final Map<PsiFile, InspectionProfile> myProfileSettings = new WeakHashMap<PsiFile, InspectionProfile>();
+
+  public HighlightingSettingsPerFile(Project project) {
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+      @Override
+      public void projectClosed(Project project) {
+        cleanProfileSettings();
+      }
+    });
+  }
 
   public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root){
     final PsiFile containingFile = root.getContainingFile();

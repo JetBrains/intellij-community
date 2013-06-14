@@ -25,11 +25,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -122,20 +118,20 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       if (!(value instanceof String)) {
         continue;
       }
-      final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById((String)value, target);
+      InspectionToolWrapper toolById = ((InspectionProfileImpl)inspectionProfile).getToolById((String)value, target);
       if (!(toolById instanceof LocalInspectionToolWrapper)) {
         continue;
       }
-      final LocalInspectionToolWrapper tool = ((LocalInspectionToolWrapper)toolById).createCopy();
+      final LocalInspectionToolWrapper toolWrapper = ((LocalInspectionToolWrapper)toolById).createCopy();
       final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-      tool.initialize(context);
+      toolWrapper.initialize(context);
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       Runnable inspect = new Runnable() {
         @Override
         public void run() {
-          pass.doInspectInBatch(managerEx, Collections.<LocalInspectionToolWrapper>singletonList(tool));
+          pass.doInspectInBatch(managerEx, Collections.<LocalInspectionToolWrapper>singletonList(toolWrapper));
         }
       };
       if (indicator == null) {

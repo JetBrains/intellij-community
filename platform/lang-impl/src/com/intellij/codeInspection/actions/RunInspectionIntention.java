@@ -93,31 +93,32 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     rerunInspection(LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName), managerEx, analysisScope, file);
   }
 
-  public static void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
+  public static void rerunInspection(final InspectionToolWrapper toolWrapper,
+                                     final InspectionManagerEx managerEx, final AnalysisScope scope,
                                      PsiElement psiElement) {
-    GlobalInspectionContextImpl inspectionContext = createContext(baseTool, managerEx, psiElement);
+    GlobalInspectionContextImpl inspectionContext = createContext(toolWrapper, managerEx, psiElement);
     inspectionContext.doInspections(scope, managerEx);
   }
 
-  public static GlobalInspectionContextImpl createContext(final InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
+  public static GlobalInspectionContextImpl createContext(final InspectionToolWrapper toolWrapper, InspectionManagerEx managerEx, PsiElement psiElement) {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
-    LinkedHashSet<InspectionProfileEntry> allEntries = new LinkedHashSet<InspectionProfileEntry>();
-    allEntries.add(baseTool);
-    rootProfile.collectDependentInspections(baseTool, allEntries);
-    InspectionProfileEntry[] toolsArray = allEntries.toArray(new InspectionProfileEntry[allEntries.size()]);
-    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(baseTool.getDisplayName(), toolsArray);
+    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
+    allWrappers.add(toolWrapper);
+    rootProfile.collectDependentInspections(toolWrapper, allWrappers);
+    InspectionToolWrapper[] toolWrappers = allWrappers.toArray(new InspectionToolWrapper[allWrappers.size()]);
+    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), toolWrappers);
     try {
       Element element = new Element("toCopy");
 
-      for (InspectionProfileEntry tool : allEntries) {
-        tool.writeSettings(element);
-        model.getInspectionTool(tool.getShortName(), psiElement).readSettings(element);
+      for (InspectionToolWrapper wrapper : allWrappers) {
+        wrapper.writeSettings(element);
+        model.getInspectionTool(wrapper.getShortName(), psiElement).readSettings(element);
       }
     }
     catch (Exception e) {
       //skip
     }
-    model.setEditable(baseTool.getDisplayName());
+    model.setEditable(toolWrapper.getDisplayName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
     return inspectionContext;

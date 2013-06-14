@@ -46,9 +46,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   }
 
   @Override
-  public boolean checkReportedProblems(@NotNull final InspectionTool tool) {
-    tool.updateContent();
-    return tool.hasReportedProblems();
+  public boolean checkReportedProblems(@NotNull final InspectionToolWrapper toolWrapper) {
+    toolWrapper.updateContent();
+    return toolWrapper.hasReportedProblems();
   }
 
   @Override
@@ -64,7 +64,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     final InspectionTreeNode parentNode,
                                     final boolean showStructure,
                                     final Map<String, Set<RefEntity>> contents,
-                                    final Map<RefEntity, CommonProblemDescriptor[]> problems, DefaultTreeModel model) {
+                                    final Map<RefEntity, CommonProblemDescriptor[]> problems,
+                                    DefaultTreeModel model) {
     final InspectionTool tool = toolNode.getTool();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
@@ -110,9 +111,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   }
 
   @Override
-  protected void appendDescriptor(final InspectionTool tool,
-                                  final UserObjectContainer container,
-                                  final InspectionPackageNode pNode,
+  protected void appendDescriptor(@NotNull final InspectionTool tool,
+                                  @NotNull final UserObjectContainer container,
+                                  @NotNull final InspectionPackageNode pNode,
                                   final boolean canPackageRepeat) {
     final GlobalInspectionContextImpl context = tool.getContext();
     final RefElementContainer refElementDescriptor = (RefElementContainer)container;

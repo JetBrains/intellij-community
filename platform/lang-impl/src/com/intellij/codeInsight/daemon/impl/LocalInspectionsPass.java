@@ -159,7 +159,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-        toolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), myIgnoreSuppressed);
+        LocalInspectionToolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), toolWrapper, myIgnoreSuppressed,
+                                                         toolWrapper.getContext(),
+                                                         toolWrapper.getTool());
       }
     }
   }
@@ -194,7 +196,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
             ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
                                                                                    descriptor.getHighlightType(), true, localFixes);
-            tool.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
+            LocalInspectionToolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), tool, true, tool.getContext(),
+                                                             tool.getTool());
           }
         }
       }
@@ -711,16 +714,30 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return new ArrayList<PsiElement>(result);
   }
 
+
+  @NotNull
+  private List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(@NotNull InspectionProfileWrapper profile, PsiElement element) {
+    List<LocalInspectionToolWrapper> enabled = new ArrayList<LocalInspectionToolWrapper>();
+    final InspectionToolWrapper[] toolWrappers = (InspectionToolWrapper[])profile.getInspectionTools(element);
+    InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      if (!profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), element)) continue;
+      LocalInspectionToolWrapper wrapper = null;
+      if (toolWrapper instanceof LocalInspectionToolWrapper) {
+        wrapper = (LocalInspectionToolWrapper)toolWrapper;
+      }
+      if (wrapper == null) continue;
+      if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(myFile, wrapper.getTool())) {
+        continue;
+      }
+      enabled.add(wrapper);
+    }
+    return enabled;
+  }
+
   @NotNull
   List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
-    final List<LocalInspectionToolWrapper> tools = profile.getHighlightingLocalInspectionTools(myFile);
-    for (Iterator<LocalInspectionToolWrapper> iterator = tools.iterator(); iterator.hasNext(); ) {
-      LocalInspectionToolWrapper tool = iterator.next();
-      if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(myFile, tool.getTool())) {
-        iterator.remove();
-      }
-    }
-    return tools;
+    return getHighlightingLocalInspectionTools(profile, myFile);
   }
 
   private void doInspectInjectedPsi(@NotNull PsiFile injectedPsi,

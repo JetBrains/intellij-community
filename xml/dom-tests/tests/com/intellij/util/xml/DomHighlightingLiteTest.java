@@ -21,6 +21,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.mock.MockInspectionProfile;
@@ -177,7 +178,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
   public void testNoMockInspection() throws Throwable {
     myElement.setFileDescription(new MyNonHighlightingDomFileDescription());
-    myInspectionProfile.setInspectionTools(new MyDomElementsInspection());
+    myInspectionProfile.setInspectionTools(new LocalInspectionToolWrapper(new MyDomElementsInspection()));
     assertNull(myAnnotationsManager.getMockInspection(myElement));
   }
 
@@ -238,7 +239,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
     };
     HighlightDisplayKey.register(inspection.getShortName());
-    myInspectionProfile.setInspectionTools(inspection);
+    myInspectionProfile.setInspectionTools(new LocalInspectionToolWrapper(inspection));
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
     assertEquals(DomHighlightStatus.ANNOTATORS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
@@ -263,8 +264,9 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
     };
     HighlightDisplayKey.register(inspection.getShortName());
-    myInspectionProfile.setInspectionTools(inspection);
-    myInspectionProfile.setEnabled(inspection, false);
+    LocalInspectionToolWrapper toolWrapper = new LocalInspectionToolWrapper(inspection);
+    myInspectionProfile.setInspectionTools(toolWrapper);
+    myInspectionProfile.setEnabled(toolWrapper, false);
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));

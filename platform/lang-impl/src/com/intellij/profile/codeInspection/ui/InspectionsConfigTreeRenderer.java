@@ -20,10 +20,10 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ui.CheckboxTree;
@@ -97,12 +97,12 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
 
   @Nullable
   private static String getHint(Descriptor descriptor) {
-    final InspectionProfileEntry tool = descriptor.getTool();
-    if (tool == null) {
+    final InspectionToolWrapper toolWrapper = descriptor.getTool();
+    if (toolWrapper == null) {
       return InspectionsBundle.message("inspection.tool.availability.in.tree.node");
     }
-    if (tool instanceof LocalInspectionToolWrapper ||
-        tool instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)tool).worksInBatchModeOnly()) {
+    if (toolWrapper instanceof LocalInspectionToolWrapper ||
+        toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).worksInBatchModeOnly()) {
       return null;
     }
     return InspectionsBundle.message("inspection.tool.availability.in.tree.node1");

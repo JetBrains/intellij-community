@@ -41,6 +41,7 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
 
   public CommonInspectionToolWrapper(@NotNull InspectionTool tool) {
     super(tool);
+    assert !(tool instanceof InspectionToolWrapper);
   }
 
   private CommonInspectionToolWrapper(@NotNull CommonInspectionToolWrapper other) {

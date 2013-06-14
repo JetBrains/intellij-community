@@ -39,7 +39,7 @@ public class ScopeToolState {
   private NamedScope myScope;
   @NotNull
   private final String myScopeName;
-  private InspectionProfileEntry myTool;
+  private /*InspectionToolWrapper*/InspectionProfileEntry myTool;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
 
@@ -73,6 +73,7 @@ public class ScopeToolState {
     return myScopeName;
   }
 
+  // InspectionToolWrapper
   @NotNull
   public InspectionProfileEntry getTool() {
     return myTool;

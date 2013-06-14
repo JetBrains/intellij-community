@@ -20,9 +20,9 @@
  */
 package com.intellij.profile.codeInspection.ui.actions;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,8 +88,8 @@ public abstract class AddScopeAction extends AnAction {
     for (InspectionConfigTreeNode node : nodes) {
       final Descriptor descriptor = node.getDescriptor();
       if (node.getScopeName() != null || descriptor == null) continue;
-      final InspectionProfileEntry tool = descriptor.getTool(); //copy
-      final ScopeToolState scopeToolState = getSelectedProfile().addScope(tool, chosenScope,
+      final InspectionToolWrapper toolWrapper = descriptor.getTool(); //copy
+      final ScopeToolState scopeToolState = getSelectedProfile().addScope(toolWrapper, chosenScope,
                                                                           getSelectedProfile().getErrorLevel(descriptor.getKey(), chosenScope),
                                                                           getSelectedProfile().isToolEnabled(descriptor.getKey()));
       final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());

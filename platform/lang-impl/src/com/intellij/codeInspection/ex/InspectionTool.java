@@ -26,7 +26,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SeverityUtil;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +109,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return getShortName();
   }
 
+  @Override
   public void cleanup() {
     if (myContext != null) {
       projectClosed(myContext.getProject());
@@ -182,7 +184,8 @@ public abstract class InspectionTool extends InspectionProfileEntry {
         final Tools tools = myContext.getTools().get(getShortName());
         if (tools != null) {
           for (ScopeToolState state : tools.getTools()) {
-            if (state.getTool() == this) {
+            InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+            if (toolWrapper == this) {
               return myContext.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(getShortName()), psiElement).getSeverity();
             }
           }
@@ -206,7 +209,8 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
     }
-    return SeverityUtil.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
+    SeverityRegistrar registrar = InspectionProjectProfileManagerImpl.getInstanceImpl(project).getSeverityRegistrar();
+    return registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
   }
 
   public static void setOutputPath(final String output) {
@@ -219,14 +223,15 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
-    myToolNode = new InspectionNode(this);
-    provider.appendToolNodeContent(myToolNode, parentNode, showStructure);
-    return myToolNode;
-  }
-
   @Nullable
   public SuppressIntentionAction[] getSuppressActions() {
     return null;
+  }
+
+  @NotNull
+  public InspectionNode createToolNode(@NotNull InspectionRVContentProvider provider, @NotNull InspectionTreeNode parentNode, final boolean showStructure) {
+    myToolNode = new InspectionNode(this);
+    provider.appendToolNodeContent(myToolNode, parentNode, showStructure);
+    return myToolNode;
   }
 }

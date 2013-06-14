@@ -56,11 +56,12 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
 
   public void testRunInspectionContext() throws Exception {
     InspectionProfile profile = new InspectionProfileImpl("foo");
-    InspectionProfileEntry[] tools = profile.getInspectionTools(null);
-    for (InspectionProfileEntry tool : tools) {
-      if (!tool.isEnabledByDefault()) {
-        GlobalInspectionContextImpl context = RunInspectionIntention.createContext(tool, (InspectionManagerEx)InspectionManager.getInstance(myProject), null);
-        context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    InspectionToolWrapper[] tools = (InspectionToolWrapper[])profile.getInspectionTools(null);
+    for (InspectionToolWrapper toolWrapper : tools) {
+      if (!toolWrapper.isEnabledByDefault()) {
+        InspectionManagerEx instance = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+        GlobalInspectionContextImpl context = RunInspectionIntention.createContext(toolWrapper, instance, null);
+        context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
         assertEquals(1, context.getTools().size());
         return;
       }

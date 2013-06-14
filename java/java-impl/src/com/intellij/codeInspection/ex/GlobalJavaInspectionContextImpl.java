@@ -23,7 +23,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -413,32 +412,26 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   @Override
-  public void performPreRunActivities(final List<Tools> globalTools, final List<Tools> localTools,
-                                      final GlobalInspectionContext context) {
+  public void performPreRunActivities(@NotNull final List<Tools> globalTools,
+                                      @NotNull final List<Tools> localTools,
+                                      @NotNull final GlobalInspectionContext context) {
     getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
-    for (int i = 0; i < globalTools.size(); i++) {
-      InspectionProfileEntry tool = globalTools.get(i).getTool();
-      if (UnusedDeclarationInspection.SHORT_NAME.equals(tool.getShortName())) {
-        Collections.swap(globalTools, i, 0);
-        break;
-      }
-    }
   }
 
 
 
   @Override
-  public void performPostRunActivities(List<InspectionProfileEntry> needRepeatSearchRequest, final GlobalInspectionContext context) {
+  public void performPostRunActivities(@NotNull List<InspectionProfileEntry> needRepeatSearchRequest, @NotNull final GlobalInspectionContext context) {
     JobDescriptor progress = context.getStdJobDescriptors().FIND_EXTERNAL_USAGES;
     progress.setTotalAmount(getRequestCount());
 
     do {
       processSearchRequests(context);
-      InspectionProfileEntry[] requestors = needRepeatSearchRequest.toArray(new InspectionProfileEntry[needRepeatSearchRequest.size()]);
-      for (InspectionProfileEntry requestor : requestors) {
-        if (requestor instanceof InspectionTool &&
-            !((InspectionTool)requestor).queryExternalUsagesRequests(InspectionManager.getInstance(context.getProject()))) {
-          needRepeatSearchRequest.remove(requestor);
+      InspectionToolWrapper[] requestors = needRepeatSearchRequest.toArray(new InspectionToolWrapper[needRepeatSearchRequest.size()]);
+      for (InspectionToolWrapper wrapper : requestors) {
+        InspectionProfileEntry requestor = wrapper.getTool();
+        if (requestor instanceof InspectionTool && !((InspectionTool)requestor).queryExternalUsagesRequests(InspectionManager.getInstance(context.getProject()))) {
+          needRepeatSearchRequest.remove(wrapper);
         }
       }
       int oldSearchRequestCount = progress.getTotalAmount();

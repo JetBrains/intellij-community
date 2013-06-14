@@ -19,10 +19,12 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.Function;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,8 @@ import java.net.URL;
  *         Date: 9/28/11
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> extends DescriptorProviderInspection {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolWrapper");
+
   protected T myTool;
   protected final E myEP;
 
@@ -90,14 +94,14 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP != null && myEP.applyToDialects;
   }
 
-  @NotNull
   @Override
+  @NotNull
   public String getShortName() {
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
-  @NotNull
   @Override
+  @NotNull
   public String getDisplayName() {
     if (myEP == null) {
       return getTool().getDisplayName();
@@ -108,8 +112,8 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
-  @NotNull
   @Override
+  @NotNull
   public String getGroupDisplayName() {
     if (myEP == null) {
       return getTool().getGroupDisplayName();
@@ -125,14 +129,14 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP == null ? getTool().isEnabledByDefault() : myEP.enabledByDefault;
   }
 
-  @NotNull
   @Override
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return myEP == null ? getTool().getDefaultLevel() : myEP.getDefaultLevel();
   }
 
-  @NotNull
   @Override
+  @NotNull
   public String[] getGroupPath() {
     if (myEP == null) {
       return getTool().getGroupPath();
@@ -181,11 +185,21 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   protected URL getDescriptionUrl() {
     Application app = ApplicationManager.getApplication();
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return super.getDescriptionUrl();
+      return superGetDescriptionUrl();
     }
     String fileName = getDescriptionFileName();
     return myEP.getLoaderForClass().getResource("/inspectionDescriptions/" + fileName);
   }
+
+  @Nullable
+  protected URL superGetDescriptionUrl() {
+    final String fileName = getDescriptionFileName();
+    return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+  }
+
+  //public String getDescriptionFileName() {
+  //  return getShortName() + ".html";
+  //}
 
   @Override
   public SuppressIntentionAction[] getSuppressActions() {
@@ -202,7 +216,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
         }
       });
     }
-    return super.getSuppressActions();
+    return null;
   }
 
   @Override
@@ -222,5 +236,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @Override
   public String toString() {
     return getShortName();
+  }
+
+  @Override
+  public void cleanup() {
+    getTool().cleanup();
   }
 }

@@ -147,7 +147,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myEmptyLookup;
 
   private InspectionProfileEntry[] myInspections;
-  private final Map<String, InspectionTool> myAvailableTools = new THashMap<String, InspectionTool>();
+  private final Map<String, InspectionToolWrapper> myAvailableTools = new THashMap<String, InspectionToolWrapper>();
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
@@ -255,7 +255,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void enableInspections(InspectionProfileEntry... inspections) {
+  public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
     myInspections = inspections;
     if (isInitialized()) {
       configureInspections(myInspections);
@@ -267,7 +267,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void enableInspections(final Class<? extends LocalInspectionTool>... inspections) {
+  public void enableInspections(@NotNull final Class<? extends LocalInspectionTool>... inspections) {
     enableInspections(Arrays.asList(inspections));
   }
 
@@ -287,9 +287,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void disableInspections(InspectionProfileEntry... inspections) {
+  public void disableInspections(@NotNull InspectionProfileEntry... inspections) {
     myAvailableTools.clear();
-    final ArrayList<InspectionProfileEntry> tools = new ArrayList<InspectionProfileEntry>(Arrays.asList(myInspections));
+    List<InspectionProfileEntry> tools = new ArrayList<InspectionProfileEntry>(Arrays.asList(myInspections));
     for (Iterator<InspectionProfileEntry> i = tools.iterator(); i.hasNext();) {
       final InspectionProfileEntry tool = i.next();
       for (InspectionProfileEntry toRemove : inspections) {
@@ -448,7 +448,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testInspection(String testDir, @NotNull InspectionToolWrapper toolWrapper) {
+  public void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper toolWrapper) {
     VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "src");
     AnalysisScope scope = new AnalysisScope(getPsiManager().findDirectory(sourceDir));
 
@@ -464,15 +464,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public static GlobalInspectionContextImpl createGlobalContextForTool(AnalysisScope scope,
                                                                        final Project project,
                                                                        final InspectionManagerEx inspectionManager,
-                                                                       final InspectionTool... tools) {
+                                                                       final InspectionToolWrapper ... toolWrappers) {
 
-    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", tools);
+    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", toolWrappers);
     GlobalInspectionContextImpl globalContext = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()) {
       @Override
-      protected List<ToolsImpl> getUsedTools() {
+      protected List<Tools> getUsedTools() {
         try {
           InspectionProfileImpl.INIT_INSPECTIONS = true;
-          for (InspectionTool tool : tools) {
+          for (InspectionToolWrapper tool : toolWrappers) {
             profile.enableTool(tool.getShortName());
           }
           return profile.getAllEnabledInspectionTools(project);
@@ -1140,7 +1140,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.tearDown();
   }
 
-  private void enableInspectionTool(InspectionProfileEntry tool) {
+  private void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
+    assert !(tool instanceof InspectionToolWrapper) : tool;
     InspectionToolWrapper wrapper = InspectionToolRegistrar.wrapTool(tool);
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
@@ -1152,7 +1153,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAvailableTools.put(shortName, wrapper);
   }
 
-  private void configureInspections(final InspectionProfileEntry[] tools) {
+  private void configureInspections(@NotNull InspectionProfileEntry[] tools) {
     for (InspectionProfileEntry tool : tools) {
       enableInspectionTool(tool);
     }
@@ -1167,13 +1168,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       @Override
       @NotNull
-      public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        final Collection<InspectionTool> tools = myAvailableTools.values();
-        return tools.toArray(new InspectionTool[tools.size()]);
+      public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
+        final Collection<InspectionToolWrapper> tools = myAvailableTools.values();
+        return tools.toArray(new InspectionToolWrapper[tools.size()]);
       }
 
       @Override
-      public InspectionProfileEntry getToolById(@NotNull String id, @NotNull PsiElement element) {
+      public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {
         if (myAvailableTools.containsKey(id)) {
           return myAvailableTools.get(id);
         }
@@ -1181,21 +1182,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return super.getToolById(id, element);
       }
 
+      @NotNull
       @Override
-      public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
-        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
-        for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
+      public List<Tools> getAllEnabledInspectionTools(Project project) {
+        List<Tools> result = new ArrayList<Tools>();
+        for (InspectionToolWrapper toolWrapper : getInspectionTools(null)) {
+          result.add(new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true));
         }
         return result;
       }
 
+      @Override
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && key.toString() != null && myAvailableTools.containsKey(key.toString());
       }
 
       @Override
-      public InspectionProfileEntry getInspectionTool(@NotNull String shortName) {
+      public InspectionToolWrapper getInspectionTool(@NotNull String shortName) {
         return myAvailableTools.get(shortName);
       }
 
@@ -1206,7 +1209,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
-      public InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
+      public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
         return myAvailableTools.get(shortName);
       }
     };
@@ -1337,6 +1340,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
     new WriteCommandAction.Simple(getProject()) {
+      @Override
       public void run() {
         try {
           copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()), 0, 0, null);
@@ -1813,6 +1817,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return myText;
     }
 
+    @Override
     public int compareTo(Border o) {
       return getOffset() < o.getOffset() ? 1 : -1;
     }
@@ -1862,10 +1867,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertEquals(expectedContent, actual);
   }
 
+  @Override
   public void testFoldingWithCollapseStatus(final String verificationFileName) {
     testFoldingRegions(verificationFileName, true);
   }
 
+  @Override
   public void testFolding(final String verificationFileName) {
     testFoldingRegions(verificationFileName, false);
   }
@@ -1908,6 +1915,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
+  @Override
   public LookupImpl getLookup() {
     return (LookupImpl)LookupManager.getActiveLookup(myEditor);
   }

@@ -27,18 +27,16 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 01-Dec-2005
  */
-public class ProfileEx implements Profile {
+public abstract class ProfileEx implements Profile {
   public String myName;
   private static final Logger LOG = Logger.getInstance("com.intellij.profile.ProfileEx");
   public boolean myLocal = true;
   protected ProfileManager myProfileManager;
+  @NonNls public static final String SCOPE = "scope";
+  public static final String NAME = "name";
 
   public ProfileEx(@NotNull String name) {
     myName = name;
-  }
-
-  public ProfileEx(@NotNull String name, final Element element) {
-    this(name);
   }
 
   @Override
@@ -72,7 +70,7 @@ public class ProfileEx implements Profile {
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     myName = name;
   }
 
@@ -119,4 +117,6 @@ public class ProfileEx implements Profile {
     }
     return 0;
   }
+
+  public void convert(@NotNull Element element) {}
 }
