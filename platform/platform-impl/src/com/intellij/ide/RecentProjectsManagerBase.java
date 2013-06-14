@@ -139,7 +139,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   @NotNull
-  protected String getProjectDisplayName(Project project) {
+  protected String getProjectDisplayName(@NotNull Project project) {
     return "";
   }
 
