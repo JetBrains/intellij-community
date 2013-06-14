@@ -67,6 +67,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
+  private static final Key<Boolean> FILES_MARKED_DIRTY_FOR_NEXT_ROUND = Key.create("SRC_MARKED_DIRTY");
   private static final String GROOVY_EXTENSION = "groovy";
   private static final String GPP_EXTENSION = "gpp";
   private final boolean myForStubs;
@@ -91,7 +92,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
       final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, settings);
       if (toCompile.isEmpty()) {
-        return ExitCode.NOTHING_DONE;
+        return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.NOTHING_DONE;
       }
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
         LOG.info("forStubs=" + myForStubs);
@@ -141,11 +142,20 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (!myForStubs && updateDependencies(context, chunk, dirtyFilesHolder, toCompile, compiled, outputConsumer)) {
         return ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
-      return ExitCode.OK;
+      return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.OK;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
     }
+    finally {
+      if (!myForStubs) {
+        FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, null); 
+      }
+    }
+  }
+
+  private Boolean hasFilesToCompileForNextRound(CompileContext context) {
+    return !myForStubs && FILES_MARKED_DIRTY_FOR_NEXT_ROUND.get(context, Boolean.FALSE);
   }
 
   private static Set<String> getPathsToCompile(List<File> toCompile) {
@@ -469,7 +479,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (stubToSrc == null) {
         return;
       }
-
       File src = out.getSourceFile();
       if (src == null) {
         return;
@@ -478,9 +487,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (groovy == null) {
         return;
       }
-
       try {
-        FSOperations.markDirty(context, new File(groovy));
+        final File groovyFile = new File(groovy);
+        if (!FSOperations.isMarkedDirty(context, groovyFile)) {
+          FSOperations.markDirty(context, groovyFile);
+          FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
+        }
       }
       catch (IOException e) {
         LOG.error(e);
