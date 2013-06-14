@@ -40,8 +40,6 @@ public abstract class Html5SchemaProvider {
     final URL htmlSchemaLocationURL;
     final URL xhtmlSchemaLocationURL;
 
-    LOG.assertTrue(providers.length > 0, "RelaxNG based schema for HTML5 is not supported. Old XSD schema will be used");
-
     if (providers.length > 1) {
       LOG.error("More than one HTML5 schema providers found: " + getClassesListString(providers));
     }
@@ -51,6 +49,7 @@ public abstract class Html5SchemaProvider {
       xhtmlSchemaLocationURL = providers[0].getXhtmlSchemaLocation();
     }
     else {
+      LOG.info("RelaxNG based schema for HTML5 is not supported. Old XSD schema will be used");
       htmlSchemaLocationURL = Html5SchemaProvider.class.getResource(ExternalResourceManagerEx.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
       xhtmlSchemaLocationURL = htmlSchemaLocationURL;
     }
