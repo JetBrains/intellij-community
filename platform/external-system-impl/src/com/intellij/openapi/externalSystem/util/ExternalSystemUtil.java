@@ -55,6 +55,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.CheckBoxList;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -221,18 +222,33 @@ public class ExternalSystemUtil {
     }
   }
 
-  private static void ruleOrphanModules(@NotNull final List<Module> orphanModules,
-                                        @NotNull final Project project,
-                                        @NotNull final ProjectSystemId externalSystemId)
+  /**
+   * There is a possible case that an external module has been un-linked from ide project. There are two ways to process
+   * ide modules which correspond to that external project:
+   * <pre>
+   * <ol>
+   *   <li>Remove them from ide project as well;</li>
+   *   <li>Keep them at ide project as well;</li>
+   * </ol>
+   * </pre>
+   * This method handles that situation, i.e. it asks a user what should be done and acts accordingly.
+   * 
+   * @param orphanModules     modules which correspond to the un-linked external project
+   * @param project           current ide project
+   * @param externalSystemId  id of the external system which project has been un-linked from ide project
+   */
+  public static void ruleOrphanModules(@NotNull final List<Module> orphanModules,
+                                       @NotNull final Project project,
+                                       @NotNull final ProjectSystemId externalSystemId)
   {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        
+
         final JPanel content = new JPanel(new GridBagLayout());
         content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystemId.getReadableName())),
                     ExternalSystemUiUtil.getFillLineConstraints(0));
-        
+
         final CheckBoxList<Module> orphanModulesList = new CheckBoxList<Module>();
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         orphanModulesList.setItems(orphanModules, new Function<Module, String>() {
@@ -244,15 +260,17 @@ public class ExternalSystemUtil {
         for (Module module : orphanModules) {
           orphanModulesList.setItemSelected(module, true);
         }
+        orphanModulesList.setBorder(IdeBorderFactory.createEmptyBorder(8));
         content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
-        
+        content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
+
         DialogWrapper dialog = new DialogWrapper(project) {
 
           {
             setTitle(ExternalSystemBundle.message("import.title", externalSystemId.getReadableName()));
             init();
           }
-          
+
           @Nullable
           @Override
           protected JComponent createCenterPanel() {
@@ -263,7 +281,7 @@ public class ExternalSystemUtil {
         if (!ok) {
           return;
         }
-        
+
         List<Module> toRemove = ContainerUtilRt.newArrayList();
         for (int i = 0; i < orphanModules.size(); i++) {
           Module module = orphanModules.get(i);
