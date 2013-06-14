@@ -34,7 +34,7 @@ public abstract class PythonRemoteInterpreterManager implements RemoteSdkFactory
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
   public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =
-    "Remote interpreter can't be executed. Please enable WebDeployment plugin.";
+    "Remote interpreter can't be executed. Please enable the Remote Hosts Access plugin.";
 
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
                                                     @NotNull PyRemoteSdkAdditionalData data,
