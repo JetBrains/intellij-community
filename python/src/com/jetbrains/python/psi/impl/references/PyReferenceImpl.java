@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -16,8 +17,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.cython.CythonLanguageDialect;
-import com.jetbrains.cython.CythonResolveUtil;
-import com.jetbrains.cython.psi.*;
+import com.jetbrains.cython.psi.CythonIncludeStatement;
+import com.jetbrains.cython.psi.CythonNamedElement;
+import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -248,8 +250,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                              PsiElement realContext, PsiElement roof) {
     ResolveResultList ret = new ResolveResultList();
     PsiElement uexpr = processor.getResult();
+    final List<PsiElement> definers = processor.getDefiners();
     if (uexpr != null) {
-      if (processor.getDefiners().isEmpty()) {
+      if (definers.isEmpty()) {
         final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(realContext);
         final ScopeOwner owner = ScopeUtil.getScopeOwner(uexpr);
         if (owner != null) {
@@ -284,7 +287,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
       // sort what we got
-      for (PsiElement hit : processor.getDefiners()) {
+      for (PsiElement hit : definers) {
         ret.poke(hit, getRate(hit));
       }
       final PsiElement packageInit = PyUtil.turnDirIntoInit(uexpr);
@@ -292,46 +295,30 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         uexpr = packageInit; // an import statement may have returned a dir
       }
     }
-    else if (!processor.getDefiners().isEmpty()) {
-      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, processor.getDefiners()));
+    else if (!definers.isEmpty()) {
+      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, definers));
     }
-    PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
+    PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(realContext);
     if (uexpr == null) {
       // ...as a part of current module
       String name = myElement.getName();
       if (PyModuleType.MODULE_MEMBERS.contains(name)) {
-        PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
-        if (otype != null && name != null) {
-          ret.addAll(otype.resolveMember(name, null, AccessDirection.READ, myContext));
-        }
-      }
-    }
-    if (uexpr == null) {
-      // ...as a builtin symbol
-      PyFile bfile = builtins_cache.getBuiltinsFile();
-      if (bfile != null && !PyUtil.isClassPrivateName(referencedName)) {
-        uexpr = bfile.getElementNamed(referencedName);
-        if (uexpr == null && "__builtins__".equals(referencedName)) {
-          uexpr = bfile; // resolve __builtins__ reference
-        }
-      }
-    }
-    if (uexpr == null && CythonLanguageDialect.isInsideCythonFile(realContext)) {
-      final CythonFile implicit = CythonResolveUtil.findImplicitDefinitionFile(realContext);
-      if (implicit != null) {
-        uexpr = implicit.getElementNamed(referencedName);
-      }
-      final ScopeOwner owner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-      if (owner instanceof CythonFile) {
-        final PsiElement resolved = ((CythonFile)owner).getElementNamed(referencedName);
-        if ((resolved instanceof CythonFunction && ((CythonFunction)resolved).isCythonLevel()) ||
-            resolved instanceof CythonFile) {
-          ret.poke(resolved, getRate(resolved));
+        PyType objectType = builtinCache.getObjectType(); // "object" as a closest kin to "module"
+        if (objectType != null && name != null) {
+          ret.addAll(objectType.resolveMember(name, null, AccessDirection.READ, myContext));
         }
       }
     }
     if (uexpr != null) {
-      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
+      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), definers));
+    }
+    else {
+      for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
+        final List<RatedResolveResult> results = provider.resolveName(myElement, definers);
+        for (RatedResolveResult res : results) {
+          ret.add(res);
+        }
+      }
     }
 
     return ret;
@@ -379,7 +366,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   // NOTE: very crude
 
-  private static int getRate(PsiElement elt) {
+  public static int getRate(PsiElement elt) {
     int rate;
     if (CythonLanguageDialect.isInsideCythonFile(elt) && elt instanceof CythonIncludeStatement) {
       rate = RatedResolveResult.RATE_LOW;

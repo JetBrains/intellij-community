@@ -838,6 +838,7 @@
     <extensionPoint qualifiedName="Pythonid.keywordArgumentProvider" interface="com.jetbrains.python.psi.impl.PyKeywordArgumentProvider"/>
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider" interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"/>
     <extensionPoint qualifiedName="Pythonid.templateContextProvider" interface="com.jetbrains.python.templateLanguages.TemplateContextProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -864,6 +865,7 @@
     <typeProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsTypeProvider"/>
 
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider"/>
 
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
@@ -893,6 +895,7 @@
     <importResolver implementation="com.jetbrains.cython.CythonImportResolver"/>
     <visitorFilter language="Cython" implementationClass="com.jetbrains.cython.CythonVisitorFilter"/>
     <pyModuleMembersProvider implementation="com.jetbrains.cython.CythonModuleMembersProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.cython.CythonReferenceResolveProvider"/>
 
     <!-- Mako -->
     <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
@@ -911,6 +914,10 @@
     <!-- SQLAlchemy -->
     <typeProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyTypeProvider"/>
     <knownDecoratorProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyKnownDecoratorProvider"/>
+
+    <!-- Web2Py -->
+    <pyReferenceResolveProvider implementation="com.jetbrains.web2py.Web2PyReferenceResolveProvider"/>
+
   </extensions>
 
   <project-components>
