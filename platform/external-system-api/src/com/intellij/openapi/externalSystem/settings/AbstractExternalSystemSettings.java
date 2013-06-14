@@ -111,6 +111,11 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
   protected abstract void checkSettings(@NotNull S old, @NotNull S current);
 
   @NotNull
+  public Topic<L> getChangesTopic() {
+    return myChangesTopic;
+  }
+
+  @NotNull
   public L getPublisher() {
     return myProject.getMessageBus().syncPublisher(myChangesTopic);
   }
