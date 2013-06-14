@@ -29,12 +29,7 @@ import java.util.Enumeration;
  * @author max
  */
 public class InspectionNode extends InspectionTreeNode {
-  public static final Icon TOOL;
-
-  static {
-    TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-  }
-
+  public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
   private boolean myTooBigForOnlineRefresh = false;
 
   public InspectionNode(@NotNull InspectionTool tool) {

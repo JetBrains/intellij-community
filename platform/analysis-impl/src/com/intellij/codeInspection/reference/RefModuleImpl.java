@@ -3,7 +3,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public class RefModuleImpl extends RefEntityImpl implements RefModule {
   private final Module myModule;
 
-  protected RefModuleImpl(Module module, @NotNull RefManager manager) {
+  protected RefModuleImpl(@NotNull Module module, @NotNull RefManager manager) {
     super(module.getName(), manager);
     myModule = module;
     ((RefProjectImpl)manager.getRefProject()).add(this);
@@ -60,12 +60,12 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
 
   @Override
   public boolean isValid() {
-    return myModule != null && !myModule.isDisposed();
+    return !myModule.isDisposed();
   }
 
   @Override
   public Icon getIcon(final boolean expanded) {
-    return ModuleType.get(getModule()).getIcon();
+    return PlatformIcons.CLOSED_MODULE_GROUP_ICON; //ModuleType.get(getModule()).getIcon();
   }
 
   @Nullable

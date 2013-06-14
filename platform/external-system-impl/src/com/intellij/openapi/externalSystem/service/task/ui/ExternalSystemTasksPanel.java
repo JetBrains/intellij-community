@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -79,7 +80,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     assert manager != null;
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
 
-    ExternalSystemRecentTaskListModel recentTasksModel = new ExternalSystemRecentTaskListModel();
+    ExternalSystemRecentTaskListModel recentTasksModel = new ExternalSystemRecentTaskListModel(externalSystemId, project);
     recentTasksModel.setTasks(settings.getRecentTasks());
     myRecentTasksList = new ExternalSystemRecentTasksList(recentTasksModel, externalSystemId, project) {
       @Override
@@ -143,6 +144,18 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     }
     else if (ExternalSystemDataKeys.SELECTED_TASK.is(dataId)) {
       return mySelectedTaskProvider == null ? null : mySelectedTaskProvider.produce();
+    }
+    else if (ExternalSystemDataKeys.SELECTED_PROJECT.is(dataId)) {
+      if (mySelectedTaskProvider != myAllTasksTree) {
+        return null;
+      }
+      else {
+        Object component = myAllTasksTree.getLastSelectedPathComponent();
+        if (component instanceof ExternalSystemNode) {
+          Object element = ((ExternalSystemNode)component).getDescriptor().getElement();
+          return element instanceof ExternalProjectPojo ? element : null;
+        }
+      }
     }
     else if (Location.DATA_KEY.is(dataId)) {
       Location location = buildLocation();

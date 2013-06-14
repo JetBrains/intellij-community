@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class CommonInspectionToolWrapper extends InspectionToolWrapper<InspectionTool, InspectionEP> {
-  public CommonInspectionToolWrapper(InspectionEP ep) {
+  public CommonInspectionToolWrapper(@NotNull InspectionEP ep) {
     super(ep);
   }
 
@@ -123,9 +123,10 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     return getTool().getQuickFixes(refElements);
   }
 
+  @NotNull
   @Override
-  public InspectionNode createToolNode(InspectionRVContentProvider provider,
-                                       InspectionTreeNode parentNode,
+  public InspectionNode createToolNode(@NotNull InspectionRVContentProvider provider,
+                                       @NotNull InspectionTreeNode parentNode,
                                        boolean showStructure) {
     return getTool().createToolNode(provider, parentNode, showStructure);
   }

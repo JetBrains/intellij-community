@@ -721,7 +721,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   @NotNull
   @Override
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
-    return new JobDescriptor[]{((GlobalInspectionContextImpl)context).BUILD_GRAPH, ((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH,
+      context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
   private static void commentOutDead(PsiElement psiElement) {
@@ -1100,7 +1101,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   }
 
   @Override
-  public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
+  public InspectionNode createToolNode(@NotNull final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
     final InspectionNode toolNode = super.createToolNode(provider, parentNode, showStructure);
     final EntryPointsNode entryPointsNode = new EntryPointsNode(this);
     provider.appendToolNodeContent(entryPointsNode, toolNode, showStructure);

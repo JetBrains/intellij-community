@@ -28,7 +28,7 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,7 +70,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     super(name, owner.getRefManager());
     myID = null;
     myFlags = 0;
-    myModule = ModuleUtil.findModuleForPsiElement(owner.getElement());
+    myModule = ModuleUtilCore.findModuleForPsiElement(owner.getElement());
   }
 
   protected RefElementImpl(PsiFile file, RefManager manager) {
@@ -81,7 +81,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     super(name, manager);
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
     myFlags = 0;
-    myModule = ModuleUtil.findModuleForPsiElement(element);
+    myModule = ModuleUtilCore.findModuleForPsiElement(element);
   }
 
   @Override

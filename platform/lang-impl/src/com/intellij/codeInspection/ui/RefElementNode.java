@@ -36,7 +36,7 @@ import javax.swing.tree.MutableTreeNode;
 public class RefElementNode extends InspectionTreeNode {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
-  protected InspectionTool myTool;
+  protected final InspectionTool myTool;
   private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
     @Override
     public Icon compute() {
@@ -48,17 +48,18 @@ public class RefElementNode extends InspectionTreeNode {
     }
   });
 
-  public RefElementNode(final Object userObject, final InspectionTool tool) {
+  public RefElementNode(@NotNull Object userObject, @NotNull InspectionTool tool) {
     super(userObject);
     myTool = tool;
   }
 
-  public RefElementNode(@NotNull RefElement element, final InspectionTool inspectionTool) {
-    super(element);
-    myTool = inspectionTool;
+  public RefElementNode(@NotNull RefElement element, @NotNull InspectionTool tool) {
+    this((Object)element, tool);
   }
 
-  public boolean hasDescriptorsUnder() { return myHasDescriptorsUnder; }
+  public boolean hasDescriptorsUnder() {
+    return myHasDescriptorsUnder;
+  }
 
   @Nullable
   public RefEntity getElement() {
@@ -121,7 +122,7 @@ public class RefElementNode extends InspectionTreeNode {
     }
   }
 
-  public void setProblem(CommonProblemDescriptor descriptor) {
+  public void setProblem(@NotNull CommonProblemDescriptor descriptor) {
     mySingleDescriptor = descriptor;
   }
 

@@ -16,8 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -130,14 +132,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
               String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
             );
           }
-          String url;
-          String extension = FileUtilRt.getExtension(file.getName());
-          if (StandardFileSystems.JAR_PROTOCOL.equals(extension)) {
-            url = JarFileSystem.PROTOCOL_PREFIX + file.getAbsolutePath() + JarFileSystem.JAR_SEPARATOR;
-          }
-          else {
-            url = VfsUtilCore.pathToUrl(file.getAbsolutePath());
-          }
+          String url = VfsUtil.getUrlForLibraryRoot(file);
           model.addRoot(url, entry.getKey());
           continue;
         }

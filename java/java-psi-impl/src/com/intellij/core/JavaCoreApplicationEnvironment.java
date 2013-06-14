@@ -51,8 +51,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
 
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");
-    registerFileType(ArchiveFileType.INSTANCE, "jar");
-    registerFileType(ArchiveFileType.INSTANCE, "zip");
+    registerFileType(ArchiveFileType.INSTANCE, "jar;zip");
 
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());

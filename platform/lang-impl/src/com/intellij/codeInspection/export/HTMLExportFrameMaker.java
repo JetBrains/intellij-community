@@ -49,7 +49,7 @@ public class HTMLExportFrameMaker {
   public void start() {
     StringBuffer buf = new StringBuffer();
     buf.append("<HTML><BODY></BODY></HTML>");
-    HTMLExporter.writeFile(myRootFolder, "empty.html", buf, myProject);
+    HTMLExportUtil.writeFile(myRootFolder, "empty.html", buf, myProject);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -64,7 +64,7 @@ public class HTMLExportFrameMaker {
       buf.append("</A><BR>");
     }
 
-    HTMLExporter.writeFile(myRootFolder, "index.html", buf, myProject);
+    HTMLExportUtil.writeFile(myRootFolder, "index.html", buf, myProject);
   }
 
   public void startInspection(@NotNull InspectionTool tool) {
@@ -83,7 +83,7 @@ public class HTMLExportFrameMaker {
     buf.append("<FRAME src=\"empty.html\" name=\"elementFrame\">");
     buf.append("</FRAMESET></BODY></HTML");
 
-    HTMLExporter.writeFile(myRootFolder, tool.getFolderName() + "-index.html", buf, myProject);
+    HTMLExportUtil.writeFile(myRootFolder, tool.getFolderName() + "-index.html", buf, myProject);
   }
 
   public String getRootFolder() {

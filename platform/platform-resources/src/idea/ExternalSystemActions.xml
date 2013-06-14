@@ -12,6 +12,8 @@
 
     <!--Context menu action-->
     <group id="ExternalSystem.Tree.Context" popup="true">
+      <action id="ExternalSystem.DetachProject"
+              class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"/>
       <reference ref="RunContextGroup"/>
     </group>
     

@@ -130,7 +130,7 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
 
   @Override
   public long getModificationCount(@NotNull Project project) {
-    throw new UnsupportedOperationException();
+    return 0;
   }
 
   @Override

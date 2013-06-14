@@ -374,7 +374,7 @@ public class HtmlUtil {
 
     if (doctype == null) {
       LOG.debug("DOCTYPE for " + htmlFileFullName + " is null");
-      return Html5SchemaProvider.HTML5_SCHEMA_LOCATION
+      return Html5SchemaProvider.getHtml5SchemaLocation()
         .equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
     }
 

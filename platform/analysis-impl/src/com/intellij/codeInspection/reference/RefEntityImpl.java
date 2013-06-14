@@ -33,13 +33,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class RefEntityImpl implements RefEntity {
   private static final String NO_NAME = InspectionsBundle.message("inspection.reference.noname");
   private RefEntityImpl myOwner;
   protected List<RefEntity> myChildren;
   private final String myName;
-  private THashMap myUserMap = null;
+  private Map myUserMap = null;
   protected int myFlags = 0;
   protected final RefManagerImpl myManager;
 

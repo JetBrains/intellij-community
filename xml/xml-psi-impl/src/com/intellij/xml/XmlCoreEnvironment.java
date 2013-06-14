@@ -9,6 +9,7 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.CoreExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ImplicitNamespaceDescriptorProvider;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -21,6 +22,7 @@ import com.intellij.lang.xhtml.XHTMLParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
 import com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer;
@@ -36,40 +38,52 @@ import com.intellij.xml.util.XmlApplicationComponent;
  * @author yole
  */
 public class XmlCoreEnvironment {
-  public static void register(CoreApplicationEnvironment appEnvironment, CoreProjectEnvironment projectEnvironment) {
-    appEnvironment.registerFileType(HtmlFileType.INSTANCE, "html;htm;sht;shtm;shtml");
-    appEnvironment.registerFileType(XHtmlFileType.INSTANCE, "xhtml");
-    appEnvironment.registerFileType(DTDFileType.INSTANCE, "dtd;ent;mod;elt");
+  public static class ApplicationEnvironment {
+    public ApplicationEnvironment(CoreApplicationEnvironment appEnvironment) {
+      appEnvironment.registerFileType(HtmlFileType.INSTANCE, "html;htm;sht;shtm;shtml");
+      appEnvironment.registerFileType(XHtmlFileType.INSTANCE, "xhtml");
+      appEnvironment.registerFileType(DTDFileType.INSTANCE, "dtd;ent;mod;elt");
 
-    appEnvironment.registerFileType(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;jhm;ant;xul;xslt;rng;fxml");
+      appEnvironment.registerFileType(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;jhm;ant;xul;xslt;rng;fxml");
 
-    appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, XMLLanguage.INSTANCE, new XMLParserDefinition());
-    appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, DTDLanguage.INSTANCE, new DTDParserDefinition());
-    appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, HTMLLanguage.INSTANCE, new HTMLParserDefinition());
-    appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, XHTMLLanguage.INSTANCE, new XHTMLParserDefinition());
+      appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, XMLLanguage.INSTANCE, new XMLParserDefinition());
+      appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, DTDLanguage.INSTANCE, new DTDParserDefinition());
+      appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, HTMLLanguage.INSTANCE, new HTMLParserDefinition());
+      appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, XHTMLLanguage.INSTANCE, new XHTMLParserDefinition());
 
-    XmlASTFactory astFactory = new XmlASTFactory();
-    appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, astFactory);
-    appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, HTMLLanguage.INSTANCE, astFactory);
-    appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, XHTMLLanguage.INSTANCE, astFactory);
-    appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, DTDLanguage.INSTANCE, astFactory);
+      XmlASTFactory astFactory = new XmlASTFactory();
+      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, astFactory);
+      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, HTMLLanguage.INSTANCE, astFactory);
+      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, XHTMLLanguage.INSTANCE, astFactory);
+      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, DTDLanguage.INSTANCE, astFactory);
 
-    appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, XmlFileType.INSTANCE, new XmlIdIndexer());
-    appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, DTDFileType.INSTANCE, new XmlIdIndexer());
+      appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, XmlFileType.INSTANCE, new XmlIdIndexer());
+      appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, DTDFileType.INSTANCE, new XmlIdIndexer());
 
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSuppressionProvider.EP_NAME, XmlSuppressionProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlFileNSInfoProvider.EP_NAME, XmlFileNSInfoProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSchemaProvider.EP_NAME, XmlSchemaProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitNamespaceDescriptorProvider.EP_NAME, ImplicitNamespaceDescriptorProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlElementDescriptorProvider.EP_NAME, XmlElementDescriptorProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), Html5SchemaProvider.EP_NAME, Html5SchemaProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlAttributeDescriptorsProvider.EP_NAME, XmlAttributeDescriptorsProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlExtension.EP_NAME, XmlExtension.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSuppressionProvider.EP_NAME, XmlSuppressionProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlFileNSInfoProvider.EP_NAME, XmlFileNSInfoProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSchemaProvider.EP_NAME, XmlSchemaProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitNamespaceDescriptorProvider.EP_NAME, ImplicitNamespaceDescriptorProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlElementDescriptorProvider.EP_NAME, XmlElementDescriptorProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), Html5SchemaProvider.EP_NAME, Html5SchemaProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlAttributeDescriptorsProvider.EP_NAME, XmlAttributeDescriptorsProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlExtension.EP_NAME, XmlExtension.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), HtmlEmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, HtmlEmbeddedTokenTypesProvider.class);
 
-    appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
-    appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
+      appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
+      appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
 
-    appEnvironment.registerApplicationService(ExternalResourceManager.class, new CoreExternalResourceManager());
+      appEnvironment.registerApplicationService(ExternalResourceManager.class, createExternalResourceManager());
+    }
+
+    protected ExternalResourceManagerEx createExternalResourceManager() {
+      return new CoreExternalResourceManager();
+    }
+  }
+
+  public static class ProjectEnvironment {
+    public ProjectEnvironment(CoreProjectEnvironment projectEnvironment) {
+    }
   }
 }

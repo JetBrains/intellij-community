@@ -24,10 +24,10 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.ExtensionPoints;
+import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
@@ -40,12 +40,13 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,14 +77,14 @@ public class RefManagerImpl extends RefManager {
   private boolean myIsInProcess = false;
 
   private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
-  private GlobalInspectionContextImpl myContext;
+  private GlobalInspectionContext myContext;
 
   private final Map<Key, RefManagerExtension> myExtensions = new HashMap<Key, RefManagerExtension>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  public RefManagerImpl(@NotNull Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
+  public RefManagerImpl(@NotNull Project project, AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
@@ -100,7 +101,8 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  public GlobalInspectionContextImpl getContext() {
+  @NotNull
+  public GlobalInspectionContext getContext() {
     return myContext;
   }
 
@@ -380,7 +382,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void initializeAnnotators() {
-    ExtensionPoint<RefGraphAnnotator> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR);
+    ExtensionPoint<RefGraphAnnotator> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR);
     final RefGraphAnnotator[] graphAnnotators = point.getExtensions();
     for (RefGraphAnnotator annotator : graphAnnotators) {
       registerGraphAnnotator(annotator);
@@ -408,7 +410,8 @@ public class RefManagerImpl extends RefManager {
     public void visitFile(PsiFile file) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        myContext.incrementJobDoneAmount(myContext.BUILD_GRAPH, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
+        String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
+        myContext.incrementJobDoneAmount(myContext.getStdJobDescriptors().BUILD_GRAPH, relative);
       }
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
@@ -498,7 +501,8 @@ public class RefManagerImpl extends RefManager {
       return getRefProject();
     }
     if (SmartRefElementPointer.DIR.equals(type)) {
-      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(PathMacroManager.getInstance(getProject()).expandPath(fqName));
+      String url = VfsUtilCore.pathToUrl(PathMacroManager.getInstance(getProject()).expandPath(fqName));
+      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         final PsiDirectory dir = PsiManager.getInstance(getProject()).findDirectory(vFile);
         return getReference(dir);

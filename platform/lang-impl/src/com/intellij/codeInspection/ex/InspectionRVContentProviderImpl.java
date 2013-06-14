@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -45,14 +46,14 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   }
 
   @Override
-  public boolean checkReportedProblems(final InspectionTool tool) {
+  public boolean checkReportedProblems(@NotNull final InspectionTool tool) {
     tool.updateContent();
     return tool.hasReportedProblems();
   }
 
   @Override
   @Nullable
-  public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
+  public QuickFixAction[] getQuickFixes(@NotNull final InspectionTool tool, @NotNull final InspectionTree tree) {
     final RefEntity[] refEntities = tree.getSelectedElements();
     return refEntities.length == 0 ? null : tool.getQuickFixes(refEntities);
   }
@@ -114,7 +115,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                   final InspectionPackageNode pNode,
                                   final boolean canPackageRepeat) {
     final GlobalInspectionContextImpl context = tool.getContext();
-    final RefElementContainer refElementDescriptor = ((RefElementContainer)container);
+    final RefElementContainer refElementDescriptor = (RefElementContainer)container;
     final RefEntity refElement = refElementDescriptor.getUserObject();
     if (context.getUIOptions().SHOW_ONLY_DIFF && tool.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
     if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
@@ -147,10 +148,11 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   }
 
   private static class RefElementContainer implements UserObjectContainer<RefEntity> {
+    @NotNull
     private final RefEntity myElement;
     private final CommonProblemDescriptor[] myDescriptors;
 
-    public RefElementContainer(final RefEntity element, final CommonProblemDescriptor[] descriptors) {
+    public RefElementContainer(@NotNull RefEntity element, CommonProblemDescriptor[] descriptors) {
       myElement = element;
       myDescriptors = descriptors;
     }
@@ -165,12 +167,14 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       return null;
     }
 
+    @NotNull
     @Override
-    public RefElementNode createNode(InspectionTool tool) {
+    public RefElementNode createNode(@NotNull InspectionTool tool) {
       return new RefElementNode(myElement, tool);
     }
 
     @Override
+    @NotNull
     public RefEntity getUserObject() {
       return myElement;
     }
@@ -180,7 +184,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     public String getModule() {
       final RefModule refModule = myElement instanceof RefElement
                                   ? ((RefElement)myElement).getModule()
-                                  : myElement instanceof RefModule ? ((RefModule)myElement) : null;
+                                  : myElement instanceof RefModule ? (RefModule)myElement : null;
       return refModule != null ? refModule.getName() : null;
     }
 

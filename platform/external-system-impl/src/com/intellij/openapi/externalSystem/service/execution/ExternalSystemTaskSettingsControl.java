@@ -69,8 +69,9 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
 
   @Override
   public void fillUi(@NotNull final PaintAwarePanel canvas, int indentLevel) {
-    myProjectPathLabel =
-      new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.project", myExternalSystemId.getReadableName()));
+    myProjectPathLabel = new JBLabel(ExternalSystemBundle.message(
+      "run.configuration.settings.label.project", myExternalSystemId.getReadableName()
+    ));
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
     FileChooserDescriptor projectPathChooserDescriptor = null;
     if (manager instanceof ExternalSystemUiAware) {

@@ -22,15 +22,10 @@ package com.intellij.codeInspection.inconsistentLanguageLevel;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -47,11 +42,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class InconsistentLanguageLevelInspection extends DescriptorProviderInspection{
-  private static final Logger LOGGER = Logger.getInstance("#" + InconsistentLanguageLevelInspection.class.getName());
-
+public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   @Override
-  public void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager) {
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemProcessor) {
     final Set<Module> modules = new THashSet<Module>();
     scope.accept(new PsiElementVisitor(){
       @Override
@@ -69,8 +65,8 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
       if (languageLevel == null) {
         languageLevel = projectLanguageLevel;
       }
-      LOGGER.assertTrue(languageLevel != null);
-      final RefModule refModule = getRefManager().getRefModule(module);
+      RefManager refManager = globalContext.getRefManager();
+      final RefModule refModule = refManager.getRefModule(module);
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (!(entry instanceof ModuleOrderEntry)) continue;
         final Module dependantModule = ((ModuleOrderEntry)entry).getModule();
@@ -79,23 +75,16 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
         if (dependantLanguageLevel == null) {
           dependantLanguageLevel = projectLanguageLevel;
         }
-        LOGGER.assertTrue(dependantLanguageLevel != null);
         if (languageLevel.compareTo(dependantLanguageLevel) < 0) {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
             "Inconsistent language level settings: module " + module.getName() + " with language level " + languageLevel +
             " depends on module " + dependantModule.getName() +" with language level " + dependantLanguageLevel,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(module, dependantModule),
             new OpenModuleSettingsFix(module));
-          addProblemElement(refModule, problemDescriptor);
+          problemProcessor.addProblemElement(refModule, problemDescriptor);
         }
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
-    return JobDescriptor.EMPTY_ARRAY;
   }
 
   @Override

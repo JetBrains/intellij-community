@@ -31,6 +31,7 @@ import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTr
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -166,13 +167,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
     final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    final ExternalSystemUiAware uiAware;
-    if (manager instanceof ExternalSystemUiAware) {
-      uiAware = (ExternalSystemUiAware)manager;
-    }
-    else {
-      uiAware = DefaultExternalSystemUiAware.INSTANCE;
-    }
+    final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
     TextFieldCompletionProvider provider = new TextFieldCompletionProviderDumbAware() {
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
@@ -224,13 +219,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
     final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    final ExternalSystemUiAware uiAware;
-    if (manager instanceof ExternalSystemUiAware) {
-      uiAware = (ExternalSystemUiAware)manager;
-    }
-    else {
-      uiAware = DefaultExternalSystemUiAware.INSTANCE;
-    }
+    final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
 
     String rawText = editor.getDocument().getText();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : settings.getAvailableProjects().entrySet()) {

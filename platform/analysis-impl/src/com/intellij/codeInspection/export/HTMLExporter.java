@@ -28,13 +28,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -42,20 +37,19 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class HTMLExporter {
   private final String myRootFolder;
-  private final Project myProject;
   private int myFileCounter;
-  private final HashMap<RefEntity,String> myElementToFilenameMap;
+  private final Map<RefEntity,String> myElementToFilenameMap;
   private final HTMLComposerImpl myComposer;
-  private final HashSet<RefEntity> myGeneratedReferences;
-  private final HashSet<RefEntity> myGeneratedPages;
+  private final Set<RefEntity> myGeneratedReferences;
+  private final Set<RefEntity> myGeneratedPages;
 
-  public HTMLExporter(String rootFolder, HTMLComposerImpl composer, Project project) {
+  public HTMLExporter(String rootFolder, HTMLComposerImpl composer) {
     myRootFolder = rootFolder;
-    myProject = project;
     myElementToFilenameMap = new HashMap<RefEntity, String>();
     myFileCounter = 0;
     myComposer = composer;
@@ -63,12 +57,12 @@ public class HTMLExporter {
     myGeneratedReferences = new HashSet<RefEntity>();
   }
 
-  public void createPage(RefEntity element) {
+  public void createPage(RefEntity element) throws IOException {
     final String currentFileName = fileNameForElement(element);
     StringBuffer buf = new StringBuffer();
     appendNavBar(buf, element);
     myComposer.composeWithExporter(buf, element, this);
-    writeFile(myRootFolder, currentFileName, buf, myProject);
+    writeFileImpl(myRootFolder, currentFileName, buf);
     myGeneratedPages.add(element);
   }
 
@@ -82,7 +76,7 @@ public class HTMLExporter {
     buf.append("<hr>");
   }
 
-  public static void writeFile(String folder, @NonNls String fileName, CharSequence buf, final Project project) {
+  public static void writeFileImpl(String folder, @NonNls String fileName, CharSequence buf) throws IOException {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String fullPath = folder + File.separator + fileName;
 
@@ -98,21 +92,8 @@ public class HTMLExporter {
       new File(fullPath).getParentFile().mkdirs();
       writer = new FileWriter(fullPath);
       writer.write(buf.toString().toCharArray());
-    } catch (IOException e) {
-      Runnable showError = new Runnable() {
-        @Override
-        public void run() {
-          Messages.showMessageDialog(
-            project,
-            InspectionsBundle.message("inspection.export.error.writing.to", fullPath),
-            InspectionsBundle.message("inspection.export.results.error.title"),
-            Messages.getErrorIcon()
-          );
-        }
-      };
-      ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
-      throw new ProcessCanceledException();
-    } finally {
+    }
+    finally {
       if (writer != null) {
         try {
           writer.close();
@@ -151,7 +132,7 @@ public class HTMLExporter {
     return result;
   }
 
-  public void generateReferencedPages() {
+  public void generateReferencedPages() throws IOException {
     Set<RefEntity> extras = getReferencesWithoutPages();
     while (extras.size() > 0) {
       for (RefEntity refElement : extras) {

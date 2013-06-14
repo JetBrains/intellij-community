@@ -19,12 +19,10 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.HTMLExportFrameMaker;
+import com.intellij.codeInspection.export.HTMLExportUtil;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
@@ -50,6 +48,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -210,24 +209,30 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     final Tools tools = context.getTools().get(shortName);
     if (tools != null) {   //dummy entry points tool
       for (ScopeToolState state : tools.getTools()) {
-        result.add((InspectionTool)state.getTool());
+        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+        result.add(toolWrapper);
       }
     }
     return result;
   }
 
   private void exportHTML(HTMLExportFrameMaker frameMaker, InspectionNode node) {
-    Set<InspectionTool> tools = getWorkedTools(node);
+    final Set<InspectionTool> tools = getWorkedTools(node);
     final InspectionTool tool = node.getTool();
-    HTMLExporter exporter =
-      new HTMLExporter(frameMaker.getRootFolder() + "/" + tool.getShortName(), tool.getComposer(), myView.getProject());
+    final HTMLExporter exporter =
+      new HTMLExporter(frameMaker.getRootFolder() + "/" + tool.getShortName(), tool.getComposer());
     frameMaker.startInspection(tool);
-    exportHTML(tools, exporter);
-    exporter.generateReferencedPages();
+    HTMLExportUtil.runExport(myView.getProject(), new ThrowableRunnable<IOException>() {
+      @Override
+      public void run() throws IOException {
+        exportHTML(tools, exporter);
+        exporter.generateReferencedPages();
+      }
+    });
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void exportHTML(Set<InspectionTool> tools, HTMLExporter exporter) {
+  private void exportHTML(Set<InspectionTool> tools, HTMLExporter exporter) throws IOException {
     StringBuffer packageIndex = new StringBuffer();
     packageIndex.append("<html><body>");
 
@@ -266,7 +271,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
 
       contentIndex.append("</body></html>");
-      HTMLExporter.writeFile(exporter.getRootFolder(), packageName + "-index.html", contentIndex, myView.getProject());
+      HTMLExportUtil.writeFile(exporter.getRootFolder(), packageName + "-index.html", contentIndex, myView.getProject());
     }
 
     final Set<RefModule> modules = new HashSet<RefModule>();
@@ -292,12 +297,12 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       exporter.createPage(module);
 
       contentIndex.append("</body></html>");
-      HTMLExporter.writeFile(exporter.getRootFolder(), module.getName() + "-index.html", contentIndex, myView.getProject());
+      HTMLExportUtil.writeFile(exporter.getRootFolder(), module.getName() + "-index.html", contentIndex, myView.getProject());
     }
 
     packageIndex.append("</body></html>");
 
-    HTMLExporter.writeFile(exporter.getRootFolder(), "index.html", packageIndex, myView.getProject());
+    HTMLExportUtil.writeFile(exporter.getRootFolder(), "index.html", packageIndex, myView.getProject());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

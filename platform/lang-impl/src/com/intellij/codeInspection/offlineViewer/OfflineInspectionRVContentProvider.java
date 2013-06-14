@@ -52,14 +52,14 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  public boolean checkReportedProblems(final InspectionTool tool) {
+  public boolean checkReportedProblems(@NotNull final InspectionTool tool) {
     final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(tool);
     return content != null && !content.values().isEmpty();
   }
 
   @Override
   @Nullable
-  public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
+  public QuickFixAction[] getQuickFixes(@NotNull final InspectionTool tool, @NotNull final InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     final Map<RefEntity, Set<QuickFix>> actions = new HashMap<RefEntity, Set<QuickFix>>();
@@ -183,9 +183,10 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
 
   private static class OfflineProblemDescriptorContainer implements UserObjectContainer<OfflineProblemDescriptor> {
+    @NotNull
     private final OfflineProblemDescriptor myDescriptor;
 
-    public OfflineProblemDescriptorContainer(final OfflineProblemDescriptor descriptor) {
+    public OfflineProblemDescriptorContainer(@NotNull OfflineProblemDescriptor descriptor) {
       myDescriptor = descriptor;
     }
 
@@ -200,12 +201,14 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       return null;
     }
 
+    @NotNull
     @Override
-    public RefElementNode createNode(InspectionTool tool) {
+    public RefElementNode createNode(@NotNull InspectionTool tool) {
       return new OfflineRefElementNode(myDescriptor, tool);
     }
 
     @Override
+    @NotNull
     public OfflineProblemDescriptor getUserObject() {
       return myDescriptor;
     }

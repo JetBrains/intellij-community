@@ -23,7 +23,7 @@ package com.intellij.codeInspection.unusedLibraries;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
@@ -60,13 +60,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class UnusedLibrariesInspection extends DescriptorProviderInspection {
+public class UnusedLibrariesInspection extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + UnusedLibrariesInspection.class.getName());
   private final JobDescriptor BACKWARD_ANALYSIS = new JobDescriptor(InspectionsBundle.message("unused.library.backward.analysis.job.description"));
 
   @Override
-  public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
-    final Project project = getContext().getProject();
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull final GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemProcessor) {
+    ((GlobalInspectionContextImpl)globalContext).appendJobDescriptor(BACKWARD_ANALYSIS);
+    final Project project = manager.getProject();
     final ArrayList<VirtualFile> libraryRoots = new ArrayList<VirtualFile>();
     if (scope.getScopeType() == AnalysisScope.PROJECT) {
       ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(project, false, false));
@@ -96,7 +100,8 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
     GlobalSearchScope searchScope;
     try {
       @NonNls final String libsName = "libs";
-      searchScope = GlobalSearchScopes.filterScope(project, new NamedScope(libsName, PackageSetFactory.getInstance().compile("lib:*..*")));
+      NamedScope libScope = new NamedScope(libsName, PackageSetFactory.getInstance().compile("lib:*..*"));
+      searchScope = GlobalSearchScopes.filterScope(project, libScope);
     }
     catch (ParsingException e) {
       //can't be
@@ -122,7 +127,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
         int nextAmount = (int)(fraction * BACKWARD_ANALYSIS.getTotalAmount());
         if (nextAmount > BACKWARD_ANALYSIS.getDoneAmount() && nextAmount < BACKWARD_ANALYSIS.getTotalAmount()) {
           BACKWARD_ANALYSIS.setDoneAmount(nextAmount);
-          getContext().incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
+          globalContext.incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
         }
       }
 
@@ -158,7 +163,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
         files.add(libraryRoot);
       }
     }
-    final RefManager refManager = getRefManager();
+    final RefManager refManager = globalContext.getRefManager();
     for (OrderEntry orderEntry : unusedLibs.keySet()) {
       if (!(orderEntry instanceof LibraryOrderEntry)) continue;
       final RefModule refModule = refManager.getRefModule(orderEntry.getOwnerModule());
@@ -171,20 +176,17 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
               return file.getPresentableName();
             }
           }, ",");
-        String message = InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName());
-        addProblemElement(refModule, manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, files)));
+        String message =
+          InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName());
+        problemProcessor.addProblemElement(refModule,
+                                           manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, files)));
       }
       else {
         String message = InspectionsBundle.message("unused.library.problem.descriptor", orderEntry.getPresentableName());
-        addProblemElement(refModule, manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, null)));
+        problemProcessor.addProblemElement(refModule,
+                                           manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, null)));
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
-    return new JobDescriptor[] {BACKWARD_ANALYSIS};
   }
 
   @Override

@@ -103,11 +103,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
 
   private ProgressIndicator myProgressIndicator;
-  public final JobDescriptor BUILD_GRAPH = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor"));
-  public final JobDescriptor[] BUILD_GRAPH_ONLY = {BUILD_GRAPH};
-  public final JobDescriptor FIND_EXTERNAL_USAGES = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor1"));
-  private final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
-  public final JobDescriptor[] LOCAL_ANALYSIS_ARRAY = {LOCAL_ANALYSIS};
+  private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
 
   private InspectionProfile myExternalProfile = null;
 
@@ -213,7 +209,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void contentRemoved(ContentManagerEvent event) {
-        if (event.getContent() == myContent){
+        if (event.getContent() == myContent) {
           if (myView != null) {
             close(false);
           }
@@ -517,9 +513,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     try {
       psiManager.startBatchFilesProcessingMode();
       refManager.inspectionReadActionStarted();
-      BUILD_GRAPH.setTotalAmount(scope.getFileCount());
-      LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
-      FIND_EXTERNAL_USAGES.setTotalAmount(0);
+      getStdJobDescriptors().BUILD_GRAPH.setTotalAmount(scope.getFileCount());
+      getStdJobDescriptors().LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
+      getStdJobDescriptors().FIND_EXTERNAL_USAGES.setTotalAmount(0);
       //to override current progress in order to hide useless messages/%
       ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
           @Override
@@ -616,7 +612,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       public void visitFile(final PsiFile file) {
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
-          incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
+          incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
           if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile)) return;
           if (localScopeFiles != null && !localScopeFiles.add(virtualFile)) return;
         }
@@ -799,7 +795,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     return myTools;
   }
 
-  private void appendJobDescriptor(@NotNull JobDescriptor job) {
+  public void appendJobDescriptor(@NotNull JobDescriptor job) {
     if (!myJobDescriptors.contains(job)) {
       myJobDescriptors.add(job);
       job.setDoneAmount(0);
@@ -864,5 +860,11 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
   public void setExternalProfile(InspectionProfile profile) {
     myExternalProfile = profile;
+  }
+
+  @NotNull
+  @Override
+  public StdJobDescriptors getStdJobDescriptors() {
+    return myStdJobDescriptors;
   }
 }

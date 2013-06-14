@@ -55,6 +55,24 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
     return myLinkedProjectsSettings.get(linkedProjectPath);
   }
 
+  /**
+   * Un-links given external project from the current ide project.
+   * 
+   * @param linkedProjectPath  path of external project to be unlinked
+   * @return                   <code>true</code> if there was an external project with the given config path linked to the current
+   *                           ide project;
+   *                           <code>false</code> otherwise
+   */
+  public boolean unlinkExternalProject(@NotNull String linkedProjectPath) {
+    S removed = myLinkedProjectsSettings.remove(linkedProjectPath);
+    if (removed == null) {
+      return false;
+    }
+    
+    getPublisher().onProjectsUnlinked(Collections.singleton(linkedProjectPath));
+    return true;
+  }
+
   public void setLinkedProjectsSettings(@NotNull Collection<S> settings) {
     List<S> added = ContainerUtilRt.newArrayList();
     Map<String, S> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);

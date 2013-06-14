@@ -63,10 +63,10 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     final JobDescriptor[] additionalJobs = getTool().getAdditionalJobs();
     if (additionalJobs == null) {
-      return isGraphNeeded() ? ((GlobalInspectionContextImpl)context).BUILD_GRAPH_ONLY : JobDescriptor.EMPTY_ARRAY;
+      return isGraphNeeded() ? context.getStdJobDescriptors().BUILD_GRAPH_ONLY : JobDescriptor.EMPTY_ARRAY;
     }
     else {
-      return isGraphNeeded() ? ArrayUtil.append(additionalJobs, ((GlobalInspectionContextImpl)context).BUILD_GRAPH) : additionalJobs;
+      return isGraphNeeded() ? ArrayUtil.append(additionalJobs, context.getStdJobDescriptors().BUILD_GRAPH) : additionalJobs;
     }
   }
 

@@ -16,15 +16,12 @@
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -78,13 +75,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   public ExternalSystemTasksTreeModel(@NotNull ProjectSystemId externalSystemId) {
     super(new ExternalSystemNode<String>(new ExternalSystemNodeDescriptor<String>("", "", null)));
     myExternalSystemId = externalSystemId;
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-    if (manager instanceof ExternalSystemUiAware) {
-      myUiAware = (ExternalSystemUiAware)manager;
-    }
-    else {
-      myUiAware = DefaultExternalSystemUiAware.INSTANCE;
-    }
+    myUiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
   }
 
   private static String getTaskName(@NotNull ExternalTaskExecutionInfo taskInfo) {
@@ -118,6 +109,27 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     root.add(result);
     nodesWereInserted(root, myIndexHolder);
     return result;
+  }
+
+  /**
+   * Asks current model to remove all nodes which have given data as a {@link ExternalSystemNodeDescriptor#getElement() payload}.
+   *
+   * @param payload  target payload
+   */
+  public void pruneNodes(@NotNull Object payload) {
+    Deque<ExternalSystemNode<?>> toProcess = new ArrayDeque<ExternalSystemNode<?>>();
+    toProcess.addFirst(getRoot());
+    while (!toProcess.isEmpty()) {
+      ExternalSystemNode<?> node = toProcess.removeLast();
+      if (payload.equals(node.getDescriptor().getElement())) {
+        removeNodeFromParent(node);
+      }
+      else {
+        for (int i = 0; i < node.getChildCount(); i++) {
+          toProcess.addFirst(node.getChildAt(i));
+        }
+      }
+    }
   }
 
   public void ensureSubProjectsStructure(@NotNull ExternalProjectPojo topLevelProject,
@@ -162,6 +174,9 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   }
 
   public void ensureTasks(@NotNull String externalProjectConfigPath, @NotNull Collection<ExternalTaskPojo> tasks) {
+    if (tasks.isEmpty()) {
+      return;
+    }
     ExternalSystemNode<ExternalProjectPojo> moduleNode = findProjectNode(externalProjectConfigPath);
     if (moduleNode == null) {
       LOG.warn(String.format(
@@ -186,7 +201,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
         }
       }
     }
-    
+
     if (!toAdd.isEmpty()) {
       for (ExternalTaskExecutionInfo taskInfo : toAdd) {
         moduleNode.add(new ExternalSystemNode<ExternalTaskExecutionInfo>(descriptor(taskInfo, myUiAware.getTaskIcon())));

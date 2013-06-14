@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +60,48 @@ public abstract class AbstractExternalSystemLocalSettings {
     new AtomicReference<Map<String, Collection<ExternalTaskPojo>>>(
       ContainerUtilRt.<String, Collection<ExternalTaskPojo>>newHashMap()
     );
+
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private final Project         myProject;
+
+  protected AbstractExternalSystemLocalSettings(@NotNull ProjectSystemId externalSystemId, @NotNull Project project) {
+    myExternalSystemId = externalSystemId;
+    myProject = project;
+  }
+
+  /**
+   * Asks current settings to drop all information related to external project which root config is located at the given path.
+   * 
+   * @param linkedProjectPathsToForget  target root external project's path
+   */
+  public void forgetExternalProject(@NotNull Set<String> linkedProjectPathsToForget) {
+    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects = myAvailableProjects.get();
+    for (Iterator<Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>>> it = projects.entrySet().iterator(); it.hasNext(); ) {
+      Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry = it.next();
+      if (linkedProjectPathsToForget.contains(entry.getKey().getPath())) {
+        it.remove();
+      }
+    }
+
+    for (Iterator<Map.Entry<String, Collection<ExternalTaskPojo>>> it = myAvailableTasks.get().entrySet().iterator(); it.hasNext(); ) {
+      Map.Entry<String, Collection<ExternalTaskPojo>> entry = it.next();
+      if (linkedProjectPathsToForget.contains(entry.getKey())
+          || linkedProjectPathsToForget.contains(ExternalSystemApiUtil.getRootProjectPath(entry.getKey(), myExternalSystemId, myProject)))
+      {
+        it.remove();
+      }
+    }
+
+    for (Iterator<ExternalTaskExecutionInfo> it = myRecentTasks.get().iterator(); it.hasNext(); ) {
+      ExternalTaskExecutionInfo taskInfo = it.next();
+      String path = taskInfo.getSettings().getExternalProjectPath();
+      if (linkedProjectPathsToForget.contains(path) ||
+          linkedProjectPathsToForget.contains(ExternalSystemApiUtil.getRootProjectPath(path, myExternalSystemId, myProject)))
+      {
+        it.remove();
+      }
+    }
+  }
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
