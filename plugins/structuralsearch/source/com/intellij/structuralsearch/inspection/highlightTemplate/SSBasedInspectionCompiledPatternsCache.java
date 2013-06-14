@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -60,11 +59,9 @@ public class SSBasedInspectionCompiledPatternsCache implements StartupActivity {
   @Nullable
   private static SSBasedInspection getInspection(@NotNull Project project) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    final InspectionProfileEntry entry = profile.getInspectionTool(SSBasedInspection.SHORT_NAME);
+    final InspectionToolWrapper entry = (InspectionToolWrapper)profile.getInspectionTool(SSBasedInspection.SHORT_NAME);
 
-    return entry instanceof InspectionToolWrapper
-           ? (SSBasedInspection)((InspectionToolWrapper)entry).getTool()
-           : null;
+    return entry == null ? null : (SSBasedInspection)entry.getTool();
   }
 
   @Nullable
