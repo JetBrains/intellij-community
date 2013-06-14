@@ -184,6 +184,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return null;
   }
 
+  @NotNull
   protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull T ref) {
     return candidates;
   }
