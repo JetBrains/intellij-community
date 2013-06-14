@@ -189,7 +189,7 @@ class InnerClassRefInsideAnonymous {
       Child(Foo foo) {
         super(new Foo() {
           public String toString() {
-            AFoo afoo = null;
+            AFoo afoo = new <error descr="Cannot reference 'AFoo' before supertype constructor has been called">AFoo</error>();
             return super.toString();
           }
         });

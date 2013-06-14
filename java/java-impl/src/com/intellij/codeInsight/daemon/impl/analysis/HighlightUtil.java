@@ -1937,7 +1937,9 @@ public class HighlightUtil extends HighlightUtilBase {
           return null;
         }
 
-        if (expression instanceof PsiJavaCodeReferenceElement && !aClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class))) {
+        if (expression instanceof PsiJavaCodeReferenceElement &&
+            !aClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
+            PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
           return null;
         }
 
