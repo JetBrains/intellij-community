@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       GrExpression lValue = assignment.getLValue();
       if (!PsiUtil.mightBeLValue(lValue)) return;
 
-      IElementType opToken = assignment.getOperationToken();
+      IElementType opToken = assignment.getOperationTokenType();
       if (opToken != GroovyTokenTypes.mASSIGN) return;
 
       GrExpression rValue = assignment.getRValue();

@@ -397,7 +397,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
-    if (expression.getOperationToken() != mASSIGN) {
+    if (expression.getOperationTokenType() != mASSIGN) {
       if (lValue instanceof GrReferenceExpression) {
         String referenceName = ((GrReferenceExpression)lValue).getReferenceName();
         if (referenceName != null) {

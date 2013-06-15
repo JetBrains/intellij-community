@@ -154,7 +154,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
 
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
-      final IElementType assignmentTokenType = assignment.getOperationToken();
+      final IElementType assignmentTokenType = assignment.getOperationTokenType();
       if (!assignmentTokenType.equals(GroovyTokenTypes.mASSIGN)) {
         return;
       }

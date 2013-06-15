@@ -241,7 +241,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (lValue instanceof GrIndexProperty) return;
       if (!PsiUtil.mightBeLValue(lValue)) return;
 
-      IElementType opToken = assignment.getOperationToken();
+      IElementType opToken = assignment.getOperationTokenType();
       if (opToken != GroovyTokenTypes.mASSIGN) return;
 
       GrExpression rValue = assignment.getRValue();
