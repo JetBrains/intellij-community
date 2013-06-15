@@ -233,7 +233,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
-    final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
     final Mappings delta = pd.dataManager.getMappings().createDelta();
     final Callbacks.Backend mappingsCallback = delta.getCallback();
     final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getName());
@@ -248,14 +247,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
         exitCode = ExitCode.OK;
 
         final Set<File> srcPath = new HashSet<File>();
+        Set<File> tempRoots = null;
+        
         collectSourceRoots(chunk, srcPath, chunk.containsTests()? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
         final BuildRootIndex index = pd.getBuildRootIndex();
+        
         for (ModuleBuildTarget target : chunk.getTargets()) {
           for (JavaSourceRootDescriptor rd : index.getTempTargetRoots(target, context)) {
+            if (tempRoots == null) {
+              tempRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            }
             srcPath.add(rd.root);
+            tempRoots.add(rd.root);
           }
         }
-
+        final DiagnosticSink diagnosticSink = new DiagnosticSink(context, tempRoots == null? Collections.<File>emptySet() : tempRoots);
+        
         final String chunkName = chunk.getName();
         context.processMessage(new ProgressMessage("Parsing java... [" + chunkName + "]"));
 
@@ -277,6 +284,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink);
+          if (compiledOk) {
+            final Collection<File> loadedTempFiles = diagnosticSink.getLoadedTempSources();
+            if (!loadedTempFiles.isEmpty()) {
+              // compile all implicitly loaded sources from temporary roots
+              compiledOk = compileJava(context, chunk, loadedTempFiles, classpath, platformCp, tempRoots, new DiagnosticSink(context, Collections.<File>emptySet()), outputSink);
+            }
+          }
         }
 
         context.checkCanceled();
@@ -782,11 +796,25 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
+    private final Set<File> myTempRoots;
     private volatile int myErrorCount = 0;
     private volatile int myWarningCount = 0;
+    private final Set<File> myLoadedTempSources = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-    public DiagnosticSink(CompileContext context) {
+    public DiagnosticSink(CompileContext context, Set<File> tempRoots) {
       myContext = context;
+      myTempRoots = tempRoots;
+    }
+
+    @Override
+    public void javaFileLoaded(File file) {
+      if (JpsPathUtil.isUnder(myTempRoots, file)) {
+        myLoadedTempSources.add(file);
+      }
+    }
+
+    public Collection<File> getLoadedTempSources() {
+      return myLoadedTempSources;
     }
 
     public void registerImports(final String className, final Collection<String> imports, final Collection<String> staticImports) {

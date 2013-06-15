@@ -3694,6 +3694,10 @@ public final class JavacRemoteProto {
          * <code>REQUEST_ACK = 5;</code>
          */
         REQUEST_ACK(4, 5),
+        /**
+         * <code>SRC_FILE_LOADED = 6;</code>
+         */
+        SRC_FILE_LOADED(5, 6),
         ;
 
         /**
@@ -3716,6 +3720,10 @@ public final class JavacRemoteProto {
          * <code>REQUEST_ACK = 5;</code>
          */
         public static final int REQUEST_ACK_VALUE = 5;
+        /**
+         * <code>SRC_FILE_LOADED = 6;</code>
+         */
+        public static final int SRC_FILE_LOADED_VALUE = 6;
 
 
         public final int getNumber() { return value; }
@@ -3727,6 +3735,7 @@ public final class JavacRemoteProto {
             case 3: return CLASS_DATA;
             case 4: return BUILD_COMPLETED;
             case 5: return REQUEST_ACK;
+            case 6: return SRC_FILE_LOADED;
             default: return null;
           }
         }

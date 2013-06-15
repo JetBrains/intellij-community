@@ -50,7 +50,7 @@ public class JavacMain {
                                 Collection<File> platformClasspath,
                                 Collection<File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
-                                final DiagnosticOutputConsumer outConsumer,
+                                final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
                                 CanceledStatus canceledStatus, boolean useEclipseCompiler) {
     JavaCompiler compiler = null;
@@ -60,7 +60,7 @@ public class JavacMain {
         break;
       }
       if (compiler == null) {
-        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
+        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
         return false;
       }
     }
@@ -69,7 +69,7 @@ public class JavacMain {
     if (compiler == null) {
       compiler = ToolProvider.getSystemJavaCompiler();
       if (compiler == null) {
-        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
+        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
         return false;
       }
       nowUsingJavac = true;
@@ -83,8 +83,16 @@ public class JavacMain {
     }
     
     final List<JavaSourceTransformer> transformers = getSourceTransformers();
+    transformers.add(new JavaSourceTransformer() { 
+      // dummy transformer to notify about sources that were accessed during compilation 
+      @Override
+      public CharSequence transform(File sourceFile, CharSequence content) throws TransformError {
+        diagnosticConsumer.javaFileLoaded(sourceFile);
+        return content;
+      }
+    });
 
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
+    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
@@ -136,7 +144,7 @@ public class JavacMain {
     final LineOutputWriter out = new LineOutputWriter() {
       protected void lineAvailable(String line) {
         if (nowUsingJavac) {
-          outConsumer.outputLineAvailable(line);
+          diagnosticConsumer.outputLineAvailable(line);
         }
         else {
           // todo: filter too verbose eclipse output?
@@ -154,7 +162,7 @@ public class JavacMain {
       }
 
       final JavaCompiler.CompilationTask task = compiler.getTask(
-        out, fileManager, outConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
+        out, fileManager, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
 
       //if (!IS_VM_6_VERSION) { //todo!
@@ -166,10 +174,10 @@ public class JavacMain {
       return task.call();
     }
     catch(IllegalArgumentException e) {
-      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
     catch (CompilationCanceledException ignored) {
-      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
+      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
     }
     finally {
       fileManager.close();
@@ -212,7 +220,7 @@ public class JavacMain {
     final List<String> result = new ArrayList<String>();
     if (usingJavac) {
       result.add("-Xprefer:source"); 
-      result.add("-implicit:class"); // the option supported by javac only
+      result.add("-implicit:none"); // the option supported by javac only
     }
     else { // is Eclipse
       result.add("-noExit");
