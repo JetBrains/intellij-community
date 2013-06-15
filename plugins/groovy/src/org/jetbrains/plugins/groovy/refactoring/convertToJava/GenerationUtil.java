@@ -315,7 +315,9 @@ public class GenerationUtil {
     while (i < parameters.length) {
       PsiParameter parameter = parameters[i];
       if (parameter == null) continue;
-      if (parameter instanceof PsiCompiledElement) parameter = (PsiParameter)((PsiCompiledElement)parameter).getMirror();
+      if (parameter instanceof PsiCompiledElement) {
+        parameter = (PsiParameter)((PsiCompiledElement)parameter).getMirror();
+      }
 
       if (i > 0) text.append(", ");  //append ','
       if (!classNameProvider.forStubs()) {

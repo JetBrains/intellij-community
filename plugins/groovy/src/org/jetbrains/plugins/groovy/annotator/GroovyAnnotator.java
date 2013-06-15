@@ -1390,6 +1390,17 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
+    final PsiElement identifier = nameValuePair.getNameIdentifierGroovy();
+    if (identifier == null) {
+      final PsiElement parent = nameValuePair.getParent();
+      if (parent instanceof GrAnnotationArgumentList) {
+        final int count = ((GrAnnotationArgumentList)parent).getAttributes().length;
+        if (count > 1) {
+          myHolder.createErrorAnnotation(nameValuePair, GroovyBundle.message("attribute.name.expected"));
+        }
+      }
+    }
+
     final GrAnnotationMemberValue value = nameValuePair.getValue();
 
     checkAnnotationAttributeValue(value, value);

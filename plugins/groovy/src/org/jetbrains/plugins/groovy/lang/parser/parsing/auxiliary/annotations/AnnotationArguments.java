@@ -43,17 +43,8 @@ public class AnnotationArguments implements GroovyElementTypes {
       return;
     }
 
-    if (checkIdentAndAssign(builder)) {
+    if (builder.getTokenType() != mRPAREN) {
       parsePairs(builder, parser);
-    }
-    else {
-      PsiBuilder.Marker pairMarker = builder.mark();
-      if (parseAnnotationMemberValueInitializer(builder, parser)) {
-        pairMarker.done(ANNOTATION_MEMBER_VALUE_PAIR);
-      }
-      else {
-        pairMarker.drop();
-      }
     }
 
     ParserUtils.getToken(builder, mNLS);
@@ -122,17 +113,29 @@ public class AnnotationArguments implements GroovyElementTypes {
   private static boolean parsePair(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
 
+    final PsiBuilder.Marker lfMarker;
     if (checkIdentAndAssign(builder)) {
       ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS);
       ParserUtils.getToken(builder, mASSIGN);
+
+      lfMarker = builder.mark();
       ParserUtils.getToken(builder, mNLS);
     }
     else {
-      builder.error(GroovyBundle.message("attribute.name.expected"));
+      lfMarker = null;
     }
 
     if (!parseAnnotationMemberValueInitializer(builder, parser)) {
-      builder.error(GroovyBundle.message("annotation.member.value.initializer.expected"));
+      if (lfMarker != null) {
+        lfMarker.rollbackTo();
+        builder.error(GroovyBundle.message("annotation.member.value.initializer.expected"));
+      }
+      else {
+        builder.error(GroovyBundle.message("annotation.attribute.expected"));
+      }
+    }
+    else if (lfMarker != null) {
+      lfMarker.drop();
     }
 
     marker.done(ANNOTATION_MEMBER_VALUE_PAIR);
