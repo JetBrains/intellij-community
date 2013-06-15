@@ -52,18 +52,21 @@ public class GrConcatenationInjector implements MultiHostInjector {
     assert context instanceof GrLiteral;
     final GrLiteral literal = (GrLiteral)context;
 
-    final PsiElement parent = context.getParent();
+    if (!(literal instanceof PsiLanguageInjectionHost)) return;
+    final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)literal;
+
+    final PsiElement parent = literal.getParent();
     if (parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getRValue() == literal) {
       final GrExpression lvalue = ((GrAssignmentExpression)parent).getLValue();
       if (lvalue instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)lvalue).resolve();
         if (resolved instanceof PsiModifierListOwner) {
-          processAnnotations(registrar, (PsiLanguageInjectionHost)literal, (PsiModifierListOwner)resolved);
+          processAnnotations(registrar, host, (PsiModifierListOwner)resolved);
         }
       }
     }
     else if (parent instanceof GrVariable) {
-      processAnnotations(registrar, (PsiLanguageInjectionHost)literal, ((GrVariable)parent));
+      processAnnotations(registrar, host, ((GrVariable)parent));
     }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
@@ -73,12 +76,11 @@ public class GrConcatenationInjector implements MultiHostInjector {
         final GroovyResolveResult result = call.advancedResolve();
         if (result.getElement() != null) {
           final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil
-            .mapArgumentsToParameters(result, context, false, false, call.getNamedArguments(), call.getExpressionArguments(),
-                                      call.getClosureArguments());
+            .mapArgumentsToParameters(result, literal, false, false, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
 
           if (map != null) {
             final Pair<PsiParameter, PsiType> pair = map.get(literal);
-            processAnnotations(registrar, (PsiLanguageInjectionHost)literal, pair.first);
+            processAnnotations(registrar, host, pair.first);
           }
         }
       }
