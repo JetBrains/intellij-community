@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * Splits input String to tokens being aware of quoted tokens,
+ * Splits input String to tokens being aware of quoted tokens ("foo bar") and escaped spaces (foo\ bar),
  * usually used for splitting command line to separate arguments that may contain space symbols.
  * Escaped symbols are not handled so there's no way to get token that itself contains quotation mark.
  */
@@ -15,9 +15,15 @@ public class CommandLineTokenizer extends StringTokenizer {
     // keep source level 1.4
     private List myTokens = new ArrayList();
     private int myCurrentToken = 0;
+    private boolean myHandleEscapedWhitespaces = false;
 
     public CommandLineTokenizer(String str) {
+      this(str, false);
+    }
+
+    public CommandLineTokenizer(String str, boolean handleEscapedWhitespaces) {
         super(str, DEFAULT_DELIMITERS, true);
+        myHandleEscapedWhitespaces = handleEscapedWhitespaces;
         parseTokens();
     }
 
@@ -78,8 +84,18 @@ public class CommandLineTokenizer extends StringTokenizer {
                 buffer.append(nextToken.substring(0, i));
                 nextToken = nextToken.substring(i + 1);
             }
-            buffer.append(nextToken);
-            if (quotationMarks % 2 == 1 && super.hasMoreTokens()) {
+
+            boolean isEscapedWhitespace = false;
+            if (myHandleEscapedWhitespaces && quotationMarks == 0 && nextToken.endsWith("\\") && super.hasMoreTokens()) {
+              isEscapedWhitespace = true;
+              buffer.append(nextToken.substring(0, nextToken.length() - 1));
+              buffer.append(super.nextToken());
+            }
+            else {
+              buffer.append(nextToken);
+            }
+
+            if ((isEscapedWhitespace || quotationMarks % 2 == 1) && super.hasMoreTokens()) {
                 nextToken = super.nextToken();
             } else {
                 nextToken = null;
