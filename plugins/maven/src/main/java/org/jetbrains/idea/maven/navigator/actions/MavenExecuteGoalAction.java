@@ -119,17 +119,4 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
 
     return rootProjects.get(0).getDirectory();
   }
-
-  @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-
-    boolean hasMaven = false;
-
-    if (project != null) {
-      hasMaven = MavenProjectsManager.getInstance(project).hasProjects();
-    }
-
-    e.getPresentation().setVisible(hasMaven);
-  }
 }
