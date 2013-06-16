@@ -1,8 +1,8 @@
 <html>
 <body>
 Reports subtraction in
-<b>compareTo()</b> methods. While it is a common idiom to
-use the results of integer subtraction as the return of a <b>compareTo()</b>
+<b>compareTo()</b> methods and methods implementing <b>java.util.Comparator.compare()</b>. While it is a common idiom to
+use the results of integer subtraction as the result of a <b>compareTo()</b>
 method, this construct may cause subtle and difficult bugs in cases of integer overflow.
 Comparing the integer values directly and returning -1, 0, or 1 is better practice in almost
 all cases.
