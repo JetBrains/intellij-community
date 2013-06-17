@@ -53,7 +53,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.State> {
+public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
   private static final Logger LOG = Logger.getInstance(Pep8ExternalAnnotator.class);
 
   public static class Problem {
@@ -76,7 +76,6 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     private final HighlightDisplayLevel level;
     private final List<String> ignoredErrors;
     private final int margin;
-    public final List<Problem> problems = new ArrayList<Problem>();
 
     public State(String interpreterPath, String fileText, HighlightDisplayLevel level,
                  List<String> ignoredErrors, int margin) {
@@ -85,6 +84,15 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       this.level = level;
       this.ignoredErrors = ignoredErrors;
       this.margin = margin;
+    }
+  }
+
+  public static class Results {
+    public final List<Problem> problems = new ArrayList<Problem>();
+    private final HighlightDisplayLevel level;
+
+    public Results(HighlightDisplayLevel level) {
+      this.level = level;
     }
   }
 
@@ -136,7 +144,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   @Nullable
   @Override
-  public State doAnnotate(State collectedInfo) {
+  public Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
     final String pep8Path = PythonHelpersLocator.getHelperPath("pep8.py");
     ArrayList<String> options = new ArrayList<String>();
@@ -151,23 +159,29 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
                                                       null,
                                                       5000,
                                                       collectedInfo.fileText.getBytes());
+
+    Results results = new Results(collectedInfo.level);
     if (output.getStderrLines().isEmpty()) {
       for (String line : output.getStdoutLines()) {
         final Problem problem = parseProblem(line);
         if (problem != null) {
-          collectedInfo.problems.add(problem);
+          results.problems.add(problem);
         }
       }
     }
     else if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
       LOG.info("Error running pep8.py: " + output.getStderr());
     }
-    return collectedInfo;
+    return results;
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, State annotationResult, @NotNull AnnotationHolder holder) {
-    if (annotationResult == null || !file.isValid()) return;
+  public void apply(@NotNull PsiFile file, Results annotationResult, @NotNull AnnotationHolder holder) {
+    if (annotationResult == null) return;
+    if (!file.isValid()) {
+      LOG.info("Trying to apply diagnostics to invalid PsiFile, skipped");
+      return;
+    }
     final String text = file.getText();
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -259,6 +273,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       int line = Integer.parseInt(m.group(1));
       int column = Integer.parseInt(m.group(2));
       return new Problem(line, column, m.group(3), m.group(4));
+    }
+    if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
+      LOG.info("Failed to parse problem line from pep8.py: " + s);
     }
     return null;
   }
