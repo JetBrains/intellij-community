@@ -41,6 +41,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull private volatile String myCurrentBranch = DEFAULT_BRANCH;
   @NotNull private volatile Collection<String> myBranches = Collections.emptySet();
+  @NotNull private volatile Collection<String> myBookmarks = Collections.emptySet();
   private boolean myIsFresh = true;
 
 
@@ -88,6 +89,12 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return myBranches;
   }
 
+  @NotNull
+  @Override
+  public Collection<String> getBookmarks() {
+    return myBookmarks;
+  }
+
 
   @Override
   public boolean isFresh() {
@@ -109,12 +116,13 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   }
 
   private void readRepository() {
-     myIsFresh = myIsFresh && myReader.checkIsFresh(); //if repository not fresh  - it will be not fresh all time
+    myIsFresh = myIsFresh && myReader.checkIsFresh(); //if repository not fresh  - it will be not fresh all time
     if (!isFresh()) {
       myState = myReader.readState();
       myCurrentRevision = myReader.readCurrentRevision();
       myCurrentBranch = myReader.readCurrentBranch();
       myBranches = myReader.readBranches();
+      myBookmarks = myReader.readBookmarks();
     }
   }
 }

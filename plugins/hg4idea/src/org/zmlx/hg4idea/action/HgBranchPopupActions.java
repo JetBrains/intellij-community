@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgBookmarkCreateCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
@@ -37,6 +38,7 @@ import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -60,9 +62,17 @@ public class HgBranchPopupActions {
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository)));
+    popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository)));
 
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
+    }
+
+    popupGroup.addSeparator("Bookmarks");
+    List<String> bookmarks = new ArrayList<String>(myRepository.getBookmarks());
+    Collections.sort(bookmarks);
+    for (String bookmark : bookmarks) {
+      popupGroup.add(new BranchActions(myProject, bookmark, myRepository));
     }
 
     popupGroup.addSeparator("Branches");
@@ -100,6 +110,39 @@ public class HgBranchPopupActions {
       }
       catch (HgCommandException exception) {
         HgAbstractGlobalAction.handleException(myProject, exception);
+      }
+    }
+  }
+
+  public static class HgNewBookmarkAction extends NewBranchAction<HgRepository> {
+
+    HgNewBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories) {
+      super(project, repositories, "New Bookmark", "Create new bookmark");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+
+      final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myProject);
+      bookmarkDialog.show();
+      if (bookmarkDialog.isOK()) {
+        try {
+          final String name = bookmarkDialog.getName();
+          new HgBookmarkCreateCommand(myProject, HgUtil.getRootForSelectedFile(myProject), name, bookmarkDialog.getRevision(),
+                                      bookmarkDialog.isActive()).execute(new HgCommandResultHandler() {
+            @Override
+            public void process(@Nullable HgCommandResult result) {
+              myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+              if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+                new HgCommandResultNotifier(myProject)
+                  .notifyError(result, "Creation  failed", "Bookmark creation [" + name + "] failed");
+              }
+            }
+          });
+        }
+        catch (HgCommandException exception) {
+          HgAbstractGlobalAction.handleException(myProject, exception);
+        }
       }
     }
   }

@@ -86,6 +86,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean branchHeadsChanged = false;
     boolean branchFileChanged = false;
     boolean mergeFileChanged = false;
+    boolean bookmarksFileChanged = false;
     for (VFileEvent event : events) {
       String filePath = event.getPath();
       if (filePath == null) {
@@ -101,12 +102,14 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
       }
+      else if (myRepositoryFiles.isBookmarksFile(filePath)) {
+        bookmarksFileChanged = true;
+      }
     }
 
 
-    if (branchHeadsChanged || branchFileChanged || mergeFileChanged) {
+    if (branchHeadsChanged || branchFileChanged || mergeFileChanged || bookmarksFileChanged) {
       myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
     }
   }
-
 }

@@ -37,11 +37,12 @@ import java.util.regex.Pattern;
  */
 public class HgRepositoryReader {
 
-  private static Pattern BRANCH_PATTERN = Pattern.compile("\\s*(.+)\\s+(.+)");
+  private static Pattern HASH_NAME = Pattern.compile("\\s*(.+)\\s+(.+)");
 
   @NotNull private final File myHgDir;            // .hg
   @NotNull private final File myBranchHeadsFile;  // .hg/cache/branchheads (does not exist before first commit)
   @NotNull private final File myCurrentBranch;    // .hg/branch
+  @NotNull private final File myBookmarksFile; //.hg/bookmarks
 
   public HgRepositoryReader(@NotNull File hgDir) {
     myHgDir = hgDir;
@@ -50,6 +51,7 @@ public class HgRepositoryReader {
     //before 2.5 only branchheads exist
     myBranchHeadsFile = branchesFile.exists() ? branchesFile : new File(new File(myHgDir, "cache"), "branchheads");
     myCurrentBranch = new File(myHgDir, "branch");
+    myBookmarksFile = new File(myHgDir, "bookmarks");
   }
 
   /**
@@ -62,7 +64,7 @@ public class HgRepositoryReader {
     if (checkIsFresh()) return null;
     String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
-    Matcher matcher = BRANCH_PATTERN.matcher(head);
+    Matcher matcher = HASH_NAME.matcher(head);
     if (matcher.matches()) {
       return (matcher.group(1));
     }
@@ -84,7 +86,7 @@ public class HgRepositoryReader {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
-        Matcher matcher = BRANCH_PATTERN.matcher(branchesWithHeads[i]);
+        Matcher matcher = HASH_NAME.matcher(branchesWithHeads[i]);
         if (matcher.matches()) {
           branches.add(matcher.group(2));
         }
@@ -108,5 +110,21 @@ public class HgRepositoryReader {
 
   public boolean branchExist() {
     return myCurrentBranch.exists();
+  }
+
+  @NotNull
+  public Collection<String> readBookmarks() {
+    Set<String> bookmarks = new HashSet<String>();
+    if (!myBookmarksFile.exists()) {
+      return bookmarks;
+    }
+    String[] bookmarksWithHeads = RepositoryUtil.tryLoadFile(myBookmarksFile).split("\n");
+    for (String str : bookmarksWithHeads) {
+      Matcher matcher = HASH_NAME.matcher(str);
+      if (matcher.matches()) {
+        bookmarks.add(matcher.group(2));
+      }
+    }
+    return bookmarks;
   }
 }

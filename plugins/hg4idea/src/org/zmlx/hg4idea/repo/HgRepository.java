@@ -38,4 +38,7 @@ public interface HgRepository extends Repository {
 
   @NotNull
   Collection<String> getBranches();
+
+  @NotNull
+  Collection<String> getBookmarks();
 }
