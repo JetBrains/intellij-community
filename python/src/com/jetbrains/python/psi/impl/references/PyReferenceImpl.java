@@ -250,7 +250,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                              PsiElement realContext, PsiElement roof) {
     ResolveResultList ret = new ResolveResultList();
     PsiElement uexpr = processor.getResult();
-    final List<PsiElement> definers = processor.getDefiners();
+    List<PsiElement> definers = processor.getDefiners();
     if (uexpr != null) {
       if (definers.isEmpty()) {
         final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(realContext);
@@ -272,6 +272,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                 processor = new ResolveProcessor(referencedName);
                 PyResolveUtil.scopeCrawlUp(processor, parentOwner, referencedName, roof);
                 uexpr = processor.getResult();
+                definers = processor.getDefiners();
               }
             }
             else if (!isCythonLevel(myElement)) {
