@@ -134,7 +134,6 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
           if (typeValue != null) {
             addedDependency.getType().setStringValue(typeValue);
-            dependency.getType().undefine();
           }
 
           String classifier = dependency.getClassifier().getStringValue();
