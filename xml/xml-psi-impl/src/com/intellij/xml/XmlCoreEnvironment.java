@@ -7,10 +7,7 @@ import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.javaee.CoreExternalResourceManager;
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ImplicitNamespaceDescriptorProvider;
+import com.intellij.javaee.*;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.dtd.DTDLanguage;
@@ -70,9 +67,12 @@ public class XmlCoreEnvironment {
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlAttributeDescriptorsProvider.EP_NAME, XmlAttributeDescriptorsProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlExtension.EP_NAME, XmlExtension.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), HtmlEmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, HtmlEmbeddedTokenTypesProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), StandardResourceProvider.EP_NAME, StandardResourceProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), StandardResourceEP.EP_NAME, StandardResourceEP.class);
 
       appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
+      appEnvironment.addExtension(StandardResourceProvider.EP_NAME, new InternalResourceProvider());
 
       appEnvironment.registerApplicationService(ExternalResourceManager.class, createExternalResourceManager());
     }

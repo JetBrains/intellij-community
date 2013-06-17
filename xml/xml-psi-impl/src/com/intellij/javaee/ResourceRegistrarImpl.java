@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class ResourceRegistrarImpl implements ResourceRegistrar {
 
-  private final Map<String, Map<String, ExternalResourceManagerImpl.Resource>> myResources = new HashMap<String, Map<String, ExternalResourceManagerImpl.Resource>>();
+  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> myResources = new HashMap<String, Map<String, ExternalResourceManagerExImpl.Resource>>();
   private final List<String> myIgnored = new ArrayList<String>();
 
   public void addStdResource(@NonNls String resource, @NonNls String fileName) {
@@ -41,9 +41,9 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, @Nullable Class klass, @Nullable ClassLoader classLoader) {
-    final Map<String, ExternalResourceManagerImpl.Resource> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
+    final Map<String, ExternalResourceManagerExImpl.Resource> map = ExternalResourceManagerExImpl.getMap(myResources, version, true);
     assert map != null;
-    ExternalResourceManagerImpl.Resource res = new ExternalResourceManagerImpl.Resource();
+    ExternalResourceManagerExImpl.Resource res = new ExternalResourceManagerExImpl.Resource();
     res.file = fileName;
     res.classLoader = classLoader;
     res.clazz = klass;
@@ -74,7 +74,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     addStdResource(resource, version, ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName, clazz);
   }
 
-  public Map<String, Map<String, ExternalResourceManagerImpl.Resource>> getResources() {
+  public Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> getResources() {
     return myResources;
   }
 

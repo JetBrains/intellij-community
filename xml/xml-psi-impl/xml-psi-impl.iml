@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="module" module-name="indexing-impl" />
     <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="library" name="XmlBeans" level="project" />
   </component>
 </module>
 
