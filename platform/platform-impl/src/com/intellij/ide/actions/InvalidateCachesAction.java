@@ -18,8 +18,8 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -33,7 +33,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Application app = ApplicationManager.getApplication();
+    final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     final boolean mac = Messages.canShowMacSheetPanel();
     boolean canRestart = app.isRestartCapable();
     
@@ -58,11 +58,11 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     }
     
     if (result == 3) {
-      app.restart();
+      app.restart(true);
       return;
     }
 
     FSRecords.invalidateCaches();
-    if (result == 0) app.restart();
+    if (result == 0) app.restart(true);
   }
 }

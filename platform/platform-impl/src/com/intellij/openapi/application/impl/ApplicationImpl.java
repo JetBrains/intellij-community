@@ -801,7 +801,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (!force && !showConfirmation()) {
+        if (!confirmExitIfNeeded(force)) {
           saveAll();
           return;
         }
@@ -847,8 +847,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
-  private static boolean showConfirmation() {
+  private static boolean confirmExitIfNeeded(boolean force) {
     final boolean hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
+    if (force && !hasUnsafeBgTasks) {
+      return true;
+    }
 
     DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
       @Override
