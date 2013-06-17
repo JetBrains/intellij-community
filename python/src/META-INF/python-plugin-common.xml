@@ -806,6 +806,9 @@
     <!-- Packaging -->
     <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
                    serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
+
+    <!-- Web2Py -->
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.web2py.Web2PyViewLineMarkerProvider"/>
   </extensions>
 
   <extensionPoints>
