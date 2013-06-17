@@ -33,6 +33,7 @@ import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * <p>
@@ -104,9 +105,11 @@ public class HgBranchPopup {
   private DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    for (VirtualFile repository : HgUtil.getHgRepositories(myProject)) {
+    List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
+    boolean isMultiRepoConfig = repositories.size() > 1;
+    for (VirtualFile repository : repositories) {
       HgRepository repo = HgRepositoryImpl.getFullInstance(repository, myProject, myProject);
-      popupGroup.add(new RootAction<HgRepository>(repo, null,
+      popupGroup.add(new RootAction<HgRepository>(repo, isMultiRepoConfig ? myCurrentRepository : null,
                                                   new HgBranchPopupActions(repo.getProject(), repo).createActions(null),
                                                   HgUtil.getDisplayableBranchText(repo),
                                                   repo.getCurrentBranch()));
