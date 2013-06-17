@@ -410,8 +410,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
   @TestOnly
   public static void checkInjectorsAreDisposed(@NotNull Project project) {
+    System.err.println("checkInjectorsAreDisposed()");
     InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
-    if (cachedManager == null) return;
+    if (cachedManager == null) {
+      System.err.println("checkInjectorsAreDisposed(): cachedManager is null");
+      return;
+    }
     try {
       for (Map.Entry<Class, MultiHostInjector[]> entry : cachedManager.injectors.entrySet()) {
         Class key = entry.getKey();
