@@ -37,7 +37,7 @@ public class XmlPrefixReferenceProvider extends PsiReferenceProvider {
               int i = value.indexOf(':');
               if (i > 0) {
                 return new PsiReference[] {
-                  new SchemaPrefixReference(attributeValue, TextRange.from(1, i), value.substring(0, i))
+                  new SchemaPrefixReference(attributeValue, TextRange.from(1, i), value.substring(0, i), null)
                 };
               }
             }

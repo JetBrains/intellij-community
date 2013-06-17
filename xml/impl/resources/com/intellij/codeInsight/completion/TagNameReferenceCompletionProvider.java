@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
@@ -53,6 +54,12 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
     if (reference instanceof TagNameReference) {
       TagNameReference tagNameReference = (TagNameReference)reference;
       collectCompletionVariants(tagNameReference, result);
+    }
+    else if (reference instanceof SchemaPrefixReference) {
+      TagNameReference tagNameReference = ((SchemaPrefixReference) reference).getTagNameReference();
+      if (tagNameReference != null && !tagNameReference.isStartTagFlag()) {
+        result.consume(createClosingTagLookupElement((XmlTag)tagNameReference.getElement(), true, tagNameReference.getNameElement()));
+      }
     }
   }
 

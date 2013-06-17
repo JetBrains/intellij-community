@@ -180,7 +180,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix, TagNameReference tagRef) {
-    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix);
+    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix,
+                                     tagRef);
   }
 
   @Override
