@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
@@ -38,8 +39,9 @@ public class MavenArtifactDownloader {
     new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
       AtomicInteger num = new AtomicInteger();
 
+      @NotNull
       @Override
-      public Thread newThread(Runnable r) {
+      public Thread newThread(@NotNull Runnable r) {
         return new Thread(r, "Maven Artifact Downloader " + num.getAndIncrement());
       }
     });
