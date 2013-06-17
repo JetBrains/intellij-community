@@ -12,6 +12,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -22,7 +24,6 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
-import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -57,6 +58,17 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public PyFunctionImpl(PyFunctionStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
   }
+
+  private class CachedStructuredDocStringProvider implements CachedValueProvider<StructuredDocString> {
+    @Nullable
+    @Override
+    public Result<StructuredDocString> compute() {
+      final PyFunctionImpl f = PyFunctionImpl.this;
+      return Result.create(DocStringUtil.getStructuredDocString(f), f);
+    }
+  }
+
+  private CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
 
   @Nullable
   @Override
@@ -369,7 +381,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public StructuredDocString getStructuredDocString() {
-    return DocStringUtil.getStructuredDocString(this);
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, myCachedStructuredDocStringProvider);
   }
 
   private boolean isGeneratedStub() {
