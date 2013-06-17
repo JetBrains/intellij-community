@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.lexer.XmlLexer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -48,6 +49,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -73,6 +76,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.zip.CRC32;
 
 public class MavenUtil {
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
@@ -746,5 +750,41 @@ public class MavenUtil {
 
   public interface MavenTaskHandler {
     void waitFor();
+  }
+
+  public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
+    String text = VfsUtil.loadText(xmlFile);
+
+    XmlLexer lexer = new XmlLexer();
+    lexer.start(text);
+
+    CRC32 crc = new CRC32();
+
+    boolean isCommentOrSpace = false;
+
+    while (true) {
+      IElementType tokenType = lexer.getTokenType();
+      if (tokenType == null) break;
+
+      if (XmlTokenType.WHITESPACES.contains(tokenType) || XmlTokenType.COMMENTS.contains(tokenType) || tokenType == XmlTokenType.XML_REAL_WHITE_SPACE) {
+        if (!isCommentOrSpace) {
+          crc.update(1);
+          isCommentOrSpace = true;
+        }
+      }
+      else {
+        isCommentOrSpace = false;
+
+        for (int start = lexer.getTokenStart(), end = lexer.getTokenEnd(); start < end; start++) {
+          char a = text.charAt(start);
+          crc.update(a);
+          crc.update(a >>> 8);
+        }
+      }
+
+      lexer.advance();
+    }
+
+    return (int)crc.getValue();
   }
 }
