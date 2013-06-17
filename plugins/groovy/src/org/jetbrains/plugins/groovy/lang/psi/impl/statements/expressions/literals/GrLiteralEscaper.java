@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
+public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralContainer> {
   private int[] outSourceOffsets;
 
-  public GrLiteralEscaper(final GrLiteralImpl literal) {
+  public GrLiteralEscaper(GrLiteralContainer literal) {
     super(literal);
   }
 
@@ -38,13 +39,13 @@ public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
     outSourceOffsets = new int[subText.length() + 1];
 
     final IElementType elementType = myHost.getFirstChild().getNode().getElementType();
-    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_CONTENT) {
       return GrStringUtil.parseStringCharacters(subText, outChars, outSourceOffsets);
     }
-    else if (elementType == GroovyTokenTypes.mREGEX_LITERAL) {
+    else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mREGEX_CONTENT) {
       return GrStringUtil.parseRegexCharacters(subText, outChars, outSourceOffsets, true);
     }
-    else if (elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
+    else if (elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT) {
       return GrStringUtil.parseRegexCharacters(subText, outChars, outSourceOffsets, false);
     }
     else return false;

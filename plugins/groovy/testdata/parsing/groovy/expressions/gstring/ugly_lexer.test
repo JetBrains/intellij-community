@@ -10,7 +10,8 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound Gstring
       PsiElement(Gstring begin)('"')
-      PsiElement(Gstring content)('abcdef ')
+      GrStringContentImpl(GString content element)
+        PsiElement(Gstring content)('abcdef ')
       GString injection
         PsiElement($)('$')
         Closable block
@@ -20,7 +21,8 @@ Groovy script
           Literal
             PsiElement(Integer)('42')
           PsiElement(})('}')
-      PsiElement(Gstring content)('\dfsd')
+      GrStringContentImpl(GString content element)
+        PsiElement(Gstring content)('\dfsd')
       PsiErrorElement:String end expected
         <empty list>
   PsiElement(new line)('\n')

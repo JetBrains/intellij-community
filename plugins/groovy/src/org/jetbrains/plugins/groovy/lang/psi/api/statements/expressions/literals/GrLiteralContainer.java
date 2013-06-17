@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals;
 
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteral;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @author ilyas
+ * @author Max Medvedev
  */
-public interface GrString extends GrLiteral {
-
-  boolean isPlainString();
-
-  GrStringInjection[] getInjections();
-
-  String[] getTextParts();
-
-  GrStringContent[] getContents();
-
-  GroovyPsiElement[] getAllContentParts();
+public interface GrLiteralContainer extends GroovyPsiElement, PsiLiteral, PsiLanguageInjectionHost {
+  GrLiteralContainer updateText(@NotNull String text);
 }

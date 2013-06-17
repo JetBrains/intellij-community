@@ -1,9 +1,11 @@
 /$
 -----
 Groovy script
-  Literal
-    GroovyASTPsiElementImpl(regex literal)
-      PsiElement(regex begin)('/')
+  Compound regular expression
+    PsiElement(regex begin)('/')
+    GString injection
       PsiElement($)('$')
-      PsiErrorElement:Regex ending expected
+      PsiErrorElement:Identifier or code block expected
         <empty list>
+    PsiErrorElement:Regex ending expected
+      <empty list>

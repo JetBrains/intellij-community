@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,14 +58,20 @@ public class PrimaryExpression implements GroovyElementTypes {
       return REFERENCE_EXPRESSION;
     }
     if (mGSTRING_BEGIN == tokenType) {
-      return StringConstructorExpression.parse(builder, parser);
+      final boolean result = CompoundStringExpression.parse(builder, parser, false, mGSTRING_BEGIN, mGSTRING_CONTENT, mGSTRING_END, null,
+                                                            GSTRING, GroovyBundle.message("string.end.expected"));
+      return result ? GSTRING : LITERAL;
     }
     if (mREGEX_BEGIN == tokenType) {
-      RegexConstructorExpression.parse(builder, parser, false);
+      CompoundStringExpression.parse(builder, parser, false, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mREGEX_LITERAL,
+                                     REGEX, GroovyBundle.message("regex.end.expected"));
       return REGEX;
     }
     if (mDOLLAR_SLASH_REGEX_BEGIN == tokenType) {
-      DollarSlashRegexConstructorExpression.parse(builder, parser, false);
+      CompoundStringExpression
+        .parse(builder, parser, false, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END,
+               mDOLLAR_SLASH_REGEX_LITERAL,
+               REGEX, GroovyBundle.message("dollar.slash.end.expected"));
       return REGEX;
     }
     if (mLBRACK == tokenType) {
