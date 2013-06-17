@@ -50,8 +50,6 @@ import java.util.List;
 public class PluginManager extends PluginManagerCore {
   @NonNls public static final String INSTALLED_TXT = "installed.txt";
 
-  static final Object lock = new Object();
-
   public static long startupStart;
 
   /**
@@ -138,8 +136,8 @@ public class PluginManager extends PluginManagerCore {
 
   public static void reportPluginError() {
     if (myPluginError != null) {
-      String message = IdeBundle.message("title.plugin.error");
-      Notifications.Bus.notify(new Notification(message, message, myPluginError, NotificationType.ERROR, new NotificationListener() {
+      String title = IdeBundle.message("title.plugin.error");
+      Notifications.Bus.notify(new Notification(title, title, myPluginError, NotificationType.ERROR, new NotificationListener() {
         @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
