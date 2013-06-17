@@ -61,7 +61,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        baseDir.refresh(false, true);
+        baseDir.refresh(true, true);
       }
     });
   }
@@ -84,7 +84,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     boolean brokenZip = true;
     if (zipArchiveFile.isFile()) {
       try {
-        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
         brokenZip = false;
       }
       catch (GeneratorException ignored) {
@@ -124,7 +124,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     );
     LOG.info("Content of " + url + " has been successfully downloaded to " + zipArchiveFile.getAbsolutePath()
              + ", size " + zipArchiveFile.length() + " bytes");
-    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
   }
 
   @Nullable
