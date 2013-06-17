@@ -292,6 +292,26 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
+  public void testIncorrectPath() throws Exception {
+    File topDir = createTestDir("top");
+    File file = createTestFile(topDir, "file.zip");
+    File subDir = new File(file, "sub/zip");
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(subDir, false);
+    try {
+      myTimeout = 10 * INTER_RESPONSE_DELAY;
+      myAccept = true;
+      FileUtil.writeToFile(file, "new content");
+      assertEvent(VFileEvent.class);
+      myTimeout = NATIVE_PROCESS_DELAY;
+    }
+    finally {
+      unwatch(request);
+      delete(topDir);
+    }
+  }
+
   public void testDirectoryOverlapping() throws Exception {
     File topDir = createTestDir("top");
     File fileInTopDir = createTestFile(topDir, "file1.txt");

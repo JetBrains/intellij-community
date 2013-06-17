@@ -36,7 +36,7 @@
 #define LOG_ENV_ERROR "error"
 #define LOG_ENV_OFF "off"
 
-#define VERSION "20130415.2136"
+#define VERSION "20130617.1827"
 #define VERSION_MSG "fsnotifier " VERSION "\n"
 
 #define USAGE_MSG \
