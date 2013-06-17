@@ -39,7 +39,7 @@ public class ExternalSystemStartupActivity implements StartupActivity {
       public void run() {
         if (!SystemProperties.getBooleanProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, false)) {
           for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-            ExternalSystemUtil.refreshProjects(project, manager.getSystemId());
+            ExternalSystemUtil.refreshProjects(project, manager.getSystemId(), false);
           }
         }
         ExternalSystemAutoImporter.letTheMagicBegin(project);
