@@ -128,7 +128,7 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
       remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), myCallback);
     }
     else {
-      Messages.showErrorDialog("WebDeployment is missing. Please enable WebDeployment plugin.", "Add Remote Interpreter");
+      Messages.showErrorDialog("The Remote Hosts Access plugin is missing. Please enable the plugin in Settings | Plugins.", "Add Remote Interpreter");
     }
   }
 
