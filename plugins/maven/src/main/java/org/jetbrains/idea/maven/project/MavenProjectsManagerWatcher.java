@@ -325,10 +325,8 @@ public class MavenProjectsManagerWatcher {
   }
 
   private boolean isProfilesFile(String path) {
-    String suffix = "/" + MavenConstants.PROFILES_XML;
-    if (!path.endsWith(suffix)) return false;
-    int pos = path.lastIndexOf(suffix);
-    return myProjectsTree.isPotentialProject(path.substring(0, pos) + "/" + MavenConstants.POM_XML);
+    if (!path.endsWith("/" + MavenConstants.PROFILES_XML)) return false;
+    return myProjectsTree.isPotentialProject(path.substring(0, path.length() - MavenConstants.PROFILES_XML.length()) + MavenConstants.POM_XML);
   }
 
   private boolean isSettingsFile(String path) {
