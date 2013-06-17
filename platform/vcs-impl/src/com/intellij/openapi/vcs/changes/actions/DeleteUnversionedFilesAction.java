@@ -23,12 +23,12 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.ide.DeleteProvider;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.IconUtil;
 
-public class DeleteUnversionedFilesAction extends AnAction {
+public class DeleteUnversionedFilesAction extends DumbAwareAction {
   public DeleteUnversionedFilesAction() {
     super("Delete", "Delete", IconUtil.getRemoveIcon());
   }
