@@ -38,6 +38,10 @@ public class TransformableJavaFileObject implements JavaFileObject {
     myTransformers = transformers;
   }
 
+  public JavaFileObject getOriginal() {
+    return myOriginal;
+  }
+
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     // todo: cache transformed content?
