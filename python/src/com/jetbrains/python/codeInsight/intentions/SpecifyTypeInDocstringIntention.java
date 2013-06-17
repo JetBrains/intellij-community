@@ -12,7 +12,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.StructuredDocString;
+import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.documentation.StructuredDocStringBase;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +86,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     if (pyFunction != null && parameter != null) {
       final String docstring = pyFunction.getDocStringValue();
       if (docstring != null) {
-        StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
+        StructuredDocString structuredDocString = StructuredDocStringBase.parse(docstring);
         return structuredDocString != null && structuredDocString.getParamType(StringUtil.notNullize(parameter.getName())) != null;
       }
       return false;
@@ -97,7 +98,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
     final String docstring = function.getDocStringValue();
     if (docstring != null) {
-      StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
+      StructuredDocString structuredDocString = StructuredDocStringBase.parse(docstring);
       return structuredDocString != null && structuredDocString.getReturnType( ) != null;
     }
     return false;

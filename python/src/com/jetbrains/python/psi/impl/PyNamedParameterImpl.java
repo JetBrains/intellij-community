@@ -17,7 +17,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
-import com.jetbrains.python.documentation.StructuredDocString;
+import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.documentation.StructuredDocStringBase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -212,7 +213,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           if (pyClass != null)
             docString = pyClass.getDocStringValue();
         }
-        StructuredDocString epydocString = StructuredDocString.parse(docString);
+        StructuredDocString epydocString = StructuredDocStringBase.parse(docString);
         if (epydocString != null) {
           String typeName = epydocString.getParamType(getName());
           if (typeName != null) {

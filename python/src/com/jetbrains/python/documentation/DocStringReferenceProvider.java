@@ -10,9 +10,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,17 +42,17 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final List<PsiReference> result = new ArrayList<PsiReference>();
         final int offset = ranges.get(0).getStartOffset();
         // XXX: It does not work with multielement docstrings
-        StructuredDocString docString = StructuredDocString.parse(text);
+        StructuredDocString docString = StructuredDocStringBase.parse(text);
         if (docString != null) {
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocString.PARAM_TAGS), StructuredDocString.PARAMETER));
+                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TAGS), StructuredDocStringBase.PARAMETER));
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocString.PARAM_TYPE_TAGS), StructuredDocString.PARAMETER_TYPE));
+                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS), StructuredDocStringBase.PARAMETER_TYPE));
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getKeywordArgumentSubstrings(), StructuredDocString.KEYWORD));
+                                            docString.getKeywordArgumentSubstrings(), StructuredDocStringBase.KEYWORD));
 
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocString.VARIABLE_TAGS), StructuredDocString.VARIABLE));
+                                            docString.getTagArguments(StructuredDocStringBase.VARIABLE_TAGS), StructuredDocStringBase.VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
         return result.toArray(new PsiReference[result.size()]);
@@ -81,7 +83,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       if (PyNames.isIdentifier(s)) {
         result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset), refType));
       }
-      if (refType.equals(StructuredDocString.PARAMETER_TYPE)) {
+      if (refType.equals(StructuredDocStringBase.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
         if (type != null) {
           result.addAll(parseTypeReferences(element, type, offset));

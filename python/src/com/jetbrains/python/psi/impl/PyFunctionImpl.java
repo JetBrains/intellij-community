@@ -22,7 +22,8 @@ import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.StructuredDocString;
+import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.documentation.StructuredDocStringBase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -396,7 +397,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
 
-    StructuredDocString epydocString = StructuredDocString.parse(docString);
+    StructuredDocString epydocString = StructuredDocStringBase.parse(docString);
     return epydocString != null ? epydocString.getReturnType() : null;
   }
 

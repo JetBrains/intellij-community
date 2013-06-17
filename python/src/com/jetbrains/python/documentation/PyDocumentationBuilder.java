@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -365,7 +366,7 @@ class PyDocumentationBuilder {
     String[] lines = removeCommonIndentation(docstring);
     String preparedDocstring = StringUtil.join(lines, "\n");
     if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
-        StructuredDocString.isEpydocDocstring(preparedDocstring)) {
+        StructuredDocStringBase.isEpydocDocstring(preparedDocstring)) {
       final EpydocString epydocString = new EpydocString(preparedDocstring);
 
       String formatted = epydocString.getDescription();
@@ -375,7 +376,7 @@ class PyDocumentationBuilder {
       return;
     }
     else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
-      StructuredDocString.isSphinxDocstring(preparedDocstring)) {
+      StructuredDocStringBase.isSphinxDocstring(preparedDocstring)) {
       String formatted = null;
       Sdk pythonSdk = PythonSdkType.findPython2Sdk(module);
       if (pythonSdk != null) {
@@ -451,7 +452,7 @@ class PyDocumentationBuilder {
   }
 
   private static Pair<String, String> getTypeAndDescr(String docString, @NotNull PyNamedParameter followed) {
-    StructuredDocString structuredDocString = StructuredDocString.parse(docString);
+    StructuredDocString structuredDocString = StructuredDocStringBase.parse(docString);
     String type = null;
     String desc = null;
     if (structuredDocString != null) {

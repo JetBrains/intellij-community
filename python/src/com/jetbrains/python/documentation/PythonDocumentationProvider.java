@@ -73,7 +73,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       String summary = "";
       final PyStringLiteralExpression docStringExpression = func.getDocStringExpression();
       if (docStringExpression != null) {
-        final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
+        final StructuredDocString docString = StructuredDocStringBase.parse(docStringExpression.getStringValue());
         if (docString != null) {
           summary = docString.getSummary();
         }
@@ -92,7 +92,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       if (docStringExpression != null) {
-        final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
+        final StructuredDocString docString = StructuredDocStringBase.parse(docStringExpression.getStringValue());
         if (docString != null) {
           summary = docString.getSummary();
         }
