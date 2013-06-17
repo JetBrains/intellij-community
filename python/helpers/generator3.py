@@ -2362,7 +2362,7 @@ def redoModule(name, outfile, mod_file_name, doing_builtins, imported_module_nam
 
 # find_binaries functionality
 
-BIN_MODULE_FNAME_PAT = re.compile('([a-zA-Z_]+[0-9a-zA-Z]*)\\.(?:pyc|pyo|(?:[a-zA-Z_]+-\\d\\d[a-zA-Z]*\\.)?(?:so|pyd))')
+BIN_MODULE_FNAME_PAT = re.compile('([a-zA-Z_]+[0-9a-zA-Z]*)\\.(?:pyc|pyo|(?:[a-zA-Z_]+-\\d\\d[a-zA-Z]*\\.|.+-linux-gnu\\.)?(?:so|pyd))')
 # possible binary module filename: letter,    alphanum                    architecture per PEP-3149
 
 def cut_binary_lib_suffix(path, f):
