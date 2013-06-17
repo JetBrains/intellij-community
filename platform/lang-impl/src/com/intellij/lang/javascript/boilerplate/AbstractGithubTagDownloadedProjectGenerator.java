@@ -49,6 +49,12 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     return getDisplayName();
   }
 
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "create.from.template." + getGithubUserName() + "." + getGithubRepositoryName();
+  }
+
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @NotNull GithubTagInfo tag, @NotNull Module module) {
