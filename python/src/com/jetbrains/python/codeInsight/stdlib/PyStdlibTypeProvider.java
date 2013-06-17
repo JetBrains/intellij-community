@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.StructuredDocString;
-import com.jetbrains.python.documentation.StructuredDocStringBase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -281,7 +281,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (docString == null && level.isPy3K()) { //if we couldn't find for Py3K will search in Python2 db
       return getStructuredDocString(qualifiedName, LanguageLevel.PYTHON27);
     }
-    return StructuredDocStringBase.parse(docString);
+    return DocStringUtil.parse(docString);
   }
 
   @Nullable

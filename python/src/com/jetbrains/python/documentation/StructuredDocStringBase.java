@@ -40,25 +40,6 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
   public static String KEYWORD = "keyword";
   public static String VARIABLE = "variable";
 
-  @Nullable
-  public static StructuredDocString parse(@Nullable String text) {
-    if (text == null) {
-      return null;
-    }
-    if (isSphinxDocstring(text)) {
-      return new SphinxDocString(text);
-    }
-    return new EpydocString(text);
-  }
-
-  public static boolean isSphinxDocstring(String text) {
-    return text.contains(":param ") || text.contains(":rtype") || text.contains(":type");
-  }
-
-  public static boolean isEpydocDocstring(String text) {
-    return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
-  }
-
   protected StructuredDocStringBase(@NotNull String docStringText, String tagPrefix) {
     final Substring docString = new Substring(docStringText);
     final List<Substring> lines = docString.splitLines();

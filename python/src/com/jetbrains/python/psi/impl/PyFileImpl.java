@@ -19,6 +19,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.inspections.PythonVisitorFilter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -719,8 +720,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return myType;
   }
 
+  @Nullable
+  @Override
+  public String getDocStringValue() {
+    return DocStringUtil.getDocStringValue(this);
+  }
+
+  @Nullable
+  @Override
+  public StructuredDocString getStructuredDocString() {
+    return DocStringUtil.getStructuredDocString(this);
+  }
+
+  @Nullable
+  @Override
   public PyStringLiteralExpression getDocStringExpression() {
-    return PythonDocStringFinder.find(this);
+    return DocStringUtil.findDocStringExpression(this);
   }
 
   public void subtreeChanged() {

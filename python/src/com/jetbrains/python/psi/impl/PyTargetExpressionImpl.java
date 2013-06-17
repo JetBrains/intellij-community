@@ -24,8 +24,8 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.StructuredDocString;
-import com.jetbrains.python.documentation.StructuredDocStringBase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
@@ -248,9 +248,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @Nullable
   public static PyType getTypeFromDocString(PyTargetExpressionImpl targetExpression) {
-    final String docString = PyPsiUtils.strValue(PyUtil.getAttributeDocString(targetExpression));
+    final String docString = PyPsiUtils.strValue(DocStringUtil.getAttributeDocString(targetExpression));
     if (docString != null) {
-      StructuredDocString structuredDocString = StructuredDocStringBase.parse(docString);
+      StructuredDocString structuredDocString = DocStringUtil.parse(docString);
       if (structuredDocString != null) {
         String typeName = structuredDocString.getParamType(null);
         if (typeName == null) {
@@ -266,9 +266,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @Nullable
   public static PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
-    String docComment = PyUtil.getAttributeDocComment(targetExpression);
+    String docComment = DocStringUtil.getAttributeDocComment(targetExpression);
     if (docComment != null) {
-      StructuredDocString structuredDocString = StructuredDocStringBase.parse(docComment);
+      StructuredDocString structuredDocString = DocStringUtil.parse(docComment);
       if (structuredDocString != null) {
         String typeName = structuredDocString.getParamType(null);
         if (typeName == null) {

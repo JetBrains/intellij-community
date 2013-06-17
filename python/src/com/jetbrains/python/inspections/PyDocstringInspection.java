@@ -118,7 +118,7 @@ public class PyDocstringInspection extends PyInspection {
         return false;
       }
 
-      StructuredDocString docString = StructuredDocStringBase.parse(text);
+      StructuredDocString docString = DocStringUtil.parse(text);
 
       if (docString == null) {
         return false;
