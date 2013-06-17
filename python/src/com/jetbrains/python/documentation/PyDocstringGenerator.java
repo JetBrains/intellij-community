@@ -31,6 +31,7 @@ import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,7 +150,7 @@ public class PyDocstringGenerator {
   public Pair<String, Integer> addParamToDocstring() {
     String text = getDocstringText();
 
-    StructuredDocString structuredDocString = StructuredDocString.parse(text);
+    StructuredDocString structuredDocString = DocStringUtil.parse(text);
 
     Collection<DocstringParam> paramsToAdd = getParamsToAdd(structuredDocString, myParams);
 
@@ -172,7 +173,7 @@ public class PyDocstringGenerator {
   private Collection<DocstringParam> collectParametersToAdd() {
     String text = getDocstringText();
 
-    StructuredDocString structuredDocString = StructuredDocString.parse(text); //TODO: do we need to cache it?
+    StructuredDocString structuredDocString = DocStringUtil.parse(text); //TODO: do we need to cache it?
 
     return getParamsToAdd(structuredDocString, myParams);
   }

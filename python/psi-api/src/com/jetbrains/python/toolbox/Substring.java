@@ -1,4 +1,4 @@
-package com.jetbrains.python.documentation;
+package com.jetbrains.python.toolbox;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -9,14 +9,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author vlan
- */
-
-/**
  * Substring with explicit offsets within its parent string.
  * <p>
  * Regular java.lang.String objects share a single char buffer for results of substring(), trim(), etc., but the offset and count
  * fields of Strings are unfortunately private.
+ *
+ * @author vlan
  */
 public class Substring implements CharSequence {
   private static final Pattern RE_NL = Pattern.compile("(\\r?\\n)");

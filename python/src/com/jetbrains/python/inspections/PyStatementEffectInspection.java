@@ -8,6 +8,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.inspections.quickfix.StatementEffectDocstringQuickFix;
 import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.inspections.quickfix.StatementEffectIntroduceVariableQuickFix;
@@ -81,7 +82,7 @@ public class PyStatementEffectInspection extends PyInspection {
             prevSibling = prevSibling.getPrevSibling();
           if (prevSibling instanceof PyAssignmentStatement) {
             for (PyExpression target : ((PyAssignmentStatement)prevSibling).getTargets()) {
-              if (PyUtil.getAttributeDocString((PyTargetExpression)target) == expression) {
+              if (DocStringUtil.getAttributeDocString((PyTargetExpression)target) == expression) {
                 return true;
               }
             }
@@ -107,7 +108,7 @@ public class PyStatementEffectInspection extends PyInspection {
       }
 
       if (expression instanceof PyStringLiteralExpression) {
-        if (PyUtil.isDocString(expression)) return true;
+        if (DocStringUtil.isDocStringExpression(expression)) return true;
       }
       else if (expression instanceof PyListCompExpression) {
         if (hasEffect(((PyListCompExpression)expression).getResultExpression())) {

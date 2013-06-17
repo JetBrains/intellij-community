@@ -19,6 +19,7 @@ import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -1003,7 +1004,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyStringLiteralExpression getDocStringExpression() {
-    return PythonDocStringFinder.find(getStatementList());
+    return DocStringUtil.findDocStringExpression(getStatementList());
   }
 
   @Override
@@ -1012,7 +1013,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (stub != null) {
       return stub.getDocString();
     }
-    return PyPsiUtils.strValue(getDocStringExpression());
+    return DocStringUtil.getDocStringValue(this);
+  }
+
+  @Nullable
+  @Override
+  public StructuredDocString getStructuredDocString() {
+    return DocStringUtil.getStructuredDocString(this);
   }
 
   public String toString() {

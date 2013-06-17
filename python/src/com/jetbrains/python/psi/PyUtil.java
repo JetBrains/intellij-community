@@ -42,7 +42,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
-import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -457,50 +456,6 @@ public class PyUtil {
 
   public static boolean isClassAttribute(PsiElement element) {
     return element instanceof PyTargetExpression && ScopeUtil.getScopeOwner(element) instanceof PyClass;
-  }
-
-  public static boolean isDocString(PyExpression expression) {
-    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
-    if (docStringOwner != null) {
-      if (docStringOwner.getDocStringExpression() == expression) {
-        return true;
-      }
-    }
-    if (EpydocUtil.isVariableDocString((PyStringLiteralExpression)expression)) return true;
-    return false;
-  }
-
-  @Nullable
-  public static PyStringLiteralExpression getAttributeDocString(PyTargetExpression attr) {
-    if (attr.getParent() instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
-      PsiElement nextSibling = assignment.getNextSibling();
-      while (nextSibling != null && (nextSibling instanceof PsiWhiteSpace || nextSibling instanceof PsiComment)) {
-        nextSibling = nextSibling.getNextSibling();
-      }
-      if (nextSibling instanceof PyExpressionStatement) {
-        final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();
-        if (expression instanceof PyStringLiteralExpression) {
-          return (PyStringLiteralExpression)expression;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static String getAttributeDocComment(PyTargetExpression attr) {
-    if (attr.getParent() instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
-      PsiElement prevSibling = assignment.getPrevSibling();
-      while (prevSibling != null && (prevSibling instanceof PsiWhiteSpace)) {
-        prevSibling = prevSibling.getPrevSibling();
-      }
-      if (prevSibling instanceof PsiComment && prevSibling.getText().startsWith("#:")) {
-        return prevSibling.getText().substring(2);
-      }
-    }
-    return null;
   }
 
   public static boolean isIfNameEqualsMain(PyIfStatement ifStatement) {

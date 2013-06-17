@@ -8,8 +8,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.debugger.PySignatureUtil;
-import com.jetbrains.python.documentation.StructuredDocString;
-import com.jetbrains.python.documentation.Substring;
+import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.toolbox.Substring;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -72,7 +73,7 @@ public class PyDocstringTypesInspection extends PyInspection {
         return;
       }
 
-      StructuredDocString docString = StructuredDocString.parse(text);
+      StructuredDocString docString = DocStringUtil.parse(text);
       if (docString == null) {
         return;
       }

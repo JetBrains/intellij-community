@@ -1,5 +1,6 @@
 package com.jetbrains.python.documentation;
 
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,7 +10,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class SphinxDocString extends StructuredDocString {
+public class SphinxDocString extends StructuredDocStringBase {
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "key" };
   public static String[] ALL_TAGS = new String[] { ":param", ":parameter", ":arg", ":argument", ":keyword", ":key",
                                                    ":type", ":raise", ":raises", ":var", ":cvar", ":ivar",

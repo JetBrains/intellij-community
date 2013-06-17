@@ -12,17 +12,18 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.StructuredDocString;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -57,6 +58,17 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public PyFunctionImpl(PyFunctionStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
   }
+
+  private class CachedStructuredDocStringProvider implements CachedValueProvider<StructuredDocString> {
+    @Nullable
+    @Override
+    public Result<StructuredDocString> compute() {
+      final PyFunctionImpl f = PyFunctionImpl.this;
+      return Result.create(DocStringUtil.getStructuredDocString(f), f);
+    }
+  }
+
+  private CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
 
   @Nullable
   @Override
@@ -305,8 +317,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public PyType getReturnTypeFromDocString() {
-    final String value = getDocStringValue();
-    final String typeName = value != null ? extractReturnType(value) : null;
+    final String typeName = extractReturnType();
     return typeName != null ? PyTypeParser.getTypeByName(this, typeName) : null;
   }
 
@@ -364,8 +375,13 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (stub != null) {
       return stub.getDocString();
     }
-    final PyStringLiteralExpression docStringExpression = getDocStringExpression();
-    return PyPsiUtils.strValue(docStringExpression);
+    return DocStringUtil.getDocStringValue(this);
+  }
+
+  @Nullable
+  @Override
+  public StructuredDocString getStructuredDocString() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, myCachedStructuredDocStringProvider);
   }
 
   private boolean isGeneratedStub() {
@@ -383,7 +399,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private static String extractReturnType(String docString) {
+  private String extractReturnType() {
+    final String docString = getDocStringValue();
+    if (docString == null) {
+      return null;
+    }
     final List<String> lines = StringUtil.split(docString, "\n");
     while (lines.size() > 0 && lines.get(0).trim().length() == 0) {
       lines.remove(0);
@@ -395,9 +415,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         return firstLine.substring(pos + 2).trim();
       }
     }
-
-    StructuredDocString epydocString = StructuredDocString.parse(docString);
-    return epydocString != null ? epydocString.getReturnType() : null;
+    final StructuredDocString structuredDocString = getStructuredDocString();
+    return structuredDocString != null ? structuredDocString.getReturnType() : null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
@@ -456,7 +475,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public PyStringLiteralExpression getDocStringExpression() {
     final PyStatementList stmtList = getStatementList();
-    return stmtList != null ? PythonDocStringFinder.find(stmtList) : null;
+    return stmtList != null ? DocStringUtil.findDocStringExpression(stmtList) : null;
   }
 
   protected String getElementLocation() {
