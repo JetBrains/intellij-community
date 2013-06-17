@@ -25,25 +25,43 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 
 public class InvalidateCachesAction extends AnAction implements DumbAware {
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setText(ApplicationManager.getApplication().isRestartCapable() ? "Invalidate Caches / Restart..." : "Invalidate Caches...");
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final Application app = ApplicationManager.getApplication();
     final boolean mac = Messages.canShowMacSheetPanel();
-    String[] options = new String[3];
-    options[0] = app.isRestartCapable() ? "Invalidate and Restart" : "Invalidate and Exit";
+    boolean canRestart = app.isRestartCapable();
+    
+    String[] options = new String[canRestart ? 4 : 3];
+    options[0] = canRestart ? "Invalidate and Restart" : "Invalidate and Exit";
     options[1] = mac ? "Cancel" : "Invalidate";
     options[2] = mac ? "Invalidate" : "Cancel";
+    if (canRestart) {
+      options[3] = "Just Restart";
+    }
 
-    int result = Messages.showYesNoCancelDialog(e.getData(PlatformDataKeys.PROJECT),
+    int result = Messages.showDialog(e.getData(PlatformDataKeys.PROJECT),
                                      "The caches will be invalidated and rebuilt on the next startup.\n" +
                                      "WARNING: Local History will be also cleared.\n\n" +
                                      "Would you like to continue?\n\n",
                                      "Invalidate Caches",
-                                     options[0], options[1], options[2],
+                                     options, 0,
                                      Messages.getWarningIcon());
 
     if (result == -1 || result == (mac ? 1 : 2)) {
       return;
     }
+    
+    if (result == 3) {
+      app.restart();
+      return;
+    }
+
     FSRecords.invalidateCaches();
     if (result == 0) app.restart();
   }

@@ -196,7 +196,6 @@
         <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
-        <action id="Restart" class="com.intellij.internal.RestartInfoAction" text="Restart"/>
       </group>
 
       <!-- Edit -->
