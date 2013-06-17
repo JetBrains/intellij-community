@@ -60,7 +60,6 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings({"CallToPrintStackTrace"})
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
@@ -68,9 +67,18 @@ public class IdeaApplication {
 
   private static IdeaApplication ourInstance;
 
-  protected final String[] myArgs;
+  public static IdeaApplication getInstance() {
+    return ourInstance;
+  }
+
+  public static boolean isLoaded() {
+    return ourInstance != null && ourInstance.myLoaded;
+  }
+
+  private final String[] myArgs;
   private boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
+  private volatile boolean myLoaded = false;
 
   public IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
@@ -174,16 +182,19 @@ public class IdeaApplication {
     return new IdeStarter();
   }
 
-  public static IdeaApplication getInstance() {
-    return ourInstance;
-  }
+  public void run() {
+    try {
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      app.load(PathManager.getOptionsPath());
 
-  public void run() throws Exception {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    app.load(PathManager.getOptionsPath());
+      myStarter.main(myArgs);
+      myStarter = null; //GC it
 
-    myStarter.main(myArgs);
-    myStarter = null; //GC it
+      myLoaded = true;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
