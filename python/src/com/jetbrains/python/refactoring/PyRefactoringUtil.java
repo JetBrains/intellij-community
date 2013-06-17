@@ -123,7 +123,12 @@ public class PyRefactoringUtil {
     if (!(scope instanceof PyClass) && !(scope instanceof PyFile) && !(scope instanceof PyFunction)) {
       return Collections.emptyList();
     }
-    final Set<String> variables = new HashSet<String>();
+    final Set<String> variables = new HashSet<String>() {
+      @Override
+      public boolean add(String s) {
+        return s != null && super.add(s);
+      }
+    };
     scope.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyTargetExpression(@NotNull final PyTargetExpression node) {
