@@ -809,6 +809,8 @@
 
     <!-- Web2Py -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.web2py.Web2PyViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.web2py.Web2PyControllerLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.web2py.Web2PyControllerLineMarkerProvider"/>
   </extensions>
 
   <extensionPoints>
