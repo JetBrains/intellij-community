@@ -172,6 +172,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
           final PsiExpression[] arguments = argumentList.getExpressions();
           if (arguments.length > 1) {
+            if (result.length() != 0) {
+              result.append('+');
+            }
             result.append("String.valueOf").append(argumentList.getText());
             return result;
           }
