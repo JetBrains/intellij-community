@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
         }
       }
     }
-    return Urls.newFromVirtualFile(virtualFile);
+    return virtualFile instanceof LightVirtualFile ? null : Urls.newFromVirtualFile(virtualFile);
   }
 
   @Override
