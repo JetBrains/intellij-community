@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -63,7 +63,7 @@ public class AddImportHelper {
       // maybe we arrived at the doc comment stmt; skip over it, too
       else if (!skippedOverImports && !skippedOverDoc && file instanceof PyFile) {
         PsiElement doc_elt =
-          PythonDocStringFinder.find((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
+          DocStringUtil.findDocStringExpression((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
         if (doc_elt != null && doc_elt.getParent() == feeler) {
           feeler = feeler.getNextSibling();
           seeker = feeler; // skip over doc even if there's nothing below it

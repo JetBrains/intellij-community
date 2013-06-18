@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.documentation.EpydocString;
-import com.jetbrains.python.documentation.Substring;
+import com.jetbrains.python.toolbox.Substring;
 
 import java.util.List;
 

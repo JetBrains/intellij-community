@@ -4,7 +4,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.TextRange;
-import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.documentation.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
@@ -16,17 +15,17 @@ public class DocStringAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFile(final PyFile node) {
-    annotateDocStringStmt(PythonDocStringFinder.find(node));
+    annotateDocStringStmt(DocStringUtil.findDocStringExpression(node));
   }
 
   @Override
   public void visitPyFunction(final PyFunction node) {
-    annotateDocStringStmt(PythonDocStringFinder.find(node.getStatementList()));
+    annotateDocStringStmt(DocStringUtil.findDocStringExpression(node.getStatementList()));
   }
 
   @Override
   public void visitPyClass(final PyClass node) {
-    annotateDocStringStmt(PythonDocStringFinder.find(node.getStatementList()));
+    annotateDocStringStmt(DocStringUtil.findDocStringExpression(node.getStatementList()));
   }
 
   @Override
@@ -45,7 +44,7 @@ public class DocStringAnnotator extends PyAnnotator {
   @Override
   public void visitPyExpressionStatement(PyExpressionStatement node) {
     if (node.getExpression() instanceof PyStringLiteralExpression &&
-        EpydocUtil.isVariableDocString((PyStringLiteralExpression)node.getExpression())) {
+        DocStringUtil.isVariableDocString((PyStringLiteralExpression)node.getExpression())) {
       annotateDocStringStmt((PyStringLiteralExpression)node.getExpression());
     }
   }

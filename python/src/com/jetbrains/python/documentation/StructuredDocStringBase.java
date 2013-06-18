@@ -3,6 +3,8 @@ package com.jetbrains.python.documentation;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +18,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public abstract class StructuredDocString {
+public abstract class StructuredDocStringBase implements StructuredDocString {
   protected final String myDescription;
 
   protected final Map<String, Substring> mySimpleTagValues = Maps.newHashMap();
@@ -38,26 +40,7 @@ public abstract class StructuredDocString {
   public static String KEYWORD = "keyword";
   public static String VARIABLE = "variable";
 
-  @Nullable
-  public static StructuredDocString parse(String text) {
-    if (text == null) {
-      return null;
-    }
-    if (isSphinxDocstring(text)) {
-      return new SphinxDocString(text);
-    }
-    return new EpydocString(text);
-  }
-
-  public static boolean isSphinxDocstring(String text) {
-    return text.contains(":param ") || text.contains(":rtype") || text.contains(":type");
-  }
-
-  public static boolean isEpydocDocstring(String text) {
-    return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
-  }
-
-  protected StructuredDocString(@NotNull String docStringText, String tagPrefix) {
+  protected StructuredDocStringBase(@NotNull String docStringText, String tagPrefix) {
     final Substring docString = new Substring(docStringText);
     final List<Substring> lines = docString.splitLines();
     final int nlines = lines.size();
@@ -76,10 +59,12 @@ public abstract class StructuredDocString {
     myDescription = builder.toString();
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }
 
+  @Override
   public String getSummary() {
     final List<String> strings = StringUtil.split(StringUtil.trimLeading(myDescription), "\n", true, false);
     if (strings.size() > 1) {
@@ -166,6 +151,7 @@ public abstract class StructuredDocString {
     return result;
   }
 
+  @Override
   @Nullable
   public Substring getTagValue(String... tagNames) {
     for (String tagName : tagNames) {
@@ -177,12 +163,14 @@ public abstract class StructuredDocString {
     return null;
   }
 
+  @Override
   @Nullable
   public Substring getTagValue(String tagName, @NotNull String argName) {
     final Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
     return argValues != null ? argValues.get(new Substring(argName)) : null;
   }
 
+  @Override
   @Nullable
   public Substring getTagValue(String[] tagNames, @NotNull String argName) {
     for (String tagName : tagNames) {
@@ -194,6 +182,7 @@ public abstract class StructuredDocString {
     return null;
   }
 
+  @Override
   public List<Substring> getTagArguments(String... tagNames) {
     for (String tagName : tagNames) {
       final Map<Substring, Substring> map = myArgTagValues.get(tagName);
@@ -204,6 +193,7 @@ public abstract class StructuredDocString {
     return Collections.emptyList();
   }
 
+  @Override
   public List<Substring> getParameterSubstrings() {
     final List<Substring> results = new ArrayList<Substring>();
     results.addAll(getTagArguments(PARAM_TAGS));
@@ -211,6 +201,7 @@ public abstract class StructuredDocString {
     return results;
   }
 
+  @Override
   @Nullable
   public Substring getParamByNameAndKind(@NotNull String name, String kind)  {
     for (Substring s: getTagArguments(kind)) {
@@ -220,39 +211,4 @@ public abstract class StructuredDocString {
     }
     return null;
   }
-
-  public abstract List<String> getParameters();
-  public abstract List<String> getKeywordArguments();
-
-  @Nullable
-  public abstract String getReturnType();
-
-  @Nullable
-  public abstract String getReturnDescription();
-
-  @Nullable
-  public abstract String getParamType(@Nullable String paramName);
-
-  @Nullable
-  public abstract String getParamDescription(@Nullable String paramName);
-
-  @Nullable
-  public abstract String getKeywordArgumentDescription(@Nullable String paramName);
-
-  public abstract List<String> getRaisedExceptions();
-
-  @Nullable
-  public abstract String getRaisedExceptionDescription(@Nullable String exceptionName);
-
-  @Nullable
-  public abstract String getAttributeDescription();
-  public abstract List<String> getAdditionalTags();
-
-  public abstract List<Substring> getKeywordArgumentSubstrings();
-
-  @Nullable
-  public abstract Substring getReturnTypeSubstring();
-
-  @Nullable
-  public abstract Substring getParamTypeSubstring(@Nullable String paramName);
 }

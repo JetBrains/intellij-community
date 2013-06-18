@@ -21,6 +21,7 @@ import com.jetbrains.python.documentation.*;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
 import com.jetbrains.python.inspections.quickfix.PySuppressInspectionFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +118,7 @@ public class PyDocstringInspection extends PyInspection {
         return false;
       }
 
-      StructuredDocString docString = StructuredDocString.parse(text);
+      StructuredDocString docString = DocStringUtil.parse(text);
 
       if (docString == null) {
         return false;

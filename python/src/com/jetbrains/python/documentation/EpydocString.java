@@ -2,6 +2,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +11,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class EpydocString extends StructuredDocString {
+public class EpydocString extends StructuredDocStringBase {
 
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "kwarg", "kwparam" };
