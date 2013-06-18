@@ -236,7 +236,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters.clear();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
-      final List<T> extensions = new ArrayList<T>();
+      final List<T> extensions = new ArrayList<T>(adapters.length);
       for (ExtensionComponentAdapter adapter : adapters) {
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         assertClass(extension.getClass());
