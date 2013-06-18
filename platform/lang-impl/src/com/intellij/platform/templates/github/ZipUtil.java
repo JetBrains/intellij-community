@@ -22,7 +22,6 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Sergey Simonchik
  */
-@SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public class ZipUtil {
 
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
@@ -134,22 +133,25 @@ public class ZipUtil {
     if (progress != null) {
       progress.setText("Extracting " + relativeExtractPath + " ...");
     }
-    FileOutputStream fileOutputStream = null;
-    try {
-      if (contentProcessor == null) {
-        fileOutputStream = new FileOutputStream(child);
+    if (contentProcessor == null) {
+      FileOutputStream fileOutputStream = new FileOutputStream(child);
+      try {
         FileUtil.copy(stream, fileOutputStream);
       }
-      else {
-        byte[] content = contentProcessor.processContent(FileUtil.loadBytes(stream), child);
-        if (content != null) {
-          fileOutputStream = new FileOutputStream(child);
+      finally {
+        fileOutputStream.close();
+      }
+    }
+    else {
+      byte[] content = contentProcessor.processContent(FileUtil.loadBytes(stream), child);
+      if (content != null) {
+        FileOutputStream fileOutputStream = new FileOutputStream(child);
+        try {
           fileOutputStream.write(content);
         }
-      }
-    } finally {
-      if (fileOutputStream != null) {
-        fileOutputStream.close();
+        finally {
+          fileOutputStream.close();
+        }
       }
     }
     LOG.info("Extract: " + relativeExtractPath);
