@@ -6,9 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +75,7 @@ public class ZipUtil {
   }
 
   public static void unzip(@Nullable ProgressIndicator progress,
-                           @NotNull File extractToDir,
+                           @NotNull File targetDir,
                            @NotNull ZipInputStream stream,
                            @Nullable NullableFunction<String, String> pathConvertor,
                            @Nullable ContentProcessor contentProcessor,
@@ -85,26 +83,33 @@ public class ZipUtil {
     if (progress != null) {
       progress.setText("Extracting...");
     }
-    SingleTopLevelFolderUnwrapper singleTopLevelFolderUnwrapper = null;
-    File unzipToDir = extractToDir;
+    File unzipToDir = targetDir;
     if (unwrapSingleTopLevelFolder) {
       unzipToDir = FileUtil.createTempDirectory("unzip-dir-", null);
-      singleTopLevelFolderUnwrapper = new SingleTopLevelFolderUnwrapper(unzipToDir);
     }
+
     ZipEntry entry;
     while ((entry = stream.getNextEntry()) != null) {
-      File child = unzipEntryToDir(progress, entry, unzipToDir, stream, pathConvertor, contentProcessor);
-      if (singleTopLevelFolderUnwrapper != null && child != null) {
-        singleTopLevelFolderUnwrapper.onFileUnzipped(child);
-      }
+      unzipEntryToDir(progress, entry, unzipToDir, stream, pathConvertor, contentProcessor);
     }
-    if (singleTopLevelFolderUnwrapper != null) {
-      singleTopLevelFolderUnwrapper.unwrap(extractToDir);
+
+    if (unwrapSingleTopLevelFolder) {
+      File[] topLevelFiles = unzipToDir.listFiles();
+      File dirToMove;
+      if (topLevelFiles != null && topLevelFiles.length == 1 && topLevelFiles[0].isDirectory()) {
+        dirToMove = topLevelFiles[0];
+      }
+      else {
+        dirToMove = unzipToDir;
+      }
+      if (!FileUtil.moveDirWithContent(dirToMove, targetDir)) {
+        FileUtil.copyDirContent(dirToMove, targetDir);
+      }
+      FileUtil.delete(unzipToDir);
     }
   }
 
-  @Nullable
-  private static File unzipEntryToDir(@Nullable ProgressIndicator progress,
+  private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final File extractToDir,
                                       ZipInputStream stream,
@@ -115,7 +120,7 @@ public class ZipUtil {
       relativeExtractPath = pathConvertor.fun(relativeExtractPath);
       if (relativeExtractPath == null) {
         // should be skipped
-        return null;
+        return;
       }
     }
     File child = new File(extractToDir, relativeExtractPath);
@@ -124,7 +129,7 @@ public class ZipUtil {
       throw new IOException("Unable to create dir: '" + dir + "'!");
     }
     if (zipEntry.isDirectory()) {
-      return dir;
+      return;
     }
     if (progress != null) {
       progress.setText("Extracting " + relativeExtractPath + " ...");
@@ -148,7 +153,6 @@ public class ZipUtil {
       }
     }
     LOG.info("Extract: " + relativeExtractPath);
-    return child;
   }
 
   @NotNull
@@ -156,66 +160,4 @@ public class ZipUtil {
     String name = StringUtil.trimStart(zipEntry.getName(), "/");
     return StringUtil.trimEnd(name, "/");
   }
-
-  private static class SingleTopLevelFolderUnwrapper {
-    private final File[] myRoots;
-    private final File myUnzipToDir;
-    private File myTopLevelDir;
-    private boolean myUnwrap = true;
-
-    private SingleTopLevelFolderUnwrapper(@NotNull File unzipToDir) {
-      myUnzipToDir = unzipToDir;
-      myRoots = ObjectUtils.notNull(File.listRoots(), ArrayUtil.EMPTY_FILE_ARRAY);
-    }
-
-    public void onFileUnzipped(@NotNull final File initialChild) {
-      if (!myUnwrap) {
-        return;
-      }
-      File child = initialChild;
-      File parent = child.getParentFile();
-      while (parent != null && !FileUtil.filesEqual(parent, myUnzipToDir)) {
-        child = parent;
-        parent = parent.getParentFile();
-        if (parent == child) {
-          LOG.warn("Unexpected cycle " + initialChild.getAbsolutePath() + ", extract dir "
-                   + myUnzipToDir.getAbsolutePath());
-          return;
-        }
-        for (File root : myRoots) {
-          if (FileUtil.filesEqual(root, parent)) {
-            parent = null;
-            LOG.warn("Unexpected traversing up to the root from " + initialChild.getAbsolutePath() + ", extract dir "
-                     + myUnzipToDir.getAbsolutePath());
-            break;
-          }
-        }
-      }
-      if (parent == null) {
-        LOG.warn("Skipping unwrapping");
-        myUnwrap = false;
-      }
-      else {
-        if (child.isDirectory()) {
-          if (myTopLevelDir == null) {
-            myTopLevelDir = child;
-          }
-          else if (!FileUtil.filesEqual(myTopLevelDir, child)) {
-            // multiple top level files or folders
-            myUnwrap = false;
-          }
-        }
-        else {
-          myUnwrap = false;
-        }
-      }
-    }
-
-    public void unwrap(@NotNull File extractToDir) throws IOException {
-      File fromDir = myUnwrap && myTopLevelDir != null ? myTopLevelDir : myUnzipToDir;
-      FileUtil.copyDirContent(fromDir, extractToDir);
-      FileUtil.delete(myUnzipToDir);
-    }
-  }
-
 }
