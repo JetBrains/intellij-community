@@ -808,9 +808,9 @@
                    serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
 
     <!-- Web2Py -->
-    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.web2py.Web2PyViewLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.web2py.Web2PyControllerLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.web2py.Web2PyControllerLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.web2py.annotator.Web2PyViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -921,7 +921,7 @@
     <knownDecoratorProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyKnownDecoratorProvider"/>
 
     <!-- Web2Py -->
-    <pyReferenceResolveProvider implementation="com.jetbrains.web2py.Web2PyReferenceResolveProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.web2py.psi.Web2PyReferenceResolveProvider"/>
 
   </extensions>
 
