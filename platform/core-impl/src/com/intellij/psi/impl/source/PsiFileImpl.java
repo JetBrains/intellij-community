@@ -313,6 +313,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     msg += "\n name=" + getName();
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
     msg += "\n document before=" + cachedDocument;
+    
+    ObjectStubTree latestIndexedStub = StubTreeLoader.getInstance().readFromVFile(getProject(), getVirtualFile());
+    msg += "\nlatestIndexedStub=" + latestIndexedStub;
+    if (latestIndexedStub != null) {
+      msg += "\nsame size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
+      msg += "\ndebugInfo=" + latestIndexedStub.getDebugInfo();
+    }
 
     FileViewProvider viewProvider = getViewProvider();
     msg += "\n viewProvider=" + viewProvider;
@@ -326,6 +333,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (document != null) {
       msg += "\n doc saved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
       msg += "; doc stamp: " + document.getModificationStamp();
+      msg += "; doc size: " + document.getTextLength();
       msg += "; committed: " + PsiDocumentManager.getInstance(getProject()).isCommitted(document);
     }
 

@@ -162,7 +162,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       long stamp = stream.readLong();
       long size = stream.readLong();
       stream.close();
-      return "indexed at " + stamp + " with size " + size;
+      return "indexed at " + stamp + " with size " + size + ", queried at " + file.getTimeStamp();
     }
     catch (IOException e) {
       return ExceptionUtil.getThrowableText(e);
