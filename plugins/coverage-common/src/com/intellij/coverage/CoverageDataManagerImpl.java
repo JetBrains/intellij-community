@@ -116,7 +116,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   public void readExternal(Element element) throws InvalidDataException {
     //noinspection unchecked
-    for (Element suiteElement : (Iterable<Element>) element.getChildren(SUITE)) {
+    for (Element suiteElement : element.getChildren(SUITE)) {
       final CoverageRunner coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement);
       // skip unknown runners
       if (coverageRunner == null) {
@@ -338,14 +338,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   public void attachToProcess(@NotNull final ProcessHandler handler,
-                              @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings) {
-    //noinspection ConstantConditions
+                              @NotNull final RunConfigurationBase configuration,
+                              @NotNull final RunnerSettings runnerSettings) {
+    handler.addProcessListener(new ProcessAdapter() {
+      public void processTerminated(final ProcessEvent event) {
+        processGatheredCoverage(configuration, runnerSettings);
+      }
+    });
+  }
+
+  @Override
+  public void processGatheredCoverage(@NotNull RunConfigurationBase configuration, @NotNull RunnerSettings runnerSettings) {
     if (runnerSettings.getData() instanceof CoverageRunnerData) {
-      handler.addProcessListener(new ProcessAdapter() {
-        public void processTerminated(final ProcessEvent event) {
-          processGatheredCoverage(configuration);
-        }
-      });
+      processGatheredCoverage(configuration);
     }
   }
 
