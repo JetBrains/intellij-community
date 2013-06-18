@@ -811,6 +811,12 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.web2py.annotator.Web2PyViewLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
+
+    <fileTypeFactory implementation="com.jetbrains.web2py.templates.Web2PyFileTypeFactory"/>
+    <lang.fileViewProviderFactory language="Web2Py"
+                                  implementationClass="com.jetbrains.web2py.templates.Web2PyFileProviderFactory"/>
+    <lang.parserDefinition language="Web2Py"
+                           implementationClass="com.jetbrains.web2py.templates.parser.Web2PyParserDefinition"/>
   </extensions>
 
   <extensionPoints>

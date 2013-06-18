@@ -1,24 +1,11 @@
 package com.jetbrains.python.templateLanguages;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.Transient;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,11 +16,13 @@ public abstract class TemplatesService {
   public static final String DJANGO = "Django";
   public static final String MAKO = "Mako";
   public static final String JINJA2 = "Jinja2";
+  public static final String WEB2PY = "Web2Py";
 
   private static List<String> ALL_TEMPLATE_LANGUAGES = ContainerUtil.immutableList(NONE,
                                                                                    DJANGO,
                                                                                    MAKO,
-                                                                                  JINJA2);
+                                                                                  JINJA2,
+                                                                                  WEB2PY);
 
   public abstract Language getSelectedTemplateLanguage();
 
