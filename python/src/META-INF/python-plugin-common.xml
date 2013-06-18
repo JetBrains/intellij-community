@@ -817,6 +817,9 @@
                                   implementationClass="com.jetbrains.web2py.templates.file.Web2PyFileProviderFactory"/>
     <lang.parserDefinition language="Web2Py"
                            implementationClass="com.jetbrains.web2py.templates.parser.Web2PyParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="Web2Py"
+                                   implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyHighlighterFactory"/>
+    <editorHighlighterProvider filetype="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyEditorHighlighterProvider"/>
   </extensions>
 
   <extensionPoints>
