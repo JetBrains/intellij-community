@@ -115,7 +115,7 @@ public class TransformableJavaFileObject implements JavaFileObject {
 
   @Override
   public final String toString() {
-    // must implement like this because toString() is called inside com.sun.tools.javac.jvm.ClassWwiter instead of getName()
+    // must implement like this because toString() is called inside com.sun.tools.javac.jvm.ClassWriter instead of getName()
     return getName();  
   }
 }
