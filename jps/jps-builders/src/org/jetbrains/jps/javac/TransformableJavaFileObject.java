@@ -112,4 +112,10 @@ public class TransformableJavaFileObject implements JavaFileObject {
   public boolean delete() {
     return myOriginal.delete();
   }
+
+  @Override
+  public final String toString() {
+    // must implement like this because toString() is called inside com.sun.tools.javac.jvm.ClassWwiter instead of getName()
+    return getName();  
+  }
 }
