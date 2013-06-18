@@ -12,9 +12,11 @@
         <scope name="Production" level="WARNING" enabled="true">
           <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="false" />
           <option name="DONT_REPORT_TRUE_ASSERT_STATEMENTS" value="false" />
+          <option name="IGNORE_ASSERT_STATEMENTS" value="false" />
         </scope>
         <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="true" />
         <option name="DONT_REPORT_TRUE_ASSERT_STATEMENTS" value="true" />
+        <option name="IGNORE_ASSERT_STATEMENTS" value="false" />
       </inspection_tool>
     </profile>
   </profiles>
