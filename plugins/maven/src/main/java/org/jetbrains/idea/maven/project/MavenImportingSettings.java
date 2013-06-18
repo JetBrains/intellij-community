@@ -53,7 +53,7 @@ public class MavenImportingSettings implements Cloneable {
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
 
-  private String dependencyTypes = "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle, client";
+  private String dependencyTypes = "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
   private Set<String> myDependencyTypesAsSet;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
