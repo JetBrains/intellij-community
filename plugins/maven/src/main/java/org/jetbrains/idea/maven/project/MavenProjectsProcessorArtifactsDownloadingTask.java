@@ -53,7 +53,7 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
   public void perform(final Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     MavenArtifactDownloader.DownloadResult result =
-      myTree.downloadSourcesAndJavadocs(myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
+      myTree.downloadSourcesAndJavadocs(project, myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
     if (myCallbackResult != null) myCallbackResult.setDone(result);
 
     // todo: hack to update all file pointers.

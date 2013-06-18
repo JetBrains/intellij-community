@@ -1243,7 +1243,8 @@ public class MavenProjectsTree {
                         });
   }
 
-  public MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Collection<MavenProject> projects,
+  public MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
+                                                                           @NotNull Collection<MavenProject> projects,
                                                                            @Nullable Collection<MavenArtifact> artifacts,
                                                                            boolean downloadSources,
                                                                            boolean downloadDocs,
@@ -1256,7 +1257,7 @@ public class MavenProjectsTree {
 
     try {
       MavenArtifactDownloader.DownloadResult result =
-        MavenArtifactDownloader.download(this, projects, artifacts, downloadSources, downloadDocs, embedder, process);
+        MavenArtifactDownloader.download(project, this, projects, artifacts, downloadSources, downloadDocs, embedder, process);
 
       for (MavenProject each : projects) {
         fireArtifactsDownloaded(each);

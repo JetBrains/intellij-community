@@ -18,9 +18,12 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.SupportedRequestType;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class MavenDependencyTypeConverter extends MavenProjectConstantListConverter {
   public MavenDependencyTypeConverter() {
@@ -29,6 +32,11 @@ public class MavenDependencyTypeConverter extends MavenProjectConstantListConver
 
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context, @NotNull MavenProject project) {
-    return project.getSupportedDependencyTypes(SupportedRequestType.FOR_COMPLETION);
+    Set<String> res = new LinkedHashSet<String>();
+
+    res.addAll(MavenProjectsManager.getInstance(context.getProject()).getImportingSettings().getDependencyTypesAsSet());
+    res.addAll(project.getDependencyTypesFromImporters(SupportedRequestType.FOR_COMPLETION));
+
+    return res;
   }
 }

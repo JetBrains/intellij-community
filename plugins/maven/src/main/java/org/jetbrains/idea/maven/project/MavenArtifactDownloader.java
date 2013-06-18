@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import gnu.trove.THashMap;
@@ -46,27 +49,31 @@ public class MavenArtifactDownloader {
       }
     });
 
+  private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
   private final Collection<MavenProject> myMavenProjects;
   private final Collection<MavenArtifact> myArtifacts;
   private final MavenProgressIndicator myProgress;
   private final MavenEmbedderWrapper myEmbedder;
 
-  public static DownloadResult download(MavenProjectsTree projectsTree,
+  public static DownloadResult download(@NotNull Project project,
+                                        MavenProjectsTree projectsTree,
                                         Collection<MavenProject> mavenProjects,
                                         @Nullable Collection<MavenArtifact> artifacts,
                                         boolean downloadSources,
                                         boolean downloadDocs,
                                         MavenEmbedderWrapper embedder,
                                         MavenProgressIndicator p) throws MavenProcessCanceledException {
-    return new MavenArtifactDownloader(projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
+    return new MavenArtifactDownloader(project, projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
   }
 
-  private MavenArtifactDownloader(MavenProjectsTree projectsTree,
+  private MavenArtifactDownloader(@NotNull Project project,
+                                  MavenProjectsTree projectsTree,
                                   Collection<MavenProject> mavenProjects,
                                   Collection<MavenArtifact> artifacts,
                                   MavenEmbedderWrapper embedder,
                                   MavenProgressIndicator p) {
+    myProject = project;
     myProjectsTree = projectsTree;
     myMavenProjects = mavenProjects;
     myArtifacts = artifacts == null ? null : new THashSet<MavenArtifact>(artifacts);
@@ -106,6 +113,18 @@ public class MavenArtifactDownloader {
   private Map<MavenId, DownloadData> collectArtifactsToDownload(List<MavenExtraArtifactType> types) {
     Map<MavenId, DownloadData> result = new THashMap<MavenId, DownloadData>();
 
+    THashSet<String> dependencyTypesFromSettings = new THashSet<String>();
+
+    AccessToken accessToken = ReadAction.start();
+    try {
+      if (myProject.isDisposed()) return result;
+
+      dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myProject).getImportingSettings().getDependencyTypesAsSet());
+    }
+    finally {
+      accessToken.finish();
+    }
+
     for (MavenProject eachProject : myMavenProjects) {
       List<MavenRemoteRepository> repositories = eachProject.getRemoteRepositories();
 
@@ -114,7 +133,13 @@ public class MavenArtifactDownloader {
 
         if (MavenConstants.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
-        if (!eachProject.isSupportedDependency(eachDependency, SupportedRequestType.FOR_IMPORT)) continue;
+
+        String dependencyType = eachDependency.getType();
+
+        if (!dependencyTypesFromSettings.contains(dependencyType)
+            && !eachProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT).contains(dependencyType)) {
+          continue;
+        }
 
         MavenId id = eachDependency.getMavenId();
         DownloadData data = result.get(id);
