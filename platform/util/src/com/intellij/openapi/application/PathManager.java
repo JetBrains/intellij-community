@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,10 +55,6 @@ public class PathManager {
   @NonNls private static String ourPluginsPath;
   @NonNls private static String ourLogPath;
 
-  @NonNls private static final String FILE = "file";
-  @NonNls private static final String JAR = "jar";
-  @NonNls private static final String JAR_DELIMITER = "!";
-  @NonNls private static final String PROTOCOL_DELIMITER = ":";
   @NonNls public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
   @NonNls private static final String LIB_FOLDER = "lib";
   @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
@@ -333,27 +329,24 @@ public class PathManager {
       System.err.println("precondition failed: " + resourcePath);
       return null;
     }
-    String protocol = resourceURL.getProtocol();
-    String resultPath = null;
 
-    if (FILE.equals(protocol)) {
+    String resultPath = null;
+    String protocol = resourceURL.getProtocol();
+    if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
       String path = resourceURL.getFile();
-      final String testPath = path.replace('\\', '/');
-      final String testResourcePath = resourcePath.replace('\\', '/');
+      String testPath = path.replace('\\', '/');
+      String testResourcePath = resourcePath.replace('\\', '/');
       if (StringUtil.endsWithIgnoreCase(testPath, testResourcePath)) {
         resultPath = path.substring(0, path.length() - resourcePath.length());
       }
     }
-    else if (JAR.equals(protocol)) {
-      String fullPath = resourceURL.getFile();
-      int delimiter = fullPath.indexOf(JAR_DELIMITER);
-      if (delimiter >= 0) {
-        String archivePath = fullPath.substring(0, delimiter);
-        if (StringUtil.startsWithConcatenationOf(archivePath, FILE, PROTOCOL_DELIMITER)) {
-          resultPath = archivePath.substring(FILE.length() + PROTOCOL_DELIMITER.length());
-        }
+    else if (URLUtil.JAR_PROTOCOL.equals(protocol)) {
+      Pair<String, String> paths = URLUtil.splitJarUrl(resourceURL.getFile());
+      if (paths != null) {
+        resultPath = paths.first;
       }
     }
+
     if (resultPath == null) {
       //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
       System.err.println("cannot extract: " + resultPath + " from " + resourceURL);
