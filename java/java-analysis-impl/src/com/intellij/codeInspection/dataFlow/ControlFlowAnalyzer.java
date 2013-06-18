@@ -29,6 +29,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -38,6 +39,7 @@ import static com.intellij.psi.CommonClassNames.*;
 class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   private static final int NOT_FOUND = -10;
+  private boolean myIgnoreAssertions;
 
   private static class CannotAnalyzeException extends RuntimeException { }
 
@@ -54,9 +56,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myFactory = valueFactory;
   }
 
-  public ControlFlow buildControlFlow(PsiElement codeFragment) {
-    if (codeFragment == null) return null;
-
+  public ControlFlow buildControlFlow(@NotNull PsiElement codeFragment, boolean ignoreAssertions) {
+    myIgnoreAssertions = ignoreAssertions;
     PsiManager manager = codeFragment.getManager();
     GlobalSearchScope scope = codeFragment.getResolveScope();
     myRuntimeException = myFactory.getNotNullFactory().create(PsiType.getJavaLangRuntimeException(manager, scope));
@@ -203,6 +204,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
+    if (myIgnoreAssertions) {
+      return;
+    }
+
     startElement(statement);
     final PsiExpression condition = statement.getAssertCondition();
     final PsiExpression description = statement.getAssertDescription();

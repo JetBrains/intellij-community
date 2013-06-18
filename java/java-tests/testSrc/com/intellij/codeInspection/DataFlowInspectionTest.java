@@ -228,4 +228,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     assert psiMethod != null;
     return new ConditionChecker.FromPsiBuilder(psiMethod, psiMethod.getParameterList().getParameters()[0], type).build();
   }
+
+  public void testIgnoreAssertions() {
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
 }

@@ -54,6 +54,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
+  public boolean IGNORE_ASSERT_STATEMENTS = false;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -85,7 +86,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (scope == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
     final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
-    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor);
+    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected(visitor)) {
         createDescription(dfaRunner, holder, visitor);
