@@ -218,7 +218,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
           return fileType.isBinary() ? content : processTemplates(projectName, new String(content), file);
         }
-      }, false);
+      }, true);
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
         public boolean value(String s) {
