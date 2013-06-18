@@ -186,18 +186,21 @@ public class GenericsUtil {
   public static PsiClass[] getLeastUpperClasses(PsiClass aClass, PsiClass bClass) {
     if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) return new PsiClass[]{bClass};
     Set<PsiClass> supers = new LinkedHashSet<PsiClass>();
-    getLeastUpperClassesInner(aClass, bClass, supers);
+    Set<PsiClass> visited = new HashSet<PsiClass>();
+    getLeastUpperClassesInner(aClass, bClass, supers, visited);
     return supers.toArray(new PsiClass[supers.size()]);
   }
 
-  private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers) {
+  private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers, Set<PsiClass> visited) {
     if (bClass.isInheritor(aClass, true)) {
       addSuper(supers, aClass);
     }
     else {
       final PsiClass[] aSupers = aClass.getSupers();
       for (PsiClass aSuper : aSupers) {
-        getLeastUpperClassesInner(aSuper, bClass, supers);
+        if (visited.add(aSuper)) {
+          getLeastUpperClassesInner(aSuper, bClass, supers, visited);
+        }
       }
     }
   }
