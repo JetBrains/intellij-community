@@ -121,7 +121,7 @@ class TestDirectory extends TestPackage {
                                        PsiClass testClass,
                                        PsiMethod testMethod,
                                        PsiPackage testPackage) {
-    if (JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT)) {
+    if (JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) && testPackage != null) {
       final PsiDirectory[] directories = testPackage.getDirectories(configuration.getConfigurationModule().getSearchScope());
       final String dirName = configuration.getPersistentData().getDirName();
       if (dirName != null) {
