@@ -49,10 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.net.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -634,7 +631,7 @@ public class PluginManagerCore {
         if (optionalDescriptor == null && !FileUtil.isJarOrZip(file)) {
           for (URL url : getClassLoaderUrls()) {
             if ("file".equals(url.getProtocol())) {
-              optionalDescriptor = loadDescriptor(new File(url.getFile()), optionalDescriptorName);
+              optionalDescriptor = loadDescriptor(new File(decodeUrl(url.getFile())), optionalDescriptorName);
               if (optionalDescriptor != null) {
                 break;
               }
@@ -788,7 +785,7 @@ public class PluginManagerCore {
     for (URL url : urls) {
       i++;
       if ("file".equals(url.getProtocol())) {
-        File file = new File(url.getFile());
+        File file = new File(decodeUrl(url.getFile()));
 
         IdeaPluginDescriptorImpl platformPluginDescriptor = null;
         if (platformPrefix != null) {
@@ -815,6 +812,12 @@ public class PluginManagerCore {
         }
       }
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  private static String decodeUrl(String file) {
+    String quotePluses = StringUtil.replace(file, "+", "%2B");
+    return URLDecoder.decode(quotePluses);
   }
 
   static void loadDescriptorsFromProperty(final List<IdeaPluginDescriptorImpl> result) {
