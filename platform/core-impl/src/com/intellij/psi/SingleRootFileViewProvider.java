@@ -504,9 +504,20 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public long getModificationStamp() {
       return getVirtualFile().getModificationStamp();
     }
+
+    @Override
+    public String toString() {
+      return "VirtualFileContent{size=" + getVirtualFile().getLength() + "}";
+    }
   }
 
   private class DocumentContent implements Content {
+    @Override
+    public String toString() {
+      final Document document = getDocument();
+      return "DocumentContent{size=" + (document == null ? null : document.getTextLength()) + "}";
+    }
+
     @NotNull
     @Override
     public CharSequence getText() {

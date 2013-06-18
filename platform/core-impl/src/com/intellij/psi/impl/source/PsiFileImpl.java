@@ -311,6 +311,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     String msg = message;
     msg += "\n file=" + this;
     msg += "\n name=" + getName();
+    msg += "\n modStamp=" + getModificationStamp();
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
     msg += "\n document before=" + cachedDocument;
     
@@ -684,6 +685,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
     StubTree stubHolder = (StubTree)tree;
+    tree.setDebugInfo(tree.getDebugInfo() + "\n  loaded at " + vFile.getTimeStamp() + "; mod stamp" + getModificationStamp() + "; viewProvider=" + getViewProvider());
 
     synchronized (PsiLock.LOCK) {
       if (getTreeElement() != null) return null;

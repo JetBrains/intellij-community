@@ -2344,7 +2344,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
            (isMock(file) || !isFileIndexed(file, indexId));
   }
 
-  private static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexId) {
+  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexId) {
     ID id = IndexInfrastructure.getStubId(indexId, file.getFileType());
     return IndexingStamp.isFileIndexed(file, id, IndexInfrastructure.getIndexCreationStamp(id));
   }
