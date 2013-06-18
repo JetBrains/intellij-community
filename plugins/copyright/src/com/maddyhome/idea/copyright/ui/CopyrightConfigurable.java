@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   private final CopyrightProfile myCopyrightProfile;
@@ -104,7 +107,16 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public void apply() throws ConfigurationException {
     myCopyrightProfile.setNotice(EntityUtil.encode(myCopyrightPane.getText().trim()));
-    myCopyrightProfile.setKeyword(myKeywordTf.getText());
+    final String keyword = myKeywordTf.getText().trim();
+    try {
+      if (!StringUtil.isEmptyOrSpaces(keyword)) {
+        Pattern.compile(keyword);
+      }
+    }
+    catch (PatternSyntaxException e) {
+      throw new ConfigurationException("Keyword pattern syntax is incorrect: " + e.getMessage());
+    }
+    myCopyrightProfile.setKeyword(keyword);
     myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText());
     CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
