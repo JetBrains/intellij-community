@@ -951,7 +951,7 @@ public class IdeEventQueue extends EventQueue {
     });
   }
 
-  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1000, 100);
+  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(AWTEvent theEvent) {
     myFrequentEventDetector.eventHappened();
