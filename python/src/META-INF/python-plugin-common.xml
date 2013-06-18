@@ -812,9 +812,9 @@
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
 
-    <fileTypeFactory implementation="com.jetbrains.web2py.templates.Web2PyFileTypeFactory"/>
+    <fileTypeFactory implementation="com.jetbrains.web2py.templates.file.Web2PyFileTypeFactory"/>
     <lang.fileViewProviderFactory language="Web2Py"
-                                  implementationClass="com.jetbrains.web2py.templates.Web2PyFileProviderFactory"/>
+                                  implementationClass="com.jetbrains.web2py.templates.file.Web2PyFileProviderFactory"/>
     <lang.parserDefinition language="Web2Py"
                            implementationClass="com.jetbrains.web2py.templates.parser.Web2PyParserDefinition"/>
   </extensions>
@@ -928,7 +928,8 @@
 
     <!-- Web2Py -->
     <pyReferenceResolveProvider implementation="com.jetbrains.web2py.psi.Web2PyReferenceResolveProvider"/>
-
+    <dialectsTokenSetContributor implementation="com.jetbrains.web2py.templates.ref.Web2PyTokenSetContributor"/>
+    <visitorFilter language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyVisitorFilter"/>
   </extensions>
 
   <project-components>
