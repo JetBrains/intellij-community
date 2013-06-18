@@ -142,7 +142,9 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     StubElement<?> stub = getStub();
     if (stub != null) {
       PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
-      assert nodes.length == 1 : stub + "; " + stub.getChildrenStubs();
+      if (nodes.length != 1) {
+        reportStubAstMismatch(stub + "; " + stub.getChildrenStubs(), getStubTree(), PsiDocumentManager.getInstance(getProject()).getCachedDocument(this));
+      }
       return nodes[0];
     }
 

@@ -306,8 +306,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return result;
   }
 
-  private void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
+  protected void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
+    clearStub();
+
     String msg = message;
     msg += "\n file=" + this;
     msg += "\n name=" + getName();
@@ -363,6 +365,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public void unloadContent() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(getTreeElement() != null);
     clearCaches();
     myViewProvider.beforeContentsSynchronized();
@@ -375,7 +378,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void clearStub() {
     StubTree stubHolder = myStub == null ? null : myStub.get();
     if (stubHolder != null) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
       ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
     }
     myStub = null;
