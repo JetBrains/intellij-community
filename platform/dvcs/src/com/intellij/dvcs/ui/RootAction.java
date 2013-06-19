@@ -30,9 +30,9 @@ import org.jetbrains.annotations.Nullable;
 public class RootAction<T extends Repository> extends ActionGroup {
 
   @NotNull protected final T myRepository;
-  @NotNull private ActionGroup myGroup;
-  @NotNull private String myBranchText;
-  @NotNull private String myBranchOrRev;
+  @NotNull private final ActionGroup myGroup;
+  @NotNull private final String myBranchText;
+  @NotNull private final String myBranchOrRev;
 
 
   /**
