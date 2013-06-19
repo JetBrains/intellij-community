@@ -34,6 +34,7 @@ import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.DependencyId;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -217,10 +218,10 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
       return new Function<MavenDomProjectModel, Set<MavenDomDependency>>() {
         public Set<MavenDomDependency> fun(MavenDomProjectModel model) {
-          String groupId = dependency.getGroupId().getStringValue();
-          String artifactId = dependency.getArtifactId().getStringValue();
+          DependencyId dependencyId = DependencyId.create(dependency);
+          if (dependencyId == null) return Collections.emptySet();
 
-          return MavenDomProjectProcessorUtils.searchDependencyUsages(model, groupId, artifactId, Collections.singleton(dependency));
+          return MavenDomProjectProcessorUtils.searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
         }
       };
     }
