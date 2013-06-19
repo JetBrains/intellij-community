@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,5 +36,4 @@ public interface RunProfile {
   Icon getIcon();
 
   void checkConfiguration() throws RuntimeConfigurationException;
-
 }
