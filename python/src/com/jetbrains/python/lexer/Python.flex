@@ -87,11 +87,11 @@ return yylength()-s.length();
 [\ ]                        { return PyTokenTypes.SPACE; }
 [\t]                        { return PyTokenTypes.TAB; }
 [\f]                        { return PyTokenTypes.FORMFEED; }
-{END_OF_LINE_COMMENT}       { return PyTokenTypes.END_OF_LINE_COMMENT; }
 "\\"                        { return PyTokenTypes.BACKSLASH; }
 
 <YYINITIAL> {
 [\n]                        { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK; }
+{END_OF_LINE_COMMENT}       { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT; }
 
 {SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
                                  else return PyTokenTypes.SINGLE_QUOTED_STRING; }
@@ -115,6 +115,7 @@ return PyTokenTypes.DOCSTRING; }
 }
 
 [\n]                        { return PyTokenTypes.LINE_BREAK; }
+{END_OF_LINE_COMMENT}       { return PyTokenTypes.END_OF_LINE_COMMENT; }
 
 <YYINITIAL, IN_DOCSTRING_OWNER> {
 {LONGINTEGER}         { return PyTokenTypes.INTEGER_LITERAL; }
