@@ -56,7 +56,7 @@ public class UsageInfo {
     if (startOffset < 0) {
       throw new IllegalArgumentException("element " + element + "; startOffset " +startOffset);
     }
-    if (startOffset >= endOffset) {
+    if (startOffset > endOffset) {
       throw new IllegalArgumentException("element " + element + "; diff " + (endOffset-startOffset));
     }
 
