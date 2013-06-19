@@ -57,6 +57,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
@@ -228,7 +229,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, final boolean focused) {
-    final JPanel panel = new JPanel(new BorderLayout());
     final String typeText = item.typeCodeFragment.getText();
     final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
     String text = typeText + separator + item.parameter.getName();
@@ -246,28 +246,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     if (!StringUtil.isEmpty(tail)) {
       text += " //" + tail;
     }
-    final EditorTextField field = new EditorTextField(" " + text, getProject(), getFileType()) {
-      @Override
-      protected boolean shouldHaveBorder() {
-        return false;
-      }
-    };
-
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    font = new Font(font.getFontName(), font.getStyle(), 12);
-    field.setFont(font);
-
-    if (selected && focused) {
-      panel.setBackground(UIUtil.getTableSelectionBackground());
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
-    } else {
-      panel.setBackground(UIUtil.getTableBackground());
-      if (selected && !focused) {
-        panel.setBorder(new DottedBorder(UIUtil.getTableForeground()));
-      }
-    }
-    panel.add(field, BorderLayout.WEST);
-    return panel;
+    return JBListTable.createEditorTextFieldPresentation(getProject(), getFileType(), " " + text, selected, focused);
   }
 
   private int getTypesMaxLength() {
