@@ -220,6 +220,10 @@ public abstract class JBListTable extends JPanel {
     mainTable.setStriped(true);
   }
 
+  public void stopEditing() {
+    TableUtil.stopEditing(mainTable);
+  }
+
   private void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
     final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
     for (EditorTextField textField : editors) {
