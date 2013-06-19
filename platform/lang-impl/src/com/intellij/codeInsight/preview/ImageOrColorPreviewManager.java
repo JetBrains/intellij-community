@@ -34,6 +34,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -117,7 +118,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   private PsiElement getPsiElementAt(@NotNull final Point point) {
     final LogicalPosition position = getLogicalPosition(point);
     if (myEditor != null && myFile != null && !(myFile instanceof PsiCompiledElement)) {
-      return myFile.getViewProvider().findElementAt(myEditor.logicalPositionToOffset(position));
+      return InjectedLanguageUtil.findElementAtNoCommit(myFile, myEditor.logicalPositionToOffset(position));
     }
 
     return null;
