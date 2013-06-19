@@ -27,7 +27,6 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -132,8 +131,7 @@ public class GradleExecutionHelper {
   private static ProjectConnection getConnection(@NotNull String projectPath, @Nullable GradleExecutionSettings settings)
     throws IllegalStateException
   {
-    File projectFile = new File(projectPath);
-    File projectDir = projectFile.getParentFile();
+    File projectDir = new File(projectPath);
     GradleConnector connector = GradleConnector.newConnector();
     if (settings != null) {
 
