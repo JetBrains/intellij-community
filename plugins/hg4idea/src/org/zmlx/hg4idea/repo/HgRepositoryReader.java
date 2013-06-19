@@ -116,6 +116,7 @@ public class HgRepositoryReader {
 
   @NotNull
   public Collection<String> readBookmarks() {
+    // .hg/bookmarks contains hash + name, f.e. 25e44c95b2612e3cdf29a704dabf82c77066cb67 A_BookMark
     Set<String> bookmarks = new HashSet<String>();
     if (!myBookmarksFile.exists()) {
       return bookmarks;

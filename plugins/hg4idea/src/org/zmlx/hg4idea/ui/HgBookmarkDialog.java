@@ -14,7 +14,7 @@ import javax.swing.event.DocumentListener;
  * @author Nadya Zabrodina
  */
 public class HgBookmarkDialog extends DialogWrapper {
-  private JPanel contentPanel;
+  private JPanel myContentPanel;
   private JTextField myRevision;
   private JTextField myBookmarkName;
   private JCheckBox myActiveCheckbox;
@@ -41,9 +41,24 @@ public class HgBookmarkDialog extends DialogWrapper {
     init();
   }
 
+  @Override
+  @Nullable
+  protected String getHelpId() {
+    return "reference.mercurial.create.bookmark";
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myBookmarkName;
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return HgBookmarkDialog.class.getName();
+  }
 
   protected JComponent createCenterPanel() {
-    return contentPanel;
+    return myContentPanel;
   }
 
   @NotNull

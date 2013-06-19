@@ -40,7 +40,7 @@ public class HgBookmarkCreateCommand {
     }
     List<String> arguments = new ArrayList<String>();
     arguments.add(myBookmarkName);
-    if (myRevisionNumber != null) {
+    if (!StringUtil.isEmptyOrSpaces(myRevisionNumber)) {
       arguments.add("--rev");
       arguments.add(myRevisionNumber);
     }
@@ -49,6 +49,4 @@ public class HgBookmarkCreateCommand {
     }
     new HgCommandExecutor(myProject).execute(myRepo, "bookmark", arguments, resultHandler);
   }
-
-
 }
