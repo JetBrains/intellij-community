@@ -83,14 +83,14 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
                                                                  MavenDomDependency.class);
     if (dependency == null || isManagedDependency(dependency)) return null;
 
-    Set<MavenDomProjectModel> parents = getParentProjects(file.getProject(), file);
+    Set<MavenDomProjectModel> parents = getParentProjects(file);
     if (parents.isEmpty()) return null;
 
     return Pair.create(dependency, parents);
   }
 
   @NotNull
-  private static Set<MavenDomProjectModel> getParentProjects(@NotNull Project project, @NotNull PsiFile file) {
+  private static Set<MavenDomProjectModel> getParentProjects(@NotNull PsiFile file) {
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
 
     if (model == null) return Collections.emptySet();
