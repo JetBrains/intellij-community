@@ -16,10 +16,8 @@
 package com.intellij.rt.execution.junit;
 
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import org.junit.runner.Description;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,15 +111,18 @@ public class JUnitForkedStarter {
 
             final FileOutputStream writer = new FileOutputStream(tempFile);
 
-            String className = null;
+            String firstName = null;
             try {
               final int classNamesSize = Integer.parseInt(perDirReader.readLine());
               writer.write((packageName + ", working directory: \'" + workingDir + "\'\n").getBytes("UTF-8")); //instead of package name
               for (int i = 0; i < classNamesSize; i++) {
-                className = perDirReader.readLine();
+                String className = perDirReader.readLine();
                 if (className == null) {
                   System.err.println("Class name is expected. Working dir: " + workingDir);
                   return -1;
+                }
+                if (firstName == null) {
+                  firstName = className;
                 }
                 writer.write((className + "\n").getBytes("UTF-8"));
               }
@@ -130,8 +131,7 @@ public class JUnitForkedStarter {
               writer.close();
             }
 
-            final Object rootDescriptor = findByClassName(testRunner, className, description);
-            
+            final Object rootDescriptor = findByClassName(testRunner, firstName, description);
             final int childResult;
             final File dir = new File(workingDir);
             if (forkMode.equals("none")) {

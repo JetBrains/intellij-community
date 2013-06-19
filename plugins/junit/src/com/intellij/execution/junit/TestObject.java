@@ -472,7 +472,7 @@ public abstract class TestObject implements JavaCommandLine {
         myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
       }
 
-      final Map<String, List<String>> perModule = forkPerModule() ? new HashMap<String, List<String>>() : null;
+      final Map<String, List<String>> perModule = forkPerModule() ? new TreeMap<String, List<String>>() : null;
       final PrintWriter writer = new PrintWriter(myTempFile, "UTF-8");
       try {
         writer.println(packageName);
@@ -483,7 +483,6 @@ public abstract class TestObject implements JavaCommandLine {
             LOG.error("invalid element " + element);
             return;
           }
-          testNames.add(name);
 
           if (perModule != null && element instanceof PsiElement) {
             final Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
@@ -496,9 +495,18 @@ public abstract class TestObject implements JavaCommandLine {
               }
               list.add(name);
             }
+          } else {
+            testNames.add(name);
           }
         }
-        Collections.sort(testNames); //sort tests in FQN order
+        if (perModule != null) {
+          for (List<String> perModuleClasses : perModule.values()) {
+            Collections.sort(perModuleClasses);
+            testNames.addAll(perModuleClasses);
+          }
+        } else {
+          Collections.sort(testNames); //sort tests in FQN order
+        }
         for (String testName : testNames) {
           writer.println(testName);
         }
@@ -515,7 +523,6 @@ public abstract class TestObject implements JavaCommandLine {
             wWriter.println(workingDir);
             final List<String> classNames = perModule.get(workingDir);
             wWriter.println(classNames.size());
-            Collections.sort(classNames);
             for (String className : classNames) {
               wWriter.println(className);
             }
