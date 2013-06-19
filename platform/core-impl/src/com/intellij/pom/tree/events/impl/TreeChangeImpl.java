@@ -154,9 +154,8 @@ public class TreeChangeImpl implements TreeChange {
     }
     finally {
       if (optimizedIndex != haveNotCalculated && index != optimizedIndex) {
-        ChangeInfo changeInfo = myChanges.get(child);
         ASTNode prev = child.getTreePrev();
-        LOG.error("Failed to calculate optimized index for add change at offset:"+changeInfo + "," + prev + "," + myChanges.get(prev));
+        LOG.error("Failed to calculate optimized index for add change at offset:"+prev + "," + myChanges.get(prev) + "," + isAfter(prev, child) + "," + optimizedIndex + "," + index);
         ourEnableAddChangeAtOffsetOptimization = false;
       }
     }
