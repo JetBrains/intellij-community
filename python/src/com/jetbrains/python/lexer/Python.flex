@@ -207,7 +207,7 @@ return PyTokenTypes.DOCSTRING; }
 }
 
 <IN_DOCSTRING_OWNER> {
-":"(\ )*"\n"          { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
+":"(\ )*{END_OF_LINE_COMMENT}?"\n"          { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
 }
 
 <PENDING_DOCSTRING> {
