@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -144,10 +143,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, StubIdList>, IOException>() {
             @Override
             public MapIndexStorage<K, StubIdList> compute() throws IOException {
-              final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-              if (indicator != null) {
-                indicator.setIndeterminate(true);
-              }
+              FileBasedIndexImpl.configureIndexDataLoadingProgress(ProgressManager.getInstance().getProgressIndicator());
+
               return new MapIndexStorage<K, StubIdList>(
                 IndexInfrastructure.getStorageFile(indexKey),
                 extension.getKeyDescriptor(),
