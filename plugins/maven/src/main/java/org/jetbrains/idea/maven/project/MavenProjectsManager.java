@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -27,13 +29,14 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
@@ -65,6 +68,8 @@ import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @State(name = "MavenProjectsManager", storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
 public class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -1053,9 +1058,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     final File mavenConfigFile = new File(projectSystemDir, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
 
-    final int crc = myProjectsTree.getFilterConfigCrc(fileIndex);
+    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+
+    final int crc = myProjectsTree.getFilterConfigCrc(fileIndex) + (int)projectRootManager.getModificationCount();
 
     final File crcFile = new File(mavenConfigFile.getParent(), "configuration.crc");
 
@@ -1120,6 +1127,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
     }
 
+    addManualAddedResources(projectConfig);
+
     final Document document = new Document(new Element("maven-project-configuration"));
     XmlSerializer.serializeInto(projectConfig, document.getRootElement());
     buildManager.runCommand(new Runnable() {
@@ -1143,6 +1152,84 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         }
       }
     });
+  }
+
+  private void addManualAddedResources(MavenProjectConfiguration projectCfg) {
+    Set<VirtualFile> processedRoots = new HashSet<VirtualFile>();
+
+    for (MavenProject project : getProjects()) {
+      for (String dir : ContainerUtil.concat(project.getSources(), project.getTestSources())) {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(dir);
+        if (file != null) {
+          processedRoots.add(file);
+        }
+      }
+
+      for (MavenResource resource : ContainerUtil.concat(project.getResources(), project.getTestResources())) {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(resource.getDirectory());
+        if (file != null) {
+          processedRoots.add(file);
+        }
+      }
+    }
+
+    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      if (!isMavenizedModule(module)) continue;
+
+      for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (SourceFolder folder : contentEntry.getSourceFolders()) {
+          VirtualFile file = folder.getFile();
+          if (file == null) continue;
+
+          if (!compilerConfiguration.isExcludedFromCompilation(file) && !isUnderRoots(processedRoots, file)) {
+            MavenModuleResourceConfiguration configuration = projectCfg.moduleConfigurations.get(module.getName());
+            if (configuration == null) continue;
+
+            List<ResourceRootConfiguration> resourcesList = folder.isTestSource() ? configuration.testResources : configuration.resources;
+
+            final ResourceRootConfiguration cfg = new ResourceRootConfiguration();
+            cfg.directory = FileUtil.toSystemIndependentName(FileUtil.toSystemIndependentName(file.getPath()));
+
+            CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+            if (compilerModuleExtension == null) continue;
+
+
+            String compilerOutputUrl = folder.isTestSource()
+                                       ? compilerModuleExtension.getCompilerOutputUrlForTests()
+                                       : compilerModuleExtension.getCompilerOutputUrl();
+
+            cfg.targetPath = VfsUtil.urlToPath(compilerOutputUrl);
+
+            convertIdeaExcludesToMavenExcludes(cfg, (CompilerConfigurationImpl)compilerConfiguration);
+
+            resourcesList.add(cfg);
+          }
+        }
+      }
+    }
+  }
+
+  private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
+
+  private static void convertIdeaExcludesToMavenExcludes(ResourceRootConfiguration cfg, CompilerConfigurationImpl compilerConfiguration) {
+    for (String pattern : compilerConfiguration.getResourceFilePatterns()) {
+      Matcher matcher = SIMPLE_NEGATIVE_PATTERN.matcher(pattern);
+      if (matcher.matches()) {
+        cfg.excludes.add("**/" + matcher.group(1));
+      }
+    }
+  }
+
+  private static boolean isUnderRoots(Set<VirtualFile> roots, VirtualFile file) {
+    for (VirtualFile f = file; f != null; f = f.getParent()) {
+      if (roots.contains(file)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static void addResources(final List<ResourceRootConfiguration> container, Collection<MavenResource> resources) {
