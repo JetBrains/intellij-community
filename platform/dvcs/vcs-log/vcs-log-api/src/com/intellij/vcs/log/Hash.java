@@ -25,6 +25,7 @@ public final class Hash {
     }
   };
 
+  private static final int SHORT_HASH_LENGTH = 7;
   private static final int CAPABILITY = 5000;
   private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>(CAPABILITY);
 
@@ -115,4 +116,8 @@ public final class Hash {
     return toStrHash();
   }
 
+  public String toShortString() {
+    String s = toStrHash();
+    return s.substring(0, Math.min(s.length(), SHORT_HASH_LENGTH));
+  }
 }

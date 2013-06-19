@@ -13,8 +13,8 @@ import java.util.List;
 public interface Graph {
 
   @NotNull
-  public List<NodeRow> getNodeRows();
+  List<NodeRow> getNodeRows();
 
   @Nullable
-  public Node getCommitNodeInRow(int rowIndex);
+  Node getCommitNodeInRow(int rowIndex);
 }

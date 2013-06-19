@@ -10,7 +10,7 @@ import java.util.List;
 public interface NodeRow {
 
   @NotNull
-  public List<Node> getNodes();
+  List<Node> getNodes();
 
-  public int getRowIndex();
+  int getRowIndex();
 }

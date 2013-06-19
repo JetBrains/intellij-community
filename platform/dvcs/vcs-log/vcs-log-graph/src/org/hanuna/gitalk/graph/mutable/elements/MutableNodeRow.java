@@ -53,4 +53,9 @@ public class MutableNodeRow implements NodeRow {
   public int getRowIndex() {
     return rowIndex;
   }
+
+  @Override
+  public String toString() {
+    return getNodes().toString();
+  }
 }

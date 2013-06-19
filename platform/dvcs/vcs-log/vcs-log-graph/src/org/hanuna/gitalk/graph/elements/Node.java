@@ -10,16 +10,16 @@ import java.util.List;
  */
 public interface Node extends GraphElement {
 
-  public int getRowIndex();
+  int getRowIndex();
 
   @NotNull
-  public NodeType getType();
+  NodeType getType();
 
   @NotNull
-  public List<Edge> getUpEdges();
+  List<Edge> getUpEdges();
 
   @NotNull
-  public List<Edge> getDownEdges();
+  List<Edge> getDownEdges();
 
   /**
    * @return if type == COMMIT_NODE - this commit.
@@ -27,9 +27,9 @@ public interface Node extends GraphElement {
    *         if type == END_COMMIT_NODE - parent of This Commit
    */
   @NotNull
-  public Hash getCommitHash();
+  Hash getCommitHash();
 
-  public static enum NodeType {
+  enum NodeType {
     COMMIT_NODE,
     EDGE_NODE,
     END_COMMIT_NODE

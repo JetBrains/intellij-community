@@ -47,7 +47,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     myLogDataHolder = logDataHolder;
     myGraphTable = new VcsLogGraphTable(vcsLogUI);
     myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI);
-    myDetailsPanel = new DetailsPanel();
+    myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable);
 
     final ChangesBrowser changesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, false, null,
                                                        ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
@@ -55,6 +55,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     setDefaultEmptyText(changesBrowser);
 
     myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener(changesBrowser));
+    myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
 
     myDetailsSplitter = new Splitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
