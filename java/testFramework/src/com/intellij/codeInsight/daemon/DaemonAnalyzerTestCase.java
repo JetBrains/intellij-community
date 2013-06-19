@@ -194,7 +194,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool){
-    assert !(tool instanceof InspectionToolWrapper) : tool;
+    //assert !(tool instanceof InspectionToolWrapper) : tool;
     InspectionToolWrapper wrapper = InspectionToolRegistrar.wrapTool(tool);
     final String shortName = wrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
