@@ -61,6 +61,9 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int lineNumber = document.getLineNumber(caretOffset);
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
 
+    final PsiElement element = file.findElementAt(caretOffset);
+    if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
+
     text = addLeadingSpaces(text, NOT_INDENT_FILTER, indentSize, indentChar);
     int firstLineIndent = StringUtil.findFirst(text, NOT_INDENT_FILTER);
     final String indentText = getIndentText(file, document, caretOffset, lineNumber, firstLineIndent);
