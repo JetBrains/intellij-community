@@ -2,13 +2,12 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 /**
  * @author Nadya Zabrodina
@@ -22,22 +21,6 @@ public class HgBookmarkDialog extends DialogWrapper {
   public HgBookmarkDialog(@Nullable Project project) {
     super(project, false);
     setTitle("Create Bookmark");
-    setOKActionEnabled(false);
-    DocumentListener documentListener = new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void changedUpdate(DocumentEvent e) {
-        update();
-      }
-    };
-
-    myBookmarkName.getDocument().addDocumentListener(documentListener);
     init();
   }
 
@@ -74,11 +57,12 @@ public class HgBookmarkDialog extends DialogWrapper {
     return myBookmarkName.getText();
   }
 
-  private void update() {
-    setOKActionEnabled(validateOptions());
-  }
-
-  private boolean validateOptions() {
-    return !StringUtil.isEmptyOrSpaces(getName());
+  @Override
+  protected ValidationInfo doValidate() {
+    String message = "You have to specify bookmark name.";
+    if (StringUtil.isEmptyOrSpaces(getName())) {
+      return new ValidationInfo(message, myBookmarkName);
+    }
+    return null;
   }
 }
