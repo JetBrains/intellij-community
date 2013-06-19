@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.components.JBLabel;
@@ -73,5 +74,18 @@ public abstract class JBTableRowEditor extends JPanel {
     panel.add(label);
     panel.add(component);
     return panel;
+  }
+
+  public class RowEditorChangeListener extends DocumentAdapter {
+    private int myColumn;
+
+    public RowEditorChangeListener(int column) {
+      myColumn = column;
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      fireDocumentChanged(e, myColumn);
+    }
   }
 }

@@ -288,19 +288,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       private EditorTextField myDefaultValueEditor;      
       private JCheckBox myAnyVar;
 
-      class MyDocumentListener extends DocumentAdapter {
-        private int myColumn;
-
-        private MyDocumentListener(int column) {
-          myColumn = column;
-        }
-
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          fireDocumentChanged(e, myColumn);
-        }
-      }
-
       @Override
       public void prepareEditor(JTable table, int row) {
         setLayout(new BorderLayout());
@@ -308,12 +295,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         myTypeEditor = new EditorTextField(document, getProject(), getFileType());
         myTypeEditor.addDocumentListener(mySignatureUpdater);
         myTypeEditor.setPreferredWidth(t.getWidth() / 2);
-        myTypeEditor.addDocumentListener(new MyDocumentListener(0));
+        myTypeEditor.addDocumentListener(new RowEditorChangeListener(0));
         add(createLabeledPanel("Type:", myTypeEditor), BorderLayout.WEST);
 
         myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
         myNameEditor.addDocumentListener(mySignatureUpdater);
-        myNameEditor.addDocumentListener(new MyDocumentListener(1));
+        myNameEditor.addDocumentListener(new RowEditorChangeListener(1));
         add(createLabeledPanel("Name:", myNameEditor), BorderLayout.CENTER);
         new TextFieldCompletionProvider() {
 
@@ -348,7 +335,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
           ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
           myDefaultValueEditor.setPreferredWidth(t.getWidth() / 2);
-          myDefaultValueEditor.addDocumentListener(new MyDocumentListener(2));
+          myDefaultValueEditor.addDocumentListener(new RowEditorChangeListener(2));
           additionalPanel.add(createLabeledPanel("Default value:", myDefaultValueEditor), BorderLayout.WEST);
 
           if (!isGenerateDelegate()) {
