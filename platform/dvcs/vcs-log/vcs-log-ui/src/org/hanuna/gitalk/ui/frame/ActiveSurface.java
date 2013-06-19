@@ -40,43 +40,27 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final BranchesPanel myBranchesPanel;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final DetailsPanel myDetailsPanel;
+  @NotNull private final Splitter myDetailsSplitter;
 
   ActiveSurface(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project) {
     myLogDataHolder = logDataHolder;
     myGraphTable = new VcsLogGraphTable(vcsLogUI);
     myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI);
+    myDetailsPanel = new DetailsPanel();
 
     final ChangesBrowser changesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, false, null,
                                                        ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
     changesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myGraphTable);
     setDefaultEmptyText(changesBrowser);
 
-    myGraphTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        int rows = myGraphTable.getSelectedRowCount();
-        if (rows < 1) {
-          setDefaultEmptyText(changesBrowser);
-          changesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
-        }
-        else {
-          List<Change> changes = new ArrayList<Change>();
-          for (Node node : myGraphTable.getSelectedNodes()) {
-            try {
-              VcsCommit commitData = myLogDataHolder.getDataPack().getCommitDataGetter().getCommitData(node);
-              changes.addAll(commitData.getChanges());
-            }
-            catch (VcsException ex) {
-              LOG.error(ex);
-            }
-          }
-          changesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
-        }
-      }
-    });
+    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener(changesBrowser));
+
+    myDetailsSplitter = new Splitter(true, 0.7f);
+    myDetailsSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
 
     Splitter splitter = new Splitter(false, 0.7f);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
+    splitter.setFirstComponent(myDetailsSplitter);
     splitter.setSecondComponent(changesBrowser);
 
     setLayout(new BorderLayout());
@@ -115,4 +99,37 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     }
   }
 
+  public void setupDetailsSplitter(boolean state) {
+    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
+  }
+
+  private class CommitSelectionListener implements ListSelectionListener {
+    private final ChangesBrowser myChangesBrowser;
+
+    public CommitSelectionListener(ChangesBrowser changesBrowser) {
+      myChangesBrowser = changesBrowser;
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      int rows = myGraphTable.getSelectedRowCount();
+      if (rows < 1) {
+        setDefaultEmptyText(myChangesBrowser);
+        myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+      }
+      else {
+        List<Change> changes = new ArrayList<Change>();
+        for (Node node : myGraphTable.getSelectedNodes()) {
+          try {
+            VcsCommit commitData = myLogDataHolder.getDataPack().getCommitDataGetter().getCommitData(node);
+            changes.addAll(commitData.getChanges());
+          }
+          catch (VcsException ex) {
+            LOG.error(ex);
+          }
+        }
+        myChangesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
+      }
+    }
+  }
 }
