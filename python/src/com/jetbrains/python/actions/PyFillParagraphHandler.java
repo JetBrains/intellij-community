@@ -2,6 +2,7 @@ package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -40,7 +41,9 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
             return quotes.getFirst() + indent;
           }
           else {
-            return quotes.getFirst();
+            final String value = stringLiteralExpression.getStringValue();
+            final int firstNotSpace = StringUtil.findFirst(value, CharFilter.NOT_WHITESPACE_FILTER);
+            return quotes.getFirst() + value.substring(0, firstNotSpace);
           }
         }
         return "\"" + indent;
