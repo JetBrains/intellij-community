@@ -93,7 +93,7 @@ public class HgBranchPopupActions {
     return popupGroup;
   }
 
-  public static class HgNewBranchAction extends NewBranchAction<HgRepository> {
+  private static class HgNewBranchAction extends NewBranchAction<HgRepository> {
     @NotNull final VirtualFile myPreselectedRepo;
 
     HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
@@ -122,7 +122,7 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class HgNewBookmarkAction extends NewBranchAction<HgRepository> {
+  private static class HgNewBookmarkAction extends NewBranchAction<HgRepository> {
     @NotNull final VirtualFile myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
