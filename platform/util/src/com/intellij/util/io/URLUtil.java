@@ -108,7 +108,7 @@ public class URLUtil {
     if (delimiter >= 0) {
       String resourcePath = fullPath.substring(delimiter + 2);
       String jarPath = fullPath.substring(0, delimiter);
-      if (StringUtil.startsWithConcatenationOf(jarPath, FILE_PROTOCOL, ":")) {
+      if (StringUtil.startsWithConcatenation(jarPath, FILE_PROTOCOL, ":")) {
         jarPath = jarPath.substring(FILE_PROTOCOL.length() + 1);
         return Pair.create(jarPath, resourcePath);
       }

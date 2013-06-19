@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     if (localizedMessage == null || !localizedMessage.startsWith(UNHANDLED_RESPONSE_PREFIX)) return t;
     String response = localizedMessage.substring(UNHANDLED_RESPONSE_PREFIX.length(),
                                                  localizedMessage.length() - 1);
-    if (StringUtil.startsWithConcatenationOf(response, USER + "@", HOST)) {
+    if (StringUtil.startsWithConcatenation(response, USER + "@", HOST)) {
       return new IOCommandException(new IOException(CvsBundle.message("exception.text.ext.server.rejected.access")));
     }
     else {

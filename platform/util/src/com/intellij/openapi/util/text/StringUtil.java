@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -792,34 +792,33 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Equivalent to testee.startsWith(firstPrefix + secondPrefix) but avoids creating an object for concatenation.
-   *
-   * @param testee
-   * @param firstPrefix
-   * @param secondPrefix
-   * @return
+   * Equivalent to string.startsWith(prefixes[0] + prefixes[1] + ...) but avoids creating an object for concatenation.
    */
-  public static boolean startsWithConcatenationOf(@NotNull String testee, @NotNull String firstPrefix, @NotNull String secondPrefix) {
-    int l1 = firstPrefix.length();
-    int l2 = secondPrefix.length();
-    if (testee.length() < l1 + l2) return false;
-    return testee.startsWith(firstPrefix) && testee.regionMatches(l1, secondPrefix, 0, l2);
+  public static boolean startsWithConcatenation(@NotNull String string, @NotNull String... prefixes) {
+    int offset = 0;
+    for (String prefix : prefixes) {
+      int prefixLen = prefix.length();
+      if (!string.regionMatches(offset, prefix, 0, prefixLen)) {
+        return false;
+      }
+      offset += prefixLen;
+    }
+    return true;
   }
 
-  /**
-   * Equivalent to testee.startsWith(firstPrefix + secondPrefix + thirdPrefix) but avoids creating an object for concatenation.
-   */
-  public static boolean startsWithConcatenationOf(@NotNull String testee,
+  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14). */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
+    return startsWithConcatenation(string, firstPrefix, secondPrefix);
+  }
+
+  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14). */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean startsWithConcatenationOf(@NotNull String string,
                                                   @NotNull String firstPrefix,
                                                   @NotNull String secondPrefix,
                                                   @NotNull String thirdPrefix) {
-    int l1 = firstPrefix.length();
-    int l2 = secondPrefix.length();
-    int l3 = thirdPrefix.length();
-    if (testee.length() < l1 + l2 + l3) return false;
-    return testee.startsWith(firstPrefix)
-           && testee.regionMatches(l1, secondPrefix, 0, l2)
-           && testee.regionMatches(l1 + l2, thirdPrefix, 0, l3);
+    return startsWithConcatenation(string, firstPrefix, secondPrefix, thirdPrefix);
   }
 
   @NotNull

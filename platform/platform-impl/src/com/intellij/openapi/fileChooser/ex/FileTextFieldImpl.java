@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -498,7 +498,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       result.currentGrandparent = result.current.getParent();
       if (result.currentGrandparent != null && result.currentParentMatch && !result.closedPath) {
         final String currentGrandparentText = result.currentGrandparent.getAbsolutePath();
-        if (StringUtil.startsWithConcatenationOf(typedText, currentGrandparentText, myFinder.getSeparator())) {
+        if (StringUtil.startsWithConcatenation(typedText, currentGrandparentText, myFinder.getSeparator())) {
           result.grandparentPrefix = currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length());
         }
       }

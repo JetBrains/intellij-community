@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -389,7 +389,7 @@ public class VfsUtilCore {
     String protocol = url.getProtocol();
     String path = url.getPath();
     if (protocol.equals(StandardFileSystems.JAR_PROTOCOL)) {
-      if (StringUtil.startsWithConcatenationOf(path, StandardFileSystems.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
+      if (StringUtil.startsWithConcatenation(path, StandardFileSystems.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
         try {
           URL subURL = new URL(path);
           path = subURL.getPath();
