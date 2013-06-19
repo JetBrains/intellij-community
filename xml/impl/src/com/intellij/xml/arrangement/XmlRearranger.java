@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
@@ -43,6 +44,16 @@ public class XmlRearranger
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, "xmlns:.*"))));
     DEFAULT_SETTINGS = new StdRulePriorityAwareSettings(
       Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
+  }
+
+  @NotNull
+  public static StdArrangementMatchRule attrArrangementRule(@NotNull String nameFilter,
+                                                            @NotNull String namespaceFilter,
+                                                            @NotNull ArrangementSettingsToken orderType) {
+    return new StdArrangementMatchRule(new StdArrangementEntryMatcher(ArrangementUtil.combine(
+      new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
+      new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter)
+    )), orderType);
   }
 
   @Nullable
