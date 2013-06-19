@@ -17,11 +17,12 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
@@ -55,7 +56,11 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     settings = createConfigurationFromFolder(location);
     if (settings != null) return settings;
 
-    final PyElement pyElement = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyElement.class, false);
+    PsiElement element = location.getPsiElement();
+    if (element instanceof PsiWhiteSpace) {
+      element = element.getPrevSibling();
+    }
+    final PyElement pyElement = PsiTreeUtil.getParentOfType(element, PyElement.class, false);
     if (pyElement != null) {
       settings = createConfigurationFromFunction(location, pyElement);
       if (settings != null) return settings;
@@ -66,7 +71,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
 
     final VirtualFile virtualFile = location.getVirtualFile();
     if (virtualFile != null && virtualFile.getFileType() instanceof PythonFileType)
-      settings = createConfigurationFromFile(location, location.getPsiElement());
+      settings = createConfigurationFromFile(location, element);
     if (settings != null) return settings;
 
     return null;
@@ -79,7 +84,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationFromFunction(Location location, PyElement element) {
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-    if (! isTestFunction(pyFunction)) return null;
+    if (pyFunction == null || !isTestFunction(pyFunction)) return null;
     final PyClass containingClass = pyFunction.getContainingClass();
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from function");
@@ -106,7 +111,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationFromClass(Location location, PyElement element) {
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (!isTestClass(pyClass)) return null;
+    if (pyClass == null || !isTestClass(pyClass)) return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
     final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
@@ -126,13 +131,11 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
   }
 
   protected boolean isTestClass(PyClass pyClass) {
-    if (pyClass == null || !PythonUnitTestUtil.isTestCaseClass(pyClass)) return false;
-    return true;
+    return PythonUnitTestUtil.isTestCaseClass(pyClass);
   }
 
   protected boolean isTestFunction(PyFunction pyFunction) {
-    if (pyFunction == null || !PythonUnitTestUtil.isTestCaseFunction(pyFunction)) return false;
-    return true;
+    return PythonUnitTestUtil.isTestCaseFunction(pyFunction);
   }
 
   protected boolean isTestFile(PsiElement file) {
@@ -216,7 +219,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
       RunManager.getInstance(location.getProject()).createRunConfiguration(name, getConfigurationFactory());
     AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)result.getConfiguration();
     configuration.setUseModuleSdk(true);
-    configuration.setModule(ModuleUtil.findModuleForPsiElement(location.getPsiElement()));
+    configuration.setModule(ModuleUtilCore.findModuleForPsiElement(location.getPsiElement()));
     return result;
   }
 
@@ -301,7 +304,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     return null;
   }
 
-  public int compareTo(Object o) {
+  public int compareTo(@NotNull Object o) {
     return PREFERED;
   }
 
