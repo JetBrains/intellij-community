@@ -141,6 +141,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     NamedScope[] scopes = myDependencyValidationManager.getScopes();
     scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes());
     scopes = NonProjectFilesScope.removeFromList(scopes);
+    scopes = ArrayUtil.remove(scopes, CustomScopesProviderEx.getAllScope());
     String[] ids = new String[scopes.length];
     for (int i = 0; i < scopes.length; i++) {
       final NamedScope scope = scopes[i];
