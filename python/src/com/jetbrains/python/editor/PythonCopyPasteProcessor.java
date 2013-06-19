@@ -2,6 +2,7 @@ package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -60,6 +61,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                             selectionModel.getSelectionStart() : caretModel.getOffset();
     final int lineNumber = document.getLineNumber(caretOffset);
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
+    final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
     final PsiElement element = file.findElementAt(caretOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
@@ -69,8 +71,19 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final String indentText = getIndentText(file, document, caretOffset, lineNumber, firstLineIndent);
 
     int toRemove = calculateIndentToRemove(text, NOT_INDENT_FILTER);
+
+    final String toString = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
     if (StringUtil.isEmptyOrSpaces(indentText) && isApplicable(file, text, caretOffset)) {
       caretModel.moveToOffset(lineStartOffset);
+
+      if (StringUtil.isEmptyOrSpaces(toString)) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.deleteString(lineStartOffset, lineEndOffset);
+          }
+        });
+      }
       editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
     }
 
@@ -85,7 +98,6 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       newText = text;
     }
 
-    String toString = document.getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber)));
     if (addLinebreak(text, toString, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd())
       newText += "\n";
     return newText;
