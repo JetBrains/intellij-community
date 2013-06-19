@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -32,11 +33,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
   protected Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    this(project, repositories, "New Branch", "Create and checkout new branch");
-  }
-
-  public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories, @NotNull String title, @NotNull String tooltipText) {
-    super(title, tooltipText, IconUtil.getAddIcon());
+    super("New Branch", "Create and checkout new branch", IconUtil.getAddIcon());
     myRepositories = repositories;
     myProject = project;
   }
@@ -44,7 +41,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
 
   @Override
   public void update(AnActionEvent e) {
-    if (anyRepositoryIsFresh()) {
+    if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
       e.getPresentation().setEnabled(false);
       e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
     }
@@ -52,13 +49,4 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
 
   @Override
   public abstract void actionPerformed(AnActionEvent e);
-
-  private boolean anyRepositoryIsFresh() {
-    for (Repository repository : myRepositories) {
-      if (repository.isFresh()) {
-        return true;
-      }
-    }
-    return false;
-  }
 }

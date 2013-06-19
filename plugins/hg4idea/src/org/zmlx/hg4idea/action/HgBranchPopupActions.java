@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -122,12 +123,24 @@ public class HgBranchPopupActions {
     }
   }
 
-  private static class HgNewBookmarkAction extends NewBranchAction<HgRepository> {
+  private static class HgNewBookmarkAction extends DumbAwareAction {
+    protected final List<HgRepository> myRepositories;
+    protected Project myProject;
     @NotNull final VirtualFile myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
-      super(project, repositories, "New Bookmark", "Create new bookmark");
+      super("New Bookmark", "Create new bookmark", null);
+      myProject = project;
+      myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setDescription("Bookmark creation is not possible before the first commit.");
+      }
     }
 
     @Override
@@ -145,7 +158,7 @@ public class HgBranchPopupActions {
               myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
               if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
                 new HgCommandResultNotifier(myProject)
-                  .notifyError(result, "Creation  failed", "Bookmark creation [" + name + "] failed");
+                  .notifyError(result, "Creation failed", "Bookmark creation [" + name + "] failed");
               }
             }
           });
