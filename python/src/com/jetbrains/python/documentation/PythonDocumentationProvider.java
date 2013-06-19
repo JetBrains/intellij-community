@@ -596,7 +596,17 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       if (visitor.myHasRaise) {
-        builder.append(prefix).append("raise:").append(offset);
+        builder.append(prefix).append("raise");
+        if (visitor.myRaiseTarget != null) {
+          String raiseTarget = visitor.myRaiseTarget.getText();
+          if (visitor.myRaiseTarget instanceof PyCallExpression) {
+            final PyExpression callee = ((PyCallExpression)visitor.myRaiseTarget).getCallee();
+            if (callee != null)
+              raiseTarget = callee.getText();
+          }
+          builder.append(" ").append(raiseTarget);
+        }
+        builder.append(":").append(offset);
       }
     }
     else {
@@ -611,10 +621,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   private static class RaiseVisitor extends PyRecursiveElementVisitor {
     private boolean myHasRaise = false;
     private boolean myHasReturn = false;
+    private PyExpression myRaiseTarget = null;
 
     @Override
     public void visitPyRaiseStatement(PyRaiseStatement node) {
       myHasRaise = true;
+      final PyExpression[] expressions = node.getExpressions();
+      if (expressions.length > 0) myRaiseTarget = expressions[0];
     }
 
     @Override
