@@ -119,7 +119,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       add(myAuthor, g.nextLine().next());
       add(myCommitMessage, g.nextLine().next());
 
-      setBackground(UIUtil.getTableBackground());
+      setOpaque(false);
     }
 
     void setData(VcsCommit commit) {
@@ -128,7 +128,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myCommitMessage.setText(commit.getFullMessage());
       repaint();
     }
-
   }
 
   private static class RefsPanel extends JPanel {
@@ -140,7 +139,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myRefPainter = new RefPainter();
       myRefs = Collections.emptyList();
       setPreferredSize(new Dimension(-1, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
-      setBackground(UIUtil.getTableBackground());
+      setOpaque(false);
     }
 
     @Override
