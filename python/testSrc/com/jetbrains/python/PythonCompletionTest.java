@@ -649,4 +649,12 @@ public class PythonCompletionTest extends PyTestCase {
   public void testReCompileMatch() {
     doTest();
   }
+
+  public void testReturnTypeOfCallFromUsages() {
+    final List<String> results = doTestByText("def f(x):\n" +
+                                              "    return x\n" +
+                                              "\n" +
+                                              "f('foo').<caret>\n");
+    assertTrue(results.contains("lower"));
+  }
 }
