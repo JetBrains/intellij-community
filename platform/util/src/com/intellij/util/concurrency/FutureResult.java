@@ -62,6 +62,17 @@ public class FutureResult<T> implements Future<T> {
     }
   }
 
+  @Nullable
+  public T tryGet() throws ExecutionException {
+    if (!mySema.tryAcquire()) return null;
+    try {
+      return doGet();
+    }
+    finally {
+      mySema.release();
+    }
+  }
+
   private T doGet() throws ExecutionException {
     Pair<Object, Boolean> pair = myValue.get();
     if (!pair.second) throw new ExecutionException(((Throwable)pair.first).getMessage(), (Throwable)pair.first);
