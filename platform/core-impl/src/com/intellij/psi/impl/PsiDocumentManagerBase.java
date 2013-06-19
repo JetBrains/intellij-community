@@ -620,14 +620,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final List<PsiFile> files = viewProvider.getAllFiles();
-    boolean commitNecessary = false;
+    boolean commitNecessary = true;
     for (PsiFile file : files) {
       if (file == null || file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null) continue;
       if (mySmartPointerManager != null) { // mock tests
         mySmartPointerManager.unfastenBelts(file, event.getOffset());
       }
       final TextBlock textBlock = TextBlock.get(file);
-      if (textBlock.isLocked()) continue;
+      if (textBlock.isLocked()) {
+        commitNecessary = false;
+        continue;
+      }
 
       textBlock.documentChanged(event);
       assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() :
@@ -638,8 +641,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         files +
         "; viewProvider=" +
         viewProvider;
-
-      commitNecessary = true;
     }
 
     boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&

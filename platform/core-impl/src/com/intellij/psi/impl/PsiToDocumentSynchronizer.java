@@ -17,7 +17,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -92,8 +91,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       }
     });
 
-    myPsiDocumentManager.commitOtherFilesAssociatedWithDocument(document, psiFile);
-
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
     if (!insideTransaction) {
       document.setModificationStamp(psiFile.getViewProvider().getModificationStamp());
@@ -149,9 +146,17 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     });
   }
 
-  private static boolean toProcessPsiEvent() {
-    Application application = ApplicationManager.getApplication();
-    return !application.hasWriteAction(IgnorePsiEventsMarker.class);
+  private boolean myIgnorePsiEvents;
+  public void setIgnorePsiEvents(boolean ignorePsiEvents) {
+    myIgnorePsiEvents = ignorePsiEvents;
+  }
+
+  public boolean isIgnorePsiEvents() {
+    return myIgnorePsiEvents;
+  }
+
+  private boolean toProcessPsiEvent() {
+    return !myIgnorePsiEvents && !ApplicationManager.getApplication().hasWriteAction(IgnorePsiEventsMarker.class);
   }
 
   public void replaceString(Document document, int startOffset, int endOffset, String s) {
