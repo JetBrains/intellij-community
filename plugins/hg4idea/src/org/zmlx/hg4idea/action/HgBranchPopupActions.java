@@ -111,7 +111,7 @@ public class HgBranchPopupActions {
             myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(myProject)
-                .notifyError(result, "Creation  failed", "Branch creation [" + name + "] failed");
+                .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
             }
           }
         });
