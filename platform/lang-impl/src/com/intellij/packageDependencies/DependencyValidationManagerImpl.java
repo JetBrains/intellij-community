@@ -69,10 +69,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   public List<NamedScope> getPredefinedScopes() {
     final List<NamedScope> predefinedScopes = new ArrayList<NamedScope>();
     final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
-    if (scopesProviders != null) {
-      for (CustomScopesProvider scopesProvider : scopesProviders) {
-        predefinedScopes.addAll(scopesProvider.getCustomScopes());
-      }
+    for (CustomScopesProvider scopesProvider : scopesProviders) {
+      predefinedScopes.addAll(scopesProvider.getCustomScopes());
     }
     return predefinedScopes;
   }
@@ -80,14 +78,12 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   public NamedScope getPredefinedScope(String name) {
     final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
-    if (scopesProviders != null) {
-      for (CustomScopesProvider scopesProvider : scopesProviders) {
-        final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx 
-                                 ? ((CustomScopesProviderEx)scopesProvider).getCustomScope(name) 
-                                 : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getCustomScopes());
-        if (scope != null) {
-          return scope;
-        }
+    for (CustomScopesProvider scopesProvider : scopesProviders) {
+      final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx
+                               ? ((CustomScopesProviderEx)scopesProvider).getCustomScope(name)
+                               : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getCustomScopes());
+      if (scope != null) {
+        return scope;
       }
     }
     return null;
@@ -120,10 +116,9 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return result.toArray(new DependencyRule[result.size()]);
   }
 
-  @Override
-  public
   @NotNull
-  DependencyRule[] getApplicableRules(PsiFile file) {
+  @Override
+  public DependencyRule[] getApplicableRules(PsiFile file) {
     ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
     for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isApplicable(file)) {
@@ -315,7 +310,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
           result.add(new Pair<Element, String>(element, name));
         }
       }
-       if (e.getChildren().size() > 0) {
+       if (!e.getChildren().isEmpty()) {
          result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
        }
        return result;
@@ -335,7 +330,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
             target.addContent(state);
           }
           for (Object attr : element.getAttributes()) {
-            target.setAttribute((Attribute)((Attribute)attr).clone());
+            target.setAttribute(((Attribute)attr).clone());
           }
         }
       }

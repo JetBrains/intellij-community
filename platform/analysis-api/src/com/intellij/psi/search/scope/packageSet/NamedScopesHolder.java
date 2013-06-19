@@ -112,6 +112,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return null;
   }
 
+  @NotNull
   public static NamedScopesHolder[] getAllNamedScopeHolders(@NotNull Project project) {
     NamedScopesHolder[] holders = new NamedScopesHolder[2];
     holders [0] = NamedScopeManager.getInstance(project);

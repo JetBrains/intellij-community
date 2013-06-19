@@ -115,7 +115,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
   protected void runTool(final String testDir,
                          final String jdkName,
                          boolean runDeadCodeFirst,
-                         final InspectionToolWrapper toolWrapper,
+                         @NotNull InspectionToolWrapper toolWrapper,
                          @NotNull InspectionToolWrapper... additional) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

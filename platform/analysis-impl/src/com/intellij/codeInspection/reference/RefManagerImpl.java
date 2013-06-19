@@ -205,8 +205,9 @@ public class RefManagerImpl extends RefManager {
     return null;
   }
 
+  @NotNull
   @Override
-  public RefEntity getRefinedElement(RefEntity ref) {
+  public RefEntity getRefinedElement(@NotNull RefEntity ref) {
     for (RefManagerExtension extension : myExtensions.values()) {
       ref = extension.getRefinedElement(ref);
     }
@@ -214,7 +215,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public Element export(RefEntity refEntity, final Element element, final int actualLine) {
+  public Element export(@NotNull RefEntity refEntity, @NotNull final Element element, final int actualLine) {
     refEntity = getRefinedElement(refEntity);
 
     Element problem = new Element("problem");
@@ -349,7 +350,7 @@ public class RefManagerImpl extends RefManager {
     return myPsiManager;
   }
 
-  public void removeReference(RefElement refElem) {
+  public void removeReference(@NotNull RefElement refElem) {
     myLock.writeLock().lock();
     try {
       final Map<PsiAnchor, RefElement> refTable = getRefTable();
@@ -600,7 +601,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public void removeRefElement(RefElement refElement, List<RefElement> deletedRefs) {
+  public void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs) {
     List<RefEntity> children = refElement.getChildren();
     if (children != null) {
       RefElement[] refElements = children.toArray(new RefElement[children.size()]);

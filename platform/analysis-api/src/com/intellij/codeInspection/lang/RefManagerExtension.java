@@ -52,7 +52,8 @@ public interface RefManagerExtension<T> {
   @Nullable
   String getType(RefEntity entity);
 
-  RefEntity getRefinedElement(final RefEntity ref);
+  @NotNull
+  RefEntity getRefinedElement(@NotNull RefEntity ref);
 
   void visitElement(final PsiElement element);
 
@@ -61,7 +62,7 @@ public interface RefManagerExtension<T> {
 
   boolean belongsToScope(final PsiElement psiElement);
 
-  void export(final RefEntity refEntity, final Element element);
+  void export(@NotNull RefEntity refEntity, @NotNull Element element);
 
   void onEntityInitialized(RefElement refEntity, PsiElement psiElement);
 }

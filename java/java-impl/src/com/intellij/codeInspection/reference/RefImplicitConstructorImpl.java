@@ -92,6 +92,6 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
 
   @Override
   public RefClass getOwnerClass() {
-    return myOwnerClass == null ? super.getOwnerClass() : myOwnerClass;
+    return myOwnerClass;
   }
 }

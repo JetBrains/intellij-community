@@ -458,16 +458,16 @@ public class InspectionApplication {
         xmlWriter.startNode("group");
         xmlWriter.addAttribute("name", groupName);
         final Set<InspectionToolWrapper> entries = map.get(groupName);
-        for (InspectionToolWrapper entry : entries) {
+        for (InspectionToolWrapper toolWrapper : entries) {
           xmlWriter.startNode("inspection");
-          xmlWriter.addAttribute("shortName", entry.getShortName());
-          xmlWriter.addAttribute("displayName", entry.getDisplayName());
-          final String description = entry.loadDescription();
+          xmlWriter.addAttribute("shortName", toolWrapper.getShortName());
+          xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
+          final String description = toolWrapper.loadDescription();
           if (description != null) {
             xmlWriter.setValue(description);
           }
           else {
-            LOG.error(entry.getShortName() + " descriptionUrl==" + entry);
+            LOG.error(toolWrapper.getShortName() + " descriptionUrl==" + toolWrapper);
           }
           xmlWriter.endNode();
         }
