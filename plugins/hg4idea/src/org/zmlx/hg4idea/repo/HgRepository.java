@@ -19,6 +19,7 @@ package org.zmlx.hg4idea.repo;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -41,4 +42,7 @@ public interface HgRepository extends Repository {
 
   @NotNull
   Collection<String> getBookmarks();
+
+  @Nullable
+  String getCurrentBookmark();
 }

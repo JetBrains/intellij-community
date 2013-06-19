@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -63,7 +64,7 @@ public class HgBranchPopupActions {
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
-    popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository),myRepository.getRoot()));
+    popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
 
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
@@ -71,9 +72,14 @@ public class HgBranchPopupActions {
 
     popupGroup.addSeparator("Bookmarks");
     List<String> bookmarks = new ArrayList<String>(myRepository.getBookmarks());
+    String currentBookmark = myRepository.getCurrentBookmark();
     Collections.sort(bookmarks);
     for (String bookmark : bookmarks) {
-      popupGroup.add(new BranchActions(myProject, bookmark, myRepository));
+      AnAction bookmarkAction = new BranchActions(myProject, bookmark, myRepository);
+      if (bookmark.equals(currentBookmark)) {
+        bookmarkAction.getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
+      }
+      popupGroup.add(bookmarkAction);
     }
 
     popupGroup.addSeparator("Branches");
