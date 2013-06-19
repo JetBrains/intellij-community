@@ -1718,9 +1718,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     });
   }
 
+  public boolean isFileUpToDate(VirtualFile file) {
+    return !myChangedFilesCollector.myFilesToUpdate.contains(file);
+  }
+
   void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
-    myChangedFilesCollector.processFileImpl(project, fileContent, false); // ProcessCanceledException will cause readding the file to processing list
+    myChangedFilesCollector.processFileImpl(project, fileContent, false); // ProcessCanceledException will cause re-adding the file to processing list
   }
 
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
@@ -2347,7 +2351,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
            (isMock(file) || !isFileIndexed(file, indexId));
   }
 
-  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexId) {
+  private static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexId) {
     ID id = IndexInfrastructure.getStubId(indexId, file.getFileType());
     return IndexingStamp.isFileIndexed(file, id, IndexInfrastructure.getIndexCreationStamp(id));
   }
