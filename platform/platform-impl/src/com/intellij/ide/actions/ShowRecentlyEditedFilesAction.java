@@ -19,6 +19,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +31,7 @@ public class ShowRecentlyEditedFilesAction extends BaseShowRecentFilesAction {
 
   @Override
   protected String getPeerActionId() {
-    return "RecentFiles";
+    return IdeActions.ACTION_RECENT_FILES;
   }
 
   protected String getTitle() {
