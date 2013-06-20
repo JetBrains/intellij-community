@@ -277,12 +277,14 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             LOG.debug(msg.toString());
           }
           
-          if (psiFile != null) {
-            final VirtualFile vFile = psiFile.getVirtualFile();
-            if (vFile != null && fileIndex.isInSourceContent(vFile)) {
-              list.add(vFile);
-            }
+          if (psiFile == null) {
+            return null;
           }
+          final VirtualFile vFile = psiFile.getVirtualFile();
+          if (vFile == null || !fileIndex.isInSourceContent(vFile)) {
+            return null; // this will switch off the check if at least one class is from libraries
+          }
+          list.add(vFile);
         }
         return list;
       }
