@@ -18,8 +18,10 @@ package com.intellij.application.options;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
@@ -230,18 +232,18 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     reset(mySettings);
   }
 
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
     settings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
 
-    settings.FIELD_NAME_PREFIX = myFieldPrefixField.getText().trim();
-    settings.STATIC_FIELD_NAME_PREFIX = myStaticFieldPrefixField.getText().trim();
-    settings.PARAMETER_NAME_PREFIX = myParameterPrefixField.getText().trim();
-    settings.LOCAL_VARIABLE_NAME_PREFIX = myLocalVariablePrefixField.getText().trim();
+    settings.FIELD_NAME_PREFIX = setPrefixSuffix(myFieldPrefixField.getText(), true);
+    settings.STATIC_FIELD_NAME_PREFIX = setPrefixSuffix(myStaticFieldPrefixField.getText(), true);
+    settings.PARAMETER_NAME_PREFIX = setPrefixSuffix(myParameterPrefixField.getText(), true);
+    settings.LOCAL_VARIABLE_NAME_PREFIX = setPrefixSuffix(myLocalVariablePrefixField.getText(), true);
 
-    settings.FIELD_NAME_SUFFIX = myFieldSuffixField.getText().trim();
-    settings.STATIC_FIELD_NAME_SUFFIX = myStaticFieldSuffixField.getText().trim();
-    settings.PARAMETER_NAME_SUFFIX = myParameterSuffixField.getText().trim();
-    settings.LOCAL_VARIABLE_NAME_SUFFIX = myLocalVariableSuffixField.getText().trim();
+    settings.FIELD_NAME_SUFFIX = setPrefixSuffix(myFieldSuffixField.getText(), false);
+    settings.STATIC_FIELD_NAME_SUFFIX = setPrefixSuffix(myStaticFieldSuffixField.getText(), false);
+    settings.PARAMETER_NAME_SUFFIX = setPrefixSuffix(myParameterSuffixField.getText(), false);
+    settings.LOCAL_VARIABLE_NAME_SUFFIX = setPrefixSuffix(myLocalVariableSuffixField.getText(), false);
 
     settings.LINE_COMMENT_AT_FIRST_COLUMN = myCbLineCommentAtFirstColumn.isSelected();
     settings.BLOCK_COMMENT_AT_FIRST_COLUMN = myCbBlockCommentAtFirstColumn.isSelected();
@@ -260,7 +262,16 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     }
   }
 
-  public void apply() {
+  private static String setPrefixSuffix(String text, boolean prefix) throws ConfigurationException {
+    text = text.trim();
+    if (text.isEmpty()) return text;
+    if (!StringUtil.isJavaIdentifier(text)) {
+      throw new ConfigurationException("Not a valid java identifier part in " + (prefix ? "prefix" : "suffix") + " \'" + text + "\'");
+    }
+    return text;
+  }
+
+  public void apply() throws ConfigurationException {
     apply(mySettings);
   }
 
