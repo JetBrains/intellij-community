@@ -59,6 +59,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -309,6 +310,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
     clearStub();
+    scheduleDropCachesWithInvalidStubPsi();
 
     String msg = message;
     msg += "\n file=" + this;
@@ -340,6 +342,20 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     throw new AssertionError(msg + "\n------------\n");
+  }
+
+  private void scheduleDropCachesWithInvalidStubPsi() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            ((PsiModificationTrackerImpl)getManager().getModificationTracker()).incCounter();
+          }
+        });
+      }
+    });
   }
 
   protected FileElement createFileElement(final CharSequence docText) {
