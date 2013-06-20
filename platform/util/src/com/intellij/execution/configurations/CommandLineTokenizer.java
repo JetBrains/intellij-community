@@ -27,6 +27,10 @@ public class CommandLineTokenizer extends StringTokenizer {
         parseTokens();
     }
 
+    /**
+     * @deprecated Do not pass custom delimiters to the CommandLineTokenizer as it may break its logic
+     */
+    @Deprecated()
     public CommandLineTokenizer(String str, String delim) {
         super(str, delim, true);
         parseTokens();
