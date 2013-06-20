@@ -193,7 +193,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         }
       }
       else { // no qualifier
-        if (usage.qualifierClass != null && PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null) {
+        if (usage.qualifierClass != null && (!usage.qualifierClass.isEnum() || PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null)) {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
       }
