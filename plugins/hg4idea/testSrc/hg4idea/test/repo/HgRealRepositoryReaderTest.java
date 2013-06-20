@@ -60,6 +60,11 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     TestRepositoryUtil.assertEqualCollections(myRepositoryReader.readBranches(), Arrays.asList("default", "branchA", "branchB"));
   }
 
+  public void testCurrentBookmark() {
+    hg("update B_BookMark");
+    assertEquals(myRepositoryReader.readCurrentBookmark(), "B_BookMark");
+  }
+
   public void testBookmarks() {
     TestRepositoryUtil.assertEqualCollections(myRepositoryReader.readBookmarks(), Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
   }
