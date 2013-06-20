@@ -98,14 +98,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    while (!checkCredentials(project)) {
-      final GithubLoginDialog dialog = new GithubLoginDialog(project);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
-    }
-
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository repository = manager.getRepositoryForFile(virtualFile);
 
