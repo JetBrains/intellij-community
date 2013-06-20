@@ -214,10 +214,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       myStub = null;
       myTreeElementPointer = createTreeElementPointer(treeElement);
 
-      if (document != null && isPhysical()) {
-        TextBlock.get(this).clear();
-      }
-
       if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
         LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
       }
