@@ -16,9 +16,6 @@
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
-import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
-import com.intellij.internal.statistic.connect.StatisticsConnectionService;
-import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
@@ -67,10 +64,8 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
   }
 
   private void runStatisticsService() {
-    final RemotelyConfigurableStatisticsService statisticsService =
-      new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(),
-                                                new StatisticsHttpClientSender(),
-                                                new StatisticsUploadAssistant());
+    StatisticsService statisticsService = StatisticsUploadAssistant.getStatisticsService();
+
     if (StatisticsUploadAssistant.showNotification()) {
       StatisticsNotificationManager.showNotification(statisticsService, myProject);
     }
