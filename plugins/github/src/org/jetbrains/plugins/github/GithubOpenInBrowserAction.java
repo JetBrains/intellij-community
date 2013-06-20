@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
@@ -34,7 +35,6 @@ import git4idea.repo.GitRepositoryManager;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import static org.jetbrains.plugins.github.GithubUtil.*;
 
@@ -131,8 +131,10 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     builder.append(makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl)).append("/blob/").append(branch).append(relativePath);
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null && editor.getDocument().getLineCount() >= 1) {
-      final int line = editor.getCaretModel().getLogicalPosition().line + 1; // lines are counted internally from 0, but from 1 on github
-      builder.append("#L").append(line);
+      SelectionModel selectionModel = editor.getSelectionModel();
+      final int begin = editor.getDocument().getLineNumber(selectionModel.getSelectionStart()) + 1;
+      final int end = editor.getDocument().getLineNumber(selectionModel.getSelectionEnd()) + 1;
+      builder.append("#L").append(begin).append('-').append(end); // lines are counted internally from 0, but from 1 on github
     }
     return builder.toString();
   }
