@@ -1894,7 +1894,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private final Queue<InvalidationTask> myFutureInvalidations = new ConcurrentLinkedQueue<InvalidationTask>();
 
     private final ManagingFS myManagingFS = ManagingFS.getInstance();
-    // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
+
+    @Override
+    public void fileMoved(VirtualFileMoveEvent event) {
+      markDirty(event, false);
+    }
 
     @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
