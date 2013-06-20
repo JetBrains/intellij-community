@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.impl.DomTestCase;
 
 import java.util.Arrays;
@@ -92,6 +93,11 @@ public class DomModelMergingTest extends DomTestCase {
     MyElement getFoo();
     List<MyElement> getBars();
     MyElement addBar();
+  }
+
+  public void testFileMerging() {
+    XmlFile mergedFile = myMerger.mergeModels(XmlFile.class, createXmlFile(""), createXmlFile(""));
+    assertNull(DomManager.getDomManager(ourProject).getFileElement(mergedFile));
   }
 
 }

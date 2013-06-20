@@ -20,9 +20,8 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import org.jdom.Element;
@@ -53,8 +52,8 @@ public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvert
     super.fillErrorLevels(profile);
 
     //javadoc attributes
-    final InspectionProfileEntry inspectionTool = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, null);
-    JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+    final InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, null);
+    JavaDocLocalInspection inspection = (JavaDocLocalInspection)toolWrapper.getTool();
     inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }
 }

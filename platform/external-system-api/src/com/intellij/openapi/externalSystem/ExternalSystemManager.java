@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
@@ -79,4 +80,10 @@ public interface ExternalSystemManager<
    * @see #getProjectResolverClass()
    */
   Class<? extends ExternalSystemTaskManager<ExecutionSettings>> getTaskManagerClass();
+
+  /**
+   * @return    file chooser descriptor to use when adding new external project
+   */
+  @NotNull
+  FileChooserDescriptor getExternalProjectDescriptor();
 }

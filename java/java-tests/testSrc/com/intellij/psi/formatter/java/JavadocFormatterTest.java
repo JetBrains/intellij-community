@@ -122,7 +122,31 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
+  public void testParameterDescriptionNotOnNewLine() throws Exception {
+    // IDEA-107383
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().JD_ALIGN_PARAM_COMMENTS = true;
+
+    doClassTest(
+      "/**\n" +
+      " @param protocolId protocol id\n" +
+      " @param connectedUserIdHandlerFromServer user id\n" +
+      " @return\n" +
+      
+      " */\n" +
+      "public void register(int protocolId, int connectedUserIdHandlerFromServer) {\n" +
+      "}",
+
+      "/**\n" +
+      " * @param protocolId                       protocol id\n" +
+      " * @param connectedUserIdHandlerFromServer user id\n" +
+      " * @return\n" +
+      " */\n" +
+      "public void register(int protocolId, int connectedUserIdHandlerFromServer) {\n" +
+      "}");
+  }
+
   public void testWrappedParameterDescription() throws Exception {
     // Inspired by IDEA-13072
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;

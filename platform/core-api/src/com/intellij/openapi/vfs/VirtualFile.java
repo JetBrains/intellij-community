@@ -45,14 +45,14 @@ import java.nio.charset.Charset;
  * @see VirtualFileManager
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   public static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
-  private static final Key<byte[]> BOM_KEY = Key.create("BOM");
-  private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
-  protected VirtualFile() {
-  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
+  private static final Key<byte[]> BOM_KEY = Key.create("BOM");
+  private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
+
+  protected VirtualFile() { }
 
   /**
    * Gets the name of this file.
@@ -147,6 +147,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   @NonNls public static final String PROP_HIDDEN = "hidden";
 
   /**
+   * Used as a property name in the {@link #is(String)}.
+   */
+  @NonNls public static final String PROP_SPECIAL = "special";
+
+  /**
    * Gets the extension of this file. If file name contains '.' extension is the substring from the last '.'
    * to the end of the name, otherwise extension is null.
    *
@@ -223,13 +228,20 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return false;
   }
 
-  /**
-   * Checks whether this file is a special (e.g. FIFO or device) file.
-   *
-   * @return <code>true</code> if the file exists and is a special one, <code>false</code> otherwise
-   * @since 11.0
-   */
+  /** @deprecated use {@link #is(String)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   public boolean isSpecialFile() {
+    return is(PROP_SPECIAL);
+  }
+
+  /**
+   * Checks whether this file has a specific property.
+   * Examples of such properties are {@link #PROP_HIDDEN} or {@link #PROP_SPECIAL}.
+   *
+   * @return <code>true</code> if the file has a specific property, <code>false</code> otherwise
+   * @since 13.0
+   */
+  public boolean is(String property) {
     return false;
   }
 

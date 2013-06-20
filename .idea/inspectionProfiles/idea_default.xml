@@ -367,8 +367,11 @@
     <inspection_tool class="PyChainedComparisonsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyComparisonWithNoneInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyCompatibilityInspection" enabled="false" level="ERROR" enabled_by_default="false">
-      <option name="fromVersion" value="2.4" />
-      <option name="toVersion" value="3.1" />
+      <option name="ourVersions">
+        <value>
+          <list size="0" />
+        </value>
+      </option>
     </inspection_tool>
     <inspection_tool class="PyDecoratorInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyDefaultArgumentInspection" enabled="false" level="WARNING" enabled_by_default="false" />

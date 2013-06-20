@@ -49,6 +49,12 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     return getDisplayName();
   }
 
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "create.from.template." + getGithubUserName() + "." + getGithubRepositoryName();
+  }
+
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @NotNull GithubTagInfo tag, @NotNull Module module) {
@@ -61,7 +67,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        baseDir.refresh(false, true);
+        baseDir.refresh(true, true);
       }
     });
   }
@@ -84,7 +90,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     boolean brokenZip = true;
     if (zipArchiveFile.isFile()) {
       try {
-        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
         brokenZip = false;
       }
       catch (GeneratorException ignored) {
@@ -122,8 +128,9 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
       getGithubRepositoryName(),
       retryOnError
     );
-    LOG.info("Downloaded " + zipArchiveFile.getAbsolutePath() + " of size " + zipArchiveFile.length() + " bytes");
-    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+    LOG.info("Content of " + url + " has been successfully downloaded to " + zipArchiveFile.getAbsolutePath()
+             + ", size " + zipArchiveFile.length() + " bytes");
+    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
   }
 
   @Nullable

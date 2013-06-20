@@ -407,13 +407,14 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   @Override
+  @Nullable
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements) {
     return extractActiveFixes(refElements, getQuickFixActions());
   }
 
-  public QuickFixAction[] extractActiveFixes(final RefEntity[] refElements, @NotNull Map<RefEntity, Set<QuickFix>> actions) {
-    if (refElements == null) return null;
-    Map<Class, QuickFixAction> result = new java.util.HashMap<Class, QuickFixAction>();
+  @Nullable
+  public QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements, @NotNull Map<RefEntity, Set<QuickFix>> actions) {
+    Map<Class, QuickFixAction> result = new HashMap<Class, QuickFixAction>();
     for (RefEntity refElement : refElements) {
       final Set<QuickFix> localQuickFixes = actions.get(refElement);
       if (localQuickFixes == null) continue;
@@ -445,7 +446,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return getProblemToElements().get(descriptor);
   }
 
-  public void ignoreProblem(final CommonProblemDescriptor descriptor, final QuickFix fix) {
+  public void ignoreProblem(@NotNull CommonProblemDescriptor descriptor, @NotNull QuickFix fix) {
     RefEntity refElement = getProblemToElements().get(descriptor);
     if (refElement != null) {
       final QuickFix[] fixes = descriptor.getFixes();

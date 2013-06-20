@@ -151,7 +151,7 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
          baseTypeName.startsWith("javax."))) {
       return;
     }
-    if (StringUtil.startsWithConcatenationOf(baseTypeName, qualifiedName, ".")) {
+    if (StringUtil.startsWithConcatenation(baseTypeName, qualifiedName, ".")) {
       return;
     }
     if (!m_includeLibraryClasses) {

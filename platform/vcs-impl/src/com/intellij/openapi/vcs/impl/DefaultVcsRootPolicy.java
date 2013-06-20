@@ -52,7 +52,7 @@ public abstract class DefaultVcsRootPolicy {
     final StorageScheme storageScheme = ((ProjectEx) project).getStateStore().getStorageScheme();
     boolean isDirectoryBased = StorageScheme.DIRECTORY_BASED.equals(storageScheme);
     final String[] parts = new String[] {"Content roots of all modules", "all immediate descendants of project base directory",
-      ".idea directory contents"};
+      Project.DIRECTORY_STORE_FOLDER + " directory contents"};
     final StringBuilder sb = new StringBuilder(parts[0]);
     if (isDirectoryBased) {
       sb.append(", ");

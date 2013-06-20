@@ -50,6 +50,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -160,8 +162,9 @@ public class ExternalSystemUtil {
    *
    * @param project           target ide project
    * @param externalSystemId  target external system which projects should be refreshed
+   * @param force             flag which defines if external project refresh should be performed if it's config is up-to-date
    */
-  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
+  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (manager == null) {
       return;
@@ -173,12 +176,12 @@ public class ExternalSystemUtil {
     }
 
     final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
+    final int[] counter = new int[1]; 
 
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
 
       @NotNull
       private final Set<String> myExternalModuleNames = ContainerUtilRt.newHashSet();
-      private int myCounter = projectsSettings.size();
 
       @Override
       public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
@@ -190,14 +193,14 @@ public class ExternalSystemUtil {
           myExternalModuleNames.add(node.getData().getName());
         }
         projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, false);
-        if (--myCounter <= 0) {
+        if (--counter[0] <= 0) {
           processOrphanModules();
         }
       }
 
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        myCounter = Integer.MAX_VALUE; // Don't process orphan modules if there was an error on refresh.
+        counter[0] = Integer.MAX_VALUE; // Don't process orphan modules if there was an error on refresh.
       }
 
       private void processOrphanModules() {
@@ -211,15 +214,34 @@ public class ExternalSystemUtil {
             orphanIdeModules.add(module);
           }
         }
-        
+
         if (!orphanIdeModules.isEmpty()) {
           ruleOrphanModules(orphanIdeModules, project, externalSystemId);
         }
       }
     };
+
+    Map<String, Long> modificationStamps = manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps();
+    Set<String> toRefresh = ContainerUtilRt.newHashSet();
     for (ExternalProjectSettings setting : projectsSettings) {
-      refreshProject(project, externalSystemId, setting.getExternalProjectPath(), callback, true, false);
+      Long oldModificationStamp = modificationStamps.get(setting.getExternalProjectPath());
+      long currentModificationStamp = getTimeStamp(setting.getExternalProjectPath());
+      if (force || currentModificationStamp < 0 || oldModificationStamp == null || oldModificationStamp < currentModificationStamp) {
+        toRefresh.add(setting.getExternalProjectPath());
+      }
     }
+
+    if (!toRefresh.isEmpty()) {
+      counter[0] = toRefresh.size();
+      for (String path : toRefresh) {
+        refreshProject(project, externalSystemId, path, callback, true, false);
+      }
+    }
+  }
+
+  private static long getTimeStamp(@NotNull String path) {
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+    return vFile == null ? -1 : vFile.getTimeStamp();
   }
 
   /**
@@ -232,7 +254,7 @@ public class ExternalSystemUtil {
    * </ol>
    * </pre>
    * This method handles that situation, i.e. it asks a user what should be done and acts accordingly.
-   * 
+   *
    * @param orphanModules     modules which correspond to the un-linked external project
    * @param project           current ide project
    * @param externalSystemId  id of the external system which project has been un-linked from ide project
@@ -336,6 +358,12 @@ public class ExternalSystemUtil {
         task.execute(indicator);
         final Throwable error = task.getError();
         if (error == null) {
+          long stamp = getTimeStamp(externalProjectPath);
+          if (stamp > 0) {
+            ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+            assert manager != null;
+            manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps().put(externalProjectPath, stamp);
+          }
           DataNode<ProjectData> externalProject = task.getExternalProject();
           callback.onSuccess(externalProject);
           return;
@@ -347,7 +375,7 @@ public class ExternalSystemUtil {
             externalSystemId.getReadableName(), externalProjectPath, message
           );
         }
-        
+
         callback.onFailure(message, extractDetails(error));
 
         ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);

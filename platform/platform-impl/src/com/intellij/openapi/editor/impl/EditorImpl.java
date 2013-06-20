@@ -475,8 +475,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);
     myGutterComponent = new EditorGutterComponentImpl(this);
     initComponent();
-
     myScrollingModel = new ScrollingModelImpl(this);
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+    }
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();

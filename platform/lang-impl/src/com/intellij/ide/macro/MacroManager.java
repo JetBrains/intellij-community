@@ -80,6 +80,7 @@ public final class MacroManager {
     registerMacro(new LineNumberMacro());
     registerMacro(new ColumnNumberMacro());
 
+    registerMacro(new ClipboardContentMacro());
     registerMacro(new SelectedTextMacro());
     registerMacro(new SelectionStartLineMacro());
     registerMacro(new SelectionStartColumnMacro());

@@ -47,16 +47,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
@@ -70,14 +70,12 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class TestObject implements JavaCommandLine {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
@@ -90,6 +88,7 @@ public abstract class TestObject implements JavaCommandLine {
   protected final JUnitConfiguration myConfiguration;
   private final ExecutionEnvironment myEnvironment;
   protected File myTempFile = null;
+  protected File myWorkingDirsFile = null;
   public File myListenersFile;
 
   public static TestObject fromString(final String id,
@@ -412,10 +411,22 @@ public abstract class TestObject implements JavaCommandLine {
     return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(myJavaParameters, myProject, true));
   }
 
+  private boolean forkPerModule() {
+    final String workingDirectory = myConfiguration.getWorkingDirectory();
+    return JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) && 
+           myConfiguration.getPersistentData().getScope() != TestSearchScope.SINGLE_MODULE && 
+           ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory);
+  }
+  
   private void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = myConfiguration.getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
-      return;
+      final String workingDirectory = myConfiguration.getWorkingDirectory();
+      if (!JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) || 
+          myConfiguration.getPersistentData().getScope() == TestSearchScope.SINGLE_MODULE || 
+          !("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory)) {
+        return;
+      }
     }
 
     if (getRunnerSettings().getData() != null) {
@@ -461,6 +472,7 @@ public abstract class TestObject implements JavaCommandLine {
         myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
       }
 
+      final Map<String, List<String>> perModule = forkPerModule() ? new TreeMap<String, List<String>>() : null;
       final PrintWriter writer = new PrintWriter(myTempFile, "UTF-8");
       try {
         writer.println(packageName);
@@ -471,15 +483,53 @@ public abstract class TestObject implements JavaCommandLine {
             LOG.error("invalid element " + element);
             return;
           }
-          testNames.add(name);
+
+          if (perModule != null && element instanceof PsiElement) {
+            final Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
+            if (module != null) {
+              final String moduleDir = PathMacroUtil.getModuleDir(module.getModuleFilePath());
+              List<String> list = perModule.get(moduleDir);
+              if (list == null) {
+                list = new ArrayList<String>();
+                perModule.put(moduleDir, list);
+              }
+              list.add(name);
+            }
+          } else {
+            testNames.add(name);
+          }
         }
-        Collections.sort(testNames); //sort tests in FQN order
+        if (perModule != null) {
+          for (List<String> perModuleClasses : perModule.values()) {
+            Collections.sort(perModuleClasses);
+            testNames.addAll(perModuleClasses);
+          }
+        } else {
+          Collections.sort(testNames); //sort tests in FQN order
+        }
         for (String testName : testNames) {
           writer.println(testName);
         }
       }
       finally {
         writer.close();
+      }
+
+      if (perModule != null && perModule.size() > 1) {
+        final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, "UTF-8");
+        try {
+          wWriter.println(packageName);
+          for (String workingDir : perModule.keySet()) {
+            wWriter.println(workingDir);
+            final List<String> classNames = perModule.get(workingDir);
+            wWriter.println(classNames.size());
+            for (String className : classNames) {
+              wWriter.println(className);
+            }
+          }
+        } finally {
+          wWriter.close();
+        }
       }
     }
     catch (IOException e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,21 +31,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Nov 29, 2003
- * Time: 9:15:30 PM
- * To change this template use Options | File Templates.
+ * @author stathik
+ * @since Nov 29, 2003
  */
 public class PluginInstaller {
+  private static final Object myLock = new Object();
 
-  private PluginInstaller() {}
+  private PluginInstaller() { }
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall, List<IdeaPluginDescriptor> allPlugins) {
     ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
@@ -61,15 +60,13 @@ public class PluginInstaller {
       try {
         result |= prepareToInstall(pluginNode, pluginIds, allPlugins);
       }
-      catch (final IOException e) {
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            Messages.showErrorDialog(pluginNode.getName() + ": " + e.getMessage(), CommonBundle.message("title.error"));
-          }
-        });
+      catch (IOException e) {
+        String title = IdeBundle.message("title.plugin.error");
+        Notifications.Bus.notify(new Notification(title, title, pluginNode.getName() + ": " + e.getMessage(), NotificationType.ERROR));
         return false;
       }
     }
+
     return result;
   }
 
@@ -79,16 +76,15 @@ public class PluginInstaller {
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
-
       final PluginId[] optionalDependentPluginIds = pluginNode.getOptionalDependentPluginIds();
-      final List <PluginNode> depends = new ArrayList <PluginNode> ();
+      final List<PluginNode> depends = new ArrayList<PluginNode>();
       final List<PluginNode> optionalDeps = new ArrayList<PluginNode>();
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
 
-        if (PluginManager.isPluginInstalled(depPluginId) || PluginManager.isModuleDependency(depPluginId) ||
+        if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
             (pluginIds != null && pluginIds.contains(depPluginId))) {
-        //  ignore installed or installing plugins
+          // ignore installed or installing plugins
           continue;
         }
 
@@ -107,7 +103,7 @@ public class PluginInstaller {
       }
 
       if (depends.size() > 0) { // has something to install prior installing the plugin
-        final boolean [] proceed = new boolean[1];
+        final boolean[] proceed = new boolean[1];
         final StringBuffer buf = new StringBuffer();
         for (PluginNode depend : depends) {
           buf.append(depend.getName()).append(",");
@@ -115,8 +111,9 @@ public class PluginInstaller {
         try {
           GuiUtils.runOrInvokeAndWait(new Runnable() {
             public void run() {
-              proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1)),
-                                                    IdeBundle.message("plugin.manager.dependencies.detected.title"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
+              String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
+              String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1));
+              proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
             }
           });
         }
@@ -127,7 +124,8 @@ public class PluginInstaller {
           if (!prepareToInstall(depends, allPlugins)) {
             return false;
           }
-        } else {
+        }
+        else {
           return false;
         }
       }
@@ -137,13 +135,15 @@ public class PluginInstaller {
         for (PluginNode depend : optionalDeps) {
           buf.append(depend.getName()).append(",");
         }
-        final boolean [] proceed = new boolean[1];
+        final boolean[] proceed = new boolean[1];
         try {
           GuiUtils.runOrInvokeAndWait(new Runnable() {
             public void run() {
-              proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(),
-                                                                      buf.substring(0, buf.length() - 1)), IdeBundle.message("plugin.manager.dependencies.detected.title"),
-                                                    Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
+              proceed[0] =
+                Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(),
+                                                           buf.substring(0, buf.length() - 1)),
+                                         IdeBundle.message("plugin.manager.dependencies.detected.title"),
+                                         Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
             }
           });
         }
@@ -158,12 +158,12 @@ public class PluginInstaller {
       }
     }
 
-    synchronized (PluginManager.lock) {
+    synchronized (myLock) {
       PluginDownloader downloader = null;
       final String repositoryName = pluginNode.getRepositoryName();
       if (repositoryName != null) {
         try {
-          final ArrayList<PluginDownloader> downloaders = new ArrayList<PluginDownloader>();
+          final List<PluginDownloader> downloaders = new ArrayList<PluginDownloader>();
           if (!UpdateChecker.checkPluginsHost(repositoryName, downloaders)) {
             return false;
           }
@@ -178,13 +178,15 @@ public class PluginInstaller {
         catch (Exception e) {
           return false;
         }
-      } else {
+      }
+      else {
         downloader = PluginDownloader.createDownloader(pluginNode);
       }
       if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
         downloader.install();
         pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
-      } else {
+      }
+      else {
         return false;
       }
     }
@@ -201,14 +203,18 @@ public class PluginInstaller {
     return false;
   }
 
-  public static void prepareToUninstall (PluginId pluginId) throws IOException {
-    synchronized (PluginManager.lock) {
+  public static void prepareToUninstall(PluginId pluginId) throws IOException {
+    synchronized (myLock) {
       if (PluginManager.isPluginInstalled(pluginId)) {
         // add command to delete the 'action script' file
         IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
-
-        StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
-        StartupActionScriptManager.addActionCommand(deleteOld);
+        if (pluginDescriptor != null) {
+          StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
+          StartupActionScriptManager.addActionCommand(deleteOld);
+        }
+        else {
+          PluginManagerMain.LOG.error("Plugin not found: " + pluginId);
+        }
       }
     }
   }

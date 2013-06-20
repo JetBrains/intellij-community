@@ -15,7 +15,13 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.DottedBorder;
+import com.intellij.ui.EditorSettingsProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
@@ -214,6 +220,10 @@ public abstract class JBListTable extends JPanel {
     mainTable.setStriped(true);
   }
 
+  public void stopEditing() {
+    TableUtil.stopEditing(mainTable);
+  }
+
   private void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
     final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
     for (EditorTextField textField : editors) {
@@ -230,7 +240,14 @@ public abstract class JBListTable extends JPanel {
 
   protected abstract JBTableRowEditor getRowEditor(int row);
 
-  protected abstract JBTableRow getRowAt(int row);
+  protected JBTableRow getRowAt(final int row) {
+    return new JBTableRow() {
+      @Override
+      public Object getValueAt(int column) {
+        return myInternalTable.getValueAt(row, column);
+      }
+    };
+  }
 
   protected boolean isRowEditable(int row) {
     return true;
@@ -238,6 +255,37 @@ public abstract class JBListTable extends JPanel {
   
   protected boolean isRowEmpty(int row) {
     return false;
+  }
+
+  public static JComponent createEditorTextFieldPresentation(final Project project,
+                                                             final FileType type,
+                                                             final String text,
+                                                             boolean selected,
+                                                             boolean focused) {
+    final JPanel panel = new JPanel(new BorderLayout());
+    final EditorTextField field = new EditorTextField(text, project, type) {
+      @Override
+      protected boolean shouldHaveBorder() {
+        return false;
+      }
+    };
+
+    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    font = new Font(font.getFontName(), font.getStyle(), 12);
+    field.setFont(font);
+    field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);
+
+    if (selected && focused) {
+      panel.setBackground(UIUtil.getTableSelectionBackground());
+      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
+    } else {
+      panel.setBackground(UIUtil.getTableBackground());
+      if (selected) {
+        panel.setBorder(new DottedBorder(UIUtil.getTableForeground()));
+      }
+    }
+    panel.add(field, BorderLayout.WEST);
+    return panel;
   }
 
   private static class RowResizeAnimator extends Thread {

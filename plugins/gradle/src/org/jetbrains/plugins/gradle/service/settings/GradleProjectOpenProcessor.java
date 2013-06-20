@@ -18,7 +18,7 @@ package org.jetbrains.plugins.gradle.service.settings;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.Step;
-import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternalProjectStepBase;
+import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternalProjectStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
  */
 public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
 
-  @NotNull public static final String[] BUILD_FILE_NAMES = {GradleConstants.DEFAULT_SCRIPT_NAME};
+  @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION};
 
   public GradleProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
     super(builder);
@@ -42,22 +42,34 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   @Nullable
   @Override
   public String[] getSupportedExtensions() {
-    return BUILD_FILE_NAMES;
+    return BUILD_FILE_EXTENSIONS;
   }
-  
+
+  @Override
+  public boolean canOpenProject(VirtualFile file) {
+    if (!file.isDirectory()) {
+      String fileName = file.getName();
+      for (String extension : BUILD_FILE_EXTENSIONS) {
+        if (fileName.endsWith(extension)) {
+          return true;
+        }
+      }
+    }
+    return super.canOpenProject(file);
+  }
+
   @Override
   protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
     AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), new GradleProjectImportProvider(getBuilder()));
     getBuilder().prepare(wizardContext);
-    getBuilder().getControl().setLinkedProjectPath(file.getPath());
+    getBuilder().getControl(null).setLinkedProjectPath(file.getPath());
     dialog.getWizardContext().setProjectBuilder(getBuilder());
     dialog.navigateToStep(new Function<Step, Boolean>() {
       @Override
       public Boolean fun(Step step) {
-        return step instanceof SelectExternalProjectStepBase;
+        return step instanceof SelectExternalProjectStep;
       }
     });
-    dialog.doNextAction();
     if (StringUtil.isEmpty(wizardContext.getProjectName())) {
       final String projectName = dialog.getWizardContext().getProjectName();
       if (!StringUtil.isEmpty(projectName)) {

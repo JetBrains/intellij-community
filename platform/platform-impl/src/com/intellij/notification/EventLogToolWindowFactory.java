@@ -31,12 +31,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 
 /**
 * @author peter
@@ -143,7 +143,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
   }
 
-  private static class LogShownTracker implements AncestorListener {
+  private static class LogShownTracker extends AncestorListenerAdapter {
     private final Project myProject;
 
     public LogShownTracker(Project project) {
@@ -156,14 +156,6 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
       if (log != null && log.isVisible()) {
         EventLog.getLogModel(myProject).logShown();
       }
-    }
-
-    @Override
-    public void ancestorRemoved(AncestorEvent event) {
-    }
-
-    @Override
-    public void ancestorMoved(AncestorEvent event) {
     }
   }
 }

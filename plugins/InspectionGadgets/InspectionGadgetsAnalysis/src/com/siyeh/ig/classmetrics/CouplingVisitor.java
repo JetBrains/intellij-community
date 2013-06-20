@@ -179,7 +179,7 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
         return;
       }
     }
-    if (StringUtil.startsWithConcatenationOf(baseTypeName, qualifiedName, ".")) {
+    if (StringUtil.startsWithConcatenation(baseTypeName, qualifiedName, ".")) {
       return;
     }
     m_dependencies.add(baseTypeName);

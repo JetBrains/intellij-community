@@ -142,6 +142,7 @@ public class DelayedDocumentWatcher implements Runnable {
   }
 
   private class MyDocumentAdapter extends DocumentAdapter {
+    @Override
     public void documentChanged(DocumentEvent event) {
       final Document document = event.getDocument();
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);

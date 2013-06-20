@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
@@ -25,15 +26,21 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiTreeAnchorizer extends TreeAnchorizer {
 
+  private static final Key<PsiAnchor> PSI_ANCHORIZER_ANCHOR = Key.create("PSI_ANCHORIZER_ANCHOR");
+
   @Override
   public Object createAnchor(Object element) {
-    if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-      return PsiAnchor.create((PsiElement)element);
+    if (element instanceof PsiElement) {
+      PsiElement psiElement = (PsiElement)element;
+      PsiAnchor anchor = psiElement.getUserData(PSI_ANCHORIZER_ANCHOR);
+      if (anchor == null) {
+        if (!psiElement.isValid()) return psiElement;
+        psiElement.putUserData(PSI_ANCHORIZER_ANCHOR, anchor = PsiAnchor.create(psiElement));
+      }
+      return anchor;
     }
-
     return super.createAnchor(element);
   }
-
   @Override
   @Nullable
   public Object retrieveElement(Object pointer) {

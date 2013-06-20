@@ -651,10 +651,14 @@ public class HighlightInfo implements Segment {
   }
 
   private static void appendFixes(@Nullable TextRange fixedRange, HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
+    if (info == null) return;
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
-        QuickFixAction.registerQuickFixAction(info, fixedRange != null ? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix,
-                                              quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME));
+        TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;
+        HighlightDisplayKey key = quickFixInfo.key != null
+                                  ? quickFixInfo.key
+                                  : HighlightDisplayKey.find(DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME);
+        QuickFixAction.registerQuickFixAction(info, range, quickFixInfo.quickFix, key);
       }
     }
   }
@@ -772,46 +776,52 @@ public class HighlightInfo implements Segment {
       }
       List<IntentionAction> newOptions = IntentionManager.getInstance().getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
-      InspectionProfileEntry tool = profile.getInspectionTool(key.toString(), element);
-      if (!(tool instanceof LocalInspectionToolWrapper)) {
+      InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profile.getInspectionTool(key.toString(), element);
+      if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
         HighlightDisplayKey idkey = HighlightDisplayKey.findById(key.toString());
         if (idkey != null) {
-          tool = profile.getInspectionTool(idkey.toString(), element);
+          toolWrapper = (InspectionToolWrapper)profile.getInspectionTool(idkey.toString(), element);
         }
       }
-      InspectionProfileEntry wrappedTool = tool;
-      if (tool instanceof LocalInspectionToolWrapper) {
-        wrappedTool = ((LocalInspectionToolWrapper)tool).getTool();
-        Class aClass = myAction.getClass();
-        if (myAction instanceof QuickFixWrapper) {
-          aClass = ((QuickFixWrapper)myAction).getFix().getClass();
-        }
-        newOptions.add(new CleanupInspectionIntention((LocalInspectionToolWrapper)tool, aClass));
-      } else if (tool instanceof GlobalInspectionToolWrapper) {
-        wrappedTool = ((GlobalInspectionToolWrapper)tool).getTool();
-        if (wrappedTool instanceof GlobalSimpleInspectionTool && (myAction instanceof LocalQuickFix || myAction instanceof QuickFixWrapper)) {
+      if (toolWrapper != null) {
+        InspectionProfileEntry wrappedTool;
+        if (toolWrapper instanceof LocalInspectionToolWrapper) {
+          wrappedTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
           Class aClass = myAction.getClass();
           if (myAction instanceof QuickFixWrapper) {
             aClass = ((QuickFixWrapper)myAction).getFix().getClass();
           }
-          newOptions.add(new CleanupInspectionIntention((GlobalInspectionToolWrapper)tool, aClass));
+          newOptions.add(new CleanupInspectionIntention(toolWrapper, aClass));
         }
-      }
-
-      if (wrappedTool instanceof CustomSuppressableInspectionTool) {
-        final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
-        if (suppressActions != null) {
-          ContainerUtil.addAll(newOptions, suppressActions);
-        }
-      }
-      if (wrappedTool instanceof BatchSuppressableTool) {
-        final SuppressQuickFix[] suppressActions = ((BatchSuppressableTool)wrappedTool).getBatchSuppressActions(element);
-        ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressActions, new Function<SuppressQuickFix, IntentionAction>() {
-          @Override
-          public IntentionAction fun(SuppressQuickFix fix) {
-            return InspectionManagerEx.convertBatchToSuppressIntentionAction(fix);
+        else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+          wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
+          if (wrappedTool instanceof GlobalSimpleInspectionTool && (myAction instanceof LocalQuickFix || myAction instanceof QuickFixWrapper)) {
+            Class aClass = myAction.getClass();
+            if (myAction instanceof QuickFixWrapper) {
+              aClass = ((QuickFixWrapper)myAction).getFix().getClass();
+            }
+            newOptions.add(new CleanupInspectionIntention(toolWrapper, aClass));
           }
-        }));
+        }
+        else {
+          throw new AssertionError("unknown tool: " + toolWrapper+"; key: "+myKey);
+        }
+
+        if (wrappedTool instanceof CustomSuppressableInspectionTool) {
+          final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
+          if (suppressActions != null) {
+            ContainerUtil.addAll(newOptions, suppressActions);
+          }
+        }
+        if (wrappedTool instanceof BatchSuppressableTool) {
+          final SuppressQuickFix[] suppressActions = ((BatchSuppressableTool)wrappedTool).getBatchSuppressActions(element);
+          ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressActions, new Function<SuppressQuickFix, IntentionAction>() {
+            @Override
+            public IntentionAction fun(SuppressQuickFix fix) {
+              return InspectionManagerEx.convertBatchToSuppressIntentionAction(fix);
+            }
+          }));
+        }
       }
       if (myProblemGroup instanceof SuppressableProblemGroup) {
         final IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);

@@ -107,6 +107,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("B", "A", 0);
   }
 
+  public void testStringConstantFromCaseStatement() throws Exception {
+    doTest("B", "A", 0);
+  }
+
   public void testDependantFields() throws Exception {
     doTest("B", "A", 0);
   }

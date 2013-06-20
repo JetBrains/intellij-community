@@ -146,6 +146,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSSnowLeopard = isMac && isOsVersionAtLeast("10.6");
   public static final boolean isMacOSLion = isMac && isOsVersionAtLeast("10.7");
   public static final boolean isMacOSMountainLion = isMac && isOsVersionAtLeast("10.8");
+  public static final boolean isMacOSMavericks = isMac && isOsVersionAtLeast("10.9");
 
   @NotNull
   public static String getMacOSMajorVersion() {

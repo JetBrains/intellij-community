@@ -1,7 +1,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionApplication;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -93,13 +92,13 @@ public class PlainTextFormatter implements InspectionsReportConverter {
           continue;
         }
 
-        final InspectionProfileEntry tool = tools.get(fileNameWithoutExt).getTool();
+        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)tools.get(fileNameWithoutExt).getTool();
 
         // Tool name and group
-        w.append(getToolPresentableName(tool)).append("\n");
+        w.append(getToolPresentableName(toolWrapper)).append("\n");
 
         // Description is HTML based, need to be converted in plain text
-        writeInspectionDescription(w, tool, transformer);
+        writeInspectionDescription(w, toolWrapper, transformer);
 
         // separator before file list
         w.append("\n");
@@ -114,7 +113,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
           final List problems = root.getChildren(PROBLEM_ELEMENT);
 
           // let's count max file path & line_number length to align problem descriptions
-          final int maxFileColonLineLength = getMaxFileColonLineNumLength(inspectionData, tool, problems);
+          final int maxFileColonLineLength = getMaxFileColonLineNumLength(inspectionData, toolWrapper, problems);
 
           for (Object problem : problems) {
             // Format:
@@ -124,7 +123,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
             final String filePath = getPath(fileElement);
 
             // skip suppressed results
-            if (resultsIgnored(inspectionData, tool)) {
+            if (resultsIgnored(inspectionData, toolWrapper)) {
               continue;
             }
 
@@ -165,7 +164,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   private int getMaxFileColonLineNumLength(@NotNull final File inspectionResultData,
-                                           @NotNull final InspectionProfileEntry tool,
+                                           @NotNull final InspectionToolWrapper toolWrapper,
                                            @NotNull final List problems) {
     int maxFileColonLineLength = 0;
     for (Object problem : problems) {
@@ -174,7 +173,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
 
       final String filePath = getPath(fileElement);
       // skip suppressed results
-      if (resultsIgnored(inspectionResultData, tool)) {
+      if (resultsIgnored(inspectionResultData, toolWrapper)) {
         continue;
       }
 
@@ -188,7 +187,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   private boolean resultsIgnored(@NotNull final File file,
-                                 @NotNull final InspectionProfileEntry tool) {
+                                 @NotNull final InspectionToolWrapper toolWrapper) {
     // TODO: check according to config
     return false;
   }
@@ -199,12 +198,12 @@ public class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   protected void writeInspectionDescription(@NotNull final Writer w,
-                                            @NotNull final InspectionProfileEntry tool,
+                                            @NotNull final InspectionToolWrapper toolWrapper,
                                             @NotNull final Transformer transformer)
     throws IOException, ConversionException {
 
     final StringWriter descrWriter = new StringWriter();
-    String descr = tool.loadDescription();
+    String descr = toolWrapper.loadDescription();
     if (descr == null) {
       return;
     }
@@ -217,7 +216,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
     }
     catch (TransformerException e) {
       // Not critical problem, just inspection error cannot be loaded
-      warn("ERROR:  Cannot load description for inspection: " + getToolPresentableName(tool) + ".\n        Error message: " + e.getMessage());
+      warn("ERROR:  Cannot load description for inspection: " + getToolPresentableName(toolWrapper) + ".\n        Error message: " + e.getMessage());
       return;
     }
 
@@ -231,14 +230,14 @@ public class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   @NotNull
-  protected String getToolPresentableName(@NotNull final InspectionProfileEntry tool) throws IOException {
+  protected String getToolPresentableName(@NotNull final InspectionToolWrapper toolWrapper) throws IOException {
     final StringBuilder buff = new StringBuilder();
 
     // inspection name
-    buff.append(tool.getDisplayName()).append(" (");
+    buff.append(toolWrapper.getDisplayName()).append(" (");
 
     // group name
-    final String[] groupPath = tool.getGroupPath();
+    final String[] groupPath = toolWrapper.getGroupPath();
     for (int i = 0, groupPathLength = groupPath.length; i < groupPathLength; i++) {
       if (i != 0) {
         buff.append(" | ");

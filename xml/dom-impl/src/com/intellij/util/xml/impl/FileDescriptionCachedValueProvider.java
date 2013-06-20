@@ -153,7 +153,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     if (sb != null) {
       sb.append("original: " + originalFile + "\n");
     }
-    if (originalFile != myXmlFile) {
+    if (!originalFile.equals(myXmlFile)) {
       final FileDescriptionCachedValueProvider<T> provider = myDomManager.getOrCreateCachedValueProvider(originalFile);
       final DomFileElementImpl<T> element = provider.getFileElement();
       if (sb != null) {

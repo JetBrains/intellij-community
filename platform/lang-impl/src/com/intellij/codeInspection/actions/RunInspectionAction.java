@@ -20,9 +20,9 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
@@ -79,7 +79,7 @@ public class RunInspectionAction extends GotoActionBase {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            runInspection(project, (InspectionProfileEntry)element, virtualFile, psiElement, psiFile);
+            runInspection(project, (InspectionToolWrapper)element, virtualFile, psiElement, psiFile);
           }
         });
       }
@@ -87,7 +87,7 @@ public class RunInspectionAction extends GotoActionBase {
   }
 
   private static void runInspection(@NotNull Project project,
-                                    @NotNull InspectionProfileEntry profileEntry,
+                                    @NotNull InspectionToolWrapper toolWrapper,
                                     @Nullable VirtualFile virtualFile,
                                     PsiElement psiElement, PsiFile psiFile) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -140,6 +140,6 @@ public class RunInspectionAction extends GotoActionBase {
     if (!dlg.isOK()) return;
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     scope = dlg.getScope(uiOptions, scope, project, module);
-    RunInspectionIntention.rerunInspection(profileEntry, managerEx, scope, psiFile);
+    RunInspectionIntention.rerunInspection(toolWrapper, managerEx, scope, psiFile);
   }
 }

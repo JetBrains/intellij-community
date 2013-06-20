@@ -23,9 +23,11 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlTagNameProvider;
 import org.jetbrains.annotations.NotNull;
@@ -48,12 +50,21 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
-                                @NotNull CompletionResultSet result) {
-    PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
-    if (reference instanceof TagNameReference) {
-      TagNameReference tagNameReference = (TagNameReference)reference;
-      collectCompletionVariants(tagNameReference, result);
-    }
+                                @NotNull final CompletionResultSet result) {
+    LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
+      @Override
+      public void consume(PsiReference reference, CompletionResultSet set) {
+        if (reference instanceof TagNameReference) {
+          collectCompletionVariants((TagNameReference)reference, set);
+        }
+        else if (reference instanceof SchemaPrefixReference) {
+          TagNameReference tagNameReference = ((SchemaPrefixReference)reference).getTagNameReference();
+          if (tagNameReference != null && !tagNameReference.isStartTagFlag()) {
+            set.consume(createClosingTagLookupElement((XmlTag)tagNameReference.getElement(), true, tagNameReference.getNameElement()));
+          }
+        }
+      }
+    });
   }
 
   public static void collectCompletionVariants(TagNameReference tagNameReference,

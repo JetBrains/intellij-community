@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemAutoImporter;
+import com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -36,15 +37,13 @@ public class ExternalSystemStartupActivity implements StartupActivity {
       @SuppressWarnings("unchecked")
       @Override
       public void run() {
-        if (SystemProperties.getBooleanProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, false)) {
-          System.setProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, Boolean.toString(false));
-        }
-        else {
+        if (!SystemProperties.getBooleanProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, false)) {
           for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-            ExternalSystemUtil.refreshProjects(project, manager.getSystemId());
+            ExternalSystemUtil.refreshProjects(project, manager.getSystemId(), false);
           }
         }
         ExternalSystemAutoImporter.letTheMagicBegin(project);
+        ExternalToolWindowManager.handle(project);
       }
     };
 

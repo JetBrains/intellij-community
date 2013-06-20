@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,23 +42,27 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.LoadAllContentsAction");
+
+  private final AtomicInteger count = new AtomicInteger();
+  private final AtomicLong totalSize = new AtomicLong();
+
   public LoadAllVfsStoredContentsAction() {
     super("Load all VirtualFiles content", "Measure virtualFile.contentsToByteArray() for all virtual files stored in the VFS", null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    count.set(0);
-    totalSize.set(0);
-
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-
     String m = "Started loading content";
     LOG.info(m);
     System.out.println(m);
     long start = System.currentTimeMillis();
+
+    count.set(0);
+    totalSize.set(0);
     ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -69,9 +73,11 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
         }
       }
     }, "Loading", false, null);
+
     long end = System.currentTimeMillis();
-    String message = "Finished loading content of " + count + " files. Total size=" + StringUtil.formatFileSize(totalSize.get()) +
-                     ". Elapsed=" + ((end - start) / 1000) + "sec.";
+    String message = "Finished loading content of " + count + " files. " +
+                     "Total size=" + StringUtil.formatFileSize(totalSize.get()) + ". " +
+                     "Elapsed=" + ((end - start) / 1000) + "sec.";
     LOG.info(message);
     System.out.println(message);
   }
@@ -79,16 +85,13 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
   private void iterateCached(VirtualFile root) {
     processFile((NewVirtualFile)root);
     Collection<VirtualFile> children = ((NewVirtualFile)root).getCachedChildren();
-    if (children == null) return;
     for (VirtualFile child : children) {
       iterateCached(child);
     }
   }
 
-  AtomicInteger count = new AtomicInteger();
-  AtomicLong totalSize = new AtomicLong();
   public boolean processFile(NewVirtualFile file) {
-    if (file.isDirectory() || file.isSpecialFile()) return true;
+    if (file.isDirectory() || file.is(VirtualFile.PROP_SPECIAL)) return true;
     try {
       DataInputStream stream = FSRecords.readContent(file.getId());
       if (stream == null) return true;

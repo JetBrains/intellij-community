@@ -38,9 +38,13 @@ public class JBLoadingPanel extends JPanel {
   private final Collection<JBLoadingPanelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent) {
+    this(manager, parent, -1);
+  }
+
+  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent, int startDelayMs) {
     super(new BorderLayout());
     myPanel = manager == null ? new JPanel() : new JPanel(manager);
-    myDecorator = new LoadingDecorator(myPanel, parent, -1) {
+    myDecorator = new LoadingDecorator(myPanel, parent, startDelayMs) {
       @Override
       protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
         final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);

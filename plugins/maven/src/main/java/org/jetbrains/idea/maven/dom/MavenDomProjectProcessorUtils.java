@@ -164,10 +164,9 @@ public class MavenDomProjectProcessorUtils {
   public static Set<MavenDomDependency> searchDependencyUsages(@NotNull final MavenDomDependency dependency) {
     final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
     if (model != null) {
-      final String artifactId = dependency.getArtifactId().getStringValue();
-      final String groupId = dependency.getGroupId().getStringValue();
-      if (artifactId != null && groupId != null) {
-        return searchDependencyUsages(model, groupId, artifactId, Collections.singleton(dependency));
+      DependencyId dependencyId = DependencyId.create(dependency);
+      if (dependencyId != null) {
+        return searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
       }
     }
     return Collections.emptySet();
@@ -175,19 +174,8 @@ public class MavenDomProjectProcessorUtils {
 
   @NotNull
   public static Set<MavenDomDependency> searchDependencyUsages(@NotNull final MavenDomProjectModel model,
-                                                               @NotNull final String groupId,
-                                                               @NotNull final String artifactId) {
-    return searchDependencyUsages(model, groupId, artifactId, Collections.<MavenDomDependency>emptySet());
-  }
-
-  @NotNull
-  public static Set<MavenDomDependency> searchDependencyUsages(@NotNull final MavenDomProjectModel model,
-                                                               @Nullable final String groupId,
-                                                               @Nullable final String artifactId,
+                                                               @NotNull final DependencyId dependencyId,
                                                                @NotNull final Set<MavenDomDependency> excludes) {
-
-    if (groupId == null || artifactId == null) return Collections.emptySet();
-
     Project project = model.getManager().getProject();
     final Set<MavenDomDependency> usages = new HashSet<MavenDomDependency>();
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
@@ -195,8 +183,8 @@ public class MavenDomProjectProcessorUtils {
         if (!model.equals(mavenDomProjectModel)) {
           for (MavenDomDependency domDependency : mavenDomProjectModel.getDependencies().getDependencies()) {
             if (excludes.contains(domDependency)) continue;
-            if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
-                groupId.equals(domDependency.getGroupId().getStringValue())) {
+
+            if (dependencyId.equals(DependencyId.create(domDependency))) {
               usages.add(domDependency);
             }
           }
@@ -305,9 +293,8 @@ public class MavenDomProjectProcessorUtils {
 
   @Nullable
   public static MavenDomDependency searchManagingDependency(@NotNull final MavenDomDependency dependency, @NotNull final Project project) {
-    final String artifactId = dependency.getArtifactId().getStringValue();
-    final String groupId = dependency.getGroupId().getStringValue();
-    if (artifactId == null || groupId == null) return null;
+    final DependencyId depId = DependencyId.create(dependency);
+    if (depId == null) return null;
 
     final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
     if (model == null) return null;
@@ -316,8 +303,7 @@ public class MavenDomProjectProcessorUtils {
       @Override
       protected MavenDomDependency find(MavenDomDependencies mavenDomDependencies) {
         for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
-          if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
-              groupId.equals(domDependency.getGroupId().getStringValue())) {
+          if (depId.equals(DependencyId.create(domDependency))) {
             return domDependency;
           }
 
@@ -331,8 +317,7 @@ public class MavenDomProjectProcessorUtils {
                 MavenDomProjectModel dependModel = MavenDomUtil.getMavenDomModel((PsiFile)resolve, MavenDomProjectModel.class);
                 if (dependModel != null) {
                   for (MavenDomDependency dep : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
-                    if (artifactId.equals(dep.getArtifactId().getStringValue()) &&
-                        groupId.equals(dep.getGroupId().getStringValue())) {
+                    if (depId.equals(DependencyId.create(dep))) {
                       return domDependency;
                     }
                   }
@@ -592,6 +577,4 @@ public class MavenDomProjectProcessorUtils {
       return myResult;
     }
   }
-
-
 }

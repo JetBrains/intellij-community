@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -49,14 +50,12 @@ import java.util.List;
 public class PluginManager extends PluginManagerCore {
   @NonNls public static final String INSTALLED_TXT = "installed.txt";
 
-  static final Object lock = new Object();
-
   public static long startupStart;
 
   /**
    * Called via reflection
    */
-  @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral", "finally"})
+  @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
   protected static void start(final String mainClass, final String methodName, final String[] args) {
     startupStart = System.nanoTime();
 
@@ -69,24 +68,7 @@ public class PluginManager extends PluginManagerCore {
     ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
       @Override
       public void uncaughtException(Thread t, Throwable e) {
-        if (e instanceof StartupAbortedException) {
-          StartupAbortedException se = (StartupAbortedException)e;
-          try {
-            if (se.logError()) {
-              if (Logger.isInitialized()) {
-                getLogger().error(e);
-              }
-              Main.showMessage("Start Failed", e);
-            }
-          }
-          finally {
-            System.exit(se.exitCode());
-          }
-        }
-
-        if (!(e instanceof ProcessCanceledException)) {
-          getLogger().error(e);
-        }
+        processException(e);
       }
     };
 
@@ -111,10 +93,51 @@ public class PluginManager extends PluginManagerCore {
     new Thread(threadGroup, runnable, "Idea Main Thread").start();
   }
 
+  public static void processException(Throwable t) {
+    StartupAbortedException se = null;
+
+    if (t instanceof StartupAbortedException) {
+      se = (StartupAbortedException)t;
+    }
+    else if (!IdeaApplication.isLoaded()) {
+      se = new StartupAbortedException(t);
+    }
+
+    if (se != null) {
+      if (se.logError()) {
+        try {
+          if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
+            getLogger().error(t);
+          }
+        }
+        catch (Throwable ignore) { }
+
+        Main.showMessage("Start Failed", t);
+      }
+
+      System.exit(se.exitCode());
+    }
+
+    if (!(t instanceof ProcessCanceledException)) {
+      getLogger().error(t);
+    }
+  }
+
+  private static Thread.UncaughtExceptionHandler HANDLER = new Thread.UncaughtExceptionHandler() {
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+      processException(e);
+    }
+  };
+
+  public static void installExceptionHandler() {
+    Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
+  }
+
   public static void reportPluginError() {
     if (myPluginError != null) {
-      String message = IdeBundle.message("title.plugin.error");
-      Notifications.Bus.notify(new Notification(message, message, myPluginError, NotificationType.ERROR, new NotificationListener() {
+      String title = IdeBundle.message("title.plugin.error");
+      Notifications.Bus.notify(new Notification(title, title, myPluginError, NotificationType.ERROR, new NotificationListener() {
         @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -193,7 +216,7 @@ public class PluginManager extends PluginManagerCore {
     }
   }
 
-  public static class StartupAbortedException extends RuntimeException {
+  private static class StartupAbortedException extends RuntimeException {
     private int exitCode = Main.STARTUP_EXCEPTION;
     private boolean logError = true;
 

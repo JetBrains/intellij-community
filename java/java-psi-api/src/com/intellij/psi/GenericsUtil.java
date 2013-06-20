@@ -23,7 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,8 @@ public class GenericsUtil {
 
   private GenericsUtil() {}
 
-  public static PsiType getGreatestLowerBound(PsiType type1, PsiType type2) {
+  public static PsiType getGreatestLowerBound(@Nullable PsiType type1, @Nullable PsiType type2) {
+    if (type1 == null || type2 == null) return null;
     return PsiIntersectionType.createIntersection(type1, type2);
   }
 
@@ -185,18 +186,21 @@ public class GenericsUtil {
   public static PsiClass[] getLeastUpperClasses(PsiClass aClass, PsiClass bClass) {
     if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) return new PsiClass[]{bClass};
     Set<PsiClass> supers = new LinkedHashSet<PsiClass>();
-    getLeastUpperClassesInner(aClass, bClass, supers);
+    Set<PsiClass> visited = new HashSet<PsiClass>();
+    getLeastUpperClassesInner(aClass, bClass, supers, visited);
     return supers.toArray(new PsiClass[supers.size()]);
   }
 
-  private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers) {
+  private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers, Set<PsiClass> visited) {
     if (bClass.isInheritor(aClass, true)) {
       addSuper(supers, aClass);
     }
     else {
       final PsiClass[] aSupers = aClass.getSupers();
       for (PsiClass aSuper : aSupers) {
-        getLeastUpperClassesInner(aSuper, bClass, supers);
+        if (visited.add(aSuper)) {
+          getLeastUpperClassesInner(aSuper, bClass, supers, visited);
+        }
       }
     }
   }

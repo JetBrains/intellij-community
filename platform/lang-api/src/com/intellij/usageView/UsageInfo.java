@@ -45,7 +45,7 @@ public class UsageInfo {
 
     TextRange elementRange = element.getTextRange();
     if (elementRange == null) {
-      LOG.error("text range null for " + element + "; " + element.getClass());
+      throw new IllegalArgumentException("text range null for " + element + "; " + element.getClass());
     }
     if (startOffset == -1 && endOffset == -1) {
       // calculate natural element range
@@ -53,8 +53,12 @@ public class UsageInfo {
       endOffset = elementRange.getEndOffset() - elementRange.getStartOffset();
     }
 
-    LOG.assertTrue(startOffset >= 0, "element " + element + "; startOffset " +startOffset);
-    LOG.assertTrue(endOffset >= startOffset, "element " + element + "; diff " + (endOffset-startOffset));
+    if (startOffset < 0) {
+      throw new IllegalArgumentException("element " + element + "; startOffset " +startOffset);
+    }
+    if (startOffset > endOffset) {
+      throw new IllegalArgumentException("element " + element + "; diff " + (endOffset-startOffset));
+    }
 
     if (startOffset != element.getTextOffset() - elementRange.getStartOffset() || endOffset != elementRange.getLength()) {
       PsiFile file = element.getContainingFile();

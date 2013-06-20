@@ -15,10 +15,10 @@
  */
 package com.intellij.ide;
 
-
 import com.intellij.Patches;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -58,12 +57,10 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
-
 /**
  * @author Vladimir Kondratyev
  * @author Anton Katilin
  */
-
 public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
 
@@ -319,7 +316,6 @@ public class IdeEventQueue extends EventQueue {
     myEventCount = evCount;
   }
 
-
   public AWTEvent getTrueCurrentEvent() {
     return myCurrentEvent;
   }
@@ -348,12 +344,9 @@ public class IdeEventQueue extends EventQueue {
     try {
       _dispatchEvent(e, false);
     }
-    catch (ProcessCanceledException pce) {
-      throw pce;
-    }
-    catch (Throwable exc) {
-      if (!myToolkitBugsProcessor.process(exc)) {
-        LOG.error("Error during dispatching of " + e, exc);
+    catch (Throwable t) {
+      if (!myToolkitBugsProcessor.process(t)) {
+        PluginManager.processException(t);
       }
     }
     finally {
@@ -668,29 +661,26 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean processAppActivationEvents(AWTEvent e) {
-    final Application app = ApplicationManager.getApplication();
+    Application app = ApplicationManager.getApplication();
     if (!(app instanceof ApplicationImpl)) return false;
-
     ApplicationImpl appImpl = (ApplicationImpl)app;
 
-    boolean consumed = false;
     if (e instanceof WindowEvent) {
       WindowEvent we = (WindowEvent)e;
       if (we.getID() == WindowEvent.WINDOW_GAINED_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && !appImpl.isActive()) {
-          consumed = appImpl.tryToApplyActivationState(true, we.getWindow());
+          appImpl.tryToApplyActivationState(true, we.getWindow());
         }
       }
       else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && appImpl.isActive()) {
-          consumed = appImpl.tryToApplyActivationState(false, we.getWindow());
+          appImpl.tryToApplyActivationState(false, we.getWindow());
         }
       }
     }
 
     return false;
   }
-
 
   private void defaultDispatchEvent(final AWTEvent e) {
     try {
@@ -700,14 +690,12 @@ public class IdeEventQueue extends EventQueue {
 
       super.dispatchEvent(e);
     }
-    catch (ProcessCanceledException pce) {
-      throw pce;
-    }
-    catch (Throwable exc) {
-      if (!myToolkitBugsProcessor.process(exc)) {
-        LOG.error("Error during dispatching of " + e, exc);
+    catch (Throwable t) {
+      if (!myToolkitBugsProcessor.process(t)) {
+        PluginManager.processException(t);
       }
-    } finally {
+    }
+    finally {
       myDispatchingFocusEvent = false;
     }
   }
@@ -963,7 +951,7 @@ public class IdeEventQueue extends EventQueue {
     });
   }
 
-  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1000, 100);
+  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(AWTEvent theEvent) {
     myFrequentEventDetector.eventHappened();

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
@@ -693,4 +694,36 @@ def <T extends PsiElement & I> T foo4(Class<T> <warning descr="Cannot assign 'Cl
 def <T extends PsiElement & I> T foo5(Class<T> x = Foo ) {}
 ''')
   }
+
+  void testFixVariableType() {
+    testHighlighting('''\
+int <warning>x<caret>x</warning> = 'abc'
+''')
+
+
+    final IntentionAction intention = myFixture.findSingleIntention('Change variable')
+    myFixture.launchAction(intention)
+    myFixture.checkResult('''\
+String xx = 'abc'
+''')
+
+  }
+
+  void testFixVariableType2() {
+    testHighlighting('''\
+int xx = 5
+
+<warning>x<caret>x</warning> = 'abc'
+''')
+
+    final IntentionAction intention = myFixture.findSingleIntention('Change variable')
+    myFixture.launchAction(intention)
+    myFixture.checkResult('''\
+String xx = 5
+
+xx = 'abc'
+''')
+
+  }
+
 }

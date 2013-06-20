@@ -56,14 +56,9 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
   }
 
-  public void apply() {
-    try {
-      if (myTab.isModified()) {
-        myTab.apply();
-      }
-    }
-    catch (ConfigurationException e) {
-      LOG.error(e);
+  public void apply() throws ConfigurationException {
+    if (myTab.isModified()) {
+      myTab.apply();
     }
   }
 

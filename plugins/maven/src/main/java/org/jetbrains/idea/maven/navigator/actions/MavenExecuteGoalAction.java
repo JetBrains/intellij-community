@@ -16,8 +16,13 @@
 package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +30,10 @@ import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -37,8 +44,8 @@ import java.util.List;
  */
 public class MavenExecuteGoalAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
+  public void actionPerformed(final AnActionEvent e) {
+    final Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
 
     ExecuteMavenGoalHistoryService historyService = ExecuteMavenGoalHistoryService.getInstance(project);
 
@@ -77,8 +84,21 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
 
     File mavenHome = MavenUtil.resolveMavenHomeDirectory(projectsManager.getGeneralSettings().getMavenHome());
     if (mavenHome == null) {
-      // todo handle
-      throw new RuntimeException();
+      Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                                                   "Failed to execute goal",
+                                                   RunnerBundle.message("external.maven.home.no.default.with.fix"), NotificationType.ERROR,
+                                                   new NotificationListener() {
+                                                     @Override
+                                                     public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                 @NotNull HyperlinkEvent event) {
+                                                       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                         ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
+                                                       }
+                                                     }
+                                                   });
+
+      Notifications.Bus.notify(notification, project);
+      return;
     }
 
     MavenRunnerParameters parameters = new MavenRunnerParameters(true, workDirectory, Arrays.asList(ParametersList.parse(goals)), null);
@@ -98,18 +118,5 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
     if (rootProjects.isEmpty()) return "";
 
     return rootProjects.get(0).getDirectory();
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-
-    boolean hasMaven = false;
-
-    if (project != null) {
-      hasMaven = MavenProjectsManager.getInstance(project).hasProjects();
-    }
-
-    e.getPresentation().setVisible(hasMaven);
   }
 }

@@ -236,11 +236,16 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters.clear();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
+      final List<T> extensions = new ArrayList<T>();
       for (ExtensionComponentAdapter adapter : adapters) {
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         assertClass(extension.getClass());
+        extensions.add(extension);
+      }
 
-        internalRegisterExtension(extension, adapter, myExtensions.size(), ArrayUtilRt.find(loadedAdapters, adapter) == -1);
+      for (int i = 0; i < extensions.size(); i++) {
+        T extension = extensions.get(i);
+        internalRegisterExtension(extension, adapters[i], myExtensions.size(), ArrayUtilRt.find(loadedAdapters, adapters[i]) == -1);
       }
       myExtensionAdapters.clear();
     }

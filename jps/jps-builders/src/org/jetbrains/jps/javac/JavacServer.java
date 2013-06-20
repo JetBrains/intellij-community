@@ -127,6 +127,11 @@ public class JavacServer {
                                                  Map<File, Set<File>> outs,
                                                  final CanceledStatus canceledStatus) {
     final DiagnosticOutputConsumer diagnostic = new DiagnosticOutputConsumer() {
+      @Override
+      public void javaFileLoaded(File file) {
+        Channels.write(ctx.getChannel(), JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createSourceFileLoadedResponse(file)));
+      }
+
       public void outputLineAvailable(String line) {
         Channels.write(ctx.getChannel(), JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createStdOutputResponse(line)));
       }

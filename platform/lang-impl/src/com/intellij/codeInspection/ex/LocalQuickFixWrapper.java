@@ -73,11 +73,11 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Nullable
-  protected QuickFix getWorkingQuickFix(QuickFix[] fixes) {
+  protected QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes) {
     for (QuickFix fix : fixes) {
       if (!myFix.getClass().isInstance(fix)) continue;
       if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper &&
-          !(((IntentionWrapper)myFix).getAction().getClass().isInstance(((IntentionWrapper)fix).getAction()))) {
+          !((IntentionWrapper)myFix).getAction().getClass().isInstance(((IntentionWrapper)fix).getAction())) {
         continue;
       }
       return fix;
@@ -91,7 +91,9 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected void applyFix(final Project project, final CommonProblemDescriptor[] descriptors, final Set<PsiElement> ignoredElements) {
+  protected void applyFix(@NotNull final Project project,
+                          @NotNull final CommonProblemDescriptor[] descriptors,
+                          @NotNull final Set<PsiElement> ignoredElements) {
     final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
     if (myFix instanceof BatchQuickFix) {
       final ArrayList<PsiElement> collectedElementsToIgnore = new ArrayList<PsiElement>();
@@ -139,7 +141,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     }
   }
 
-  private void ignore(Set<PsiElement> ignoredElements, CommonProblemDescriptor descriptor, QuickFix fix) {
+  private void ignore(@NotNull Set<PsiElement> ignoredElements, @NotNull CommonProblemDescriptor descriptor, @Nullable QuickFix fix) {
     if (fix != null) {
       ((DescriptorProviderInspection)myTool).ignoreProblem(descriptor, fix);
     }

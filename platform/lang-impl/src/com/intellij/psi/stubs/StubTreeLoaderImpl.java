@@ -94,6 +94,11 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       return null;
     }
 
+    boolean wasIndexedAlready = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isFileUpToDate(vFile);
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
+    boolean saved = document == null || FileDocumentManager.getInstance().isDocumentUnsaved(document);
+
     final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, GlobalSearchScope
         .fileScope(project, vFile));
     final int size = datas.size();
@@ -107,7 +112,10 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
       }
       ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
-      tree.setDebugInfo("created from index: " + StubUpdatingIndex.getIndexingStampInfo(vFile));
+      tree.setDebugInfo("created from index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) + 
+                        ", wasIndexedAlready=" + wasIndexedAlready + 
+                        ", saved=" + saved +
+                        ", queried at " + vFile.getTimeStamp());
       return tree;
     }
     else if (size != 0) {

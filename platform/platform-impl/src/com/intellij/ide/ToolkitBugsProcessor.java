@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.BitUtil;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ToolkitBugsProcessor {
-
   private static final Logger LOG = Logger.getInstance("ToolkitBugProcessor");
 
-  List<Handler> myHandlers = new ArrayList<Handler>();
+  private final List<Handler> myHandlers = new ArrayList<Handler>();
 
   public ToolkitBugsProcessor() {
     Class<?>[] classes = getClass().getDeclaredClasses();
     for (Class<?> each : classes) {
-      if ((each.getModifiers() & Modifier.ABSTRACT) > 0) continue;
-      if (Handler.class.isAssignableFrom(each)) {
+      if (!BitUtil.isSet(each.getModifiers(), Modifier.ABSTRACT) && Handler.class.isAssignableFrom(each)) {
         try {
           Handler eachHandler = (Handler)each.newInstance();
           if (eachHandler.isActual()) {
@@ -43,7 +42,6 @@ public class ToolkitBugsProcessor {
         }
         catch (Throwable e) {
           LOG.error(e);
-          continue;
         }
       }
     }
@@ -63,8 +61,7 @@ public class ToolkitBugsProcessor {
   }
 
 
-  abstract static class Handler {
-
+  private abstract static class Handler {
     private final String myDetails;
 
     protected Handler() {
@@ -75,9 +72,9 @@ public class ToolkitBugsProcessor {
       myDetails = details;
     }
 
-    abstract boolean process(Throwable e, StackTraceElement[] stack);
+    public abstract boolean process(Throwable e, StackTraceElement[] stack);
 
-    boolean isActual() {
+    public boolean isActual() {
       return true;
     }
 
@@ -97,8 +94,9 @@ public class ToolkitBugsProcessor {
     }
   }
 
-  static class Sun_6857057 extends Handler {
-    Sun_6857057() {
+  @SuppressWarnings("UnusedDeclaration")
+  private static class Sun_6857057 extends Handler {
+    public Sun_6857057() {
       super("text editor component - sync between model and view while dnd operations");
     }
 
@@ -114,13 +112,14 @@ public class ToolkitBugsProcessor {
     }
   }
 
-  static class Sun_6785663 extends Handler {
-    Sun_6785663() {
-      super("Numbus L&F problem -- update style");
+  @SuppressWarnings("UnusedDeclaration")
+  private static class Sun_6785663 extends Handler {
+    public Sun_6785663() {
+      super("Nimbus L&F problem -- update style");
     }
 
     @Override
-    boolean process(Throwable e, StackTraceElement[] stack) {
+    public boolean process(Throwable e, StackTraceElement[] stack) {
       if (e instanceof ClassCastException && stack.length > 1) {
         return stack[0].getClassName().equals("javax.swing.plaf.synth.SynthButtonUI")
           && stack[0].getMethodName().equals("updateStyle");
@@ -129,13 +128,14 @@ public class ToolkitBugsProcessor {
     }
   }
 
-  static class Tricky_JEditorPane_registerEditorKitForContentType_NPE extends Handler {
-    Tricky_JEditorPane_registerEditorKitForContentType_NPE() {
+  @SuppressWarnings("UnusedDeclaration")
+  private static class Tricky_JEditorPane_registerEditorKitForContentType_NPE extends Handler {
+    public Tricky_JEditorPane_registerEditorKitForContentType_NPE() {
       super("http://ea.jetbrains.com/browser/ea_problems/13587 - JEditorPane_registerEditorKitForContentType_NPE");
     }
 
     @Override
-    boolean process(Throwable e, StackTraceElement[] stack) {
+    public boolean process(Throwable e, StackTraceElement[] stack) {
       if (e instanceof NullPointerException && stack.length > 3) {
         //bombed for possible future fix
         if (SystemInfo.isJavaVersionAtLeast("1.7")) return false;
@@ -144,21 +144,22 @@ public class ToolkitBugsProcessor {
           && stack[0].getMethodName().equals("put")
           && stack[3].getClassName().equals("javax.swing.JEditorPane")
           && stack[3].getMethodName().equals("loadDefaultKitsIfNecessary");
-
       }
       return false;
     }
   }
 
-  static class Apple_ExceptionOnChangingMonitors extends Handler {
+  @SuppressWarnings("UnusedDeclaration")
+  private static class Apple_ExceptionOnChangingMonitors extends Handler {
+    public Apple_ExceptionOnChangingMonitors() { }
 
     @Override
-    boolean isActual() {
+    public boolean isActual() {
       return SystemInfo.isMac;
     }
 
     @Override
-    boolean process(Throwable e, StackTraceElement[] stack) {
+    public boolean process(Throwable e, StackTraceElement[] stack) {
       if (e instanceof ArrayIndexOutOfBoundsException && stack.length > 1) {
         return stack[0].getClassName().equals("apple.awt.CWindow")
           && stack[0].getMethodName().equals("displayChanged");
@@ -173,19 +174,19 @@ public class ToolkitBugsProcessor {
     }
   }
 
-  static class Apple_CAccessible_NPE extends Handler {
-
-    Apple_CAccessible_NPE() {
+  @SuppressWarnings("UnusedDeclaration")
+  private static class Apple_CAccessible_NPE extends Handler {
+    public Apple_CAccessible_NPE() {
       super("apple.awt.CAccessible.getAccessibleContext(CAccessible.java:74)");
     }
 
     @Override
-    boolean isActual() {
+    public boolean isActual() {
       return SystemInfo.isMac;
     }
 
     @Override
-    boolean process(Throwable e, StackTraceElement[] stack) {
+    public boolean process(Throwable e, StackTraceElement[] stack) {
       if (e instanceof NullPointerException && stack.length > 1) {
         return stack[0].getClassName().equals("apple.awt.CAccessible") && stack[0].getMethodName().equals("getAccessibleContext");
       }

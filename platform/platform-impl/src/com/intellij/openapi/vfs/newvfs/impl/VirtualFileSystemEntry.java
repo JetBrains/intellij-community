@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -410,8 +410,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean isSpecialFile() {
-    return getFlagInt(IS_SPECIAL_FLAG);
+  public boolean is(String property) {
+    if (property == PROP_SPECIAL) return getFlagInt(IS_SPECIAL_FLAG);
+    if (property == PROP_HIDDEN) return ourPersistence.isHidden(this);
+    return super.is(property);
   }
 
   @Override

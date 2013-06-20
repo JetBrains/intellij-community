@@ -35,6 +35,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +43,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +56,20 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
+  public boolean IGNORE_ASSERT_STATEMENTS = false;
 
   @Override
   public JComponent createOptionsPanel() {
     throw new RuntimeException("no UI in headless mode");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    node.addContent(new Element("option").setAttribute("name", "SUGGEST_NULLABLE_ANNOTATIONS").setAttribute("value", String.valueOf(SUGGEST_NULLABLE_ANNOTATIONS)));
+    node.addContent(new Element("option").setAttribute("name", "DONT_REPORT_TRUE_ASSERT_STATEMENTS").setAttribute("value", String.valueOf(DONT_REPORT_TRUE_ASSERT_STATEMENTS)));
+    if (IGNORE_ASSERT_STATEMENTS) {
+      node.addContent(new Element("option").setAttribute("name", "IGNORE_ASSERT_STATEMENTS").setAttribute("value", "true"));
+    }
   }
 
   @Override
@@ -85,7 +97,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (scope == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
     final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
-    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor);
+    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected(visitor)) {
         createDescription(dfaRunner, holder, visitor);

@@ -36,7 +36,7 @@ public class Descriptor {
   private final HighlightDisplayKey myKey;
 
   private Element myConfig;
-  private final InspectionProfileEntry myTool;
+  private final InspectionToolWrapper myToolWrapper;
   private final HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
   private final NamedScope myScope;
@@ -47,14 +47,14 @@ public class Descriptor {
   public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileImpl inspectionProfile) {
     myState = state;
     myInspectionProfile = inspectionProfile;
-    final InspectionProfileEntry tool = state.getTool();
+    InspectionToolWrapper tool = (InspectionToolWrapper)state.getTool();
     myText = tool.getDisplayName();
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
     myKey = HighlightDisplayKey.find(tool.getShortName());
     myLevel = inspectionProfile.getErrorLevel(myKey, ScopeToolStateUtil.getScope(state));
     myEnabled = inspectionProfile.isToolEnabled(myKey, ScopeToolStateUtil.getScope(state));
-    myTool = tool;
+    myToolWrapper = tool;
     myScope = ScopeToolStateUtil.getScope(state);
   }
 
@@ -98,28 +98,29 @@ public class Descriptor {
     return myConfig;
   }
 
-  public InspectionProfileEntry getTool() {
-    return myTool;
+  @NotNull
+  public InspectionToolWrapper getTool() {
+    return myToolWrapper;
   }
 
   @Nullable
   public String loadDescription() {
     if (myConfig == null) {
-      myConfig = createConfigElement(getTool());
+      InspectionToolWrapper toolWrapper = getTool();
+      myConfig = createConfigElement(toolWrapper);
     }
 
-    if (!(myTool instanceof InspectionTool)) return null;
-    return myTool.loadDescription();
+    return myToolWrapper.loadDescription();
   }
 
   public InspectionProfileImpl getInspectionProfile() {
     return myInspectionProfile;
   }
 
-  public static Element createConfigElement(InspectionProfileEntry tool) {
+  public static Element createConfigElement(InspectionToolWrapper toolWrapper) {
     Element element = new Element("options");
     try {
-      tool.writeSettings(element);
+      toolWrapper.writeSettings(element);
     }
     catch (WriteExternalException e) {
       LOG.error(e);

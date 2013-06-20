@@ -305,14 +305,17 @@ int watch(const char* root, array* mounts) {
 
   struct stat st;
   if (stat(root, &st) != 0) {
-    if (errno == EACCES) {
-      return ERR_IGNORE;
-    }
-    else if (errno == ENOENT) {
+    if (errno == ENOENT) {
       return ERR_MISSING;
     }
-    userlog(LOG_ERR, "stat(%s): %s", root, strerror(errno));
-    return ERR_ABORT;
+    else if (errno == EACCES || errno == ELOOP || errno == ENAMETOOLONG || errno == ENOTDIR) {
+      userlog(LOG_INFO, "stat(%s): %s", root, strerror(errno));
+      return ERR_CONTINUE;
+    }
+    else {
+      userlog(LOG_ERR, "stat(%s): %s", root, strerror(errno));
+      return ERR_ABORT;
+    }
   }
 
   if (S_ISREG(st.st_mode)) {

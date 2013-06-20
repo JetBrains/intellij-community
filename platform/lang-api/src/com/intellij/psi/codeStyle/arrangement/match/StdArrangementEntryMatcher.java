@@ -137,7 +137,7 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
       ByNameArrangementEntryMatcher byName = myNamePattern == null ? null : new ByNameArrangementEntryMatcher(myNamePattern);
       ByNamespaceArrangementEntryMatcher byNamespace = myNamespacePattern == null
                                                        ? null : new ByNamespaceArrangementEntryMatcher(myNamespacePattern);
-      int i = countNonNulls(byType, byModifiers, byName);
+      int i = countNonNulls(byType, byModifiers, byName, byNamespace);
       if (i == 0 && myMatchers.isEmpty()) {
         return ArrangementEntryMatcher.EMPTY;
       }

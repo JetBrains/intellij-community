@@ -187,27 +187,28 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
   }
 
   private static void syncPaths(@NotNull Module module, @NotNull ModuleData data) {
-    CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+    ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
+      modifiableModel.dispose();
       LOG.warn(String.format("Can't sync paths for module '%s'. Reason: no compiler extension is found for it", module.getName()));
       return;
     }
-    CompilerModuleExtension model = (CompilerModuleExtension)extension.getModifiableModel(true);
     try {
       String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
       if (compileOutputPath != null) {
-        model.setCompilerOutputPath(compileOutputPath);
+        extension.setCompilerOutputPath(compileOutputPath);
       }
 
       String testCompileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.TEST);
       if (testCompileOutputPath != null) {
-        model.setCompilerOutputPathForTests(testCompileOutputPath);
+        extension.setCompilerOutputPathForTests(testCompileOutputPath);
       }
 
-      model.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
+      extension.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
     }
     finally {
-      model.commit();
+      modifiableModel.commit();
     }
   }
   

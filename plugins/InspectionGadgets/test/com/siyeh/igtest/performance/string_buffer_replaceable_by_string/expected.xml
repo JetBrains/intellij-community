@@ -1,18 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
-  <problem>
-    <file>StringBufferReplaceableByString.java</file>
-    <line>6</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'StringBuffer' can be replaced with 'String'</problem_class>
-    <description>&lt;code&gt;StringBuilder builder&lt;/code&gt; can be replaced with 'String' #loc</description>
-  </problem>
-
-  <problem>
-    <file>StringBufferReplaceableByString.java</file>
-    <line>7</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'StringBuffer' can be replaced with 'String'</problem_class>
-    <description>&lt;code&gt;StringBuffer buffer&lt;/code&gt; can be replaced with 'String' #loc</description>
-  </problem>
 
   <problem>
     <file>StringBufferReplaceableByString.java</file>
@@ -37,8 +24,16 @@
 
   <problem>
     <file>StringBufferReplaceableByString.java</file>
-    <line>29</line>
+    <line>34</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'StringBuffer' can be replaced with 'String'</problem_class>
     <description>&lt;code&gt;StringBuilder b&lt;/code&gt; can be replaced with 'String' #loc</description>
   </problem>
+
+  <problem>
+    <file>StringBufferReplaceableByString.java</file>
+    <line>50</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'StringBuffer' can be replaced with 'String'</problem_class>
+    <description>&lt;code&gt;StringBuilder d&lt;/code&gt; can be replaced with 'String' #loc</description>
+  </problem>
+
 </problems>

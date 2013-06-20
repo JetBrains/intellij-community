@@ -75,35 +75,25 @@ public class BlockSupportImpl extends BlockSupport {
   @Override
   @NotNull
   public DiffLog reparseRange(@NotNull final PsiFile file,
-                              final int startOffset,
-                              final int endOffset,
-                              final int lengthShift,
+                              TextRange changedPsiRange,
                               @NotNull final CharSequence newFileText,
                               @NotNull final ProgressIndicator indicator) {
-    return reparseRangeInternal(file, startOffset > 0 ? startOffset - 1 : 0, endOffset, lengthShift, newFileText, indicator);
-  }
-
-  @NotNull
-  private static DiffLog reparseRangeInternal(@NotNull PsiFile file,
-                                              int startOffset,
-                                              int endOffset,
-                                              int lengthShift,
-                                              @NotNull CharSequence newFileText,
-                                              @NotNull ProgressIndicator indicator) {
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
     final FileElement treeFileElement = fileImpl.getTreeElement();
     final CharTable charTable = treeFileElement.getCharTable();
 
-    final int textLength = treeFileElement.getTextLength() + lengthShift;
+    
+    final int textLength = newFileText.length();
+    int lengthShift = textLength - treeFileElement.getTextLength();
 
     if (treeFileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
       // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
       return makeFullParse(treeFileElement, newFileText, textLength, fileImpl, indicator);
     }
 
-    final ASTNode leafAtStart = treeFileElement.findLeafElementAt(startOffset);
-    final ASTNode leafAtEnd = treeFileElement.findLeafElementAt(endOffset);
+    final ASTNode leafAtStart = treeFileElement.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
+    final ASTNode leafAtEnd = treeFileElement.findLeafElementAt(changedPsiRange.getEndOffset());
     ASTNode node = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
 

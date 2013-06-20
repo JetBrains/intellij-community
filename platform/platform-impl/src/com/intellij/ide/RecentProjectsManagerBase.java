@@ -56,6 +56,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     public String lastPath;
   }
 
+  private final Object myStateLock = new Object();
   private State myState = new State();
 
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new HashMap<String, String>());
@@ -66,25 +67,29 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   public State getState() {
-    validateRecentProjects();
-    return myState;
+    synchronized (myStateLock) {
+      validateRecentProjects();
+      return myState;
+    }
   }
 
   public void loadState(final State state) {
-    myState = state;
-    if (myState.lastPath != null && !new File(myState.lastPath).exists()) {
-      myState.lastPath = null;
-    }
-    if (myState.lastPath != null) {
-      File lastFile = new File(myState.lastPath);
-      if (lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
+    synchronized (myStateLock) {
+      myState = state;
+      if (myState.lastPath != null && !new File(myState.lastPath).exists()) {
         myState.lastPath = null;
+      }
+      if (myState.lastPath != null) {
+        File lastFile = new File(myState.lastPath);
+        if (lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
+          myState.lastPath = null;
+        }
       }
     }
   }
 
   private void validateRecentProjects() {
-    synchronized (myState) {
+    synchronized (myStateLock) {
       for (Iterator i = myState.recentPaths.iterator(); i.hasNext();) {
         String s = (String)i.next();
 
@@ -102,44 +107,50 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   public void removePath(final String path) {
     if (path == null) return;
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      myState.recentPaths.remove(path);
-      myState.names.remove(path);
-    }
-    else {
-      Iterator<String> i = myState.recentPaths.iterator();
-      while (i.hasNext()) {
-        String p = i.next();
-        if (path.equalsIgnoreCase(p)) {
-          myState.names.remove(p);
-          i.remove();
+    synchronized (myStateLock) {
+      if (SystemInfo.isFileSystemCaseSensitive) {
+        myState.recentPaths.remove(path);
+        myState.names.remove(path);
+      }
+      else {
+        Iterator<String> i = myState.recentPaths.iterator();
+        while (i.hasNext()) {
+          String p = i.next();
+          if (path.equalsIgnoreCase(p)) {
+            myState.names.remove(p);
+            i.remove();
+          }
         }
       }
     }
   }
 
   public String getLastProjectPath() {
-    return myState.lastPath;
+    synchronized (myStateLock) {
+      return myState.lastPath;
+    }
   }
 
   public void updateLastProjectPath() {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length == 0) {
-      myState.lastPath = null;
-      myState.openPaths = Collections.emptyList();
-    } else {
-      myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
-      myState.openPaths = new ArrayList<String>();
-      for (Project openProject : openProjects) {
-        final String path = getProjectPath(openProject);
-        ContainerUtil.addIfNotNull(myState.openPaths, path);
-        myState.names.put(path, getProjectDisplayName(openProject));
+    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    synchronized (myStateLock) {
+      if (openProjects.length == 0) {
+        myState.lastPath = null;
+        myState.openPaths = Collections.emptyList();
+      } else {
+        myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
+        myState.openPaths = new ArrayList<String>();
+        for (Project openProject : openProjects) {
+          final String path = getProjectPath(openProject);
+          ContainerUtil.addIfNotNull(myState.openPaths, path);
+          myState.names.put(path, getProjectDisplayName(openProject));
+        }
       }
     }
   }
 
   @NotNull
-  protected String getProjectDisplayName(Project project) {
+  protected String getProjectDisplayName(@NotNull Project project) {
     return "";
   }
 
@@ -174,7 +185,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
 
     final LinkedHashSet<String> paths;
-    synchronized (myState) {
+    synchronized (myStateLock) {
       paths = ContainerUtil.newLinkedHashSet(myState.recentPaths);
     }
     paths.remove(null);
@@ -184,7 +195,10 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
     for (final String path : paths) {
       final String projectName = getProjectName(path);
-      String displayName = myState.names.get(path);
+      String displayName;
+      synchronized (myStateLock) {
+        displayName = myState.names.get(path);
+      }
       if (StringUtil.isEmptyOrSpaces(displayName)) {
         displayName = duplicates.contains(path) ? path : projectName;
       }
@@ -208,7 +222,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
                                                      Messages.getQuestionIcon());
 
           if (rc == 0) {
-            synchronized (myState) {
+            synchronized (myStateLock) {
               myState.recentPaths.clear();
             }
             WelcomeFrame.clearRecents();
@@ -224,7 +238,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   private void markPathRecent(String path) {
-    synchronized (myState) {
+    synchronized (myStateLock) {
       myState.lastPath = path;
       removePath(path);
       myState.recentPaths.add(0, path);
@@ -252,7 +266,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
     @Override
     public void projectClosing(Project project) {
-      myState.names.put(getProjectPath(project), getProjectDisplayName(project));
+      synchronized (myStateLock) {
+        myState.names.put(getProjectPath(project), getProjectDisplayName(project));
+      }
     }
 
     public void projectClosed(final Project project) {
@@ -317,7 +333,10 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       if (projectFromCommandLine != null) return;
       GeneralSettings generalSettings = GeneralSettings.getInstance();
       if (generalSettings.isReopenLastProject()) {
-        List<String> openPaths = myState.openPaths;
+        List<String> openPaths;
+        synchronized (myStateLock) {
+          openPaths = ContainerUtil.newArrayList(myState.openPaths);
+        }
         if (!openPaths.isEmpty()) {
           for (String openPath : openPaths) {
             if (isValidProjectPath(openPath)) {

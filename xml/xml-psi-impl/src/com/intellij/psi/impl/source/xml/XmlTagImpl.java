@@ -125,6 +125,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     super(type);
   }
 
+  @Override
   public void clearCaches() {
     myName = null;
     myLocalName = null;
@@ -140,6 +141,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     super.clearCaches();
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     ProgressManager.checkCanceled();
@@ -178,9 +180,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix, TagNameReference tagRef) {
-    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix);
+    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix,
+                                     tagRef);
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {
     final XmlTag parentTag = getParentTag();
 
@@ -224,10 +228,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return document.getDefaultNSDescriptor(url, true);
   }
 
+  @Override
   public boolean isEmpty() {
     return XmlChildRole.CLOSING_TAG_START_FINDER.findChild(this) == null;
   }
 
+  @Override
   public void collapseIfEmpty() {
     final XmlTag[] tags = getSubTags();
     if (tags.length > 0) {
@@ -242,6 +248,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final PomModel pomModel = PomManager.getModel(getProject());
     final PomTransactionBase transaction = new PomTransactionBase(this, pomModel.getModelAspect(XmlAspect.class)) {
 
+      @Override
       @Nullable
       public PomModelEvent runInner() {
         final ASTNode closingBracket = closingName.getTreeNext();
@@ -259,6 +266,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getSubTagText(@NonNls String qname) {
@@ -334,6 +342,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, CachedValuesManager.getManager(getManager().getProject()).createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
+      @Override
       public Result<XmlNSDescriptor> compute() {
         XmlNSDescriptor descriptor = getImplicitNamespaceDescriptor(fileLocation);
         if (descriptor != null) {
@@ -420,10 +429,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return file.getDocument();
   }
 
+  @Override
   public PsiReference getReference() {
     return ArrayUtil.getFirstElement(getReferences());
   }
 
+  @Override
   public XmlElementDescriptor getDescriptor() {
     final long curModCount = getManager().getModificationTracker().getModificationCount();
     long curExtResourcesModCount = ExternalResourceManagerEx.getInstanceEx().getModificationCount(getProject());
@@ -487,6 +498,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return elementDescriptor;
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -501,6 +513,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
   }
 
+  @Override
   @NotNull
   public String getName() {
     String name = myName;
@@ -517,10 +530,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return name;
   }
 
+  @Override
   public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
     final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
+      @Override
       public PomModelEvent runInner() throws IncorrectOperationException {
         final String oldName = getName();
         final XmlTagImpl dummyTag =
@@ -546,6 +561,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return this;
   }
 
+  @Override
   @NotNull
   public XmlAttribute[] getAttributes() {
     XmlAttribute[] attributes = myAttributes;
@@ -562,6 +578,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private XmlAttribute[] calculateAttributes(final Map<String, String> attributesValueMap) {
     final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
     processChildren(new PsiElementProcessor() {
+      @Override
       public boolean execute(@NotNull PsiElement element) {
         if (element instanceof XmlAttribute) {
           XmlAttribute attribute = (XmlAttribute)element;
@@ -587,6 +604,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     attributesValueMap.put(name, value);
   }
 
+  @Override
   public String getAttributeValue(String qname) { //todo ?
     Map<String, String> map = myAttributeValueMap;
     while (map == null) {
@@ -600,6 +618,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return map.get(qname);
   }
 
+  @Override
   public String getAttributeValue(String _name, String namespace) {
     if (namespace == null) {
       return getAttributeValue(_name);
@@ -633,6 +652,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return null;
   }
 
+  @Override
   @NotNull
   public XmlTag[] getSubTags() {
     return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this);
@@ -640,6 +660,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   protected void fillSubTags(final List<XmlTag> result) {
     processElements(new PsiElementProcessor() {
+      @Override
       public boolean execute(@NotNull PsiElement element) {
         if (element instanceof XmlTag) {
           assert element.isValid();
@@ -650,11 +671,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }, this);
   }
 
+  @Override
   @NotNull
   public XmlTag[] findSubTags(String name) {
     return findSubTags(name, null);
   }
 
+  @Override
   @NotNull
   public XmlTag[] findSubTags(final String name, @Nullable final String namespace) {
     final XmlTag[] subTags = getSubTags();
@@ -670,12 +693,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return ContainerUtil.toArray(result, new XmlTag[result.size()]);
   }
 
+  @Override
   public XmlTag findFirstSubTag(String name) {
     final XmlTag[] subTags = findSubTags(name);
     if (subTags.length > 0) return subTags[0];
     return null;
   }
 
+  @Override
   public XmlAttribute getAttribute(String name, String namespace) {
     if (name != null && name.indexOf(':') != -1 ||
         namespace == null ||
@@ -689,6 +714,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return getAttribute(prefix + ":" + name);
   }
 
+  @Override
   @Nullable
   public XmlAttribute getAttribute(String qname) {
     if (qname == null) return null;
@@ -711,6 +737,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return true;
   }
 
+  @Override
   @NotNull
   public String getNamespace() {
     String cachedNamespace = myCachedNamespace;
@@ -729,11 +756,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return cachedNamespace;
   }
 
+  @Override
   @NotNull
   public String getNamespacePrefix() {
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
+  @Override
   @NotNull
   public String getNamespaceByPrefix(String prefix) {
     final PsiElement parent = getParent();
@@ -776,6 +805,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return XmlUtil.EMPTY_URI;
   }
 
+  @Override
   public String getPrefixByNamespace(String namespace) {
     final PsiElement parent = getParent();
     BidirectionalMap<String, String> map = initNamespaceMaps(parent);
@@ -790,6 +820,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return null;
   }
 
+  @Override
   public String[] knownNamespaces() {
     final PsiElement parentElement = getParent();
     BidirectionalMap<String, String> map = initNamespaceMaps(parentElement);
@@ -885,6 +916,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return value;
   }
 
+  @Override
   @NotNull
   public String getLocalName() {
     String localName = myLocalName;
@@ -895,11 +927,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return localName;
   }
 
+  @Override
   public boolean hasNamespaceDeclarations() {
     getAttributes();
     return myHaveNamespaceDeclarations;
   }
 
+  @Override
   @NotNull
   public Map<String, String> getLocalNamespaceDeclarations() {
     Map<String, String> namespaces = new THashMap<String, String>();
@@ -912,6 +946,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return namespaces;
   }
 
+  @Override
   public XmlAttribute setAttribute(String qname, String value) throws IncorrectOperationException {
     final XmlAttribute attribute = getAttribute(qname);
 
@@ -933,6 +968,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
   }
 
+  @Override
   public XmlAttribute setAttribute(String name, String namespace, String value) throws IncorrectOperationException {
     if (!Comparing.equal(namespace, "")) {
       final String prefix = getPrefixByNamespace(namespace);
@@ -941,6 +977,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return setAttribute(name, value);
   }
 
+  @Override
   public XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforceNamespacesDeep) {
     return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep);
   }
@@ -962,6 +999,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
   }
 
+  @Override
   @NotNull
   public XmlTagValue getValue() {
     XmlTagValue tagValue = myValue;
@@ -971,6 +1009,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return tagValue;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlTag(this);
@@ -984,10 +1023,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return "XmlTag:" + getName();
   }
 
+  @Override
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean beforeB) {
     TreeElement firstAppended = null;
     boolean before = beforeB == null || beforeB.booleanValue();
@@ -1058,6 +1099,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return new BodyInsertTransaction(child);
   }
 
+  @Override
   public void deleteChildInternal(@NotNull final ASTNode child) {
     final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
@@ -1065,6 +1107,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (child.getElementType() == XmlElementType.XML_ATTRIBUTE) {
       try {
         model.runTransaction(new PomTransactionBase(this, aspect) {
+          @Override
           public PomModelEvent runInner() {
             final String name = ((XmlAttribute)child).getName();
             XmlTagImpl.super.deleteChildInternal(child);
@@ -1111,24 +1154,28 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return endTagStart;
   }
 
+  @Override
   public XmlTag getParentTag() {
     final PsiElement parent = getParent();
     if (parent instanceof XmlTag) return (XmlTag)parent;
     return null;
   }
 
+  @Override
   public XmlTagChild getNextSiblingInTag() {
     final PsiElement nextSibling = getNextSibling();
     if (nextSibling instanceof XmlTagChild) return (XmlTagChild)nextSibling;
     return null;
   }
 
+  @Override
   public XmlTagChild getPrevSiblingInTag() {
     final PsiElement prevSibling = getPrevSibling();
     if (prevSibling instanceof XmlTagChild) return (XmlTagChild)prevSibling;
     return null;
   }
 
+  @Override
   public Icon getElementIcon(int flags) {
     return PlatformIcons.XML_TAG_ICON;
   }
@@ -1142,6 +1189,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       myChild = child;
     }
 
+    @Override
     public PomModelEvent runInner() throws IncorrectOperationException {
       final ASTNode anchor = expandTag();
       if (myChild.getElementType() == XmlElementType.XML_TAG) {
@@ -1192,6 +1240,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       return null;
     }
 
+    @Override
     public TreeElement getFirstInserted() {
       return (TreeElement)myNewElement;
     }
@@ -1212,6 +1261,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       myModel = model;
     }
 
+    @Override
     public PomModelEvent runInner() {
       final String value = ((XmlAttribute)myChild).getValue();
       final String name = ((XmlAttribute)myChild).getName();
@@ -1249,6 +1299,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       return XmlAttributeSetImpl.createXmlAttributeSet(myModel, XmlTagImpl.this, name, value);
     }
 
+    @Override
     public TreeElement getFirstInserted() {
       return myFirstInserted;
     }
@@ -1267,11 +1318,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       myBefore = before;
     }
 
+    @Override
     public PomModelEvent runInner() {
       myRetHolder = XmlTagImpl.super.addInternal(myChild, myChild, myAnchor, Boolean.valueOf(myBefore));
       return null;
     }
 
+    @Override
     public TreeElement getFirstInserted() {
       return myRetHolder;
     }

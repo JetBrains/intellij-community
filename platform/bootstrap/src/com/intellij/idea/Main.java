@@ -41,6 +41,8 @@ public class Main {
   public static final int LICENSE_ERROR = 4;
   public static final int PLUGIN_ERROR = 5;
 
+  private static final String AWT_HEADLESS = "java.awt.headless";
+
   private static boolean isHeadless;
   private static boolean isCommandLine;
 
@@ -50,7 +52,7 @@ public class Main {
     setFlags(args);
 
     if (isHeadless()) {
-      System.setProperty("java.awt.headless", Boolean.TRUE.toString());
+      System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
     else {
       if (GraphicsEnvironment.isHeadless()) {
@@ -89,7 +91,7 @@ public class Main {
   }
 
   private static boolean isHeadless(String[] args) {
-    if (GraphicsEnvironment.isHeadless()) {
+    if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
       return true;
     }
 
@@ -168,7 +170,7 @@ public class Main {
   public static void showMessage(String title, String message, boolean error) {
     if (isCommandLine()) {
       PrintStream stream = error ? System.err : System.out;
-      stream.println(title + ": " + message);
+      stream.println("\n" + title + ": " + message);
     }
     else {
       try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }

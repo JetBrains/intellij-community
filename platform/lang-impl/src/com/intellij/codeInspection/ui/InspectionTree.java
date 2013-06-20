@@ -59,7 +59,6 @@ import java.util.*;
 public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
   private SelectionPath mySelectionPath;
-  private static final RefEntity[] EMPTY_ELEMENTS_ARRAY = new RefEntity[0];
   private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
   public InspectionTree(final Project project) {
@@ -130,7 +129,7 @@ public class InspectionTree extends Tree {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       final InspectionTool selectedTool = getSelectedTool();
-      if (selectedTool == null) return EMPTY_ELEMENTS_ARRAY;
+      if (selectedTool == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
 
       List<RefEntity> result = new ArrayList<RefEntity>();
       for (TreePath selectionPath : selectionPaths) {
@@ -139,7 +138,7 @@ public class InspectionTree extends Tree {
       }
       return result.toArray(new RefEntity[result.size()]);
     }
-    return EMPTY_ELEMENTS_ARRAY;
+    return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
 
   private static void addElementsInNode(InspectionTreeNode node, List<RefEntity> out) {

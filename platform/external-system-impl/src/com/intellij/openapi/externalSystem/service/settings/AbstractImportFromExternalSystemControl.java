@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.settings;
 
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -22,6 +23,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,6 +56,8 @@ public abstract class AbstractImportFromExternalSystemControl<
   @NotNull private final  ProjectSystemId                                myExternalSystemId;
   @Nullable private final ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
 
+  @Nullable Project myCurrentProject;
+
   @SuppressWarnings("AbstractMethodCallInConstructor")
   protected AbstractImportFromExternalSystemControl(@NotNull ProjectSystemId externalSystemId,
                                                     @NotNull SystemSettings systemSettings,
@@ -67,7 +71,9 @@ public abstract class AbstractImportFromExternalSystemControl<
 
     JLabel linkedProjectPathLabel =
       new JLabel(ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()));
-    FileChooserDescriptor fileChooserDescriptor = getLinkedProjectChooserDescriptor();
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+    assert manager != null;
+    FileChooserDescriptor fileChooserDescriptor = manager.getExternalProjectDescriptor();
 
     myLinkedProjectPathField.addBrowseFolderListener("",
                                                      ExternalSystemBundle
@@ -102,8 +108,26 @@ public abstract class AbstractImportFromExternalSystemControl<
     ExternalSystemUiUtil.fillBottom(myComponent);
   }
 
-  @NotNull
-  protected abstract FileChooserDescriptor getLinkedProjectChooserDescriptor();
+  /**
+   * This control is assumed to be used at least at two circumstances:
+   * <pre>
+   * <ul>
+   *   <li>new ide project is being created on the external project basis;</li>
+   *   <li>new ide module(s) is being added to the existing ide project on the external project basis;</li>
+   * </ul>
+   * </pre>
+   * We need to differentiate these situations, for example, we don't want to allow linking an external project to existing ide
+   * project if it's already linked.
+   * <p/>
+   * This property helps us to achieve that - when an ide project is defined, that means that new modules are being imported
+   * to that ide project from external project; when this property is <code>null</code> that means that new ide project is being
+   * created on the target external project basis.
+   * 
+   * @param currentProject  current ide project (if any)
+   */
+  public void setCurrentProject(@Nullable Project currentProject) {
+    myCurrentProject = currentProject;
+  }
 
   protected abstract void onLinkedProjectPathChange(@NotNull String path);
 
@@ -159,9 +183,15 @@ public abstract class AbstractImportFromExternalSystemControl<
     if (StringUtil.isEmpty(linkedProjectPath)) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
     }
-    else {
-      ExternalSystemApiUtil.storeLastUsedExternalProjectPath(linkedProjectPath, myExternalSystemId);
+    else if (myCurrentProject != null) {
+      ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
+      assert manager != null;
+      AbstractExternalSystemSettings<?,?> settings = manager.getSettingsProvider().fun(myCurrentProject);
+      if (settings.getLinkedProjectSettings(linkedProjectPath) != null) {
+        throw new ConfigurationException(ExternalSystemBundle.message("error.project.already.registered"));
+      }
     }
+    ExternalSystemApiUtil.storeLastUsedExternalProjectPath(linkedProjectPath, myExternalSystemId);
     myProjectSettings.setExternalProjectPath(ExternalSystemApiUtil.normalizePath(linkedProjectPath));
 
     String errorMessage = myProjectSettingsControl.apply(myProjectSettings);

@@ -41,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -359,7 +360,8 @@ class Browser extends JPanel {
       PsiElement element = ((RefElement)refEntity).getElement();
       if (element == null) return tool;
       InspectionProfileWrapper profileWrapper = InspectionProjectProfileManagerImpl.getInstanceImpl(manager.getProject()).getProfileWrapper();
-      tool = (InspectionTool)profileWrapper.getInspectionTool(tool.getShortName(), element);
+      InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profileWrapper.getInspectionTool(tool.getShortName(), element);
+      tool = toolWrapper;
     }
     return tool;
   }
@@ -417,8 +419,8 @@ class Browser extends JPanel {
     }
   }
 
-  public void showDescription(InspectionTool tool){
-    if (tool.getShortName().length() == 0){
+  public void showDescription(@NotNull InspectionTool tool){
+    if (tool.getShortName().isEmpty()){
       showEmpty();
       return;
     }
@@ -510,7 +512,7 @@ class Browser extends JPanel {
             //CCE here means QuickFix was incorrectly inherited
             fix.applyFix(myView.getProject(), descriptor);
             if (startCount != tracker.getModificationCount()) {
-              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
+              final DescriptorProviderInspection tool = (DescriptorProviderInspection)myView.getTree().getSelectedTool();
               if (tool != null) {
                 tool.ignoreProblem(element, descriptor, idx);
               }

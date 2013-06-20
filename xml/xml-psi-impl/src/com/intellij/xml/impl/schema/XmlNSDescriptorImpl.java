@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,7 +396,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     if (namespace.length() > 0) {
       return checkSchemaNamespace(namespace);
     }
-    return StringUtil.startsWithConcatenationOf(context.getName(), XSD_PREFIX, ":");
+    return StringUtil.startsWithConcatenation(context.getName(), XSD_PREFIX, ":");
   }
 
   static @NotNull XmlNSDescriptorImpl getNSDescriptorToSearchIn(XmlTag rootTag, final String name, XmlNSDescriptorImpl defaultNSDescriptor) {

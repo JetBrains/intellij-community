@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,8 +90,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         annoClasses.add(StringUtil.getShortName(annotationClass));
         for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
           final String annoClass = annoClasses.get(cursor);
-          for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance()
-            .get(annoClass, myProject, GlobalSearchScope.allScope(myProject))) {
+          for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance().get(annoClass, myProject, GlobalSearchScope.allScope(myProject))) {
             final PsiElement modList = annotation.getParent();
             if (!(modList instanceof PsiModifierList)) continue;
             final PsiElement element = modList.getParent();

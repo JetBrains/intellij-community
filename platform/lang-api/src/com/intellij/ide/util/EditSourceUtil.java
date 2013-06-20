@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class EditSourceUtil {
     }
 
     VirtualFile file = PsiUtilCore.getVirtualFile(element.getNavigationElement());
-    return file != null && file.isValid() && !file.isSpecialFile() && !VfsUtilCore.isBrokenLink(file);
+    return file != null && file.isValid() && !file.is(VirtualFile.PROP_SPECIAL) && !VfsUtilCore.isBrokenLink(file);
   }
 
   public static void navigate(NavigationItem item, boolean requestFocus, boolean useCurrentWindow) {

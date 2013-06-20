@@ -54,7 +54,7 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
   public S getLinkedProjectSettings(@NotNull String linkedProjectPath) {
     return myLinkedProjectsSettings.get(linkedProjectPath);
   }
-
+  
   /**
    * Un-links given external project from the current ide project.
    * 
@@ -109,6 +109,11 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
    * @param current  current settings state
    */
   protected abstract void checkSettings(@NotNull S old, @NotNull S current);
+
+  @NotNull
+  public Topic<L> getChangesTopic() {
+    return myChangesTopic;
+  }
 
   @NotNull
   public L getPublisher() {

@@ -821,6 +821,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return result.values();
   }
 
+  @NotNull
+  Collection<? extends RunnerAndConfigurationSettings> getConfigurationSettings() {
+    return myConfigurations.values();
+  }
+
   @Override
   public boolean isTemporary(@NotNull final RunConfiguration configuration) {
     return Arrays.asList(getTempConfigurations()).contains(configuration);

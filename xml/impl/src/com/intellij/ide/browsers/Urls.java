@@ -2,6 +2,7 @@ package com.intellij.ide.browsers;
 
 import com.google.common.base.CharMatcher;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -48,7 +49,12 @@ public final class Urls {
     }
     String scheme = matcher.group(1);
     String authority = StringUtil.nullize(matcher.group(2));
+
     String path = StringUtil.nullize(matcher.group(3));
+    if (path != null) {
+      path = FileUtil.toCanonicalUriPath(path);
+    }
+
     String parameters = matcher.group(4);
     if (authority != null && StandardFileSystems.FILE_PROTOCOL.equals(scheme)) {
       path = path == null ? authority : (authority + path);

@@ -340,7 +340,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   @Override
   public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    if (file.isDirectory() || !file.isValid() || file.isSpecialFile()) {
+    if (file.isDirectory() || !file.isValid() || file.is(VirtualFile.PROP_SPECIAL)) {
       return UnknownFileType.INSTANCE;
     }
     FileType fileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);

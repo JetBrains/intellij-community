@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
@@ -196,13 +195,13 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private boolean wereToolSettingsModified(Descriptor descriptor) {
-    InspectionProfileEntry tool = descriptor.getTool();
-    if (tool == null || !mySelectedProfile.isToolEnabled(descriptor.getKey())) {
+    InspectionToolWrapper toolWrapper = descriptor.getTool();
+    if (toolWrapper == null || !mySelectedProfile.isToolEnabled(descriptor.getKey())) {
       return false;
     }
     Element oldConfig = descriptor.getConfig();
     if (oldConfig == null) return false;
-    Element newConfig = Descriptor.createConfigElement(tool);
+    Element newConfig = Descriptor.createConfigElement(toolWrapper);
     if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(new Runnable() {
@@ -250,7 +249,8 @@ public class SingleInspectionProfilePanel extends JPanel {
         continue;
       }
       myDescriptors.put(new Descriptor(state, profile), descriptors);
-      final List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(state.getTool().getShortName());
+      InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+      final List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(toolWrapper.getShortName());
       if (nonDefaultTools != null) {
         for (ScopeToolState nonDefaultToolState : nonDefaultTools) {
           descriptors.add(new Descriptor(nonDefaultToolState, profile));
@@ -290,9 +290,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (initValue == -1) {
         inspectionProfile.initInspectionTools(null);
         ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
-        final InspectionProfileEntry[] profileEntries = profileModifiableModel.getInspectionTools(null);
-        for (InspectionProfileEntry entry : profileEntries) {
-          profileModifiableModel.disableTool(entry.getShortName(), (NamedScope)null);
+        final InspectionToolWrapper[] profileEntries = (InspectionToolWrapper[])profileModifiableModel.getInspectionTools(null);
+        for (InspectionToolWrapper toolWrapper : profileEntries) {
+          profileModifiableModel.disableTool(toolWrapper.getShortName(), (NamedScope)null);
         }
         profileModifiableModel.setLocal(true);
         profileModifiableModel.setModified(true);

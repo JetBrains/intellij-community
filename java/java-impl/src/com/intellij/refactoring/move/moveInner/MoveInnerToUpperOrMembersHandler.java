@@ -17,6 +17,7 @@ package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -39,8 +40,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     if (elements.length != 1) return false;
     PsiElement element = elements [0];
-    return isStaticInnerClass(element) &&
-           (targetContainer == null || targetContainer.equals(MoveInnerImpl.getTargetContainer((PsiClass)elements[0], false)));
+    return isStaticInnerClass(element);
   }
 
   private static boolean isStaticInnerClass(final PsiElement element) {
@@ -70,7 +70,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
       if (dialog.isOK()) {
         final MoveHandlerDelegate moveHandlerDelegate = dialog.getRefactoringHandler();
         if (moveHandlerDelegate != null) {
-          moveHandlerDelegate.doMove(project, new PsiElement[] { aClass }, null, null);
+          moveHandlerDelegate.doMove(project, new PsiElement[] { aClass }, LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
         }
       }
       return true;

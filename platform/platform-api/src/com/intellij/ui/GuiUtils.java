@@ -336,10 +336,10 @@ public class GuiUtils {
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
-        if (StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && enabled) {
+        if (StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && enabled) {
           text = "<html>"+text.substring(("<html>"+changeColorString).length());
         }
-        else if (!StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && !enabled) {
+        else if (!StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && !enabled) {
           text = "<html>"+changeColorString+text.substring("<html>".length());
         }
         label.setText(text);

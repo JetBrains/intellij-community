@@ -8,19 +8,19 @@ import com.intellij.testFramework.InspectionTestCase;
 
 public class RedundantSuppressTest extends InspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
-  private InspectionTool[] myInspectionTools;
+  private InspectionToolWrapper[] myInspectionToolWrappers;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     InspectionToolRegistrar.getInstance().ensureInitialized();
-    myInspectionTools = new InspectionTool[]{new LocalInspectionToolWrapper(new I18nInspection()),
+    myInspectionToolWrappers = new InspectionToolWrapper[]{new LocalInspectionToolWrapper(new I18nInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
       @Override
-      protected InspectionTool[] getInspectionTools(PsiElement psiElement, InspectionManager manager) {
-        return myInspectionTools;
+      protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, InspectionManager manager) {
+        return myInspectionToolWrappers;
       }
     });
   }

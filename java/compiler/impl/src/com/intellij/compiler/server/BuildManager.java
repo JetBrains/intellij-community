@@ -69,11 +69,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -391,10 +393,18 @@ public class BuildManager implements ApplicationComponent{
     synchronized (myProjectDataMap) {
       ProjectData data = myProjectDataMap.get(projectPath);
       if (data != null && !data.myNeedRescan) {
-        return new ArrayList<String>(data.myChanged);
+        return convertToStringPaths(data.myChanged);
       }
       return null;
     }
+  }
+
+  private static List<String> convertToStringPaths(final Collection<InternedPath> interned) {
+    final ArrayList<String> list = new ArrayList<String>(interned.size());
+    for (InternedPath path : interned) {
+      list.add(path.getValue());
+    }
+    return list;
   }
 
   @Nullable
@@ -548,9 +558,9 @@ public class BuildManager implements ApplicationComponent{
               LOG.info("Scheduling build for " +
                        projectPath +
                        "; CHANGED: " +
-                       new HashSet<String>(data.myChanged) +
+                       new HashSet<String>(convertToStringPaths(data.myChanged)) +
                        "; DELETED: " +
-                       new HashSet<String>(data.myDeleted));
+                       new HashSet<String>(convertToStringPaths(data.myDeleted)));
             }
             currentFSChanges = data.getAndResetRescanFlag() ? null : data.createNextEvent();
             projectTaskQueue = data.taskQueue;
@@ -1107,8 +1117,8 @@ public class BuildManager implements ApplicationComponent{
 
   private static class ProjectData {
     final SequentialTaskExecutor taskQueue;
-    private final Set<String> myChanged = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
-    private final Set<String> myDeleted = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    private final Set<InternedPath> myChanged = new THashSet<InternedPath>();
+    private final Set<InternedPath> myDeleted = new THashSet<InternedPath>();
     private long myNextEventOrdinal = 0L;
     private boolean myNeedRescan = true;
 
@@ -1118,15 +1128,21 @@ public class BuildManager implements ApplicationComponent{
 
     public void addChanged(Collection<String> paths) {
       if (!myNeedRescan) {
-        myDeleted.removeAll(paths);
-        myChanged.addAll(paths);
+        for (String path : paths) {
+          final InternedPath _path = InternedPath.create(path);
+          myDeleted.remove(_path);
+          myChanged.add(_path);
+        }
       }
     }
 
     public void addDeleted(Collection<String> paths) {
       if (!myNeedRescan) {
-        myChanged.removeAll(paths);
-        myDeleted.addAll(paths);
+        for (String path : paths) {
+          final InternedPath _path = InternedPath.create(path);
+          myChanged.remove(_path);
+          myDeleted.add(_path);
+        }
       }
     }
 
@@ -1134,10 +1150,17 @@ public class BuildManager implements ApplicationComponent{
       final CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builder =
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder();
       builder.setOrdinal(++myNextEventOrdinal);
-      builder.addAllChangedPaths(myChanged);
+
+      for (InternedPath path : myChanged) {
+        builder.addChangedPaths(path.getValue());
+      }
       myChanged.clear();
-      builder.addAllDeletedPaths(myDeleted);
+
+      for (InternedPath path : myDeleted) {
+        builder.addDeletedPaths(path.getValue());
+      }
       myDeleted.clear();
+
       return builder.build();
     }
 
@@ -1155,4 +1178,84 @@ public class BuildManager implements ApplicationComponent{
     }
   }
 
+  private static abstract class InternedPath {
+    protected final int[] myPath;
+
+    /**
+     * @param path assuming system-independent path with forward slashes
+     */
+    protected InternedPath(String path) {
+      final IntArrayList list = new IntArrayList();
+      final StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
+      while(tokenizer.hasMoreTokens()) {
+        final String element = tokenizer.nextToken();
+        list.add(FileNameCache.storeName(element));
+      }
+      myPath = list.toArray();
+    }
+    
+    public abstract String getValue();
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      InternedPath path = (InternedPath)o;
+
+      if (!Arrays.equals(myPath, path.myPath)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(myPath);
+    }
+    
+    public static InternedPath create(String path) {
+      return path.startsWith("/")? new XInternedPath(path) : new WinInternedPath(path); 
+    }
+  }
+  
+  private static class WinInternedPath extends InternedPath {
+    private WinInternedPath(String path) {
+      super(path);
+    }
+
+    public String getValue() {
+      if (myPath.length == 1) {
+        final String name = FileNameCache.getVFileName(myPath[0]);
+        // handle case of windows drive letter
+        return name.length() == 2 && name.endsWith(":")? name + "/" : name;
+      }
+      
+      final StringBuilder buf = new StringBuilder();
+      for (int element : myPath) {
+        if (buf.length() > 0) {
+          buf.append("/");
+        }
+        buf.append(FileNameCache.getVFileName(element));
+      }
+      return buf.toString();
+    }
+  }
+
+  private static class XInternedPath extends InternedPath {
+    private XInternedPath(String path) {
+      super(path);
+    }
+
+    public String getValue() {
+      if (myPath.length > 0) {
+        final StringBuilder buf = new StringBuilder();
+        for (int element : myPath) {
+          buf.append("/").append(FileNameCache.getVFileName(element));
+        }
+        return buf.toString();
+      }
+      return "/";
+    }
+  }
+  
 }

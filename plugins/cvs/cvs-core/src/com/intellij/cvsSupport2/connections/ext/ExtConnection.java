@@ -85,7 +85,7 @@ public class ExtConnection extends ConnectionOnProcess {
       }
       String read = buffer.toString().trim();
       if (!expectedResult.equals(read)) {
-        if (StringUtil.startsWithConcatenationOf(read, myUserName + "@", myHost)) {
+        if (StringUtil.startsWithConcatenation(read, myUserName + "@", myHost)) {
           throw new AuthenticationException(CvsBundle.message("exception.text.ext.server.rejected.access"), null);
         }
         else {

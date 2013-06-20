@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
@@ -46,20 +47,22 @@ public abstract class AbstractExternalSystemLocalSettings {
     = !SystemProperties.getBooleanProperty("external.system.forget.expand.nodes.state", false);
 
   private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>>             myExpandStates
-                                                                                                               =
+                                                                                                                              =
     new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
-  private final AtomicReference<List<ExternalTaskExecutionInfo>>                           myRecentTasks       =
+  private final AtomicReference<List<ExternalTaskExecutionInfo>>                           myRecentTasks                      =
     new AtomicReference<List<ExternalTaskExecutionInfo>>(
       ContainerUtilRt.<ExternalTaskExecutionInfo>newArrayList()
     );
-  private final AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>> myAvailableProjects =
+  private final AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>> myAvailableProjects                =
     new AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>>(
       ContainerUtilRt.<ExternalProjectPojo, Collection<ExternalProjectPojo>>newHashMap()
     );
-  private final AtomicReference<Map<String, Collection<ExternalTaskPojo>>>                 myAvailableTasks    =
+  private final AtomicReference<Map<String, Collection<ExternalTaskPojo>>>                 myAvailableTasks                   =
     new AtomicReference<Map<String, Collection<ExternalTaskPojo>>>(
       ContainerUtilRt.<String, Collection<ExternalTaskPojo>>newHashMap()
     );
+  private final AtomicReference<Map<String/* external project config path */, Long>>       myExternalConfigModificationStamps =
+    new AtomicReference<Map<String, Long>>(ContainerUtilRt.<String, Long>newHashMap());
 
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project         myProject;
@@ -71,7 +74,7 @@ public abstract class AbstractExternalSystemLocalSettings {
 
   /**
    * Asks current settings to drop all information related to external project which root config is located at the given path.
-   * 
+   *
    * @param linkedProjectPathsToForget  target root external project's path
    */
   public void forgetExternalProject(@NotNull Set<String> linkedProjectPathsToForget) {
@@ -100,6 +103,11 @@ public abstract class AbstractExternalSystemLocalSettings {
       {
         it.remove();
       }
+    }
+
+    Map<String, Long> modificationStamps = myExternalConfigModificationStamps.get();
+    for (String path : linkedProjectPathsToForget) {
+      modificationStamps.remove(path);
     }
   }
 
@@ -135,7 +143,18 @@ public abstract class AbstractExternalSystemLocalSettings {
   public void setRecentTasks(@NotNull List<ExternalTaskExecutionInfo> tasks) {
     myRecentTasks.set(tasks);
   }
+  
+  @NotNull
+  public Map<String, Long> getExternalConfigModificationStamps() {
+    return myExternalConfigModificationStamps.get();
+  }
 
+  @SuppressWarnings("UnusedDeclaration")
+  public void setExternalConfigModificationStamps(@NotNull Map<String, Long> modificationStamps) {
+    // Required for IJ serialization.
+    myExternalConfigModificationStamps.set(modificationStamps);
+  }
+  
   public void fillState(@NotNull State state) {
     if (PRESERVE_EXPAND_STATE) {
       state.tasksExpandState = myExpandStates.get();
@@ -146,16 +165,43 @@ public abstract class AbstractExternalSystemLocalSettings {
     state.recentTasks = myRecentTasks.get();
     state.availableProjects = myAvailableProjects.get();
     state.availableTasks = myAvailableTasks.get();
+    state.modificationStamps = myExternalConfigModificationStamps.get();
   }
 
   public void loadState(@NotNull State state) {
     setIfNotNull(myExpandStates, state.tasksExpandState);
     setIfNotNull(myAvailableProjects, state.availableProjects);
     setIfNotNull(myAvailableTasks, state.availableTasks);
+    setIfNotNull(myExternalConfigModificationStamps, state.modificationStamps);
     if (state.recentTasks != null) {
       List<ExternalTaskExecutionInfo> recentTasks = myRecentTasks.get();
       recentTasks.clear();
       recentTasks.addAll(state.recentTasks);
+    }
+    pruneOutdatedEntries();
+  }
+
+  private void pruneOutdatedEntries() {
+    ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
+    assert manager != null;
+    Set<String> toForget = ContainerUtilRt.newHashSet();
+    for (ExternalProjectPojo pojo : myAvailableProjects.get().keySet()) {
+      toForget.add(pojo.getPath());
+    }
+    for (String path : myAvailableTasks.get().keySet()) {
+      toForget.add(path);
+    }
+    for (ExternalTaskExecutionInfo taskInfo : myRecentTasks.get()) {
+      toForget.add(taskInfo.getSettings().getExternalProjectPath());
+    }
+    
+    AbstractExternalSystemSettings<?, ?> settings = manager.getSettingsProvider().fun(myProject);
+    for (ExternalProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
+      toForget.remove(projectSettings.getExternalProjectPath());
+    }
+
+    if (!toForget.isEmpty()) {
+      forgetExternalProject(toForget);
     }
   }
 
@@ -172,5 +218,8 @@ public abstract class AbstractExternalSystemLocalSettings {
     public List<ExternalTaskExecutionInfo>                             recentTasks       = ContainerUtilRt.newArrayList();
     public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>   availableProjects = ContainerUtilRt.newHashMap();
     public Map<String/* project name */, Collection<ExternalTaskPojo>> availableTasks    = ContainerUtilRt.newHashMap();
+
+    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps
+      = ContainerUtilRt.newHashMap();
   }
 }

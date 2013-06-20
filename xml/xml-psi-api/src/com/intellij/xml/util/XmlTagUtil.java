@@ -17,6 +17,7 @@ package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -84,15 +85,16 @@ public class XmlTagUtil extends XmlTagUtilBase {
   }
 
 
-  public static String composeTagText(@NonNls String tagName, @NonNls String tagValue) {
-    String result = "<" + tagName;
-    if (tagValue == null || "".equals(tagValue)) {
-      result += "/>";
+  public static CharSequence composeTagText(@NonNls String tagName, @NonNls String tagValue) {
+    StringBuilder builder = new StringBuilder();
+    builder.append('<').append(tagName);
+    if (StringUtil.isEmpty(tagValue)) {
+      builder.append("/>");
     }
     else {
-      result += ">" + getCDATAQuote(tagValue) + "</" + tagName + ">";
+      builder.append('>').append(getCDATAQuote(tagValue)).append("</").append(tagName).append('>');
     }
-    return result;
+    return builder;
   }
 
   public static String[] getCharacterEntityNames() {

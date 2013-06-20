@@ -20,9 +20,7 @@ public abstract class AbstractExternalProjectImportProvider extends ProjectImpor
 
   @Override
   public ModuleWizardStep[] createSteps(WizardContext context) {
-    return new ModuleWizardStep[] { new SelectExternalProjectStepBase(context) };
-    // TODO den uncomment
-    //return new ModuleWizardStep[] { new SelectExternalProjectStepBase(context), new AdjustExternalProjectImportSettingsStep(context) };
+    return new ModuleWizardStep[] { new SelectExternalProjectStep(context) };
   }
 
   @Override

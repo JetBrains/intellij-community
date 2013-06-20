@@ -199,7 +199,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
                     final String prefix = tag.getNamespacePrefix();
                     if (prefix.length() == 0) {
                         return new DocElement(mgr, psiElement, "element", (String)object);
-                    } else if (StringUtil.startsWithConcatenationOf(((String)object), prefix, ":")) {
+                    } else if (StringUtil.startsWithConcatenation(((String)object), prefix, ":")) {
                       return new DocElement(mgr, psiElement, "element", ((String)object).substring(prefix.length() + 1));
                     }
                 }

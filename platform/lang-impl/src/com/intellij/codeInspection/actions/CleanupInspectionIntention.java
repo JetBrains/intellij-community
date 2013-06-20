@@ -45,18 +45,18 @@ import java.util.List;
  * Date: 21-Feb-2006
  */
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
-  private final InspectionToolWrapper myTool;
+  private final InspectionToolWrapper myToolWrapper;
   private final Class myQuickfixClass;
 
-  public CleanupInspectionIntention(@NotNull InspectionToolWrapper tool, Class quickFixClass) {
-    myTool = tool;
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, Class quickFixClass) {
+    myToolWrapper = toolWrapper;
     myQuickfixClass = quickFixClass;
   }
 
   @Override
   @NotNull
   public String getText() {
-    return InspectionsBundle.message("fix.all.inspection.problems.in.file", myTool.getDisplayName());
+    return InspectionsBundle.message("fix.all.inspection.problems.in.file", myToolWrapper.getDisplayName());
   }
 
   @Override
@@ -72,7 +72,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       ProgressManager.getInstance().runProcess(new Computable<List<CommonProblemDescriptor>>() {
         @Override
         public List<CommonProblemDescriptor> compute() {
-          return InspectionRunningUtil.runInspectionOnFile(file, myTool);
+          return InspectionRunningUtil.runInspectionOnFile(file, myToolWrapper);
         }
       }, new EmptyProgressIndicator());
 
@@ -111,8 +111,8 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myTool instanceof LocalInspectionToolWrapper &&
-                                                                                         ((LocalInspectionToolWrapper)myTool).isUnfair());
+    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myToolWrapper instanceof LocalInspectionToolWrapper &&
+                                                                                         ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }
 
   @Override

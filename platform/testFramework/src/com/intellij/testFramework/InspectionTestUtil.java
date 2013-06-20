@@ -19,7 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.CharArrayReader;
 import java.io.File;
@@ -57,13 +58,13 @@ expected:
         }
       }
 
-      Document missing = new Document((Element)expectedProblem.clone());
+      Document missing = new Document(expectedProblem.clone());
       System.out.println("The following haven't been reported as expected: " + new String(JDOMUtil.printDocument(missing, "\n")));
       failed = true;
     }
 
     for (Element reportedProblem : reportedProblems) {
-      Document extra = new Document((Element)reportedProblem.clone());
+      Document extra = new Document(reportedProblem.clone());
       System.out.println("The following has been unexpectedly reported: " + new String(JDOMUtil.printDocument(extra, "\n")));
       failed = true;
     }
@@ -126,11 +127,11 @@ expected:
     return Comparing.equal(reportedFile.getName(), expectedProblem.getChildText("file"));
   }
 
-  public static void compareToolResults(InspectionTool tool, boolean checkRange, String testDir) {
+  public static void compareToolResults(InspectionToolWrapper toolWrapper, boolean checkRange, String testDir) {
     final Element root = new Element("problems");
     final Document doc = new Document(root);
-    tool.updateContent();  //e.g. dead code need check for reachables
-    tool.exportResults(root);
+    toolWrapper.updateContent();  //e.g. dead code need check for reachables
+    toolWrapper.exportResults(root);
 
     File file = new File(testDir + "/expected.xml");
     try {
@@ -143,8 +144,11 @@ expected:
     }
   }
 
-  public static void runTool(final InspectionTool tool, final AnalysisScope scope, final GlobalInspectionContextImpl globalContext, final InspectionManagerEx inspectionManager) {
-    final String shortName = tool.getShortName();
+  public static void runTool(@NotNull InspectionToolWrapper toolWrapper,
+                             @NotNull final AnalysisScope scope,
+                             @NotNull final GlobalInspectionContextImpl globalContext,
+                             @NotNull final InspectionManagerEx inspectionManager) {
+    final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
       HighlightDisplayKey.register(shortName);

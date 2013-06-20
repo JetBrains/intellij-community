@@ -39,15 +39,8 @@ public class MainImpl {
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            try {
-              app.run();
-            }
-            catch (PluginManager.StartupAbortedException e) {
-              throw e;
-            }
-            catch (Throwable t) {
-              throw new PluginManager.StartupAbortedException(t);
-            }
+            PluginManager.installExceptionHandler();
+            app.run();
           }
         });
       }

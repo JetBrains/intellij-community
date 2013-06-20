@@ -17,8 +17,8 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handles tooltip links in format <code>#inspection/inspection_short_name</code>.
  * On a click or expend acton returns more detailed description for given inspection.
- * 
+ *
  * @author peter
  */
 public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
@@ -50,10 +50,10 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
     }
 
     final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
-    final InspectionProfileEntry tool = profile.getInspectionTool(refSuffix, file);
-    if (tool == null) return null;
+    final InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profile.getInspectionTool(refSuffix, file);
+    if (toolWrapper == null) return null;
 
-    String description = tool.loadDescription();
+    String description = toolWrapper.loadDescription();
     if (description == null) {
       LOG.warn("No description for inspection '" + refSuffix + "'");
       description = InspectionsBundle.message("inspection.tool.description.under.construction.text");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,9 +233,9 @@ public class InjectorUtils {
   @Nullable
   public static <T> T findNearestComment(PsiElement element, NullableFunction<PsiComment, T> processor) {
     if (element instanceof PsiComment) return null;
-    PsiComment comment = null;
+    PsiComment comment;
     PsiElement start = element;
-    for (int i=0; i<2 && start != null; i++) {
+    for (int i = 0; i < 3 && start != null; i++) {
       if (start instanceof PsiFile) return null;
       for (PsiElement e = start.getPrevSibling(); e != null; e = e.getPrevSibling()) {
         if (e instanceof PsiComment) {
@@ -244,14 +244,14 @@ public class InjectorUtils {
           if (value != null) return value;
           else continue;
         }
-        else if (e instanceof PsiWhiteSpace) continue;
+        else if (e instanceof PsiWhiteSpace || e.getText().trim().isEmpty()) continue;
         else if (e instanceof PsiLanguageInjectionHost) {
           if (StringUtil.isEmptyOrSpaces(e.getText())) continue;
           else return null;
         }
         break;
       }
-      start = element.getParent();
+      start = start.getParent();
     }
     return null;
   }

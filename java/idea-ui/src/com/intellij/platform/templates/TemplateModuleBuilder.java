@@ -205,7 +205,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         @Nullable
         @Override
         public String fun(String path) {
-          if (moduleMode && path.contains(".idea")) return null;
+          if (moduleMode && path.contains(Project.DIRECTORY_STORE_FOLDER)) return null;
           if (basePackage != null) {
             return path.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
           }
@@ -218,7 +218,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
           return fileType.isBinary() ? content : processTemplates(projectName, new String(content), file);
         }
-      });
+      }, true);
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
         public boolean value(String s) {

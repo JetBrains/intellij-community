@@ -138,6 +138,10 @@ public class CommonShortcuts {
     return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
   }
 
+  public static ShortcutSet getRecentFiles() {
+    return shortcutsById(IdeActions.ACTION_RECENT_FILES);
+  }
+
   private static CustomShortcutSet shortcutsById(String actionId) {
     if (ApplicationManager.getApplication() == null) return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
 

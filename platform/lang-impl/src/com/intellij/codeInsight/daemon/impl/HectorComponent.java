@@ -36,7 +36,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -272,7 +271,7 @@ public class HectorComponent extends JPanel {
         }
       }
       forceDaemonRestart();
-      InspectionProjectProfileManagerImpl.getInstanceImpl(myFile.getProject()).updateStatusBar();
+      DaemonListeners.getInstance(myFile.getProject()).updateStatusBar();
     }
   }
 

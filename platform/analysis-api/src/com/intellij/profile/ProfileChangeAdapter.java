@@ -15,11 +15,15 @@
  */
 package com.intellij.profile;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * User: anna
  * Date: 20-Nov-2005
  */
 public abstract class ProfileChangeAdapter {
   public void profileChanged(Profile profile){}
-  public void profileActivated(Profile oldProfile, Profile profile){}
+  public void profileActivated(@NotNull Profile oldProfile, Profile profile){}
+  public void profilesInitialized() {}
+  public void profilesShutdown(){}
 }

@@ -52,8 +52,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  public boolean checkReportedProblems(@NotNull final InspectionTool tool) {
-    final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(tool);
+  public boolean checkReportedProblems(@NotNull final InspectionToolWrapper toolWrapper) {
+    final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(toolWrapper);
     return content != null && !content.values().isEmpty();
   }
 
@@ -171,9 +171,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  protected void appendDescriptor(final InspectionTool tool,
-                                  final UserObjectContainer container,
-                                  final InspectionPackageNode packageNode,
+  protected void appendDescriptor(@NotNull final InspectionTool tool,
+                                  @NotNull final UserObjectContainer container,
+                                  @NotNull final InspectionPackageNode packageNode,
                                   final boolean canPackageRepeat) {
     final RefElementNode elemNode = addNodeToParent(container, tool, packageNode);
     if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
