@@ -195,7 +195,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
 
-    final PsiElement writeAccess = checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline);
+    final PsiElement writeAccess = checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline, defToInline);
     if (writeAccess != null) {
       HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{writeAccess}, writeAttributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
@@ -273,12 +273,13 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  public static PsiElement checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline) {
+  public static PsiElement checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, PsiElement defToInline) {
     for (PsiElement element : refsToInline) {
 
       PsiElement parent = element.getParent();
       if (parent instanceof PsiArrayAccessExpression) {
         if (((PsiArrayAccessExpression)parent).getIndexExpression() == element) continue;
+        if (defToInline instanceof PsiExpression && !(defToInline instanceof PsiNewExpression)) continue;
         element = parent;
         parent = parent.getParent();
       }
