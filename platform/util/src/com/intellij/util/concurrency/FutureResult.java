@@ -1,7 +1,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
@@ -9,11 +9,35 @@ import java.util.concurrent.Semaphore;
 
 public class FutureResult<T> implements Future<T> {
   private final Semaphore mySema = new Semaphore(0);
-  private volatile Ref<Pair<Object, Boolean>> myValue;
+  private volatile Pair<Object, Boolean> myValue;
 
-  public void reset() {
-    mySema.drainPermits();
+  public synchronized void set(@Nullable T result) {
+    assertNotSet();
+
+    myValue = Pair.create((Object)result, true);
+    mySema.release();
+  }
+
+  public synchronized void setException(@NotNull Throwable e) {
+    assertNotSet();
+
+    myValue = Pair.create((Object)e, false);
+    mySema.release();
+  }
+
+  public synchronized void reset() {
+    try {
+      // wait till readers get their results
+      if (isDone()) mySema.acquire();
+    }
+    catch (InterruptedException ignore) {
+      return;
+    }
     myValue = null;
+  }
+
+  private void assertNotSet() {
+    if (isDone()) throw new IllegalStateException("Result is already set");
   }
 
   public boolean cancel(boolean mayInterruptIfRunning) {
@@ -28,20 +52,6 @@ public class FutureResult<T> implements Future<T> {
     return myValue != null;
   }
 
-  public void set(@Nullable T result) {
-    if (myValue != null) throw new IllegalStateException("Result is already set");
-
-    myValue = Ref.create(Pair.create((Object)result, true));
-    mySema.release();
-  }
-
-  public void setException(Throwable e) {
-    assert myValue == null;
-
-    myValue = Ref.create(Pair.create((Object)e, false));
-    mySema.release();
-  }
-
   public T get() throws InterruptedException, ExecutionException {
     mySema.acquire();
     try {
@@ -52,7 +62,7 @@ public class FutureResult<T> implements Future<T> {
     }
   }
 
-  public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     if (!mySema.tryAcquire(timeout, unit)) throw new TimeoutException();
     try {
       return doGet();
@@ -64,18 +74,16 @@ public class FutureResult<T> implements Future<T> {
 
   @Nullable
   public T tryGet() throws ExecutionException {
-    if (!mySema.tryAcquire()) return null;
-    try {
-      return doGet();
-    }
-    finally {
-      mySema.release();
-    }
+    return doGet();
   }
 
+  @Nullable
   private T doGet() throws ExecutionException {
-    Pair<Object, Boolean> pair = myValue.get();
+    Pair<Object, Boolean> pair = myValue;
+    if (pair == null) return null;
+
     if (!pair.second) throw new ExecutionException(((Throwable)pair.first).getMessage(), (Throwable)pair.first);
+    //noinspection unchecked
     return (T)pair.first;
   }
 }
