@@ -132,7 +132,7 @@ public class HgRepositoryReader {
   }
 
   @Nullable
-  public String readActiveBookmark() {
+  public String readCurrentBookmark() {
     return myCurrentBookmark.exists() ? RepositoryUtil.tryLoadFile(myCurrentBookmark) : null;
   }
 }
