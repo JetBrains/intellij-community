@@ -114,7 +114,7 @@ public class MainFrame {
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true).getComponent();
   }
 
-  public JPanel getMainComponent() {
+  public JComponent getMainComponent() {
     return myMainPanel;
   }
 

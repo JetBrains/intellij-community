@@ -50,7 +50,7 @@ public class VcsLogManager extends AbstractProjectComponent {
         }
 
         final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
-        Content vcsLogContentPane = new ContentImpl(mainPanel, "VCS LOG", true);
+        Content vcsLogContentPane = new ContentImpl(mainPanel, "Log", true);
         ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
         changesView.addContent(vcsLogContentPane);
         vcsLogContentPane.setCloseable(false);
@@ -72,17 +72,6 @@ public class VcsLogManager extends AbstractProjectComponent {
 
       }
     });
-
-    /*
-    TODO refresh on repo changes
-
-        myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
-          @Override
-          public void repositoryChanged(@NotNull GitRepository repository) {
-            myUiController.refresh(false);
-          }
-        });
-     */
   }
 
   private static class VcsLogContainer extends JPanel {
@@ -96,7 +85,7 @@ public class VcsLogManager extends AbstractProjectComponent {
       myLoadingPanel.startLoading();
     }
 
-    void init(@NotNull JPanel mainComponent) {
+    void init(@NotNull JComponent mainComponent) {
       myLoadingPanel.add(mainComponent);
       myLoadingPanel.stopLoading();
     }
