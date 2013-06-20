@@ -118,6 +118,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       add(myHashLabel, g.nextLine().next());
       add(myAuthor, g.nextLine().next());
       add(myCommitMessage, g.nextLine().next());
+      add(Box.createVerticalGlue(), g.nextLine().next().weighty(1.0).fillCell());
 
       setOpaque(false);
     }
