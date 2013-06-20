@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * @date 10/22/10
  */
 public class GithubShareDialog extends DialogWrapper {
-  private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
+  private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+");
   private GithubSharePanel myGithubSharePanel;
   private final Set<String> myAvailableNames;
 
