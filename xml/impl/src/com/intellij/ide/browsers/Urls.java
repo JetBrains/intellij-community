@@ -52,7 +52,7 @@ public final class Urls {
 
     String path = StringUtil.nullize(matcher.group(3));
     if (path != null) {
-      path = FileUtil.toCanonicalPath(path, '/');
+      path = FileUtil.toCanonicalUriPath(path);
     }
 
     String parameters = matcher.group(4);
