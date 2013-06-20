@@ -25,19 +25,19 @@ import java.util.ArrayList;
  * @author Dmitry Skavish
  */
 public class JDMethodComment extends JDParamListOwnerComment {
-  public JDMethodComment(CommentFormatter formatter) {
-    super(formatter);
-  }
-
-  private String returnTag;
-  private ArrayList<NameDesc> throwsList;
 
   private static final @NonNls String THROWS_TAG = "@throws ";
   private static final @NonNls String EXCEPTION_TAG = "@exception ";
 
+  private String returnTag;
+  private ArrayList<NameDesc> throwsList;
+
+  public JDMethodComment(CommentFormatter formatter) {
+    super(formatter);
+  }
+
   @Override
   protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
-
     super.generateSpecial(prefix, sb);
 
     if (returnTag != null) {
@@ -56,25 +56,14 @@ public class JDMethodComment extends JDParamListOwnerComment {
       String tag = myFormatter.getSettings().JD_USE_THROWS_NOT_EXCEPTION ? THROWS_TAG : EXCEPTION_TAG;
       generateList(prefix, sb, throwsList, tag,
                    myFormatter.getSettings().JD_ALIGN_EXCEPTION_COMMENTS,
-                   myFormatter.getSettings().JD_MIN_EXCEPTION_NAME_LENGTH,
-                   myFormatter.getSettings().JD_MAX_EXCEPTION_NAME_LENGTH,
                    myFormatter.getSettings().JD_KEEP_EMPTY_EXCEPTION,
                    myFormatter.getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE
       );
     }
   }
 
-  public String getReturnTag() {
-    return returnTag;
-  }
-
   public void setReturnTag(String returnTag) {
     this.returnTag = returnTag;
-  }
-
-  public void removeThrow(NameDesc nd) {
-    if (throwsList == null) return;
-    throwsList.remove(nd);
   }
 
   public ArrayList<NameDesc> getThrowsList() {
@@ -86,14 +75,6 @@ public class JDMethodComment extends JDParamListOwnerComment {
       throwsList = new ArrayList<NameDesc>();
     }
     throwsList.add(new NameDesc(className, description));
-  }
-
-  public NameDesc getThrow(String name) {
-    return getNameDesc(name, throwsList);
-  }
-
-  public void setThrowsList(ArrayList<NameDesc> throwsList) {
-    this.throwsList = throwsList;
   }
 
 }
