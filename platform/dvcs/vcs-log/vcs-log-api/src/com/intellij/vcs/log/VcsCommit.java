@@ -24,7 +24,18 @@ public interface VcsCommit extends CommitParents {
   @NotNull
   String getAuthorName();
 
+  @NotNull
+  String getAuthorEmail();
+
   long getAuthorTime();
+
+  @NotNull
+  String getCommitterName();
+
+  @NotNull
+  String getCommitterEmail();
+
+  long getCommitTime();
 
   @Override
   @NotNull

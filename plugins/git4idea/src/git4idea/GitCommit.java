@@ -73,6 +73,7 @@ public final class GitCommit implements VcsCommit {
     return myAuthorName;
   }
 
+  @Override
   @NotNull
   public String getAuthorEmail() {
     return myAuthorEmail;
@@ -83,16 +84,19 @@ public final class GitCommit implements VcsCommit {
     return myAuthorTime;
   }
 
+  @Override
   @NotNull
   public String getCommitterName() {
     return myCommitterName;
   }
 
+  @Override
   @NotNull
   public String getCommitterEmail() {
     return myCommitterEmail;
   }
 
+  @Override
   public long getCommitTime() {
     return myCommitTime;
   }

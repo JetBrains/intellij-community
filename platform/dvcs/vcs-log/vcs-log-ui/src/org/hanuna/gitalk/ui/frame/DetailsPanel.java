@@ -90,8 +90,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static class DataPanel extends JPanel {
 
     @NotNull private final JLabel myHashLabel;
-    @NotNull private final JTextArea myCommitMessage;
     @NotNull private final JTextField myAuthor;
+    @NotNull private final JTextArea myCommitMessage;
 
     DataPanel() {
       super();
@@ -125,8 +125,13 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     void setData(VcsCommit commit) {
       myHashLabel.setText(commit.getHash().toShortString());
-      myAuthor.setText(commit.getAuthorName());
       myCommitMessage.setText(commit.getFullMessage());
+
+      String authorText = commit.getAuthorName();
+      if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
+        authorText += " (committed by " + commit.getCommitterName() + ")";
+      }
+      myAuthor.setText(authorText);
       repaint();
     }
   }

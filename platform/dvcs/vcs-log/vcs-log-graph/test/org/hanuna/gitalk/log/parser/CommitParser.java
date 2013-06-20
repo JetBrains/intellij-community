@@ -124,9 +124,32 @@ public class CommitParser {
         return authorName;
       }
 
+      @NotNull
+      @Override
+      public String getAuthorEmail() {
+        throw new UnsupportedOperationException();
+      }
+
       @Override
       public long getAuthorTime() {
         return timestamp;
+      }
+
+      @NotNull
+      @Override
+      public String getCommitterName() {
+        return getAuthorName();
+      }
+
+      @NotNull
+      @Override
+      public String getCommitterEmail() {
+        return getAuthorEmail();
+      }
+
+      @Override
+      public long getCommitTime() {
+        return getAuthorTime();
       }
 
       @NotNull
@@ -135,6 +158,7 @@ public class CommitParser {
         throw new UnsupportedOperationException();
       }
 
+      @Override
       @NotNull
       public Collection<Change> getChanges() {
         throw new UnsupportedOperationException();
