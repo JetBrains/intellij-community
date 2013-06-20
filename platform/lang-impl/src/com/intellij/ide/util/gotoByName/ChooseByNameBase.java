@@ -768,6 +768,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected void cancelListUpdater() {
+    cancelCalcElementsThread();
     myListUpdater.cancelAll();
   }
 
@@ -1575,7 +1576,6 @@ public abstract class ChooseByNameBase {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      cancelCalcElementsThread();
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();
