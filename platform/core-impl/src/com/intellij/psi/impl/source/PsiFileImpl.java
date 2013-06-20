@@ -312,16 +312,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     String msg = message;
     msg += "\n file=" + this;
-    msg += "\n name=" + getName();
-    msg += "\n modStamp=" + getModificationStamp();
+    msg += ", modStamp=" + getModificationStamp();
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
     msg += "\n document before=" + cachedDocument;
     
     ObjectStubTree latestIndexedStub = StubTreeLoader.getInstance().readFromVFile(getProject(), getVirtualFile());
     msg += "\nlatestIndexedStub=" + latestIndexedStub;
     if (latestIndexedStub != null) {
-      msg += "\nsame size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
-      msg += "\ndebugInfo=" + latestIndexedStub.getDebugInfo();
+      msg += "\n   same size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
+      msg += "\n   debugInfo=" + latestIndexedStub.getDebugInfo();
     }
 
     FileViewProvider viewProvider = getViewProvider();
@@ -340,7 +339,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       msg += "; committed: " + PsiDocumentManager.getInstance(getProject()).isCommitted(document);
     }
 
-    throw new AssertionError(msg);
+    throw new AssertionError(msg + "\n------------\n");
   }
 
   protected FileElement createFileElement(final CharSequence docText) {
