@@ -98,7 +98,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     assertEquals(myRepositoryReader.readCurrentBookmark(), "B_BookMark");
   }
 
-   @NotNull
+  @NotNull
   private Collection<String> readBookmarks() throws IOException {
     Collection<String> bookmarks = new HashSet<String>();
     File bookmarksFile = new File(myHgDir, "bookmarks");

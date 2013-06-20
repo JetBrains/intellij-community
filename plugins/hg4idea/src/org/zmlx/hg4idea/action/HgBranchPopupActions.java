@@ -154,7 +154,7 @@ public class HgBranchPopupActions {
       if (bookmarkDialog.isOK()) {
         try {
           final String name = bookmarkDialog.getName();
-          new HgBookmarkCreateCommand(myProject, myPreselectedRepo, name, bookmarkDialog.getRevision(),
+          new HgBookmarkCreateCommand(myProject, myPreselectedRepo, name,
                                       bookmarkDialog.isActive()).execute(new HgCommandResultHandler() {
             @Override
             public void process(@Nullable HgCommandResult result) {
