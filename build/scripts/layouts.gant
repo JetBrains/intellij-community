@@ -695,6 +695,7 @@ def layoutCommunityJps(String home, String target) {
       include(name: "optimizedFileManager.jar")
       include(name: "log4j.jar")
       include(name: "jgoodies-forms.jar")
+      include(name: "ecj*.jar")
     }
     dir("test") {
       jar("jps-build-test.jar") {
