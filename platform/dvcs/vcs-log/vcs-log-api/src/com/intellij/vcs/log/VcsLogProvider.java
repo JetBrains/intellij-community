@@ -23,16 +23,13 @@ public interface VcsLogProvider {
   List<? extends VcsCommit> readNextBlock(@NotNull VirtualFile root) throws VcsException;
 
   /**
-   * Read details of the given commits from the VCS
-   *
-   *
-   *
-   * @param root
-   * @param hashes
-   * @return
+   * Read details of the given commits from the VCS.
    */
   @NotNull
   List<? extends VcsCommit> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
+  /**
+   * Read all references (branches, tags, etc.) for the given roots.
+   */
   Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 }
