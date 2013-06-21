@@ -45,8 +45,8 @@ import java.util.Map;
  * @author Kirill Likhodedov
  */
 public class MockVcsHelper extends AbstractVcsHelper {
-  private boolean myCommitDialogShown;
-  private boolean myMergeDialogShown;
+  private volatile boolean myCommitDialogShown;
+  private volatile boolean myMergeDialogShown;
 
   private CommitHandler myCommitHandler;
   private MergeHandler myMergeHandler;
