@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -63,8 +64,12 @@ abstract class HgAbstractGlobalAction extends AnAction {
   protected abstract void execute(Project project, Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo);
 
   public static void handleException(Project project, Exception e) {
+    handleException(project, "Error", e);
+  }
+
+  public static void handleException(Project project, @NotNull String title, Exception e) {
     LOG.info(e);
-    new HgCommandResultNotifier(project).notifyError(null, "Error", e.getMessage());
+    new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
   }
 
   protected void markDirtyAndHandleErrors(Project project, VirtualFile repository) {

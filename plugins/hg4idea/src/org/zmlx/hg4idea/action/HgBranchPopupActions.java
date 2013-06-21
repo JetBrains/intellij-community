@@ -121,7 +121,7 @@ public class HgBranchPopupActions {
         });
       }
       catch (HgCommandException exception) {
-        HgAbstractGlobalAction.handleException(myProject, exception);
+        HgAbstractGlobalAction.handleException(myProject, "Can't create new branch: ", exception);
       }
     }
   }
