@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,15 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private static final class JarFileSystemImplLock { }
   private static final JarFileSystemImplLock LOCK = new JarFileSystemImplLock();
 
-  private final Set<String> myNoCopyJarPaths =
-    SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows) ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+  private final Set<String> myNoCopyJarPaths;
   private File myNoCopyJarDir;
   private final Map<String, JarHandler> myHandlers = new THashMap<String, JarHandler>(FileUtil.PATH_HASHING_STRATEGY);
   private String[] jarPathsCache;
 
   public JarFileSystemImpl(MessageBus bus) {
+    boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
+    myNoCopyJarPaths = noCopy ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull final List<? extends VFileEvent> events) {
