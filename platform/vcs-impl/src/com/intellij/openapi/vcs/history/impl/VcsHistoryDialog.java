@@ -459,22 +459,23 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   @Nullable
   private Block getBlock(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
-    if (myRevisionToContentMap.containsKey(revision))
+    if (myRevisionToContentMap.containsKey(revision)) {
       return myRevisionToContentMap.get(revision);
-
-    int index = myRevisions.indexOf(revision);
+    }
 
     final String revisionContent = getContentOf(revision);
     if (revisionContent == null) return null;
-    if (index == 0) {
-      Block currentBlock = new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd);
-      myRevisionToContentMap.put(revision, new FindBlock(revisionContent, currentBlock).getBlockInThePrevVersion());
-    }
-    else {
-      Block prevBlock = getBlock(myRevisions.get(index - 1));
-      if (prevBlock == null) return null;
-      myRevisionToContentMap.put(revision, new FindBlock(revisionContent, prevBlock).getBlockInThePrevVersion());
-    }
+
+    int index = myRevisions.indexOf(revision);
+    Block blockByIndex = getBlock(index);
+    if (blockByIndex == null) return null;
+
+    myRevisionToContentMap.put(revision, new FindBlock(revisionContent, blockByIndex).getBlockInThePrevVersion());
     return myRevisionToContentMap.get(revision);
   }
+
+  private Block getBlock(int index) throws FilesTooBigForDiffException, VcsException {
+    return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd);
+  }
+
 }
