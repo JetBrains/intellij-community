@@ -62,6 +62,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.plugins.github.GithubUtil.isRepositoryOnGitHub;
+
 /**
  * @author oleg
  */
@@ -90,19 +92,18 @@ public class GithubShareAction extends DumbAwareAction {
       return;
     }
     final VirtualFile root = project.getBaseDir();
-    // Check if git is already initialized and presence of remote branch
-    final boolean gitDetected = GitUtil.isUnderGit(root);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    final GitRepository gitRepository = manager.getRepositoryForFile(root);
+    final boolean gitDetected = gitRepository != null;
+    boolean externalRemoteDetected = false;
     if (gitDetected) {
-      try {
-        final List<GitDeprecatedRemote> gitRemotes = GitDeprecatedRemote.list(project, root);
-        if (!gitRemotes.isEmpty()) {
-          Messages.showErrorDialog(project, "Project is already under git with configured remote", "Cannot create new GitHub repository");
-          return;
-        }
-      }
-      catch (VcsException e2) {
-        Messages.showErrorDialog(project, "Error happened during git operation: " + e2.getMessage(), "Cannot create new GitHub repository");
+      if (isRepositoryOnGitHub(gitRepository)) {
+        Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "", "Project is already on GitHub",
+                                                     NotificationType.INFORMATION);
+        Notificator.getInstance(project).notify(notification);
         return;
+      } else {
+        externalRemoteDetected = !gitRepository.getRemotes().isEmpty();
       }
     }
 
@@ -149,7 +150,7 @@ public class GithubShareAction extends DumbAwareAction {
         Messages.showErrorDialog(project, "Failed to create new GitHub repository", "Create GitHub Repository");
         return;
       }
-      bindToGithub(project, root, gitDetected, settings.getLogin(), name);
+      bindToGithub(project, root, gitDetected, externalRemoteDetected, settings.getLogin(), name);
     }
     catch (final Exception e1) {
       Messages.showErrorDialog(e1.getMessage(), "Failed to create new GitHub repository");
@@ -180,7 +181,7 @@ public class GithubShareAction extends DumbAwareAction {
 
   }
 
-  private void bindToGithub(final Project project, final VirtualFile root, boolean gitDetected, final String login, final String name) {
+  private void bindToGithub(final Project project, final VirtualFile root, boolean gitDetected, boolean externalRemoteDetected, final String login, final String name) {
     LOG.info("Binding local project with GitHub");
     // creating empty git repo if git isnot initialized
     if (!gitDetected) {
@@ -215,7 +216,8 @@ public class GithubShareAction extends DumbAwareAction {
     final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     addRemoteHandler.setSilent(true);
     final String remoteUrl = GithubApiUtil.getGitHost() + "/" + login + "/" + name + ".git";
-    addRemoteHandler.addParameters("add", "origin", remoteUrl);
+    final String remoteName = externalRemoteDetected ? "github" : "origin";
+    addRemoteHandler.addParameters("add", remoteName, remoteUrl);
     try {
       addRemoteHandler.run();
       repository.update();
@@ -236,7 +238,7 @@ public class GithubShareAction extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Git git = ServiceManager.getService(Git.class);
-        GitCommandResult result = git.push(repository, "origin", remoteUrl, "refs/heads/master:refs/heads/master");
+        GitCommandResult result = git.push(repository, remoteName, remoteUrl, "refs/heads/master:refs/heads/master");
         if (result.success()) {
           Notificator.getInstance(project).notify(new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Success",
                                                                    "Successfully created project '" + name + "' on GitHub",
