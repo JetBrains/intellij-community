@@ -29,6 +29,7 @@ import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import org.jetbrains.jps.ant.model.JpsAntExtensionService;
 import org.jetbrains.jps.ant.model.JpsAntInstallation;
@@ -73,9 +74,16 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     return Collections.emptyList();
   }
 
+  @Nullable
   private static JpsAntArtifactExtension getBuildExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
-    return buildPhase == ArtifactBuildPhase.PRE_PROCESSING ? JpsAntExtensionService.getPreprocessingExtension(artifact)
-                                                           : JpsAntExtensionService.getPostprocessingExtension(artifact);
+    switch (buildPhase) {
+      case PRE_PROCESSING:
+        return JpsAntExtensionService.getPreprocessingExtension(artifact);
+      case POST_PROCESSING:
+        return JpsAntExtensionService.getPostprocessingExtension(artifact);
+      default:
+        return null;
+    }
   }
 
   private static class AntArtifactBuildTask extends BuildTask {
