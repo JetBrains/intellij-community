@@ -2004,7 +2004,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    public void scheduleForUpdate(VirtualFile file) {
+    private void scheduleForUpdate(VirtualFile file) {
       myFilesToUpdate.add(file);
     }
 
@@ -2207,10 +2207,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             myForceUpdateSemaphore.down();
             // process only files that can affect result
             processFileImpl(project, new com.intellij.ide.caches.FileContent(file), onlyRemoveOutdatedData);
-          } catch (ProcessCanceledException ex) {
-            LOG.assertTrue(!onlyRemoveOutdatedData);
-            myChangedFilesCollector.scheduleForUpdate(file);
-            throw ex;
           }
           finally {
             myForceUpdateSemaphore.up();
