@@ -83,7 +83,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         return;
       }
 
-      if (editor != null && !checkContentInEditor(editor)) {
+      if (editor != null && editor.getDocument().getTextLength() == 0) {
         e.getPresentation().setVisible(false);
         e.getPresentation().setEnabled(false);
         return;
@@ -362,15 +362,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
       name = selectedFile.getName();
     }
     return new NamedContent(name, text);
-  }
-
-  private static boolean checkContentInEditor(@NotNull final Editor editor) {
-    String text = editor.getSelectionModel().getSelectedText();
-    if (text == null) {
-      text = editor.getDocument().getText();
-    }
-
-    return !StringUtil.isEmptyOrSpaces(text);
   }
 
   private static class NamedContent {
