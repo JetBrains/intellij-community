@@ -164,7 +164,7 @@ public class MavenDomProjectProcessorUtils {
   public static Set<MavenDomDependency> searchDependencyUsages(@NotNull final MavenDomDependency dependency) {
     final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
     if (model != null) {
-      DependencyId dependencyId = DependencyId.create(dependency);
+      DependencyConflictId dependencyId = DependencyConflictId.create(dependency);
       if (dependencyId != null) {
         return searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
       }
@@ -174,7 +174,7 @@ public class MavenDomProjectProcessorUtils {
 
   @NotNull
   public static Set<MavenDomDependency> searchDependencyUsages(@NotNull final MavenDomProjectModel model,
-                                                               @NotNull final DependencyId dependencyId,
+                                                               @NotNull final DependencyConflictId dependencyId,
                                                                @NotNull final Set<MavenDomDependency> excludes) {
     Project project = model.getManager().getProject();
     final Set<MavenDomDependency> usages = new HashSet<MavenDomDependency>();
@@ -184,7 +184,7 @@ public class MavenDomProjectProcessorUtils {
           for (MavenDomDependency domDependency : mavenDomProjectModel.getDependencies().getDependencies()) {
             if (excludes.contains(domDependency)) continue;
 
-            if (dependencyId.equals(DependencyId.create(domDependency))) {
+            if (dependencyId.equals(DependencyConflictId.create(domDependency))) {
               usages.add(domDependency);
             }
           }
@@ -293,7 +293,7 @@ public class MavenDomProjectProcessorUtils {
 
   @Nullable
   public static MavenDomDependency searchManagingDependency(@NotNull final MavenDomDependency dependency, @NotNull final Project project) {
-    final DependencyId depId = DependencyId.create(dependency);
+    final DependencyConflictId depId = DependencyConflictId.create(dependency);
     if (depId == null) return null;
 
     final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
@@ -303,7 +303,7 @@ public class MavenDomProjectProcessorUtils {
       @Override
       protected MavenDomDependency find(MavenDomDependencies mavenDomDependencies) {
         for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
-          if (depId.equals(DependencyId.create(domDependency))) {
+          if (depId.equals(DependencyConflictId.create(domDependency))) {
             return domDependency;
           }
 
@@ -317,7 +317,7 @@ public class MavenDomProjectProcessorUtils {
                 MavenDomProjectModel dependModel = MavenDomUtil.getMavenDomModel((PsiFile)resolve, MavenDomProjectModel.class);
                 if (dependModel != null) {
                   for (MavenDomDependency dep : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
-                    if (depId.equals(DependencyId.create(dep))) {
+                    if (depId.equals(DependencyConflictId.create(dep))) {
                       return domDependency;
                     }
                   }

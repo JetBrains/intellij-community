@@ -6,15 +6,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 
 /**
-* @author Sergey Evdokimov
-*/
-public class DependencyId {
+ * See org.apache.maven.artifact.Artifact#getDependencyConflictId()
+ *
+ * @author Sergey Evdokimov
+ */
+public class DependencyConflictId {
   private final String groupId;
   private final String artifactId;
   private final String type;
   private final String classifier;
 
-  public DependencyId(@NotNull String groupId, @NotNull String artifactId, @Nullable String type, @Nullable String classifier) {
+  public DependencyConflictId(@NotNull String groupId, @NotNull String artifactId, @Nullable String type, @Nullable String classifier) {
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.type = StringUtil.isEmpty(type) ? "jar" : type;
@@ -22,7 +24,7 @@ public class DependencyId {
   }
 
   @Nullable
-  public static DependencyId create(@NotNull MavenDomDependency dep) {
+  public static DependencyConflictId create(@NotNull MavenDomDependency dep) {
     String groupId = dep.getGroupId().getStringValue();
     if (StringUtil.isEmpty(groupId)) return null;
 
@@ -30,7 +32,7 @@ public class DependencyId {
     if (StringUtil.isEmpty(artifactId)) return null;
 
     //noinspection ConstantConditions
-    return new DependencyId(groupId, artifactId, dep.getType().getStringValue(), dep.getClassifier().getStringValue());
+    return new DependencyConflictId(groupId, artifactId, dep.getType().getStringValue(), dep.getClassifier().getStringValue());
   }
 
   public boolean isValid() {
@@ -40,9 +42,9 @@ public class DependencyId {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DependencyId)) return false;
+    if (!(o instanceof DependencyConflictId)) return false;
 
-    DependencyId id = (DependencyId)o;
+    DependencyConflictId id = (DependencyConflictId)o;
 
     if (artifactId != null ? !artifactId.equals(id.artifactId) : id.artifactId != null) return false;
     if (classifier != null ? !classifier.equals(id.classifier) : id.classifier != null) return false;
