@@ -59,6 +59,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,10 +214,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       myStub = null;
       myTreeElementPointer = createTreeElementPointer(treeElement);
 
-      if (document != null && isPhysical()) {
-        TextBlock.get(this).clear();
-      }
-
       if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
         LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
       }
@@ -309,19 +306,19 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
     clearStub();
+    scheduleDropCachesWithInvalidStubPsi();
 
     String msg = message;
     msg += "\n file=" + this;
-    msg += "\n name=" + getName();
-    msg += "\n modStamp=" + getModificationStamp();
+    msg += ", modStamp=" + getModificationStamp();
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
     msg += "\n document before=" + cachedDocument;
     
     ObjectStubTree latestIndexedStub = StubTreeLoader.getInstance().readFromVFile(getProject(), getVirtualFile());
     msg += "\nlatestIndexedStub=" + latestIndexedStub;
     if (latestIndexedStub != null) {
-      msg += "\nsame size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
-      msg += "\ndebugInfo=" + latestIndexedStub.getDebugInfo();
+      msg += "\n   same size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
+      msg += "\n   debugInfo=" + latestIndexedStub.getDebugInfo();
     }
 
     FileViewProvider viewProvider = getViewProvider();
@@ -340,7 +337,21 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       msg += "; committed: " + PsiDocumentManager.getInstance(getProject()).isCommitted(document);
     }
 
-    throw new AssertionError(msg);
+    throw new AssertionError(msg + "\n------------\n");
+  }
+
+  private void scheduleDropCachesWithInvalidStubPsi() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            ((PsiModificationTrackerImpl)getManager().getModificationTracker()).incCounter();
+          }
+        });
+      }
+    });
   }
 
   protected FileElement createFileElement(final CharSequence docText) {

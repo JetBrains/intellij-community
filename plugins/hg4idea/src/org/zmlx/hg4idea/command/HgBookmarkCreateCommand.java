@@ -19,18 +19,15 @@ public class HgBookmarkCreateCommand {
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRepo;
   @Nullable private final String myBookmarkName;
-  @Nullable private final String myRevisionNumber;
   private final boolean isActive;
 
   public HgBookmarkCreateCommand(@NotNull Project project,
                                  @NotNull VirtualFile repo,
                                  @Nullable String bookmarkName,
-                                 @Nullable String revisionNumber,
                                  boolean active) {
     myProject = project;
     myRepo = repo;
     myBookmarkName = bookmarkName;
-    myRevisionNumber = revisionNumber;
     isActive = active;
   }
 
@@ -40,10 +37,6 @@ public class HgBookmarkCreateCommand {
     }
     List<String> arguments = new ArrayList<String>();
     arguments.add(myBookmarkName);
-    if (!StringUtil.isEmptyOrSpaces(myRevisionNumber)) {
-      arguments.add("--rev");
-      arguments.add(myRevisionNumber);
-    }
     if (!isActive) {
       arguments.add("--inactive");
     }

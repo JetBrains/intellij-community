@@ -93,8 +93,10 @@ public class AutoHardWrapHandler {
       change.charTyped(editor, modificationStampBeforeTyping);
     }
 
-    // Return eagerly if we don't need to auto-wrap line on right margin exceeding.
-    if (project == null || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)
+    // Return eagerly if we don't need to auto-wrap line, e.g. because of right margin exceeding.
+    if (/*editor.isOneLineMode()
+        || */project == null
+        || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)
         || (TemplateManager.getInstance(project) != null && TemplateManager.getInstance(project).getActiveTemplate(editor) != null))
     {
       return;
@@ -108,6 +110,10 @@ public class AutoHardWrapHandler {
 
     // Check if right margin is exceeded.
     int margin = editor.getSettings().getRightMargin(project);
+    if (margin <= 0) {
+      return;
+    }
+    
     VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
     if (margin > visEndLinePosition.column) {
       if (change != null) {

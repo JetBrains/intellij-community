@@ -59,4 +59,13 @@ public class StringBufferReplaceableByString {
     (Math.random() < 0.5 ? a : b).append("BLA");
     System.out.println(a + "/" + b);
   }
+
+  String incomplete(char[] cs) {
+    StringBuilder a = new StringBuilder();
+    a.append(cs, 1);
+    System.out.println(a.toString());
+    StringBuilder b = new StringBuilder();
+    b.append()
+    return b.toString();
+  }
 }

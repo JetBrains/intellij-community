@@ -13,10 +13,9 @@ import javax.swing.*;
  * @author Nadya Zabrodina
  */
 public class HgBookmarkDialog extends DialogWrapper {
-  private JPanel myContentPanel;
-  private JTextField myRevision;
-  private JTextField myBookmarkName;
-  private JCheckBox myActiveCheckbox;
+  @NotNull private JPanel myContentPanel;
+  @NotNull private JTextField myBookmarkName;
+  @NotNull private JCheckBox myActiveCheckbox;
 
   public HgBookmarkDialog(@Nullable Project project) {
     super(project, false);
@@ -31,33 +30,33 @@ public class HgBookmarkDialog extends DialogWrapper {
   }
 
   @Override
+  @NotNull
   public JComponent getPreferredFocusedComponent() {
     return myBookmarkName;
   }
 
   @Override
+  @NotNull
   protected String getDimensionServiceKey() {
     return HgBookmarkDialog.class.getName();
   }
 
+  @NotNull
   protected JComponent createCenterPanel() {
     return myContentPanel;
-  }
-
-  @NotNull
-  public String getRevision() {
-    return myRevision.getText();
   }
 
   public boolean isActive() {
     return !myActiveCheckbox.isSelected();
   }
 
+  @Nullable
   public String getName() {
     return myBookmarkName.getText();
   }
 
   @Override
+  @Nullable
   protected ValidationInfo doValidate() {
     String message = "You have to specify bookmark name.";
     if (StringUtil.isEmptyOrSpaces(getName())) {

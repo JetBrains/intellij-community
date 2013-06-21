@@ -861,7 +861,7 @@ public class BuildManager implements ApplicationComponent{
     cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
     if (isProfilingMode) {
       cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
-      cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,sessionname=ExternalBuild");
+      cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,delay=10000,sessionname=ExternalBuild");
     }
 
     cmdLine.addParameter("-classpath");

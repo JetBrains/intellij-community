@@ -94,18 +94,20 @@ public class HgBranchPopup {
 
   private ActionGroup createActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
-
     fillPopupWithCurrentRepositoryActions(popupGroup, createRepositoriesActions());
-
     popupGroup.addSeparator();
     return popupGroup;
   }
 
 
+  @Nullable
   private DefaultActionGroup createRepositoriesActions() {
+    List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
+    if (repositories.size() == 1) {
+      return null; //  if project has only one repository all branches, bookmarks and actions should be inline  and no repository group needed
+    }
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
     boolean isMultiRepoConfig = repositories.size() > 1;
     for (VirtualFile repository : repositories) {
       HgRepository repo = HgRepositoryImpl.getFullInstance(repository, myProject, myProject);

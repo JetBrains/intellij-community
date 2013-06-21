@@ -60,7 +60,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("p.A.B", "B", false, null, false, false, null));
   }
 
-  public void _testScr30106() throws Exception {
+  public void testScr30106() throws Exception {
     doTest(createAction("p.A.B", "B", true, "outer", false, false, null));
   }
 

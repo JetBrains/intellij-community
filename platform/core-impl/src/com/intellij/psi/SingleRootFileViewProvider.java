@@ -30,7 +30,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -47,6 +46,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,10 +181,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     setContent(cachedDocument == null ? new VirtualFileContent() : new DocumentContent());
   }
 
-  public void beforeDocumentChanged() {
-    final PsiFile psiFile = getCachedPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded() && getContent() instanceof DocumentContent) {
-      setContent(new PsiFileContent((PsiFileImpl)psiFile, getModificationStamp()));
+  public void beforeDocumentChanged(@Nullable PsiFile psiCause) {
+    PsiFile psiFile = psiCause != null ? psiCause : getPsi(getBaseLanguage());
+    if (psiFile instanceof PsiFileImpl) {
+      setContent(new PsiFileContent((PsiFileImpl)psiFile, psiCause == null ? getModificationStamp() : LocalTimeCounter.currentTime()));
     }
   }
 
@@ -536,36 +536,33 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private class PsiFileContent implements Content {
     private final PsiFileImpl myFile;
-    private CharSequence myContent = null;
+    private volatile String myContent = null;
     private final long myModificationStamp;
+    
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
+    private final List<FileElement> myFileElementHardRefs = new SmartList<FileElement>();
 
     private PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
       myFile = file;
       myModificationStamp = modificationStamp;
+      for (PsiFile aFile : getAllFiles()) {
+        if (aFile instanceof PsiFileImpl) {
+          myFileElementHardRefs.add(((PsiFileImpl)aFile).calcTreeElement());
+        }
+      }
     }
 
     @Override
     public CharSequence getText() {
-      if (!myFile.isContentsLoaded()) {
-        unsetPsiContent();
-        return getContents();
+      if (myContent == null) {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
+        myContent = myFile.calcTreeElement().getText();
       }
-      if (myContent != null) return myContent;
-      return myContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
-        @Override
-        @NotNull
-        public CharSequence compute() {
-          return myFile.calcTreeElement().getText();
-        }
-      });
+      return myContent;
     }
 
     @Override
     public long getModificationStamp() {
-      if (!myFile.isContentsLoaded()) {
-        unsetPsiContent();
-        return SingleRootFileViewProvider.this.getModificationStamp();
-      }
       return myModificationStamp;
     }
   }

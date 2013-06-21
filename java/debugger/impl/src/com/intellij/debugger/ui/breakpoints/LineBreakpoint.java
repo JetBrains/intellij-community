@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -44,12 +45,16 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -203,6 +208,37 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             return true;
           }
         }
+        if (LOG.isDebugEnabled()) {
+          final GlobalSearchScope scope = debugProcess.getSearchScope();
+          final boolean contains = scope.contains(breakpointFile);
+          final Project project = getProject();
+          final List<VirtualFile> files = ContainerUtil.map(
+            JavaFullClassNameIndex.getInstance().get(className.hashCode(), project, scope), new Function<PsiClass, VirtualFile>() {
+            @Override
+            public VirtualFile fun(PsiClass aClass) {
+              return aClass.getContainingFile().getVirtualFile();
+            }
+          });
+          final List<VirtualFile> allFiles = ContainerUtil.map(
+            JavaFullClassNameIndex.getInstance().get(className.hashCode(), project, new EverythingGlobalScope(project)), new Function<PsiClass, VirtualFile>() {
+            @Override
+            public VirtualFile fun(PsiClass aClass) {
+              return aClass.getContainingFile().getVirtualFile();
+            }
+          });
+          final VirtualFile contentRoot = fileIndex.getContentRootForFile(breakpointFile);
+          final Module module = fileIndex.getModuleForFile(breakpointFile);
+
+          LOG.debug("Did not find '" +
+                    className + "' in " + scope +
+                    "; contains=" + contains +
+                    "; contentRoot=" + contentRoot +
+                    "; module = " + module +
+                    "; all files in index are: " + files+
+                    "; all possible files are: " + allFiles
+          );
+        }
+        
         return false;
       }
     }
@@ -218,7 +254,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       public Collection<VirtualFile> compute() {
         final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Found "+ classes.length + " classes " + topLevelClassName + " in scope");
+          LOG.debug("Found "+ classes.length + " classes " + topLevelClassName + " in scope "+scope);
         }
         if (classes.length == 0) {
           return null;
@@ -241,12 +277,14 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             LOG.debug(msg.toString());
           }
           
-          if (psiFile != null) {
-            final VirtualFile vFile = psiFile.getVirtualFile();
-            if (vFile != null && fileIndex.isInSourceContent(vFile)) {
-              list.add(vFile);
-            }
+          if (psiFile == null) {
+            return null;
           }
+          final VirtualFile vFile = psiFile.getVirtualFile();
+          if (vFile == null || !fileIndex.isInSourceContent(vFile)) {
+            return null; // this will switch off the check if at least one class is from libraries
+          }
+          list.add(vFile);
         }
         return list;
       }
