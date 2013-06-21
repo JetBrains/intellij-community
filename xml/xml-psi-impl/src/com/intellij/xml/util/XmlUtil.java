@@ -735,9 +735,13 @@ public class XmlUtil {
 
       if (file != null) {
         for (XmlFileNSInfoProvider provider : nsProviders) {
-          if (provider.overrideNamespaceFromDocType(file)) {
-            overrideNamespaceFromDocType = true;
-            break;
+          try {
+            if (provider.overrideNamespaceFromDocType(file)) {
+              overrideNamespaceFromDocType = true;
+              break;
+            }
+          }
+          catch (AbstractMethodError ignored) {
           }
         }
       }
