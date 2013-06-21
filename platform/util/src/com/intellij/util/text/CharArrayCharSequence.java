@@ -105,7 +105,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     final int readChars = Math.min(len, length() - start);
     if (readChars <= 0) return -1;
 
-    System.arraycopy(myChars, start, cbuf, off, readChars);
+    System.arraycopy(myChars, myStart + start, cbuf, off, readChars);
     return readChars;
   }
 }
