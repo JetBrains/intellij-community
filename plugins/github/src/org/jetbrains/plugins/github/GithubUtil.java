@@ -289,27 +289,15 @@ public class GithubUtil {
    */
   @Nullable
   public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String owner, final String name) throws IOException {
-    final GithubSettings settings = GithubSettings.getInstance();
-    final String password = settings.getPassword();
-    final Boolean validCredentials = accessToGithubWithModalProgress(project, settings.getHost(),
-                                                                     new ThrowableComputable<Boolean, IOException>() {
-      @Override
-      public Boolean compute() throws IOException {
-        ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-        return testConnection(settings.getHost(), settings.getLogin(), password);
-      }
-    });
-    if (validCredentials == null) {
-      return null;
-    }
-    if (!validCredentials){
+    while (!checkCredentials(project)){
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.isOK()){
         return null;
       }
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
+    final GithubSettings settings = GithubSettings.getInstance();
     final String validPassword = settings.getPassword();
     return accessToGithubWithModalProgress(project, settings.getHost(), new ThrowableComputable<RepositoryInfo, IOException>() {
       @Nullable
