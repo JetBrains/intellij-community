@@ -23,8 +23,8 @@ import org.apache.sanselan.Sanselan;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
-import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.ide.BuiltInServerManager;
+import org.jetbrains.ide.HttpRequestHandler;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
@@ -41,9 +41,9 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
 
     HttpRequest request = (HttpRequest)event.getMessage();
-    if (BuiltInServer.LOG.isDebugEnabled()) {
-      BuiltInServer.LOG.debug(request.toString());
-    }
+    //if (BuiltInServer.LOG.isDebugEnabled()) {
+      //BuiltInServer.LOG.debug(request.toString());
+    //}
 
     QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
 

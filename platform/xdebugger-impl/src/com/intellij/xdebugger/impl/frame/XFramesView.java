@@ -68,6 +68,7 @@ public class XFramesView extends XDebugViewBase {
 
     myFramesList = new XDebuggerFramesList(session.getProject());
     myFramesList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
         processFrameSelection();
@@ -85,6 +86,7 @@ public class XFramesView extends XDebugViewBase {
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
 
     myThreadComboBox = new JComboBox();
+    //noinspection unchecked
     myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
     myThreadComboBox.addItemListener(new MyItemListener());
     myToolbar = createToolbar();
@@ -121,6 +123,7 @@ public class XFramesView extends XDebugViewBase {
     return builder;
   }
 
+  @Override
   protected void rebuildView(final SessionEvent event) {
     if (event == SessionEvent.BEFORE_RESUME) return;
     if (event == SessionEvent.FRAME_CHANGED) {
@@ -148,6 +151,7 @@ public class XFramesView extends XDebugViewBase {
     XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
     for (XExecutionStack executionStack : executionStacks) {
       if (!myExecutionStacks.contains(executionStack)) {
+        //noinspection unchecked
         myThreadComboBox.addItem(executionStack);
         myExecutionStacks.add(executionStack);
       }
@@ -207,6 +211,7 @@ public class XFramesView extends XDebugViewBase {
   }
 
   private class MyItemListener implements ItemListener {
+    @Override
     public void itemStateChanged(final ItemEvent e) {
       if (!myListenersEnabled) return;
 
@@ -237,8 +242,10 @@ public class XFramesView extends XDebugViewBase {
       myNextFrameIndex = 1;
     }
 
+    @Override
     public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, final boolean last) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           myStackFrames.addAll(stackFrames);
           addFrameListElements(stackFrames, last);
@@ -252,8 +259,9 @@ public class XFramesView extends XDebugViewBase {
     }
 
     @Override
-    public void errorOccurred(final String errorMessage) {
+    public void errorOccurred(@NotNull final String errorMessage) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myErrorMessage == null) {
             myErrorMessage = errorMessage;
@@ -271,21 +279,20 @@ public class XFramesView extends XDebugViewBase {
           model.removeElementAt(model.getSize() - 1);
         }
         for (Object value : values) {
+          //noinspection unchecked
           model.addElement(value);
         }
         if (!last) {
+          //noinspection unchecked
           model.addElement(null);
         }
         myFramesList.repaint();
       }
     }
 
+    @Override
     public boolean isObsolete() {
       return !myRunning;
-    }
-
-    public void errorOccured(final String errorMessage) {
-      errorOccurred(errorMessage);
     }
 
     public void dispose() {
@@ -305,6 +312,7 @@ public class XFramesView extends XDebugViewBase {
       myRunning = false;
     }
 
+    @SuppressWarnings("unchecked")
     public void initModel(final DefaultListModel model) {
       model.removeAllElements();
       for (XStackFrame stackFrame : myStackFrames) {
