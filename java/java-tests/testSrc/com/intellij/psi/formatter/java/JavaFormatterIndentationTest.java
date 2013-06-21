@@ -40,7 +40,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
     // Checking that closing curly brace of initialization block that is not the first block on a line is correctly indented.
     doTextTest("class Class {\n" + "    private Type field; {\n" + "    }\n" + "}",
-               "class Class {\n" + "    private Type field; {\n" + "    }\n" + "}");
+               "class Class {\n" + "    private Type field;\n\n    {\n" + "    }\n" + "}");
     doTextTest(
       "class T {\n" +
       "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
@@ -49,7 +49,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}",
       "class T {\n" +
-      "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
+      "    private final DecimalFormat fmt = new DecimalFormat();\n\n    {\n" +
       "        fmt.setGroupingUsed(false);\n" +
       "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
       "    }\n" +

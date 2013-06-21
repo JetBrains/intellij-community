@@ -105,22 +105,23 @@ public class HgBranchPopupActions {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final String name = HgUtil.getNewBranchNameFromUser(myProject, "Create New Branch");
-      if (name != null) {
-        try {
-          new HgBranchCreateCommand(myProject, myPreselectedRepo, name).execute(new HgCommandResultHandler() {
-            @Override
-            public void process(@Nullable HgCommandResult result) {
-              myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
-              if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-                new HgCommandResultNotifier(myProject)
-                  .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
-              }
+      if (name == null) {
+        return;
+      }
+      try {
+        new HgBranchCreateCommand(myProject, myPreselectedRepo, name).execute(new HgCommandResultHandler() {
+          @Override
+          public void process(@Nullable HgCommandResult result) {
+            myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+            if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+              new HgCommandResultNotifier(myProject)
+                .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
             }
-          });
-        }
-        catch (HgCommandException exception) {
-          HgAbstractGlobalAction.handleException(myProject, exception);
-        }
+          }
+        });
+      }
+      catch (HgCommandException exception) {
+        HgAbstractGlobalAction.handleException(myProject, exception);
       }
     }
   }
@@ -153,7 +154,7 @@ public class HgBranchPopupActions {
       if (bookmarkDialog.isOK()) {
         try {
           final String name = bookmarkDialog.getName();
-          new HgBookmarkCreateCommand(myProject, myPreselectedRepo, name, bookmarkDialog.getRevision(),
+          new HgBookmarkCreateCommand(myProject, myPreselectedRepo, name,
                                       bookmarkDialog.isActive()).execute(new HgCommandResultHandler() {
             @Override
             public void process(@Nullable HgCommandResult result) {

@@ -50,9 +50,11 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     File cacheDir = new File(testHgDir, "cache");
     File testBranchFile = new File(testHgDir, "branch");
     File testBookmarkFile = new File(testHgDir, "bookmarks");
+    File testCurrentBookmarkFile = new File(testHgDir, "bookmarks.current");
     FileUtil.copyDir(cacheDir, new File(myHgDir, "cache"));
     FileUtil.copy(testBranchFile, new File(myHgDir, "branch"));
     FileUtil.copy(testBookmarkFile, new File(myHgDir, "bookmarks"));
+    FileUtil.copy(testCurrentBookmarkFile, new File(myHgDir, "bookmarks.current"));
 
     myRepositoryReader = new HgRepositoryReader(myHgDir);
     myBranches = readBranches();
@@ -91,6 +93,12 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     return branches;
   }
 
+
+  public void testCurrentBookmark() {
+    assertEquals(myRepositoryReader.readCurrentBookmark(), "B_BookMark");
+  }
+
+  @NotNull
   private Collection<String> readBookmarks() throws IOException {
     Collection<String> bookmarks = new HashSet<String>();
     File bookmarksFile = new File(myHgDir, "bookmarks");

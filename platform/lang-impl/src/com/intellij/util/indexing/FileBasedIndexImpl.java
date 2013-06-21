@@ -1764,6 +1764,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
           catch (ProcessCanceledException e) {
             cleanFileContent(fc, psiFile);
+            myChangedFilesCollector.invalidateIndicesForFile(file, true);
             throw e;
           }
           catch (StorageException e) {

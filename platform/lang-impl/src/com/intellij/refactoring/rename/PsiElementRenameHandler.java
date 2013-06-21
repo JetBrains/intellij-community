@@ -83,7 +83,9 @@ public class PsiElementRenameHandler implements RenameHandler {
       return;
     }
 
-    if (nameSuggestionContext != null && !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
+    if (nameSuggestionContext != null &&
+        nameSuggestionContext.isPhysical() &&
+        !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
       final String message = "Selected element is used from non-project files. These usages won't be renamed. Proceed anyway?";
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
       if (Messages.showYesNoDialog(project, message,

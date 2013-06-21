@@ -98,6 +98,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         PsiDocumentManagerBase.checkConsistency(psiFile, document);
       }
     }
+
+    psiFile.getViewProvider().contentsSynchronized();
   }
 
   @Override

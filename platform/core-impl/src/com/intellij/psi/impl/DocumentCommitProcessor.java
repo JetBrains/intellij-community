@@ -106,10 +106,8 @@ public abstract class DocumentCommitProcessor {
   @Nullable("returns runnable to execute under write action in AWT to finish the commit")
   public Processor<Document> doCommit(@NotNull final CommitTask task,
                                       @NotNull final PsiFile file,
-                                      final boolean synchronously,
-                                      @NotNull PsiDocumentManager documentManager) {
+                                      final boolean synchronously) {
     Document document = task.document;
-    ((PsiDocumentManagerBase)documentManager).clearTreeHardRef(document);
     final TextBlock textBlock = TextBlock.get(file);
     if (textBlock.isEmpty()) return null;
     final long startDocModificationTimeStamp = document.getModificationStamp();

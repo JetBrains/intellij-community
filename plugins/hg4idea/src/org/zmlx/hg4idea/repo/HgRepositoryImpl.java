@@ -130,7 +130,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
       myCurrentBranch = myReader.readCurrentBranch();
       myBranches = myReader.readBranches();
       myBookmarks = myReader.readBookmarks();
-      myCurrentBookmark = myReader.readActiveBookmark();
+      myCurrentBookmark = myReader.readCurrentBookmark();
     }
   }
 }

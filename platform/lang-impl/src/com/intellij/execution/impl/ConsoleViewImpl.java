@@ -747,7 +747,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final EditorNotificationPanel comp = new EditorNotificationPanel() {
           {
             myLabel.setIcon(AllIcons.General.ExclMark);
-            myLabel.setText("Too many output to process");
+            myLabel.setText("Too much output to process");
           }
         };
         add(comp, BorderLayout.NORTH);

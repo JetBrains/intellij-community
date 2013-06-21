@@ -408,7 +408,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         List<PsiFile> psiFiles = viewProvider.getAllFiles();
         for (PsiFile file : psiFiles) {
           if (file.isValid() && file != excludeFile) {
-            Processor<Document> finishProcessor = doCommit(task, file, synchronously, documentManager);
+            Processor<Document> finishProcessor = doCommit(task, file, synchronously);
             if (finishProcessor != null) {
               finishProcessors.add(finishProcessor);
             }

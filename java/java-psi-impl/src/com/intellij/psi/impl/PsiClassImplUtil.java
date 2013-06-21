@@ -570,8 +570,8 @@ public class PsiClassImplUtil {
           if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
             resolved = true;
           }
-          if (resolved) return false;
         }
+        if (resolved) return false;
 
         if (visited != null) {
           for (Pair<PsiMember, PsiSubstitutor> aList : list) {
