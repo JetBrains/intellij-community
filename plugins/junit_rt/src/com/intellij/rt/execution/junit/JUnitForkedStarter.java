@@ -19,6 +19,7 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -90,7 +91,7 @@ public class JUnitForkedStarter {
     final Object description = testRunner.getTestToStart(args);
     if (description == null) return -1;
 
-    TreeSender.sendTree(testRunner, description);
+    TreeSender.sendTree(testRunner, description, true);
 
     long time = System.currentTimeMillis();
 
@@ -111,7 +112,7 @@ public class JUnitForkedStarter {
 
             final FileOutputStream writer = new FileOutputStream(tempFile);
 
-            String firstName = null;
+            List classNames = new ArrayList();
             try {
               final int classNamesSize = Integer.parseInt(perDirReader.readLine());
               writer.write((packageName + ", working directory: \'" + workingDir + "\'\n").getBytes("UTF-8")); //instead of package name
@@ -121,9 +122,7 @@ public class JUnitForkedStarter {
                   System.err.println("Class name is expected. Working dir: " + workingDir);
                   return -1;
                 }
-                if (firstName == null) {
-                  firstName = className;
-                }
+                classNames.add(className);
                 writer.write((className + "\n").getBytes("UTF-8"));
               }
             }
@@ -131,14 +130,20 @@ public class JUnitForkedStarter {
               writer.close();
             }
 
-            final Object rootDescriptor = findByClassName(testRunner, firstName, description);
+            final Object rootDescriptor = findByClassName(testRunner, (String)classNames.get(0), description);
             final int childResult;
             final File dir = new File(workingDir);
             if (forkMode.equals("none")) {
               childResult =
-                runChild(rootDescriptor, isJUnit4, listeners, out, err, parameters, testRunner, false, "@" + tempFile.getAbsolutePath(), dir);
+                runChild(isJUnit4, listeners, out, err, parameters, "@" + tempFile.getAbsolutePath(), dir,
+                         String.valueOf(testRunner.getRegistry().getKnownObject(rootDescriptor) - 1));
             } else {
-              final List children = testRunner.getChildTests(rootDescriptor);
+              final List children = new ArrayList(testRunner.getChildTests(description));
+              for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+                if (!classNames.contains(testRunner.getTestClassName(iterator.next()))) {
+                  iterator.remove();
+                }
+              }
               final boolean forkTillMethod = forkMode.equalsIgnoreCase("method");
               childResult = processChildren(isJUnit4, listeners, out, err, parameters, testRunner, children, result, forkTillMethod, dir);
             }
@@ -186,34 +191,39 @@ public class JUnitForkedStarter {
     for (int i = 0, argsLength = children.size(); i < argsLength; i++) {
       final Object child = children.get(i);
       final List childTests = testRunner.getChildTests(child);
-      final int childResult = childTests.isEmpty() || !forkTillMethod
-                              ? runChild(child, isJUnit4, listeners, out, err, parameters, testRunner, forkTillMethod || workingDir != null, testRunner.getStartDescription(child), workingDir)
-                              : processChildren(isJUnit4, listeners, out, err, parameters, testRunner, childTests, result, forkTillMethod, workingDir);
+      final int childResult;
+      if (childTests.isEmpty() || !forkTillMethod) {
+        final int startIndex = testRunner.getRegistry().getKnownObject(child);
+        childResult =
+          runChild(isJUnit4, listeners, out, err, parameters, testRunner.getStartDescription(child), workingDir,
+                   String.valueOf(startIndex));
+      }
+      else {
+        childResult =
+          processChildren(isJUnit4, listeners, out, err, parameters, testRunner, childTests, result, forkTillMethod, workingDir);
+      }
       result = Math.min(childResult, result);
     }
     return result;
   }
 
-  private static int runChild(Object child,
-                              boolean isJUnit4,
+  private static int runChild(boolean isJUnit4,
                               List listeners,
                               SegmentedOutputStream out,
                               SegmentedOutputStream err,
                               List parameters,
-                              IdeaTestRunner testRunner,
-                              boolean forkTillMethod,
                               String description,
-                              File workingDir) throws IOException, InterruptedException {
+                              File workingDir, 
+                              String startIndex) throws IOException, InterruptedException {
     //noinspection SSBasedInspection
     final File tempFile = File.createTempFile("fork", "test");
     final String testOutputPath = tempFile.getAbsolutePath();
-    final int knownObject = testRunner.getRegistry().getKnownObject(child);
 
     final ProcessBuilder builder = new ProcessBuilder();
     builder.add(parameters);
     builder.add(JUnitForkedStarter.class.getName());
     builder.add(testOutputPath);
-    builder.add(String.valueOf(knownObject + (forkTillMethod ? 0 : 1)));
+    builder.add(startIndex);
     builder.add(String.valueOf(isJUnit4));
     builder.add(description);
     builder.add(listeners);

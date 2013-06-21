@@ -47,7 +47,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       else if (request instanceof FilterRequest) {
         description = getFilteredDescription(request, description);
       }
-      if (sendTree) TreeSender.sendTree(this, description);
+      TreeSender.sendTree(this, description, sendTree);
     }
     catch (Exception e) {
       //noinspection HardCodedStringLiteral

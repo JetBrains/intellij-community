@@ -130,15 +130,13 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   }
 
   public TestResult doRun(Test suite, boolean wait) {  //todo
-    if (mySendTree) {
-      try {
-        TreeSender.sendTree(this, suite);
-      }
-      catch (Exception e) {
-        //noinspection HardCodedStringLiteral
-        System.err.println("Internal Error occured.");
-        e.printStackTrace(System.err);
-      }
+    try {
+      TreeSender.sendTree(this, suite, mySendTree);
+    }
+    catch (Exception e) {
+      //noinspection HardCodedStringLiteral
+      System.err.println("Internal Error occured.");
+      e.printStackTrace(System.err);
     }
     return super.doRun(suite, wait);
   }
