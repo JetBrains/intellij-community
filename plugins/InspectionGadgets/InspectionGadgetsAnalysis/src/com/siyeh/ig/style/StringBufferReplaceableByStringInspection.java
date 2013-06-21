@@ -337,11 +337,11 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length == 1) {
-      return true;
+    if (arguments.length == 3) {
+      return arguments[0].getType() instanceof PsiArrayType &&
+             arguments[1].getType() == PsiType.INT && arguments[2].getType() == PsiType.INT;
     }
-    final PsiExpression argument = arguments[0];
-    return argument.getType() instanceof PsiArrayType;
+    return arguments.length == 1;
   }
 
   public static boolean isToStringCall(PsiElement element) {
