@@ -65,8 +65,11 @@ public class UnindexedFilesUpdater implements CacheUpdater {
 
   @Override
   public void processFile(final FileContent fileContent) {
-    myIndex.indexFileContent(myProject, fileContent);
-    IndexingStamp.flushCache(fileContent.getVirtualFile());
+    try {
+      myIndex.indexFileContent(myProject, fileContent);
+    } finally {
+      IndexingStamp.flushCache(fileContent.getVirtualFile());
+    }
   }
 
   @Override
