@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.connections.ssh;
 
+import com.intellij.cvsSupport2.config.ProxySettings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
@@ -30,9 +31,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SocksAuthenticatorManager {
-  private final static String SOCKS_REQUESTING_PROTOCOL = "SOCKS";
+
   private final Object myLock;
-  private CvsProxySelector mySelector;
+  private volatile CvsProxySelector mySelector;
 
   public static SocksAuthenticatorManager getInstance() {
     return ServiceManager.getService(SocksAuthenticatorManager.class);
@@ -53,6 +54,9 @@ public class SocksAuthenticatorManager {
 
   public void unregister(final ConnectionSettings connectionSettings) {
     SshLogger.debug("unregister in authenticator");
+    if (!connectionSettings.isUseProxy()) return;
+    final int proxyType = connectionSettings.getProxyType();
+    if (proxyType != ProxySettings.SOCKS4 && proxyType != ProxySettings.SOCKS5) return;
     mySelector.unregister(connectionSettings.getHostName(), connectionSettings.getPort());
     CommonProxy.getInstance().removeCustomAuth(getClass().getName());
   }
