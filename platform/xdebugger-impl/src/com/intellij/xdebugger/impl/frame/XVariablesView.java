@@ -52,6 +52,7 @@ public class XVariablesView extends XDebugViewBase {
     DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
   }
 
+  @Override
   protected void rebuildView(final SessionEvent event) {
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myDebuggerTreePanel.getTree();
