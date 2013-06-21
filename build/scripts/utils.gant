@@ -61,7 +61,7 @@ binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
 binding.setVariable("yjpOptions", { String systemSelector, String platformSuffix = "" ->
-  "-agentlib:yjpagent$platformSuffix=disablej2ee,disablealloc,disabletracing,onlylocal,builtinprobes=none,disableexceptiontelemetry,sessionname=$systemSelector".trim()
+  "-agentlib:yjpagent$platformSuffix=disablej2ee,disablealloc,disabletracing,onlylocal,builtinprobes=none,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
 })
 
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
