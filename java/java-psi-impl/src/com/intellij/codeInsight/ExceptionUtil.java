@@ -20,10 +20,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.MethodProcessorSetupFailedException;
+import com.intellij.psi.scope.processor.MethodResolverProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -400,13 +401,43 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
 
-    final PsiSubstitutor substitutor = ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
-      @Override
-      public PsiSubstitutor compute() {
-        return result.getSubstitutor();
+    final PsiSubstitutor substitutor = result.getSubstitutor();
+    if (method != null && !isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
+      final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
+      if (thrownExceptions.length > 0) {
+        final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall);
+        try {
+          PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
+          final List<CandidateInfo> results = processor.getResults();
+          if (results.size() > 1) {
+            final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions);
+            for (CandidateInfo info : results) {
+              final PsiElement element = info.getElement();
+              if (element instanceof PsiMethod && MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element)) {
+                ex.retainAll(collectSubstituted(info.getSubstitutor(), ((PsiMethod)element).getThrowsList().getReferencedTypes()));
+              }
+            }
+            return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()]));
+          }
+        }
+        catch (MethodProcessorSetupFailedException ignore) {
+          return Collections.emptyList();
+        }
       }
-    });
+    }
+
     return getUnhandledExceptions(method, methodCall, topElement, substitutor);
+  }
+
+  private static List<PsiClassType> collectSubstituted(PsiSubstitutor substitutor, PsiClassType[] thrownExceptions) {
+    final List<PsiClassType> ex = new ArrayList<PsiClassType>();
+    for (PsiClassType thrownException : thrownExceptions) {
+      final PsiType psiType = substitutor.substitute(thrownException);
+      if (psiType instanceof PsiClassType) {
+        ex.add((PsiClassType)psiType);
+      }
+    }
+    return ex;
   }
 
   @NotNull
@@ -466,6 +497,13 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
     final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
+    return getUnhandledExceptions(element, topElement, substitutor, referencedTypes);
+  }
+
+  private static List<PsiClassType> getUnhandledExceptions(PsiElement element,
+                                                           PsiElement topElement,
+                                                           PsiSubstitutor substitutor,
+                                                           PsiClassType[] referencedTypes) {
     if (referencedTypes.length > 0) {
       List<PsiClassType> result = ContainerUtil.newArrayList();
 
