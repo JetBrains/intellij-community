@@ -64,4 +64,5 @@ public interface GitRepositoryManager {
 
   void updateAllRepositories();
 
+  void waitUntilInitialized();
 }

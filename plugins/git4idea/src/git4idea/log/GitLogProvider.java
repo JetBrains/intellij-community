@@ -66,6 +66,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @Override
   public Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException {
+    myRepositoryManager.waitUntilInitialized();
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);

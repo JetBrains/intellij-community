@@ -71,4 +71,8 @@ public class GitTestRepositoryManager implements GitRepositoryManager {
   public void updateAllRepositories() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  void waitUntilInitialized() {
+  }
 }

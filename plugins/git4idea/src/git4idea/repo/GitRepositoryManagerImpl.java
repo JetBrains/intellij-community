@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +35,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -47,11 +47,12 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
 
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private AbstractVcs myVcs;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
 
   @NotNull private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
-  @NotNull private final GitPlatformFacade myPlatformFacade;
+  @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
   public GitRepositoryManagerImpl(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
                                   @NotNull ProjectLevelVcsManager vcsManager) {
@@ -68,15 +69,6 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       GitRootScanner.start(myProject);
     }
-
-    // TODO hack for GitLogProvider to be able to get actual refs data when requested from VcsLogManager in a post-startup activity
-    // need to come up with a right fix for it.
-    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        updateRepositoriesCollection();
-      }
-    });
   }
 
   @Override
@@ -218,6 +210,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     try {
       myRepositories.clear();
       myRepositories.putAll(repositories);
+      myInitializationWaiter.countDown();
     }
     finally {
         REPO_LOCK.writeLock().unlock();
@@ -238,4 +231,13 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     return "GitRepositoryManager{myRepositories: " + myRepositories + '}';
   }
 
+  @Override
+  public void waitUntilInitialized() {
+    try {
+      myInitializationWaiter.await();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+  }
 }
