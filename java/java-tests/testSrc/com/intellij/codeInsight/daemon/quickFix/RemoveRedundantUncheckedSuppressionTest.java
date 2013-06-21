@@ -32,7 +32,7 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCa
     final UncheckedWarningLocalInspection warningLocalInspection = new UncheckedWarningLocalInspection();
     final RedundantSuppressInspection inspection = new RedundantSuppressInspection(){
       @Override
-      protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, InspectionManager manager) {
+      protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
         return new InspectionToolWrapper[]{
           new LocalInspectionToolWrapper(varargsInspection),
           new LocalInspectionToolWrapper(warningLocalInspection)

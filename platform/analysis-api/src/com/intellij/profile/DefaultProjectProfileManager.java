@@ -49,6 +49,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   private static final String VERSION = "1.0";
 
+  @NotNull
   protected final Project myProject;
 
   /** This field is used for serialization. Do not rename it or make access weaker */
@@ -63,7 +64,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
-  public DefaultProjectProfileManager(final Project project, final ApplicationProfileManager applicationProfileManager,
+  public DefaultProjectProfileManager(@NotNull final Project project, final ApplicationProfileManager applicationProfileManager,
                                       final DependencyValidationManager holder) {
     myProject = project;
     myHolder = holder;
