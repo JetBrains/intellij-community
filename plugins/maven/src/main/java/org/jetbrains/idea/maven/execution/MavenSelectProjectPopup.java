@@ -75,8 +75,10 @@ public class MavenSelectProjectPopup {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          e.consume();
-          showModulesButton.doClick();
+          if (!e.isConsumed()) { // May be consumed by path completion.
+            e.consume();
+            showModulesButton.doClick();
+          }
         }
       }
     });
