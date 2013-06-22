@@ -116,6 +116,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     }
   }
 
+  @NotNull
   @Override
   public String toLogString() {
     return String.format("HgRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",
