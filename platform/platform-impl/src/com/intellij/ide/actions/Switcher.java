@@ -233,7 +233,7 @@ public class Switcher extends AnAction implements DumbAware {
       pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
 
       final Font font = pathLabel.getFont();
-      pathLabel.setFont(font.deriveFont((float)10));
+      pathLabel.setFont(font.deriveFont(Math.max(10f, font.getSize() - 4f)));
 
       descriptions = new JPanel(new BorderLayout()) {
         @Override
