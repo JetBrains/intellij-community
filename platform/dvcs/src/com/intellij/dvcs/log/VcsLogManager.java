@@ -17,6 +17,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefresher;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,7 @@ public class VcsLogManager extends AbstractProjectComponent {
         VcsLogDataHolder.init(myProject, logProvider, root, new Consumer<VcsLogDataHolder>() {
           @Override
           public void consume(VcsLogDataHolder vcsLogDataHolder) {
+            myProject.getMessageBus().connect(myProject).subscribe(VcsLogRefresher.TOPIC, vcsLogDataHolder);
             VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject);
             mainPanel.init(logUI.getMainFrame().getMainComponent());
           }

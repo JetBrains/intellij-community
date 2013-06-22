@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogSettings;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.GitLogIcons;
@@ -67,6 +68,7 @@ public class MainFrame {
         myLogDataHolder.refresh(new Runnable() {
           @Override
           public void run() {
+            myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refreshAll();
             myUI.reloadModel();
             myUI.updateUI();
           }

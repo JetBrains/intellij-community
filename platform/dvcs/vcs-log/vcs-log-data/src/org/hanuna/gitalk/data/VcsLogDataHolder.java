@@ -20,11 +20,13 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefresher;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Kirill Likhodedov
  */
-public class VcsLogDataHolder {
+public class VcsLogDataHolder implements VcsLogRefresher {
 
   private static final Logger LOG = Logger.getInstance("Git.Log");
 
@@ -80,7 +82,31 @@ public class VcsLogDataHolder {
       }
     });
   }
-  
+
+  @Override
+  public void refreshAll() {
+    refresh(EmptyRunnable.getInstance());
+  }
+
+  @Override
+  public void refreshRefs() {
+    // TODO
+    refreshAll();
+    //myDataLoaderQueue.run(new Task.Backgroundable() {
+    //  @Override
+    //  public void run(@NotNull ProgressIndicator indicator) {
+    //    try {
+    //      Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
+    //      myDataPack = DataPack.build(myDataPack.get)
+    //    }
+    //    catch (VcsException e) {
+    //      // TODO
+    //      throw new RuntimeException(e);
+    //    }
+    //  }
+    //});
+  }
+
   private static void doRefresh(@NotNull BackgroundTaskQueue queue, @NotNull Project project, @NotNull final VcsLogProvider logProvider,
                                 @NotNull final VirtualFile root, @NotNull final VcsCommitCache commitCache,
                                 @NotNull final Consumer<DataPack> dataPackConsumer) {
