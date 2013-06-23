@@ -368,8 +368,10 @@ class PyDocumentationBuilder {
     if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
         DocStringUtil.isEpydocDocString(preparedDocstring)) {
       final EpydocString epydocString = new EpydocString(preparedDocstring);
-
-      String formatted = epydocString.getDescription();
+      String formatted = EpydocRunner.formatDocstring(module, docstring);
+      if (formatted == null) {
+        formatted = epydocString.getDescription();
+      }
       result.add(formatted);
       result.add(formatStructuredDocString(epydocString));
       unformattedOutput.add(result);

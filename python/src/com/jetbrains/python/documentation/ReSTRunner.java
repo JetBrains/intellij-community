@@ -22,6 +22,7 @@ public class ReSTRunner {
   @Nullable
   public static String formatDocstring(@NotNull Sdk sdk, String text) {
     String sdkHome = sdk.getHomePath();
+    if (sdkHome == null) return null;
     final String formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
     ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(),
                                                       new String[]{
