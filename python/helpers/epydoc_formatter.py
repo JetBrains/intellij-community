@@ -1,10 +1,18 @@
-import re
-import string
 import sys
 from epydoc.markup import DocstringLinker
-from epydoc.markup.epytext import parse_docstring, ParseError
+from epydoc.markup.epytext import parse_docstring, ParseError, _colorize
+import epydoc.markup.epytext
 
-def is_fatal(self):
+def _add_para(doc, para_token, stack, indent_stack, errors):
+  """Colorize the given paragraph, and add it to the DOM tree."""
+  para = _colorize(doc, para_token, errors)
+  if para_token.inline:
+    para.attribs['inline'] = True
+  stack[-1].children.append(para)
+
+epydoc.markup.epytext._add_para = _add_para
+
+def is_fatal():
   return False
 
 ParseError.is_fatal = is_fatal
