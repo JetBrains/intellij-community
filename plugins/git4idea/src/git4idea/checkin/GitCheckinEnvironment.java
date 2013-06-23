@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
@@ -658,7 +659,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.insets = insets;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      myAmend = new JCheckBox(GitBundle.getString("commit.amend"));
+      myAmend = new NonFocusableCheckBox(GitBundle.getString("commit.amend"));
       myAmend.setMnemonic('m');
       myAmend.setSelected(false);
       myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
