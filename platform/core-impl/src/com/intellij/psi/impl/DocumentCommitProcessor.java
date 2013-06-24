@@ -52,7 +52,7 @@ import java.util.Arrays;
 public abstract class DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
 
-  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project, PsiFile excludeFile);
+  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project);
   public abstract void commitAsynchronously(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason);
 
   protected static class CommitTask {
