@@ -76,16 +76,15 @@ public class ExtConnection extends ConnectionOnProcess {
   private void check(ICvsCommandStopper stopper, String expectedResult) throws IOException, AuthenticationException {
     InputStreamWrapper streamWrapper = new InputStreamWrapper(myInputStream, stopper, new ReadWriteStatistics());
     try {
-      int i;
       StringBuilder buffer = new StringBuilder();
       while (true) {
-        i = streamWrapper.read();
+        int i = streamWrapper.read();
         if (i == -1 || i == '\n' || i == ' ' || i == '\r') break;
         buffer.append((char)i);
       }
       String read = buffer.toString().trim();
       if (!expectedResult.equals(read)) {
-        if (StringUtil.startsWithConcatenation(read, myUserName + "@", myHost)) {
+        if (StringUtil.startsWithConcatenation(read, myUserName, "@", myHost)) {
           throw new AuthenticationException(CvsBundle.message("exception.text.ext.server.rejected.access"), null);
         }
         else {
@@ -110,12 +109,12 @@ public class ExtConnection extends ConnectionOnProcess {
     command.addParameter("-l");
     command.addParameter(userName);
 
-    if (config.PRIVATE_KEY_FILE.length() > 0) {
+    if (!config.PRIVATE_KEY_FILE.isEmpty()) {
       command.addParameter("-i");
       command.addParameter(config.PRIVATE_KEY_FILE);
     }
 
-    if (config.ADDITIONAL_PARAMETERS.length() > 0) {
+    if (!config.ADDITIONAL_PARAMETERS.isEmpty()) {
       StringTokenizer parameters = new StringTokenizer(config.ADDITIONAL_PARAMETERS, " ");
       while (parameters.hasMoreTokens()) command.addParameter(parameters.nextToken());
     }

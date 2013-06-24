@@ -118,9 +118,8 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     if (!(sourceException instanceof IOException)) return t;
     String localizedMessage = t.getLocalizedMessage();
     if (localizedMessage == null || !localizedMessage.startsWith(UNHANDLED_RESPONSE_PREFIX)) return t;
-    String response = localizedMessage.substring(UNHANDLED_RESPONSE_PREFIX.length(),
-                                                 localizedMessage.length() - 1);
-    if (StringUtil.startsWithConcatenation(response, USER + "@", HOST)) {
+    String response = localizedMessage.substring(UNHANDLED_RESPONSE_PREFIX.length(), localizedMessage.length() - 1);
+    if (StringUtil.startsWithConcatenation(response, USER, "@", HOST)) {
       return new IOCommandException(new IOException(CvsBundle.message("exception.text.ext.server.rejected.access")));
     }
     else {
