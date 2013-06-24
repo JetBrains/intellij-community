@@ -83,12 +83,19 @@ public class UnSelectWordHandler extends EditorActionHandler {
       }
     }
 
-    while (element instanceof PsiWhiteSpace) {
-      if (element.getNextSibling() == null) {
+    if (element instanceof PsiWhiteSpace) {
+      PsiElement nextSibling = element.getNextSibling();
+      if (nextSibling == null) {
         element = element.getParent();
+        if (element == null || element instanceof PsiFile) {
+          return;
+        }
+        nextSibling = element.getNextSibling();
+        if (nextSibling == null) {
+          return;
+        }
       }
-
-      element = element.getNextSibling();
+      element = nextSibling;
       cursorOffset = element.getTextRange().getStartOffset();
     }
 
