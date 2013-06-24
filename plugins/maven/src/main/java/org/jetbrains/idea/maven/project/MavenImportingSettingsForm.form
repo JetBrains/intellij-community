@@ -272,7 +272,7 @@
         <properties>
           <labelFor value="83bca"/>
           <text value="Dependency types:"/>
-          <toolTipText value="Comma separated list of dependency types those must be added as external libraries on import"/>
+          <toolTipText resource-bundle="ProjectBundle" key="maven.import.dependency.type.description"/>
         </properties>
       </component>
       <component id="83bca" class="javax.swing.JTextField" binding="myDependencyTypes">
@@ -283,7 +283,7 @@
         </constraints>
         <properties>
           <columns value="0"/>
-          <toolTipText value="Comma separated list of dependency types those must be added as external libraries on import"/>
+          <toolTipText resource-bundle="ProjectBundle" key="maven.import.dependency.type.description"/>
         </properties>
       </component>
       <component id="d634c" class="com.intellij.ui.components.JBLabel">
@@ -294,7 +294,7 @@
           <componentStyle value="SMALL"/>
           <fontColor value="BRIGHTER"/>
           <labelFor value="83bca"/>
-          <text value="Comma separated list of dependency types that should be imported"/>
+          <text resource-bundle="ProjectBundle" key="maven.import.dependency.type.description"/>
         </properties>
       </component>
     </children>
