@@ -646,14 +646,14 @@ public class CompileDriver {
 
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode(), true, true,
-                                                      isCompilationStartedAutomatically(scope));
+    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
 
     StatusBar.Info.set("", myProject, "Compiler");
     if (useExtProcessBuild) {
       // ensure the project model seen by build process is up-to-date
       myProject.save();
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!isUnitTestMode) {
         ApplicationManager.getApplication().saveSettings();
       }
     }
@@ -751,7 +751,9 @@ public class CompileDriver {
               compileContext.addMessage(message);
             }
             else {
-              notifyDeprecatedImplementation();
+              if (!isUnitTestMode) {
+                notifyDeprecatedImplementation();
+              }
             }
             
             TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject, compileContext.getProgressIndicator());
