@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -52,19 +53,19 @@ import java.util.*;
  * @author max
  */
 public class QuickFixAction extends AnAction {
-  protected InspectionTool myTool;
+  protected final InspectionToolWrapper myToolWrapper;
 
   public static InspectionResultsView getInvoker(AnActionEvent e) {
     return InspectionResultsView.DATA_KEY.getData(e.getDataContext());
   }
 
-  protected QuickFixAction(String text, @NotNull InspectionTool tool) {
-    this(text, AllIcons.Actions.CreateFromUsage, null, tool);
+  protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {
+    this(text, AllIcons.Actions.CreateFromUsage, null, toolWrapper);
   }
 
-  protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionTool tool) {
+  protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
     super(text, null, icon);
-    myTool = tool;
+    myToolWrapper = toolWrapper;
     if (keyStroke != null) {
       registerCustomShortcutSet(new CustomShortcutSet(keyStroke), null);
     }
@@ -79,8 +80,8 @@ public class QuickFixAction extends AnAction {
     }
 
     final InspectionTree tree = view.getTree();
-    final InspectionTool tool = tree.getSelectedTool();
-    if (!view.isSingleToolInSelection() || tool != myTool) {
+    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
+    if (!view.isSingleToolInSelection() || toolWrapper != myToolWrapper) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
       return;
@@ -131,12 +132,9 @@ public class QuickFixAction extends AnAction {
       }
     }
 
-    if (!readOnlyFiles.isEmpty()) {
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyFiles));
-      if (operationStatus.hasReadonlyFiles()) return;
-    }
+    if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
 
-    final RefManagerImpl refManager = (RefManagerImpl)myTool.getContext().getRefManager();
+    final RefManagerImpl refManager = (RefManagerImpl)myToolWrapper.getContext().getRefManager();
 
     final boolean initial = refManager.isInProcess();
 
@@ -162,22 +160,22 @@ public class QuickFixAction extends AnAction {
         }
       }, getTemplatePresentation().getText(), null);
 
-      refreshViews(project, ignoredElements, myTool);
+      refreshViews(project, ignoredElements, myToolWrapper);
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
     }
   }
 
-  public void doApplyFix(final RefElement[] refElements, InspectionResultsView view) {
-    final RefManagerImpl refManager = (RefManagerImpl)myTool.getContext().getRefManager();
+  public void doApplyFix(@NotNull final RefElement[] refElements, @NotNull InspectionResultsView view) {
+    final RefManagerImpl refManager = (RefManagerImpl)view.getGlobalInspectionContext().getRefManager();
 
     final boolean initial = refManager.isInProcess();
 
     refManager.inspectionReadActionFinished();
 
     try {
-      final boolean[] refreshNeeded = new boolean[]{false};
+      final boolean[] refreshNeeded = {false};
       if (refElements.length > 0) {
         final Project project = refElements[0].getRefManager().getProject();
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -194,7 +192,7 @@ public class QuickFixAction extends AnAction {
         }, getTemplatePresentation().getText(), null);
       }
       if (refreshNeeded[0]) {
-        refreshViews(view.getProject(), refElements, myTool);
+        refreshViews(view.getProject(), refElements, myToolWrapper);
       }
     }
     finally {  //to make offline view lazy
@@ -202,8 +200,8 @@ public class QuickFixAction extends AnAction {
     }
   }
 
-  public static void removeElements(final RefElement[] refElements, final Project project, final InspectionTool tool) {
-    refreshViews(project, refElements, tool);
+  public static void removeElements(@NotNull RefElement[] refElements, @NotNull Project project, @NotNull InspectionToolWrapper toolWrapper) {
+    refreshViews(project, refElements, toolWrapper);
     final ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
     for (RefElement refElement : refElements) {
       if (refElement == null) continue;
@@ -261,18 +259,18 @@ public class QuickFixAction extends AnAction {
     return selection.toArray(new RefElement[selection.size()]);
   }
 
-  private static void refreshViews(final Project project, final Set<PsiElement> selectedElements, final InspectionTool tool) {
+  private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> selectedElements, @NotNull InspectionToolWrapper toolWrapper) {
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
       for (PsiElement element : selectedElements) {
-        context.ignoreElement(tool, element);
+        context.ignoreElement(toolWrapper.getTool(), element);
       }
       context.refreshViews();
     }
   }
 
-  private static void refreshViews(final Project project, final RefElement[] refElements, final InspectionTool tool) {
+  private static void refreshViews(@NotNull Project project, @NotNull RefElement[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
     for (RefElement element : refElements) {
       final PsiElement psiElement = element != null ? element.getElement() : null;
@@ -280,7 +278,7 @@ public class QuickFixAction extends AnAction {
         ignoredElements.add(psiElement);
       }
     }
-    refreshViews(project, ignoredElements, tool);
+    refreshViews(project, ignoredElements, toolWrapper);
   }
 
   /**

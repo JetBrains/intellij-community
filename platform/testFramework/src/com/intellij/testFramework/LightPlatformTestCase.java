@@ -466,8 +466,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     enableInspectionTool(myAvailableInspectionTools, wrapper);
   }
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    //assert !(tool instanceof InspectionToolWrapper) : tool;
-    enableInspectionTool(myAvailableInspectionTools, InspectionToolRegistrar.wrapTool(tool));
+    InspectionToolWrapper toolWrapper = tool instanceof InspectionTool ? new CommonInspectionToolWrapper((InspectionTool)tool) : InspectionToolRegistrar.wrapTool(tool);
+    enableInspectionTool(myAvailableInspectionTools, toolWrapper);
   }
 
   private static void enableInspectionTool(@NotNull Map<String, InspectionToolWrapper> availableLocalTools, @NotNull InspectionToolWrapper wrapper) {

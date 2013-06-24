@@ -27,6 +27,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -39,18 +41,24 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.InspectionToolsConfigurable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 public class InspectionManagerEx extends InspectionManagerBase {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
@@ -131,6 +139,23 @@ public class InspectionManagerEx extends InspectionManagerBase {
         return fix.getFamilyName();
       }
     };
+  }
+
+  @Nullable
+  public static SuppressIntentionAction[] getSuppressActions(@NotNull InspectionProfileEntry tool) {
+    if (tool instanceof CustomSuppressableInspectionTool) {
+      return ((CustomSuppressableInspectionTool)tool).getSuppressActions(null);
+    }
+    if (tool instanceof BatchSuppressableTool) {
+      LocalQuickFix[] actions = ((BatchSuppressableTool)tool).getBatchSuppressActions(null);
+      return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<LocalQuickFix, SuppressIntentionAction>() {
+        @Override
+        public SuppressIntentionAction fun(final LocalQuickFix fix) {
+          return convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
+        }
+      });
+    }
+    return null;
   }
 
 
@@ -229,5 +254,42 @@ public class InspectionManagerEx extends InspectionManagerBase {
   @TestOnly
   public NotNullLazyValue<ContentManager> getContentManager() {
     return myContentManager;
+  }
+
+  private final AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
+  private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
+  public void buildInspectionSearchIndexIfNecessary() {
+    if (!myToolsAreInitialized.getAndSet(true)) {
+      final SearchableOptionsRegistrar myOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
+      final InspectionToolRegistrar toolRegistrar = InspectionToolRegistrar.getInstance();
+      final Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
+
+      app.executeOnPooledThread(new Runnable(){
+        @Override
+        public void run() {
+          List<InspectionToolWrapper> tools = toolRegistrar.createTools();
+          for (InspectionToolWrapper toolWrapper : tools) {
+            processText(toolWrapper.getDisplayName().toLowerCase(), toolWrapper, myOptionsRegistrar);
+
+            final String description = toolWrapper.loadDescription();
+            if (description != null) {
+              @NonNls String descriptionText = HTML_PATTERN.matcher(description).replaceAll(" ");
+              processText(descriptionText, toolWrapper, myOptionsRegistrar);
+            }
+          }
+        }
+      });
+    }
+  }
+
+  private static void processText(@NotNull @NonNls String descriptionText,
+                                  @NotNull InspectionToolWrapper tool,
+                                  @NotNull SearchableOptionsRegistrar myOptionsRegistrar) {
+    if (ApplicationManager.getApplication().isDisposed()) return;
+    final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
+    for (String word : words) {
+      myOptionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
+    }
   }
 }

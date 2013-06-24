@@ -21,6 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -39,9 +41,8 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix myFix;
   private String myText;
 
-  public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull DescriptorProviderInspection tool) {
-    super(fix.getName(), tool);
-    myTool = tool;
+  public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
+    super(fix.getName(), toolWrapper);
     myFix = fix;
     myText = myFix.getName();
   }
@@ -96,7 +97,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
                           @NotNull final Set<PsiElement> ignoredElements) {
     final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
     if (myFix instanceof BatchQuickFix) {
-      final ArrayList<PsiElement> collectedElementsToIgnore = new ArrayList<PsiElement>();
+      final List<PsiElement> collectedElementsToIgnore = new ArrayList<PsiElement>();
       final Runnable refreshViews = new Runnable() {
         @Override
         public void run() {
@@ -105,13 +106,13 @@ public class LocalQuickFixWrapper extends QuickFixAction {
             ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()));
           }
 
-          final RefManager refManager = myTool.getContext().getRefManager();
+          final RefManager refManager = myToolWrapper.getContext().getRefManager();
           final RefElement[] refElements = new RefElement[collectedElementsToIgnore.size()];
           for (int i = 0, collectedElementsToIgnoreSize = collectedElementsToIgnore.size(); i < collectedElementsToIgnoreSize; i++) {
             refElements[i] = refManager.getReference(collectedElementsToIgnore.get(i));
           }
 
-          removeElements(refElements, project, myTool);
+          removeElements(refElements, project, myToolWrapper);
         }
       };
 
@@ -143,7 +144,9 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
   private void ignore(@NotNull Set<PsiElement> ignoredElements, @NotNull CommonProblemDescriptor descriptor, @Nullable QuickFix fix) {
     if (fix != null) {
-      ((DescriptorProviderInspection)myTool).ignoreProblem(descriptor, fix);
+      InspectionToolPresentation presentation =
+        ((GlobalInspectionContextImpl)myToolWrapper.getContext()).getPresentation(myToolWrapper);
+      presentation.ignoreProblem(descriptor, fix);
     }
     if (descriptor instanceof ProblemDescriptor) {
       ignoredElements.add(((ProblemDescriptor)descriptor).getPsiElement());

@@ -1354,6 +1354,7 @@
 
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
+    <applicationService serviceImplementation="com.intellij.codeInspection.ex.SpecialToolsManager"/>
 
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
 

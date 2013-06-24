@@ -15,17 +15,10 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class ScopeToolStateUtil {
-  @Nullable
-  public static NamedScope getScope(@NotNull ScopeToolState toolState) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    return toolState.getScope(project);
-  }
+public interface InspectionPresentationProvider {
+  @NotNull
+  InspectionToolPresentation createPresentation(@NotNull InspectionToolWrapper toolWrapper);
 }

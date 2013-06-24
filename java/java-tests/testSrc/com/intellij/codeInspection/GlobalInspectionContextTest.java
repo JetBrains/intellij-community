@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 
 import java.util.ArrayList;
@@ -34,8 +35,8 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
   public void testProblemDuplication() throws Exception {
     String shortName = new VisibilityInspection().getShortName();
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
-    profile.disableAllTools();
-    profile.enableTool(shortName);
+    profile.disableAllTools(getProject());
+    profile.enableTool(shortName, getProject());
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
     context.setExternalProfile(profile);
@@ -45,18 +46,20 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     context.doInspections(scope, InspectionManager.getInstance(getProject()));
 
     Tools tools = context.getTools().get(shortName);
-    GlobalInspectionToolWrapper tool = (GlobalInspectionToolWrapper)tools.getTool();
-    assertEquals(1, tool.getProblemDescriptors().size());
+    GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    assertEquals(1, presentation.getProblemDescriptors().size());
 
     context.doInspections(scope, InspectionManager.getInstance(getProject()));
     tools = context.getTools().get(shortName);
-    tool = (GlobalInspectionToolWrapper)tools.getTool();
-    assertEquals(1, tool.getProblemDescriptors().size());
+    toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
+    presentation = context.getPresentation(toolWrapper);
+    assertEquals(1, presentation.getProblemDescriptors().size());
   }
 
   public void testRunInspectionContext() throws Exception {
     InspectionProfile profile = new InspectionProfileImpl("foo");
-    InspectionToolWrapper[] tools = (InspectionToolWrapper[])profile.getInspectionTools(null);
+    InspectionToolWrapper[] tools = profile.getInspectionTools(null);
     for (InspectionToolWrapper toolWrapper : tools) {
       if (!toolWrapper.isEnabledByDefault()) {
         InspectionManagerEx instance = (InspectionManagerEx)InspectionManager.getInstance(myProject);

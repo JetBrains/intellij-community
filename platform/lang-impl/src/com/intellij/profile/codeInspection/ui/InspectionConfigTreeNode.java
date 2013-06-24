@@ -17,7 +17,7 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.codeInspection.ex.ScopeToolStateUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.CheckedTreeNode;
@@ -37,7 +37,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     @Override
     protected Boolean compute() {
       Descriptor descriptor = getDescriptor();
-      if (descriptor != null) return descriptor.getInspectionProfile().isProperSetting(descriptor.getTool().getShortName());
+      if (descriptor != null) return descriptor.getInspectionProfile().isProperSetting(descriptor.getToolWrapper().getShortName());
       for (int i = 0; i < getChildCount(); i++) {
         InspectionConfigTreeNode node = (InspectionConfigTreeNode)getChildAt(i);
         if (node.isProperSetting()) {
@@ -48,7 +48,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     }
   };
 
-  public InspectionConfigTreeNode(Object userObject, ScopeToolState state, boolean byDefault, boolean inspectionNode) {
+  public InspectionConfigTreeNode(@NotNull Object userObject, ScopeToolState state, boolean byDefault, boolean inspectionNode) {
     super(userObject);
     myState = state;
     myByDefault = byDefault;
@@ -58,7 +58,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     }
   }
 
-  public InspectionConfigTreeNode(Descriptor descriptor, ScopeToolState state, boolean byDefault, boolean isEnabled,
+  public InspectionConfigTreeNode(@NotNull Descriptor descriptor, ScopeToolState state, boolean byDefault, boolean isEnabled,
                                   boolean inspectionNode) {
     this(descriptor, state, byDefault, inspectionNode);
     setChecked(isEnabled);
@@ -71,8 +71,8 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
   }
 
   @Nullable
-  public NamedScope getScope() {
-    return myState != null ? ScopeToolStateUtil.getScope(myState) : null;
+  public NamedScope getScope(Project project) {
+    return myState == null ? null : myState.getScope(project);
   }
 
   public boolean isByDefault() {

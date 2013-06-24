@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -40,11 +41,10 @@ public interface InspectionProfile extends Profile {
   /**
    * If you need to modify tool's settings, please use {@link #modifyToolSettings}
    */
-//  InspectionProfileWrapper
-  InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
+  InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
 
   @Nullable
-  InspectionProfileEntry getInspectionTool(@NotNull String shortName);
+  InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project);
 
   /** Returns (unwrapped) inspection */
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
@@ -72,7 +72,7 @@ public interface InspectionProfile extends Profile {
    * @return all (both enabled and disabled) tools
    */
   @NotNull
-  InspectionProfileEntry[] getInspectionTools(@Nullable PsiElement element);
+  InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element);
 
   void cleanup(@NotNull Project project);
 
@@ -86,7 +86,7 @@ public interface InspectionProfile extends Profile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  boolean isExecutable();
+  boolean isExecutable(Project project);
 
   boolean isEditable();
 

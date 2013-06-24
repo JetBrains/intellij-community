@@ -91,7 +91,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(@NotNull final Project project, final BaseAnalysisActionDialog dialog) {
     final AdditionalPanel panel = new AdditionalPanel();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     final JComboBox profiles = panel.myBrowseProfilesCombo.getComboBox();
@@ -121,7 +121,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         else {
           //if profile was disabled and cancel after apply was pressed
           final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
-          final boolean canExecute = profile != null && profile.isExecutable();
+          final boolean canExecute = profile != null && profile.isExecutable(project);
           dialog.setOKActionEnabled(canExecute);
         }
       }
@@ -130,7 +130,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       @Override
       public void actionPerformed(ActionEvent e) {
         myExternalProfile = (InspectionProfile)profiles.getSelectedItem();
-        final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable();
+        final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable(project);
         dialog.setOKActionEnabled(canExecute);
         if (canExecute) {
           manager.setProfile(myExternalProfile.getName());
@@ -138,7 +138,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       }
     });
     final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
-    dialog.setOKActionEnabled(profile != null && profile.isExecutable());
+    dialog.setOKActionEnabled(profile != null && profile.isExecutable(project));
     return panel.myAdditionalPanel;
   }
 

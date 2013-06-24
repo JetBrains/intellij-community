@@ -19,18 +19,18 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -68,7 +68,7 @@ public class InspectionProfileConvertor {
     renameOldDefaultsProfile();
   }
 
-  private boolean retrieveOldSettings(Element element) {
+  private boolean retrieveOldSettings(@NotNull Element element) {
     boolean hasOldSettings = false;
     for (final Object obj : element.getChildren(OPTION_TAG)) {
       Element option = (Element)obj;
@@ -87,7 +87,7 @@ public class InspectionProfileConvertor {
         Element e = (Element)o;
         String key = e.getName();
         String levelName = e.getAttributeValue(LEVEL_ATT);
-        HighlightSeverity severity = ((InspectionProfileManagerImpl)myManager).getSeverityRegistrar().getSeverity(levelName);
+        HighlightSeverity severity = ((SeverityProvider)myManager).getSeverityRegistrar().getSeverity(levelName);
         HighlightDisplayLevel level = severity == null ? null : HighlightDisplayLevel.find(severity);
         if (level == null) continue;
         myDisplayLevelMap.put(key, level);
@@ -97,9 +97,8 @@ public class InspectionProfileConvertor {
     return false;
   }
 
-  public void storeEditorHighlightingProfile(Element element) {
+  public void storeEditorHighlightingProfile(@NotNull Element element, @NotNull InspectionProfile editorProfile) {
     if (retrieveOldSettings(element)) {
-      final InspectionProfileImpl editorProfile = new InspectionProfileImpl(OLD_HIGHTLIGHTING_SETTINGS_PROFILE);
 
       final ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
 
@@ -116,7 +115,7 @@ public class InspectionProfileConvertor {
   public static Element convertToNewFormat(Element profileFile, InspectionProfile profile) throws IOException, JDOMException {
     Element rootElement = new Element(INSPECTIONS_TAG);
     rootElement.setAttribute(NAME_ATT, profile.getName());
-    final InspectionToolWrapper[] tools = (InspectionToolWrapper[])profile.getInspectionTools(null);
+    final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
     for (final Object o : profileFile.getChildren(INSP_TOOL_TAG)) {
       Element toolElement = ((Element)o).clone();
       String toolClassName = toolElement.getAttributeValue(CLASS_ATT);
@@ -162,7 +161,7 @@ public class InspectionProfileConvertor {
   }
 
   protected void fillErrorLevels(final ModifiableModel profile) {
-    InspectionToolWrapper[] toolWrappers = (InspectionToolWrapper[])profile.getInspectionTools(null);
+    InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     LOG.assertTrue(toolWrappers != null, "Profile was not correctly init");
     //fill error levels
     for (final String shortName : myDisplayLevelMap.keySet()) {
@@ -175,13 +174,13 @@ public class InspectionProfileConvertor {
 
       //set up tools for default profile
       if (level != HighlightDisplayLevel.DO_NOT_SHOW) {
-        profile.enableTool(shortName, null);
+        profile.enableTool(shortName, null, null);
       }
 
       if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {
         level = HighlightDisplayLevel.WARNING;
       }
-      profile.setErrorLevel(key, level);
+      profile.setErrorLevel(key, level, null);
     }
   }
 

@@ -31,27 +31,17 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.EntryPointsNode;
-import com.intellij.codeInspection.ui.InspectionNode;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.util.RefFilter;
-import com.intellij.icons.AllIcons;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -59,15 +49,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,40 +61,26 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
-public class UnusedDeclarationInspection extends FilteringInspectionTool {
+public class UnusedDeclarationInspection extends InspectionTool implements InspectionPresentationProvider {
   public boolean ADD_MAINS_TO_ENTRIES = true;
 
   public boolean ADD_APPLET_TO_ENTRIES = true;
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
 
-  private HashSet<RefElement> myProcessedSuspicious = null;
+  private Set<RefElement> myProcessedSuspicious = null;
   private int myPhase;
-  private final QuickFixAction[] myQuickFixActions;
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
-  private WeakUnreferencedFilter myFilter;
-  private DeadHTMLComposer myComposer;
   @NonNls public static final String SHORT_NAME = "UnusedDeclaration";
   @NonNls private static final String ALTERNATIVE_ID = "unused";
-
-  private static final String COMMENT_OUT_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.comment.quickfix");
-  private static final String DELETE_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix");
-
-  @NonNls private static final String DELETE = "delete";
-  @NonNls private static final String COMMENT = "comment";
-  @NonNls private static final String [] HINTS = {COMMENT, DELETE};
 
   public final EntryPoint[] myExtensions;
   private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspection.class.getName());
 
   public UnusedDeclarationInspection() {
-
-    myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     final EntryPoint[] deadCodeAddins = new EntryPoint[point.getExtensions().length];
     EntryPoint[] extensions = point.getExtensions();
@@ -132,10 +102,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     myExtensions = deadCodeAddins;
   }
 
-  @Override
-  public void initialize(@NotNull final GlobalInspectionContextImpl context) {
-    super.initialize(context);
-    ((EntryPointsManagerImpl)getEntryPointsManager()).setAddNonJavaEntries(ADD_NONJAVA_TO_ENTRIES);
+  private GlobalInspectionContextImpl getContext() {
+    return myContext;
   }
 
   private class OptionsPanel extends JPanel {
@@ -369,8 +337,9 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
   @Override
   public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
-    getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull final RefEntity refEntity) {
+    getContext().getRefManager().iterate(new RefJavaVisitor() {
+      @Override
+      public void visitElement(@NotNull final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           if (!refElement.isSuspicious()) return;
@@ -387,13 +356,15 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
           }
 
           refElement.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull RefMethod method) {
+            @Override
+            public void visitMethod(@NotNull RefMethod method) {
               if (isAddMainsEnabled() && method.isAppMain()) {
                 getEntryPointsManager().addEntryPoint(method, false);
               }
             }
 
-            @Override public void visitClass(@NotNull RefClass aClass) {
+            @Override
+            public void visitClass(@NotNull RefClass aClass) {
               if (isAddAppletEnabled() && aClass.isApplet() ||
                   isAddServletEnabled() && aClass.isServlet()) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
@@ -406,19 +377,20 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
     if (isAddNonJavaUsedEnabled()) {
       checkForReachables();
+      final StrictUnreferencedFilter strictUnreferencedFilter = new StrictUnreferencedFilter(this, myContext);
       ProgressManager.getInstance().runProcess(new Runnable() {
         @Override
         public void run() {
-          final RefFilter filter = new StrictUnreferencedFilter(UnusedDeclarationInspection.this);
-          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getRefManager().getProject());
-          getRefManager().iterate(new RefJavaVisitor() {
-            @Override public void visitElement(@NotNull final RefEntity refEntity) {
-              if (refEntity instanceof RefClass && filter.accepts((RefClass)refEntity)) {
+          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getContext().getRefManager().getProject());
+          getContext().getRefManager().iterate(new RefJavaVisitor() {
+            @Override
+            public void visitElement(@NotNull final RefEntity refEntity) {
+              if (refEntity instanceof RefClass && strictUnreferencedFilter.accepts((RefClass)refEntity)) {
                 findExternalClassReferences((RefClass)refEntity);
               }
               else if (refEntity instanceof RefMethod) {
                 RefMethod refMethod = (RefMethod)refEntity;
-                if (refMethod.isConstructor() && filter.accepts(refMethod)) {
+                if (refMethod.isConstructor() && strictUnreferencedFilter.accepts(refMethod)) {
                   findExternalClassReferences(refMethod.getOwnerClass());
                 }
               }
@@ -514,9 +486,10 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return false;
   }
 
+
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
-    private StrictUnreferencedFilter(@NotNull InspectionTool tool) {
-      super(tool);
+    private StrictUnreferencedFilter(@NotNull UnusedDeclarationInspection tool, @NotNull GlobalInspectionContextImpl context) {
+      super(tool, context);
     }
 
     @Override
@@ -527,34 +500,22 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
-  private static class WeakUnreferencedFilter extends UnreferencedFilter {
-    private WeakUnreferencedFilter(@NotNull InspectionTool tool) {
-      super(tool);
-    }
-
-    @Override
-    public int getElementProblemCount(final RefJavaElement refElement) {
-      final int problemCount = super.getElementProblemCount(refElement);
-      if (problemCount > - 1) return problemCount;
-      if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
-      return 0;
-    }
-  }
-
   @Override
   public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager) {
     checkForReachables();
-    final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this) : new RefUnreachableFilter(this);
+    final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this, getContext()) : new RefUnreachableFilter(this, getContext());
     final boolean[] requestAdded = {false};
 
-    getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
+    getContext().getRefManager().iterate(new RefJavaVisitor() {
+      @Override
+      public void visitElement(@NotNull RefEntity refEntity) {
         if (!(refEntity instanceof RefJavaElement)) return;
         if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) return;
-        RefJavaElement refElement= (RefJavaElement)refEntity;
+        RefJavaElement refElement = (RefJavaElement)refEntity;
         if (filter.accepts(refElement) && !myProcessedSuspicious.contains(refElement)) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitField(@NotNull final RefField refField) {
+            @Override
+            public void visitField(@NotNull final RefField refField) {
               myProcessedSuspicious.add(refField);
               PsiField psiField = refField.getElement();
               if (isSerializationImplicitlyUsedField(psiField)) {
@@ -572,7 +533,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
               }
             }
 
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
+            @Override
+            public void visitMethod(@NotNull final RefMethod refMethod) {
               myProcessedSuspicious.add(refMethod);
               if (refMethod instanceof RefImplicitConstructor) {
                 visitClass(refMethod.getOwnerClass());
@@ -593,7 +555,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
               }
             }
 
-            @Override public void visitClass(@NotNull final RefClass refClass) {
+            @Override
+            public void visitClass(@NotNull final RefClass refClass) {
               myProcessedSuspicious.add(refClass);
               if (!refClass.isAnonymous()) {
                 getJavaContext().enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
@@ -654,69 +617,10 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
-  public GlobalJavaInspectionContext getJavaContext() {
+  private GlobalJavaInspectionContext getJavaContext() {
     return getContext().getExtension(GlobalJavaInspectionContext.CONTEXT);
   }
 
-  @Override
-  public RefFilter getFilter() {
-    if (myFilter == null) {
-      myFilter = new WeakUnreferencedFilter(this);
-    }
-    return myFilter;
-  }
-
-  @Override
-  @NotNull
-  public HTMLComposerImpl getComposer() {
-    if (myComposer == null) {
-      myComposer = new DeadHTMLComposer(this);
-    }
-    return myComposer;
-  }
-
-  @Override
-  public void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity) {
-    if (!(refEntity instanceof RefJavaElement)) return;
-    final WeakUnreferencedFilter filter = new WeakUnreferencedFilter(this);
-    if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
-      if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
-      Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
-      if (element == null) return;
-      @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
-
-      final RefElement refElement = (RefElement)refEntity;
-      final HighlightSeverity severity = getCurrentSeverity(refElement);
-      final String attributeKey =
-        getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-      problemClassElement.setAttribute("severity", severity.myName);
-      problemClassElement.setAttribute("attribute_key", attributeKey);
-
-      problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
-      element.addContent(problemClassElement);
-
-      @NonNls Element hintsElement = new Element("hints");
-
-      for (String hint : HINTS) {
-        @NonNls Element hintElement = new Element("hint");
-        hintElement.setAttribute("value", hint);
-        hintsElement.addContent(hintElement);
-      }
-      element.addContent(hintsElement);
-
-
-      Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
-      StringBuffer buf = new StringBuffer();
-      DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
-      descriptionElement.addContent(buf.toString());
-      element.addContent(descriptionElement);
-    }
-  }
-
-  @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements) {
-    return myQuickFixActions;
-  }
 
   @NotNull
   @Override
@@ -725,224 +629,14 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
-  private static void commentOutDead(PsiElement psiElement) {
-    PsiFile psiFile = psiElement.getContainingFile();
 
-    if (psiFile != null) {
-      Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
-      if (doc != null) {
-        TextRange textRange = psiElement.getTextRange();
-        String date = DateFormatUtil.formatDateTime(new Date());
-
-        int startOffset = textRange.getStartOffset();
-        CharSequence chars = doc.getCharsSequence();
-        while (CharArrayUtil.regionMatches(chars, startOffset, InspectionsBundle.message("inspection.dead.code.comment"))) {
-          int line = doc.getLineNumber(startOffset) + 1;
-          if (line < doc.getLineCount()) {
-            startOffset = doc.getLineStartOffset(line);
-            startOffset = CharArrayUtil.shiftForward(chars, startOffset, " \t");
-          }
-        }
-
-        int endOffset = textRange.getEndOffset();
-
-        int line1 = doc.getLineNumber(startOffset);
-        int line2 = doc.getLineNumber(endOffset - 1);
-
-        if (line1 == line2) {
-          doc.insertString(startOffset, InspectionsBundle.message("inspection.dead.code.date.comment", date));
-        }
-        else {
-          for (int i = line1; i <= line2; i++) {
-            doc.insertString(doc.getLineStartOffset(i), "//");
-          }
-
-          doc.insertString(doc.getLineStartOffset(Math.min(line2 + 1, doc.getLineCount() - 1)),
-                           InspectionsBundle.message("inspection.dead.code.stop.comment", date));
-          doc.insertString(doc.getLineStartOffset(line1), InspectionsBundle.message("inspection.dead.code.start.comment", date));
-        }
-      }
-    }
-  }
-
-  @Override
-  @Nullable
-  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
-    if (descriptor instanceof ProblemDescriptor) {
-      if (DELETE.equals(hint)) {
-        return new PermanentDeleteFix(((ProblemDescriptor)descriptor).getPsiElement());
-      }
-      if (COMMENT.equals(hint)) {
-        return new CommentOutFix(((ProblemDescriptor)descriptor).getPsiElement());
-      }
-    }
-    return null;
-  }
-
-  private class PermanentDeleteAction extends QuickFixAction {
-    private PermanentDeleteAction() {
-      super(DELETE_QUICK_FIX, AllIcons.Actions.Cancel, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), UnusedDeclarationInspection.this);
-    }
-
-    @Override
-    protected boolean applyFix(final RefElement[] refElements) {
-      if (!super.applyFix(refElements)) return false;
-      final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
-      for (RefElement refElement : refElements) {
-        PsiElement psiElement = refElement.getElement();
-        if (psiElement == null) continue;
-        if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
-        psiElements.add(psiElement);
-      }
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final Project project = getContext().getProject();
-          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false, new Runnable() {
-            @Override
-            public void run() {
-              removeElements(refElements, project, UnusedDeclarationInspection.this);
-            }
-          });
-        }
-      });
-
-      return false; //refresh after safe delete dialog is closed
-    }
-  }
-
-  private static class PermanentDeleteFix implements IntentionAction {
-    private final PsiElement myElement;
-
-    private PermanentDeleteFix(final PsiElement element) {
-      myElement = element;
-    }
-
-    @Override
-    @NotNull
-    public String getText() {
-      return DELETE_QUICK_FIX;
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (myElement != null && myElement.isValid()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            SafeDeleteHandler
-              .invoke(myElement.getProject(), new PsiElement[]{PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class)}, false);
-          }
-        });
-      }
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
-  }
-
-  private class CommentOutBin extends QuickFixAction {
-    private CommentOutBin() {
-      super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
-            UnusedDeclarationInspection.this);
-    }
-
-    @Override
-    protected boolean applyFix(RefElement[] refElements) {
-      if (!super.applyFix(refElements)) return false;
-      ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
-      for (RefElement refElement : refElements) {
-        PsiElement psiElement = refElement.getElement();
-        if (psiElement == null) continue;
-        if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
-        commentOutDead(psiElement);
-        refElement.getRefManager().removeRefElement(refElement, deletedRefs);
-      }
-
-      EntryPointsManager entryPointsManager = getEntryPointsManager();
-      for (RefElement refElement : deletedRefs) {
-        entryPointsManager.removeEntryPoint(refElement);
-      }
-
-      return true;
-    }
-  }
-
-  private static class CommentOutFix implements IntentionAction {
-    private final PsiElement myElement;
-
-    private CommentOutFix(final PsiElement element) {
-      myElement = element;
-    }
-
-    @Override
-    @NotNull
-    public String getText() {
-      return COMMENT_OUT_QUICK_FIX;
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (myElement != null && myElement.isValid()) {
-        commentOutDead(PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class));
-      }
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
-  }
-
-  private class MoveToEntries extends QuickFixAction {
-    private MoveToEntries() {
-      super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), UnusedDeclarationInspection.this);
-    }
-
-    @Override
-    protected boolean applyFix(RefElement[] refElements) {
-      final EntryPointsManager entryPointsManager = getEntryPointsManager();
-      for (RefElement refElement : refElements) {
-        entryPointsManager.addEntryPoint(refElement, true);
-      }
-
-      return true;
-    }
-
-
-  }
-
-  private void checkForReachables() {
+  void checkForReachables() {
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
-    getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
+    getContext().getRefManager().iterate(new RefJavaVisitor() {
+      @Override
+      public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
           if (!getContext().isToCheckMember(refElement, UnusedDeclarationInspection.this)) return;
@@ -1094,18 +788,16 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
-  @Override
-  public void updateContent() {
-    checkForReachables();
-    super.updateContent();
-  }
 
   @NotNull
   @Override
-  public InspectionNode createToolNode(@NotNull final InspectionRVContentProvider provider, @NotNull final InspectionTreeNode parentNode, final boolean showStructure) {
-    final InspectionNode toolNode = super.createToolNode(provider, parentNode, showStructure);
-    final EntryPointsNode entryPointsNode = new EntryPointsNode(this);
-    provider.appendToolNodeContent(entryPointsNode, toolNode, showStructure);
-    return entryPointsNode;
+  public InspectionToolPresentation createPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+    myContext = (GlobalInspectionContextImpl)toolWrapper.getContext();
+    return new UnusedDeclarationPresentation(toolWrapper);
+  }
+
+  @Override
+  public boolean isGraphNeeded() {
+    return true;
   }
 }

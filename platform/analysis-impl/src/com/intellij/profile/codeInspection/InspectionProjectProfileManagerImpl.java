@@ -238,7 +238,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   public void convert(Element element) throws InvalidDataException {
     super.convert(element);
     if (PROJECT_PROFILE != null) {
-      ((ProfileEx)getProjectProfileImpl()).convert(element);
+      ((ProfileEx)getProjectProfileImpl()).convert(element, getProject());
     }
   }
 }

@@ -17,6 +17,8 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.CommonInspectionToolWrapper;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,9 +28,14 @@ import javax.swing.*;
  * @author max
  */
 public class EntryPointsNode extends InspectionNode {
-  public EntryPointsNode(@NotNull UnusedDeclarationInspection tool) {
-    super(new DummyEntryPointsTool(tool));
-    getTool().updateContent();
+  public EntryPointsNode(@NotNull UnusedDeclarationInspection tool, @NotNull GlobalInspectionContextImpl context) {
+    super(createDummyWrapper(tool, context));
+  }
+
+  private static CommonInspectionToolWrapper createDummyWrapper(UnusedDeclarationInspection tool, GlobalInspectionContextImpl context) {
+    CommonInspectionToolWrapper wrapper = new CommonInspectionToolWrapper(new DummyEntryPointsTool());
+    wrapper.initialize(context);
+    return wrapper;
   }
 
   @Override

@@ -20,6 +20,7 @@
  */
 package com.intellij.profile.codeInspection.ui.actions;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -97,13 +98,14 @@ public abstract class AddScopeAction extends AnAction {
     for (InspectionConfigTreeNode node : nodes) {
       final Descriptor descriptor = node.getDescriptor();
       if (node.getScopeName() != null || descriptor == null) continue;
-      final InspectionToolWrapper toolWrapper = descriptor.getTool(); //copy
-      final ScopeToolState scopeToolState = getSelectedProfile().addScope(toolWrapper, chosenScope,
-                                                                          getSelectedProfile().getErrorLevel(descriptor.getKey(), chosenScope),
-                                                                          getSelectedProfile().isToolEnabled(descriptor.getKey()));
-      final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());
+      final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper(); //copy
+      InspectionProfileImpl selectedProfile = getSelectedProfile();
+      HighlightDisplayLevel level = selectedProfile.getErrorLevel(descriptor.getKey(), chosenScope, project);
+      boolean enabled = selectedProfile.isToolEnabled(descriptor.getKey());
+      final ScopeToolState scopeToolState = selectedProfile.addScope(toolWrapper, chosenScope, level, enabled, project);
+      final Descriptor addedDescriptor = new Descriptor(scopeToolState, selectedProfile, project);
       if (node.getChildCount() == 0) {
-        node.add(new InspectionConfigTreeNode(descriptor, getSelectedProfile().getToolDefaultState(descriptor.getKey().toString()), true, true, false));
+        node.add(new InspectionConfigTreeNode(descriptor, selectedProfile.getToolDefaultState(descriptor.getKey().toString(), project), true, true, false));
       }
       node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState, false, false), 0);
       node.setInspectionNode(false);
@@ -142,7 +144,7 @@ public abstract class AddScopeAction extends AnAction {
 
     final Set<NamedScope> used = new HashSet<NamedScope>();
     for (Descriptor descriptor : descriptors) {
-      final List<ScopeToolState> nonDefaultTools = getSelectedProfile().getNonDefaultTools(descriptor.getKey().toString());
+      final List<ScopeToolState> nonDefaultTools = getSelectedProfile().getNonDefaultTools(descriptor.getKey().toString(), project);
       if (nonDefaultTools != null) {
         for (ScopeToolState state : nonDefaultTools) {
           used.add(state.getScope(project));

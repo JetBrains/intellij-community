@@ -28,6 +28,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.icons.AllIcons;
@@ -53,6 +54,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -157,15 +159,17 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           if (node instanceof InspectionNode) {
             InspectionNode toolNode = (InspectionNode)node;
             Element problems = new Element(PROBLEMS);
-            final InspectionTool tool = toolNode.getTool();
-            final Set<InspectionTool> tools = getWorkedTools(toolNode);
-            for (InspectionTool inspectionTool : tools) {
-              inspectionTool.exportResults(problems);
+            InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
+
+            final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
+            for (InspectionToolWrapper wrapper : toolWrappers) {
+              InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
+              presentation.exportResults(problems);
             }
             PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
             try {
               JDOMUtil.writeDocument(new Document(problems),
-                                     outputDirectoryName + File.separator + tool.getShortName() + InspectionApplication.XML_EXTENSION,
+                                     outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
                                      CodeStyleSettingsManager.getSettings(null).getLineSeparator());
             }
             catch (IOException e) {
@@ -197,19 +201,20 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     }
   }
 
-  private Set<InspectionTool> getWorkedTools(InspectionNode node) {
-    final Set<InspectionTool> result = new HashSet<InspectionTool>();
-    final InspectionTool tool = node.getTool();
+  @NotNull
+  private Set<InspectionToolWrapper> getWorkedTools(@NotNull InspectionNode node) {
+    final Set<InspectionToolWrapper> result = new HashSet<InspectionToolWrapper>();
+    final InspectionToolWrapper wrapper = node.getToolWrapper();
     if (myView.getCurrentProfileName() != null){
-      result.add(tool);
+      result.add(wrapper);
       return result;
     }
-    final String shortName = tool.getShortName();
+    final String shortName = wrapper.getShortName();
     final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
     final Tools tools = context.getTools().get(shortName);
     if (tools != null) {   //dummy entry points tool
       for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+        InspectionToolWrapper toolWrapper = state.getTool();
         result.add(toolWrapper);
       }
     }
@@ -217,29 +222,31 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   }
 
   private void exportHTML(HTMLExportFrameMaker frameMaker, InspectionNode node) {
-    final Set<InspectionTool> tools = getWorkedTools(node);
-    final InspectionTool tool = node.getTool();
+    final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(node);
+    final InspectionToolWrapper toolWrapper = node.getToolWrapper();
+
     final HTMLExporter exporter =
-      new HTMLExporter(frameMaker.getRootFolder() + "/" + tool.getShortName(), tool.getComposer());
-    frameMaker.startInspection(tool);
+      new HTMLExporter(frameMaker.getRootFolder() + "/" + toolWrapper.getShortName(), myView.getGlobalInspectionContext().getPresentation(toolWrapper).getComposer());
+    frameMaker.startInspection(toolWrapper);
     HTMLExportUtil.runExport(myView.getProject(), new ThrowableRunnable<IOException>() {
       @Override
       public void run() throws IOException {
-        exportHTML(tools, exporter);
+        exportHTML(toolWrappers, exporter);
         exporter.generateReferencedPages();
       }
     });
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void exportHTML(Set<InspectionTool> tools, HTMLExporter exporter) throws IOException {
+  private void exportHTML(@NotNull Set<InspectionToolWrapper> toolWrappers, HTMLExporter exporter) throws IOException {
     StringBuffer packageIndex = new StringBuffer();
     packageIndex.append("<html><body>");
 
     final Map<String, Set<RefEntity>> content = new HashMap<String, Set<RefEntity>>();
 
-    for (InspectionTool tool : tools) {
-      final Map<String, Set<RefEntity>> toolContent = tool.getContent();
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+      final Map<String, Set<RefEntity>> toolContent = presentation.getContent();
       if (toolContent != null) {
         content.putAll(toolContent);
       }
@@ -250,12 +257,12 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       content.put("default package" , defaultPackageEntities);
     }
 
-    ArrayList<String> packageNames = new ArrayList<String>(content.keySet());
+    List<String> packageNames = new ArrayList<String>(content.keySet());
 
     Collections.sort(packageNames);
     for (String packageName : packageNames) {
       appendPackageReference(packageIndex, packageName);
-      final ArrayList<RefEntity> packageContent = new ArrayList<RefEntity>(content.get(packageName));
+      List<RefEntity> packageContent = new ArrayList<RefEntity>(content.get(packageName));
       Collections.sort(packageContent, RefEntityAlphabeticalComparator.getInstance());
       StringBuffer contentIndex = new StringBuffer();
       contentIndex.append("<html><body>");
@@ -275,8 +282,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     }
 
     final Set<RefModule> modules = new HashSet<RefModule>();
-    for (InspectionTool tool : tools) {
-      final Set<RefModule> problems = tool.getModuleProblems();
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+      final Set<RefModule> problems = presentation.getModuleProblems();
       if (problems != null) {
         modules.addAll(problems);
       }

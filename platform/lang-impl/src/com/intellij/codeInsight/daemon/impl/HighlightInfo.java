@@ -776,11 +776,11 @@ public class HighlightInfo implements Segment {
       }
       List<IntentionAction> newOptions = IntentionManager.getInstance().getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
-      InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profile.getInspectionTool(key.toString(), element);
+      InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
       if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
         HighlightDisplayKey idkey = HighlightDisplayKey.findById(key.toString());
         if (idkey != null) {
-          toolWrapper = (InspectionToolWrapper)profile.getInspectionTool(idkey.toString(), element);
+          toolWrapper = profile.getInspectionTool(idkey.toString(), element);
         }
       }
       if (toolWrapper != null) {

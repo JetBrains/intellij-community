@@ -23,11 +23,12 @@ package com.intellij.profile.codeInspection;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInsight.daemon.JavaAwareInspectionProfileCoverter;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.SpecialToolsManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 
 public class JavaAwareInspectionProfileManager extends InspectionProfileManagerImpl {
-  public JavaAwareInspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
-    super(registrar, schemesManagerFactory);
+  public JavaAwareInspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory, SpecialToolsManager specialToolsManager) {
+    super(registrar, schemesManagerFactory,specialToolsManager);
   }
 
   @Override

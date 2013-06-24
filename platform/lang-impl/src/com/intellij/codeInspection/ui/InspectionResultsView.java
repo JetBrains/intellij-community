@@ -104,18 +104,20 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   });
 
   private final Splitter mySplitter;
+  @NotNull
   private final GlobalInspectionContextImpl myGlobalInspectionContext;
   private boolean myRerun = false;
 
+  @NotNull
   private final InspectionRVContentProvider myProvider;
   private AnAction myIncludeAction;
   private AnAction myExcludeAction;
 
-  public InspectionResultsView(final Project project,
+  public InspectionResultsView(@NotNull final Project project,
                                final InspectionProfile inspectionProfile,
-                               final AnalysisScope scope,
-                               final GlobalInspectionContextImpl globalInspectionContext,
-                               final InspectionRVContentProvider provider) {
+                               @NotNull AnalysisScope scope,
+                               @NotNull GlobalInspectionContextImpl globalInspectionContext,
+                               @NotNull InspectionRVContentProvider provider) {
     setLayout(new BorderLayout());
 
     myProject = project;
@@ -423,7 +425,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           showInBrowser(problemNode.getElement(), problemNode.getDescriptor());
         }
         else if (node instanceof InspectionNode) {
-          showInBrowser(((InspectionNode)node).getTool());
+          showInBrowser(((InspectionNode)node).getToolWrapper());
         }
         else {
           myBrowser.showEmpty();
@@ -439,10 +441,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     setCursor(currentCursor);
   }
 
-  private void showInBrowser(InspectionTool tool) {
+  private void showInBrowser(@NotNull InspectionToolWrapper toolWrapper) {
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
-    myBrowser.showDescription(tool);
+    myBrowser.showDescription(toolWrapper);
     setCursor(currentCursor);
   }
 
@@ -453,15 +455,24 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     setCursor(currentCursor);
   }
 
-  public void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
-    final InspectionTreeNode parentNode = getToolParentNode(
-      !tool.getGroupDisplayName().isEmpty() ? tool.getGroupDisplayName() : InspectionProfileEntry.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
-    tool.createToolNode(myProvider, parentNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
-    registerActionShortcuts(tool);
+  @NotNull
+  public InspectionNode addTool(@NotNull final InspectionToolWrapper toolWrapper, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
+    String groupName =
+      toolWrapper.getGroupDisplayName().isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : toolWrapper.getGroupDisplayName();
+    InspectionTreeNode parentNode = getToolParentNode(groupName, errorLevel, groupedBySeverity);
+    InspectionNode toolNode = new InspectionNode(toolWrapper);
+    boolean showStructure = myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE;
+    myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
+    InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(toolWrapper);
+    toolNode = presentation.createToolNode(myGlobalInspectionContext, toolNode, myProvider, parentNode, showStructure);
+    ((DefaultInspectionToolPresentation)presentation).myToolNode = toolNode;
+
+    registerActionShortcuts(presentation);
+    return toolNode;
   }
 
-  private void registerActionShortcuts(InspectionTool tool) {
-    final QuickFixAction[] fixes = tool.getQuickFixes(new RefEntity[0]);
+  private void registerActionShortcuts(@NotNull InspectionToolPresentation presentation) {
+    final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY);
     if (fixes != null) {
       for (QuickFixAction fix : fixes) {
         fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
@@ -476,7 +487,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @Nullable
   public String getCurrentProfileName() {
-    return myInspectionProfile != null ? myInspectionProfile.getDisplayName() : null;
+    return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
   public InspectionProfile getCurrentProfile() {
@@ -499,18 +510,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private boolean buildTree() {
-    final InspectionProfile profile = myInspectionProfile;
-    final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
+    InspectionProfile profile = myInspectionProfile;
+    boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
     final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
     boolean resultsFound = false;
     for (Tools currentTools : tools.values()) {
-      final InspectionTool defaultTool = (InspectionTool)currentTools.getDefaultState().getTool();
-      final HighlightDisplayKey key = HighlightDisplayKey.find(defaultTool.getShortName());
+      InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+      final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
       for (ScopeToolState state : currentTools.getTools()) {
-        final InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
-        if (myProvider.checkReportedProblems(toolWrapper)) {
-          addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject)), isGroupedBySeverity);
+        InspectionToolWrapper toolWrapper = state.getTool();
+        if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+          addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject), isGroupedBySeverity);
           resultsFound = true;
         }
       }
@@ -518,8 +529,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return resultsFound;
   }
 
-  public InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
-    if (groupName == null || groupName.isEmpty()) {
+  @NotNull
+  public InspectionTreeNode getToolParentNode(@NotNull String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
+    if (groupName.isEmpty()) {
       return getRelativeRootNode(groupedBySeverity, errorLevel);
     }
     if (myGroups == null) {
@@ -532,8 +544,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     Map<String, InspectionGroupNode> searchMap = new HashMap<String, InspectionGroupNode>(map);
     if (!groupedBySeverity) {
-      for (HighlightDisplayLevel level : myGroups.keySet()) {
-        searchMap.putAll(myGroups.get(level));
+      for (Map<String, InspectionGroupNode> groupMap : myGroups.values()) {
+        searchMap.putAll(groupMap);
       }
     }
     InspectionGroupNode group = searchMap.get(groupName);
@@ -545,21 +557,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return group;
   }
 
+  @NotNull
   private InspectionTreeNode getRelativeRootNode(boolean isGroupedBySeverity, HighlightDisplayLevel level) {
     if (isGroupedBySeverity) {
       if (mySeverityGroupNodes.containsKey(level)) {
         return mySeverityGroupNodes.get(level);
       }
-      else {
-        final InspectionSeverityGroupNode severityGroupNode = new InspectionSeverityGroupNode(myProject, level);
-        mySeverityGroupNodes.put(level, severityGroupNode);
-        myTree.getRoot().add(severityGroupNode);
-        return severityGroupNode;
-      }
+      final InspectionSeverityGroupNode severityGroupNode = new InspectionSeverityGroupNode(myProject, level);
+      mySeverityGroupNodes.put(level, severityGroupNode);
+      myTree.getRoot().add(severityGroupNode);
+      return severityGroupNode;
     }
-    else {
-      return myTree.getRoot();
-    }
+    return myTree.getRoot();
   }
 
 
@@ -597,6 +606,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myOccurenceNavigator != null ? myOccurenceNavigator.getPreviousOccurenceActionName() : "";
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -604,7 +614,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
-    if (InspectionResultsView.DATA_KEY.is(dataId)) return this;
+    if (DATA_KEY.is(dataId)) return this;
     if (myTree == null) return null;
     TreePath[] paths = myTree.getSelectionPaths();
 
@@ -614,9 +624,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         return collectPsiElements();
       }
-      else {
-        return null;
-      }
+      return null;
     }
 
     TreePath path = paths[0];
@@ -629,7 +637,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (refElement == null) return null;
       final RefEntity item = refElement.getRefManager().getRefinedElement(refElement);
 
-      if (item == null || !item.isValid()) return null;
+      if (!item.isValid()) return null;
 
       PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getElement() : null;
       if (psiElement == null) return null;
@@ -721,15 +729,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     actions.addSeparator();
 
-    final InspectionTool tool = myTree.getSelectedTool();
-    if (tool != null) {
-      final QuickFixAction[] quickFixes = myProvider.getQuickFixes(tool, myTree);
+    final InspectionToolWrapper toolWrapper = myTree.getSelectedToolWrapper();
+    if (toolWrapper != null) {
+      final QuickFixAction[] quickFixes = myProvider.getQuickFixes(toolWrapper, myTree);
       if (quickFixes != null) {
         for (QuickFixAction quickFixe : quickFixes) {
           actions.add(quickFixe);
         }
       }
-      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
       if (key == null) return; //e.g. DummyEntryPointsTool
 
       //options
@@ -748,20 +756,23 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     menu.getComponent().show(component, x, y);
   }
 
-  @NotNull public InspectionTree getTree(){
+  @NotNull
+  public InspectionTree getTree(){
     return myTree;
   }
 
+  @NotNull
   public GlobalInspectionContextImpl getGlobalInspectionContext() {
     return myGlobalInspectionContext;
   }
 
+  @NotNull
   public InspectionRVContentProvider getProvider() {
     return myProvider;
   }
 
   public boolean isSingleToolInSelection() {
-    return myTree != null && myTree.getSelectedTool() != null;
+    return myTree != null && myTree.getSelectedToolWrapper() != null;
   }
 
   public boolean isRerun() {
@@ -782,12 +793,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
       }
     }
-    if (!profiles.isEmpty()) {
-      return profiles.iterator().next();
-    }
-    else {
+    if (profiles.isEmpty()) {
       return (InspectionProfile)profileManager.getProjectProfileImpl();
     }
+    return profiles.iterator().next();
   }
 
   public boolean isProfileDefined() {
@@ -827,15 +836,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     @Override
     public void actionPerformed(AnActionEvent e) {
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
-      final InspectionTool tool = myTree.getSelectedTool();
+      final InspectionToolWrapper toolWrapper = myTree.getSelectedToolWrapper();
       InspectionProfile inspectionProfile = myInspectionProfile;
       final boolean profileIsDefined = isProfileDefined();
       if (!profileIsDefined) {
         inspectionProfile = guessProfileToSelect(profileManager);
       }
 
-      if (tool != null) {
-        final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName()); //do not search for dead code entry point tool
+      if (toolWrapper != null) {
+        final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
         if (key != null){
           if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, profileIsDefined)
               && profileIsDefined){

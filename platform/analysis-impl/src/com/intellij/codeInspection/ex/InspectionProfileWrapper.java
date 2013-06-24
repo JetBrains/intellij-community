@@ -52,19 +52,19 @@ public class InspectionProfileWrapper {
   }
 
   @NotNull
-  public InspectionProfileEntry[] getInspectionTools(PsiElement element){
+  public InspectionToolWrapper[] getInspectionTools(PsiElement element){
      return myProfile.getInspectionTools(element);
   }
 
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
-  public static void checkInspectionsDuplicates(@NotNull InspectionProfileEntry[] tools) {
+  public static void checkInspectionsDuplicates(@NotNull InspectionToolWrapper[] toolWrappers) {
     if (alreadyChecked) return;
     alreadyChecked = true;
-    Set<InspectionProfileEntry> uniqTools = new THashSet<InspectionProfileEntry>(tools.length);
-    for (InspectionProfileEntry tool : tools) {
-      if (!uniqTools.add(tool)) {
-        LOG.error("Inspection " + tool.getDisplayName() + " (" + tool.getClass() + ") already registered");
+    Set<InspectionProfileEntry> uniqTools = new THashSet<InspectionProfileEntry>(toolWrappers.length);
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      if (!uniqTools.add(toolWrapper.getTool())) {
+        LOG.error("Inspection " + toolWrapper.getDisplayName() + " (" + toolWrapper.getTool().getClass() + ") already registered");
       }
     }
   }
@@ -81,12 +81,11 @@ public class InspectionProfileWrapper {
     return myProfile.isToolEnabled(key);
   }
 
-//  InspectionToolWrapper
-  public InspectionProfileEntry getInspectionTool(final String shortName, PsiElement element) {
+  public InspectionToolWrapper getInspectionTool(final String shortName, PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
   }
 
-  public void init(final Project project) {
+  public void init(@NotNull Project project) {
     final List<Tools> profileEntries = myProfile.getAllEnabledInspectionTools(project);
     for (Tools profileEntry : profileEntries) {
       for (ScopeToolState toolState : profileEntry.getTools()) {

@@ -16,7 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
@@ -32,17 +32,18 @@ public class InspectionNode extends InspectionTreeNode {
   public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
   private boolean myTooBigForOnlineRefresh = false;
 
-  public InspectionNode(@NotNull InspectionTool tool) {
-    super(tool);
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
+    super(toolWrapper);
+    assert toolWrapper.getContext() != null;
   }
 
   public String toString() {
-    return getTool().getDisplayName();
+    return getToolWrapper().getDisplayName();
   }
 
   @NotNull
-  public InspectionTool getTool() {
-    return (InspectionTool)getUserObject();
+  public InspectionToolWrapper getToolWrapper() {
+    return (InspectionToolWrapper)getUserObject();
   }
 
   @Override

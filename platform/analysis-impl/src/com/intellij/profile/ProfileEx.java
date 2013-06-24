@@ -16,6 +16,7 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
  * Date: 01-Dec-2005
  */
 public abstract class ProfileEx implements Profile {
+  // public for JDOMExternalizable
+  @NotNull
   public String myName;
   private static final Logger LOG = Logger.getInstance("com.intellij.profile.ProfileEx");
   public boolean myLocal = true;
@@ -36,10 +39,11 @@ public abstract class ProfileEx implements Profile {
   public static final String NAME = "name";
 
   public ProfileEx(@NotNull String name) {
-    myName = name;
+    setName(name);
   }
 
   @Override
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -118,5 +122,5 @@ public abstract class ProfileEx implements Profile {
     return 0;
   }
 
-  public void convert(@NotNull Element element) {}
+  public void convert(@NotNull Element element, @NotNull Project project) {}
 }

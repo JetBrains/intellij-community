@@ -24,7 +24,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -40,7 +42,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -113,7 +115,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   private final Map<String, Tools> myTools = new THashMap<String, Tools>();
 
   private AnalysisUIOptions myUIOptions;
-  @NonNls static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
+  @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
   private boolean myUseProgressIndicatorInTests = false;
 
@@ -184,7 +186,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         for (ScopeToolState state : tools.getTools()) {
           final NamedScope namedScope = state.getScope(project);
           if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
-            return state.isEnabled() && ((InspectionToolWrapper)state.getTool()).getTool() == tool;
+            return state.isEnabled() && state.getTool().getTool() == tool;
           }
         }
       }
@@ -230,7 +232,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
-  protected void addView(@NotNull InspectionResultsView view) {
+  public void addView(@NotNull InspectionResultsView view) {
     addView(view, view.getCurrentProfileName() == null
                   ? InspectionsBundle.message("inspection.results.title")
                   : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
@@ -246,7 +248,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+        InspectionToolWrapper toolWrapper = state.getTool();
         toolWrapper.cleanup();
       }
     }
@@ -313,10 +315,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
                                        final InspectionManager manager,
                                        @NotNull final List<File> inspectionsResults) {
     cleanup();
-
     myCurrentScope = scope;
 
-    InspectionTool.setOutputPath(outputPath);
+    DefaultInspectionToolPresentation.setOutputPath(outputPath);
     final boolean oldToolsSettings = RUN_GLOBAL_TOOLS_ONLY;
     RUN_GLOBAL_TOOLS_ONLY = runGlobalToolsOnly;
     try {
@@ -332,14 +333,14 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
             String toolName = stringSetEntry.getKey();
             if (sameTools != null) {
               for (ScopeToolState toolDescr : sameTools.getTools()) {
-                InspectionToolWrapper toolWrapper = (InspectionToolWrapper)toolDescr.getTool();
+                InspectionToolWrapper toolWrapper = toolDescr.getTool();
                 if (toolWrapper instanceof LocalInspectionToolWrapper) {
                   hasProblems = new File(outputPath, toolName + ext).exists();
                 }
-                else if (toolWrapper.getTool() instanceof InspectionTool) {
-                  InspectionTool tool = (InspectionTool)toolWrapper.getTool();
-                  tool.updateContent();
-                  if (tool.hasReportedProblems()) {
+                else {
+                  InspectionToolPresentation presentation = getPresentation(toolWrapper);
+                  presentation.updateContent();
+                  if (presentation.hasReportedProblems()) {
                     final Element root = new Element(InspectionsBundle.message("inspection.problems"));
                     globalTools.put(root, sameTools);
                     LOG.assertTrue(!hasProblems, toolName);
@@ -367,8 +368,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
                 final Tools tools = globalTools.get(element);
                 for (ScopeToolState state : tools.getTools()) {
                   try {
-                    InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
-                    toolWrapper.exportResults(element, refEntity);
+                    InspectionToolWrapper toolWrapper = state.getTool();
+                    InspectionToolPresentation presentation = getPresentation(toolWrapper);
+                    presentation.exportResults(element, refEntity);
                   }
                   catch (Exception e) {
                     LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
@@ -404,7 +406,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       });
     }
     finally {
-      InspectionTool.setOutputPath(null);
+      DefaultInspectionToolPresentation.setOutputPath(null);
       RUN_GLOBAL_TOOLS_ONLY = oldToolsSettings;
     }
   }
@@ -421,7 +423,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         final NamedScope namedScope = state.getScope(file.getProject());
         if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
           if (state.isEnabled()) {
-            InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+            InspectionToolWrapper toolWrapper = state.getTool();
             if (toolWrapper.getTool() == tool) return true;
           }
           return false;
@@ -436,7 +438,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     final Tools tools = myTools.get(tool.getShortName());
     if (tools != null){
       for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+        InspectionToolWrapper toolWrapper = state.getTool();
         ignoreElementRecursively(toolWrapper, refElement);
       }
     }
@@ -446,12 +448,10 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     return myView;
   }
 
-  private static void ignoreElementRecursively(@NotNull InspectionToolWrapper toolWrapper, final RefEntity refElement) {
+  private void ignoreElementRecursively(@NotNull InspectionToolWrapper toolWrapper, final RefEntity refElement) {
     if (refElement != null) {
-      InspectionProfileEntry tool = toolWrapper.getTool();
-      if (tool instanceof InspectionTool) {
-        ((InspectionTool)tool).ignoreCurrentElement(refElement);
-      }
+      InspectionToolPresentation presentation = getPresentation(toolWrapper);
+      presentation.ignoreCurrentElement(refElement);
       final List<RefEntity> children = refElement.getChildren();
       if (children != null) {
         for (RefEntity child : children) {
@@ -488,28 +488,33 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
       @Override
       public void onSuccess() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            LOG.info("Code inspection finished");
-
-            if (myView != null) {
-              if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-                NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true)
-                  .createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(myProject);
-                close(true);
-              }
-              else {
-                addView(myView);
-              }
-            }
-          }
-        });
+        notifyInspectionsFinished();
       }
     });
   }
 
-  public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
+  private void notifyInspectionsFinished() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        LOG.info("Code inspection finished");
+
+        if (myView != null) {
+          if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
+            NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true)
+              .createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(myProject);
+            close(true);
+          }
+          else {
+            addView(myView);
+          }
+        }
+      }
+    });
+  }
+
+  private void performInspectionsWithProgress(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     myProgressIndicator = getProgressIndicator();
     //init manager in read action
@@ -567,7 +572,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     // run special tools first
     for (Tools tools : specialTools) {
       for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+        InspectionToolWrapper toolWrapper = state.getTool();
         InspectionTool tool = (InspectionTool)toolWrapper.getTool();
         try {
           if (tool.isGraphNeeded()) {
@@ -592,14 +597,15 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+        InspectionToolWrapper toolWrapper = state.getTool();
         GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
+        InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
         try {
           if (tool.isGraphNeeded()) {
             ((RefManagerImpl)getRefManager()).findAllDeclarations();
           }
-          tool.runInspection(scope, manager, this, toolWrapper);
-          if (tool.queryExternalUsagesRequests(manager,this, toolWrapper)) {
+          tool.runInspection(scope, manager, this, toolPresentation);
+          if (tool.queryExternalUsagesRequests(manager,this, toolPresentation)) {
             needRepeatSearchRequest.add(toolWrapper);
           }
         }
@@ -635,16 +641,17 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-      tool.inspectionStarted(manager, this, toolWrapper);
+      tool.inspectionStarted(manager, this, getPresentation(toolWrapper));
     }
 
-    final Map<String, DescriptorProviderInspection> map = getInspectionWrappersMap(localTools);
+    final Map<String, InspectionToolWrapper> map = getInspectionWrappersMap(localTools);
     scope.accept(new PsiElementVisitor() {
       @Override
       public void visitFile(final PsiFile file) {
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
-          incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
+          incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile
+            .getPresentableUrl(), myProject, true, false));
           if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile)) return;
           if (localScopeFiles != null && !localScopeFiles.add(virtualFile)) return;
         }
@@ -672,8 +679,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
               ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, false);
               ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
               tool.checkFile(file, manager, problemsHolder, GlobalInspectionContextImpl.this, problemDescriptionProcessor);
-              LocalInspectionToolWrapper.addProblemDescriptors(problemsHolder.getResults(), false, GlobalInspectionContextImpl.this, null,
-                                                               CONVERT, toolWrapper);
+              InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+              LocalDescriptorsUtil.addProblemDescriptors(problemsHolder.getResults(), false, GlobalInspectionContextImpl.this, null,
+                                                         CONVERT, toolPresentation);
               return true;
             }
           });
@@ -704,39 +712,56 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
   @NotNull
-  private static ProblemDescriptionsProcessor getProblemDescriptionProcessor(@NotNull final GlobalInspectionToolWrapper toolWrapper,
-                                                                             @NotNull final Map<String, DescriptorProviderInspection> wrappersMap) {
-    return new GlobalInspectionToolWrapper(toolWrapper.getTool()) {
+  private ProblemDescriptionsProcessor getProblemDescriptionProcessor(@NotNull final GlobalInspectionToolWrapper toolWrapper,
+                                                                      @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
+    return new ProblemDescriptionsProcessor() {
+      @Nullable
       @Override
-      public void addProblemElement(RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
+      public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
+        return new CommonProblemDescriptor[0];
+      }
+
+      @Override
+      public void ignoreElement(@NotNull RefEntity refEntity) {
+
+      }
+
+      @Override
+      public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
         for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
-          if (problemDescriptor instanceof ProblemDescriptor) {
-            ProblemGroup problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
+          if (!(problemDescriptor instanceof ProblemDescriptor)) {
+            continue;
+          }
+          ProblemGroup problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
 
-            if (problemGroup != null) {
-              DescriptorProviderInspection dummyWrapper = wrappersMap.get(problemGroup.getProblemName());
+          InspectionToolWrapper targetWrapper;
+          if (problemGroup == null) {
+            targetWrapper = toolWrapper;
+          }
+          else {
+            targetWrapper = wrappersMap.get(problemGroup.getProblemName());
 
-              if (dummyWrapper != null) { // Else it's switched off
-                dummyWrapper.addProblemElement(refEntity, problemDescriptor);
-              }
-            }
-            else {
-              toolWrapper.addProblemElement(refEntity, problemDescriptor);
-            }
+          }
+          if (targetWrapper != null) { // Else it's switched off
+            InspectionToolPresentation toolPresentation = getPresentation(targetWrapper);
+            toolPresentation.addProblemElement(refEntity, problemDescriptor);
           }
         }
+      }
+
+      @Override
+      public RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
+        return null;
       }
     };
   }
 
   @NotNull
-  private static Map<String, DescriptorProviderInspection> getInspectionWrappersMap(@NotNull List<Tools> tools) {
-    Map<String, DescriptorProviderInspection> name2Inspection = new HashMap<String, DescriptorProviderInspection>(tools.size());
+  private static Map<String, InspectionToolWrapper> getInspectionWrappersMap(@NotNull List<Tools> tools) {
+    Map<String, InspectionToolWrapper> name2Inspection = new HashMap<String, InspectionToolWrapper>(tools.size());
     for (Tools tool : tools) {
-      InspectionProfileEntry profileEntry = tool.getTool();
-      if (profileEntry instanceof DescriptorProviderInspection) {
-        name2Inspection.put(profileEntry.getShortName(), (DescriptorProviderInspection)profileEntry);
-      }
+      InspectionToolWrapper toolWrapper = tool.getTool();
+      name2Inspection.put(toolWrapper.getShortName(), toolWrapper);
     }
 
     return name2Inspection;
@@ -769,11 +794,11 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     for (Tools currentTools : usedTools) {
       final String shortName = currentTools.getShortName();
       myTools.put(shortName, currentTools);
-      InspectionToolWrapper toolWrapper1 = (InspectionToolWrapper)currentTools.getTool();
+      InspectionToolWrapper toolWrapper1 = currentTools.getTool();
       classifyTool(outGlobalTools, outLocalTools, outGlobalSimpleTools, outSpecialTools, currentTools, toolWrapper1);
 
       for (ScopeToolState state : currentTools.getTools()) {
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)state.getTool();
+        InspectionToolWrapper toolWrapper = state.getTool();
         toolWrapper.initialize(this);
       }
     }
@@ -787,7 +812,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<InspectionToolWrapper>();
     for (Tools tool : tools) {
-      profile.collectDependentInspections((InspectionToolWrapper)tool.getTool(), dependentTools);
+      profile.collectDependentInspections(tool.getTool(), dependentTools, getProject());
     }
 
     if (dependentTools.isEmpty()) {
@@ -863,12 +888,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     myView = null;
   }
 
-  public void cleanup(final InspectionManagerEx managerEx) {
+  public void cleanup(@NotNull InspectionManagerEx managerEx) {
     managerEx.closeRunningContext(this);
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper tool = (InspectionToolWrapper)state.getTool();
-        tool.finalCleanup();
+        InspectionToolWrapper toolWrapper = state.getTool();
+        getPresentation(toolWrapper).finalCleanup();
       }
     }
     cleanup();
@@ -913,5 +938,23 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   @NotNull
   public StdJobDescriptors getStdJobDescriptors() {
     return myStdJobDescriptors;
+  }
+
+  private final Map<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = new THashMap<InspectionToolWrapper, InspectionToolPresentation>();
+  @NotNull
+  public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+    InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);
+    if (presentation == null) {
+      InspectionProfileEntry tool = toolWrapper.getTool();
+      if (tool instanceof InspectionPresentationProvider) {
+        presentation = ((InspectionPresentationProvider)tool).createPresentation(toolWrapper);
+      }
+      else {
+        presentation = new DefaultInspectionToolPresentation(toolWrapper);
+      }
+      presentation.initialize(this);
+      myPresentationMap.put(toolWrapper, presentation);
+    }
+    return presentation;
   }
 }

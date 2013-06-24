@@ -18,6 +18,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -39,11 +41,11 @@ public interface ModifiableModel extends Profile {
 
   void setBaseProfile(InspectionProfile profile);
 
-  void enableTool(String inspectionTool, NamedScope namedScope);
+  void enableTool(String inspectionTool, NamedScope namedScope, Project project);
 
-  void disableTool(String inspectionTool, NamedScope namedScope);
+  void disableTool(String inspectionTool, NamedScope namedScope, @NotNull Project project);
 
-  void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level);
+  void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project);
 
   HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey, PsiElement element);
 
@@ -57,24 +59,21 @@ public interface ModifiableModel extends Profile {
 
   void setModified(final boolean toolsSettingsChanged);
 
-  @Deprecated
-  boolean isProperSetting(HighlightDisplayKey key);
+  boolean isProperSetting(@NotNull String toolId);
 
-  boolean isProperSetting(String toolId);
+  void resetToBase(Project project);
 
-  void resetToBase();
-
-  void resetToEmpty();
+  void resetToEmpty(Project project);
 
   /**
    * @return {@link com.intellij.codeInspection.ex.InspectionToolWrapper}
    * @see #getUnwrappedTool(String, com.intellij.psi.PsiElement)
    */
-  InspectionProfileEntry getInspectionTool(String shortName, PsiElement element);
+  InspectionToolWrapper getInspectionTool(String shortName, PsiElement element);
 
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
-  InspectionProfileEntry[] getInspectionTools(PsiElement element);
+  InspectionToolWrapper[] getInspectionTools(PsiElement element);
 
   void copyFrom(InspectionProfile profile);
 
@@ -86,7 +85,7 @@ public interface ModifiableModel extends Profile {
 
   void lockProfile(boolean isLocked);
 
-  void disableTool(String toolId, PsiElement element);
+  void disableTool(@NotNull String toolId, @NotNull PsiElement element);
 
-  void disableTool(String inspectionTool);
+  void disableTool(String inspectionTool, Project project);
 }

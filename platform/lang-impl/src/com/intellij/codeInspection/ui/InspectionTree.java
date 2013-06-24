@@ -25,9 +25,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.CommonInspectionToolWrapper;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -101,19 +99,20 @@ public class InspectionTree extends Tree {
   }
 
   @Nullable
-  public InspectionTool getSelectedTool() {
+  public InspectionToolWrapper getSelectedToolWrapper() {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;
-    InspectionTool tool = null;
+    InspectionToolWrapper toolWrapper = null;
     for (TreePath path : paths) {
       Object[] nodes = path.getPath();
       for (int j = nodes.length - 1; j >= 0; j--) {
         Object node = nodes[j];
         if (node instanceof InspectionNode) {
-          if (tool == null) {
-            tool = ((InspectionNode)node).getTool();
+          InspectionToolWrapper wrapper = ((InspectionNode)node).getToolWrapper();
+          if (toolWrapper == null) {
+            toolWrapper = wrapper;
           }
-          else if (tool != ((InspectionNode)node).getTool()) {
+          else if (toolWrapper != wrapper) {
             return null;
           }
           break;
@@ -121,15 +120,15 @@ public class InspectionTree extends Tree {
       }
     }
 
-    return tool;
+    return toolWrapper;
   }
 
   @NotNull
   public RefEntity[] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
-      final InspectionTool selectedTool = getSelectedTool();
-      if (selectedTool == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
+      InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
+      if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
 
       List<RefEntity> result = new ArrayList<RefEntity>();
       for (TreePath selectionPath : selectionPaths) {
@@ -163,8 +162,8 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    final InspectionTool tool = getSelectedTool();
-    if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper))) return EMPTY_DESCRIPTORS;
+    final InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
+    if (getSelectionCount() == 0 || !(toolWrapper instanceof LocalInspectionToolWrapper)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {

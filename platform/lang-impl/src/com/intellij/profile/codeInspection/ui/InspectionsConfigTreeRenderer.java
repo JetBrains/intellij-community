@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -38,6 +39,12 @@ import javax.swing.*;
 import java.awt.*;
 
 abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+  private final Project myProject;
+
+  public InspectionsConfigTreeRenderer(Project project) {
+    myProject = project;
+  }
+
   protected abstract String getFilter();
 
   @Override
@@ -58,7 +65,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
     Color foreground =
       selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeTextForeground();
 
-    @NonNls String text = null;
+    @NonNls String text;
     int style = SimpleTextAttributes.STYLE_PLAIN;
     String hint = null;
     if (object instanceof String) {
@@ -74,7 +81,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
         }
         else {
           text = "In scope \'" + scopeName + "\'";
-          if (node.getScope() == null) {
+          if (node.getScope(myProject) == null) {
             foreground = JBColor.RED;
           }
         }
@@ -97,7 +104,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
 
   @Nullable
   private static String getHint(Descriptor descriptor) {
-    final InspectionToolWrapper toolWrapper = descriptor.getTool();
+    final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
     if (toolWrapper == null) {
       return InspectionsBundle.message("inspection.tool.availability.in.tree.node");
     }

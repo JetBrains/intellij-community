@@ -46,8 +46,8 @@ import java.util.LinkedHashSet;
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
   private final String myShortName;
 
-  public RunInspectionIntention(final InspectionProfileEntry tool) {
-    myShortName = tool.getShortName();
+  public RunInspectionIntention(@NotNull InspectionToolWrapper toolWrapper) {
+    myShortName = toolWrapper.getShortName();
   }
 
   public RunInspectionIntention(final HighlightDisplayKey key) {
@@ -104,15 +104,15 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
     allWrappers.add(toolWrapper);
-    rootProfile.collectDependentInspections(toolWrapper, allWrappers);
+    rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());
     InspectionToolWrapper[] toolWrappers = allWrappers.toArray(new InspectionToolWrapper[allWrappers.size()]);
-    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), toolWrappers);
+    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(), toolWrappers);
     try {
       Element element = new Element("toCopy");
 
       for (InspectionToolWrapper wrapper : allWrappers) {
-        wrapper.writeSettings(element);
-        model.getInspectionTool(wrapper.getShortName(), psiElement).readSettings(element);
+        wrapper.getTool().writeSettings(element);
+        model.getInspectionTool(wrapper.getShortName(), psiElement).getTool().readSettings(element);
       }
     }
     catch (Exception e) {
