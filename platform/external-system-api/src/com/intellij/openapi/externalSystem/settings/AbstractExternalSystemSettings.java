@@ -43,6 +43,26 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
     myChangesTopic = topic;
     myProject = project;
   }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  /**
+   * Every time particular external system setting is changed corresponding message is sent via ide
+   * <a href="http://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+Messaging+infrastructure">messaging sub-system</a>.
+   * The problem is that every external system implementation defines it's own topic/listener pair. Listener interface is derived
+   * from the common {@link ExternalSystemSettingsListener} interface and is specific to external sub-system implementation.
+   * However, it's possible that a client wants to perform particular actions based only on {@link ExternalSystemSettingsListener}
+   * facilities. There is no way for such external system-agnostic client to create external system-specific listener
+   * implementation then.
+   * <p/>
+   * That's why this method allows to wrap given 'generic listener' into external system-specific one.
+   * 
+   * @param listener  target generic listener to wrap to external system-specific implementation
+   */
+  public abstract void subscribe(@NotNull ExternalSystemSettingsListener<S> listener);
   
   @SuppressWarnings("unchecked")
   @NotNull

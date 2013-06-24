@@ -27,6 +27,8 @@ import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
@@ -56,8 +58,7 @@ public abstract class AddScopeAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     if (getSelectedProfile() == null) return;
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null) return;
+    final Project project = getProject(e);
     final InspectionConfigTreeNode[] selectedNodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     if (selectedNodes == null) return;
     final List<Descriptor> descriptors = new ArrayList<Descriptor>();
@@ -66,6 +67,14 @@ public abstract class AddScopeAction extends AnAction {
     }
 
     presentation.setEnabled(!getAvailableScopes(project, descriptors).isEmpty());
+  }
+
+  private static Project getProject(AnActionEvent e) {
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
   }
 
   @Override
@@ -79,7 +88,7 @@ public abstract class AddScopeAction extends AnAction {
       collect(descriptors, nodes, node);
     }
 
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = getProject(e);
     final List<String> availableScopes = getAvailableScopes(project, descriptors);
     final int idx = Messages.showChooseDialog(myTree, "Scope:", "Choose Scope", ArrayUtil.toStringArray(availableScopes), availableScopes.get(0), Messages.getQuestionIcon());
     if (idx == -1) return;
@@ -127,7 +136,7 @@ public abstract class AddScopeAction extends AnAction {
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       Collections.addAll(scopes, holder.getScopes());
     }
-    scopes.remove(DefaultScopesProvider.getAllScope());
+    scopes.remove(CustomScopesProviderEx.getAllScope());
 
     CustomScopesProviderEx.filterNoSettingsScopes(project, scopes);
 

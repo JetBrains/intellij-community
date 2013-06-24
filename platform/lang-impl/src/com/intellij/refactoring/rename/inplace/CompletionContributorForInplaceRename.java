@@ -33,7 +33,7 @@ public class CompletionContributorForInplaceRename extends CompletionContributor
     final Editor editor = parameters.getLookup().getEditor();
     final TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     if (state != null) {
-      if (editor.getUserData(InplaceRefactoring.INPLACE_RENAMER) != null) {
+      if (editor.getUserData(InplaceRefactoring.INPLACE_RENAMER) != null && parameters.getInvocationCount() == 0) {
         result.stopHere();
       }
     }

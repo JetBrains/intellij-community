@@ -69,6 +69,9 @@ public interface GitRepository extends Repository {
   GitUntrackedFilesHolder getUntrackedFilesHolder();
 
 
+  @NotNull
+  GitRepoInfo getInfo();
+
   /**
    * Returns the current branch of this Git repository.
    * If the repository is being rebased, then the current branch is the branch being rebased (which was current before the rebase

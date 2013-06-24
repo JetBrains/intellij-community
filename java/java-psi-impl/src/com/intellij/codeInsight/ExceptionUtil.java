@@ -420,7 +420,11 @@ public class ExceptionUtil {
             for (CandidateInfo info : results) {
               final PsiElement element = info.getElement();
               if (element instanceof PsiMethod && MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element)) {
-                ex.retainAll(collectSubstituted(info.getSubstitutor(), ((PsiMethod)element).getThrowsList().getReferencedTypes()));
+                final PsiClassType[] exceptions = ((PsiMethod)element).getThrowsList().getReferencedTypes();
+                if (exceptions.length == 0) {
+                  return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, PsiClassType.EMPTY_ARRAY);
+                }
+                retainExceptions(ex, collectSubstituted(info.getSubstitutor(), exceptions));
               }
             }
             return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()]));
@@ -433,6 +437,29 @@ public class ExceptionUtil {
     }
 
     return getUnhandledExceptions(method, methodCall, topElement, substitutor);
+  }
+
+  private static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
+    final List<PsiClassType> replacement = new ArrayList<PsiClassType>();
+    for (Iterator<PsiClassType> iterator = ex.iterator(); iterator.hasNext(); ) {
+      PsiClassType classType = iterator.next();
+      boolean found = false;
+      for (PsiClassType psiClassType : thrownEx) {
+        if (psiClassType.isAssignableFrom(classType)) {
+          found = true;
+          break;
+        } else if (classType.isAssignableFrom(psiClassType)) {
+          replacement.add(psiClassType);
+          iterator.remove();
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        iterator.remove();
+      }
+    }
+    ex.addAll(replacement);
   }
 
   private static List<PsiClassType> collectSubstituted(PsiSubstitutor substitutor, PsiClassType[] thrownExceptions) {

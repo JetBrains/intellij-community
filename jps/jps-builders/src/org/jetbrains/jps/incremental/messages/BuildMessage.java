@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package org.jetbrains.jps.incremental.messages;
  *         Date: 9/29/11
  */
 public abstract class BuildMessage {
-  public static enum Kind {
+  public enum Kind {
     ERROR, WARNING, INFO, PROGRESS
   }
 

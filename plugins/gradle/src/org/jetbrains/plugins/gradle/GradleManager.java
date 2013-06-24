@@ -34,6 +34,7 @@ import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExt
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -50,10 +51,12 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
 import org.jetbrains.plugins.gradle.remote.impl.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
@@ -279,11 +282,33 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
   }
 
   @Override
-  public void runActivity(Project project) {
+  public void runActivity(final Project project) {
+    // We want to automatically refresh linked projects on gradle service directory change.
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
+      @Override
+      public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
+        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+      }
+    });
+    
     // We used to assume that gradle scripts are always named 'build.gradle' and kept path to that build.gradle file at ide settings.
-    // However, it was found out that that is incorrect assumption (IDEA-109064). Now we keep paths to gradle script's directories
+    // However, it was found out that that is incorrect assumption (IDEA-109064). Now we keep paths to gradle script's directories   
     // instead. However, we don't want to force old users to re-import gradle projects because of that. That's why we check gradle
     // config and re-point it from build.gradle to the parent dir if necessary.
+    Map<String, String> adjustedPaths = patchLinkedProjects(project);
+    if (adjustedPaths == null) {
+      return;
+    }
+
+    GradleLocalSettings localSettings = GradleLocalSettings.getInstance(project);
+    patchRecentTasks(adjustedPaths, localSettings);
+    patchAvailableProjects(adjustedPaths, localSettings);
+    patchAvailableTasks(adjustedPaths, localSettings);
+  }
+
+  @Nullable
+  private static Map<String, String> patchLinkedProjects(@NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
     Collection<GradleProjectSettings> correctedSettings = ContainerUtilRt.newArrayList();
     Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
@@ -305,35 +330,14 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
       correctedSettings.add(projectSettings);
     }
     if (adjustedPaths.isEmpty()) {
-      return;
+      return null;
     }
-    
-    settings.setLinkedProjectsSettings(correctedSettings);
 
-    GradleLocalSettings localSettings = GradleLocalSettings.getInstance(project);
-    // Recent tasks.
-    for (ExternalTaskExecutionInfo taskInfo : localSettings.getRecentTasks()) {
-      ExternalSystemTaskExecutionSettings s = taskInfo.getSettings();
-      String newPath = adjustedPaths.get(s.getExternalProjectPath());
-      if (newPath != null) {
-        s.setExternalProjectPath(newPath);
-      }
-    }
-    
-    // Available projects.
-    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects = ContainerUtilRt.newHashMap();
-    for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : localSettings.getAvailableProjects().entrySet()) {
-      String newPath = adjustedPaths.get(entry.getKey().getPath());
-      if (newPath == null) {
-        adjustedAvailableProjects.put(entry.getKey(), entry.getValue());
-      }
-      else {
-        adjustedAvailableProjects.put(new ExternalProjectPojo(entry.getKey().getName(), newPath), entry.getValue());
-      }
-    }
-    localSettings.setAvailableProjects(adjustedAvailableProjects);
-    
-    // Available tasks.
+    settings.setLinkedProjectsSettings(correctedSettings);
+    return adjustedPaths;
+  }
+
+  private static void patchAvailableTasks(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
     Map<String, Collection<ExternalTaskPojo>> adjustedAvailableTasks = ContainerUtilRt.newHashMap();
     for (Map.Entry<String, Collection<ExternalTaskPojo>> entry : localSettings.getAvailableTasks().entrySet()) {
       String newPath = adjustedPaths.get(entry.getKey());
@@ -351,5 +355,29 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
       }
     }
     localSettings.setAvailableTasks(adjustedAvailableTasks);
+  }
+
+  private static void patchAvailableProjects(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
+    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects = ContainerUtilRt.newHashMap();
+    for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : localSettings.getAvailableProjects().entrySet()) {
+      String newPath = adjustedPaths.get(entry.getKey().getPath());
+      if (newPath == null) {
+        adjustedAvailableProjects.put(entry.getKey(), entry.getValue());
+      }
+      else {
+        adjustedAvailableProjects.put(new ExternalProjectPojo(entry.getKey().getName(), newPath), entry.getValue());
+      }
+    }
+    localSettings.setAvailableProjects(adjustedAvailableProjects);
+  }
+
+  private static void patchRecentTasks(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
+    for (ExternalTaskExecutionInfo taskInfo : localSettings.getRecentTasks()) {
+      ExternalSystemTaskExecutionSettings s = taskInfo.getSettings();
+      String newPath = adjustedPaths.get(s.getExternalProjectPath());
+      if (newPath != null) {
+        s.setExternalProjectPath(newPath);
+      }
+    }
   }
 }
