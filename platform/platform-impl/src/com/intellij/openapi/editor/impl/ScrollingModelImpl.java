@@ -250,9 +250,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Nullable
   public JScrollBar getVerticalScrollBar() {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return null;
-
-    return myEditor.getScrollPane().getVerticalScrollBar();
+    JScrollPane scrollPane = myEditor.getScrollPane();
+    return scrollPane.getVerticalScrollBar();
   }
 
   @Nullable
