@@ -4,17 +4,19 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.rest.RestFile;
 import com.jetbrains.rest.psi.RestTitle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User : catherine
  */
 public class RestStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
-  public RestStructureViewModel(@NotNull PsiFile psiFile) {
-    super(psiFile, new RestStructureViewElement(psiFile));
+  public RestStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
+    super(psiFile, editor, new RestStructureViewElement(psiFile));
     withSorters(Sorter.ALPHA_SORTER);
     withSuitableClasses(RestTitle.class);
   }
