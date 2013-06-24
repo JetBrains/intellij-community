@@ -63,7 +63,7 @@ public class MethodUpDownUtil {
     StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(element);
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
-      StructureViewModel model = builder.createStructureViewModel();
+      StructureViewModel model = builder.createStructureViewModel(null);
       try {
         addStructureViewElements(model.getRoot(), array, element);
       }

@@ -33,7 +33,8 @@ import org.jetbrains.annotations.Nullable;
  * @see TextEditorBasedStructureViewModel
  * @see com.intellij.lang.LanguageStructureViewBuilder#getStructureViewBuilder(com.intellij.psi.PsiFile)
  */
-public abstract class TreeBasedStructureViewBuilder implements StructureViewBuilder {
+public abstract class
+  TreeBasedStructureViewBuilder implements StructureViewBuilder {
   /**
    * @deprecated Use createStructureViewModel(Editor editor)
    */

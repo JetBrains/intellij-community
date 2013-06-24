@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * The standard {@link StructureViewModel} implementation which is linked to a text editor.
  *
- * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel(Editor editor)
  */
 
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel, ProvidingTreeModel {
