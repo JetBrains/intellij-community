@@ -221,6 +221,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
 
+  @Override
   @Nullable
   public RunContentDescriptor getRunContentDescriptor() {
     return myRunContentDescriptor;

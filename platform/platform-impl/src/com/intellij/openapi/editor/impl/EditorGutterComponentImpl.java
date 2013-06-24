@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NullableFunction;
@@ -161,7 +160,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public Dimension getPreferredSize() {
     if (UISettings.getInstance().PRESENTATION_MODE) {
-      return new Dimension(myEditor.getFontMetrics(Font.PLAIN).getHeight(), myEditor.getPreferredHeight());
+      final Dimension dimension = new Dimension(myEditor.getFontMetrics(Font.PLAIN).getHeight(), myEditor.getPreferredHeight());
+      if (isLineMarkersShown()) {
+        dimension.width += getLineNumberAreaWidth() + getLineMarkerAreaWidth();
+      }
+      return dimension;
     }
     int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
     myLastPreferredHeight = myEditor.getPreferredHeight();
@@ -190,11 +193,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public void paint(Graphics g) {
     if (UISettings.getInstance().PRESENTATION_MODE) {
       g.setColor(myEditor.getColorsScheme().getDefaultBackground());
-      Dimension size = getPreferredSize();
-      Rectangle bounds = g.getClipBounds();
-      if (bounds.height >= 0) {
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      final Rectangle clip = g.getClipBounds();
+
+      if (clip.height >= 0) {
+        g.fillRect(clip.x, clip.y, clip.width, clip.height);
       }
+
+      paintCaretRowBackground(g, clip.x, clip.width);
+
+      if (isLineNumbersShown()) {
+        UISettings.setupAntialiasing(g);
+        paintLineNumbers(g, clip);
+      }
+
       return;
     }
 

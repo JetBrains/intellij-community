@@ -57,7 +57,7 @@ public abstract class AbstractExternalSystemLocalSettings {
     new AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>>(
       ContainerUtilRt.<ExternalProjectPojo, Collection<ExternalProjectPojo>>newHashMap()
     );
-  private final AtomicReference<Map<String, Collection<ExternalTaskPojo>>>                 myAvailableTasks                   =
+  private final AtomicReference<Map<String/* external project config path */, Collection<ExternalTaskPojo>>> myAvailableTasks =
     new AtomicReference<Map<String, Collection<ExternalTaskPojo>>>(
       ContainerUtilRt.<String, Collection<ExternalTaskPojo>>newHashMap()
     );

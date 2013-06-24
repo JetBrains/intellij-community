@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,22 +43,17 @@ public class BaseLabel extends JLabel {
     setActiveFg(DEFAULT_ACTIVE_FORE);
     setPassiveFg(DEFAULT_PASSIVE_FORE);
     myBold = bold;
-    updateFont();
   }
 
-  public void updateUI() {
-    super.updateUI();
-    updateFont();
-  }
-
-  private void updateFont() {
-    Font baseFont = getLabelFont();
+  @Override
+  public Font getFont() {
+    Font f = UIUtil.getLabelFont();
+    f = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
     if (myBold) {
-      setFont(baseFont.deriveFont(Font.BOLD));
+      f = f.deriveFont(Font.BOLD);
     }
-    else {
-      setFont(baseFont);
-    }
+
+    return f;
   }
 
   public static Font getLabelFont() {
@@ -125,7 +120,6 @@ public class BaseLabel extends JLabel {
       }
 
       myBold = false; //isSelected;
-      updateFont();
     }
   }
 

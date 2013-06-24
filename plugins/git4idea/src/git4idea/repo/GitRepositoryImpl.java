@@ -180,6 +180,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     }
   }
 
+  @NotNull
   @Override
   public String toLogString() {
     return String.format("GitRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",

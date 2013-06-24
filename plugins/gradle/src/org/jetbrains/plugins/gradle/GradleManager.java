@@ -24,11 +24,15 @@ import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
-import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
-import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -37,6 +41,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,15 +70,17 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
  * @since 4/10/13 1:19 PM
  */
 public class GradleManager
-  implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, ExternalSystemManager<
+implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
   GradleProjectSettings,
   GradleSettingsListener,
   GradleSettings,
@@ -269,5 +276,80 @@ public class GradleManager
   @Override
   public FileChooserDescriptor getExternalProjectDescriptor() {
     return GradleUtil.getGradleProjectFileChooserDescriptor();
+  }
+
+  @Override
+  public void runActivity(Project project) {
+    // We used to assume that gradle scripts are always named 'build.gradle' and kept path to that build.gradle file at ide settings.
+    // However, it was found out that that is incorrect assumption (IDEA-109064). Now we keep paths to gradle script's directories
+    // instead. However, we don't want to force old users to re-import gradle projects because of that. That's why we check gradle
+    // config and re-point it from build.gradle to the parent dir if necessary.
+    GradleSettings settings = GradleSettings.getInstance(project);
+    Collection<GradleProjectSettings> correctedSettings = ContainerUtilRt.newArrayList();
+    Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
+    for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
+      String oldPath = projectSettings.getExternalProjectPath();
+      if (!new File(oldPath).isDirectory()) {
+        try {
+          String newPath = new File(oldPath).getParentFile().getCanonicalPath();
+          projectSettings.setExternalProjectPath(newPath);
+          adjustedPaths.put(oldPath, newPath);
+        }
+        catch (IOException e) {
+          LOG.warn(String.format(
+            "Unexpected exception occurred on attempt to re-point linked gradle project path from build.gradle to its parent dir. Path: %s",
+            oldPath
+          ), e);
+        }
+      }
+      correctedSettings.add(projectSettings);
+    }
+    if (adjustedPaths.isEmpty()) {
+      return;
+    }
+    
+    settings.setLinkedProjectsSettings(correctedSettings);
+
+    GradleLocalSettings localSettings = GradleLocalSettings.getInstance(project);
+    // Recent tasks.
+    for (ExternalTaskExecutionInfo taskInfo : localSettings.getRecentTasks()) {
+      ExternalSystemTaskExecutionSettings s = taskInfo.getSettings();
+      String newPath = adjustedPaths.get(s.getExternalProjectPath());
+      if (newPath != null) {
+        s.setExternalProjectPath(newPath);
+      }
+    }
+    
+    // Available projects.
+    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects = ContainerUtilRt.newHashMap();
+    for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : localSettings.getAvailableProjects().entrySet()) {
+      String newPath = adjustedPaths.get(entry.getKey().getPath());
+      if (newPath == null) {
+        adjustedAvailableProjects.put(entry.getKey(), entry.getValue());
+      }
+      else {
+        adjustedAvailableProjects.put(new ExternalProjectPojo(entry.getKey().getName(), newPath), entry.getValue());
+      }
+    }
+    localSettings.setAvailableProjects(adjustedAvailableProjects);
+    
+    // Available tasks.
+    Map<String, Collection<ExternalTaskPojo>> adjustedAvailableTasks = ContainerUtilRt.newHashMap();
+    for (Map.Entry<String, Collection<ExternalTaskPojo>> entry : localSettings.getAvailableTasks().entrySet()) {
+      String newPath = adjustedPaths.get(entry.getKey());
+      if (newPath == null) {
+        adjustedAvailableTasks.put(entry.getKey(), entry.getValue());
+      }
+      else {
+        for (ExternalTaskPojo task : entry.getValue()) {
+          String newTaskPath = adjustedPaths.get(task.getLinkedExternalProjectPath());
+          if (newTaskPath != null) {
+            task.setLinkedExternalProjectPath(newTaskPath);
+          }
+        }
+        adjustedAvailableTasks.put(newPath, entry.getValue());
+      }
+    }
+    localSettings.setAvailableTasks(adjustedAvailableTasks);
   }
 }

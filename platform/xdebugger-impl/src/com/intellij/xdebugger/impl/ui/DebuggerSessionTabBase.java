@@ -98,6 +98,7 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
     return AllIcons.FileTypes.Text;
   }
 
+  @Override
   @NotNull
   public RunnerLayoutUi getUi() {
     return myUi;
@@ -124,6 +125,7 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
     if (myConsole instanceof ObservableConsoleView) {
       ObservableConsoleView observable = (ObservableConsoleView)myConsole;
       observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
+        @Override
         public void contentAdded(final Collection<ConsoleViewContentType> types) {
           if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
             content.fireAlert();

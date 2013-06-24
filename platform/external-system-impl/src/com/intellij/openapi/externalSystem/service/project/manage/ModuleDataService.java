@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -72,7 +71,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       myAlarm.addRequest(new ImportModulesTask(project, toImport, synchronous), PROJECT_INITIALISATION_DELAY_MS);
       return;
     }
-    Runnable task = new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
@@ -84,15 +83,9 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
           if (module != null) {
             syncPaths(module, node.getData());
           }
-        }
+        } 
       }
-    };
-    if (synchronous) {
-      UIUtil.invokeAndWaitIfNeeded(task);
-    }
-    else {
-      UIUtil.invokeLaterIfNeeded(task);
-    }
+    });
   }
 
   private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate, @NotNull final Project project) {

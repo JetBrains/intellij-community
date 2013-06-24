@@ -218,7 +218,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     };
 
-    @SuppressWarnings({"ManualArrayToCollectionCopy"})
+    @SuppressWarnings({"ManualArrayToCollectionCopy", "ConstantConditions"})
     SwitcherPanel(final Project project, String title, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
@@ -229,11 +229,11 @@ public class Switcher extends AnAction implements DumbAware {
       setFocusable(true);
       addKeyListener(this);
       setBorder(new EmptyBorder(0, 0, 0, 0));
-      setBackground(Color.WHITE);
+      setBackground(JBColor.background());
       pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
 
       final Font font = pathLabel.getFont();
-      pathLabel.setFont(font.deriveFont((float)10));
+      pathLabel.setFont(font.deriveFont(Math.max(10f, font.getSize() - 4f)));
 
       descriptions = new JPanel(new BorderLayout()) {
         @Override

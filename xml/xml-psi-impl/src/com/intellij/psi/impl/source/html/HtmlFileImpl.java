@@ -34,6 +34,7 @@ public class HtmlFileImpl extends XmlFileImpl {
     return "HtmlFile:" + getName();
   }
 
+  @Override
   public XmlDocument getDocument() {
     CompositeElement treeElement = calcTreeElement();
 

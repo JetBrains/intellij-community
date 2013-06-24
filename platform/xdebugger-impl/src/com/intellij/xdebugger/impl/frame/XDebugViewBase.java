@@ -42,6 +42,7 @@ public abstract class XDebugViewBase implements Disposable {
 
   private void onSessionEvent(final SessionEvent event) {
     AppUIUtil.invokeLaterIfProjectAlive(mySession.getProject(), new Runnable() {
+      @Override
       public void run() {
         rebuildView(event);
       }
@@ -50,27 +51,33 @@ public abstract class XDebugViewBase implements Disposable {
 
   protected abstract void rebuildView(final SessionEvent event);
 
+  @Override
   public void dispose() {
     mySession.removeSessionListener(mySessionListener);
   }
 
   private class MyDebugSessionListener extends XDebugSessionAdapter {
+    @Override
     public void sessionPaused() {
       onSessionEvent(SessionEvent.PAUSED);
     }
 
+    @Override
     public void sessionResumed() {
       onSessionEvent(SessionEvent.RESUMED);
     }
 
+    @Override
     public void sessionStopped() {
       onSessionEvent(SessionEvent.STOPPED);
     }
 
+    @Override
     public void stackFrameChanged() {
       onSessionEvent(SessionEvent.FRAME_CHANGED);
     }
 
+    @Override
     public void beforeSessionResume() {
       onSessionEvent(SessionEvent.BEFORE_RESUME);
     }
