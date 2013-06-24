@@ -33,6 +33,7 @@ import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -653,7 +654,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType type = cd.getLubType();
       if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
         addConditionalRuntimeThrow(cd, true);
-        break;
       }
     }
   }
