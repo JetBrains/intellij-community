@@ -71,7 +71,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private ToolWindowFactory myContentFactory;
 
   private ActionCallback myActivation = new ActionCallback.Done();
-  private BusyObject.Impl myShowing = new BusyObject.Impl() {
+  private final BusyObject.Impl myShowing = new BusyObject.Impl() {
     @Override
     public boolean isReady() {
       return myComponent != null && myComponent.isShowing();
@@ -79,7 +79,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   };
   private boolean myUseLastFocused = true;
 
-  private final static Logger LOG = Logger.getInstance(ToolWindowImpl.class);
+  private static final Logger LOG = Logger.getInstance(ToolWindowImpl.class);
 
   ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
@@ -151,7 +151,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public final boolean isActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myToolWindowManager.isEditorComponentActive()) return false;
-    return myToolWindowManager.isToolWindowActive(myId) || (myDecorator != null && myDecorator.isFocused());
+    return myToolWindowManager.isToolWindowActive(myId) || myDecorator != null && myDecorator.isFocused();
   }
 
   @Override
@@ -167,6 +167,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
             IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
               @Override
               public void run() {
+                if (myContentManager.isDisposed()) return;
                 myContentManager.getReady(requestor).notify(result);
               }
             });
