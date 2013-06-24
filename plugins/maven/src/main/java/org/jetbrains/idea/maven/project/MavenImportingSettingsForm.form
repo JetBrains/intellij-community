@@ -294,7 +294,7 @@
           <componentStyle value="SMALL"/>
           <fontColor value="BRIGHTER"/>
           <labelFor value="83bca"/>
-          <text value="Comma separated list of dependency types those must be added as external libraries on import"/>
+          <text value="Comma separated list of dependency types that should be imported"/>
         </properties>
       </component>
     </children>
