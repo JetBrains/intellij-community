@@ -38,8 +38,8 @@ import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -51,9 +51,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author vlan
@@ -779,6 +781,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void showInstallationError(Project project, String title, String description) {
     PackagesNotificationPanel.showError(project, title, description);
+  }
+
+  @Override
+  public void showInstallationError(Component owner, String title, String description) {
+    PackagesNotificationPanel.showError(owner, title, description);
   }
 
   private class MySdkRootWatcher extends BulkFileListener.Adapter {

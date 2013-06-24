@@ -3,8 +3,6 @@ package com.jetbrains.python.refactoring.changeSignature;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -22,7 +20,6 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureDialogBase;
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
-import com.intellij.ui.DottedBorder;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
@@ -30,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.jetbrains.python.PyBundle;
@@ -233,7 +231,6 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
   @Override
   protected JComponent getRowPresentation(ParameterTableModelItemBase<PyParameterInfo> item, boolean selected, final boolean focused) {
-    final JPanel panel = new JPanel(new BorderLayout());
     String text = item.parameter.getName();
     final String defaultCallValue = item.defaultValueCodeFragment.getText();
     PyParameterTableModelItem pyItem = (PyParameterTableModelItem)item;
@@ -250,28 +247,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
     if (!StringUtil.isEmpty(tail)) {
       text += " //" + tail;
     }
-    final EditorTextField field = new EditorTextField(" " + text, getProject(), getFileType()) {
-      @Override
-      protected boolean shouldHaveBorder() {
-        return false;
-      }
-    };
-
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    font = new Font(font.getFontName(), font.getStyle(), 12);
-    field.setFont(font);
-
-    if (selected && focused) {
-      panel.setBackground(UIUtil.getTableSelectionBackground());
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
-    } else {
-      panel.setBackground(UIUtil.getTableBackground());
-      if (selected) {
-        panel.setBorder(new DottedBorder(UIUtil.getTableForeground()));
-      }
-    }
-    panel.add(field, BorderLayout.WEST);
-    return panel;
+    return JBListTable.createEditorTextFieldPresentation(getProject(), getFileType(), " " + text, selected, focused);
   }
 
   @Override
