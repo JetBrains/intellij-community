@@ -59,7 +59,7 @@ public class SSBasedInspectionCompiledPatternsCache implements StartupActivity {
   @Nullable
   private static SSBasedInspection getInspection(@NotNull Project project) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    final InspectionToolWrapper entry = (InspectionToolWrapper)profile.getInspectionTool(SSBasedInspection.SHORT_NAME);
+    final InspectionToolWrapper entry = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
 
     return entry == null ? null : (SSBasedInspection)entry.getTool();
   }
