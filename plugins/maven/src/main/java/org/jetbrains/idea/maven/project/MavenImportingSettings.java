@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 public class MavenImportingSettings implements Cloneable {
   private static final String PROCESS_RESOURCES_PHASE = "process-resources";
@@ -112,8 +112,8 @@ public class MavenImportingSettings implements Cloneable {
     if (myDependencyTypesAsSet == null) {
       Set<String> res = new LinkedHashSet<String>();
 
-      for (StringTokenizer st = new StringTokenizer(dependencyTypes, " \n\r\t,;"); st.hasMoreTokens(); ) {
-        res.add(st.nextToken());
+      for (String type : StringUtil.tokenize(dependencyTypes, " \n\r\t,;")) {
+        res.add(type);
       }
 
       myDependencyTypesAsSet = res;
