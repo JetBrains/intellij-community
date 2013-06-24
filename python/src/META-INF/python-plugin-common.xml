@@ -932,7 +932,8 @@
     <!-- Web2Py -->
     <pyReferenceResolveProvider implementation="com.jetbrains.web2py.psi.Web2PyReferenceResolveProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.web2py.templates.ref.Web2PyTokenSetContributor"/>
-    <visitorFilter language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyVisitorFilter"/>
+    <visitorFilter language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyTemplateVisitorFilter"/>
+    <visitorFilter language="Python" implementationClass="com.jetbrains.web2py.annotator.Web2PyVisitorFilter"/>
   </extensions>
 
   <project-components>

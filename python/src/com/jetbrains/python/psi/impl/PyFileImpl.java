@@ -314,8 +314,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     else {
       lang = getLanguage();
     }
-    final PythonVisitorFilter filter = PythonVisitorFilter.INSTANCE.forLanguage(lang);
-    return filter == null || filter.isSupported(visitorClass, this);
+    final List<PythonVisitorFilter> filters = PythonVisitorFilter.INSTANCE.allForLanguage(lang);
+    if (filters.isEmpty()) return true;
+    for (PythonVisitorFilter filter : filters) {
+      if (!filter.isSupported(visitorClass, this))
+        return false;
+    }
+    return true;
   }
 
   private final Key<Set<PyFile>> PROCESSED_FILES = Key.create("PyFileImpl.processDeclarations.processedFiles");
