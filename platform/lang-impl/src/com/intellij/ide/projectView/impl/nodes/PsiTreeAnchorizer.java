@@ -58,7 +58,7 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
     if (pointer instanceof PsiAnchor) {
       PsiElement retrieve = ((PsiAnchor)pointer).retrieve();
       if (retrieve == null) {
-        System.out.println("Null anchor: " + pointer);
+        //System.out.println("Null anchor: " + pointer);
       }
       return retrieve;
     }
