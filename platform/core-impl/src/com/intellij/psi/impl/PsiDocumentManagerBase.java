@@ -365,9 +365,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     });
   }
 
-  public void commitOtherFilesAssociatedWithDocument(final Document document, final PsiFile psiFile) {
-  }
-
   @Override
   public <T> T commitAndRunReadAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);

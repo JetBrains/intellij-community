@@ -176,11 +176,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @Override
-  public void documentAndPsiInSync() {
-    myElementInfo.documentAndPsiInSync();
-  }
-
-  @Override
   public void unfastenBelt(int offset) {
     myElementInfo.unfastenBelt(offset);
   }

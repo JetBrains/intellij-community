@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
   void fastenBelt(int offset, @Nullable RangeMarker[] cachedRangeMarkers);
-  void documentAndPsiInSync();
 
   void unfastenBelt(int offset);
 

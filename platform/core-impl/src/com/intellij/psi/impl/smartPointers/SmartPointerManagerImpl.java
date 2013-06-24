@@ -17,11 +17,9 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
 import java.util.List;
-import java.util.Set;
 
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
@@ -105,36 +102,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         if (injectedFile == null) continue;
         unfastenBelts(injectedFile, 0);
       }
-    }
-  }
-
-  public static void synchronizePointers(@NotNull PsiFile file) {
-    final Set<Language> languages = file.getViewProvider().getLanguages();
-    for (Language language : languages) {
-      final PsiFile f = file.getViewProvider().getPsi(language);
-      synchronized (f) {
-        _synchronizePointers(f);
-      }
-    }
-  }
-
-  private static void _synchronizePointers(@NotNull PsiFile file) {
-    List<SmartPointerEx> pointers = getPointers(file);
-    if (pointers == null) return;
-
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < pointers.size(); i++) {
-      SmartPointerEx pointer = pointers.get(i);
-      if (pointer != null) {
-        pointer.documentAndPsiInSync();
-      }
-    }
-
-    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-    for (Document document : InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocuments(file)) {
-      PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
-      if (injectedfile == null) continue;
-      _synchronizePointers(injectedfile);
     }
   }
 
