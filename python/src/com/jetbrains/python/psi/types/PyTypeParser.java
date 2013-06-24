@@ -1,62 +1,59 @@
 package com.jetbrains.python.psi.types;
 
-import com.google.common.base.CharMatcher;
+import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.hash.HashMap;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.types.functionalParser.ForwardDeclaration;
+import com.jetbrains.python.psi.types.functionalParser.FunctionalParser;
+import com.jetbrains.python.psi.types.functionalParser.ParserException;
+import com.jetbrains.python.psi.types.functionalParser.Token;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
+import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.many;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.token;
 
 /**
- * @author yole
+ * @author vlan
  */
 public class PyTypeParser {
-  private static final Pattern PARAMETRIZED_CLASS = Pattern.compile("([a-zA-Z0-9._]+) of (.+)");
-  private static final Pattern DICT_TYPE = Pattern.compile("dict from (.+) to (.+)");
-
-  private PyTypeParser() {
-  }
-
-  @Nullable
-  public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type) {
-    final ParseResult result = parse(anchor, type);
-    return result.getType();
-  }
-
-  @NotNull
-  public static ParseResult parse(@Nullable PsiElement anchor, @NotNull String type) {
-    final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
-    final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
-    final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();
-    final PyType t = parse(anchor, type, types, fullRanges, imports, 0);
-    return new ParseResult(t, types, fullRanges, imports);
-  }
+  private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.<TextRange, PyType>emptyMap(), Collections.<PyType, TextRange>emptyMap(),
+                                                                 Collections.<PyType, PyImportElement>emptyMap());
 
   public static class ParseResult {
     @Nullable private PyType myType;
-    @NotNull private Map<TextRange, PyType> myTypes;
-    @NotNull private Map<PyType, TextRange> myFullRanges;
-    @NotNull private final Map<PyType, PyImportElement> myImports;
+    @NotNull private Map<TextRange, ? extends PyType> myTypes;
+    @NotNull private Map<? extends PyType, TextRange> myFullRanges;
+    @NotNull private final Map<? extends PyType, PyImportElement> myImports;
 
-    ParseResult(@Nullable PyType type, @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges,
-                @NotNull Map<PyType, PyImportElement> imports) {
+    ParseResult(@Nullable PyType type, @NotNull Map<TextRange, ? extends PyType> types,
+                @NotNull Map<? extends PyType, TextRange> fullRanges,
+                @NotNull Map<? extends PyType, PyImportElement> imports) {
       myType = type;
       myTypes = types;
       myFullRanges = fullRanges;
       myImports = imports;
+    }
+
+    ParseResult(@Nullable PyType type, @NotNull TextRange range) {
+      this(type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
     }
 
     @Nullable
@@ -65,281 +62,299 @@ public class PyTypeParser {
     }
 
     @NotNull
-    public Map<TextRange, PyType> getTypes() {
+    public Map<TextRange, ? extends PyType> getTypes() {
       return myTypes;
     }
 
     @NotNull
-    public Map<PyType, TextRange> getFullRanges() {
+    public Map<? extends PyType, TextRange> getFullRanges() {
       return myFullRanges;
     }
 
     @NotNull
-    public Map<PyType, PyImportElement> getImports() {
+    public Map<? extends PyType, PyImportElement> getImports() {
       return myImports;
     }
+
+    private ParseResult merge(@NotNull ParseResult result) {
+      final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
+      final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
+      final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();
+      types.putAll(myTypes);
+      types.putAll(result.getTypes());
+      fullRanges.putAll(myFullRanges);
+      fullRanges.putAll(result.getFullRanges());
+      imports.putAll(myImports);
+      imports.putAll(result.getImports());
+      return new ParseResult(myType, types, fullRanges, imports);
+    }
+
+    private ParseResult withType(@Nullable PyType type) {
+      return new ParseResult(type, myTypes, myFullRanges, myImports);
+    }
   }
 
   @Nullable
-  private static PyType parse(@Nullable PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
-                              @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports, int offset) {
-    if (anchor == null || !anchor.isValid()) {
-      return null;
-    }
-    final String trimmed = DocStringUtil.trimDocString(type);
-    offset += type.indexOf(trimmed);
-    type = trimmed;
-    final TextRange whole = new TextRange(offset, offset + type.length());
-    if (type.equals("None")) {
-      final PyType t = PyNoneType.INSTANCE;
-      types.put(whole, t);
-      return t;
-    }
-    if (type.startsWith("(") && type.endsWith(")")) {
-      return parseTupleType(anchor, type.substring(1, type.length() - 1), types, fullRanges, imports, offset + 1);
-    }
-    if (type.contains(" or ")) {
-      return parseUnionType(anchor, type, types, fullRanges, imports, offset);
-    }
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-    if (type.equals("unknown")) {
-      return null;
-    }
-    if (type.equals("string")) {
-      PyType t = builtinCache.getStringType(LanguageLevel.forElement(anchor));
-      types.put(whole, t);
-      return t;
-    }
-    if (type.equals("str")) {
-      final PyType t = builtinCache.getStrType();
-      types.put(whole, t);
-      return t;
-    }
-    if (type.equals("bytes")) {
-      final PyType t = builtinCache.getBytesType(LanguageLevel.forElement(anchor));
-      types.put(whole, t);
-      return t;
-    }
-    if (type.equals("unicode")) {
-      final PyType t = builtinCache.getUnicodeType(LanguageLevel.forElement(anchor));
-      types.put(whole, t);
-      return t;
-    }
-    if (type.equals("boolean")) {
-      final PyType t = builtinCache.getBoolType();
-      types.put(whole, t);
-      return t;
-    }
-    if (type.equals("file object")) {
-      final PyType t = builtinCache.getObjectType("file");
-      types.put(whole, t);
-      return t;
-    }
-    if (type.equals("dictionary")) {
-      final PyType t = builtinCache.getObjectType("dict");
-      types.put(whole, t);
-      return t;
-    }
-    if (type.startsWith("dict from")) {
-      return parseDictFromToType(anchor, type, types, fullRanges, imports, offset);
-    }
-    if (type.equals("integer") || (type.equals("long") && LanguageLevel.forElement(anchor).isPy3K())) {
-      final PyType t = builtinCache.getIntType();
-      types.put(whole, t);
-      return t;
-    }
-    if (type.length() == 1 && 'T' <= type.charAt(0) && type.charAt(0) <= 'Z') {
-      return new PyGenericType(type);
-    }
-    final Matcher m = PARAMETRIZED_CLASS.matcher(type);
-    if (m.matches()) {
-      final PyType objType = parseObjectType(anchor, m.group(1), builtinCache, types, fullRanges, imports, offset + m.start(1));
-      final PyType elementType = parse(anchor, m.group(2), types, fullRanges, imports, offset + m.start(2));
-      if (objType != null) {
-        if (objType instanceof PyClassType && elementType != null) {
-          return new PyCollectionTypeImpl(((PyClassType)objType).getPyClass(), false, elementType);
-        }
-        return objType;
-      }
-    }
-    return parseObjectType(anchor, type, builtinCache, types, fullRanges, imports, offset);
-  }
-
-  @Nullable
-  private static PyType parseObjectType(@NotNull PsiElement anchor, @NotNull String type, @NotNull PyBuiltinCache builtinCache,
-                                        @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges,
-                                        @NotNull Map<PyType, PyImportElement> imports, int offset) {
-    final TextRange whole = new TextRange(offset, offset + type.length());
-    final PyClassType classType = builtinCache.getObjectType(type);
-    if (classType != null) {
-      types.put(whole, classType);
-      return classType;
-    }
-    final PsiFile anchorFile = anchor.getContainingFile();
-    if (anchorFile instanceof PyFile) {
-      final PyClass aClass = ((PyFile)anchorFile).findTopLevelClass(type);
-      if (aClass != null) {
-        final PyType t = new PyClassTypeImpl(aClass, false);
-        t.assertValid("PyFile.findTopLevelClass()");
-        types.put(whole, t);
-        return t;
-      }
-
-      final List<PyFromImportStatement> fromImports = ((PyFile)anchorFile).getFromImports();
-      for (PyFromImportStatement fromImportStatement : fromImports) {
-        final PyImportElement[] elements = fromImportStatement.getImportElements();
-        for (PyImportElement element : elements) {
-          final String visibleName = element.getVisibleName();
-          if (type.equals(visibleName)) {
-            final PyQualifiedName importSourceQName = fromImportStatement.getImportSourceQName();
-            if (importSourceQName != null) {
-              String qName = importSourceQName.toString() + "." + visibleName;
-              final HashMap<TextRange, PyType> unusedRanges = new HashMap<TextRange, PyType>();
-              final PyType pyType = getTypeFromQName(anchor, qName, whole, unusedRanges, fullRanges, offset);
-              if (pyType != null) {
-                types.put(whole, pyType);
-                imports.put(pyType, element);
-                return pyType;
-              }
-            }
-          }
-        }
-      }
-
-    }
-    if (StringUtil.isJavaIdentifier(type)) {
-      final Collection<PyClass> classes = PyClassNameIndex.find(type, anchor.getProject(), true);
-      if (classes.size() == 1) {
-        final PyType t = new PyClassTypeImpl(classes.iterator().next(), false);
-        t.assertValid("PyClassNameIndex.find().iterator().next()");
-        types.put(whole, t);
-        return t;
-      }
-    }
-    return getTypeFromQName(anchor, type, whole, types, fullRanges, offset);
-  }
-
-  @Nullable
-  public static PyType getTypeFromQName(@NotNull PsiElement anchor, @NotNull String qName, TextRange whole,
-                                        @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType,
-                                        TextRange> fullRanges, int offset) {
-    final PsiFile anchorFile = anchor.getContainingFile();
-    if (CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.is('.')).or(CharMatcher.is('_')).matchesAllOf(qName)) {
-      final List<TextRange> ranges = splitRanges(qName, ".");
-      final TextRange classRange = !ranges.isEmpty() ? ranges.remove(ranges.size() - 1) : new TextRange(0, qName.length());
-      PyType moduleType = null;
-      if (!ranges.isEmpty()) {
-        final TextRange first = ranges.get(0);
-        for (TextRange range : ranges) {
-          final PyQualifiedName moduleName = PyQualifiedName.fromDottedString(first.union(range).substring(qName));
-          if (anchorFile instanceof PyFile) {
-            moduleType = new PyImportedModuleType(new PyImportedModule(null, (PyFile)anchorFile, moduleName));
-            types.put(range.shiftRight(offset), moduleType);
-          }
-        }
-      }
-      final String shortName = classRange.substring(qName);
-      if (moduleType != null) {
-        final PyResolveContext context = PyResolveContext.defaultContext();
-        final List<? extends RatedResolveResult> results = moduleType.resolveMember(shortName, null, AccessDirection.READ, context);
-        if (results != null && !results.isEmpty()) {
-          final RatedResolveResult result = results.get(0);
-          final PsiElement resolved = result.getElement();
-          if (resolved instanceof PyTypedElement) {
-            PyType t = context.getTypeEvalContext().getType((PyTypedElement)resolved);
-            if (t instanceof PyClassType) {
-              t = ((PyClassType)t).toInstance();
-            }
-            if (t != null) {
-              t.assertValid("PyImportedModuleType.resolveMember()");
-              types.put(classRange.shiftRight(offset), t);
-              fullRanges.put(t, whole);
-              return t;
-            }
-          }
-        }
-      }
-      final Collection<PyClass> classes = PyClassNameIndex.find(shortName, anchor.getProject(), true);
-      for (PyClass aClass : classes) {
-        if (qName.equals(aClass.getQualifiedName())) {
-          final PyType t = new PyClassTypeImpl(aClass, false);
-          t.assertValid("PyClassNameIndex.find()");
-          types.put(classRange.shiftRight(offset), t);
-          fullRanges.put(t, whole);
-          return t;
-        }
-      }
-      // Workaround for stdlib modules _abcoll, _functools, etc.
-      for (PyClass aClass : classes) {
-        final String name = aClass.getQualifiedName();
-        if (name != null && name.startsWith("_")) {
-          final PyType t = new PyClassTypeImpl(aClass, false);
-          t.assertValid("PyClassNameIndex.find() for _foo");
-          types.put(classRange.shiftRight(offset), t);
-          fullRanges.put(t, whole);
-          return t;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PyType parseTupleType(@NotNull PsiElement anchor, @NotNull String elementTypeNames, @NotNull Map<TextRange, PyType> types,
-                                       @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports,
-                                       int offset) {
-    final List<TextRange> ranges = splitRanges(elementTypeNames, ",");
-    final List<PyType> elementTypes = new ArrayList<PyType>();
-    for (TextRange range : ranges) {
-      elementTypes.add(parse(anchor, range.substring(elementTypeNames), types, fullRanges, imports, offset + range.getStartOffset()));
-    }
-    return PyTupleType.create(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
-  }
-
-  @Nullable
-  private static PyType parseDictFromToType(@NotNull PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
-                                            @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports,
-                                            int offset) {
-    final Matcher m = DICT_TYPE.matcher(type);
-    PyClassType dict = PyBuiltinCache.getInstance(anchor).getDictType();
-    if (dict != null) {
-      if (m.matches()) {
-        PyType from = parse(anchor, m.group(1), types, fullRanges, imports, offset + m.start(1));
-        PyType to = parse(anchor, m.group(2), types, fullRanges, imports, offset + m.start(2));
-        final PyType p = PyTupleType.create(anchor, new PyType[] {from, to});
-        return new PyCollectionTypeImpl(dict.getPyClass(), false, p);
-      }
-      return dict;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PyType parseUnionType(@NotNull PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
-                                       @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports,
-                                       int offset) {
-    final List<TextRange> ranges = splitRanges(type, " or ");
-    PyType result = null;
-    boolean first = true;
-    for (TextRange range : ranges) {
-      final PyType t = parse(anchor, range.substring(type), types, fullRanges, imports, offset + range.getStartOffset());
-      result = first ? t : PyUnionType.union(result, t);
-      first = false;
-    }
-    return result;
+  public static PyType getTypeByName(@Nullable final PsiElement anchor, @NotNull String type) {
+    return parse(anchor, type).getType();
   }
 
   @NotNull
-  private static List<TextRange> splitRanges(@NotNull final String s, @NotNull final String separator) {
-    List<TextRange> ranges = new ArrayList<TextRange>();
-    final int len = s.length();
-    final int seplen = separator.length();
-    int end;
-    for (int start = 0; start < len; start = end + seplen) {
-      final int n = s.indexOf(separator, start);
-      end = (n == -1) ? len : n;
-      ranges.add(new TextRange(start, end));
+  public static ParseResult parse(@Nullable final PsiElement anchor, @NotNull String type) {
+    if (anchor == null || !anchor.isValid()) {
+      return EMPTY_RESULT;
     }
-    return ranges;
+
+    final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
+
+    final FunctionalParser<ParseResult, PyElementType> simpleType =
+      token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
+        .map(new MakeSimpleType(anchor));
+
+    final FunctionalParser<ParseResult, PyElementType> tupleType =
+      op("(").skipThen(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op(")"))
+        .map(new Function<Pair<ParseResult, List<ParseResult>>, ParseResult>() {
+          @Override
+          public ParseResult fun(Pair<ParseResult, List<ParseResult>> value) {
+            final List<PyType> types = new ArrayList<PyType>();
+            ParseResult result = value.getFirst();
+            types.add(result.getType());
+            for (ParseResult r : value.getSecond()) {
+              result = result.merge(r);
+              types.add(r.getType());
+            }
+            return result.withType(PyTupleType.create(anchor, types.toArray(new PyType[types.size()])));
+          }
+        });
+
+    final FunctionalParser<ParseResult, PyElementType> typeParameter =
+      token(PARAMETER)
+        .map(new Function<Token<PyElementType>, ParseResult>() {
+          @Override
+          public ParseResult fun(Token<PyElementType> token) {
+            return new ParseResult(new PyGenericType(token.getText().toString()), token.getRange());
+          }
+        });
+
+    final FunctionalParser<ParseResult, PyElementType> simpleExpr =
+      simpleType
+        .or(tupleType)
+        .or(typeParameter)
+        .cached();
+
+    final FunctionalParser<ParseResult, PyElementType> paramExpr =
+      simpleExpr.thenSkip(op("of")).then(simpleExpr)
+        .map(new Function<Pair<ParseResult, ParseResult>, ParseResult>() {
+          @Override
+          public ParseResult fun(Pair<ParseResult, ParseResult> value) {
+            final ParseResult firstResult = value.getFirst();
+            final ParseResult secondResult = value.getSecond();
+            final ParseResult result = firstResult.merge(secondResult);
+            final PyType firstType = firstResult.getType();
+            final PyType secondType = secondResult.getType();
+            if (firstType != null) {
+              if (firstType instanceof PyClassType && secondType != null) {
+                return result.withType(new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, secondType));
+              }
+              return result.withType(firstType);
+            }
+            return EMPTY_RESULT;
+          }
+        })
+        .or(simpleExpr.thenSkip(op("from")).then(simpleExpr).thenSkip(op("to")).then(simpleExpr)
+              .map(new Function<Pair<Pair<ParseResult, ParseResult>, ParseResult>, ParseResult>() {
+                @Override
+                public ParseResult fun(Pair<Pair<ParseResult, ParseResult>, ParseResult> value) {
+                  final Pair<ParseResult, ParseResult> firstPair = value.getFirst();
+                  final ParseResult first = firstPair.getFirst();
+                  final ParseResult second = firstPair.getSecond();
+                  final ParseResult third = value.getSecond();
+                  final PyType firstType = first.getType();
+                  if (firstType instanceof PyClassType) {
+                    final PyTupleType tupleType = PyTupleType.create(anchor, new PyType[] { second.getType(), third.getType() });
+                    final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, tupleType);
+                    return first.merge(second).merge(third).withType(type);
+                  }
+                  return EMPTY_RESULT;
+                }
+              }))
+        .or(simpleExpr);
+
+    final FunctionalParser<ParseResult, PyElementType> unionExpr =
+      paramExpr.then(many(op("or").skipThen(paramExpr)))
+        .map(new Function<Pair<ParseResult, List<ParseResult>>, ParseResult>() {
+          @Override
+          public ParseResult fun(Pair<ParseResult, List<ParseResult>> value) {
+            final ParseResult first = value.getFirst();
+            final List<ParseResult> rest = value.getSecond();
+            if (rest.isEmpty()) {
+              return first;
+            }
+            final List<PyType> types = new ArrayList<PyType>();
+            types.add(first.getType());
+            ParseResult result = first;
+            for (ParseResult r : rest) {
+              types.add(r.getType());
+              result = result.merge(r);
+            }
+            return result.withType(PyUnionType.union(types));
+          }
+        });
+
+    typeExpr.define(unionExpr);
+
+    final FunctionalParser<ParseResult, PyElementType> typeFile = typeExpr.endOfInput();
+
+    try {
+      return typeFile.parse(tokenize(type));
+    }
+    catch (ParserException e) {
+      return EMPTY_RESULT;
+    }
+  }
+
+  private static class MakeSimpleType implements Function<Pair<Token<PyElementType>, List<Token<PyElementType>>>, ParseResult> {
+    @NotNull private final PsiElement myAnchor;
+
+    public MakeSimpleType(@NotNull PsiElement anchor) {
+      myAnchor = anchor;
+    }
+
+    @Nullable
+    @Override
+    public ParseResult fun(@NotNull Pair<Token<PyElementType>, List<Token<PyElementType>>> value) {
+      final Token<PyElementType> first = value.getFirst();
+      final List<Token<PyElementType>> rest = value.getSecond();
+      final TextRange firstRange = first.getRange();
+      final String firstText = first.getText().toString();
+
+      if (rest.isEmpty()) {
+        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(myAnchor);
+
+        if ("unknown".equals(firstText)) {
+          return EMPTY_RESULT;
+        }
+        else if (PyNames.NONE.equals(firstText)) {
+          return new ParseResult(PyNoneType.INSTANCE, firstRange);
+        }
+        else if ("integer".equals(firstText) || ("long".equals(firstText) && LanguageLevel.forElement(myAnchor).isPy3K())) {
+          return new ParseResult(builtinCache.getIntType(), firstRange);
+        }
+        else if ("string".equals(firstText)) {
+          return new ParseResult(builtinCache.getStringType(LanguageLevel.forElement(myAnchor)), firstRange);
+        }
+        else if ("bytes".equals(firstText)) {
+          return new ParseResult(builtinCache.getBytesType(LanguageLevel.forElement(myAnchor)), firstRange);
+        }
+        else if ("unicode".equals(firstText)) {
+          return new ParseResult(builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor)), firstRange);
+        }
+        else if ("boolean".equals(firstText)) {
+          return new ParseResult(builtinCache.getBoolType(), firstRange);
+        }
+        else if ("dictionary".equals(firstText)) {
+          return new ParseResult(builtinCache.getDictType(), firstRange);
+        }
+
+        final PyType builtinType = builtinCache.getObjectType(firstText);
+        if (builtinType != null) {
+          return new ParseResult(builtinType, firstRange);
+        }
+      }
+
+      final PsiFile file = myAnchor.getContainingFile();
+
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+
+        PsiElement resolved = pyFile.getElementNamed(firstText);
+        if (resolved == null) {
+          resolved = new QualifiedNameResolverImpl(firstText).fromElement(myAnchor).firstResult();
+        }
+
+        if (resolved instanceof PyTypedElement) {
+          final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
+          final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
+          final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();
+          final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+          PyType type = context.getType((PyTypedElement)resolved);
+          if (type != null) {
+            if (type instanceof PyClassLikeType) {
+              type = ((PyClassLikeType)type).toInstance();
+            }
+            types.put(firstRange, type);
+            fullRanges.put(type, firstRange);
+            for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
+              for (PyImportElement importElement : fromImportStatement.getImportElements()) {
+                if (firstText.equals(importElement.getVisibleName())) {
+                  imports.put(type, importElement);
+                }
+              }
+            }
+
+            final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+            final PyExpression expression = myAnchor instanceof PyExpression ? (PyExpression)myAnchor : null;
+
+            for (Token<PyElementType> token : rest) {
+              final List<? extends RatedResolveResult> results =
+                type.resolveMember(token.getText().toString(), expression, AccessDirection.READ, resolveContext);
+              if (results != null && !results.isEmpty()) {
+                resolved = results.get(0).getElement();
+                if (resolved instanceof PyTypedElement) {
+                  type = context.getType((PyTypedElement)resolved);
+                }
+              }
+              if (type == null) {
+                break;
+              }
+              types.put(token.getRange(), type);
+              fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
+            }
+            if (type != null) {
+              return new ParseResult(type, types, fullRanges, imports);
+            }
+          }
+        }
+      }
+
+      if (rest.isEmpty()) {
+        final Collection<PyClass> classes = PyClassNameIndex.find(firstText, myAnchor.getProject(), true);
+        if (classes.size() == 1) {
+          final PyClassTypeImpl type = new PyClassTypeImpl(classes.iterator().next(), false);
+          type.assertValid("PyClassNameIndex.find().iterator().next()");
+          return new ParseResult(type, firstRange);
+        }
+      }
+
+      return EMPTY_RESULT;
+    }
+  }
+
+  private static FunctionalParser<Token<PyElementType>, PyElementType> op(@Nullable String text) {
+    return token(PyTypeTokenTypes.OP, text);
+  }
+
+  private static List<Token<PyElementType>> tokenize(@NotNull String s) {
+    final List<Token<PyElementType>> tokens = new ArrayList<Token<PyElementType>>();
+    final PyTypeLexer lexer = new PyTypeLexer(new StringReader(s));
+    lexer.reset(s, 0, s.length(), lexer.yystate());
+    try {
+      PyElementType type;
+      while ((type = lexer.advance()) != null) {
+        if (type == PyTypeTokenTypes.SPACE || type == PyTypeTokenTypes.MARKUP) {
+          continue;
+        }
+        final TextRange range = TextRange.create(lexer.getTokenStart(), lexer.getTokenEnd());
+        final Token<PyElementType> token = new Token<PyElementType>(type, lexer.yytext(), range);
+        tokens.add(token);
+      }
+    }
+    catch (IOException e) {
+      return Collections.emptyList();
+    }
+    catch (Error e) {
+      return Collections.emptyList();
+    }
+    return tokens;
   }
 }

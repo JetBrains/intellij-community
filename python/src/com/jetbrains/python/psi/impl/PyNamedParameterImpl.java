@@ -265,7 +265,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       for (int pos = text.indexOf(name); pos != -1; pos = text.indexOf(name, pos + 1)) {
         final PsiReference ref = file.findReferenceAt(pos);
         if (ref != null && ref.isReferenceTo(function)) {
-          return PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
+          return PsiTreeUtil.getParentOfType(file.findElementAt(pos), PyCallExpression.class);
         }
       }
     }

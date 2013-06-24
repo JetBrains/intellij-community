@@ -18,6 +18,7 @@ public class PyTypeParserTest extends PyTestCase {
   }
 
   private static void assertClassType(PyType type, final String name) {
+    assertNotNull(type);
     assertEquals(name, ((PyClassType) type).getPyClass().getName());
   }
 
@@ -62,6 +63,57 @@ public class PyTypeParserTest extends PyTestCase {
     final List<PyType> list = new ArrayList<PyType>(members);
     assertClassType(list.get(0), "MyObject");
     assertClassType(list.get(1), "str");
+  }
+
+  public void testNoneType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "None");
+    assertNotNull(type);
+    assertInstanceOf(type, PyNoneType.class);
+  }
+
+  public void testIntegerType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "integer");
+    assertClassType(type, "int");
+  }
+
+  public void testStringType() {
+    // Python 2
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "string");
+    assertNotNull(type);
+    assertInstanceOf(type, PyUnionType.class);
+    final PyUnionType unionType = (PyUnionType)type;
+    final ArrayList<PyType> types = new ArrayList<PyType>(unionType.getMembers());
+    assertClassType(types.get(0), "str");
+    assertClassType(types.get(1), "unicode");
+  }
+
+  public void testBooleanType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "boolean");
+    assertClassType(type, "bool");
+  }
+
+  public void testDictionaryType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "dictionary");
+    assertClassType(type, "dict");
+  }
+
+  public void testQualifiedNotImportedType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), "collections.Iterable");
+    final PyType type = result.getType();
+    assertClassType(type, "Iterable");
+    assertEquals(2, result.getTypes().size());
+  }
+
+  public void testUnqualifiedNotImportedType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "Iterable");
+    assertClassType(type, "Iterable");
   }
 
   public void testTypeSubparts() {
