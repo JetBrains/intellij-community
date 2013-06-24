@@ -28,4 +28,11 @@ public class SemVerTest {
     Assert.assertNotNull(semVer);
     Assert.assertEquals(new SemVer(0, 9, 2), semVer);
   }
+
+  @Test
+  public void testExtendedVersion() throws Exception {
+    SemVer semVer = SemVer.parseFromText("0.9.2-dart");
+    Assert.assertNotNull(semVer);
+    Assert.assertEquals(new SemVer(0, 9, 2), semVer);
+  }
 }
