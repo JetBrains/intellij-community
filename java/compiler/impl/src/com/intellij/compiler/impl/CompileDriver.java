@@ -27,12 +27,17 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
 import com.intellij.compiler.make.ChangedConstantsDependencyProcessor;
 import com.intellij.compiler.make.DependencyCache;
+import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -48,6 +53,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -102,6 +108,7 @@ import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.RequestFuture;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -743,6 +750,10 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
+            else {
+              notifyDeprecatedImplementation();
+            }
+            
             TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject, compileContext.getProgressIndicator());
             doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
           }
@@ -768,6 +779,24 @@ public class CompileDriver {
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
+  }
+
+  private void notifyDeprecatedImplementation() {
+    final NotificationListener hyperlinkHandler = new NotificationListener.Adapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+        if (!myProject.isDisposed()) {
+          ShowSettingsUtil.getInstance().editConfigurable(myProject, new CompilerConfigurable(myProject));
+        }
+      }
+    };
+    final Notification notification = new Notification(
+      "Compile", "Deprecated make implementation",
+      "Old implementation of \"Make\" feature is enabled for this project.<br>It has been deprecated and will be removed soon.<br>Please enable newer 'external build' feature in <a href=\"#\">Settings | Compiler</a>.",
+      NotificationType.WARNING, 
+      hyperlinkHandler
+    );
+    Notifications.Bus.notify(notification, myProject);
   }
 
   @Nullable @TestOnly
