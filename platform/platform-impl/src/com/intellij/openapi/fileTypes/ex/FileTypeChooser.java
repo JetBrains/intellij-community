@@ -166,7 +166,7 @@ public class FileTypeChooser extends DialogWrapper {
     chooser.show();
     if (!chooser.isOK()) return null;
     final FileType type = chooser.getSelectedType();
-    if (type == FileTypes.UNKNOWN) return null;
+    if (type == FileTypes.UNKNOWN || type == null) return null;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
