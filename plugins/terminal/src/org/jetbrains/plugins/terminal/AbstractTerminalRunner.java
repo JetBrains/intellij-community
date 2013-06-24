@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
-import com.jediterm.emulator.TtyConnector;
+import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

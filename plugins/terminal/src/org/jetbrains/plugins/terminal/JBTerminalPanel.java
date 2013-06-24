@@ -25,11 +25,11 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.ui.GraphicsUtil;
-import com.jediterm.emulator.TextStyle;
-import com.jediterm.emulator.display.BackBuffer;
-import com.jediterm.emulator.display.LinesBuffer;
-import com.jediterm.emulator.display.StyleState;
-import com.jediterm.emulator.ui.SwingTerminalPanel;
+import com.jediterm.terminal.TextStyle;
+import com.jediterm.terminal.display.BackBuffer;
+import com.jediterm.terminal.display.LinesBuffer;
+import com.jediterm.terminal.display.StyleState;
+import com.jediterm.terminal.ui.SwingTerminalPanel;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
