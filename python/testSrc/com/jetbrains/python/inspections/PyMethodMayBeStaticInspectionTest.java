@@ -46,6 +46,9 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
   public void testNotImplemented() {
     doTest();
   }
+  public void testOverwrittenMethod() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile("inspections/PyMethodMayBeStaticInspection/" + getTestName(true) + ".py");
