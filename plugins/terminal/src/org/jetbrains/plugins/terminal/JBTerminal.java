@@ -9,7 +9,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.terminal.display.BackBuffer;
-import com.jediterm.terminal.display.LinesBuffer;
 import com.jediterm.terminal.display.StyleState;
 import com.jediterm.terminal.ui.SwingJediTerminal;
 import com.jediterm.terminal.ui.SwingTerminalPanel;
@@ -27,8 +26,8 @@ public class JBTerminal extends SwingJediTerminal {
   }
 
   @Override
-  protected SwingTerminalPanel createTerminalPanel(StyleState styleState, BackBuffer backBuffer, LinesBuffer scrollBuffer) {
-    return new JBTerminalPanel(backBuffer, scrollBuffer, styleState, getColorScheme());
+  protected SwingTerminalPanel createTerminalPanel(StyleState styleState, BackBuffer backBuffer) {
+    return new JBTerminalPanel(backBuffer, styleState, getColorScheme());
   }
 
   public EditorColorsScheme getColorScheme() {

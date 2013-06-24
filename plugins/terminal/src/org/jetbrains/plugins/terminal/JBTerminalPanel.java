@@ -27,7 +27,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.display.BackBuffer;
-import com.jediterm.terminal.display.LinesBuffer;
 import com.jediterm.terminal.display.StyleState;
 import com.jediterm.terminal.ui.SwingTerminalPanel;
 
@@ -41,8 +40,8 @@ import java.io.IOException;
 public class JBTerminalPanel extends SwingTerminalPanel {
   private final EditorColorsScheme myColorScheme;
 
-  public JBTerminalPanel(BackBuffer backBuffer, LinesBuffer scrollBuffer, StyleState styleState, EditorColorsScheme scheme) {
-    super(backBuffer, scrollBuffer, styleState);
+  public JBTerminalPanel(BackBuffer backBuffer, StyleState styleState, EditorColorsScheme scheme) {
+    super(backBuffer, styleState);
     myColorScheme = scheme;
 
     styleState.setDefaultStyle(new TextStyle(myColorScheme.getDefaultForeground(), myColorScheme.getDefaultBackground()));
