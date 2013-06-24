@@ -17,12 +17,14 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.DelegatingGradleSettingsListenerAdapter;
 
 import java.util.Set;
 
@@ -53,6 +55,13 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleProject
     return ServiceManager.getService(project, GradleSettings.class);
   }
 
+  @Override
+  public void subscribe(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> listener) {
+    getProject().getMessageBus().connect(getProject()).subscribe(GradleSettingsListener.TOPIC,
+                                                                 new DelegatingGradleSettingsListenerAdapter(listener));
+    
+  }
+
   @SuppressWarnings("unchecked")
   @Nullable
   @Override
@@ -80,10 +89,11 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleProject
     return myServiceDirectoryPath;
   }
 
-  public void setServiceDirectoryPath(@Nullable String path) {
-    if (!Comparing.equal(myServiceDirectoryPath, path)) {
-      final String oldPath = myServiceDirectoryPath;
-      getPublisher().onServiceDirectoryPathChange(oldPath, path);
+  public void setServiceDirectoryPath(@Nullable String newPath) {
+    if (!Comparing.equal(myServiceDirectoryPath, newPath)) {
+      String oldPath = myServiceDirectoryPath;
+      myServiceDirectoryPath = newPath;
+      getPublisher().onServiceDirectoryPathChange(oldPath, newPath);
     } 
   }
 
