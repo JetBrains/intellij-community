@@ -90,11 +90,13 @@ public class GitRepoInfo {
 
     GitRepoInfo info = (GitRepoInfo)o;
 
-    if (!myBranchTrackInfos.equals(info.myBranchTrackInfos)) return false;
+    if (myState != info.myState) return false;
+    if (myCurrentRevision != null ? !myCurrentRevision.equals(info.myCurrentRevision) : info.myCurrentRevision != null) return false;
     if (myCurrentBranch != null ? !myCurrentBranch.equals(info.myCurrentBranch) : info.myCurrentBranch != null) return false;
+    if (!myRemotes.equals(info.myRemotes)) return false;
+    if (!myBranchTrackInfos.equals(info.myBranchTrackInfos)) return false;
     if (!myLocalBranches.equals(info.myLocalBranches)) return false;
     if (!myRemoteBranches.equals(info.myRemoteBranches)) return false;
-    if (!myRemotes.equals(info.myRemotes)) return false;
 
     return true;
   }
@@ -102,6 +104,8 @@ public class GitRepoInfo {
   @Override
   public int hashCode() {
     int result = myCurrentBranch != null ? myCurrentBranch.hashCode() : 0;
+    result = 31 * result + (myCurrentRevision != null ? myCurrentRevision.hashCode() : 0);
+    result = 31 * result + myState.hashCode();
     result = 31 * result + myRemotes.hashCode();
     result = 31 * result + myLocalBranches.hashCode();
     result = 31 * result + myRemoteBranches.hashCode();
