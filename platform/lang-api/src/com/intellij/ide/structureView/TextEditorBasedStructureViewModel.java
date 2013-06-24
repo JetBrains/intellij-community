@@ -66,7 +66,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     this(editor, null);
   }
 
-  private TextEditorBasedStructureViewModel(Editor editor, PsiFile file) {
+  protected TextEditorBasedStructureViewModel(Editor editor, PsiFile file) {
     myEditor = editor;
     myPsiFile = file;
 

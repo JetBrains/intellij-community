@@ -24,6 +24,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,8 @@ public class JavaStructureViewBuilderFactory implements PsiStructureViewFactory 
     return new TreeBasedStructureViewBuilder() {
       @Override
       @NotNull
-      public StructureViewModel createStructureViewModel() {
-        return new JavaFileTreeModel((PsiJavaFile)psiFile);
+      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+        return new JavaFileTreeModel((PsiJavaFile)psiFile, editor);
       }
 
       @Override

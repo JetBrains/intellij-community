@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
-
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Default implementation of the {@link StructureViewBuilder} interface which uses the
@@ -33,19 +35,32 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class TreeBasedStructureViewBuilder implements StructureViewBuilder {
   /**
+   * @deprecated Use createStructureViewModel(Editor editor)
+   */
+  @NotNull
+  @Deprecated
+  public StructureViewModel createStructureViewModel() {
+    throw new AbstractMethodError();
+  }
+
+  /**
    * Returns the structure view model defining the data displayed in the structure view
    * for a specific file.
+   *
+   * todo This method must be abstract, but due to compatibility reasons we wait IDEA 13 release
    *
    * @return the structure view model instance.
    * @see TextEditorBasedStructureViewModel
    */
   @NotNull
-  public abstract StructureViewModel createStructureViewModel();
+  public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+    return createStructureViewModel();
+  }
 
   @Override
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
-    final StructureViewModel model = createStructureViewModel();
+    final StructureViewModel model = createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
     StructureView view = StructureViewFactory.getInstance(project).createStructureView(fileEditor, model, project, isRootNodeShown());
     Disposer.register(view, new Disposable() {
       @Override
@@ -57,7 +72,7 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
   }
 
   /**
-   * Override returning <code>false</code> if root node created by {@link #createStructureViewModel()} shall not be visible
+   * Override returning <code>false</code> if root node created by {@link #createStructureViewModel(Editor editor)} shall not be visible
    * @return <code>false</code> if root node shall not be visible in structure tree.
    */
   public boolean isRootNodeShown() {

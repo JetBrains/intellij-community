@@ -17,8 +17,10 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -28,8 +30,8 @@ public class StructureViewModelBase extends TextEditorBasedStructureViewModel {
   private Sorter[] mySorters = Sorter.EMPTY_ARRAY;
   private Class[] mySuitableClasses = null;
 
-  public StructureViewModelBase(@NotNull PsiFile psiFile, @NotNull StructureViewTreeElement root) {
-    super(psiFile);
+  public StructureViewModelBase(@NotNull PsiFile psiFile, @Nullable Editor editor, @NotNull StructureViewTreeElement root) {
+    super(editor, psiFile);
     myRoot = root;
   }
 

@@ -23,9 +23,11 @@ import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,11 +38,12 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
   private final PsiClassOwner myFile;
   private String myPlace;
 
-  public JavaFileTreeModel(@NotNull PsiClassOwner file) {
-    super(file);
+  public JavaFileTreeModel(@NotNull PsiClassOwner file, @Nullable Editor editor) {
+    super(editor, file);
     myFile = file;
   }
 
+  @Override
   @NotNull
   public Filter[] getFilters() {
     return new Filter[]{new FieldsFilter(),
@@ -53,20 +56,24 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
     return NODE_PROVIDERS;
   }
 
+  @Override
   @NotNull
   public Grouper[] getGroupers() {
     return new Grouper[]{new SuperTypesGrouper(), new PropertiesGrouper()};
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
     return new JavaFileTreeElement(myFile);
   }
 
+  @Override
   public boolean shouldEnterElement(final Object element) {
     return element instanceof PsiClass;
   }
 
+  @Override
   @NotNull
   public Sorter[] getSorters() {
     return new Sorter[] {
@@ -76,15 +83,18 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
       Sorter.ALPHA_SORTER};
   }
 
+  @Override
   protected PsiFile getPsiFile() {
     return myFile;
   }
 
+  @Override
   public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
     Object value = element.getValue();
     return value instanceof PsiClass || value instanceof PsiFile;
   }
 
+  @Override
   public boolean isAlwaysLeaf(StructureViewTreeElement element) {
     Object value = element.getValue();
     return value instanceof PsiMethod || value instanceof PsiField;
@@ -113,6 +123,7 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
     return false;
   }
 
+  @Override
   @NotNull
   protected Class[] getSuitableClasses() {
     return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaFile.class};
