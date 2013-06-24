@@ -209,6 +209,12 @@ public class EPathUtil {
         return url.substring(projectUrl.length()); //leading /
       }
 
+      final String path = VfsUtilCore.urlToPath(url);
+      final String projectPath = projectBaseDir.getPath();
+      if (path.startsWith(projectPath)) {
+        return ProjectRootManagerImpl.extractLocalPath(path.substring(projectPath.length()));
+      }
+
       return ProjectRootManagerImpl.extractLocalPath(url);
     }
   }
