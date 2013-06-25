@@ -174,6 +174,8 @@ public class SystemInfo extends SystemInfoRt {
    */
   public static final boolean isMacOSMountainLion = isMountainLion();
 
+  public static final boolean isMacOSMavericks = isMac && isOsVersionAtLeast("10.9");
+
   /** @deprecated use {@linkplain #isXWindow} (to remove in IDEA 13) */
   public static boolean X11PasteEnabledSystem = isXWindow;
 
