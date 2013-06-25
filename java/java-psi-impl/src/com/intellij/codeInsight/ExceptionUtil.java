@@ -439,7 +439,7 @@ public class ExceptionUtil {
     return getUnhandledExceptions(method, methodCall, topElement, substitutor);
   }
 
-  private static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
+  public static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
     final List<PsiClassType> replacement = new ArrayList<PsiClassType>();
     for (Iterator<PsiClassType> iterator = ex.iterator(); iterator.hasNext(); ) {
       PsiClassType classType = iterator.next();
@@ -462,7 +462,7 @@ public class ExceptionUtil {
     ex.addAll(replacement);
   }
 
-  private static List<PsiClassType> collectSubstituted(PsiSubstitutor substitutor, PsiClassType[] thrownExceptions) {
+  public static List<PsiClassType> collectSubstituted(PsiSubstitutor substitutor, PsiClassType[] thrownExceptions) {
     final List<PsiClassType> ex = new ArrayList<PsiClassType>();
     for (PsiClassType thrownException : thrownExceptions) {
       final PsiType psiType = substitutor.substitute(thrownException);
