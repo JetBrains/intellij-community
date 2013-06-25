@@ -2252,7 +2252,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
         
         if (updateSemaphore.isUpdateCanceled()) {
-          System.err.println("cancel index update because of PCE in sibling thread");
+          //System.err.println("cancel index update because of PCE in sibling thread");
           throw new ProcessCanceledException();
         }
         
