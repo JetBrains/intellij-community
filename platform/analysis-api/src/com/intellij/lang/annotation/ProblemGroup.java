@@ -15,10 +15,13 @@
  */
 package com.intellij.lang.annotation;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Unique object, which is the same for all of the problems of some group.
  * It is used to split some inspection to several fake inspections
  */
 public interface ProblemGroup {
+  @Nullable
   String getProblemName();
 }
