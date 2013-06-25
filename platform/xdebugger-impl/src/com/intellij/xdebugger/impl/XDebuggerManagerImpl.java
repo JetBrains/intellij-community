@@ -289,7 +289,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @NotNull
   @Override
-  public <T extends XDebugProcess> Collection<? extends T> getDebugProcesses(Class<T> processClass) {
+  public <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass) {
     List<T> list = null;
     for (XDebugSessionImpl session : mySessions.values()) {
       final XDebugProcess process = session.getDebugProcess();
