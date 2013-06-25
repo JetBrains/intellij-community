@@ -77,15 +77,21 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
-      Language l = ((LanguageFileType)fileType).getLanguage();
-      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-      if (parserDefinition == null) return false;
+      final Language l = ((LanguageFileType)fileType).getLanguage();
+      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      if (parserDefinition == null) {
+        return false;
+      }
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
-      if (elementType instanceof IStubFileElementType &&
-                  (((IStubFileElementType)elementType).shouldBuildStubFor(file) ||
-                   IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID, file)))) {
-        return true;
+      if (elementType instanceof IStubFileElementType) {
+        if (((IStubFileElementType)elementType).shouldBuildStubFor(file)) {
+          return true;
+        }
+        final ID indexId = IndexInfrastructure.getStubId(INDEX_ID, file.getFileType());
+        if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
+          return true;
+        }
       }
     }
     final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
