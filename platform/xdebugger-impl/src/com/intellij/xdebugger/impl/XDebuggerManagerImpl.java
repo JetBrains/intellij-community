@@ -36,6 +36,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.*;
@@ -289,14 +290,17 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @NotNull
   @Override
   public <T extends XDebugProcess> Collection<? extends T> getDebugProcesses(Class<T> processClass) {
-    final List<T> list = new ArrayList<T>();
+    List<T> list = null;
     for (XDebugSessionImpl session : mySessions.values()) {
       final XDebugProcess process = session.getDebugProcess();
       if (processClass.isInstance(process)) {
+        if (list == null) {
+          list = new SmartList<T>();
+        }
         list.add(processClass.cast(process));
       }
     }
-    return list;
+    return list == null ? Collections.<T>emptyList() : list;
   }
 
   @Override
