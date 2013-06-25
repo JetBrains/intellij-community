@@ -163,4 +163,15 @@ public class PyTypeParserTest extends PyTestCase {
     final PyType t2 = PyTypeParser.getTypeByName(myFixture.getFile(), "list of str or int");
     assertInstanceOf(t2, PyUnionType.class);
   }
+
+  public void testParenthesesPriority() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "list of (str or int)");
+    assertInstanceOf(type, PyCollectionType.class);
+    final PyCollectionType collectionType = (PyCollectionType)type;
+    assertNotNull(collectionType);
+    assertEquals("list", collectionType.getName());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    assertInstanceOf(elementType, PyUnionType.class);
+  }
 }

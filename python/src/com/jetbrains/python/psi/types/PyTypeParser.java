@@ -117,10 +117,14 @@ public class PyTypeParser {
         .map(new Function<Pair<ParseResult, List<ParseResult>>, ParseResult>() {
           @Override
           public ParseResult fun(Pair<ParseResult, List<ParseResult>> value) {
-            final List<PyType> types = new ArrayList<PyType>();
             ParseResult result = value.getFirst();
+            final List<ParseResult> rest = value.getSecond();
+            if (rest.isEmpty()) {
+              return result;
+            }
+            final List<PyType> types = new ArrayList<PyType>();
             types.add(result.getType());
-            for (ParseResult r : value.getSecond()) {
+            for (ParseResult r : rest) {
               result = result.merge(r);
               types.add(r.getType());
             }
