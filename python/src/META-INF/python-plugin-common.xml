@@ -820,6 +820,8 @@
     <lang.syntaxHighlighterFactory key="Web2Py"
                                    implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyHighlighterFactory"/>
     <editorHighlighterProvider filetype="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyEditorHighlighterProvider"/>
+
+    <treeStructureProvider implementation="com.jetbrains.web2py.projectView.Web2PyTreeStructureProvider"/>
   </extensions>
 
   <extensionPoints>
