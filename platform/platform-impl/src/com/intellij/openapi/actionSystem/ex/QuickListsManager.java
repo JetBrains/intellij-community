@@ -54,7 +54,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   private final ActionManager myActionManager;
   private final SchemesManager<QuickList, QuickList> mySchemesManager;
 
-  private final static Logger LOG = Logger.getInstance("#" + QuickListsManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + QuickListsManager.class.getName());
 
   public static QuickListsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(QuickListsManager.class);
@@ -116,7 +116,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
   public void initComponent() {
     mySchemesManager.loadSchemes();
-    registerActions();    
+    registerActions();
   }
 
   public void disposeComponent() {
