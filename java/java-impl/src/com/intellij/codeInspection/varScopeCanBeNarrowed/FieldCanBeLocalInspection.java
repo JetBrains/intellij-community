@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.java.JavaCommenter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -36,6 +37,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -47,10 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author ven
@@ -270,6 +270,63 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
+
+    @Nullable
+    @Override
+    protected PsiElement moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
+      final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<PsiCodeBlock, Collection<PsiReference>>();
+      groupByCodeBlocks(ReferencesSearch.search(variable).findAll(), refs);
+      PsiElement element = null;
+      for (Collection<PsiReference> psiReferences : refs.values()) {
+        element = super.moveDeclaration(project, variable, psiReferences, false);
+      }
+      if (element != null) {
+        final PsiElement finalElement = element;
+        Runnable runnable = new Runnable() {
+          public void run() {
+            beforeDelete(project, variable, finalElement);
+            variable.normalizeDeclaration();
+            variable.delete();
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+      return element;
+    }
+
+    private static void groupByCodeBlocks(final Collection<PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+      for (PsiReference psiReference : allReferences) {
+        final PsiElement element = psiReference.getElement();
+        final PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
+        LOG.assertTrue(block != null);
+        Collection<PsiReference> references = refs.get(block);
+        if (references == null) {
+          references = new ArrayList<PsiReference>();
+          if (findExistentBlock(refs, psiReference, block, references)) continue;
+          refs.put(block, references);
+        }
+        references.add(psiReference);
+      }
+    }
+
+    private static boolean findExistentBlock(Map<PsiCodeBlock, Collection<PsiReference>> refs,
+                                             PsiReference psiReference,
+                                             PsiCodeBlock block,
+                                             Collection<PsiReference> references) {
+      for (Iterator<PsiCodeBlock> iterator = refs.keySet().iterator(); iterator.hasNext(); ) {
+        PsiCodeBlock codeBlock = iterator.next();
+        if (PsiTreeUtil.isAncestor(codeBlock, block, false)) {
+          refs.get(codeBlock).add(psiReference);
+          return true;
+        }
+        else if (PsiTreeUtil.isAncestor(block, codeBlock, false)) {
+          references.addAll(refs.get(codeBlock));
+          iterator.remove();
+          break;
+        }
+      }
+      return false;
+    }
 
     @Override
     @Nullable

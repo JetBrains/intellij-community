@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Danila Ponomarenko
  */
 public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance(BaseConvertToLocalQuickFix.class);
+  protected static final Logger LOG = Logger.getInstance(BaseConvertToLocalQuickFix.class);
 
   @Override
   @NotNull
@@ -89,10 +89,14 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   }
 
   @Nullable
-  private PsiElement moveDeclaration(@NotNull Project project, @NotNull V variable) {
+  protected PsiElement moveDeclaration(@NotNull Project project, @NotNull V variable) {
     final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
     if (references.isEmpty()) return null;
 
+    return moveDeclaration(project, variable, references, true);
+  }
+
+  protected PsiElement moveDeclaration(Project project, V variable, final Collection<PsiReference> references, boolean delete) {
     final PsiCodeBlock anchorBlock = findAnchorBlock(references);
     if (anchorBlock == null) return null; //was assert, but need to fix the case when obsolete inspection highlighting is left
     if (!CodeInsightUtil.preparePsiElementsForWrite(anchorBlock)) return null;
@@ -113,6 +117,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         anchorAssignmentExpression.getRExpression(),
         variable,
         refsSet,
+        delete,
         new NotNullFunction<PsiDeclarationStatement, PsiElement>() {
           @NotNull
           @Override
@@ -132,6 +137,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       variable.getInitializer(),
       variable,
       references,
+      delete,
       new NotNullFunction<PsiDeclarationStatement, PsiElement>() {
         @NotNull
         @Override
@@ -147,7 +153,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                     @Nullable final PsiExpression initializer,
                                     @NotNull final V variable,
                                     @NotNull final Collection<PsiReference> references,
-                                    @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+                                    final boolean delete, @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     return ApplicationManager.getApplication().runWriteAction(
@@ -155,9 +161,11 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         @Override
         public PsiElement compute() {
           final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
-          beforeDelete(project, variable, newDeclaration);
-          variable.normalizeDeclaration();
-          variable.delete();
+          if (delete) {
+            beforeDelete(project, variable, newDeclaration);
+            variable.normalizeDeclaration();
+            variable.delete();
+          }
           return newDeclaration;
         }
       }
