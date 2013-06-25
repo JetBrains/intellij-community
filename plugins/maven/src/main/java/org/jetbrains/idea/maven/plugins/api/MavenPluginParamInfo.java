@@ -99,9 +99,13 @@ public class MavenPluginParamInfo {
   }
 
   public static void processParamInfo(@NotNull XmlText paramValue, @NotNull PairProcessor<ParamInfo, MavenDomConfiguration> processor) {
-    XmlTag paramTag = paramValue.getParentTag();
-    if (paramTag == null) return;
+    XmlTag tag = paramValue.getParentTag();
+    if (tag != null) {
+      processParamInfo(tag, processor);
+    }
+  }
 
+  public static void processParamInfo(@NotNull XmlTag paramTag, @NotNull PairProcessor<ParamInfo, MavenDomConfiguration> processor) {
     XmlTag configurationTag = paramTag;
     DomElement domElement;
 
@@ -214,6 +218,10 @@ public class MavenPluginParamInfo {
     public MavenParamLanguageProvider getLanguageProvider() {
       ensureLanguageInit();
       return myLanguageProvider;
+    }
+
+    public MavenPluginDescriptor.Param getParam() {
+      return myParam;
     }
 
     public String getLanguageInjectionPrefix() {
