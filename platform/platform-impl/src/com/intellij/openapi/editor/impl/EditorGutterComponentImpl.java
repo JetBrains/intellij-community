@@ -589,9 +589,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int editorLocationX = (int)editorLocationInWindow.getX();
     int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;
 
-    int width = (int)(editorComponent.getLocation().getX() + editorComponent.getWidth());
+    int width = editorLocationX + editorComponent.getWidth();
     if (rightMarginX < width && editorLocationX < width - rightMarginX) {
-      myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX - editorLocationX)/2 - myIconsAreaWidth - 10);
+      myTextAnnotationGuttersSize = Math.max(myTextAnnotationGuttersSize, (width - rightMarginX - editorLocationX)/2 -
+                                                                          (myLineMarkerAreaWidth + myLineNumberAreaWidth));
     }
   }
 
