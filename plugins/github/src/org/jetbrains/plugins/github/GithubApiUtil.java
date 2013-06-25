@@ -26,6 +26,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
@@ -52,9 +53,33 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement postRequest(@NotNull String host, @Nullable String login, @Nullable String password,
-                                        @NotNull String path, @Nullable String requestBody) throws IOException {
+  public static JsonElement getRequest(@NotNull String host, @NotNull String path) throws IOException {
+    return request(host, null, null, path, null, false);
+  }
+
+  @Nullable
+  public static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, null, false);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull String host,
+                                        @Nullable String login,
+                                        @Nullable String password,
+                                        @NotNull String path,
+                                        @Nullable String requestBody) throws IOException {
     return request(host, login, password, path, requestBody, true);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull String host, @NotNull String path, @Nullable String requestBody) throws IOException {
+    return request(host, null, null, path, requestBody, true);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
+    throws IOException {
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, requestBody, true);
   }
 
   @Nullable
@@ -67,6 +92,9 @@ public class GithubApiUtil {
       if (resp == null) {
         LOG.info(String.format("Unexpectedly empty response: %s", resp));
         return null;
+      }
+      if (method.getStatusCode() >= 400 && method.getStatusCode() <= 404) {
+        throw new AuthenticationException("Request response: " + method.getStatusText());
       }
       return parseResponse(resp);
     }

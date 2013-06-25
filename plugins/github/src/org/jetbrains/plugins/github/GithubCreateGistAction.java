@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,6 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
-import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
@@ -121,21 +121,23 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
 
     final boolean anonymous = dialog.isAnonymous();
+    GithubAuthData auth = null;
     if (!anonymous) {
-      if (!GithubUtil.checkCredentials(project)) {
-        final GithubLoginDialog loginDialog = new GithubLoginDialog(project);
-        loginDialog.show();
-        if (!loginDialog.isOK()) {
-          showError(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.", null, null);
-          return;
+      final AtomicReference<Boolean> success = new AtomicReference<Boolean>();
+      final GithubAuthData validAuth = GithubUtil.getAuthData();
+      ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
+        public void run(@NotNull ProgressIndicator indicator) {
+          success.set(GithubUtil.makeValidAuthData(project, validAuth, indicator));
         }
+      });
+      if (!success.get()) {
+        showError(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.", null, null);
+        return;
       }
+      auth = validAuth;
     }
 
-    GithubSettings settings = GithubSettings.getInstance();
-    createGistWithProgress(project, editor, file, files, settings.getLogin(), settings.getPassword(), dialog.getDescription(),
-                           dialog.isPrivate(), anonymous,
-                           new Consumer<String>() {
+    createGistWithProgress(project, editor, file, files, auth, dialog.getDescription(), dialog.isPrivate(), anonymous, new Consumer<String>() {
 
                              @Override
                              public void consume(String url) {
@@ -155,7 +157,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   private static void createGistWithProgress(@NotNull final Project project, @Nullable final Editor editor,
                                                @Nullable final VirtualFile file, @Nullable final VirtualFile[] files,
-                                               @NotNull final String login, @NotNull final String password,
+                                               @Nullable final GithubAuthData auth,
                                                @NotNull final String description, final boolean aPrivate,
                                                final boolean anonymous, @NotNull final Consumer<String> resultHandler) {
     final AtomicReference<String> url = new AtomicReference<String>();
@@ -166,7 +168,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         if (contents == null) {
           return;
         }
-        String gistUrl = createGist(project, login, password, anonymous, contents, aPrivate, description);
+        String gistUrl = createGist(project, auth, anonymous, contents, aPrivate, description);
         url.set(gistUrl);
       }
 
@@ -219,15 +221,19 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String createGist(@NotNull Project project, @Nullable String login, @Nullable String password, boolean anonymous,
+  private static String createGist(@NotNull Project project,
+                                   @Nullable GithubAuthData auth,
+                                   boolean anonymous,
                                    @NotNull List<NamedContent> contents, boolean isPrivate, @NotNull String description) {
-    if (anonymous) {
-      login = null;
-      password = null;
-    }
     String requestBody = prepareJsonRequest(description, isPrivate, contents);
     try {
-      JsonElement jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), login, password, "/gists", requestBody);
+      JsonElement jsonElement = null;
+      if (anonymous) {
+        jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), "/gists", requestBody);
+      }
+      else {
+        jsonElement = GithubApiUtil.postRequest(auth, "/gists", requestBody);
+      }
       if (jsonElement == null) {
         LOG.info("Null JSON response returned by GitHub");
         showError(project, "Failed to create gist", "Empty JSON response returned by GitHub", null, null);

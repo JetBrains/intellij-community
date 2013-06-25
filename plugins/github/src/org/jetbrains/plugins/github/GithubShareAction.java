@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
@@ -42,7 +41,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
-import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.Notificator;
@@ -61,8 +59,9 @@ import org.jetbrains.plugins.github.ui.GithubShareDialog;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.jetbrains.plugins.github.GithubUtil.isRepositoryOnGitHub;
+import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
 /**
  * @author oleg
@@ -77,91 +76,194 @@ public class GithubShareAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null || project.isDefault()){
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setVisible(false);
+      setVisibleEnabled(e, false, false);
       return;
     }
-    e.getPresentation().setVisible(true);
-    e.getPresentation().setEnabled(true);
+    setVisibleEnabled(e, true, true);
   }
 
+  // TODO: ??? Git preparations -> Modal thread
+  // TODO: AtomicReference vs Ref
+  // get gitRepository
+  // check for existing git repo
+  // check available repos (net)
+  // check privateRepo access (net)
+  // Show dialog (window)
+  // create GitHub repo (net)
+  // create local git repo
+  // make first commit
+  // add GitHub as a remote host
+  // push everything (net)
   @Override
   public void actionPerformed(final AnActionEvent e) {
+    // get gitRepository
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null || !GithubUtil.testGitExecutable(project)){
+    if (project == null || !GithubUtil.testGitExecutable(project)) {
       return;
     }
+
+    BasicAction.saveAll();
+
     final VirtualFile root = project.getBaseDir();
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository gitRepository = manager.getRepositoryForFile(root);
     final boolean gitDetected = gitRepository != null;
+
+    // check for existing git repo
     boolean externalRemoteDetected = false;
     if (gitDetected) {
-      if (isRepositoryOnGitHub(gitRepository)) {
-        Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "", "Project is already on GitHub",
-                                                     NotificationType.INFORMATION);
+      if (GithubUtil.isRepositoryOnGitHub(gitRepository)) {
+        Notification notification =
+          new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "", "Project is already on GitHub", NotificationType.INFORMATION);
         Notificator.getInstance(project).notify(notification);
         return;
-      } else {
+      }
+      else {
         externalRemoteDetected = !gitRepository.getRemotes().isEmpty();
       }
     }
 
-    BasicAction.saveAll();
-    try {
-      final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project);
-      if (availableRepos == null){
-        return;
-      }
-      final HashSet<String> names = new HashSet<String>();
-      for (RepositoryInfo info : availableRepos) {
-        names.add(info.getName());
-      }
+    final GithubAuthData auth = GithubUtil.getAuthData();
+    // get available GitHub repos with modal progress
+    final AtomicReference<HashSet<String>> repoNamesRef = new AtomicReference<HashSet<String>>();
+    final AtomicReference<Boolean> isPrivateRepoAllowedRef = new AtomicReference<Boolean>();
+    final AtomicReference<IOException> exceptionRef = new AtomicReference<IOException>();
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          // get existing github repos (network) and validate auth data
+          final List<RepositoryInfo> availableRepos =
+            GithubUtil.runAndValidateAuth(project, auth, indicator, new ThrowableComputable<List<RepositoryInfo>, IOException>() {
+              @Override
+              public List<RepositoryInfo> compute() throws IOException {
+                return GithubUtil.getAvailableRepos(auth);
+              }
+            });
+          if (availableRepos == null) {
+            return;
+          }
+          final HashSet<String> names = new HashSet<String>();
+          for (RepositoryInfo info : availableRepos) {
+            names.add(info.getName());
+          }
+          repoNamesRef.set(names);
 
-      final GithubSettings settings = GithubSettings.getInstance();
-      final String password = settings.getPassword();
-      final Boolean privateRepoAllowed =
-        GithubUtil.accessToGithubWithModalProgress(project, settings.getHost(), new ThrowableComputable<Boolean, IOException>() {
-        @Override
-        public Boolean compute() throws IOException {
-          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return GithubUtil.isPrivateRepoAllowed(settings.getHost(), settings.getLogin(), password);
+          // check access to private repos (network)
+          final Boolean privateRepoAllowed = GithubUtil.isPrivateRepoAllowed(auth);
+          isPrivateRepoAllowedRef.set(privateRepoAllowed);
         }
-      });
-      if (privateRepoAllowed == null) {
-        return;
+        catch (IOException e) {
+          exceptionRef.set(e);
+        }
       }
-      final GithubShareDialog shareDialog = new GithubShareDialog(project, names, privateRepoAllowed);
-      shareDialog.show();
-      if (!shareDialog.isOK()) {
-        return;
-      }
-
-      final boolean isPrivate = shareDialog.isPrivate();
-      final String name = shareDialog.getRepositoryName();
-      final String description = shareDialog.getDescription();
-      LOG.info("Creating GitHub repository");
-      boolean repositoryCreated =
-        createGithubRepository(settings.getHost(), settings.getLogin(), settings.getPassword(), name, description, isPrivate);
-      if (repositoryCreated) {
-        LOG.info("Successfully created GitHub repository");
-      }
-      else {
-        Messages.showErrorDialog(project, "Failed to create new GitHub repository", "Create GitHub Repository");
-        return;
-      }
-      bindToGithub(project, root, gitDetected, externalRemoteDetected, settings.getLogin(), name);
+    });
+    if (exceptionRef.get() != null) {
+      Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to connect to GitHub");
+      return;
     }
-    catch (final Exception e1) {
-      Messages.showErrorDialog(e1.getMessage(), "Failed to create new GitHub repository");
+    if (repoNamesRef.get() == null || isPrivateRepoAllowedRef.get() == null) {
+      return;
+    }
+
+    // Show dialog (window)
+    final GithubShareDialog shareDialog = new GithubShareDialog(project, repoNamesRef.get(), isPrivateRepoAllowedRef.get());
+    shareDialog.show();
+    if (!shareDialog.isOK()) {
+      return;
+    }
+    final boolean isPrivate = shareDialog.isPrivate();
+    final String name = shareDialog.getRepositoryName();
+    final String description = shareDialog.getDescription();
+
+    // finish the job in background
+    final boolean finalExternalRemoteDetected = externalRemoteDetected;
+    new Task.Backgroundable(project, "Sharing project on GitHub") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          // create GitHub repo (network)
+          LOG.info("Creating GitHub repository");
+          indicator.setText("Creating GitHub repository");
+          if (createGithubRepository(auth, name, description, isPrivate)) {
+            LOG.info("Successfully created GitHub repository");
+          }
+          else {
+            showErrorDialog(project, "Failed to create new GitHub repository", "Create GitHub Repository", indicator);
+            return;
+          }
+
+          LOG.info("Binding local project with GitHub");
+          // creating empty git repo if git is not initialized
+          if (!gitDetected) {
+            if (!createEmptyGitRepository(project, root, indicator)) {
+              return;
+            }
+          }
+
+          // In this case we should create sample commit for binding project
+          if (!performFirstCommitIfRequired(project, root, indicator)) {
+            return;
+          }
+
+          GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+          final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
+          LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
+
+          //git remote add origin git@github.com:login/name.git
+          LOG.info("Adding GitHub as a remote host");
+          indicator.setText("Adding GitHub as a remote host");
+          final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
+          addRemoteHandler.setSilent(true);
+          final String remoteUrl = GithubApiUtil.getGitHost() + "/" + auth.getLogin() + "/" + name + ".git";
+          final String remoteName = finalExternalRemoteDetected ? "github" : "origin";
+          addRemoteHandler.addParameters("add", remoteName, remoteUrl);
+          try {
+            addRemoteHandler.run();
+            repository.update();
+            if (addRemoteHandler.getExitCode() != 0) {
+              showErrorDialog("Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote", indicator);
+              return;
+            }
+          }
+          catch (VcsException e) {
+            showErrorDialog(e.getMessage(), "Failed to add GitHub repository as remote", indicator);
+            LOG.info("Failed to add GitHub as remote: " + e.getMessage());
+            return;
+          }
+
+          //git push origin master
+          indicator.setText("Pushing to github master");
+          Git git = ServiceManager.getService(Git.class);
+          GitCommandResult result = git.push(repository, remoteName, remoteUrl, "refs/heads/master:refs/heads/master");
+          if (result.success()) {
+            Notificator.getInstance(project).notify(
+              new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Success", "Successfully created project '" + name + "' on GitHub",
+                               NotificationType.INFORMATION));
+          }
+          else {
+            Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Push to GitHub failed",
+                                                         "Push failed: <br/>" + result.getErrorOutputAsHtmlString(),
+                                                         NotificationType.ERROR);
+            Notificator.getInstance(project).notify(notification);
+          }
+        }
+        catch (IOException e) {
+          exceptionRef.set(e);
+        }
+      }
+    }.queue();
+    if (exceptionRef.get() != null) {
+      Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to create new GitHub repository");
     }
   }
 
-  private static boolean createGithubRepository(@NotNull String host, @NotNull String login, @NotNull String password, @NotNull String name,
-                                                @NotNull String description, boolean aPrivate) throws IOException {
+  private static boolean createGithubRepository(@NotNull GithubAuthData auth,
+                                                @NotNull String name,
+                                                @NotNull String description,
+                                                boolean aPrivate) throws IOException {
     String path = "/user/repos";
     String requestBody = prepareRequest(name, description, aPrivate);
-    JsonElement result = GithubApiUtil.postRequest(host, login, password, path, requestBody);
+    JsonElement result = GithubApiUtil.postRequest(auth, path, requestBody);
     if (result == null) {
       return false;
     }
@@ -170,6 +272,23 @@ public class GithubShareAction extends DumbAwareAction {
       return false;
     }
     return result.getAsJsonObject().has("url");
+  }
+
+  private static boolean createEmptyGitRepository(@NotNull Project project,
+                                                  @NotNull VirtualFile root,
+                                                  @NotNull ProgressIndicator indicator) {
+    LOG.info("No git detected, creating empty git repo");
+    indicator.setText("Creating empty git repo");
+    final GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
+    //GitHandlerUtil.doSynchronously(h, GitBundle.getString("initializing.title"), h.printableCommandLine());
+    GitHandlerUtil.runInCurrentThread(h, indicator, true, GitBundle.getString("initializing.title"));
+    if (!h.errors().isEmpty()) {
+      GitUIUtil.showOperationErrors(project, h.errors(), "git init");
+      LOG.info("Failed to create empty git repo: " + h.errors());
+      return false;
+    }
+    GitInit.refreshAndConfigureVcsMappings(project, root, "");
+    return true;
   }
 
   private static String prepareRequest(String name, String description, boolean isPrivate) {
@@ -181,86 +300,15 @@ public class GithubShareAction extends DumbAwareAction {
 
   }
 
-  private void bindToGithub(final Project project, final VirtualFile root, boolean gitDetected, boolean externalRemoteDetected, final String login, final String name) {
-    LOG.info("Binding local project with GitHub");
-    // creating empty git repo if git isnot initialized
-    if (!gitDetected) {
-      LOG.info("No git detected, creating empty git repo");
-      final GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
-      GitHandlerUtil.doSynchronously(h, GitBundle.getString("initializing.title"), h.printableCommandLine());
-      if (!h.errors().isEmpty()) {
-        GitUIUtil.showOperationErrors(project, h.errors(), "git init");
-        LOG.info("Failed to create empty git repo: " + h.errors());
-        return;
-      }
-      final ProgressManager manager = ProgressManager.getInstance();
-      manager.runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          GitInit.refreshAndConfigureVcsMappings(project, root, "");
-        }
-      }, "Committing", false, project);
-    }
-
-    // In this case we should create sample commit for binding project
-    if (!performFirstCommitIfRequired(project, root)) {
-      return;
-    }
-
-    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
-    final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
-    LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
-
-    //git remote add origin git@github.com:login/name.git
-    LOG.info("Adding GitHub as a remote host");
-    final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-    addRemoteHandler.setSilent(true);
-    final String remoteUrl = GithubApiUtil.getGitHost() + "/" + login + "/" + name + ".git";
-    final String remoteName = externalRemoteDetected ? "github" : "origin";
-    addRemoteHandler.addParameters("add", remoteName, remoteUrl);
-    try {
-      addRemoteHandler.run();
-      repository.update();
-      if (addRemoteHandler.getExitCode() != 0) {
-        Messages.showErrorDialog("Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote");
-        return;
-      }
-    }
-    catch (VcsException e) {
-      Messages.showErrorDialog(e.getMessage(), "Failed to add GitHub repository as remote");
-      LOG.info("Failed to add GitHub as remote: " + e.getMessage());
-      return;
-    }
-
-    //git push origin master
-
-    new Task.Backgroundable(project, "Pushing to GitHub", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        Git git = ServiceManager.getService(Git.class);
-        GitCommandResult result = git.push(repository, remoteName, remoteUrl, "refs/heads/master:refs/heads/master");
-        if (result.success()) {
-          Notificator.getInstance(project).notify(new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Success",
-                                                                   "Successfully created project '" + name + "' on GitHub",
-                                                                   NotificationType.INFORMATION));
-        }
-        else {
-          showPushError(project, "Push failed: <br/>" + result.getErrorOutputAsHtmlString());
-        }
-      }
-    }.queue();
-  }
-
-  private static void showPushError(@NotNull Project project, @NotNull String message) {
-    Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Push to GitHub failed", message,
-                                                 NotificationType.ERROR);
-    Notificator.getInstance(project).notify(notification);
-  }
-
-  private boolean performFirstCommitIfRequired(final Project project, final VirtualFile root) {
+  // get repository
+  // create README
+  // ask for files to add (coming soon)
+  // commit
+  private boolean performFirstCommitIfRequired(final Project project, final VirtualFile root, @NotNull ProgressIndicator indicator) {
+    // get repository
     final GitVcs gitVcs = GitVcs.getInstance(project);
     if (gitVcs == null){
-      Messages.showErrorDialog(project, "Cannot find git initialized", "Failed to share");
+      showErrorDialog(project, "Cannot find git initialized", "Failed to share", indicator);
       return false;
     }
 
@@ -271,105 +319,121 @@ public class GithubShareAction extends DumbAwareAction {
     }
     GitRepository repository = repositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
-      Messages.showErrorDialog(project, "Cannot find git repository for root " + root, "Failed to share");
+      showErrorDialog(project, "Cannot find git repository for root " + root, "Failed to share", indicator);
       return false;
     }
     if (!repository.isFresh()) {
       return true;
     }
 
-    final Ref<Exception> exceptionRef = new Ref<Exception>();
     // Creating or modifying readme file
+    final Ref<Exception> exceptionRef = new Ref<Exception>();
+    final Ref<VirtualFile> readmeFileRef = new Ref<VirtualFile>();
     LOG.info("Touching file 'README' for initial commit");
-    final VirtualFile readmeFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    indicator.setText("Touching file 'README' for initial commit");
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
-      public VirtualFile compute() {
-        VirtualFile file = null;
-        try {
-          file = root.findChild("README");
-          if (file == null) {
-            file = root.createChildData(this, "README");
-            VfsUtil.saveText(file, "This file was created by " + ApplicationInfoEx.getInstanceEx().getFullApplicationName() + " for binding GitHub repository");
-          } else {
-            VfsUtil.saveText(file, VfsUtil.loadText(file) + "\nThis file was modified by " + ApplicationInfoEx.getInstanceEx().getFullApplicationName() + " for binding GitHub repository");
-          }
-        }
-        catch (IOException e) {
-          exceptionRef.set(e);
-          LOG.info("Failed to touch file 'README' for initial commit: " + e.getMessage());
-        }
-        return file;
-      }
-    });
-    if (!exceptionRef.isNull()) {
-      Messages.showErrorDialog(project, exceptionRef.get().getMessage(), "Failed to modify file during post activities");
-    }
-    exceptionRef.set(null);
-    LOG.info("Trying to commit");
-    final ProgressManager manager = ProgressManager.getInstance();
-    manager.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        try {
-          LOG.info("Adding files for commit");
-          final ProgressIndicator progressIndicator = manager.getProgressIndicator();
-          if (progressIndicator != null){
-            progressIndicator.setText("Adding files to git");
-          }
-          // Add readme files to git
-          final ArrayList<VirtualFile> files2Add = new ArrayList<VirtualFile>();
-          if (readmeFile != null) {
-            files2Add.add(readmeFile);
-          }
-          final ChangeListManagerImpl changeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
-
-          // Force update
-          final Semaphore semaphore = new Semaphore();
-          semaphore.up();
-          changeListManager.invokeAfterUpdate(new Runnable() {
-            @Override
-            public void run() {
-              semaphore.down();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            VirtualFile file = null;
+            try {
+              file = root.findChild("README");
+              if (file == null) {
+                file = root.createChildData(this, "README");
+                VfsUtil.saveText(file, "This file was created by " +
+                                       ApplicationInfoEx.getInstanceEx().getFullApplicationName() +
+                                       " for binding GitHub repository");
+              }
+              else {
+                VfsUtil.saveText(file, VfsUtil.loadText(file) +
+                                       "\nThis file was modified by " +
+                                       ApplicationInfoEx.getInstanceEx().getFullApplicationName() +
+                                       " for binding GitHub repository");
+              }
             }
-          }, InvokeAfterUpdateMode.SILENT, null, null);
-          if (!semaphore.waitFor(30000)) {
-            exceptionRef.set(new VcsException("Too long VCS update"));
-            return;
-          }
-
-          for (VirtualFile file : changeListManager.getUnversionedFiles()) {
-            if (file.getPath().contains(Project.DIRECTORY_STORE_FOLDER)) {
-              continue;
+            catch (IOException e) {
+              exceptionRef.set(e);
+              LOG.info("Failed to touch file 'README' for initial commit: " + e.getMessage());
             }
-            if (readmeFile != null && readmeFile.equals(file)) {
-              continue;
-            }
-            files2Add.add(file);
+            readmeFileRef.set(file);
           }
-          if (progressIndicator != null){
-            progressIndicator.setText("Adding files to git");
-          }
-          GitFileUtils.addFiles(project, root, files2Add);
-
-          LOG.info("Performing commit");
-          if (progressIndicator != null){
-            progressIndicator.setText("Performing commit");
-          }
-          GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
-          handler.addParameters("-m", "First commit");
-          handler.endOptions();
-          handler.run();
-        }
-        catch (VcsException e) {
-          exceptionRef.set(e);
-          LOG.info("Failed to commit to GitHub");
-        }
+        });
       }
-    }, "Performing post creating github repository activities", true, project);
-
+    }, indicator.getModalityState());
+    final VirtualFile readmeFile = readmeFileRef.get();
     if (!exceptionRef.isNull()) {
-      Messages.showErrorDialog(project, exceptionRef.get().getMessage(), "Failed to commit file during post activities");
+      showErrorDialog(project, exceptionRef.get().getMessage(), "Failed to modify file during post activities", indicator);
+    }
+
+    // commit
+    LOG.info("Trying to commit");
+    indicator.setText("Trying to commit");
+    try {
+      LOG.info("Adding files for commit");
+      indicator.setText("Adding files to git");
+      // Add readme files to git
+      final ArrayList<VirtualFile> files2Add = new ArrayList<VirtualFile>();
+      if (readmeFile != null) {
+        files2Add.add(readmeFile);
+      }
+      final ChangeListManagerImpl changeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
+
+      // Force update
+      final Semaphore semaphore = new Semaphore();
+      semaphore.up();
+      changeListManager.invokeAfterUpdate(new Runnable() {
+        @Override
+        public void run() {
+          semaphore.down();
+        }
+      }, InvokeAfterUpdateMode.SILENT, null, null);
+      if (!semaphore.waitFor(30000)) {
+        throw new VcsException("Too long VCS update");
+      }
+
+      for (VirtualFile file : changeListManager.getUnversionedFiles()) {
+        if (file.getPath().contains(Project.DIRECTORY_STORE_FOLDER)) {
+          continue;
+        }
+        if (readmeFile != null && readmeFile.equals(file)) {
+          continue;
+        }
+        files2Add.add(file);
+      }
+      GitFileUtils.addFiles(project, root, files2Add);
+
+      LOG.info("Performing commit");
+      indicator.setText("Performing commit");
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.addParameters("-m", "First commit");
+      handler.endOptions();
+      handler.run();
+    }
+    catch (VcsException e) {
+      LOG.info("Failed to perform initial commit");
+      showErrorDialog(project, e.getMessage(), "Failed to commit file during post activities", indicator);
       return false;
     }
     return true;
+  }
+
+  private static void showErrorDialog(final String message, final String title, ProgressIndicator indicator) {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        Messages.showErrorDialog(message, title);
+      }
+    }, indicator.getModalityState());
+  }
+
+  private static void showErrorDialog(final Project project, final String message, final String title, ProgressIndicator indicator) {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        Messages.showErrorDialog(project, message, title);
+      }
+    }, indicator.getModalityState());
   }
 }

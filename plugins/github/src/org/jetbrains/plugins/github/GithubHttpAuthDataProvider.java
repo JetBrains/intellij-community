@@ -20,7 +20,6 @@ import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import git4idea.jgit.GitHttpAuthDataProvider;
-import git4idea.jgit.GitHttpCredentialsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

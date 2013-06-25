@@ -35,7 +35,7 @@ abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
     String url = GithubUtil.findGithubRemoteUrl(repository);
     if (url == null) {
       GithubUtil.LOG.info(String.format("Repository is not under GitHub. Root: %s, Remotes: %s", repository.getRoot(),
-                                        GitUtil.getPrintableRemotes(repository.getRemotes())));
+                                           GitUtil.getPrintableRemotes(repository.getRemotes())));
       return;
     }
     url = GithubUtil.makeGithubRepoUrlFromRemoteUrl(url);

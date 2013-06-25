@@ -174,4 +174,10 @@ public class GithubSettings implements PersistentStateComponent<Element> {
       myTrustedHosts.add(host);
     }
   }
+
+  public void setAuth(@NotNull GithubAuthData auth) {
+    setHost(auth.getHost());
+    setLogin(auth.getLogin());
+    setPassword(auth.getPassword());
+  }
 }

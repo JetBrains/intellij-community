@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.plugins.github.GithubAuthData;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -88,6 +89,10 @@ public class GithubLoginPanel {
 
   public JComponent getPreferrableFocusComponent() {
     return myLoginTextField;
+  }
+
+  public GithubAuthData getAuth() {
+    return new GithubAuthData(getHost(), getLogin(), getPassword());
   }
 }
 

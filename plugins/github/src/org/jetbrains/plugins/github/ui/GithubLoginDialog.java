@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -21,7 +22,19 @@ public class GithubLoginDialog extends DialogWrapper {
   private final GithubLoginPanel myGithubLoginPanel;
   private final Project myProject;
 
-  // TODO: login to github must be merged with tasks server settings
+  public GithubLoginDialog(final @NotNull GithubAuthData auth, final Project project) {
+    super(project, true);
+    myProject = project;
+    myGithubLoginPanel = new GithubLoginPanel(this);
+    myGithubLoginPanel.setHost(auth.getHost());
+    myGithubLoginPanel.setLogin(auth.getLogin());
+    myGithubLoginPanel.setPassword(auth.getPassword());
+    setTitle("Login to GitHub");
+    setOKButtonText("Login");
+    init();
+  }
+
+  @Deprecated
   public GithubLoginDialog(final Project project) {
     super(project, true);
     myProject = project;
@@ -57,16 +70,12 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final String login = myGithubLoginPanel.getLogin();
-    final String password = myGithubLoginPanel.getPassword();
-    final String host = myGithubLoginPanel.getHost();
+    final GithubAuthData auth = myGithubLoginPanel.getAuth();
     try {
-      boolean loggedSuccessfully = GithubUtil.checkCredentials(myProject, host, login, password);
+      boolean loggedSuccessfully = GithubUtil.checkAuthData(auth);
       if (loggedSuccessfully) {
         final GithubSettings settings = GithubSettings.getInstance();
-        settings.setLogin(login);
-        settings.setPassword(password);
-        settings.setHost(host);
+        settings.setAuth(auth);
         super.doOKAction();
       }
       else {
@@ -81,5 +90,9 @@ public class GithubLoginDialog extends DialogWrapper {
 
   public void clearErrors() {
     setErrorText(null);
+  }
+
+  public GithubAuthData getAuth() {
+    return myGithubLoginPanel.getAuth();
   }
 }

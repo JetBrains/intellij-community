@@ -17,7 +17,11 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,28 +37,43 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author oleg
  */
 public class GithubCheckoutProvider implements CheckoutProvider {
 
-  private static Logger LOG  = GithubUtil.LOG;
+  private static Logger LOG = GithubUtil.LOG;
 
   @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
-    if (!GithubUtil.testGitExecutable(project)){
+    if (!GithubUtil.testGitExecutable(project)) {
       return;
     }
     BasicAction.saveAll();
-    List<RepositoryInfo> availableRepos = null;
-    try {
-      availableRepos = GithubUtil.getAvailableRepos(project);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      GithubUtil.notifyError(project, "Couldn't get the list of GitHub repositories", GithubUtil.getErrorTextFromException(e));
-    }
+
+    final GithubAuthData auth = GithubUtil.getAuthData();
+    final AtomicReference<List<RepositoryInfo>> repositoryInfoRef = new AtomicReference<List<RepositoryInfo>>();
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          final List<RepositoryInfo> repositoryInfo =
+            GithubUtil.runAndValidateAuth(project, auth, indicator, new ThrowableComputable<List<RepositoryInfo>, IOException>() {
+              @Override
+              public List<RepositoryInfo> compute() throws IOException {
+                return GithubUtil.getAvailableRepos(auth);
+              }
+            });
+          repositoryInfoRef.set(repositoryInfo);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          GithubUtil.notifyError(project, "Couldn't get the list of GitHub repositories", GithubUtil.getErrorTextFromException(e));
+        }
+      }
+    });
+    final List<RepositoryInfo> availableRepos = repositoryInfoRef.get();
     if (availableRepos == null){
       return;
     }

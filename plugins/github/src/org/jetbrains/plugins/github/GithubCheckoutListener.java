@@ -32,10 +32,9 @@ public class GithubCheckoutListener implements CheckoutListener {
 
   @Override
   public void processOpenedProject(final Project lastOpenedProject) {
-    final GithubSettings settings = GithubSettings.getInstance();
     final Pair<String, String> info = getGithubProjectInfo(lastOpenedProject);
     if (info != null) {
-      processProject(lastOpenedProject, settings, info.first, info.second);
+      processProject(lastOpenedProject, info.first, info.second);
     }
   }
 
@@ -47,9 +46,6 @@ public class GithubCheckoutListener implements CheckoutListener {
     }
     // Check if git is already initialized and presence of remote branch
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return null;
-    }
     final GitRepository gitRepository = manager.getRepositoryForFile(root);
     if (gitRepository == null){
       return null;
@@ -88,12 +84,12 @@ public class GithubCheckoutListener implements CheckoutListener {
     return Pair.create(author, name);
   }
 
-  private static void processProject(final Project openedProject, final GithubSettings settings, final String author, final String name) {
+  private static void processProject(final Project openedProject, final String author, final String name) {
     // try to enable git tasks integration
     final Runnable taskInitializationRunnable = new Runnable() {
       public void run() {
         try {
-          enableGithubTrackerIntegration(openedProject, settings.getLogin(), settings.getPassword(), author, name);
+          enableGithubTrackerIntegration(openedProject, author, name);
         }
         catch (Exception e) {
           // Ignore it
@@ -108,8 +104,6 @@ public class GithubCheckoutListener implements CheckoutListener {
   }
 
   private static void enableGithubTrackerIntegration(final Project project,
-                                                     final String login,
-                                                     final String password,
                                                      final String author,
                                                      final String name) {
     // Look for github repository type
@@ -121,9 +115,11 @@ public class GithubCheckoutListener implements CheckoutListener {
       }
     }
     // Create new one if not found exists
+    // TODO: Validate password?
+    GithubSettings settings = GithubSettings.getInstance();
     final GitHubRepository repository = new GitHubRepository(new GitHubRepositoryType());
-    repository.setUsername(login);
-    repository.setPassword(password);
+    repository.setUsername(settings.getLogin());
+    repository.setPassword(settings.getPassword());
     repository.setRepoAuthor(author);
     repository.setRepoName(name);
     final ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>(Arrays.asList(allRepositories));
