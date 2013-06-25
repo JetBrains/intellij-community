@@ -207,6 +207,8 @@ public class PyDocstringGenerator {
       }
       replacementText.append(line);
     }
+    if (replacementText.length() > 0)
+      replacementText.deleteCharAt(replacementText.length()-1);
     addParams(replacementText, false, paramsToAdd);
     for (int i = ind; i != lines.length; ++i) {
       String line = lines[i];
@@ -223,26 +225,7 @@ public class PyDocstringGenerator {
   private int addParams(StringBuilder replacementText,
                         boolean addWS, Collection<DocstringParam> paramsToAdd) {
 
-    PsiWhiteSpace whitespace = null;
-    if (myDocStringOwner instanceof PyFunction) {
-      final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
-      if (document != null && statementList != null && myFunction != null && statementList.getStatements().length != 0
-          && document.getLineNumber(statementList.getTextOffset()) != document.getLineNumber(myFunction.getTextOffset())) {
-        whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
-      }
-    }
-    String ws = "\n";
-    if (whitespace != null) {
-      String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 0) {
-        ws += spaces[spaces.length - 1];
-      }
-    }
-    else {
-      ws += StringUtil.repeat(" ", getIndentSize(myDocStringOwner));
-    }
-
+    final String ws = getWhitespace();
     // if creating a new docstring, leave blank line where text will be entered
     if (!StringUtil.containsAlphaCharacters(replacementText.toString())) {
       replacementText.append("\n");
@@ -292,6 +275,29 @@ public class PyDocstringGenerator {
       replacementText.append("\n");
     }
     return offset;
+  }
+
+  private String getWhitespace() {
+    PsiWhiteSpace whitespace = null;
+    if (myDocStringOwner instanceof PyFunction) {
+      final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
+      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
+      if (document != null && statementList != null && myFunction != null && statementList.getStatements().length != 0
+          && document.getLineNumber(statementList.getTextOffset()) != document.getLineNumber(myFunction.getTextOffset())) {
+        whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
+      }
+    }
+    String ws = "\n";
+    if (whitespace != null) {
+      String[] spaces = whitespace.getText().split("\n");
+      if (spaces.length > 0) {
+        ws += spaces[spaces.length - 1];
+      }
+    }
+    else {
+      ws += StringUtil.repeat(" ", getIndentSize(myDocStringOwner));
+    }
+    return ws;
   }
 
   @NotNull
