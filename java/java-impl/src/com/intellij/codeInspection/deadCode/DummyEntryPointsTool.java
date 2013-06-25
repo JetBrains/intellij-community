@@ -19,11 +19,13 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.ex.InspectionPresentationProvider;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -33,11 +35,15 @@ public class DummyEntryPointsTool extends UnusedDeclarationInspection implements
   }
 
   @Override
-  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {}
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+  }
 
+  @Nullable
   @Override
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
+  public JobDescriptor[] getAdditionalJobs() {
     return JobDescriptor.EMPTY_ARRAY;
   }
 

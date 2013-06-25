@@ -124,20 +124,13 @@ class Browser extends JPanel {
   private void showPageFromHistory(@NotNull RefEntity newEntity) {
     InspectionToolWrapper toolWrapper = getToolWrapper(newEntity);
     try {
-      if (!(toolWrapper instanceof CommonInspectionToolWrapper)) {
-        showEmpty();
-      }
-      else {
-        try {
-          String html = generateHTML(newEntity, toolWrapper);
-          myHTMLViewer.read(new StringReader(html), null);
-          setupStyle();
-          myHTMLViewer.setCaretPosition(0);
-        }
-        catch (Exception e) {
-          showEmpty();
-        }
-      }
+      String html = generateHTML(newEntity, toolWrapper);
+      myHTMLViewer.read(new StringReader(html), null);
+      setupStyle();
+      myHTMLViewer.setCaretPosition(0);
+    }
+    catch (Exception e) {
+      showEmpty();
     }
     finally {
       myCurrentEntity = newEntity;

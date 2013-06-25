@@ -266,7 +266,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
     context.setExternalProfile(profile);
-    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
   }
 
   public void testInspectionsInitialization() throws Exception {

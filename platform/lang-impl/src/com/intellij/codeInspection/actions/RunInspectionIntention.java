@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -93,14 +95,17 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     rerunInspection(LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName), managerEx, analysisScope, file);
   }
 
-  public static void rerunInspection(final InspectionToolWrapper toolWrapper,
-                                     final InspectionManagerEx managerEx, final AnalysisScope scope,
+  public static void rerunInspection(@NotNull InspectionToolWrapper toolWrapper,
+                                     @NotNull InspectionManagerEx managerEx,
+                                     @NotNull AnalysisScope scope,
                                      PsiElement psiElement) {
     GlobalInspectionContextImpl inspectionContext = createContext(toolWrapper, managerEx, psiElement);
-    inspectionContext.doInspections(scope, managerEx);
+    inspectionContext.doInspections(scope);
   }
 
-  public static GlobalInspectionContextImpl createContext(final InspectionToolWrapper toolWrapper, InspectionManagerEx managerEx, PsiElement psiElement) {
+  public static GlobalInspectionContextImpl createContext(@NotNull InspectionToolWrapper toolWrapper,
+                                                          @NotNull InspectionManagerEx managerEx,
+                                                          PsiElement psiElement) {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
     allWrappers.add(toolWrapper);
@@ -109,14 +114,16 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     final InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(), toolWrappers);
     try {
       Element element = new Element("toCopy");
-
-      for (InspectionToolWrapper wrapper : allWrappers) {
+      for (InspectionToolWrapper wrapper : toolWrappers) {
         wrapper.getTool().writeSettings(element);
-        model.getInspectionTool(wrapper.getShortName(), psiElement).getTool().readSettings(element);
+        InspectionToolWrapper tw = psiElement == null ? model.getInspectionTool(wrapper.getShortName(), managerEx.getProject())
+                                                      : model.getInspectionTool(wrapper.getShortName(), psiElement);
+        tw.getTool().readSettings(element);
       }
     }
-    catch (Exception e) {
-      //skip
+    catch (WriteExternalException ignored) {
+    }
+    catch (InvalidDataException ignored) {
     }
     model.setEditable(toolWrapper.getDisplayName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);

@@ -58,11 +58,10 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     try {
       scope.setSearchInLibraries(false);
       FileDocumentManager.getInstance().saveAllDocuments();
-      final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
       inspectionContext.setExternalProfile(myExternalProfile);
       inspectionContext.setCurrentScope(scope);
-      inspectionContext.doInspections(scope, inspectionManagerEx);
+      inspectionContext.doInspections(scope);
     }
     finally {
       myGlobalInspectionContext = null;

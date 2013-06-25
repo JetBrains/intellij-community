@@ -73,7 +73,7 @@ public class InspectionRunningUtil {
     finally {
       refManager.inspectionReadActionFinished();
       toolWrapper.cleanup();
-      context.cleanup(managerEx);
+      context.cleanup();
     }
   }
 }

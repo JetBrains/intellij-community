@@ -25,7 +25,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.codeInspection.ex.SpecialToolsManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -82,7 +81,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return (InspectionProfileManagerImpl)ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  public InspectionProfileManagerImpl(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory, SpecialToolsManager specialToolsManager) {
+  public InspectionProfileManagerImpl(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
     registerProvidedSeverities();

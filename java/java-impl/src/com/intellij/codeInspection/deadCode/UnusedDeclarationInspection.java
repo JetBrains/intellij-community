@@ -64,7 +64,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class UnusedDeclarationInspection extends InspectionTool implements InspectionPresentationProvider {
+public class UnusedDeclarationInspection extends GlobalInspectionTool implements InspectionPresentationProvider {
   public boolean ADD_MAINS_TO_ENTRIES = true;
 
   public boolean ADD_APPLET_TO_ENTRIES = true;
@@ -79,6 +79,7 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
 
   public final EntryPoint[] myExtensions;
   private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspection.class.getName());
+  private GlobalInspectionContextImpl myContext;
 
   public UnusedDeclarationInspection() {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
@@ -336,8 +337,11 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
   }
 
   @Override
-  public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
-    getContext().getRefManager().iterate(new RefJavaVisitor() {
+  public void runInspection(@NotNull final AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull final GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
@@ -348,7 +352,7 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
 
           if (file == null) return;
           final boolean isSuppressed = refElement.isSuppressed(getShortName(), ALTERNATIVE_ID);
-          if (!getContext().isToCheckFile(file, UnusedDeclarationInspection.this) || isSuppressed) {
+          if (!((GlobalInspectionContextImpl)globalContext).isToCheckFile(file, UnusedDeclarationInspection.this) || isSuppressed) {
             if (isSuppressed || !scope.contains(file)) {
               getEntryPointsManager().addEntryPoint(refElement, false);
             }
@@ -377,12 +381,13 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
 
     if (isAddNonJavaUsedEnabled()) {
       checkForReachables();
-      final StrictUnreferencedFilter strictUnreferencedFilter = new StrictUnreferencedFilter(this, myContext);
+      final StrictUnreferencedFilter strictUnreferencedFilter = new StrictUnreferencedFilter(this,
+                                                                                             (GlobalInspectionContextImpl)globalContext);
       ProgressManager.getInstance().runProcess(new Runnable() {
         @Override
         public void run() {
-          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getContext().getRefManager().getProject());
-          getContext().getRefManager().iterate(new RefJavaVisitor() {
+          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(globalContext.getRefManager().getProject());
+          globalContext.getRefManager().iterate(new RefJavaVisitor() {
             @Override
             public void visitElement(@NotNull final RefEntity refEntity) {
               if (refEntity instanceof RefClass && strictUnreferencedFilter.accepts((RefClass)refEntity)) {
@@ -408,7 +413,7 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
                                                        return false;
                                                      }
                                                    },
-                                                   GlobalSearchScope.projectScope(getContext().getProject()));
+                                                   GlobalSearchScope.projectScope(globalContext.getProject()));
               }
             }
           });
@@ -501,12 +506,15 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
   }
 
   @Override
-  public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager) {
+  public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager,
+                                             @NotNull GlobalInspectionContext globalContext,
+                                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     checkForReachables();
-    final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this, getContext()) : new RefUnreachableFilter(this, getContext());
+    final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this, (GlobalInspectionContextImpl)globalContext) :
+                             new RefUnreachableFilter(this, (GlobalInspectionContextImpl)globalContext);
     final boolean[] requestAdded = {false};
 
-    getContext().getRefManager().iterate(new RefJavaVisitor() {
+    globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
         if (!(refEntity instanceof RefJavaElement)) return;
@@ -621,12 +629,10 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
     return getContext().getExtension(GlobalJavaInspectionContext.CONTEXT);
   }
 
-
-  @NotNull
+  @Nullable
   @Override
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
-    return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH,
-      context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
+  public JobDescriptor[] getAdditionalJobs() {
+    return new JobDescriptor[]{getContext().getStdJobDescriptors().BUILD_GRAPH, getContext().getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
 
@@ -792,8 +798,19 @@ public class UnusedDeclarationInspection extends InspectionTool implements Inspe
   @NotNull
   @Override
   public InspectionToolPresentation createPresentation(@NotNull InspectionToolWrapper toolWrapper) {
-    myContext = (GlobalInspectionContextImpl)toolWrapper.getContext();
     return new UnusedDeclarationPresentation(toolWrapper);
+  }
+
+  @Override
+  public void initialize(@NotNull GlobalInspectionContext context) {
+    super.initialize(context);
+    myContext = (GlobalInspectionContextImpl)context;
+  }
+
+  @Override
+  public void cleanup() {
+    super.cleanup();
+    myContext = null;
   }
 
   @Override

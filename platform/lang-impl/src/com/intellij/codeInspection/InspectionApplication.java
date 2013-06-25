@@ -218,7 +218,7 @@ public class InspectionApplication {
             if (myErrorCodeRequired) System.exit(1);
             return;
           }
-          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, im, inspectionsResults);
+          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");

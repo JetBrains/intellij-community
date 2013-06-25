@@ -23,6 +23,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.StdLanguages;
@@ -101,7 +102,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
-  public static boolean isInspectionsEnabled(final boolean online, Project project) {
+  public static boolean isInspectionsEnabled(final boolean online, @NotNull Project project) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (online) {
       if (modules.length == 0) {
@@ -417,6 +418,14 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
                                       @NotNull final List<Tools> localTools,
                                       @NotNull final GlobalInspectionContext context) {
     getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
+    // UnusedDeclarationInspection should run first
+    for (int i = 0; i < globalTools.size(); i++) {
+      InspectionToolWrapper toolWrapper = globalTools.get(i).getTool();
+      if (UnusedDeclarationInspection.SHORT_NAME.equals(toolWrapper.getShortName())) {
+        Collections.swap(globalTools, i, 0);
+        break;
+      }
+    }
   }
 
 
@@ -435,9 +444,6 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           InspectionToolPresentation presentation = ((GlobalInspectionContextImpl)context).getPresentation(toolWrapper);
           result = ((GlobalInspectionToolWrapper)toolWrapper).getTool().queryExternalUsagesRequests(inspectionManager, context, presentation);
-        }
-        else if (toolWrapper instanceof CommonInspectionToolWrapper) {
-          result = ((CommonInspectionToolWrapper)toolWrapper).getTool().queryExternalUsagesRequests(inspectionManager);
         }
         if (!result) {
           needRepeatSearchRequest.remove(toolWrapper);

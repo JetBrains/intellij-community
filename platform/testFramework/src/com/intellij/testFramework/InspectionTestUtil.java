@@ -154,6 +154,6 @@ expected:
       HighlightDisplayKey.register(shortName);
     }
 
-    globalContext.doInspections(scope, inspectionManager);
+    globalContext.doInspections(scope);
   }
 }

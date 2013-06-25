@@ -221,7 +221,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     context.setExternalProfile(inspectionProfile);
     context.setCurrentScope(scope);
-    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
     final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, context,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();

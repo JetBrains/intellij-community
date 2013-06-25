@@ -22,6 +22,7 @@ import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,14 +44,14 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     configureByFile("Foo.java");
 
     AnalysisScope scope = new AnalysisScope(getFile());
-    context.doInspections(scope, InspectionManager.getInstance(getProject()));
+    context.doInspections(scope);
 
     Tools tools = context.getTools().get(shortName);
     GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     assertEquals(1, presentation.getProblemDescriptors().size());
 
-    context.doInspections(scope, InspectionManager.getInstance(getProject()));
+    context.doInspections(scope);
     tools = context.getTools().get(shortName);
     toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
     presentation = context.getPresentation(toolWrapper);
@@ -60,11 +61,12 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
   public void testRunInspectionContext() throws Exception {
     InspectionProfile profile = new InspectionProfileImpl("foo");
     InspectionToolWrapper[] tools = profile.getInspectionTools(null);
+    PsiFile file = createDummyFile("xx.txt", "xxx");
     for (InspectionToolWrapper toolWrapper : tools) {
       if (!toolWrapper.isEnabledByDefault()) {
         InspectionManagerEx instance = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-        GlobalInspectionContextImpl context = RunInspectionIntention.createContext(toolWrapper, instance, null);
-        context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+        GlobalInspectionContextImpl context = RunInspectionIntention.createContext(toolWrapper, instance, file);
+        context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
         assertEquals(1, context.getTools().size());
         return;
       }

@@ -54,6 +54,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     if (annotator != null) {
       refManager.registerGraphAnnotator(annotator);
     }
+    getTool().initialize(context);
   }
 
   @Override

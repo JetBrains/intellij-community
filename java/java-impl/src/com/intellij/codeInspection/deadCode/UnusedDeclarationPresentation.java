@@ -320,7 +320,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
                                        boolean showStructure) {
-    final EntryPointsNode entryPointsNode = new EntryPointsNode(getTool(), context);
+    final EntryPointsNode entryPointsNode = new EntryPointsNode(context);
     InspectionToolWrapper dummyToolWrapper = entryPointsNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(dummyToolWrapper);
     presentation.updateContent();
