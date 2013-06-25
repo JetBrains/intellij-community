@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
@@ -22,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -53,7 +55,7 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement getRequest(@NotNull String host, @NotNull String path) throws IOException {
+  public static JsonElement anonymousGetRequest(@NotNull String host, @NotNull String path) throws IOException {
     return request(host, null, null, path, null, false);
   }
 
@@ -77,7 +79,8 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement postRequest(@NotNull String host, @NotNull String path, @Nullable String requestBody) throws IOException {
+  public static JsonElement anonymousPostRequest(@NotNull String host, @NotNull String path, @Nullable String requestBody)
+    throws IOException {
     return request(host, null, null, path, requestBody, true);
   }
 
@@ -97,7 +100,9 @@ public class GithubApiUtil {
 
   @Nullable
   private static JsonElement request(@NotNull String host, @Nullable String login, @Nullable String password,
-                                     @NotNull String path, @Nullable String requestBody, boolean post) throws IOException {
+                                     @NotNull String path,
+                                     @Nullable String requestBody,
+                                     boolean post) throws IOException {
     HttpMethod method = null;
     try {
       method = doREST(host, login, password, path, requestBody, post);
@@ -109,7 +114,25 @@ public class GithubApiUtil {
       if (method.getStatusCode() >= 400 && method.getStatusCode() <= 404) {
         throw new AuthenticationException("Request response: " + method.getStatusText());
       }
-      return parseResponse(resp);
+
+      JsonElement ret = parseResponse(resp);
+
+      Header header = method.getResponseHeader("Link");
+      if (header != null) {
+        String s = header.getValue();
+        final int end = s.indexOf(">; rel=\"next\"");
+        final int begin = s.lastIndexOf('<', end);
+        if (begin >= 0 && end >= 0) {
+          JsonElement next = request(s.substring(begin + 1, end), login, password, "", requestBody, post);
+          if (next != null) {
+            JsonArray merged = ret.getAsJsonArray();
+            merged.addAll(next.getAsJsonArray());
+            return merged;
+          }
+        }
+      }
+
+      return ret;
     }
     finally {
       if (method != null) {

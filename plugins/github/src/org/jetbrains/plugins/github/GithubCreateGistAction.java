@@ -228,7 +228,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     try {
       JsonElement jsonElement;
       if (auth == null) {
-        jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), "/gists", requestBody);
+        jsonElement = GithubApiUtil.anonymousPostRequest(GithubApiUtil.getApiUrl(), "/gists", requestBody);
       }
       else {
         jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), auth, "/gists", requestBody);
