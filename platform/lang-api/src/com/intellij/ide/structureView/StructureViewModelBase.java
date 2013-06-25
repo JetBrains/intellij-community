@@ -32,6 +32,13 @@ public class StructureViewModelBase extends TextEditorBasedStructureViewModel {
 
   public StructureViewModelBase(@NotNull PsiFile psiFile, @Nullable Editor editor, @NotNull StructureViewTreeElement root) {
     super(editor, psiFile);
+
+    myRoot = root;
+  }
+
+  public StructureViewModelBase(@NotNull PsiFile psiFile, @NotNull StructureViewTreeElement root) {
+    super(psiFile);
+
     myRoot = root;
   }
 
