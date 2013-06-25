@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -249,6 +250,7 @@ public class RemoveUnusedVariableUtil {
             if (element instanceof PsiField) {
               ((PsiField)element).normalizeDeclaration();
             }
+            if (processResourceVariable(element)) break;
             element.delete();
           }
           return !sideEffectsFound;
@@ -257,5 +259,25 @@ public class RemoveUnusedVariableUtil {
       element = element.getParent();
     }
     return true;
+  }
+
+  private static boolean processResourceVariable(PsiElement element) {
+    final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
+    if (element instanceof PsiResourceVariable && tryStatement != null) {
+      final PsiResourceList resourceList = tryStatement.getResourceList();
+      if (resourceList != null &&
+          resourceList.getResourceVariables().contains(element) &&
+          resourceList.getResourceVariablesCount() == 1) {
+
+        final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+        if (tryBlock != null) {
+          tryBlock.deleteChildRange(tryBlock.getFirstChild(), tryBlock.getFirstBodyElement());
+          tryBlock.deleteChildRange(tryBlock.getLastBodyElement(), tryBlock.getLastChild());
+          tryStatement.replace(tryBlock);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

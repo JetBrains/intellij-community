@@ -42,10 +42,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -234,10 +232,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final Runnable runnable = new Runnable() {
       public void run() {
         try{
-          PsiExpression[] exprs = new PsiExpression[refsToInline.length];
+          SmartPsiElementPointer<PsiExpression>[] exprs = new SmartPsiElementPointer[refsToInline.length];
+          final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
           for(int idx = 0; idx < refsToInline.length; idx++){
             PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)refsToInline[idx];
-            exprs[idx] = InlineUtil.inlineVariable(local, defToInline, refElement);
+            exprs[idx] = pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement));
           }
 
           if (!isInliningVariableInitializer(defToInline)) {
@@ -251,12 +250,17 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
           }
 
           if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-            highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
+            highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length], new Function<SmartPsiElementPointer<PsiExpression>, PsiExpression>() {
+              @Override
+              public PsiExpression fun(SmartPsiElementPointer<PsiExpression> pointer) {
+                return pointer.getElement();
+              }
+            }), attributes, true, null);
             WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           }
 
-          for (final PsiExpression expr : exprs) {
-            InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+          for (final SmartPsiElementPointer<PsiExpression> expr : exprs) {
+            InlineUtil.tryToInlineArrayCreationForVarargs(expr.getElement());
           }
         }
         catch (IncorrectOperationException e){

@@ -209,6 +209,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testResourceVariable() throws Exception {
+    doTest(false);
+  }
+
   public void testEnclosingThisExpression() throws Exception {
     doTest(true);
   }
