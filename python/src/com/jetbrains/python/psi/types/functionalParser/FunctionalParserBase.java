@@ -15,6 +15,13 @@ import java.util.Map;
 * @author vlan
 */
 public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, T> {
+  @Nullable private String myName = null;
+
+  @Override
+  public String toString() {
+    return myName != null ? String.format("<%s>", myName) : super.toString();
+  }
+
   @NotNull
   @Override
   public R parse(@NotNull List<Token<T>> tokens) throws ParserException {
@@ -74,6 +81,13 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
   @Override
   public FunctionalParser<R, T> endOfInput() {
     return this.thenSkip(FunctionalParserBase.<T>finished());
+  }
+
+  @NotNull
+  @Override
+  public FunctionalParser<R, T> named(@NotNull String name) {
+    myName = name;
+    return this;
   }
 
   @NotNull

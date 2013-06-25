@@ -109,7 +109,8 @@ public class PyTypeParser {
 
     final FunctionalParser<ParseResult, PyElementType> simpleType =
       token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
-        .map(new MakeSimpleType(anchor));
+        .map(new MakeSimpleType(anchor))
+        .named("simple-type");
 
     final FunctionalParser<ParseResult, PyElementType> tupleType =
       op("(").skipThen(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op(")"))
@@ -125,7 +126,8 @@ public class PyTypeParser {
             }
             return result.withType(PyTupleType.create(anchor, types.toArray(new PyType[types.size()])));
           }
-        });
+        })
+        .named("tuple-type");
 
     final FunctionalParser<ParseResult, PyElementType> typeParameter =
       token(PARAMETER)
@@ -134,13 +136,15 @@ public class PyTypeParser {
           public ParseResult fun(Token<PyElementType> token) {
             return new ParseResult(new PyGenericType(token.getText().toString()), token.getRange());
           }
-        });
+        })
+        .named("type-parameter");
 
     final FunctionalParser<ParseResult, PyElementType> simpleExpr =
       simpleType
         .or(tupleType)
         .or(typeParameter)
-        .cached();
+        .cached()
+        .named("simple-expr");
 
     final FunctionalParser<ParseResult, PyElementType> paramExpr =
       simpleExpr.thenSkip(op("of")).then(simpleExpr)
@@ -178,7 +182,8 @@ public class PyTypeParser {
                   return EMPTY_RESULT;
                 }
               }))
-        .or(simpleExpr);
+        .or(simpleExpr)
+        .named("param-expr");
 
     final FunctionalParser<ParseResult, PyElementType> unionExpr =
       paramExpr.then(many(op("or").skipThen(paramExpr)))
@@ -199,11 +204,17 @@ public class PyTypeParser {
             }
             return result.withType(PyUnionType.union(types));
           }
-        });
+        })
+        .named("union-expr");
 
-    typeExpr.define(unionExpr);
+    typeExpr
+      .define(unionExpr)
+      .named("type-expr");
 
-    final FunctionalParser<ParseResult, PyElementType> typeFile = typeExpr.endOfInput();
+    final FunctionalParser<ParseResult, PyElementType> typeFile =
+      typeExpr
+        .endOfInput()
+        .named("type-file");
 
     try {
       return typeFile.parse(tokenize(type));

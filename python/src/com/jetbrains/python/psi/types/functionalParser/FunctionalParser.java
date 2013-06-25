@@ -36,6 +36,9 @@ public interface FunctionalParser<R, T> {
   FunctionalParser<R, T> endOfInput();
 
   @NotNull
+  FunctionalParser<R, T> named(@NotNull String name);
+
+  @NotNull
   FunctionalParser<R, T> cached();
 
   class State {
