@@ -17,7 +17,7 @@ public class SmartPsiPointer {
   }
 
   public VirtualFile getFile() {
-    return pointer != null ? pointer.getElement().getContainingFile().getVirtualFile():null;
+    return pointer != null ? pointer.getVirtualFile():null;
   }
 
   public int getOffset() {
