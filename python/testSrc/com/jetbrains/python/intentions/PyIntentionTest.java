@@ -15,6 +15,19 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 public class PyIntentionTest extends PyTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    documentationSettings.setFormat(DocStringFormat.REST);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    documentationSettings.setFormat(DocStringFormat.PLAIN);
+  }
 
   private void doTest(String hint) {
     myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");
@@ -420,14 +433,7 @@ public class PyIntentionTest extends PyTestCase {
   private void doDocStubTest() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.REST);
-    try {
-      doTest(PyBundle.message("INTN.doc.string.stub"), true);
-    }
-    finally {
-      documentationSettings.setFormat(DocStringFormat.PLAIN);
-    }
+    doTest(PyBundle.message("INTN.doc.string.stub"), true);
   }
 
   private void doDocReferenceTest() {
