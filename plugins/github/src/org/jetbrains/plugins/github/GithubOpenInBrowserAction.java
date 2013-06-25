@@ -124,13 +124,20 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
                                       @NotNull String githubRemoteUrl) {
     final StringBuilder builder = new StringBuilder();
     builder.append(GithubUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl)).append("/blob/").append(branch).append(relativePath);
+
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null && editor.getDocument().getLineCount() >= 1) {
+      // lines are counted internally from 0, but from 1 on github
       SelectionModel selectionModel = editor.getSelectionModel();
       final int begin = editor.getDocument().getLineNumber(selectionModel.getSelectionStart()) + 1;
-      final int end = editor.getDocument().getLineNumber(selectionModel.getSelectionEnd()) + 1;
-      builder.append("#L").append(begin).append('-').append(end); // lines are counted internally from 0, but from 1 on github
+      final int selectionEnd = selectionModel.getSelectionEnd();
+      int end = editor.getDocument().getLineNumber(selectionEnd) + 1;
+      if (editor.getDocument().getLineStartOffset(end - 1) == selectionEnd) {
+        end -= 1;
+      }
+      builder.append("#L").append(begin).append('-').append(end);
     }
+
     return builder.toString();
   }
 
