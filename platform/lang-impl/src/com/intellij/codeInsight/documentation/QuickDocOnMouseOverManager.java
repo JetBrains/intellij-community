@@ -211,7 +211,7 @@ public class QuickDocOnMouseOverManager {
 
     PsiElement activeElement = myActiveElements.get(editor);
     if (targetElementUnderMouse.equals(activeElement)
-        && (myAlarm.getActiveRequestCount() > 0 // Request to show documentation for the target component has been already queued.
+        && (!myAlarm.isEmpty() // Request to show documentation for the target component has been already queued.
             || hint != null)) // Documentation for the target component is being shown.
     { 
       return;

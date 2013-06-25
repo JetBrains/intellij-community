@@ -442,7 +442,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       public void run() {
         if (!isValid()) return;
         // there is pending update which is going to change prop file anyway
-        if (myUpdatePsiAlarm.getActiveRequestCount() != 0) {
+        if (!myUpdatePsiAlarm.isEmpty()) {
           myUpdateEditorAlarm.cancelAllRequests();
           myUpdateEditorAlarm.addRequest(this, 200);
           return;

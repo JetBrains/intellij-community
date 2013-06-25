@@ -97,14 +97,16 @@ public class MavenArtifactSearchPanel extends JPanel {
     add(pane, BorderLayout.CENTER);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         scheduleSearch();
       }
     });
 
     myResultList.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (myAlarm.getActiveRequestCount() > 0) return;
+        if (!myAlarm.isEmpty()) return;
 
         boolean hasSelection = !myResultList.isSelectionEmpty();
         myListener.canSelectStateChanged(MavenArtifactSearchPanel.this, hasSelection);
@@ -146,6 +148,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           try {
             doSearch(text);
@@ -163,6 +166,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     final TreeModel model = new MyTreeModel(result);
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!myDialog.isVisible()) return;
 
@@ -200,14 +204,17 @@ public class MavenArtifactSearchPanel extends JPanel {
       myItems = items;
     }
 
+    @Override
     public Object getRoot() {
       return myItems;
     }
 
+    @Override
     public Object getChild(Object parent, int index) {
       return getList(parent).get(index);
     }
 
+    @Override
     public int getChildCount(Object parent) {
       List list = getList(parent);
       assert list != null : parent;
@@ -220,20 +227,25 @@ public class MavenArtifactSearchPanel extends JPanel {
       return null;
     }
 
+    @Override
     public boolean isLeaf(Object node) {
       return node != myItems && (getList(node) == null || getChildCount(node) < 2);
     }
 
+    @Override
     public int getIndexOfChild(Object parent, Object child) {
       return getList(parent).indexOf(child);
     }
 
+    @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
     }
 
+    @Override
     public void addTreeModelListener(TreeModelListener l) {
     }
 
+    @Override
     public void removeTreeModelListener(TreeModelListener l) {
     }
   }
@@ -296,6 +308,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       });
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
                                                   boolean hasFocus) {
       myLeftComponent.clear();
