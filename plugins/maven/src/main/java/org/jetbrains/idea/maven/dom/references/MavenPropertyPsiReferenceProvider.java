@@ -23,13 +23,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
-import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.plugins.api.MavenPluginParamInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -49,25 +47,11 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
   private static boolean isElementCanContainReference(PsiElement element) {
     if (element instanceof XmlTag) {
-      class MyProcessor implements PairProcessor<MavenPluginParamInfo.ParamInfo, MavenDomConfiguration> {
-
-        boolean disableReferences = false;
-
-        @Override
-        public boolean process(MavenPluginParamInfo.ParamInfo info, MavenDomConfiguration configuration) {
-          if (Boolean.TRUE.equals(info.getParam().disableReferences)) {
-            disableReferences = true;
-            return false;
-          }
-          return true;
+      for (MavenPluginParamInfo.ParamInfo info : MavenPluginParamInfo.getParamInfoList((XmlTag)element)) {
+        if (Boolean.TRUE.equals(info.getParam().disableReferences)) {
+          return false;
         }
       }
-
-      MyProcessor p = new MyProcessor();
-
-      MavenPluginParamInfo.processParamInfo((XmlTag)element, p);
-
-      return !p.disableReferences;
     }
 
     return true;
