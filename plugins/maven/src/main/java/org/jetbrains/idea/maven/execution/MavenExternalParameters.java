@@ -502,7 +502,7 @@ public class MavenExternalParameters {
         stringBuilder.append(",");
       }
       if (!entry.getValue()) {
-        stringBuilder.append("-");
+        stringBuilder.append("!");
       }
       stringBuilder.append(entry.getKey());
     }

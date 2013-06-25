@@ -37,10 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,7 +73,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
         protected final void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
           MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
           for (String profile : manager.getAvailableProfiles()) {
-            result.addElement(LookupElementBuilder.create(profile));
+            result.addElement(LookupElementBuilder.create(ParametersListUtil.join(profile)));
           }
         }
 
@@ -141,7 +141,9 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
     Map<String, Boolean> profilesMap = new LinkedHashMap<String, Boolean>();
 
-    for (String profile : Strings.tokenize(profilesComponent.getComponent().getText(), " ,;")) {
+    List<String> profiles = ParametersListUtil.parse(profilesComponent.getComponent().getText());
+
+    for (String profile : profiles) {
       Boolean isEnabled = true;
       if (profile.startsWith("-") || profile.startsWith("!")) {
         profile = profile.substring(1);
@@ -160,19 +162,19 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
     goalsComponent.getComponent().setText(ParametersList.join(data.getGoals()));
     myResolveToWorkspaceCheckBox.setSelected(data.isResolveToWorkspace());
 
-    StringBuilder sb = new StringBuilder();
+    ParametersList parametersList = new ParametersList();
+
     for (Map.Entry<String, Boolean> entry : data.getProfilesMap().entrySet()) {
-      if (sb.length() != 0) {
-        sb.append(" ");
-      }
+      String profileName = entry.getKey();
+
       if (!entry.getValue()) {
-        sb.append("-");
+        profileName = '-' + profileName;
       }
 
-      sb.append(entry.getKey());
+      parametersList.add(profileName);
     }
 
-    profilesComponent.getComponent().setText(sb.toString());
+    profilesComponent.getComponent().setText(parametersList.getParametersString());
   }
 
   protected abstract MavenRunnerParameters getParameters();
