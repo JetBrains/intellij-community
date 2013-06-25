@@ -684,7 +684,8 @@ public class HighlightInfo implements Segment {
       List<IntentionAction> options = myOptions;
       HighlightDisplayKey key = myKey;
       if (myProblemGroup != null) {
-        HighlightDisplayKey problemGroupKey = HighlightDisplayKey.findById(myProblemGroup.getProblemName());
+        String problemName = myProblemGroup.getProblemName();
+        HighlightDisplayKey problemGroupKey = problemName != null ? HighlightDisplayKey.findById(problemName) : null;
         if (problemGroupKey != null) {
           key = problemGroupKey;
         }
