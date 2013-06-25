@@ -134,7 +134,7 @@ public class CreateFromUsageUtils {
 
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
-    LOG.assertTrue(!aClass.isInterface(), "Interface bodies should be already set up");
+    LOG.assertTrue(!aClass.isInterface() || method.hasModifierProperty(PsiModifier.DEFAULT), "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     Properties properties = new Properties();
