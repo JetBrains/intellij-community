@@ -35,6 +35,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.cmd.ParametersListLexer;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -80,11 +81,18 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
         @NotNull
         @Override
         protected String getPrefix(@NotNull String currentTextPrefix) {
-          String prefix = super.getPrefix(currentTextPrefix);
-          if (prefix.startsWith("-") || prefix.startsWith("!")) {
-            prefix = prefix.substring(1);
+          ParametersListLexer lexer = new ParametersListLexer(currentTextPrefix);
+          while (lexer.nextToken()) {
+            if (lexer.getTokenEnd() == currentTextPrefix.length()) {
+              String prefix = lexer.getCurrentToken();
+              if (prefix.startsWith("-") || prefix.startsWith("!")) {
+                prefix = prefix.substring(1);
+              }
+              return prefix;
+            }
           }
-          return prefix;
+
+          return "";
         }
       };
 
