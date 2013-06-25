@@ -8,6 +8,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -15,18 +16,21 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 public class PyIntentionTest extends PyTestCase {
+  @Nullable private PyDocumentationSettings myDocumentationSettings = null;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.REST);
+    myDocumentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    myDocumentationSettings.setFormat(DocStringFormat.REST);
   }
 
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.PLAIN);
+    if (myDocumentationSettings != null) {
+      myDocumentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 
   private void doTest(String hint) {
