@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -113,8 +114,9 @@ public class GithubShareAction extends DumbAwareAction {
     boolean externalRemoteDetected = false;
     if (gitDetected) {
       if (GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-        Notification notification =
-          new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "", "Project is already on GitHub", NotificationType.INFORMATION);
+        Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Project is already on GitHub",
+                                                     "<a href=\"" + GithubUtil.findGithubRemoteUrl(gitRepository) + "\">GitHub</a>",
+                                                     NotificationType.INFORMATION);
         Notificator.getInstance(project).notify(notification);
         return;
       }
@@ -231,7 +233,9 @@ public class GithubShareAction extends DumbAwareAction {
             return;
           }
 
+          //TODO: login - case-insensitive, remoteUrl - case-insensitive, gitUrl - case-sensitive. DAFAQ
           //git push origin master
+          LOG.info("Pushing to github master");
           indicator.setText("Pushing to github master");
           Git git = ServiceManager.getService(Git.class);
           GitCommandResult result = git.push(repository, remoteName, remoteUrl, "refs/heads/master:refs/heads/master");
