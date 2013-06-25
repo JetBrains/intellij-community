@@ -752,12 +752,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         if (inspectionProfile != null) {
           final NamedScope scope = getProfileManager().getScopesManager().getScope(scopeElement.getAttributeValue(NAME));
           if (scope != null) {
-            for (InspectionToolWrapper wrapper : inspectionProfile.getInspectionTools(null)) {
-              final HighlightDisplayKey key = HighlightDisplayKey.find(wrapper.getShortName());
+            for (InspectionToolWrapper toolWrapper : inspectionProfile.getInspectionTools(null)) {
+              final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
               try {
-                InspectionToolWrapper toolWrapper = copyToolSettings(wrapper);
+                InspectionToolWrapper toolWrapperCopy = copyToolSettings(toolWrapper);
                 HighlightDisplayLevel errorLevel = inspectionProfile.getErrorLevel(key, null, project);
-                getTools(wrapper.getShortName(), project).addTool(scope, toolWrapper, inspectionProfile.isToolEnabled(key), errorLevel);
+                getTools(toolWrapper.getShortName(), project).addTool(scope, toolWrapperCopy, inspectionProfile.isToolEnabled(key), errorLevel);
               }
               catch (Exception e) {
                 LOG.error(e);
