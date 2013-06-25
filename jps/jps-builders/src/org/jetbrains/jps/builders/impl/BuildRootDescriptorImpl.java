@@ -27,9 +27,7 @@ public class BuildRootDescriptorImpl extends BuildRootDescriptor {
   private final boolean myCanUseFileCache;
 
   public BuildRootDescriptorImpl(BuildTarget target, File root) {
-    myTarget = target;
-    myRoot = root;
-    myCanUseFileCache = super.canUseFileCache();
+    this(target, root, false);
   }
 
   public BuildRootDescriptorImpl(BuildTarget target, File root, boolean canUseFileCache) {
