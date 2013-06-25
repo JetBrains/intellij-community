@@ -155,4 +155,12 @@ public class PyTypeParserTest extends PyTestCase {
     assertNull(members.get(0));
     assertClassType(members.get(1), "int");
   }
+
+  public void testUnionParamPriority() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType t1 = PyTypeParser.getTypeByName(myFixture.getFile(), "list of int or list of str");
+    assertInstanceOf(t1, PyUnionType.class);
+    final PyType t2 = PyTypeParser.getTypeByName(myFixture.getFile(), "list of str or int");
+    assertInstanceOf(t2, PyUnionType.class);
+  }
 }
