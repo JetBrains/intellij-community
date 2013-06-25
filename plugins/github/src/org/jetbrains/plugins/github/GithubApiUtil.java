@@ -63,6 +63,11 @@ public class GithubApiUtil {
   }
 
   @Nullable
+  public static JsonElement getRequest(@NotNull String host, @NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    return request(host, auth.getLogin(), auth.getPassword(), path, null, false);
+  }
+
+  @Nullable
   public static JsonElement postRequest(@NotNull String host,
                                         @Nullable String login,
                                         @Nullable String password,
@@ -80,6 +85,14 @@ public class GithubApiUtil {
   public static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
     throws IOException {
     return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, requestBody, true);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull String host,
+                                        @NotNull GithubAuthData auth,
+                                        @NotNull String path,
+                                        @Nullable String requestBody) throws IOException {
+    return request(host, auth.getLogin(), auth.getPassword(), path, requestBody, true);
   }
 
   @Nullable

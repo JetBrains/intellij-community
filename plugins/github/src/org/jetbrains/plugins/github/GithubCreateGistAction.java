@@ -137,10 +137,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
       auth = validAuth;
     }
 
-    createGistWithProgress(project, editor, file, files, auth, dialog.getDescription(), dialog.isPrivate(), anonymous, new Consumer<String>() {
+    createGistWithProgress(project, editor, file, files, auth, dialog.getDescription(), dialog.isPrivate(), new Consumer<String>() {
 
-                             @Override
-                             public void consume(String url) {
+      @Override
+      public void consume(String url) {
                                if (url == null) {
                                  return;
                                }
@@ -159,7 +159,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                                @Nullable final VirtualFile file, @Nullable final VirtualFile[] files,
                                                @Nullable final GithubAuthData auth,
                                                @NotNull final String description, final boolean aPrivate,
-                                               final boolean anonymous, @NotNull final Consumer<String> resultHandler) {
+                                               @NotNull final Consumer<String> resultHandler) {
     final AtomicReference<String> url = new AtomicReference<String>();
     new Task.Backgroundable(project, "Creating Gist") {
       @Override
@@ -168,7 +168,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         if (contents == null) {
           return;
         }
-        String gistUrl = createGist(project, auth, anonymous, contents, aPrivate, description);
+        String gistUrl = createGist(project, auth, contents, aPrivate, description);
         url.set(gistUrl);
       }
 
@@ -223,16 +223,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
   @Nullable
   private static String createGist(@NotNull Project project,
                                    @Nullable GithubAuthData auth,
-                                   boolean anonymous,
                                    @NotNull List<NamedContent> contents, boolean isPrivate, @NotNull String description) {
     String requestBody = prepareJsonRequest(description, isPrivate, contents);
     try {
-      JsonElement jsonElement = null;
-      if (anonymous) {
+      JsonElement jsonElement;
+      if (auth == null) {
         jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), "/gists", requestBody);
       }
       else {
-        jsonElement = GithubApiUtil.postRequest(auth, "/gists", requestBody);
+        jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), auth, "/gists", requestBody);
       }
       if (jsonElement == null) {
         LOG.info("Null JSON response returned by GitHub");
