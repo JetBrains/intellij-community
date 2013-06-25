@@ -199,7 +199,12 @@ public class PyStubsTest extends PyTestCase {
     assertNull("There should be no stub if file holds tree element", fileStub);
 
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, myFixture.getProject(), null);
-    fileImpl.unloadContent();
+    new WriteCommandAction(myFixture.getProject(), fileImpl) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        fileImpl.unloadContent();
+      }
+    }.execute();
     assertNull(fileImpl.getTreeElement()); // Test unload successed.
 
     fileStub = fileImpl.getStub();
