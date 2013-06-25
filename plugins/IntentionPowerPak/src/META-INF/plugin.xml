@@ -488,5 +488,9 @@
       <className>com.siyeh.ipp.parenthesis.AddClarifyingParenthesesIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.types.MakeMethodDefaultIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
   </extensions>
 </idea-plugin>
