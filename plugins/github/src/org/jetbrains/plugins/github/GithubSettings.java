@@ -15,17 +15,12 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,33 +58,12 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private Collection<String> myTrustedHosts = new ArrayList<String>();
 
   private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
-  private boolean passwordChanged = false;
-
-  // Once master password is refused, do not ask for it again
-  private boolean masterPasswordRefused = false;
-
 
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
   }
 
   public Element getState() {
-    LOG.assertTrue(!ProgressManager.getInstance().hasProgressIndicator(), "Password should not be accessed under modal progress");
-
-    try {
-      if (passwordChanged && !masterPasswordRefused) {
-        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, getPassword());
-      }
-    }
-    catch (MasterPasswordUnavailableException e){
-      LOG.info("Couldn't store password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-      masterPasswordRefused = true;
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog("Error happened while storing password for github", "Error");
-      LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-    }
-    passwordChanged = false;
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, getLogin());
     element.setAttribute(HOST, getHost());
@@ -131,30 +105,17 @@ public class GithubSettings implements PersistentStateComponent<Element> {
 
   @NotNull
   public String getPassword() {
-    LOG.assertTrue(!ProgressManager.getInstance().hasProgressIndicator(), "Password should not be accessed under modal progress");
     String password;
     final Project project = ProjectManager.getInstance().getDefaultProject();
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    final PasswordSafe passwordSafe = PasswordSafe.getInstance();
     try {
-      password = passwordSafe.getMemoryProvider().getPassword(project, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
-      if (password != null) {
-        return password;
-      }
-      final MasterKeyPasswordSafe masterKeyProvider = passwordSafe.getMasterKeyProvider();
-      if (!masterKeyProvider.isEmpty()) {
-        // workaround for: don't ask for master password, if the requested password is not there.
-        // this should be fixed in PasswordSafe: don't ask master password to look for keys
-        // until then we assume that is PasswordSafe was used (there is anything there), then it makes sense to look there.
-        password = masterKeyProvider.getPassword(project, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
-      }
+      password = passwordSafe.getPassword(project, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-      masterPasswordRefused = true;
       password = "";
     }
 
-    passwordChanged = false;
     return password != null ? password : "";
   }
 
@@ -179,12 +140,11 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setPassword(final String password) {
-    passwordChanged = !getPassword().equals(password);
     try {
       PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password != null ? password : "");
     }
     catch (PasswordSafeException e) {
-      LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
+      LOG.info("Couldn't set password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
     }
   }
 
