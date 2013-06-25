@@ -221,7 +221,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
            isSuppressed(place, alternativeId);
   }
 
-  public static boolean canRunInspections(final Project project, final boolean online) {
+  public static boolean canRunInspections(@NotNull Project project, final boolean online) {
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       if (!factory.isProjectConfiguredToRunInspections(project, online)) {
         return false;
