@@ -40,8 +40,7 @@ public class DivideByZeroInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "divide.by.zero.problem.descriptor");
+    return InspectionGadgetsBundle.message("divide.by.zero.problem.descriptor");
   }
 
   @Override
@@ -76,7 +75,7 @@ public class DivideByZeroInspection extends BaseInspection {
         return;
       }
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.DIVEQ) && !tokenType.equals(JavaTokenType.PERCEQ) || isZero(rhs)) {
+      if (!tokenType.equals(JavaTokenType.DIVEQ) && !tokenType.equals(JavaTokenType.PERCEQ) || !isZero(rhs)) {
         return;
       }
       registerError(expression);
