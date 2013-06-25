@@ -75,7 +75,13 @@ public class GithubLoginDialog extends DialogWrapper {
       boolean loggedSuccessfully = GithubUtil.checkAuthData(auth);
       if (loggedSuccessfully) {
         final GithubSettings settings = GithubSettings.getInstance();
-        settings.setAuth(auth);
+        if (myGithubLoginPanel.getSavePassvord()) {
+          settings.setAuth(auth);
+        }
+        else {
+          settings.setHost(auth.getHost());
+          settings.setLogin(auth.getLogin());
+        }
         super.doOKAction();
       }
       else {

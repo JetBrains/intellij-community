@@ -37,6 +37,7 @@ public class GithubLoginPanel {
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
+  private JCheckBox mySavePasswordCheckBox;
 
   public GithubLoginPanel(final GithubLoginDialog dialog) {
     DocumentListener listener = new DocumentAdapter() {
@@ -85,6 +86,14 @@ public class GithubLoginPanel {
 
   public String getPassword() {
     return String.valueOf(myPasswordField.getPassword());
+  }
+
+  public boolean getSavePassvord() {
+    return mySavePasswordCheckBox.isSelected();
+  }
+
+  public void setSavePassword(final boolean savePassword) {
+    mySavePasswordCheckBox.setSelected(savePassword);
   }
 
   public JComponent getPreferrableFocusComponent() {
