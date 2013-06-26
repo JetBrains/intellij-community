@@ -2288,21 +2288,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private static final class UpdateSemaphore extends Semaphore {
-    private volatile boolean myIsCanceled = false;
-    
-    UpdateSemaphore() {
-    }
-    
-    boolean isUpdateCanceled() {
-      return myIsCanceled;
-    }
-    
-    void reportUpdateCanceled() {
-      myIsCanceled = true;
-    }
-  }
-  
   private class UnindexedFilesFinder implements CollectingContentIterator {
     private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
     @Nullable
