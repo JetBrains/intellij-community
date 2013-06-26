@@ -2220,10 +2220,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       try {
         for (VirtualFile file : getAllFilesToUpdate()) {
-          if (updateSemaphore.isUpdateCanceled()) {
-            // another thread synchronizing on the same semaphore, got PCE, so throw PCE as well
-            throw new ProcessCanceledException();
-          }
           if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.contains(((VirtualFileWithId)file).getId())) {
             continue;
           }
