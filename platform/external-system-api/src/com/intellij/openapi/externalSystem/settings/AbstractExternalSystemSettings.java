@@ -74,6 +74,18 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
   public S getLinkedProjectSettings(@NotNull String linkedProjectPath) {
     return myLinkedProjectsSettings.get(linkedProjectPath);
   }
+
+  public void linkProject(@NotNull S settings) throws IllegalArgumentException {
+    S existing = getLinkedProjectSettings(settings.getExternalProjectPath());
+    if (existing != null) {
+      throw new IllegalArgumentException(String.format(
+        "Can't link external project '%s'. Reason: it's already registered at the current ide project",
+        settings.getExternalProjectPath()
+      ));
+    }
+    myLinkedProjectsSettings.put(settings.getExternalProjectPath(), settings);
+    getPublisher().onProjectsLinked(Collections.singleton(settings));
+  }
   
   /**
    * Un-links given external project from the current ide project.

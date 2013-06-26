@@ -14,6 +14,7 @@
     <group id="ExternalSystem.ToolWindow.Toolbar">
       <reference id="ExternalSystem.RefreshAllProjects"/>
       <reference id="ExternalSystem.AttachProject"/>
+      <reference ref="ExternalSystem.DetachProject"/>
     </group>
 
     <!--Context menu action-->

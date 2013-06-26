@@ -47,6 +47,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,7 +147,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Override
   @NotNull
   public List<PsiFile> getAllFiles() {
-    return Collections.singletonList(getPsi(getBaseLanguage()));
+    return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
   @Nullable

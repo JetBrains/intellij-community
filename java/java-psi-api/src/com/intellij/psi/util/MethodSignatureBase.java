@@ -25,6 +25,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
 
   private final PsiSubstitutor mySubstitutor;
   private final PsiType[] myParameterTypes;
+  private volatile PsiType[] myErasedParameterTypes;
   protected final PsiTypeParameter[] myTypeParameters;
 
   protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters) {
@@ -68,6 +69,14 @@ public abstract class MethodSignatureBase implements MethodSignature {
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return myTypeParameters;
+  }
+  
+  public PsiType[] getErasedParameterTypes() {
+    PsiType[] result = myErasedParameterTypes;
+    if (result == null) {
+      result = myErasedParameterTypes = MethodSignatureUtil.getErasedParameterTypes(this);
+    }
+    return result;
   }
 
   public boolean equals(Object o) {

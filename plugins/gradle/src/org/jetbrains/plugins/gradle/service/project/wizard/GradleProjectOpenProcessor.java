@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.service.settings;
+package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;

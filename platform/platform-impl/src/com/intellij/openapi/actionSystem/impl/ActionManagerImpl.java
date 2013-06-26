@@ -98,6 +98,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String DESCRIPTION = "description";
   @NonNls public static final String TEXT_ATTR_NAME = "text";
   @NonNls public static final String POPUP_ATTR_NAME = "popup";
+  @NonNls public static final String COMPACT_ATTR_NAME = "compact";
   @NonNls public static final String SEPARATOR_ELEMENT_NAME = "separator";
   @NonNls public static final String REFERENCE_ELEMENT_NAME = "reference";
   @NonNls public static final String GROUPID_ATTR_NAME = "group-id";
@@ -502,7 +503,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
-      className = DefaultActionGroup.class.getName();
+      if ("true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))) {
+        className = DefaultCompactActionGroup.class.getName();
+      } else {
+        className = DefaultActionGroup.class.getName();
+      }
     }
     try {
       Class aClass = Class.forName(className, true, loader);

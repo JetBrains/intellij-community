@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
@@ -778,6 +779,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected class MyDeleteAction extends AnAction implements DumbAware {
     private final Condition<Object[]> myCondition;
+
+    public MyDeleteAction() {
+      this(Conditions.<Object[]>alwaysTrue());
+    }
 
     public MyDeleteAction(Condition<Object[]> availableCondition) {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);

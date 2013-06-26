@@ -99,7 +99,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
       }
     };
     ExternalSystemUiUtil.apply(settings, myAllTasksModel);
-    CustomizationUtil.installPopupHandler(myAllTasksTree, TREE_ACTIONS_GROUP_ID, TREE_PLACE);
+    CustomizationUtil.installPopupHandler(myAllTasksTree, TREE_ACTIONS_GROUP_ID, TREE_CONTEXT_MENU_PLACE);
 
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup group = (ActionGroup)actionManager.getAction(TOOL_WINDOW_TOOLBAR_ACTIONS_GROUP_ID);

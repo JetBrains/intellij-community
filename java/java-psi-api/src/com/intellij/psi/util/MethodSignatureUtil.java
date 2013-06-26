@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,22 +64,29 @@ public class MethodSignatureUtil {
 
       @Override
       public boolean equals(MethodSignature method1, MethodSignature method2) {
-        if (method1.isConstructor() != method2.isConstructor()) return false;
-        if (!method1.isConstructor() && !method1.getName().equals(method2.getName())) return false;
-        final PsiType[] parameterTypes1 = method1.getParameterTypes();
-        final PsiType[] parameterTypes2 = method2.getParameterTypes();
-        if (parameterTypes1.length != parameterTypes2.length) return false;
-
-        final PsiSubstitutor substitutor1 = method1.getSubstitutor();
-        final PsiSubstitutor substitutor2 = method2.getSubstitutor();
-        for (int i = 0; i < parameterTypes1.length; i++) {
-          final PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(parameterTypes1[i]), substitutor1);
-          final PsiType type2 = TypeConversionUtil.erasure(substitutor2.substitute(parameterTypes2[i]), substitutor2);
-          if (!Comparing.equal(type1, type2)) return false;
-        }
-        return true;
+        return areSignaturesEqualLightweight(method1, method2) && checkErasedParametersEqual(method1, method2);
       }
     };
+
+  private static boolean checkErasedParametersEqual(MethodSignature method1, MethodSignature method2) {
+    PsiType[] erased1 = method1 instanceof MethodSignatureBase
+                        ? ((MethodSignatureBase)method1).getErasedParameterTypes() : getErasedParameterTypes(method1);
+    PsiType[] erased2 = method2 instanceof MethodSignatureBase 
+                        ? ((MethodSignatureBase)method2).getErasedParameterTypes() : getErasedParameterTypes(method2);
+    return Arrays.equals(erased1, erased2);
+  }
+
+  public static PsiType[] getErasedParameterTypes(MethodSignature signature) {
+    PsiType[] parameterTypes = signature.getParameterTypes();
+    if (parameterTypes.length == 0) return PsiType.EMPTY_ARRAY;
+
+    PsiSubstitutor substitutor = signature.getSubstitutor();
+    PsiType[] erasedTypes = new PsiType[parameterTypes.length];
+    for (int i = 0; i < parameterTypes.length; i++) {
+      erasedTypes[i] = TypeConversionUtil.erasure(substitutor.substitute(parameterTypes[i]), substitutor);
+    }
+    return erasedTypes;
+  }
 
   public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
                                                       @Nullable PsiParameterList parameterTypes,
@@ -125,7 +133,7 @@ public class MethodSignatureUtil {
                                                    final MethodSignature superSignature,
                                                    final PsiSubstitutor unifyingSubstitutor) {
     if (unifyingSubstitutor == null) return false;
-    if (!METHOD_PARAMETERS_ERASURE_EQUALITY.equals(subSignature, superSignature)) return false;
+    if (!checkErasedParametersEqual(subSignature, superSignature)) return false;
 
     final PsiType[] subParameterTypes = subSignature.getParameterTypes();
     final PsiType[] superParameterTypes = superSignature.getParameterTypes();

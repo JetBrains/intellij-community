@@ -22,6 +22,7 @@ import org.jdom.Attribute;
 import org.jdom.Comment;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -36,11 +37,11 @@ public abstract class PathMacroMap {
 
   public abstract String substitute(String text, boolean caseSensitive);
 
-  public final void substitute(Element e, boolean caseSensitive) {
+  public final void substitute(@NotNull Element e, boolean caseSensitive) {
     substitute(e, caseSensitive, false);
   }
 
-  public final void substitute(Element e, boolean caseSensitive, final boolean recursively,
+  public final void substitute(@NotNull Element e, boolean caseSensitive, final boolean recursively,
                                @Nullable PathMacroFilter filter) {
     List content = e.getContent();
     //noinspection ForLoopReplaceableByForEach
@@ -77,7 +78,7 @@ public abstract class PathMacroMap {
     }
   }
 
-  public final void substitute(Element e, boolean caseSensitive, final boolean recursively) {
+  public final void substitute(@NotNull Element e, boolean caseSensitive, final boolean recursively) {
     substitute(e, caseSensitive, recursively, null);
   }
 

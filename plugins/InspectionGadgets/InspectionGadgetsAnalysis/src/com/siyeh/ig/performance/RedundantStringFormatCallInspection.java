@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +48,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     return new RedundantStringFormatCallFix();
   }
 
-  private static class RedundantStringFormatCallFix
-    extends InspectionGadgetsFix {
+  private static class RedundantStringFormatCallFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -59,7 +58,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -108,11 +107,13 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       final PsiExpression firstArgument = arguments[0];
       final PsiType firstType = firstArgument.getType();
-      if (firstType == null || containsPercentN(firstArgument)) {
+      if (firstType == null) {
         return;
       }
-      if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING) && arguments.length == 1) {
-        registerMethodCallError(expression);
+      if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        if (arguments.length == 1 && !containsPercentN(firstArgument)) {
+          registerMethodCallError(expression);
+        }
       }
       else if (firstType.equalsToText("java.util.Locale")) {
         if (arguments.length != 2) {
@@ -120,12 +121,13 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         }
         final PsiExpression secondArgument = arguments[1];
         final PsiType secondType = secondArgument.getType();
-        if (secondType == null) {
+        if (secondType == null || !secondType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           return;
         }
-        if (secondType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          registerMethodCallError(expression);
+        if (containsPercentN(secondArgument)) {
+          return;
         }
+        registerMethodCallError(expression);
       }
     }
 

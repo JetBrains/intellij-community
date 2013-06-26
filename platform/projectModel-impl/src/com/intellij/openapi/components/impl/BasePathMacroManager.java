@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
@@ -111,7 +112,7 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @Override
-  public void collapsePathsRecursively(final Element element) {
+  public void collapsePathsRecursively(@NotNull final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
@@ -121,7 +122,7 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @Override
-  public void expandPaths(final Element element) {
+  public void expandPaths(@NotNull final Element element) {
     getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 

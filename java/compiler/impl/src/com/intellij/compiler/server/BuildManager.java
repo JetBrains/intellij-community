@@ -825,8 +825,8 @@ public class BuildManager implements ApplicationComponent{
       cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
 
-    if (Registry.is("compiler.process.use.memory.temp.cache")) {
-      cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION);
+    if (!Registry.is("compiler.process.use.memory.temp.cache")) {
+      cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=false");
     }
     if (Registry.is("compiler.process.use.external.javac")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION);

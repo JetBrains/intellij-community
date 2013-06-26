@@ -186,9 +186,10 @@ public abstract class AbstractExternalSystemConfigurable<
   @NotNull
   protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
   
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected String getProjectName(@NotNull String path) {
-    return new File(path).getParentFile().getName();
+    return new File(path).getName();
   }
 
   private void prepareSystemSettings(@NotNull SystemSettings s) {

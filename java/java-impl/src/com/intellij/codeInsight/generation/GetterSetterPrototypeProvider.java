@@ -17,6 +17,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -31,6 +32,17 @@ public abstract class GetterSetterPrototypeProvider {
   public abstract boolean canGeneratePrototypeFor(PsiField field);
   public abstract PsiMethod[] generateGetters(PsiField field); 
   public abstract PsiMethod[] generateSetters(PsiField field);
+  public PsiMethod[] findGetters(PsiClass psiClass, String propertyName) {
+    return null;
+  }
+
+  public String suggestGetterName(String propertyName) {
+    return null;
+  }
+
+  public boolean isSimpleGetter(PsiMethod method, String oldPropertyName) {
+    return false;
+  }
 
   public abstract boolean isReadOnly(PsiField field);
 
@@ -50,5 +62,28 @@ public abstract class GetterSetterPrototypeProvider {
       }
     }
     return field.hasModifierProperty(PsiModifier.FINAL);
+  }
+
+  public static PsiMethod[] findGetters(PsiClass aClass, String propertyName, boolean isStatic) {
+    if (!isStatic) {
+      for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
+        final PsiMethod[] getterSetter = provider.findGetters(aClass, propertyName);
+        if (getterSetter != null) return getterSetter;
+      }
+    }
+    final PsiMethod propertyGetterSetter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
+    if (propertyGetterSetter != null) {
+      return new PsiMethod[] {propertyGetterSetter};
+    }
+    return null; 
+  }
+
+  public static String suggestNewGetterName(String oldPropertyName, String newPropertyName, PsiMethod method) {
+    for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
+      if (provider.isSimpleGetter(method, oldPropertyName)) {
+        return provider.suggestGetterName(newPropertyName);
+      }
+    }
+    return null;
   }
 }
