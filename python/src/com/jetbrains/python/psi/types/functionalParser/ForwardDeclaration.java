@@ -16,8 +16,10 @@ public class ForwardDeclaration<R, T> extends FunctionalParserBase<R, T> {
     return new ForwardDeclaration<R, T>();
   }
 
-  public void define(@NotNull FunctionalParser<R, T> parser) {
+  @NotNull
+  public ForwardDeclaration<R, T> define(@NotNull FunctionalParser<R, T> parser) {
     myParser = parser;
+    return this;
   }
 
   @NotNull

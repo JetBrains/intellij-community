@@ -52,7 +52,7 @@ public class PyTypeParser {
       myImports = imports;
     }
 
-    ParseResult(@Nullable PyType type, @NotNull TextRange range) {
+    ParseResult(@NotNull PyType type, @NotNull TextRange range) {
       this(type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
     }
 
@@ -109,23 +109,29 @@ public class PyTypeParser {
 
     final FunctionalParser<ParseResult, PyElementType> simpleType =
       token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
-        .map(new MakeSimpleType(anchor));
+        .map(new MakeSimpleType(anchor))
+        .named("simple-type");
 
     final FunctionalParser<ParseResult, PyElementType> tupleType =
       op("(").skipThen(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op(")"))
         .map(new Function<Pair<ParseResult, List<ParseResult>>, ParseResult>() {
           @Override
           public ParseResult fun(Pair<ParseResult, List<ParseResult>> value) {
-            final List<PyType> types = new ArrayList<PyType>();
             ParseResult result = value.getFirst();
+            final List<ParseResult> rest = value.getSecond();
+            if (rest.isEmpty()) {
+              return result;
+            }
+            final List<PyType> types = new ArrayList<PyType>();
             types.add(result.getType());
-            for (ParseResult r : value.getSecond()) {
+            for (ParseResult r : rest) {
               result = result.merge(r);
               types.add(r.getType());
             }
             return result.withType(PyTupleType.create(anchor, types.toArray(new PyType[types.size()])));
           }
-        });
+        })
+        .named("tuple-type");
 
     final FunctionalParser<ParseResult, PyElementType> typeParameter =
       token(PARAMETER)
@@ -134,13 +140,15 @@ public class PyTypeParser {
           public ParseResult fun(Token<PyElementType> token) {
             return new ParseResult(new PyGenericType(token.getText().toString()), token.getRange());
           }
-        });
+        })
+        .named("type-parameter");
 
     final FunctionalParser<ParseResult, PyElementType> simpleExpr =
       simpleType
         .or(tupleType)
         .or(typeParameter)
-        .cached();
+        .cached()
+        .named("simple-expr");
 
     final FunctionalParser<ParseResult, PyElementType> paramExpr =
       simpleExpr.thenSkip(op("of")).then(simpleExpr)
@@ -178,7 +186,8 @@ public class PyTypeParser {
                   return EMPTY_RESULT;
                 }
               }))
-        .or(simpleExpr);
+        .or(simpleExpr)
+        .named("param-expr");
 
     final FunctionalParser<ParseResult, PyElementType> unionExpr =
       paramExpr.then(many(op("or").skipThen(paramExpr)))
@@ -199,11 +208,17 @@ public class PyTypeParser {
             }
             return result.withType(PyUnionType.union(types));
           }
-        });
+        })
+        .named("union-expr");
 
-    typeExpr.define(unionExpr);
+    typeExpr
+      .define(unionExpr)
+      .named("type-expr");
 
-    final FunctionalParser<ParseResult, PyElementType> typeFile = typeExpr.endOfInput();
+    final FunctionalParser<ParseResult, PyElementType> typeFile =
+      typeExpr
+        .endOfInput()
+        .named("type-file");
 
     try {
       return typeFile.parse(tokenize(type));
@@ -238,22 +253,28 @@ public class PyTypeParser {
           return new ParseResult(PyNoneType.INSTANCE, firstRange);
         }
         else if ("integer".equals(firstText) || ("long".equals(firstText) && LanguageLevel.forElement(myAnchor).isPy3K())) {
-          return new ParseResult(builtinCache.getIntType(), firstRange);
+          final PyClassType type = builtinCache.getIntType();
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("string".equals(firstText)) {
-          return new ParseResult(builtinCache.getStringType(LanguageLevel.forElement(myAnchor)), firstRange);
+          final PyType type = builtinCache.getStringType(LanguageLevel.forElement(myAnchor));
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("bytes".equals(firstText)) {
-          return new ParseResult(builtinCache.getBytesType(LanguageLevel.forElement(myAnchor)), firstRange);
+          final PyClassType type = builtinCache.getBytesType(LanguageLevel.forElement(myAnchor));
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("unicode".equals(firstText)) {
-          return new ParseResult(builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor)), firstRange);
+          final PyClassType type = builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor));
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("boolean".equals(firstText)) {
-          return new ParseResult(builtinCache.getBoolType(), firstRange);
+          final PyClassType type = builtinCache.getBoolType();
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("dictionary".equals(firstText)) {
-          return new ParseResult(builtinCache.getDictType(), firstRange);
+          final PyClassType type = builtinCache.getDictType();
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
 
         final PyType builtinType = builtinCache.getObjectType(firstText);
