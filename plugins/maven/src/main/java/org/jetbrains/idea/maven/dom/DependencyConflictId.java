@@ -49,8 +49,24 @@ public class DependencyConflictId {
     return new DependencyConflictId(groupId, artifactId, type, classifier);
   }
 
-  public boolean isValid() {
-    return StringUtil.isNotEmpty(groupId) && StringUtil.isNotEmpty(artifactId);
+  @NotNull
+  public String getGroupId() {
+    return groupId;
+  }
+
+  @NotNull
+  public String getArtifactId() {
+    return artifactId;
+  }
+
+  @NotNull
+  public String getType() {
+    return type;
+  }
+
+  @Nullable
+  public String getClassifier() {
+    return classifier;
   }
 
   @Override
