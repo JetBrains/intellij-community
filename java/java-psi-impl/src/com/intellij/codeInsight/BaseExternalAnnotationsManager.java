@@ -302,7 +302,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     Set<PsiFile> possibleAnnotationsXmls = new THashSet<PsiFile>();
     for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
-      final VirtualFile ext = root.findFileByRelativePath(packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
+      final VirtualFile ext = root.findFileByRelativePath(packageName.replace('.', '/') + "/" + ANNOTATIONS_XML);
       if (ext == null) continue;
       final PsiFile psiFile = myPsiManager.findFile(ext);
       if (psiFile == null) continue;

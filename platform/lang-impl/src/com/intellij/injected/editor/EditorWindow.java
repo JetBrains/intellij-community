@@ -527,6 +527,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.getContentSize();
   }
 
+  @NotNull
   @Override
   public JScrollPane getScrollPane() {
     return myDelegate.getScrollPane();

@@ -27,8 +27,6 @@ import javax.swing.*;
 import java.util.List;
 
 public interface ContentManager extends Disposable, BusyObject {
-
-
   boolean canCloseContents();
 
   @NotNull

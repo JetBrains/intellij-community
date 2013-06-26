@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -181,12 +182,21 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
   }
 
   public void syncPaths(@NotNull final LibraryData externalLibrary, @NotNull final Library ideLibrary, boolean synchronous) {
-    final Set<String> toRemove = ContainerUtilRt.newHashSet();
-    final Set<String> toAdd = ContainerUtilRt.newHashSet(externalLibrary.getPaths(LibraryPathType.BINARY));
-    for (VirtualFile ideFile : ideLibrary.getFiles(OrderRootType.CLASSES)) {
-      String idePath = ExternalSystemApiUtil.getLocalFileSystemPath(ideFile);
-      if (!toAdd.remove(idePath)) {
-        toRemove.add(idePath);
+    final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
+    final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
+    for (LibraryPathType pathType : LibraryPathType.values()) {
+      OrderRootType ideType = myLibraryPathTypeMapper.map(pathType);
+      HashSet<String> toAddPerType = ContainerUtilRt.newHashSet(externalLibrary.getPaths(pathType));
+      toAdd.put(ideType, toAddPerType);
+
+      HashSet<String> toRemovePerType = ContainerUtilRt.newHashSet();
+      toRemove.put(ideType, toRemovePerType);
+
+      for (VirtualFile ideFile : ideLibrary.getFiles(ideType)) {
+        String idePath = ExternalSystemApiUtil.getLocalFileSystemPath(ideFile);
+        if (!toAddPerType.remove(idePath)) {
+          toRemovePerType.add(ideFile.getUrl());
+        }
       }
     }
     if (toRemove.isEmpty() && toAdd.isEmpty()) {
@@ -197,12 +207,17 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
       public void run() {
         Library.ModifiableModel model = ideLibrary.getModifiableModel();
         try {
-          for (String path : toRemove) {
-            model.removeRoot(path, OrderRootType.CLASSES);
+          for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {
+            for (String path : entry.getValue()) {
+              model.removeRoot(path, entry.getKey());
+            }
           }
-          Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
-          roots.put(OrderRootType.CLASSES, ContainerUtil.map(toAdd, PATH_TO_FILE));
-          registerPaths(roots, model, externalLibrary.getName());
+
+          for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
+            Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
+            roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
+            registerPaths(roots, model, externalLibrary.getName());
+          }
         }
         finally {
           model.commit();

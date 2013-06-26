@@ -403,7 +403,8 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
 
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
+                                                @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
     for (RefElement entryPoint : entryPointsManager.getEntryPoints()) {

@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
@@ -44,18 +45,18 @@ public class Descriptor {
   private final ScopeToolState myState;
   private final InspectionProfileImpl myInspectionProfile;
 
-  public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileImpl inspectionProfile) {
+  public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileImpl inspectionProfile, @NotNull Project project) {
     myState = state;
     myInspectionProfile = inspectionProfile;
-    InspectionToolWrapper tool = (InspectionToolWrapper)state.getTool();
+    InspectionToolWrapper tool = state.getTool();
     myText = tool.getDisplayName();
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
     myKey = HighlightDisplayKey.find(tool.getShortName());
-    myLevel = inspectionProfile.getErrorLevel(myKey, ScopeToolStateUtil.getScope(state));
-    myEnabled = inspectionProfile.isToolEnabled(myKey, ScopeToolStateUtil.getScope(state));
+    myScope = state.getScope(project);
+    myLevel = inspectionProfile.getErrorLevel(myKey, myScope, project);
+    myEnabled = inspectionProfile.isToolEnabled(myKey, myScope, project);
     myToolWrapper = tool;
-    myScope = ScopeToolStateUtil.getScope(state);
   }
 
   public boolean equals(Object obj) {
@@ -99,14 +100,14 @@ public class Descriptor {
   }
 
   @NotNull
-  public InspectionToolWrapper getTool() {
+  public InspectionToolWrapper getToolWrapper() {
     return myToolWrapper;
   }
 
   @Nullable
   public String loadDescription() {
     if (myConfig == null) {
-      InspectionToolWrapper toolWrapper = getTool();
+      InspectionToolWrapper toolWrapper = getToolWrapper();
       myConfig = createConfigElement(toolWrapper);
     }
 
@@ -120,7 +121,7 @@ public class Descriptor {
   public static Element createConfigElement(InspectionToolWrapper toolWrapper) {
     Element element = new Element("options");
     try {
-      toolWrapper.writeSettings(element);
+      toolWrapper.getTool().writeSettings(element);
     }
     catch (WriteExternalException e) {
       LOG.error(e);

@@ -7,9 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
-import com.jediterm.emulator.TtyConnector;
 import com.jediterm.pty.PtyProcess;
 import com.jediterm.pty.PtyProcessTtyConnector;
+import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;

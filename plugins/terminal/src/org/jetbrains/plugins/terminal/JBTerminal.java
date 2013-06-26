@@ -8,11 +8,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.containers.HashMap;
-import com.jediterm.emulator.display.BackBuffer;
-import com.jediterm.emulator.display.LinesBuffer;
-import com.jediterm.emulator.display.StyleState;
-import com.jediterm.emulator.ui.SwingJediTerminal;
-import com.jediterm.emulator.ui.SwingTerminalPanel;
+import com.jediterm.terminal.display.BackBuffer;
+import com.jediterm.terminal.display.StyleState;
+import com.jediterm.terminal.ui.SwingJediTerminal;
+import com.jediterm.terminal.ui.SwingTerminalPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +26,8 @@ public class JBTerminal extends SwingJediTerminal {
   }
 
   @Override
-  protected SwingTerminalPanel createTerminalPanel(StyleState styleState, BackBuffer backBuffer, LinesBuffer scrollBuffer) {
-    return new JBTerminalPanel(backBuffer, scrollBuffer, styleState, getColorScheme());
+  protected SwingTerminalPanel createTerminalPanel(StyleState styleState, BackBuffer backBuffer) {
+    return new JBTerminalPanel(backBuffer, styleState, getColorScheme());
   }
 
   public EditorColorsScheme getColorScheme() {

@@ -141,20 +141,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   }
 
   @Override
-  public void commitOtherFilesAssociatedWithDocument(final Document document, final PsiFile psiFile) {
-    super.commitOtherFilesAssociatedWithDocument(document, psiFile);
-    final FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider != null && viewProvider.getAllFiles().size() > 1) {
-      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
-        @Override
-        public void run() {
-          doCommit(document, psiFile);
-        }
-      });
-    }
-  }
-
-  @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
     return viewProvider != null && PostprocessReformattingAspect.getInstance(myProject).isViewProviderLocked(viewProvider);

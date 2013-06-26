@@ -19,6 +19,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -38,9 +39,9 @@ import java.util.List;
  */
 public class DescriptorComposer extends HTMLComposerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorComposer");
-  private final DescriptorProviderInspection myTool;
+  private final InspectionToolPresentation myTool;
 
-  public DescriptorComposer(DescriptorProviderInspection tool) {
+  public DescriptorComposer(@NotNull InspectionToolPresentation tool) {
     myTool = tool;
   }
 
@@ -72,14 +73,13 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
   }
 
-  public static String[] quickFixTexts(RefEntity where, InspectionTool tool){
-    QuickFixAction[] quickFixes = tool.getQuickFixes(new RefEntity[] {where});
+  public static String[] quickFixTexts(RefEntity where, @NotNull InspectionToolPresentation toolPresentation){
+    QuickFixAction[] quickFixes = toolPresentation.getQuickFixes(new RefEntity[] {where});
     if (quickFixes == null) {
       return null;
     }
     List<String> texts = new ArrayList<String>();
-    for (int i = 0; i < quickFixes.length; i++) {
-      QuickFixAction quickFix = quickFixes[i];
+    for (QuickFixAction quickFix : quickFixes) {
       final String text = quickFix.getText(where);
       if (text == null) continue;
       texts.add(text);
@@ -143,7 +143,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
   protected void composeDescription(@NotNull CommonProblemDescriptor description, int i, @NotNull StringBuffer buf, @NotNull RefEntity refElement) {
     PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
-    StringBuffer anchor = new StringBuffer();
+    StringBuilder anchor = new StringBuilder();
     VirtualFile vFile = null;
 
     if (expression != null) {
@@ -156,7 +156,8 @@ public class DescriptorComposer extends HTMLComposerImpl {
         if (myExporter == null){
           //noinspection HardCodedStringLiteral
           anchor.append(new URL(vFile.getUrl() + "#descr:" + i));
-        } else {
+        }
+        else {
           anchor.append(myExporter.getURL(refElement));
         }
       }

@@ -22,7 +22,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -273,9 +272,9 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     Class rootType = fileElement.getRootElementClass();
     final InspectionProfile profile = getInspectionProfile(fileElement);
     final List<DomElementsInspection> inspections = new SmartList<DomElementsInspection>();
-    for (final InspectionToolWrapper toolWrapper : (InspectionToolWrapper[])profile.getInspectionTools(fileElement.getFile())) {
+    for (final InspectionToolWrapper toolWrapper : profile.getInspectionTools(fileElement.getFile())) {
       if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), fileElement.getFile())) {
-        ContainerUtil.addIfNotNull(getSuitableInspection(toolWrapper, rootType), inspections);
+        ContainerUtil.addIfNotNull(getSuitableInspection(toolWrapper.getTool(), rootType), inspections);
       }
     }
     return inspections;
@@ -287,10 +286,6 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   @Nullable
   private static DomElementsInspection getSuitableInspection(InspectionProfileEntry entry, Class rootType) {
-    if (entry instanceof LocalInspectionToolWrapper) {
-      return getSuitableInspection(((LocalInspectionToolWrapper)entry).getTool(), rootType);
-    }
-
     if (entry instanceof DomElementsInspection) {
       if (((DomElementsInspection)entry).getDomClasses().contains(rootType)) {
         return (DomElementsInspection) entry;

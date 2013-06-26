@@ -440,7 +440,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     final List<InspectionEP> eps = ContainerUtil.newArrayList();
     ContainerUtil.addAll(eps, Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION));
     ContainerUtil.addAll(eps, Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION));
-    ContainerUtil.addAll(eps, (InspectionEP[])Extensions.getExtensions("com.intellij.specialTool"));
 
     next:
     for (int i = 0; i < classes.length; i++) {
@@ -462,23 +461,25 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected void enableInspectionTool(@NotNull InspectionToolWrapper wrapper) {
-    enableInspectionTool(myAvailableInspectionTools, wrapper);
+  protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
+    enableInspectionTool(myAvailableInspectionTools, toolWrapper);
   }
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    assert !(tool instanceof InspectionToolWrapper) : tool;
-    enableInspectionTool(myAvailableInspectionTools, InspectionToolRegistrar.wrapTool(tool));
+    InspectionToolWrapper toolWrapper = InspectionToolRegistrar.wrapTool(tool);
+    enableInspectionTool(myAvailableInspectionTools, toolWrapper);
   }
 
-  private static void enableInspectionTool(@NotNull Map<String, InspectionToolWrapper> availableLocalTools, @NotNull InspectionToolWrapper wrapper) {
-    final String shortName = wrapper.getShortName();
+  private static void enableInspectionTool(@NotNull Map<String, InspectionToolWrapper> availableLocalTools,
+                                           @NotNull InspectionToolWrapper toolWrapper) {
+    final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
-      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), wrapper instanceof LocalInspectionToolWrapper
-                                                                        ? ((LocalInspectionToolWrapper)wrapper).getTool().getID()
-                                                                        : wrapper.getShortName());
+      String id = toolWrapper instanceof LocalInspectionToolWrapper
+                  ? ((LocalInspectionToolWrapper)toolWrapper).getTool().getID()
+                  : toolWrapper.getShortName();
+      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), id);
     }
-    availableLocalTools.put(shortName, wrapper);
+    availableLocalTools.put(shortName, toolWrapper);
   }
 
   @NotNull

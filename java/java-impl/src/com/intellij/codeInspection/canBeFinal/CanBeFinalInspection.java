@@ -177,7 +177,8 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
+                                                @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor problemsProcessor) {
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
       problemsProcessor.ignoreElement(entryPoint);

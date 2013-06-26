@@ -16,7 +16,10 @@
 
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.ide.*;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
@@ -35,6 +38,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -759,6 +764,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
     if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
+    }
+    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId) && myFileEditor instanceof TextEditor) {
+      return ((TextEditor)myFileEditor).getEditor();
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCutProvider();

@@ -25,6 +25,7 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class InspectionExtensionsFactory {
@@ -42,6 +43,6 @@ public abstract class InspectionExtensionsFactory {
   @Nullable
   public abstract String getSuppressedInspectionIdsIn(PsiElement element);
 
-  public abstract boolean isProjectConfiguredToRunInspections(Project project, boolean online);
+  public abstract boolean isProjectConfiguredToRunInspections(@NotNull Project project, boolean online);
 
 }

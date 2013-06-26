@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,13 +111,15 @@ public class DaemonCodeAnalyzerSettingsImpl extends DaemonCodeAnalyzerSettings i
     }
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  private void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    myManager.getConverter().storeEditorHighlightingProfile(element);
+    myManager.getConverter().storeEditorHighlightingProfile(element,
+                                                            new InspectionProfileImpl(
+                                                              InspectionProfileConvertor.OLD_HIGHTLIGHTING_SETTINGS_PROFILE));
     myManager.setRootProfile(element.getAttributeValue(PROFILE_ATT));
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  private void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     element.setAttribute(PROFILE_ATT, myManager.getRootProfile().getName());
   }

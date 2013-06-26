@@ -52,7 +52,7 @@ public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvert
     super.fillErrorLevels(profile);
 
     //javadoc attributes
-    final InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, null);
+    final InspectionToolWrapper toolWrapper = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, null);
     JavaDocLocalInspection inspection = (JavaDocLocalInspection)toolWrapper.getTool();
     inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }

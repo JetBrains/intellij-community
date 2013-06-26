@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,10 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -266,7 +264,17 @@ public class GenerateMembersUtil {
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
-      substituteThrows(factory, sourceMethod.getThrowsList(), resultMethod.getThrowsList(), collisionResolvedSubstitutor, sourceMethod);
+      final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes());
+      if (target instanceof PsiClass) {
+        final PsiClass[] supers = ((PsiClass)target).getSupers();
+        for (PsiClass aSuper : supers) {
+          final PsiMethod psiMethod = aSuper.findMethodBySignature(sourceMethod, true);
+          if (psiMethod != null && psiMethod != sourceMethod) {
+            ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY), psiMethod.getThrowsList().getReferencedTypes()));
+          }
+        }
+      }
+      substituteThrows(factory, resultMethod.getThrowsList(), collisionResolvedSubstitutor, sourceMethod, thrownTypes);
       return resultMethod;
     }
     catch (IncorrectOperationException e) {
@@ -400,11 +408,11 @@ public class GenerateMembersUtil {
   }
 
   private static void substituteThrows(@NotNull JVMElementFactory factory,
-                                       @NotNull PsiReferenceList sourceThrowsList,
                                        @NotNull PsiReferenceList targetThrowsList,
-                                       @NotNull PsiSubstitutor substitutor, 
-                                       @NotNull PsiMethod sourceMethod) {
-    for (PsiClassType thrownType : sourceThrowsList.getReferencedTypes()) {
+                                       @NotNull PsiSubstitutor substitutor,
+                                       @NotNull PsiMethod sourceMethod, 
+                                       List<PsiClassType> thrownTypes) {
+    for (PsiClassType thrownType : thrownTypes) {
       targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod)));
     }
   }

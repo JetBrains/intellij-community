@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Computable;
@@ -36,7 +35,7 @@ import javax.swing.tree.MutableTreeNode;
 public class RefElementNode extends InspectionTreeNode {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
-  protected final InspectionTool myTool;
+  protected final InspectionToolPresentation myToolPresentation;
   private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
     @Override
     public Icon compute() {
@@ -48,13 +47,13 @@ public class RefElementNode extends InspectionTreeNode {
     }
   });
 
-  public RefElementNode(@NotNull Object userObject, @NotNull InspectionTool tool) {
+  public RefElementNode(@NotNull Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
-    myTool = tool;
+    myToolPresentation = presentation;
   }
 
-  public RefElementNode(@NotNull RefElement element, @NotNull InspectionTool tool) {
-    this((Object)element, tool);
+  public RefElementNode(@NotNull RefElement element, @NotNull InspectionToolPresentation presentation) {
+    this((Object)element, presentation);
   }
 
   public boolean hasDescriptorsUnder() {
@@ -93,25 +92,25 @@ public class RefElementNode extends InspectionTreeNode {
 
   @Override
   public boolean isResolved() {
-    return myTool.isElementIgnored(getElement());
+    return myToolPresentation.isElementIgnored(getElement());
   }
 
 
   @Override
   public void ignoreElement() {
-    myTool.ignoreCurrentElement(getElement());
+    myToolPresentation.ignoreCurrentElement(getElement());
     super.ignoreElement();
   }
 
   @Override
   public void amnesty() {
-    myTool.amnesty(getElement());
+    myToolPresentation.amnesty(getElement());
     super.amnesty();
   }
 
   @Override
   public FileStatus getNodeStatus() {
-    return  myTool.getElementStatus(getElement());
+    return  myToolPresentation.getElementStatus(getElement());
   }
 
   @Override

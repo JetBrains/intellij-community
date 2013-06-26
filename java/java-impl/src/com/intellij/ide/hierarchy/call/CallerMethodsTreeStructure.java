@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -38,7 +39,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   /**
    * Should be called in read action
    */
-  public CallerMethodsTreeStructure(final Project project, final PsiMethod method, final String scopeType) {
+  public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
     super(project, new CallHierarchyNodeDescriptor(project, null, method, true, false));
     myScopeType = scopeType;
   }

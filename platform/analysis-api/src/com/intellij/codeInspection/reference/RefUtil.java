@@ -17,7 +17,11 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * Application component which provides utility methods for working with the reference
@@ -33,6 +37,15 @@ public class RefUtil {
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitUsage(element)) return true;
+    }
+    return false;
+  }
+
+  public static boolean contains(RefEntity element, @NotNull Collection<RefEntity> entities){
+    for (RefEntity refEntity : entities) {
+      if (Comparing.equal(refEntity, element)) {
+        return true;
+      }
     }
     return false;
   }

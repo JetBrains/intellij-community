@@ -92,7 +92,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
           continue;
         }
 
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)tools.get(fileNameWithoutExt).getTool();
+        InspectionToolWrapper toolWrapper = tools.get(fileNameWithoutExt).getTool();
 
         // Tool name and group
         w.append(getToolPresentableName(toolWrapper)).append("\n");

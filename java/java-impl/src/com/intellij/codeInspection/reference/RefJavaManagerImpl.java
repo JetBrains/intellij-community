@@ -110,7 +110,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     @Override
     protected Ref<UnusedDeclarationInspection> compute(PsiFile file, RefManagerImpl refManager) {
       Tools tools = ((GlobalInspectionContextImpl)refManager.getContext()).getTools().get(UnusedDeclarationInspection.SHORT_NAME);
-      InspectionToolWrapper toolWrapper = tools != null ? (InspectionToolWrapper)tools.getEnabledTool(file) : null;
+      InspectionToolWrapper toolWrapper = tools == null ? null : tools.getEnabledTool(file);
       InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
       return Ref.create(tool instanceof UnusedDeclarationInspection ? (UnusedDeclarationInspection)tool : null);
     }
@@ -283,8 +283,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return null;
   }
 
+  @NotNull
   @Override
-  public RefEntity getRefinedElement(final RefEntity ref) {
+  public RefEntity getRefinedElement(@NotNull final RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return ((RefImplicitConstructor)ref).getOwnerClass();
     }
@@ -312,7 +313,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void export(final RefEntity refEntity, final Element element) {
+  public void export(@NotNull final RefEntity refEntity, @NotNull final Element element) {
     if (refEntity instanceof RefElement) {
       final SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
       if (pointer != null) {

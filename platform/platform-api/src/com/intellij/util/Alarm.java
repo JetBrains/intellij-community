@@ -233,6 +233,12 @@ public class Alarm implements Disposable {
     }
   }
 
+  public boolean isEmpty() {
+    synchronized (LOCK) {
+      return myRequests.isEmpty();
+    }
+  }
+
   protected boolean isEdt() {
     return isEventDispatchThread();
   }

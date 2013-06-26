@@ -52,7 +52,7 @@ public abstract class InspectionRVContentProvider {
     UserObjectContainer<T> getOwner();
 
     @NotNull
-    RefElementNode createNode(@NotNull InspectionTool tool);
+    RefElementNode createNode(@NotNull InspectionToolPresentation presentation);
 
     T getUserObject();
 
@@ -64,29 +64,34 @@ public abstract class InspectionRVContentProvider {
     boolean supportStructure();
   }
 
-  public abstract boolean checkReportedProblems(@NotNull InspectionToolWrapper toolWrapper);
+  public abstract boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionToolWrapper toolWrapper);
 
   @Nullable
-  public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionTool tool, @NotNull InspectionTree tree);
+  public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
 
-  public void appendToolNodeContent(@NotNull InspectionNode toolNode,
+  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                    @NotNull InspectionNode toolNode,
                                     @NotNull InspectionTreeNode parentNode,
                                     final boolean showStructure) {
-    final InspectionTool tool = toolNode.getTool();
-    final Map<String, Set<RefEntity>> content = tool.getContent();
-    appendToolNodeContent(toolNode, parentNode, showStructure, content != null ? content : new HashMap<String, Set<RefEntity>>(),
-                          tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool).getProblemElements() : null, null);
+    InspectionToolWrapper wrapper = toolNode.getToolWrapper();
+    InspectionToolPresentation presentation = context.getPresentation(wrapper);
+    Map<String, Set<RefEntity>> content = presentation.getContent();
+    Map<RefEntity, CommonProblemDescriptor[]> problems = presentation.getProblemElements();
+    Map<String, Set<RefEntity>> contents = content == null ? new HashMap<String, Set<RefEntity>>() : content;
+    appendToolNodeContent(context, toolNode, parentNode, showStructure, contents, problems, null);
   }
 
-  public abstract void appendToolNodeContent(final InspectionNode toolNode,
-                                             final InspectionTreeNode parentNode,
+  public abstract void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                             @NotNull InspectionNode toolNode,
+                                             @NotNull InspectionTreeNode parentNode,
                                              final boolean showStructure,
-                                             final Map<String, Set<RefEntity>> contents,
-                                             final Map<RefEntity, CommonProblemDescriptor[]> problems,
+                                             @NotNull Map<String, Set<RefEntity>> contents,
+                                             @NotNull Map<RefEntity, CommonProblemDescriptor[]> problems,
                                              @Nullable final DefaultTreeModel model);
 
-  protected abstract void appendDescriptor(@NotNull InspectionTool tool,
+  protected abstract void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
+                                           @NotNull InspectionToolWrapper toolWrapper,
                                            @NotNull UserObjectContainer container,
                                            @NotNull InspectionPackageNode pNode,
                                            final boolean canPackageRepeat);
@@ -95,10 +100,11 @@ public abstract class InspectionRVContentProvider {
     return true;
   }
 
-  protected <T> List<InspectionTreeNode> buildTree(final Map<String, Set<T>> packageContents,
+  protected <T> List<InspectionTreeNode> buildTree(@NotNull GlobalInspectionContextImpl context,
+                                                   @NotNull Map<String, Set<T>> packageContents,
                                                    final boolean canPackageRepeat,
-                                                   final InspectionTool tool,
-                                                   final Function<T, UserObjectContainer<T>> computeContainer,
+                                                   @NotNull InspectionToolWrapper toolWrapper,
+                                                   @NotNull Function<T, UserObjectContainer<T>> computeContainer,
                                                    final boolean showStructure) {
     final List<InspectionTreeNode> content = new ArrayList<InspectionTreeNode>();
     final Map<String, Map<String, InspectionPackageNode>> module2PackageMap = new HashMap<String, Map<String, InspectionPackageNode>>();
@@ -119,7 +125,7 @@ public abstract class InspectionRVContentProvider {
           pNode = new InspectionPackageNode(packageName);
           packageNodes.put(packageName, pNode);
         }
-        appendDescriptor(tool, container, pNode, canPackageRepeat);
+        appendDescriptor(context, toolWrapper, container, pNode, canPackageRepeat);
       }
     }
     if (supportStructure) {
@@ -213,14 +219,14 @@ public abstract class InspectionRVContentProvider {
 
   @NotNull
   protected static RefElementNode addNodeToParent(@NotNull UserObjectContainer container,
-                                                  @NotNull InspectionTool tool,
+                                                  @NotNull InspectionToolPresentation presentation,
                                                   final InspectionTreeNode parentNode) {
-    final RefElementNode nodeToBeAdded = container.createNode(tool);
+    final RefElementNode nodeToBeAdded = container.createNode(presentation);
     final Ref<Boolean> firstLevel = new Ref<Boolean>(true);
     RefElementNode prevNode = null;
     final Ref<RefElementNode> result = new Ref<RefElementNode>();
     while (true) {
-      final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(tool);
+      final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(presentation);
       final UserObjectContainer finalContainer = container;
       final RefElementNode finalPrevNode = prevNode;
       TreeUtil.traverseDepth(parentNode, new TreeUtil.Traverse() {
@@ -280,7 +286,7 @@ public abstract class InspectionRVContentProvider {
           }
         }
         else if (current instanceof InspectionNode) {
-          if (((InspectionNode)current).getTool().getShortName().compareTo(((InspectionNode)child).getTool().getShortName()) == 0) {
+          if (((InspectionNode)current).getToolWrapper().getShortName().compareTo(((InspectionNode)child).getToolWrapper().getShortName()) == 0) {
             processDepth(model, child, current);
             return;
           }

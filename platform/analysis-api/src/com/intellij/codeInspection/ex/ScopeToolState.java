@@ -21,7 +21,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
@@ -39,21 +38,21 @@ public class ScopeToolState {
   private NamedScope myScope;
   @NotNull
   private final String myScopeName;
-  private /*InspectionToolWrapper*/InspectionProfileEntry myTool;
+  private InspectionToolWrapper myToolWrapper;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
 
   private JComponent myAdditionalConfigPanel;
   private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
 
-  public ScopeToolState(@NotNull NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, @NotNull HighlightDisplayLevel level) {
-    this(scope.getName(), tool, enabled, level);
+  public ScopeToolState(@NotNull NamedScope scope, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level) {
+    this(scope.getName(), toolWrapper, enabled, level);
     myScope = scope;
   }
 
-  public ScopeToolState(@NotNull String scopeName, @NotNull InspectionProfileEntry tool, boolean enabled, @NotNull HighlightDisplayLevel level) {
+  public ScopeToolState(@NotNull String scopeName, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level) {
     myScopeName = scopeName;
-    myTool = tool;
+    myToolWrapper = toolWrapper;
     myEnabled = enabled;
     myLevel = level;
   }
@@ -73,10 +72,9 @@ public class ScopeToolState {
     return myScopeName;
   }
 
-  // InspectionToolWrapper
   @NotNull
-  public InspectionProfileEntry getTool() {
-    return myTool;
+  public InspectionToolWrapper getTool() {
+    return myToolWrapper;
   }
 
   public boolean isEnabled() {
@@ -96,40 +94,37 @@ public class ScopeToolState {
     myLevel = level;
   }
 
-  @Nullable
+  @NotNull
   public JComponent getAdditionalConfigPanel() {
-    if (myAdditionalConfigPanel == null){
-      myAdditionalConfigPanel = myTool.createOptionsPanel();
+    if (myAdditionalConfigPanel == null) {
+      myAdditionalConfigPanel = myToolWrapper.getTool().createOptionsPanel();
       if (myAdditionalConfigPanel == null){
         myAdditionalConfigPanel = new JPanel();
       }
-      return myAdditionalConfigPanel;
     }
     return myAdditionalConfigPanel;
   }
-
-
 
   public void resetConfigPanel(){
     myAdditionalConfigPanel = null;
   }
 
-  public void setTool(@NotNull InspectionProfileEntry tool) {
-    myTool = tool;
+  public void setTool(@NotNull InspectionToolWrapper tool) {
+    myToolWrapper = tool;
   }
 
-  public boolean equalTo(ScopeToolState state2) {
+  public boolean equalTo(@NotNull ScopeToolState state2) {
     if (isEnabled() != state2.isEnabled()) return false;
     if (getLevel() != state2.getLevel()) return false;
-    InspectionProfileEntry tool = getTool();
-    InspectionProfileEntry tool2 = state2.getTool();
-    if (!tool.isInitialized() && !tool2.isInitialized()) return true;
+    InspectionToolWrapper toolWrapper = getTool();
+    InspectionToolWrapper toolWrapper2 = state2.getTool();
+    if (!toolWrapper.isInitialized() && !toolWrapper2.isInitialized()) return true;
     try {
       @NonNls String tempRoot = "root";
       Element oldToolSettings = new Element(tempRoot);
-      tool.writeSettings(oldToolSettings);
+      toolWrapper.getTool().writeSettings(oldToolSettings);
       Element newToolSettings = new Element(tempRoot);
-      tool2.writeSettings(newToolSettings);
+      toolWrapper2.getTool().writeSettings(newToolSettings);
       return JDOMUtil.areElementsEqual(oldToolSettings, newToolSettings);
     }
     catch (WriteExternalException e) {

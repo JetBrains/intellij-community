@@ -19,7 +19,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -519,7 +518,6 @@ public class DaemonListeners implements Disposable {
 
     @Override
     public void profilesShutdown() {
-      HighlightingSettingsPerFile.getInstance(myProject).cleanProfileSettings();
     }
   }
 

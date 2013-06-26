@@ -181,6 +181,26 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return true;
   }
 
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child.getPsi() instanceof PsiResourceList && getCatchBlocks().length == 0 && getFinallyBlock() == null) {
+      final PsiCodeBlock tryBlock = getTryBlock();
+      if (tryBlock != null) {
+        final PsiCodeBlock block = (PsiCodeBlock)replace(tryBlock);
+        final PsiJavaToken lBrace = block.getLBrace();
+        final PsiJavaToken rBrace = block.getRBrace();
+        if (lBrace != null) {
+          lBrace.delete();
+        }
+        if (rBrace != null) {
+          rBrace.delete();
+        }
+        return;
+      }
+    }
+    super.deleteChildInternal(child);
+  }
+
   public String toString() {
     return "PsiTryStatement";
   }

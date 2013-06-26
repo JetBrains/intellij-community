@@ -20,9 +20,11 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,29 +35,35 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
 
   private String myStructureViewPlace;
 
-  public HtmlStructureViewTreeModel(final XmlFile file) {
-    super(file);
+  public HtmlStructureViewTreeModel(final XmlFile file, @Nullable Editor editor) {
+    super(file, editor);
+
     myNodeProviders = Arrays.<NodeProvider>asList(new Html5SectionsNodeProvider());
   }
 
+  @Override
   public void setPlace(final String place) {
     myStructureViewPlace = place;
   }
 
+  @Override
   public String getPlace() {
     return myStructureViewPlace;
   }
 
+  @Override
   @NotNull
   public Sorter[] getSorters() {
     return Sorter.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public Collection<NodeProvider> getNodeProviders() {
     return myNodeProviders;
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
     return new HtmlFileTreeElement(ViewStructureAction.isInStructureViewPopup(this), (XmlFile)getPsiFile());

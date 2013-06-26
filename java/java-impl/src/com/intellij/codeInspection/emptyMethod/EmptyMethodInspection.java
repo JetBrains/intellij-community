@@ -202,7 +202,8 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext context,
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
+                                                @NotNull final GlobalJavaInspectionContext context,
                                                 @NotNull final ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {

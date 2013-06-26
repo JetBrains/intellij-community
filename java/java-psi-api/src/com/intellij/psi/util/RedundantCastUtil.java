@@ -251,8 +251,8 @@ public class RedundantCastUtil {
         final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
         if (!newResult.isValidResult()) return;
         final PsiMethod newTargetMethod = (PsiMethod)newResult.getElement();
-        final PsiType newReturnType = newResult.getSubstitutor().substitute(newTargetMethod.getReturnType());
-        final PsiType oldReturnType = resolveResult.getSubstitutor().substitute(targetMethod.getReturnType());
+        final PsiType newReturnType = newCall.getType();
+        final PsiType oldReturnType = methodCall.getType();
         if (Comparing.equal(newReturnType, oldReturnType)) {
           if (newTargetMethod.equals(targetMethod) ||
               (newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&

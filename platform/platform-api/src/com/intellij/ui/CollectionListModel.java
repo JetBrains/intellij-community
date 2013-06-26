@@ -29,7 +29,7 @@ import java.util.*;
 public class CollectionListModel<T> extends AbstractListModel implements EditableModel {
   private final List<T> myItems;
 
-  public CollectionListModel(@NotNull final List<? extends T> items) {
+  public CollectionListModel(@NotNull final Collection<? extends T> items) {
     myItems = new ArrayList<T>(items);
   }
 

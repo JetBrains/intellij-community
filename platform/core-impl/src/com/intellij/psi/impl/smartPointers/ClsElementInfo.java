@@ -50,11 +50,6 @@ public class ClsElementInfo implements SmartPointerElementInfo {
   public void unfastenBelt(int offset) {
   }
 
-  // commit
-  @Override
-  public void documentAndPsiInSync() {
-  }
-
   @Override
   public PsiElement restoreElement() {
     return myStubIndexReference.retrieve();

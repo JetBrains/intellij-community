@@ -874,6 +874,7 @@ public class HighlightMethodUtil {
     if (hasNoBody) {
       if (isExtension) {
         description = JavaErrorMessages.message("extension.method.should.have.a.body");
+        additionalFixes.add(new AddMethodBodyFix(method));
       }
       else if (isInterface && isStatic) {
         description = "Static methods in interfaces should have a body";

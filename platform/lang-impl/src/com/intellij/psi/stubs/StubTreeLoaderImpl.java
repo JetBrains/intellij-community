@@ -150,7 +150,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   public long getStubTreeTimestamp(VirtualFile vFile) {
-    return IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID);
+    return IndexingStamp.getIndexStamp(vFile, IndexInfrastructure.getStubId(StubUpdatingIndex.INDEX_ID, vFile.getFileType()));
   }
 
   @Override

@@ -1518,8 +1518,12 @@ public abstract class DialogWrapper {
           menuSelectionManager.clearSelectedPath();
         }
         else {
+          if (ApplicationManager.getApplication() == null) {
+            doCancelAction(e);
+            return;
+          }
           final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
-          if (ApplicationManager.getApplication() == null || popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
+          if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
             doCancelAction(e);
           }
         }

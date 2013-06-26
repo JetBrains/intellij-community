@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   protected HierarchyNodeDescriptor myBaseDescriptor;
   private HierarchyNodeDescriptor myRoot;
+  @NotNull
   protected final Project myProject;
 
   protected HierarchyTreeStructure(@NotNull Project project, HierarchyNodeDescriptor baseDescriptor) {

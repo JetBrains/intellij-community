@@ -27,6 +27,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -40,6 +41,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.Profile;
@@ -88,7 +90,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       @Override
       public InspectionProfileImpl readScheme(final Document document) {
         InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
-        profile.load(document.getRootElement());
+        load(profile, document.getRootElement());
         return profile;
       }
 
@@ -126,6 +128,21 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     };
 
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
+  }
+
+  private static void load(final InspectionProfileImpl profile, @NotNull Element element) {
+    try {
+      profile.readExternal(element);
+    }
+    catch (Exception e) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
+                                   InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
+        }
+      }, ModalityState.NON_MODAL);
+    }
   }
 
   @NotNull
@@ -215,7 +232,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       if (profileElement != null) {
         rootElement = profileElement;
       }
-      profile.load(rootElement);
+      load(profile, rootElement);
       return profile;
     }
     return getProfile(path, false);

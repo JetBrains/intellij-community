@@ -99,8 +99,8 @@ import java.util.EventObject;
 import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
-
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
+  private final EditorColorsManager myEditorColorsManager;
 
   private       HighlightersSet myHighlighter;
   @JdkConstants.InputEventMask private int             myStoredModifiers = 0;
@@ -174,7 +174,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionAdapter() {
     @Override
     public void mouseMoved(final EditorMouseEvent e) {
-      if (e.isConsumed() || !myProject.isInitialized()) {
+      if (e.isConsumed() || !myProject.isInitialized() || myProject.isDisposed()) {
         return;
       }
       MouseEvent mouseEvent = e.getMouseEvent();
@@ -188,12 +188,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       Editor editor = e.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+      PsiFile psiFile = documentManager.getPsiFile(editor.getDocument());
       Point point = new Point(mouseEvent.getPoint());
-      if (PsiDocumentManager.getInstance(myProject).isCommitted(editor.getDocument())) {
+      if (documentManager.isCommitted(editor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
-        editor = InjectedLanguageUtil
-          .getEditorForInjectedLanguageNoCommit(editor, psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
+        int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
+        editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile, offset);
       }
 
       LogicalPosition pos = editor.xyToLogicalPosition(point);
@@ -221,11 +222,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   @NotNull private final Alarm myDocAlarm;
 
-  public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
-                          FileEditorManager fileEditorManager, @NotNull DocumentationManager documentationManager,
+  public CtrlMouseHandler(final Project project,
+                          StartupManager startupManager,
+                          EditorColorsManager colorsManager,
+                          FileEditorManager fileEditorManager,
+                          @NotNull DocumentationManager documentationManager,
                           @NotNull final EditorFactory editorFactory)
   {
     super(project);
+    myEditorColorsManager = colorsManager;
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {
@@ -265,7 +270,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       return null;
     }
     JComponent hintComponent = hint.getComponent();
-    if (hintComponent == null || !hintComponent.isShowing()) {
+    if (!hintComponent.isShowing()) {
       return null;
     }
     return new Rectangle(hintComponent.getLocationOnScreen(), hintComponent.getSize());
@@ -847,7 +852,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       Consumer<String> newTextConsumer = newTextConsumerRef.get();
       QuickDocInfoPane quickDocPane = null;
       if (docInfo.documentationAnchor != null) {
-        quickDocPane = new QuickDocInfoPane(docInfo.documentationAnchor, info.myElementAtPointer, label, docInfo.text);
+        quickDocPane = new QuickDocInfoPane(docInfo.documentationAnchor, info.myElementAtPointer, label);
         quickDocPaneRef.set(quickDocPane);
       }
 
@@ -887,7 +892,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
+    TextAttributes attributes = myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
     for (TextRange range : info.getRanges()) {
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                                                        HighlighterLayer.SELECTION + 1,
@@ -958,9 +963,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     QuickDocInfoPane(@NotNull PsiElement documentationAnchor,
                      @NotNull PsiElement elementUnderMouse,
-                     @NotNull JComponent baseDocControl,
-                     @NotNull String text)
-    {
+                     @NotNull JComponent baseDocControl) {
       myBaseDocControl = baseDocControl;
 
       PresentationFactory presentationFactory = new PresentationFactory();

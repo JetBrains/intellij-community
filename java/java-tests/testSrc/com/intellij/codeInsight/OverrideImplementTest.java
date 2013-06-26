@@ -71,6 +71,10 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
   public void testOverrideExtensionMethods() { doTest8(false, false); }
   public void testDoNotImplementExtensionMethods() { doTest8(false, true); }
 
+
+  public void testOverrideInInterface() { doTest8(false, false); }
+  public void testMultipleInheritedThrows() {doTest8(false, false);}
+
   public void testLongFinalParameterList() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     try {

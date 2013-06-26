@@ -659,7 +659,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType type = cd.getLubType();
       if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
         addConditionalRuntimeThrow(cd, true);
-        break;
       }
     }
   }

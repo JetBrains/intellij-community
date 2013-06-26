@@ -210,7 +210,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     List<UsageInfo> usages = findUsages(findModel);
     assertEquals(2, usages.size());
-    if (!(usages.get(0).getElement().getContainingFile() instanceof PsiJavaFile)) {
+    if (!(usages.get(0).getFile() instanceof PsiJavaFile)) {
       Collections.swap(usages, 0, 1);
     }
     PsiElement element = usages.get(0).getElement();

@@ -462,7 +462,7 @@
 
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
 
-    <specialTool shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
+    <globalInspection shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"/>
     <globalInspection shortName="UnusedLibrary" bundle="messages.InspectionsBundle" key="unused.library.display.name"

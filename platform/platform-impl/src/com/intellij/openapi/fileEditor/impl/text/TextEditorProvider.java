@@ -202,9 +202,10 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
     if (editor instanceof EditorEx) {
       state.VERTICAL_SCROLL_OFFSET = editor.getScrollingModel().getVerticalScrollOffset();
-      state.MAX_VERTICAL_SCROLL_OFFSET = ((EditorEx)editor).getScrollPane().getVerticalScrollBar().getMaximum();
+      JScrollBar scrollBar = ((EditorEx)editor).getScrollPane().getVerticalScrollBar();
+      state.MAX_VERTICAL_SCROLL_OFFSET = scrollBar == null ? 0 : scrollBar.getMaximum();
     }
-    
+
     return state;
   }
 
@@ -216,6 +217,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     boolean preciselyScrollVertically =
       state.VERTICAL_SCROLL_OFFSET > 0
       && editorEx != null
+      && editorEx.getScrollPane().getVerticalScrollBar() != null
       && editorEx.getScrollPane().getVerticalScrollBar().getMaximum() == state.MAX_VERTICAL_SCROLL_OFFSET;
     if (preciselyScrollVertically) {
       editor.getScrollingModel().scrollVertically(state.VERTICAL_SCROLL_OFFSET);

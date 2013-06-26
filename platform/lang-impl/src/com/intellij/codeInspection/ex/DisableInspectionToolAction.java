@@ -63,7 +63,7 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    InspectionToolWrapper toolWrapper = (InspectionToolWrapper)inspectionProfile.getInspectionTool(myToolId);
+    InspectionToolWrapper toolWrapper = inspectionProfile.getInspectionTool(myToolId, project);
     return toolWrapper == null || toolWrapper.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
   }
 

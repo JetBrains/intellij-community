@@ -26,10 +26,11 @@ import java.util.Set;
  */
 public class ExternalToolWindowManager {
 
+  @SuppressWarnings("unchecked")
   public static void handle(@NotNull final Project project) {
     for (final ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
       final AbstractExternalSystemSettings settings = manager.getSettingsProvider().fun(project);
-      project.getMessageBus().connect(project).subscribe(settings.getChangesTopic(), new ExternalSystemSettingsListenerAdapter() {
+      settings.subscribe(new ExternalSystemSettingsListenerAdapter() {
         @Override
         public void onProjectsLinked(@NotNull Collection linked) {
           if (settings.getLinkedProjectsSettings().size() != 1) {

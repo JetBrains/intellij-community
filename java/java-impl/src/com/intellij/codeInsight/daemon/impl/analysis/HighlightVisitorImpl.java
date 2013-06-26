@@ -130,12 +130,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         Project project = file.getProject();
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
         FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
-        RefCountHolder refCountHolder = RefCountHolder.startUsing(file);
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator == null) throw new IllegalStateException("Must be run under progress");
+        RefCountHolder refCountHolder = RefCountHolder.startUsing(file, indicator);
         myRefCountHolder = refCountHolder;
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        success = indicator != null && refCountHolder.analyze(file, dirtyScope, action, indicator);
+        success = refCountHolder.analyze(file, dirtyScope, action, indicator);
       }
       else {
         myRefCountHolder = null;

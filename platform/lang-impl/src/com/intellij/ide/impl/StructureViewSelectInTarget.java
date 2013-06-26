@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,18 @@ import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 
 public class StructureViewSelectInTarget implements SelectInTarget {
+  public static final Key<StructureViewWrapper> CUSTOM_STRUCTURE_VIEW_KEY = Key.create("customStructureView");
+
   private final Project myProject;
 
   public StructureViewSelectInTarget(Project project) {
     myProject = project;
   }
-
 
   public String toString() {
     return IdeBundle.message("select.in.file.structure");
@@ -48,15 +50,20 @@ public class StructureViewSelectInTarget implements SelectInTarget {
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final FileEditor fileEditor = context.getFileEditorProvider().openFileEditor();
 
-    ToolWindowManager windowManager=ToolWindowManager.getInstance(context.getProject());
+    StructureViewWrapper customStructureView = CUSTOM_STRUCTURE_VIEW_KEY.get(context.getVirtualFile());
+    if (customStructureView != null) {
+      customStructureView.selectCurrentElement(fileEditor, context.getVirtualFile(), requestFocus);
+      return;
+    }
+
+    ToolWindowManager windowManager = ToolWindowManager.getInstance(context.getProject());
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
         StructureViewFactoryEx.getInstanceEx(myProject).runWhenInitialized(new Runnable() {
           @Override
           public void run() {
-            final StructureViewWrapper structureView = getStructureViewWrapper();
-            structureView.selectCurrentElement(fileEditor, context.getVirtualFile(), requestFocus);
+            getStructureViewWrapper().selectCurrentElement(fileEditor, context.getVirtualFile(), requestFocus);
           }
         });
       }
@@ -67,7 +74,6 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     else {
       runnable.run();
     }
-
   }
 
   private StructureViewWrapper getStructureViewWrapper() {
@@ -88,5 +94,4 @@ public class StructureViewSelectInTarget implements SelectInTarget {
   public float getWeight() {
     return StandardTargetWeights.STRUCTURE_WEIGHT;
   }
-
 }

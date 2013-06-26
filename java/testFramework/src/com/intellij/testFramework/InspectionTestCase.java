@@ -115,7 +115,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
   protected void runTool(final String testDir,
                          final String jdkName,
                          boolean runDeadCodeFirst,
-                         final InspectionToolWrapper toolWrapper,
+                         @NotNull InspectionToolWrapper toolWrapper,
                          @NotNull InspectionToolWrapper... additional) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -132,7 +132,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     AnalysisScope scope = createAnalysisScope(sourceDir[0].getParent());
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    InspectionToolWrapper[] toolWrappers = runDeadCodeFirst ? new InspectionToolWrapper []{new CommonInspectionToolWrapper(new UnusedDeclarationInspection()), toolWrapper} : new InspectionToolWrapper []{toolWrapper};
+    InspectionToolWrapper[] toolWrappers = runDeadCodeFirst ? new InspectionToolWrapper []{new GlobalInspectionToolWrapper(new UnusedDeclarationInspection()), toolWrapper} : new InspectionToolWrapper []{toolWrapper};
     toolWrappers = ArrayUtil.mergeArrays(toolWrappers, additional);
     final GlobalInspectionContextImpl globalContext =
       CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrappers);
@@ -140,6 +140,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
   }
 
+  @NotNull
   protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     return new AnalysisScope(psiManager.findDirectory(sourceDir));

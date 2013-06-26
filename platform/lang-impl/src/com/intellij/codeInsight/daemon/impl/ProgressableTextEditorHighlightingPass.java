@@ -110,7 +110,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private void repaintTrafficIcon() {
     if (ApplicationManager.getApplication().isCommandLine()) return;
 
-    if (repaintIconAlarm.getActiveRequestCount() == 0 || getProgressCount() >= getProgressLimit()) {
+    if (repaintIconAlarm.isEmpty() || getProgressCount() >= getProgressLimit()) {
       repaintIconAlarm.addRequest(new Runnable() {
         @Override
         public void run() {

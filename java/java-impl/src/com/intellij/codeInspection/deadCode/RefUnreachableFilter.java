@@ -24,17 +24,19 @@
  */
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
 import org.jetbrains.annotations.NotNull;
 
 public class RefUnreachableFilter extends RefFilter {
   @NotNull
-  protected InspectionTool myTool;
+  protected UnusedDeclarationInspection myTool;
+  @NotNull protected final GlobalInspectionContextImpl myContext;
 
-  public RefUnreachableFilter(@NotNull InspectionTool tool) {
+  public RefUnreachableFilter(@NotNull UnusedDeclarationInspection tool, @NotNull GlobalInspectionContextImpl context) {
     myTool = tool;
+    myContext = context;
   }
 
   @Override
@@ -42,7 +44,7 @@ public class RefUnreachableFilter extends RefFilter {
     if (refElement instanceof RefParameter) return 0;
     if (refElement.isSyntheticJSP()) return 0;
     if (!(refElement instanceof RefMethod || refElement instanceof RefClass || refElement instanceof RefField)) return 0;
-    if (!myTool.getContext().isToCheckMember(refElement, myTool)) return 0;
+    if (!myContext.isToCheckMember(refElement, myTool)) return 0;
     return ((RefElementImpl)refElement).isSuspicious() ? 1 : 0;
   }
 }

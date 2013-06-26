@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -49,7 +49,7 @@ public abstract class XDebuggerManager {
   public abstract XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole);
 
   @NotNull
-  public abstract <T extends XDebugProcess> Collection<? extends T> getDebugProcesses(Class<T> processClass);
+  public abstract <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass);
 
   @Nullable
   public abstract XDebugSession getCurrentSession();

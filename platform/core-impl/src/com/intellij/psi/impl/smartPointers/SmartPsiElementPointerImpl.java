@@ -53,25 +53,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     cacheElement(element);
     myElementClass = elementClass;
     myElementInfo = elementInfo;
-    // Assert document committed.
-    //todo
-    //if (containingFile != null) {
-    //  final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    //  if (psiDocumentManager instanceof PsiDocumentManagerImpl) {
-    //    Document doc = psiDocumentManager.getCachedDocument(containingFile);
-    //    if (doc != null) {
-    //      //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
-    //      if (!(element instanceof PsiFile)) {
-    //        LOG.assertTrue(!psiDocumentManager.isUncommited(doc) || ((PsiDocumentManagerImpl)psiDocumentManager).isCommittingDocument(doc));
-    //      }
-    //    }
-    //  }
-    //}
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof SmartPsiElementPointer)) return false;
-    return pointsToTheSameElementAs(this, (SmartPsiElementPointer)obj);
+    return obj instanceof SmartPsiElementPointer && pointsToTheSameElementAs(this, (SmartPsiElementPointer)obj);
   }
 
   public int hashCode() {
@@ -188,11 +173,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       return new MultiRootSelfElementInfo(project, proper, element.getClass(), containingFile, containingFile.getLanguage());
     }
     return new SelfElementInfo(project, proper, element.getClass(), containingFile, containingFile.getLanguage());
-  }
-
-  @Override
-  public void documentAndPsiInSync() {
-    myElementInfo.documentAndPsiInSync();
   }
 
   @Override

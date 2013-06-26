@@ -41,13 +41,25 @@ public final class Urls {
   }
 
   @Nullable
-  private static Url parseUrl(String url, boolean urlAsRaw) {
-    Matcher matcher = URI_PATTERN.matcher(url);
+  private static Url parseUrl(@NotNull String url, boolean urlAsRaw) {
+    String urlToParse;
+    if (url.startsWith("jar:file://")) {
+      urlToParse = url.substring("jar:".length());
+    }
+    else {
+      urlToParse = url;
+    }
+
+    Matcher matcher = URI_PATTERN.matcher(urlToParse);
     if (!matcher.matches()) {
       LOG.warn("Cannot parse url " + url);
       return null;
     }
     String scheme = matcher.group(1);
+    if (urlToParse != url) {
+      scheme = "jar:" + scheme;
+    }
+
     String authority = StringUtil.nullize(matcher.group(2));
 
     String path = StringUtil.nullize(matcher.group(3));

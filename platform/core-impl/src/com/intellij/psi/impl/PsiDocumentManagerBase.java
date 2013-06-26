@@ -262,7 +262,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public void commitDocument(@NotNull final Document doc) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (!isCommitted(document)) {
-      doCommit(document, null);
+      doCommit(document);
     }
   }
 
@@ -345,17 +345,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  protected void doCommit(@NotNull final Document document, final PsiFile excludeFile) {
+  private void doCommit(@NotNull final Document document) {
     assert !myIsCommitInProgress : "Do not call commitDocument() from inside PSI change listener";
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
-        if (getSynchronizer().isDocumentAffectedByTransactions(document) && excludeFile == null) return;
+        if (getSynchronizer().isDocumentAffectedByTransactions(document)) return;
 
         myIsCommitInProgress = true;
         try {
-          myDocumentCommitProcessor.commitSynchronously(document, myProject, excludeFile);
+          myDocumentCommitProcessor.commitSynchronously(document, myProject);
         }
         finally {
           myIsCommitInProgress = false;
@@ -363,9 +363,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         assert !myUncommittedDocuments.contains(document) : "Document :" + document;
       }
     });
-  }
-
-  public void commitOtherFilesAssociatedWithDocument(final Document document, final PsiFile psiFile) {
   }
 
   @Override

@@ -25,7 +25,7 @@
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -37,12 +37,11 @@ import java.util.List;
 public class HTMLExportFrameMaker {
   private final String myRootFolder;
   private final Project myProject;
-  private final List<InspectionTool> myInspectionTools;
+  private final List<InspectionToolWrapper> myInspectionToolWrappers = new ArrayList<InspectionToolWrapper>();
 
   public HTMLExportFrameMaker(String rootFolder, Project project) {
     myRootFolder = rootFolder;
     myProject = project;
-    myInspectionTools = new ArrayList<InspectionTool>();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -56,19 +55,19 @@ public class HTMLExportFrameMaker {
   public void done() {
     StringBuffer buf = new StringBuffer();
 
-    for (InspectionTool tool : myInspectionTools) {
+    for (InspectionToolWrapper toolWrapper : myInspectionToolWrappers) {
       buf.append("<A HREF=\"");
-      buf.append(tool.getFolderName());
+      buf.append(toolWrapper.getFolderName());
       buf.append("-index.html\">");
-      buf.append(tool.getDisplayName());
+      buf.append(toolWrapper.getDisplayName());
       buf.append("</A><BR>");
     }
 
     HTMLExportUtil.writeFile(myRootFolder, "index.html", buf, myProject);
   }
 
-  public void startInspection(@NotNull InspectionTool tool) {
-    myInspectionTools.add(tool);
+  public void startInspection(@NotNull InspectionToolWrapper toolWrapper) {
+    myInspectionToolWrappers.add(toolWrapper);
     @NonNls StringBuffer buf = new StringBuffer();
     buf.append("<HTML><HEAD><TITLE>");
     buf.append(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -76,14 +75,14 @@ public class HTMLExportFrameMaker {
     buf.append("</TITLE></HEAD>");
     buf.append("<FRAMESET cols=\"30%,70%\"><FRAMESET rows=\"30%,70%\">");
     buf.append("<FRAME src=\"");
-    buf.append(tool.getFolderName());
+    buf.append(toolWrapper.getFolderName());
     buf.append("/index.html\" name=\"inspectionFrame\">");
     buf.append("<FRAME src=\"empty.html\" name=\"packageFrame\">");
     buf.append("</FRAMESET>");
     buf.append("<FRAME src=\"empty.html\" name=\"elementFrame\">");
     buf.append("</FRAMESET></BODY></HTML");
 
-    HTMLExportUtil.writeFile(myRootFolder, tool.getFolderName() + "-index.html", buf, myProject);
+    HTMLExportUtil.writeFile(myRootFolder, toolWrapper.getFolderName() + "-index.html", buf, myProject);
   }
 
   public String getRootFolder() {

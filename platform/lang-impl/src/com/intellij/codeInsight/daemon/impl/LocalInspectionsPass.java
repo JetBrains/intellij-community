@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -159,11 +160,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-        LocalInspectionToolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), toolWrapper, myIgnoreSuppressed,
-                                                         toolWrapper.getContext(),
-                                                         toolWrapper.getTool());
+        addDescriptors(toolWrapper, descriptor);
       }
     }
+  }
+
+  private void addDescriptors(@NotNull LocalInspectionToolWrapper toolWrapper, @NotNull ProblemDescriptor descriptor) {
+    GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)toolWrapper.getContext();
+    InspectionToolPresentation toolPresentation = context.getPresentation(toolWrapper);
+    LocalDescriptorsUtil.addProblemDescriptors(Collections.singletonList(descriptor), toolPresentation, myIgnoreSuppressed,
+                                               context,
+                                               toolWrapper.getTool());
   }
 
   private void addDescriptorsFromInjectedResults(@NotNull InspectionManagerEx iManager) {
@@ -176,12 +183,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument(file);
       List<InspectionResult> resultList = entry.getValue();
       for (InspectionResult inspectionResult : resultList) {
-        LocalInspectionToolWrapper tool = inspectionResult.tool;
+        LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
 
           PsiElement psiElement = descriptor.getPsiElement();
           if (psiElement == null) continue;
-          if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool.getTool())) continue;
+          if (InspectionManagerEx.inspectionResultSuppressed(psiElement, toolWrapper.getTool())) continue;
           List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, ((ProblemDescriptorBase)descriptor).getTextRange());
           for (TextRange editable : editables) {
             TextRange hostRange = documentRange.injectedToHost(editable);
@@ -196,8 +203,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
             ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
                                                                                    descriptor.getHighlightType(), true, localFixes);
-            LocalInspectionToolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), tool, true, tool.getContext(),
-                                                             tool.getTool());
+            addDescriptors(toolWrapper, patchedDescriptor);
           }
         }
       }
@@ -718,7 +724,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull
   private List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(@NotNull InspectionProfileWrapper profile, PsiElement element) {
     List<LocalInspectionToolWrapper> enabled = new ArrayList<LocalInspectionToolWrapper>();
-    final InspectionToolWrapper[] toolWrappers = (InspectionToolWrapper[])profile.getInspectionTools(element);
+    final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(element);
     InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       if (!profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), element)) continue;

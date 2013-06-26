@@ -184,6 +184,8 @@
       <param name="outputDirectory" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
       <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
       <param name="resourceEncoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+
+      <param name="outputFileNameMapping" disableReferences="true"/>
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-acr-plugin">
@@ -243,6 +245,8 @@
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-resources-plugin">
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+
+      <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
   </extensions>
 

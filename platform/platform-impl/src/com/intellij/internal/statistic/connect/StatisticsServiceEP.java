@@ -21,22 +21,22 @@ import com.intellij.openapi.util.LazyInstance;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-public class StatisticsServiceEP<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {
+public class StatisticsServiceEP extends AbstractExtensionPointBean implements KeyedLazyInstance<StatisticsService> {
   @Attribute("key")
   public String key;
 
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final LazyInstance<T> myHandler = new LazyInstance<T>() {
+  private final LazyInstance<StatisticsService> myHandler = new LazyInstance<StatisticsService>() {
     @Override
-    protected Class<T> getInstanceClass() throws ClassNotFoundException {
+    protected Class<StatisticsService> getInstanceClass() throws ClassNotFoundException {
       return findClass(implementationClass);
     }
   };
 
   @Override
-  public T getInstance() {
+  public StatisticsService getInstance() {
     return myHandler.getValue();
   }
 

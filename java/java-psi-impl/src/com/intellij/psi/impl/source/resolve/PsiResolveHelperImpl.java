@@ -361,6 +361,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     @SuppressWarnings("unchecked")
     Pair<PsiType, ConstraintType>[] constraints = new Pair[typeParameters.length];
     PsiFile file = parent.getContainingFile();
+    LOG.assertTrue(file != null, parent);
     final PsiManager manager = file.getManager();
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
     for (int i = 0; i < typeParameters.length; i++) {

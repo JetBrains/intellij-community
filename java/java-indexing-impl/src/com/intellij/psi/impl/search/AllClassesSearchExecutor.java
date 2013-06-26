@@ -23,9 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -111,11 +109,10 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  private static boolean processScopeRootForAllClasses(PsiElement scopeRoot, final Processor<PsiClass> processor) {
-    if (scopeRoot == null) return true;
-    final boolean[] stopped = new boolean[]{false};
+  private static boolean processScopeRootForAllClasses(@NotNull PsiElement scopeRoot, final Processor<PsiClass> processor) {
+    final boolean[] stopped = {false};
 
-    scopeRoot.accept(new JavaRecursiveElementWalkingVisitor() {
+    JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (!stopped[0]) {
@@ -123,11 +120,26 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         }
       }
 
-      @Override public void visitClass(PsiClass aClass) {
+      @Override
+      public void visitClass(PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }
-    });
+    } : new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (!stopped[0]) {
+          super.visitElement(element);
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {
+        stopped[0] = !processor.process(aClass);
+        super.visitClass(aClass);
+      }
+    };
+    scopeRoot.accept(visitor);
 
     return !stopped[0];
   }

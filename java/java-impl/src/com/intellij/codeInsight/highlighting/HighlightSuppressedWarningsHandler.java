@@ -118,11 +118,11 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       if (!(value instanceof String)) {
         continue;
       }
-      InspectionToolWrapper toolById = ((InspectionProfileImpl)inspectionProfile).getToolById((String)value, target);
-      if (!(toolById instanceof LocalInspectionToolWrapper)) {
+      InspectionToolWrapper toolWrapperById = ((InspectionProfileImpl)inspectionProfile).getToolById((String)value, target);
+      if (!(toolWrapperById instanceof LocalInspectionToolWrapper)) {
         continue;
       }
-      final LocalInspectionToolWrapper toolWrapper = ((LocalInspectionToolWrapper)toolById).createCopy();
+      final LocalInspectionToolWrapper toolWrapper = ((LocalInspectionToolWrapper)toolWrapperById).createCopy();
       final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
       toolWrapper.initialize(context);

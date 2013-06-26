@@ -21,7 +21,7 @@
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +35,7 @@ public interface GlobalInspectionContextExtension<T> {
   void performPreRunActivities(@NotNull List<Tools> globalTools,
                                @NotNull List<Tools> localTools,
                                @NotNull GlobalInspectionContext context);
-                                              //InspectionToolWrapper
-  void performPostRunActivities(@NotNull List<InspectionProfileEntry> inspections, @NotNull GlobalInspectionContext context);
+  void performPostRunActivities(@NotNull List<InspectionToolWrapper> inspections, @NotNull GlobalInspectionContext context);
 
   void cleanup();
 }

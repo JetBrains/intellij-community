@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LayeredIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,12 +52,11 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private final boolean myNavigateToReference;
 
-  public CallHierarchyNodeDescriptor(
-    final Project project,
-    final HierarchyNodeDescriptor parentDescriptor,
-    final PsiElement element,
-    final boolean isBase,
-    final boolean navigateToReference){
+  public CallHierarchyNodeDescriptor(@NotNull Project project,
+                                     final HierarchyNodeDescriptor parentDescriptor,
+                                     @NotNull PsiElement element,
+                                     final boolean isBase,
+                                     final boolean navigateToReference) {
     super(project, parentDescriptor, element, isBase);
     myNavigateToReference = navigateToReference;
   }

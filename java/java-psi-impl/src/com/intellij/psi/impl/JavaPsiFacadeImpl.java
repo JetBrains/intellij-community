@@ -182,7 +182,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     if (cache == null) {
       myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = new ConcurrentHashMap<String, PsiPackage>());
     }
-    
+
     PsiPackage aPackage = cache.get(qualifiedName);
     if (aPackage != null) {
       return aPackage;
@@ -352,9 +352,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
           @Override
           public int compare(PsiClass o1, PsiClass o2) {
-            VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
             VirtualFile file1 = PsiUtilCore.getVirtualFile(o1);
-            return scope.compare(file2, file1);
+            VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
+            return file1 == null ? file2 == null ? 0 : -1 : file2 == null ? 1 : scope.compare(file2, file1);
           }
         });
       }
