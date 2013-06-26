@@ -16,7 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 /**
- * Markup interface to show Action Manager that disabled action shouldn't be shown
+ * Markup interface to tell Action Manager that disabled actions shouldn't be shown
  *
  * @author Konstantin Bulenkov
  */
