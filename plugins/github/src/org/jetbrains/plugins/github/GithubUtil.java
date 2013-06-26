@@ -25,8 +25,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThrowableConsumer;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -56,24 +56,27 @@ public class GithubUtil {
   static final String GITHUB_NOTIFICATION_GROUP = "github";
 
   @Nullable
-  public static <T> T runAndValidateAuth(@NotNull Project project,
-                                         @NotNull GithubAuthData auth,
-                                         @NotNull ProgressIndicator indicator,
-                                         @NotNull ThrowableComputable<T, IOException> computable) throws IOException {
+  public static GithubAuthData runAndGetValidAuth(@NotNull Project project,
+                                                  @NotNull ProgressIndicator indicator,
+                                                  @NotNull ThrowableConsumer<GithubAuthData, IOException> task) throws IOException {
+    GithubAuthData auth = getAuthData();
     try {
-      return computable.compute();
+      task.consume(auth);
+      return auth;
     }
     catch (AuthenticationException e) {
-      if (!makeValidAuthData(project, auth, indicator)) {
+      auth = getValidAuthData(project, indicator);
+      if (auth == null) {
         return null;
       }
-      return computable.compute();
+      task.consume(auth);
+      return auth;
     }
     catch (IOException e) {
       GithubSslSupport sslSupport = GithubSslSupport.getInstance();
       if (GithubSslSupport.isCertificateException(e)) {
         if (sslSupport.askIfShouldProceed(auth.getHost())) {
-          return runAndValidateAuth(project, auth, indicator, computable);
+          return runAndGetValidAuth(project, indicator, task);
         }
         else {
           return null;
@@ -89,28 +92,31 @@ public class GithubUtil {
     return new GithubAuthData(settings.getHost(), settings.getLogin(), settings.getPassword());
   }
 
-  public static boolean makeValidAuthData(@NotNull Project project, @NotNull GithubAuthData auth, @NotNull ProgressIndicator indicator) {
-    try {
-      if (!checkAuthData(auth)) {
-        final GithubLoginDialog dialog = new GithubLoginDialog(auth, project);
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            dialog.show();
-          }
-        }, indicator.getModalityState());
-        if (!dialog.isOK()) {
-          return false;
-        }
-        GithubAuthData newAuth = dialog.getAuth();
-        auth.set(newAuth);
+  @Nullable
+  public static GithubAuthData getValidAuthData(@NotNull Project project, @NotNull ProgressIndicator indicator) throws IOException {
+    final GithubLoginDialog dialog = new GithubLoginDialog(project);
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        dialog.show();
       }
+    }, indicator.getModalityState());
+    if (!dialog.isOK()) {
+      return null;
     }
-    catch (IOException e) {
-      return false;
-    }
+    return dialog.getAuthData();
+  }
 
-    return true;
+  @Nullable
+  public static GithubAuthData getValidAuthData(@NotNull Project project,
+                                                @NotNull GithubAuthData auth,
+                                                @NotNull ProgressIndicator indicator) throws IOException {
+    if (!checkAuthData(auth)) {
+      return getValidAuthData(project, indicator);
+    }
+    else {
+      return auth;
+    }
   }
 
   public static boolean checkAuthData(GithubAuthData auth) throws IOException {

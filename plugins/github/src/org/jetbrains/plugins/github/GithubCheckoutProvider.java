@@ -21,10 +21,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConsumer;
 import git4idea.actions.BasicAction;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.checkout.GitCloneDialog;
@@ -53,19 +53,16 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     }
     BasicAction.saveAll();
 
-    final GithubAuthData auth = GithubUtil.getAuthData();
     final AtomicReference<List<RepositoryInfo>> repositoryInfoRef = new AtomicReference<List<RepositoryInfo>>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          final List<RepositoryInfo> repositoryInfo =
-            GithubUtil.runAndValidateAuth(project, auth, indicator, new ThrowableComputable<List<RepositoryInfo>, IOException>() {
-              @Override
-              public List<RepositoryInfo> compute() throws IOException {
-                return GithubUtil.getAvailableRepos(auth);
-              }
+          GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
+            @Override
+            public void consume(GithubAuthData authData) throws IOException {
+              repositoryInfoRef.set(GithubUtil.getAvailableRepos(authData));
+            }
             });
-          repositoryInfoRef.set(repositoryInfo);
         }
         catch (IOException e) {
           LOG.info(e);

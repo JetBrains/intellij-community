@@ -17,24 +17,11 @@ import java.io.IOException;
  */
 public class GithubLoginDialog extends DialogWrapper {
 
-  private static Logger LOG  = GithubUtil.LOG;
+  private static Logger LOG = GithubUtil.LOG;
 
   private final GithubLoginPanel myGithubLoginPanel;
   private final Project myProject;
 
-  public GithubLoginDialog(final @NotNull GithubAuthData auth, final Project project) {
-    super(project, true);
-    myProject = project;
-    myGithubLoginPanel = new GithubLoginPanel(this);
-    myGithubLoginPanel.setHost(auth.getHost());
-    myGithubLoginPanel.setLogin(auth.getLogin());
-    myGithubLoginPanel.setPassword(auth.getPassword());
-    setTitle("Login to GitHub");
-    setOKButtonText("Login");
-    init();
-  }
-
-  @Deprecated
   public GithubLoginDialog(final Project project) {
     super(project, true);
     myProject = project;
@@ -50,7 +37,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @NotNull
   protected Action[] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   @Override
@@ -70,13 +57,13 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final GithubAuthData auth = myGithubLoginPanel.getAuth();
+    final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
       boolean loggedSuccessfully = GithubUtil.checkAuthData(auth);
       if (loggedSuccessfully) {
         final GithubSettings settings = GithubSettings.getInstance();
         if (myGithubLoginPanel.getSavePassvord()) {
-          settings.setAuth(auth);
+          settings.setAuthData(auth);
         }
         else {
           settings.setHost(auth.getHost());
@@ -98,7 +85,8 @@ public class GithubLoginDialog extends DialogWrapper {
     setErrorText(null);
   }
 
-  public GithubAuthData getAuth() {
-    return myGithubLoginPanel.getAuth();
+  @NotNull
+  public GithubAuthData getAuthData() {
+    return myGithubLoginPanel.getAuthData();
   }
 }

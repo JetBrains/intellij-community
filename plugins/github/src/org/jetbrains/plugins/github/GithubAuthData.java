@@ -48,9 +48,4 @@ public class GithubAuthData {
     return myPassword != null ? myPassword : "";
   }
 
-  public void set(@NotNull GithubAuthData auth) {
-    myHost = auth.getHost();
-    myLogin = auth.getLogin();
-    myPassword = auth.getPassword();
-  }
 }

@@ -122,18 +122,27 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
     GithubAuthData auth = null;
     if (!dialog.isAnonymous()) {
-      final AtomicReference<Boolean> success = new AtomicReference<Boolean>();
-      final GithubAuthData validAuth = GithubUtil.getAuthData();
+      final AtomicReference<GithubAuthData> authDataRef = new AtomicReference<GithubAuthData>();
+      final AtomicReference<IOException> exceptionRef = new AtomicReference<IOException>();
       ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
         public void run(@NotNull ProgressIndicator indicator) {
-          success.set(GithubUtil.makeValidAuthData(project, validAuth, indicator));
+          try {
+            authDataRef.set(GithubUtil.getValidAuthData(project, indicator));
+          }
+          catch (IOException e) {
+            exceptionRef.set(e);
+          }
         }
       });
-      if (!success.get()) {
-        showError(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.", null, null);
+      if (authDataRef.get() == null) {
+        showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
         return;
       }
-      auth = validAuth;
+      if (exceptionRef.get() != null) {
+        showError(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.", null, exceptionRef.get());
+        return;
+      }
+      auth = authDataRef.get();
     }
 
     createGistWithProgress(project, editor, file, files, auth, dialog.getDescription(), dialog.isPrivate(), new Consumer<String>() {
