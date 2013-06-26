@@ -449,14 +449,7 @@ public class GithubShareAction extends DumbAwareAction {
                                                @NotNull String title,
                                                @NotNull final String url) {
     Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, message, "<a href='" + url + "'>" + title + "</a>",
-                                                 NotificationType.INFORMATION, new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          BrowserUtil.launchBrowser(url);
-        }
-      }
-    });
+                                                 NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
     Notificator.getInstance(project).notify(notification);
   }
 }

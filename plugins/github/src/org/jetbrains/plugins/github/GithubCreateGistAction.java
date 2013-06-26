@@ -180,14 +180,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static void showNotificationWithLink(@NotNull Project project, @NotNull final String url) {
     Notificator.getInstance(project)
       .notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Gist Created Successfully", "Your gist url: <a href='open'>" + url + "</a>",
-              NotificationType.INFORMATION, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            BrowserUtil.launchBrowser(url);
-          }
-        }
-      });
+              NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
   }
 
   @NotNull
