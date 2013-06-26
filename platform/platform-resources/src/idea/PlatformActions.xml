@@ -263,7 +263,7 @@
       </group>
 
       <!-- View -->
-      <group id="ViewMenu" popup="true">
+      <group id="ViewMenu" popup="true" compact="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
@@ -319,7 +319,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" configurable="true" popup="true">
+      <group id="ToolsMenu" configurable="true" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
         <separator/>
