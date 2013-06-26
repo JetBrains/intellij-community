@@ -63,6 +63,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
@@ -926,9 +927,9 @@ public abstract class ChooseByNameBase {
         final Runnable request = new Runnable() {
           @Override
           public void run() {
-            final CalcElementsCallback callback = new CalcElementsCallback() {
+            final Consumer<Set<?>> callback = new Consumer<Set<?>>() {
               @Override
-              public void run(@NotNull final Set<?> elements) {
+              public void consume(Set<?> elements) {
                 synchronized (myRebuildMutex) {
                   ApplicationManager.getApplication().assertIsDispatchThread();
                   if (checkDisposed()) {
@@ -963,10 +964,7 @@ public abstract class ChooseByNameBase {
               ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
             }
 
-            CalcElementsThread calcElementsThread =
-              new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
-            myCalcElementsThread = calcElementsThread;
-            ApplicationManager.getApplication().executeOnPooledThread(calcElementsThread);
+            scheduleCalcElements(text, myCheckBox.isSelected(), postRunnable == null, modalityState, callback);
           }
         };
 
@@ -978,6 +976,16 @@ public abstract class ChooseByNameBase {
         }
       }
     }, modalityState);
+  }
+
+  public void scheduleCalcElements(String text,
+                                    boolean checkboxState,
+                                    boolean canCancel,
+                                    ModalityState modalityState,
+                                    Consumer<Set<?>> callback) {
+    CalcElementsThread calcElementsThread = new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel);
+    myCalcElementsThread = calcElementsThread;
+    ApplicationManager.getApplication().executeOnPooledThread(calcElementsThread);
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -1395,7 +1403,7 @@ public abstract class ChooseByNameBase {
   private class CalcElementsThread implements Runnable {
     private final String myPattern;
     private boolean myCheckboxState;
-    private final CalcElementsCallback myCallback;
+    private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
 
     private Set<Object> myElements = null;
@@ -1405,7 +1413,7 @@ public abstract class ChooseByNameBase {
 
     CalcElementsThread(String pattern,
                        boolean checkboxState,
-                       CalcElementsCallback callback,
+                       Consumer<Set<?>> callback,
                        @NotNull ModalityState modalityState,
                        boolean canCancel) {
       myPattern = pattern;
@@ -1469,7 +1477,7 @@ public abstract class ChooseByNameBase {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          myCallback.run(myElements);
+          myCallback.consume(myElements);
         }
       }, myModalityState);
     }
@@ -1503,6 +1511,7 @@ public abstract class ChooseByNameBase {
     }
 
     private void showCard(final String card, final int delay) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       myShowCardAlarm.cancelAllRequests();
       myShowCardAlarm.addRequest(new Runnable() {
         @Override
@@ -1542,10 +1551,6 @@ public abstract class ChooseByNameBase {
 
   private static Matcher buildPatternMatcher(@NotNull String pattern) {
     return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
-  }
-
-  private interface CalcElementsCallback {
-    void run(Set<?> elements);
   }
 
   private static class HintLabel extends JLabel {
