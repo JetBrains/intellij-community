@@ -31,4 +31,25 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     }
     return new PyCollectionTypeImpl(pyClass, isDefinition, elementType);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PyCollectionType)) return false;
+    if (!super.equals(o)) return false;
+
+    PyCollectionType type = (PyCollectionType)o;
+
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+    if (myElementType != null ? !myElementType.equals(type.getElementType(context)) : type.getElementType(context) != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myElementType != null ? myElementType.hashCode() : 0);
+    return result;
+  }
 }
