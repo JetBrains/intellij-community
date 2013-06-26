@@ -822,6 +822,7 @@
     <editorHighlighterProvider filetype="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyEditorHighlighterProvider"/>
 
     <treeStructureProvider implementation="com.jetbrains.web2py.projectView.Web2PyTreeStructureProvider"/>
+    <refactoring.elementListenerProvider implementation="com.jetbrains.web2py.refactoring.Web2PyRefactoringListenerProvider"/>
   </extensions>
 
   <extensionPoints>
