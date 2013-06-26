@@ -16,6 +16,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -187,21 +188,30 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       PsiClass aClass = field.getContainingClass();
       if (aClass != null) {
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-        PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
-        if (allElementsToDelete.contains(getter) || getter != null && !getter.isPhysical()) getter = null;
+        PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(aClass, propertyName, isStatic);
+        if (getters != null) {
+          final List<PsiMethod> validGetters = new ArrayList<PsiMethod>(1);
+          for (PsiMethod getter : getters) {
+            if (!allElementsToDelete.contains(getter) && (getter != null && getter.isPhysical())) {
+              validGetters.add(getter);
+            }
+          }
+          getters = validGetters.isEmpty() ? null : validGetters.toArray(new PsiMethod[validGetters.size()]);
+        }
+
         PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
         if (allElementsToDelete.contains(setter) || setter != null && !setter.isPhysical()) setter = null;
-        if (askUser && (getter != null || setter != null)) {
+        if (askUser && (getters != null || setter != null)) {
           final String message =
-            RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getter, setter);
-          if (Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != 0) {
-            getter = null;
+            RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getters != null ? getters[0] : null, setter);
+          if (!ApplicationManager.getApplication().isUnitTestMode() && Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != 0) {
+            getters = null;
             setter = null;
           }
         }
         List<PsiElement> elements = new ArrayList<PsiElement>();
         if (setter != null) elements.add(setter);
-        if (getter != null) elements.add(getter);
+        if (getters != null) Collections.addAll(elements, getters);
         return elements;
       }
     }
