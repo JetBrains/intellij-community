@@ -52,7 +52,7 @@ public class PyTypeParser {
       myImports = imports;
     }
 
-    ParseResult(@Nullable PyType type, @NotNull TextRange range) {
+    ParseResult(@NotNull PyType type, @NotNull TextRange range) {
       this(type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
     }
 
@@ -253,22 +253,28 @@ public class PyTypeParser {
           return new ParseResult(PyNoneType.INSTANCE, firstRange);
         }
         else if ("integer".equals(firstText) || ("long".equals(firstText) && LanguageLevel.forElement(myAnchor).isPy3K())) {
-          return new ParseResult(builtinCache.getIntType(), firstRange);
+          final PyClassType type = builtinCache.getIntType();
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("string".equals(firstText)) {
-          return new ParseResult(builtinCache.getStringType(LanguageLevel.forElement(myAnchor)), firstRange);
+          final PyType type = builtinCache.getStringType(LanguageLevel.forElement(myAnchor));
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("bytes".equals(firstText)) {
-          return new ParseResult(builtinCache.getBytesType(LanguageLevel.forElement(myAnchor)), firstRange);
+          final PyClassType type = builtinCache.getBytesType(LanguageLevel.forElement(myAnchor));
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("unicode".equals(firstText)) {
-          return new ParseResult(builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor)), firstRange);
+          final PyClassType type = builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor));
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("boolean".equals(firstText)) {
-          return new ParseResult(builtinCache.getBoolType(), firstRange);
+          final PyClassType type = builtinCache.getBoolType();
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
         else if ("dictionary".equals(firstText)) {
-          return new ParseResult(builtinCache.getDictType(), firstRange);
+          final PyClassType type = builtinCache.getDictType();
+          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
         }
 
         final PyType builtinType = builtinCache.getObjectType(firstText);
