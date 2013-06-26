@@ -17,14 +17,12 @@ import java.io.IOException;
  */
 public class GithubLoginDialog extends DialogWrapper {
 
-  private static Logger LOG = GithubUtil.LOG;
+  private static final Logger LOG = GithubUtil.LOG;
 
   private final GithubLoginPanel myGithubLoginPanel;
-  private final Project myProject;
 
   public GithubLoginDialog(final Project project) {
     super(project, true);
-    myProject = project;
     myGithubLoginPanel = new GithubLoginPanel(this);
     final GithubSettings settings = GithubSettings.getInstance();
     myGithubLoginPanel.setHost(settings.getHost());
@@ -62,7 +60,7 @@ public class GithubLoginDialog extends DialogWrapper {
       boolean loggedSuccessfully = GithubUtil.checkAuthData(auth);
       if (loggedSuccessfully) {
         final GithubSettings settings = GithubSettings.getInstance();
-        if (myGithubLoginPanel.getSavePassvord()) {
+        if (myGithubLoginPanel.storePassword()) {
           settings.setAuthData(auth);
         }
         else {

@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GithubCheckoutProvider implements CheckoutProvider {
 
-  private static Logger LOG = GithubUtil.LOG;
+  private static final Logger LOG = GithubUtil.LOG;
 
   @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {

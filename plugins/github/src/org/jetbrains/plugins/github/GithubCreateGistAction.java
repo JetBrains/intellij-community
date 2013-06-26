@@ -116,30 +116,20 @@ public class GithubCreateGistAction extends DumbAwareAction {
     // Ask for description and other params
     final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project);
     dialog.show();
-    if (!dialog.isOK()){
+    if (!dialog.isOK()) {
       return;
     }
 
     GithubAuthData auth = null;
     if (!dialog.isAnonymous()) {
       final AtomicReference<GithubAuthData> authDataRef = new AtomicReference<GithubAuthData>();
-      final AtomicReference<IOException> exceptionRef = new AtomicReference<IOException>();
       ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
         public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            authDataRef.set(GithubUtil.getValidAuthData(project, indicator));
-          }
-          catch (IOException e) {
-            exceptionRef.set(e);
-          }
+          authDataRef.set(GithubUtil.getValidAuthData(project, indicator));
         }
       });
       if (authDataRef.get() == null) {
         showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
-        return;
-      }
-      if (exceptionRef.get() != null) {
-        showError(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.", null, exceptionRef.get());
         return;
       }
       auth = authDataRef.get();
@@ -149,25 +139,28 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
       @Override
       public void consume(String url) {
-                               if (url == null) {
-                                 return;
-                               }
+        if (url == null) {
+          return;
+        }
 
-                               if (dialog.isOpenInBrowser()) {
-                                 BrowserUtil.launchBrowser(url);
-                               }
-                               else {
-                                 showNotificationWithLink(project, url);
-                               }
-                             }
-                           });
+        if (dialog.isOpenInBrowser()) {
+          BrowserUtil.launchBrowser(url);
+        }
+        else {
+          showNotificationWithLink(project, url);
+        }
+      }
+    });
   }
 
-  private static void createGistWithProgress(@NotNull final Project project, @Nullable final Editor editor,
-                                               @Nullable final VirtualFile file, @Nullable final VirtualFile[] files,
-                                               @Nullable final GithubAuthData auth,
-                                               @NotNull final String description, final boolean aPrivate,
-                                               @NotNull final Consumer<String> resultHandler) {
+  private static void createGistWithProgress(@NotNull final Project project,
+                                             @Nullable final Editor editor,
+                                             @Nullable final VirtualFile file,
+                                             @Nullable final VirtualFile[] files,
+                                             @Nullable final GithubAuthData auth,
+                                             @NotNull final String description,
+                                             final boolean aPrivate,
+                                             @NotNull final Consumer<String> resultHandler) {
     final AtomicReference<String> url = new AtomicReference<String>();
     new Task.Backgroundable(project, "Creating Gist") {
       @Override
@@ -185,12 +178,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   private static void showNotificationWithLink(@NotNull Project project, @NotNull final String url) {
-    Notificator.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Gist Created Successfully",
-      "Your gist url: <a href='open'>" + url + "</a>", NotificationType.INFORMATION,
-      new NotificationListener() {
+    Notificator.getInstance(project)
+      .notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Gist Created Successfully", "Your gist url: <a href='open'>" + url + "</a>",
+              NotificationType.INFORMATION, new NotificationListener() {
         @Override
-        public void hyperlinkUpdate(@NotNull Notification notification,
-                                    @NotNull HyperlinkEvent event) {
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             BrowserUtil.launchBrowser(url);
           }
@@ -199,10 +191,12 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static List<NamedContent> collectContents(@NotNull Project project, @Nullable Editor editor,
-                                                    @Nullable VirtualFile file, @Nullable VirtualFile[] files) {
+  private static List<NamedContent> collectContents(@NotNull Project project,
+                                                    @Nullable Editor editor,
+                                                    @Nullable VirtualFile file,
+                                                    @Nullable VirtualFile[] files) {
     if (editor != null) {
-      NamedContent content = getContentFromEditor(editor, file, project);
+      NamedContent content = getContentFromEditor(editor, file);
       return content == null ? Collections.<NamedContent>emptyList() : Collections.singletonList(content);
     }
     if (files != null) {
@@ -224,7 +218,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
   @Nullable
   private static String createGist(@NotNull Project project,
                                    @Nullable GithubAuthData auth,
-                                   @NotNull List<NamedContent> contents, boolean isPrivate, @NotNull String description) {
+                                   @NotNull List<NamedContent> contents,
+                                   boolean isPrivate,
+                                   @NotNull String description) {
     if (contents.isEmpty()) {
       showWarning(project, "Failed to create gist", "Can't create empty gist");
       return null;
@@ -279,8 +275,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
     });
   }
 
-  private static void showError(@NotNull Project project, @NotNull String title, @NotNull String content,
-                                @Nullable String details, @Nullable Exception e) {
+  private static void showError(@NotNull Project project,
+                                @NotNull String title,
+                                @NotNull String content,
+                                @Nullable String details,
+                                @Nullable Exception e) {
     Notificator.getInstance(project).notifyError(title, content);
     LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
   }
@@ -351,7 +350,8 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static NamedContent getContentFromEditor(@NotNull final Editor editor, @Nullable VirtualFile selectedFile, @NotNull Project project) {
+  private static NamedContent getContentFromEditor(@NotNull final Editor editor,
+                                                   @Nullable VirtualFile selectedFile) {
     String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Nullable
       @Override

@@ -38,7 +38,7 @@ import java.io.IOException;
  * @date 10/20/10
  */
 public class GithubSettingsPanel {
-  private static Logger LOG = GithubUtil.LOG;
+  private static final Logger LOG = GithubUtil.LOG;
 
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;

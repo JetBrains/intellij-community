@@ -93,7 +93,7 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static GithubAuthData getValidAuthData(@NotNull Project project, @NotNull ProgressIndicator indicator) throws IOException {
+  public static GithubAuthData getValidAuthData(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
@@ -105,18 +105,6 @@ public class GithubUtil {
       return null;
     }
     return dialog.getAuthData();
-  }
-
-  @Nullable
-  public static GithubAuthData getValidAuthData(@NotNull Project project,
-                                                @NotNull GithubAuthData auth,
-                                                @NotNull ProgressIndicator indicator) throws IOException {
-    if (!checkAuthData(auth)) {
-      return getValidAuthData(project, indicator);
-    }
-    else {
-      return auth;
-    }
   }
 
   public static boolean checkAuthData(GithubAuthData auth) throws IOException {
@@ -302,7 +290,7 @@ public class GithubUtil {
 
   @Nullable
   public static String getUserAndRepositoryOrShowError(@NotNull Project project, @NotNull String url) {
-    int index = -1;
+    int index;
     if (url.startsWith(getHttpsUrl())) {
       index = url.lastIndexOf('/');
       if (index == -1) {
