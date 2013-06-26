@@ -35,19 +35,13 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
       return null;
     }
 
-    String login = GithubSettings.getInstance().getLogin();
+    GithubSettings settings = GithubSettings.getInstance();
+    String login = settings.getLogin();
     if (StringUtil.isEmptyOrSpaces(login)) {
       return null;
     }
 
-    String key = GithubSettings.GITHUB_SETTINGS_PASSWORD_KEY;
-    try {
-      return new AuthData(login, PasswordSafe.getInstance().getPassword(null, GithubSettings.class, key));
-    }
-    catch (PasswordSafeException e) {
-      GithubUtil.LOG.info("Couldn't get the password for key [" + key + "]", e);
-      return null;
-    }
+    return new AuthData(login, settings.getPassword());
   }
 
 }
