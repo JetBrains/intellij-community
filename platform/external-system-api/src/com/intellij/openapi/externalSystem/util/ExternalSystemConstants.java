@@ -31,11 +31,11 @@ public class ExternalSystemConstants {
   @NonNls @NotNull public static final String TOOL_WINDOW_TOOLBAR_ACTIONS_GROUP_ID = "ExternalSystem.ToolWindow.Toolbar";
   @NonNls @NotNull public static final String TREE_ACTIONS_GROUP_ID                = "ExternalSystem.Tree.Context";
 
-  @NonNls @NotNull public static final String TOOL_WINDOW_PLACE = "ExternalSystem.ToolWindow";
-  @NonNls @NotNull public static final String TREE_PLACE        = "ExternalSystem.Tree";
+  @NonNls @NotNull public static final String TOOL_WINDOW_PLACE       = "ExternalSystem.ToolWindow";
+  @NonNls @NotNull public static final String TREE_CONTEXT_MENU_PLACE = "ExternalSystem.Tree.Context.Menu";
 
   @NotNull public static final String DEBUG_RUNNER_ID = "ExternalSystemTaskDebugRunner";
-  @NotNull public static final String RUNNER_ID = "ExternalSystemTaskRunner";
+  @NotNull public static final String RUNNER_ID       = "ExternalSystemTaskRunner";
 
   public static final boolean VERBOSE_PROCESSING       = SystemProperties.getBooleanProperty("external.system.verbose.processing", false);
   public static final int     RECENT_TASKS_NUMBER      = SystemProperties.getIntProperty("external.system.recent.tasks.number", 7);
