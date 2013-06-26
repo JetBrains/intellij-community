@@ -17,7 +17,9 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -56,6 +58,7 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,10 +116,7 @@ public class GithubShareAction extends DumbAwareAction {
     boolean externalRemoteDetected = false;
     if (gitDetected) {
       if (GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-        Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Project is already on GitHub",
-                                                     "<a href=\"" + GithubUtil.findGithubRemoteUrl(gitRepository) + "\">GitHub</a>",
-                                                     NotificationType.INFORMATION);
-        Notificator.getInstance(project).notify(notification);
+        showNotificationWithLink(project, "Project is already on GitHub", "GitHub", GithubUtil.findGithubRemoteUrl(gitRepository));
         return;
       }
       else {
@@ -442,5 +442,21 @@ public class GithubShareAction extends DumbAwareAction {
         Messages.showErrorDialog(project, message, title);
       }
     }, indicator.getModalityState());
+  }
+
+  private static void showNotificationWithLink(@NotNull Project project,
+                                               @NotNull String message,
+                                               @NotNull String title,
+                                               @NotNull final String url) {
+    Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, message, "<a href='" + url + "'>" + title + "</a>",
+                                                 NotificationType.INFORMATION, new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          BrowserUtil.launchBrowser(url);
+        }
+      }
+    });
+    Notificator.getInstance(project).notify(notification);
   }
 }
