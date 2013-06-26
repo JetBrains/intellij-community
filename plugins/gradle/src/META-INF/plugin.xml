@@ -29,14 +29,16 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.settings.GradleProjectImportProvider"/>
-    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.settings.GradleProjectImportBuilder"/>
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
+    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
+    <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
+    <internalFileTemplate name="Gradle File"/>
     <projectConfigurable id="reference.settingsdialog.project.gradle"
                          instance="org.jetbrains.plugins.gradle.service.settings.GradleConfigurable"
                          key="gradle.name" bundle="i18n.GradleBundle"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
-    <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.service.settings.GradleProjectOpenProcessor"/>
+    <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectOpenProcessor"/>
     <configurationType implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType"/>
 
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>

@@ -16,14 +16,10 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtilRt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -33,11 +29,12 @@ public class PaintAwarePanel extends JPanel {
 
   @Nullable private Consumer<Graphics> myPaintCallback;
 
-  public PaintAwarePanel(LayoutManager layout) {
-    super(layout);
+  public PaintAwarePanel() {
+    this(new GridBagLayout());
   }
 
-  public PaintAwarePanel() {
+  public PaintAwarePanel(LayoutManager layout) {
+    super(layout);
   }
 
   @Override

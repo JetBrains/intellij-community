@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.service.settings;
+package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -32,6 +32,7 @@ import com.intellij.pom.java.LanguageLevel;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
