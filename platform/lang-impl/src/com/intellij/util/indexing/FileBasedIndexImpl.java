@@ -2215,59 +2215,58 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo, boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       ProjectIndexableFilesFilter indexableFilesFilter = projectIndexableFiles(project);
-      
-      final UpdateSemaphore updateSemaphore = obtainForceUpdateSemaphore();
 
-      try {
-        for (VirtualFile file : getAllFilesToUpdate()) {
-          if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.contains(((VirtualFileWithId)file).getId())) {
-            continue;
+      UpdateSemaphore updateSemaphore;
+      do{
+        updateSemaphore = obtainForceUpdateSemaphore();
+        try {
+          for (VirtualFile file : getAllFilesToUpdate()) {
+            if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.contains(((VirtualFileWithId)file).getId())) {
+              continue;
+            }
+    
+            if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
+              try {
+                updateSemaphore.down();
+                // process only files that can affect result
+                processFileImpl(project, new com.intellij.ide.caches.FileContent(file), onlyRemoveOutdatedData);
+              }
+              catch (ProcessCanceledException e) {
+                updateSemaphore.reportUpdateCanceled();
+                throw e;
+              }
+              finally {
+                updateSemaphore.up();
+              }
+            }
           }
   
-          if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
-            try {
-              updateSemaphore.down();
-              // process only files that can affect result
-              processFileImpl(project, new com.intellij.ide.caches.FileContent(file), onlyRemoveOutdatedData);
-            }
-            catch (ProcessCanceledException e) {
-              updateSemaphore.reportUpdateCanceled();
-              throw e;
-            }
-            finally {
-              updateSemaphore.up();
+          // If several threads entered the method at the same time and there were files to update,
+          // all the threads should leave the method synchronously after all the files scheduled for update are reindexed,
+          // no matter which thread will do reindexing job.
+          // Thus we ensure that all the threads that entered the method will get the most recent data
+  
+          while (!updateSemaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
+            if (Thread.holdsLock(PsiLock.LOCK)) {
+              break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
             }
           }
+          
         }
-
-        // If several threads entered the method at the same time and there were files to update,
-        // all the threads should leave the method synchronously after all the files scheduled for update are reindexed,
-        // no matter which thread will do reindexing job.
-        // Thus we ensure that all the threads that entered the method will get the most recent data
-
-        while (!updateSemaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
-          if (Thread.holdsLock(PsiLock.LOCK)) {
-            break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
-          }
-        }
-        
-        if (updateSemaphore.isUpdateCanceled()) {
-          //System.err.println("cancel index update because of PCE in sibling thread");
-          throw new ProcessCanceledException();
-        }
-        
+        finally {
+          releaseForceUpdateSemaphore(updateSemaphore);
+        }    
+      // if some other thread was unable to complete indexing because of PCE, 
+      // we should try again and ensure the file is indexed before proceeding further
       }
-      finally {
-        releaseForceUpdateSemaphore(updateSemaphore);
-      }
-
+      while (updateSemaphore.isUpdateCanceled());  
     }
 
     private void processFileImpl(Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent, boolean onlyRemoveOutdatedData) {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
-        try {
+        try {                                                                  
           if (onlyRemoveOutdatedData || isTooLarge(file)) {
             // on shutdown there is no need to re-index the file, just remove outdated data from indices
             final List<ID<?, ?>> affected = new ArrayList<ID<?, ?>>();
