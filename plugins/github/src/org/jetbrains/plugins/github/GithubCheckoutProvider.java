@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author oleg
@@ -53,7 +53,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     }
     BasicAction.saveAll();
 
-    final AtomicReference<List<RepositoryInfo>> repositoryInfoRef = new AtomicReference<List<RepositoryInfo>>();
+    final Ref<List<RepositoryInfo>> repositoryInfoRef = new Ref<List<RepositoryInfo>>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {

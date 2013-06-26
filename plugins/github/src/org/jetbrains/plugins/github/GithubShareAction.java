@@ -63,7 +63,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
@@ -87,7 +86,6 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   // TODO: ??? Git preparations -> Modal thread
-  // TODO: AtomicReference vs Ref
   // get gitRepository
   // check for existing git repo
   // check available repos (net)
@@ -126,15 +124,15 @@ public class GithubShareAction extends DumbAwareAction {
     }
 
     // get available GitHub repos with modal progress
-    final AtomicReference<HashSet<String>> repoNamesRef = new AtomicReference<HashSet<String>>();
-    final AtomicReference<GithubUser> userInfoRef = new AtomicReference<GithubUser>();
-    final AtomicReference<GithubAuthData> authRef = new AtomicReference<GithubAuthData>();
-    final AtomicReference<IOException> exceptionRef = new AtomicReference<IOException>();
+    final Ref<HashSet<String>> repoNamesRef = new Ref<HashSet<String>>();
+    final Ref<GithubUser> userInfoRef = new Ref<GithubUser>();
+    final Ref<GithubAuthData> authRef = new Ref<GithubAuthData>();
+    final Ref<IOException> exceptionRef = new Ref<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           // get existing github repos (network) and validate auth data
-          final AtomicReference<List<RepositoryInfo>> availableReposRef = new AtomicReference<List<RepositoryInfo>>();
+          final Ref<List<RepositoryInfo>> availableReposRef = new Ref<List<RepositoryInfo>>();
           final GithubAuthData auth =
             GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
               @Override
@@ -142,7 +140,7 @@ public class GithubShareAction extends DumbAwareAction {
                 availableReposRef.set(GithubUtil.getAvailableRepos(authData));
               }
             });
-          if (auth == null || availableReposRef.get() == null) {
+          if (auth == null || availableReposRef.isNull()) {
             return;
           }
           final HashSet<String> names = new HashSet<String>();
@@ -164,11 +162,11 @@ public class GithubShareAction extends DumbAwareAction {
         }
       }
     });
-    if (exceptionRef.get() != null) {
+    if (!exceptionRef.isNull()) {
       Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to connect to GitHub");
       return;
     }
-    if (repoNamesRef.get() == null || userInfoRef.get() == null) {
+    if (repoNamesRef.isNull() || userInfoRef.isNull()) {
       return;
     }
 
@@ -261,7 +259,7 @@ public class GithubShareAction extends DumbAwareAction {
         }
       }
     }.queue();
-    if (exceptionRef.get() != null) {
+    if (!exceptionRef.isNull()) {
       Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to create new GitHub repository");
     }
   }

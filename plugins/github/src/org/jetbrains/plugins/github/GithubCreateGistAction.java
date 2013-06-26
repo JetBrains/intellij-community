@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +50,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author oleg
@@ -122,13 +122,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
     GithubAuthData auth = null;
     if (!dialog.isAnonymous()) {
-      final AtomicReference<GithubAuthData> authDataRef = new AtomicReference<GithubAuthData>();
+      final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
       ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
         public void run(@NotNull ProgressIndicator indicator) {
           authDataRef.set(GithubUtil.getValidAuthData(project, indicator));
         }
       });
-      if (authDataRef.get() == null) {
+      if (authDataRef.isNull()) {
         showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
         return;
       }
@@ -161,7 +161,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                              @NotNull final String description,
                                              final boolean aPrivate,
                                              @NotNull final Consumer<String> resultHandler) {
-    final AtomicReference<String> url = new AtomicReference<String>();
+    final Ref<String> url = new Ref<String>();
     new Task.Backgroundable(project, "Creating Gist") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
