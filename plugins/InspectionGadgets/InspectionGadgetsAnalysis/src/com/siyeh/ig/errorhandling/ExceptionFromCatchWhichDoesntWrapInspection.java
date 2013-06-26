@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -87,7 +88,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
         return;
       }
       @NonNls final String parameterName = parameter.getName();
-      if ("ignore".equals(parameterName) || "ignored".equals(parameterName)) {
+      if (PsiUtil.isIgnoredName(parameterName)) {
         return;
       }
       final PsiExpression exception = statement.getException();
