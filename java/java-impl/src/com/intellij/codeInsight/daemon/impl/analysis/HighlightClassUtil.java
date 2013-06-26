@@ -995,7 +995,7 @@ public class HighlightClassUtil {
       if (classReference == null) return;
       final PsiClass psiClass = (PsiClass)classReference.resolve();
       if (psiClass == null) return;
-      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, psiClass);
+      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, psiClass, false);
       if (chooser == null) return;
 
       final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
