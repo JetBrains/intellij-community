@@ -174,4 +174,14 @@ public class PyTypeParserTest extends PyTestCase {
     final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
     assertInstanceOf(elementType, PyUnionType.class);
   }
+
+  public void testBoundedGeneric() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T (str or unicode)");
+    assertNotNull(type);
+    assertInstanceOf(type, PyGenericType.class);
+    final PyGenericType genericType = (PyGenericType)type;
+    final PyType bound = genericType.getBound();
+    assertInstanceOf(bound, PyUnionType.class);
+  }
 }

@@ -14,10 +14,12 @@ import java.util.List;
  * @author vlan
  */
 public class PyGenericType implements PyType {
-  private final String myName;
+  @NotNull private final String myName;
+  @Nullable private PyType myBound;
 
-  public PyGenericType(@NotNull String name) {
-    this.myName = name;
+  public PyGenericType(@NotNull String name, @Nullable PyType bound) {
+    myName = name;
+    myBound = bound;
   }
 
   @Nullable
@@ -70,5 +72,10 @@ public class PyGenericType implements PyType {
   @Override
   public String toString() {
     return "PyGenericType: " + myName;
+  }
+
+  @Nullable
+  public PyType getBound() {
+    return myBound;
   }
 }
