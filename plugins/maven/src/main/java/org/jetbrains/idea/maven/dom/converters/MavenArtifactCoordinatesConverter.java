@@ -41,6 +41,7 @@ import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -54,7 +55,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     if (s == null) return null;
 
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getProject(context));
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
 
     return selectStrategy(context).isValid(id, manager, context) ? s : null;
   }
@@ -67,7 +68,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getProject(context));
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     MavenDomShortArtifactCoordinates coordinates = MavenArtifactCoordinatesHelper.getCoordinates(context);
@@ -79,15 +80,10 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   @Override
   public PsiElement resolve(String o, ConvertContext context) {
-    Project p = getProject(context);
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
-    PsiFile result = selectStrategy(context).resolve(p, id, context);
+    PsiFile result = selectStrategy(context).resolve(id, context);
     return result != null ? result : super.resolve(o, context);
-  }
-
-  private static Project getProject(ConvertContext context) {
-    return context.getFile().getProject();
   }
 
   @Override
@@ -181,9 +177,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return doGetVariants(id, manager);
     }
 
-    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-      PsiManager psiManager = PsiManager.getInstance(project);
+    public PsiFile resolve(MavenId id, ConvertContext context) {
+      PsiManager psiManager = context.getPsiManager();
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(psiManager.getProject());
 
       PsiFile result = resolveBySpecifiedPath();
       if (result != null) return result;
@@ -197,6 +193,15 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Nullable
     protected PsiFile resolveBySpecifiedPath() {
       return null;
+    }
+
+    @Nullable
+    protected MavenProject findMavenProject(ConvertContext context) {
+      PsiFile psiFile = context.getFile().getOriginalFile();
+      VirtualFile file = psiFile.getVirtualFile();
+      if (file == null) return null;
+
+      return MavenProjectsManager.getInstance(psiFile.getProject()).findProject(file);
     }
 
     private PsiFile resolveInProjects(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
@@ -214,7 +219,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return psiManager.findFile(virtualFile);
     }
 
-    protected File makeLocalRepositoryFile(MavenId id, File localRepository) {
+    private File makeLocalRepositoryFile(MavenId id, File localRepository) {
       String relPath = (StringUtil.notNullize(id.getGroupId(), "null")).replace(".", "/");
 
       relPath += "/" + id.getArtifactId();
@@ -227,7 +232,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   private class ProjectStrategy extends ConverterStrategy {
     @Override
-    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
+    public PsiFile resolve(MavenId id, ConvertContext context) {
       return null;
     }
 
@@ -268,8 +273,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
-      PsiFile res = super.resolve(project, id, context);
+    public PsiFile resolve(MavenId id, ConvertContext context) {
+      PsiFile res = super.resolve(id, context);
       if (res != null) return res;
 
       DomElement parent = context.getInvocationElement().getParent();
@@ -278,14 +283,11 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       DependencyConflictId dependencyId = DependencyConflictId.create((MavenDomDependency)parent);
       if (dependencyId == null) return null;
 
-      VirtualFile file = context.getFile().getOriginalFile().getVirtualFile();
-      if (file == null) return null;
-
-      MavenProject mavenProject = MavenProjectsManager.getInstance(context.getProject()).findProject(file);
+      MavenProject mavenProject = findMavenProject(context);
       if (mavenProject != null) {
         for (MavenArtifact artifact : mavenProject.getDependencies()) {
           if (dependencyId.equals(DependencyConflictId.create(artifact))) {
-            return super.resolve(project, new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
+            return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
           }
         }
       }
@@ -330,7 +332,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   private class ExclusionStrategy extends ConverterStrategy {
     @Override
-    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
+    public PsiFile resolve(MavenId id, ConvertContext context) {
       return null;
     }
 
@@ -386,8 +388,33 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    protected File makeLocalRepositoryFile(MavenId id, File localRepository) {
-      return MavenArtifactUtil.getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+    public PsiFile resolve(MavenId id, ConvertContext context) {
+      PsiFile res = super.resolve(id, context);
+      if (res != null) return res;
+
+      // Try to resolve to imported plugin
+      MavenProject mavenProject = findMavenProject(context);
+      if (mavenProject != null) {
+        for (MavenPlugin plugin : mavenProject.getPlugins()) {
+          if (MavenArtifactUtil.isPluginIdEquals(id.getGroupId(), id.getArtifactId(), plugin.getGroupId(), plugin.getArtifactId())) {
+            return super.resolve(plugin.getMavenId(), context);
+          }
+        }
+      }
+
+      // Try to resolve to plugin with latest version
+      PsiManager psiManager = context.getPsiManager();
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(psiManager.getProject());
+
+      File artifactFile = MavenArtifactUtil
+        .getArtifactFile(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(artifactFile);
+      if (virtualFile != null) {
+        return psiManager.findFile(virtualFile);
+      }
+
+      return null;
     }
   }
 }
