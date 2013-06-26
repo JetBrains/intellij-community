@@ -18,6 +18,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -255,12 +256,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
 
     cleanupUI(isOk);
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     myActionListener.onClose();
-  }
-
-  @Nullable
-  public static ChooseByNamePopup getActivePopup(@NotNull final Project project) {
-    return CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY.get(project);
   }
 
   private void cleanupUI(boolean ok) {

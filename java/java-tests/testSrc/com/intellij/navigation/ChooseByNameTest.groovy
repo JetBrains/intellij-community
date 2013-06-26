@@ -2,7 +2,9 @@ package com.intellij.navigation
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.GotoClassModel2
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
@@ -22,6 +24,7 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
 
   private List<Object> createPopup(ChooseByNameModel model, String text) {
     def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null, "")
+    Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
