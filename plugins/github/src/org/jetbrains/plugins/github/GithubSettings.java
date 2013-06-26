@@ -17,6 +17,10 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
+import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -141,8 +145,21 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setPassword(final String password) {
+    setPassword(password, true);
+  }
+
+  public void setPassword(final String password, final boolean rememberPassword) {
     try {
-      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, StringUtil.notNullize(password));
+      if (rememberPassword) {
+        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, StringUtil.notNullize(password));
+      }
+      else {
+        final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+        if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
+          passwordSafe.getMemoryProvider()
+            .storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, StringUtil.notNullize(password));
+        }
+      }
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't set password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
@@ -176,9 +193,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  public void setAuthData(@NotNull GithubAuthData auth) {
+  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
     setHost(auth.getHost());
     setLogin(auth.getLogin());
-    setPassword(auth.getPassword());
+    setPassword(auth.getPassword(), rememberPassword);
   }
 }
