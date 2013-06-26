@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitUtil;
@@ -62,7 +63,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
@@ -86,7 +86,6 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   // TODO: ??? Git preparations -> Modal thread
-  // TODO: AtomicReference vs Ref
   // get gitRepository
   // check for existing git repo
   // check available repos (net)
@@ -124,28 +123,28 @@ public class GithubShareAction extends DumbAwareAction {
       }
     }
 
-    final GithubAuthData auth = GithubUtil.getAuthData();
     // get available GitHub repos with modal progress
-    final AtomicReference<HashSet<String>> repoNamesRef = new AtomicReference<HashSet<String>>();
-    final AtomicReference<Boolean> isPrivateRepoAllowedRef = new AtomicReference<Boolean>();
-    final AtomicReference<String> loginRef = new AtomicReference<String>();
-    final AtomicReference<IOException> exceptionRef = new AtomicReference<IOException>();
+    final Ref<HashSet<String>> repoNamesRef = new Ref<HashSet<String>>();
+    final Ref<GithubUser> userInfoRef = new Ref<GithubUser>();
+    final Ref<GithubAuthData> authRef = new Ref<GithubAuthData>();
+    final Ref<IOException> exceptionRef = new Ref<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           // get existing github repos (network) and validate auth data
-          final List<RepositoryInfo> availableRepos =
-            GithubUtil.runAndValidateAuth(project, auth, indicator, new ThrowableComputable<List<RepositoryInfo>, IOException>() {
+          final Ref<List<RepositoryInfo>> availableReposRef = new Ref<List<RepositoryInfo>>();
+          final GithubAuthData auth =
+            GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
               @Override
-              public List<RepositoryInfo> compute() throws IOException {
-                return GithubUtil.getAvailableRepos(auth);
+              public void consume(GithubAuthData authData) throws IOException {
+                availableReposRef.set(GithubUtil.getAvailableRepos(authData));
               }
             });
-          if (availableRepos == null) {
+          if (auth == null || availableReposRef.isNull()) {
             return;
           }
           final HashSet<String> names = new HashSet<String>();
-          for (RepositoryInfo info : availableRepos) {
+          for (RepositoryInfo info : availableReposRef.get()) {
             names.add(info.getName());
           }
           repoNamesRef.set(names);
@@ -155,24 +154,25 @@ public class GithubShareAction extends DumbAwareAction {
           if (userInfo == null) {
             return;
           }
-          isPrivateRepoAllowedRef.set(userInfo.getPlan().isPrivateRepoAllowed());
-          loginRef.set(userInfo.getLogin());
+          userInfoRef.set(userInfo);
+          authRef.set(auth);
         }
         catch (IOException e) {
           exceptionRef.set(e);
         }
       }
     });
-    if (exceptionRef.get() != null) {
+    if (!exceptionRef.isNull()) {
       Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to connect to GitHub");
       return;
     }
-    if (repoNamesRef.get() == null || isPrivateRepoAllowedRef.get() == null) {
+    if (repoNamesRef.isNull() || userInfoRef.isNull()) {
       return;
     }
 
     // Show dialog (window)
-    final GithubShareDialog shareDialog = new GithubShareDialog(project, repoNamesRef.get(), isPrivateRepoAllowedRef.get());
+    final GithubShareDialog shareDialog =
+      new GithubShareDialog(project, repoNamesRef.get(), userInfoRef.get().getPlan().isPrivateRepoAllowed());
     shareDialog.show();
     if (!shareDialog.isOK()) {
       return;
@@ -190,7 +190,7 @@ public class GithubShareAction extends DumbAwareAction {
           // create GitHub repo (network)
           LOG.info("Creating GitHub repository");
           indicator.setText("Creating GitHub repository");
-          if (createGithubRepository(auth, name, description, isPrivate)) {
+          if (createGithubRepository(authRef.get(), name, description, isPrivate)) {
             LOG.info("Successfully created GitHub repository");
           }
           else {
@@ -220,7 +220,7 @@ public class GithubShareAction extends DumbAwareAction {
           indicator.setText("Adding GitHub as a remote host");
           final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
           addRemoteHandler.setSilent(true);
-          final String remoteUrl = GithubApiUtil.getGitHost() + "/" + loginRef.get() + "/" + name + ".git";
+          final String remoteUrl = GithubApiUtil.getGitHost() + "/" + userInfoRef.get().getLogin() + "/" + name + ".git";
           final String remoteName = finalExternalRemoteDetected ? "github" : "origin";
           addRemoteHandler.addParameters("add", remoteName, remoteUrl);
           try {
@@ -259,7 +259,7 @@ public class GithubShareAction extends DumbAwareAction {
         }
       }
     }.queue();
-    if (exceptionRef.get() != null) {
+    if (!exceptionRef.isNull()) {
       Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to create new GitHub repository");
     }
   }
@@ -449,14 +449,7 @@ public class GithubShareAction extends DumbAwareAction {
                                                @NotNull String title,
                                                @NotNull final String url) {
     Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, message, "<a href='" + url + "'>" + title + "</a>",
-                                                 NotificationType.INFORMATION, new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          BrowserUtil.launchBrowser(url);
-        }
-      }
-    });
+                                                 NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
     Notificator.getInstance(project).notify(notification);
   }
 }

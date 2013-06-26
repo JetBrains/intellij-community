@@ -837,6 +837,9 @@
                         serviceImplementation="com.intellij.codeInsight.CodeInsightUtilBase"/>
     <applicationService serviceInterface="com.intellij.ide.util.treeView.TreeAnchorizer"
                         serviceImplementation="com.intellij.ide.projectView.impl.nodes.PsiTreeAnchorizer"/>
+
+    <!--todo approve set order="last" for OpenFilesActivity-->
+    <postStartupActivity implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent" order="first"/>
   </extensions>
 </idea-plugin>
 

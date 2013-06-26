@@ -192,7 +192,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       else if (!myInstallationManager.isGradleSdkHome(new File(gradleHomePath))) {
         myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
-        return GradleBundle.message("gradle.home.setting.type.explicit.incorrect");
+        return GradleBundle.message("gradle.home.setting.type.explicit.incorrect", gradleHomePath);
       }
     }
     settings.setPreferLocalInstallationToWrapper(myUseLocalDistributionButton.isSelected());

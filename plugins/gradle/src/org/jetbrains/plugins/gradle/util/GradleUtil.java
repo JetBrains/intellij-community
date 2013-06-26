@@ -58,8 +58,8 @@ public class GradleUtil {
   /**
    * Tries to parse what gradle version should be used with gradle wrapper for the gradle project located at the given path. 
    *
-   * @param gradleProjectPath  target gradle project path
-   * @return gradle version should be used with gradle wrapper for the gradle project located at the given path
+   * @param gradleProjectPath  target gradle project config's (*.gradle) path or config file's directory path.
+   * @return                   gradle version should be used with gradle wrapper for the gradle project located at the given path
    *                           if any; <code>null</code> otherwise
    */
   @Nullable
@@ -68,11 +68,16 @@ public class GradleUtil {
       return null;
     }
     File file = new File(gradleProjectPath);
-    if (!file.isFile()) {
-      return null;
-    }
 
-    File gradleDir = new File(file.getParentFile(), "gradle");
+    // There is a possible case that given path points to a gradle script (*.gradle) but it's also possible that
+    // it references script's directory. We want to provide flexibility here.
+    File gradleDir;
+    if (file.isFile()) {
+      gradleDir = new File(file.getParentFile(), "gradle");
+    }
+    else {
+      gradleDir = file;
+    }
     if (!gradleDir.isDirectory()) {
       return null;
     }

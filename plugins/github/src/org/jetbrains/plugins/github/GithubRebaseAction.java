@@ -26,10 +26,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConsumer;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommand;
@@ -43,7 +44,6 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
@@ -91,7 +91,6 @@ public class GithubRebaseAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final GithubAuthData auth = GithubUtil.getAuthData();
 
     final VirtualFile root = project.getBaseDir();
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
@@ -104,7 +103,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     final GitRemote remote = GithubUtil.findGitHubRemoteBranch(gitRepository);
     final String pushUrl = GithubUtil.getGithubUrl(remote);
 
-    final String login = auth.getLogin();
+    final String login = GithubSettings.getInstance().getLogin();
     final int index = pushUrl.lastIndexOf(login);
     if (index == -1) {
       Messages.showErrorDialog(project, "Github remote repository doesn't seem to be your own repository: " + pushUrl,
@@ -116,33 +115,33 @@ public class GithubRebaseAction extends DumbAwareAction {
       repoName = repoName.substring(0, repoName.length() - 4);
     }
 
-    final AtomicReference<String> remoteForForkParentRepo = new AtomicReference<String>();
-    final AtomicReference<String> parentRepoUrlRef = new AtomicReference<String>();
+    final Ref<String> remoteForForkParentRepo = new Ref<String>();
+    final Ref<String> parentRepoUrlRef = new Ref<String>();
     final String finalRepoName = repoName;
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           // load repository info (network)
-          final RepositoryInfo repositoryInfo =
-            GithubUtil.runAndValidateAuth(project, auth, indicator, new ThrowableComputable<RepositoryInfo, IOException>() {
-              @Override
-              public RepositoryInfo compute() throws IOException {
-                return GithubUtil.getDetailedRepoInfo(auth, login, finalRepoName);
-              }
-            });
-          if (repositoryInfo == null) {
+          final Ref<RepositoryInfo> repositoryInfoRef = new Ref<RepositoryInfo>();
+          GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
+            @Override
+            public void consume(GithubAuthData authData) throws IOException {
+              repositoryInfoRef.set(GithubUtil.getDetailedRepoInfo(authData, login, finalRepoName));
+            }
+          });
+          if (repositoryInfoRef.isNull()) {
             Messages.showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl,
                                      CANNOT_PERFORM_GITHUB_REBASE);
             return;
           }
 
-          if (!repositoryInfo.isFork()) {
+          if (!repositoryInfoRef.get().isFork()) {
             Messages
               .showErrorDialog(project, "Github repository '" + finalRepoName + "' is not a forked one", CANNOT_PERFORM_GITHUB_REBASE);
             return;
           }
 
-          final String parent = repositoryInfo.getParentName();
+          final String parent = repositoryInfoRef.get().getParentName();
           LOG.assertTrue(parent != null, "Parent repository not found!");
           final String parentDotGit = parent + ".git";
           final String parentRepoUrl = GithubApiUtil.getGitHost() + "/" + parentDotGit;
@@ -167,7 +166,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     });
 
     final String parentRepoUrl = parentRepoUrlRef.get();
-    if (remoteForForkParentRepo.get() == null) {
+    if (remoteForForkParentRepo.isNull()) {
       final int result = Messages.showYesNoDialog(project, "It is necessary to have '" +
                                                            parentRepoUrl +
                                                            "' as a configured remote. Add remote?", "Github Rebase",
@@ -182,7 +181,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     new Task.Backgroundable(project, "Adding GitHub parent as a remote host") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (remoteForForkParentRepo.get() == null) {
+        if (remoteForForkParentRepo.isNull()) {
           try {
             LOG.info("Adding GitHub parent as a remote host");
             indicator.setText("Adding GitHub parent as a remote host");

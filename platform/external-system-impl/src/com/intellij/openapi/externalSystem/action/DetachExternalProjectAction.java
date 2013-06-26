@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.action;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,15 +31,18 @@ import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTr
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,15 +55,19 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
   public DetachExternalProjectAction() {
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
+    getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
   }
 
   @Override
   public void update(AnActionEvent e) {
     MyInfo info = getProcessingInfo(e.getDataContext());
-    if (info.icon != null) {
-      e.getPresentation().setIcon(info.icon);
+    String place = e.getPlace();
+    if (ExternalSystemConstants.TOOL_WINDOW_PLACE.equals(place)) {
+      e.getPresentation().setEnabled(info.externalProject != null);
     }
-    e.getPresentation().setVisible(info.externalProject != null);
+    else if (ExternalSystemConstants.TREE_CONTEXT_MENU_PLACE.equals(place)) {
+      e.getPresentation().setVisible(info.externalProject != null);
+    }
   }
 
   @Override
@@ -126,39 +134,35 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
     AbstractExternalSystemSettings<?, ?> settings = manager.getSettingsProvider().fun(ideProject);
     ExternalProjectSettings externalProjectSettings = settings.getLinkedProjectSettings(externalProject.getPath());
     AbstractExternalSystemLocalSettings localSettings = manager.getLocalSettingsProvider().fun(ideProject);
-    Icon icon = ExternalSystemUiUtil.getUiAware(externalSystemId).getProjectIcon();
+    
     return new MyInfo(externalProjectSettings == null ? null : settings,
                       localSettings == null ? null : localSettings,
                       externalProjectSettings == null ? null : externalProject,
                       ideProject,
-                      externalSystemId,
-                      icon);
+                      externalSystemId);
   }
   
   private static class MyInfo {
 
-    public static final MyInfo EMPTY = new MyInfo(null, null, null, null, null, null);
+    public static final MyInfo EMPTY = new MyInfo(null, null, null, null, null);
 
     @Nullable public final AbstractExternalSystemSettings<?, ?> settings;
     @Nullable public final AbstractExternalSystemLocalSettings  localSettings;
     @Nullable public final ExternalProjectPojo                  externalProject;
     @Nullable public final Project                              ideProject;
     @Nullable public final ProjectSystemId                      externalSystemId;
-    @Nullable public final Icon                                 icon;
 
     MyInfo(@Nullable AbstractExternalSystemSettings<?, ?> settings,
            @Nullable AbstractExternalSystemLocalSettings localSettings,
            @Nullable ExternalProjectPojo externalProject,
            @Nullable Project ideProject,
-           @Nullable ProjectSystemId externalSystemId,
-           @Nullable Icon icon)
+           @Nullable ProjectSystemId externalSystemId)
     {
       this.settings = settings;
       this.localSettings = localSettings;
       this.externalProject = externalProject;
       this.ideProject = ideProject;
       this.externalSystemId = externalSystemId;
-      this.icon = icon;
     }
   }
 }

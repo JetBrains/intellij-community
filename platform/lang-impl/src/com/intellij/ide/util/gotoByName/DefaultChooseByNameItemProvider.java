@@ -189,7 +189,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  public static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
+  private static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
     pattern = base.transformPattern(pattern);
 
     ChooseByNameModel model = base.getModel();
@@ -256,7 +256,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       @NotNull
       @Override
       public Pair<String, MinusculeMatcher> fun(String s) {
-        return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s), NameUtil.MatchingCaseSensitivity.NONE));
+        String namePattern = getNamePattern(base, s);
+        return Pair.create(namePattern, buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
       }
     });
   }

@@ -16,11 +16,9 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
@@ -32,16 +30,12 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
-import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +75,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       Element element = myState.getPropertiesElement();
       if (element != null) {
         //noinspection unchecked
-        myProperties.loadState(XmlSerializer.deserialize(element, XDebuggerUtilImpl.getStateClass(myProperties.getClass())));
+        myProperties.loadState(XmlSerializer.deserialize(element, ComponentSerializationUtil.getStateClass(myProperties.getClass())));
       }
     }
   }

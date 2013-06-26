@@ -82,8 +82,19 @@ public class Utils{
                                        @NotNull DataContext context,
                                        String place,
                                        ActionManager actionManager){
-    expandActionGroup(group, list, presentationFactory, context, place, actionManager, false);
+    expandActionGroup(group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
   }
+
+  public static void expandActionGroup(@NotNull ActionGroup group,
+                                       List<AnAction> list,
+                                       PresentationFactory presentationFactory,
+                                       DataContext context,
+                                       @NotNull String place,
+                                       ActionManager actionManager,
+                                       boolean transparentOnly) {
+    expandActionGroup(group, list, presentationFactory, context, place, actionManager, transparentOnly, false);
+  }
+
   /**
    * @param list this list contains expanded actions.
    * @param actionManager manager
@@ -94,7 +105,8 @@ public class Utils{
                                        DataContext context,
                                        @NotNull String place,
                                        ActionManager actionManager,
-                                       boolean transparentOnly) {
+                                       boolean transparentOnly,
+                                       boolean hideDisabled) {
     Presentation presentation = presentationFactory.getPresentation(group);
     AnActionEvent e = new AnActionEvent(
       null,
@@ -126,11 +138,15 @@ public class Utils{
         if (!doUpdate(child, e1, presentation)) continue;
       }
 
-      if (!presentation.isVisible()) { // don't create invisible items in the menu
+      if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
         continue;
       }
       if (child instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)child;
+        boolean skip = hideDisabled && !hasEnabledChildren(actionGroup, presentationFactory, context, place);
+        if (skip) {
+          continue;
+        }
         if (actionGroup.isPopup()) { // popup menu has its own presentation
           if (actionGroup.disableIfNoVisibleChildren()) {
             final boolean visibleChildren = hasVisibleChildren(actionGroup, presentationFactory, context, place);
@@ -140,10 +156,11 @@ public class Utils{
             presentation.setEnabled(actionGroup.canBePerformed(context) || visibleChildren);
           }
 
+
           list.add(child);
         }
         else {
-          expandActionGroup((ActionGroup)child, list, presentationFactory, context, place, actionManager);
+          expandActionGroup((ActionGroup)child, list, presentationFactory, context, place, actionManager, false, hideDisabled);
         }
       }
       else if (child instanceof Separator) {
@@ -152,6 +169,9 @@ public class Utils{
         }
       }
       else {
+        if (hideDisabled && !hasEnabledChildren(new DefaultActionGroup(child), presentationFactory, context, place)) {
+          continue;
+        }
         list.add(child);
       }
     }
@@ -213,6 +233,45 @@ public class Utils{
         }
       }
       else if (presentation.isVisible()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+  private static boolean hasEnabledChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
+    AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
+    event.setInjectedContext(group.isInInjectedContext());
+    for (AnAction anAction : group.getChildren(event)) {
+      if (anAction == null) {
+        LOG.error("Null action found in group " + group + ", " + factory.getPresentation(group));
+        continue;
+      }
+      if (anAction instanceof Separator) {
+        continue;
+      }
+      final Project project = PlatformDataKeys.PROJECT.getData(context);
+      if (project != null && DumbService.getInstance(project).isDumb() && !anAction.isDumbAware()) {
+        continue;
+      }
+
+      final Presentation presentation = factory.getPresentation(anAction);
+      updateGroupChild(context, place, anAction, presentation);
+      if (anAction instanceof ActionGroup) {
+        ActionGroup childGroup = (ActionGroup)anAction;
+
+        // popup menu must be visible itself
+        if (childGroup.isPopup()) {
+          if (!presentation.isEnabled()) {
+            continue;
+          }
+        }
+
+        if (hasEnabledChildren(childGroup, factory, context, place)) {
+          return true;
+        }
+      }
+      else if (presentation.isEnabled()) {
         return true;
       }
     }

@@ -16,11 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.FileTypeUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,6 +34,14 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean commentsAreContent = false;
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    node.addContent(new Element("option").setAttribute("name", "m_reportEmptyBlocks").setAttribute("value", String.valueOf(m_reportEmptyBlocks)));
+    if (commentsAreContent) {
+      node.addContent(new Element("option").setAttribute("name", "commentsAreContent").setAttribute("value", "true"));
+    }
+  }
 
   @Override
   @NotNull
