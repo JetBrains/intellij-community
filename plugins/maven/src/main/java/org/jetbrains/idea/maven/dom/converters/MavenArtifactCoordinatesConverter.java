@@ -33,11 +33,13 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -267,27 +269,42 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
-      if (id.getVersion() == null && id.getGroupId() != null && id.getArtifactId() != null) {
-        DomElement parent = context.getInvocationElement().getParent();
-        if (parent instanceof MavenDomDependency) {
-          MavenDomDependency managedDependency = MavenDomProjectProcessorUtils.searchManagingDependency((MavenDomDependency)parent);
-          if (managedDependency != null && !"import".equals(managedDependency.getScope().getStringValue())) {
-            final GenericDomValue<String> managedDependencyArtifactId = managedDependency.getArtifactId();
-            PsiElement res = RecursionManager.doPreventingRecursion(managedDependencyArtifactId, false, new Computable<PsiElement>() {
-              @Override
-              public PsiElement compute() {
-                return new GenericDomValueReference(managedDependencyArtifactId).resolve();
-              }
-            });
+      PsiFile res = super.resolve(project, id, context);
+      if (res != null) return res;
 
-            if (res instanceof PsiFile) {
-              return (PsiFile)res;
-            }
+      DomElement parent = context.getInvocationElement().getParent();
+      if (!(parent instanceof MavenDomDependency)) return null;
+
+      DependencyConflictId dependencyId = DependencyConflictId.create((MavenDomDependency)parent);
+      if (dependencyId == null) return null;
+
+      VirtualFile file = context.getFile().getOriginalFile().getVirtualFile();
+      if (file == null) return null;
+
+      MavenProject mavenProject = MavenProjectsManager.getInstance(context.getProject()).findProject(file);
+      if (mavenProject != null) {
+        for (MavenArtifact artifact : mavenProject.getDependencies()) {
+          if (dependencyId.equals(DependencyConflictId.create(artifact))) {
+            return super.resolve(project, new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
           }
         }
       }
 
-      return super.resolve(project, id, context);
+      if (id.getVersion() == null) {
+        MavenDomDependency managedDependency = MavenDomProjectProcessorUtils.searchManagingDependency((MavenDomDependency)parent);
+        if (managedDependency != null) {
+          final GenericDomValue<String> managedDependencyArtifactId = managedDependency.getArtifactId();
+          return RecursionManager.doPreventingRecursion(managedDependencyArtifactId, false, new Computable<PsiFile>() {
+            @Override
+            public PsiFile compute() {
+              PsiElement res = new GenericDomValueReference(managedDependencyArtifactId).resolve();
+              return res instanceof PsiFile ? (PsiFile)res : null;
+            }
+          });
+        }
+      }
+
+      return null;
     }
 
     @Override
