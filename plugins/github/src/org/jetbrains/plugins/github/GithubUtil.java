@@ -129,12 +129,12 @@ public class GithubUtil {
   }
 
   private static boolean testConnection(@NotNull GithubAuthData auth) throws IOException {
-    GithubUser user = retrieveCurrentUserInfo(auth);
+    GithubUser user = getCurrentUserInfo(auth);
     return user != null;
   }
 
   @Nullable
-  private static GithubUser retrieveCurrentUserInfo(@NotNull GithubAuthData auth) throws IOException {
+  public static GithubUser getCurrentUserInfo(@NotNull GithubAuthData auth) throws IOException {
     JsonElement result = GithubApiUtil.getRequest(auth, "/user");
     return parseUserInfo(result);
   }
@@ -154,7 +154,8 @@ public class GithubUtil {
       return null;
     }
     GithubUser.Plan plan = parsePlan(obj.get("plan"));
-    return new GithubUser(plan);
+    String login = obj.get("login").getAsString();
+    return new GithubUser(login, plan);
   }
 
   @NotNull
@@ -217,14 +218,6 @@ public class GithubUtil {
         String.format("Exception was thrown when trying to retrieve information about repository.  Owner: %s, Name: %s", owner, name));
       return null;
     }
-  }
-
-  public static boolean isPrivateRepoAllowed(@NotNull GithubAuthData auth) throws IOException {
-    GithubUser user = retrieveCurrentUserInfo(auth);
-    if (user == null) {
-      return false;
-    }
-    return user.getPlan().isPrivateRepoAllowed();
   }
 
   @Nullable

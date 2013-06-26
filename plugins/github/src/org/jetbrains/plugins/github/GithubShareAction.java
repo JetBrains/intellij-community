@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -129,6 +128,7 @@ public class GithubShareAction extends DumbAwareAction {
     // get available GitHub repos with modal progress
     final AtomicReference<HashSet<String>> repoNamesRef = new AtomicReference<HashSet<String>>();
     final AtomicReference<Boolean> isPrivateRepoAllowedRef = new AtomicReference<Boolean>();
+    final AtomicReference<String> loginRef = new AtomicReference<String>();
     final AtomicReference<IOException> exceptionRef = new AtomicReference<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
@@ -151,8 +151,12 @@ public class GithubShareAction extends DumbAwareAction {
           repoNamesRef.set(names);
 
           // check access to private repos (network)
-          final Boolean privateRepoAllowed = GithubUtil.isPrivateRepoAllowed(auth);
-          isPrivateRepoAllowedRef.set(privateRepoAllowed);
+          final GithubUser userInfo = GithubUtil.getCurrentUserInfo(auth);
+          if (userInfo == null) {
+            return;
+          }
+          isPrivateRepoAllowedRef.set(userInfo.getPlan().isPrivateRepoAllowed());
+          loginRef.set(userInfo.getLogin());
         }
         catch (IOException e) {
           exceptionRef.set(e);
@@ -216,7 +220,7 @@ public class GithubShareAction extends DumbAwareAction {
           indicator.setText("Adding GitHub as a remote host");
           final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
           addRemoteHandler.setSilent(true);
-          final String remoteUrl = GithubApiUtil.getGitHost() + "/" + auth.getLogin() + "/" + name + ".git";
+          final String remoteUrl = GithubApiUtil.getGitHost() + "/" + loginRef.get() + "/" + name + ".git";
           final String remoteName = finalExternalRemoteDetected ? "github" : "origin";
           addRemoteHandler.addParameters("add", remoteName, remoteUrl);
           try {
@@ -233,7 +237,6 @@ public class GithubShareAction extends DumbAwareAction {
             return;
           }
 
-          //TODO: login - case-insensitive, remoteUrl - case-insensitive, gitUrl - case-sensitive. DAFAQ
           //git push origin master
           LOG.info("Pushing to github master");
           indicator.setText("Pushing to github master");

@@ -41,6 +41,7 @@ class GithubUser {
 
     public static Plan fromString(String name) {
       for (Plan plan : values()) {
+
         if (plan.name().equalsIgnoreCase(name)) {
           return plan;
         }
@@ -54,14 +55,21 @@ class GithubUser {
   }
 
   @NotNull private final Plan myPlan;
+  @NotNull private final String myLogin;
 
-  GithubUser(@NotNull Plan plan) {
+  GithubUser(@NotNull String login, @NotNull Plan plan) {
+    myLogin = login;
     myPlan = plan;
   }
 
   @NotNull
   Plan getPlan() {
     return myPlan;
+  }
+
+  @NotNull
+  String getLogin() {
+    return myLogin;
   }
 
 }
