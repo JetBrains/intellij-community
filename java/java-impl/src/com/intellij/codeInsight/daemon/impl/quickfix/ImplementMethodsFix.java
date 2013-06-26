@@ -28,15 +28,17 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
+import net.sf.cglib.core.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
@@ -107,6 +109,6 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
 
     return OverrideImplementUtil
-      .showOverrideImplementChooser(editor, startElement, true, OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true), Collections.<CandidateInfo>emptyList());
+      .showOverrideImplementChooser(editor, startElement, true, OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true), ContainerUtil.<CandidateInfo>newArrayList());
   }
 }

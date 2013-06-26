@@ -435,17 +435,6 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
                                           ContainerUtil.<CandidateInfo>newArrayList() : getMethodsToOverrideImplement(aClass, true);
 
-    if (toImplement && PsiUtil.isLanguageLevel8OrHigher(aClass)) {
-      for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
-        CandidateInfo candidate = iterator.next();
-        PsiElement element = candidate.getElement();
-        if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
-          iterator.remove();
-          secondary.add(candidate);
-        }
-      }
-    }
-
     final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;
 
@@ -461,12 +450,26 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }.execute();
   }
 
+  /**
+   * @param candidates, secondary should allow modifications
+   */
   @Nullable
   public static MemberChooser<PsiMethodMember> showOverrideImplementChooser(Editor editor,
                                                                             final PsiElement aClass,
                                                                             final boolean toImplement,
                                                                             final Collection<CandidateInfo> candidates,
                                                                             Collection<CandidateInfo> secondary) {
+
+    if (toImplement && PsiUtil.isLanguageLevel8OrHigher(aClass)) {
+      for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
+        CandidateInfo candidate = iterator.next();
+        PsiElement element = candidate.getElement();
+        if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
+          iterator.remove();
+          secondary.add(candidate);
+        }
+      }
+    }
 
     final JavaOverrideImplementMemberChooser chooser =
       JavaOverrideImplementMemberChooser.create(aClass, toImplement, candidates, secondary);

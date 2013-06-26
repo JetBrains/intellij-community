@@ -55,7 +55,7 @@ public class OverrideImplementExploreUtil {
         continue;
       }
       // filter already implemented
-      if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) {
+      if (aClass != hisClass && MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) {
         continue;
       }
 
