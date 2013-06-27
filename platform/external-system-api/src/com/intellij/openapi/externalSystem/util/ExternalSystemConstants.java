@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ExternalSystemConstants {
 
-  @NonNls @NotNull public static final String NEWLY_IMPORTED_PROJECT  = "external.system.newly.imported";
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_ID_KEY  = "external.system.id";
   @NonNls @NotNull public static final String LINKED_PROJECT_PATH_KEY = "external.linked.project.path";
 

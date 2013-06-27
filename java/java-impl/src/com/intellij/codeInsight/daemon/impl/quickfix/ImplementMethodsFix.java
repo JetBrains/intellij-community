@@ -30,16 +30,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import net.sf.cglib.core.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public ImplementMethodsFix(PsiElement aClass) {
@@ -77,7 +72,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(myPsiElement.getContainingFile())) return;
     if (myPsiElement instanceof PsiEnumConstant) {
-      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, ((PsiEnumConstant)myPsiElement).getContainingClass());
+      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, ((PsiEnumConstant)myPsiElement).getContainingClass(), true);
       if (chooser == null) return;
 
       final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
@@ -105,10 +100,14 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
 
   @Nullable
-  protected static MemberChooser<PsiMethodMember> chooseMethodsToImplement(Editor editor, PsiElement startElement, PsiClass aClass) {
+  protected static MemberChooser<PsiMethodMember> chooseMethodsToImplement(Editor editor,
+                                                                           PsiElement startElement,
+                                                                           PsiClass aClass, 
+                                                                           boolean implemented) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
 
+    final Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMapToOverrideImplement(aClass, true, implemented).values();
     return OverrideImplementUtil
-      .showOverrideImplementChooser(editor, startElement, true, OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true), ContainerUtil.<CandidateInfo>newArrayList());
+      .showOverrideImplementChooser(editor, startElement, true, overrideImplement, ContainerUtil.<CandidateInfo>newArrayList());
   }
 }

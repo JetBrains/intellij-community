@@ -42,38 +42,37 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   @Nullable
   @Override
   public GenerationInfo generateGetter() throws IncorrectOperationException {
-    final GenerationInfo[] infos = generateGetters();
+    final GenerationInfo[] infos = generateGetters(getElement().getContainingClass());
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
 
   @Nullable
   @Override
-  public GenerationInfo[] generateGetters() throws IncorrectOperationException {
-    final PsiField field = getElement();
-    return createGenerateInfos(field, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
+  public GenerationInfo[] generateGetters(PsiClass aClass) throws IncorrectOperationException {
+    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(getElement(), true));
   }
 
   @Nullable
   @Override
   public GenerationInfo generateSetter() throws IncorrectOperationException {
-    final GenerationInfo[] infos = generateSetters();
+    final GenerationInfo[] infos = generateSetters(getElement().getContainingClass());
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
 
   @Override
   @Nullable
-  public GenerationInfo[] generateSetters() {
+  public GenerationInfo[] generateSetters(PsiClass aClass) {
     final PsiField field = getElement();
     if (GetterSetterPrototypeProvider.isReadOnlyProperty(field)) {
       return null;
     }
-    return createGenerateInfos(field, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
+    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
   }
 
-  private static GenerationInfo[] createGenerateInfos(PsiField field, PsiMethod[] prototypes) {
+  private static GenerationInfo[] createGenerateInfos(PsiClass aClass, PsiMethod[] prototypes) {
     final List<GenerationInfo> methods = new ArrayList<GenerationInfo>();
     for (PsiMethod prototype : prototypes) {
-      final PsiMethod method = createMethodIfNotExists(field, prototype);
+      final PsiMethod method = createMethodIfNotExists(aClass, prototype);
       if (method != null) {
         methods.add(new PsiGenerationInfo(method));
       }
@@ -82,8 +81,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   }
 
   @Nullable
-  private static PsiMethod createMethodIfNotExists(final PsiField field, final PsiMethod template) {
-    final PsiClass aClass = field.getContainingClass();
+  private static PsiMethod createMethodIfNotExists(PsiClass aClass, final PsiMethod template) {
     PsiMethod existing = aClass.findMethodBySignature(template, false);
     if (existing == null) {
       if (template != null) {

@@ -787,6 +787,7 @@ public class CompileDriver {
     final NotificationListener hyperlinkHandler = new NotificationListener.Adapter() {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+        notification.expire();
         if (!myProject.isDisposed()) {
           ShowSettingsUtil.getInstance().editConfigurable(myProject, new CompilerConfigurable(myProject));
         }

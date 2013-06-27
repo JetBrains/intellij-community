@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,31 @@
 
 package com.intellij.codeInsight.preview;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
-public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponent {
-
-  public ImageOrColorPreviewProjectComponent(final Project project) {
-    super(project);
-  }
-
+public class ImageOrColorPreviewProjectComponent implements StartupActivity, DumbAware {
   @Override
-  public void projectOpened() {
-    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ImageOrColorPreviewComponent";
+  public void runActivity(Project project) {
+    if (!project.isDefault()) {
+      project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
+    }
   }
 
   private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
       if (isSuitable(source.getProject(), file)) {
-        final FileEditor[] fileEditors = source.getEditors(file);
-        for (final FileEditor each : fileEditors) {
+        for (final FileEditor each : source.getEditors(file)) {
           if (each instanceof TextEditor) {
             Disposer.register(each, new ImageOrColorPreviewManager((TextEditor)each, source.getProject()));
           }
@@ -64,10 +50,12 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
 
     private static boolean isSuitable(final Project project, final VirtualFile file) {
       final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(file);
-      if (provider == null) return false;
+      if (provider == null) {
+        return false;
+      }
 
       for (final PsiFile psiFile : provider.getAllFiles()) {
-        for(PreviewHintProvider hintProvider: Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
+        for (PreviewHintProvider hintProvider : Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
           if (hintProvider.isSupportedFile(psiFile)) {
             return true;
           }
@@ -77,6 +65,4 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
       return false;
     }
   }
-
-
 }

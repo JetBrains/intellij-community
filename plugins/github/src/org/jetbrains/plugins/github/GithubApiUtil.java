@@ -55,27 +55,8 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement anonymousGetRequest(@NotNull String host, @NotNull String path) throws IOException {
-    return request(host, null, null, path, null, false);
-  }
-
-  @Nullable
   public static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
     return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, null, false);
-  }
-
-  @Nullable
-  public static JsonElement getRequest(@NotNull String host, @NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(host, auth.getLogin(), auth.getPassword(), path, null, false);
-  }
-
-  @Nullable
-  public static JsonElement postRequest(@NotNull String host,
-                                        @Nullable String login,
-                                        @Nullable String password,
-                                        @NotNull String path,
-                                        @Nullable String requestBody) throws IOException {
-    return request(host, login, password, path, requestBody, true);
   }
 
   @Nullable

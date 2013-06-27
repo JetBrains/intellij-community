@@ -47,7 +47,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     // Check if git is already initialized and presence of remote branch
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository gitRepository = manager.getRepositoryForFile(root);
-    if (gitRepository == null){
+    if (gitRepository == null) {
       return null;
     }
 
@@ -61,23 +61,23 @@ public class GithubCheckoutListener implements CheckoutListener {
       return null;
     }
     int i = url.lastIndexOf("/");
-    if (i == -1){
+    if (i == -1) {
       return null;
     }
     String name = url.substring(i + 1);
-    if (name.endsWith(".git")){
+    if (name.endsWith(".git")) {
       name = name.substring(0, name.length() - 4);
     }
     url = url.substring(0, i);
     // We don't want https://
-    if (url.startsWith("https://")){
+    if (url.startsWith("https://")) {
       url = url.substring(8);
     }
     i = url.lastIndexOf(':');
     if (i == -1) {
       i = url.lastIndexOf('/');
     }
-    if (i == -1){
+    if (i == -1) {
       return null;
     }
     final String author = url.substring(i + 1);
@@ -98,14 +98,13 @@ public class GithubCheckoutListener implements CheckoutListener {
     };
     if (openedProject.isInitialized()) {
       taskInitializationRunnable.run();
-    } else {
+    }
+    else {
       StartupManager.getInstance(openedProject).runWhenProjectIsInitialized(taskInitializationRunnable);
     }
   }
 
-  private static void enableGithubTrackerIntegration(final Project project,
-                                                     final String author,
-                                                     final String name) {
+  private static void enableGithubTrackerIntegration(final Project project, final String author, final String name) {
     // Look for github repository type
     final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     final TaskRepository[] allRepositories = manager.getAllRepositories();
@@ -115,7 +114,6 @@ public class GithubCheckoutListener implements CheckoutListener {
       }
     }
     // Create new one if not found exists
-    // TODO: Validate password?
     GithubSettings settings = GithubSettings.getInstance();
     final GitHubRepository repository = new GitHubRepository(new GitHubRepositoryType());
     repository.setUsername(settings.getLogin());

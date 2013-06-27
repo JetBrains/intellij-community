@@ -17,10 +17,15 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
+import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +47,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
   private static final String HOST = "Host";
-  private static final String ANONIMOUS_GIST = "Anonymous";
+  private static final String ANONYMOUS_GIST = "Anonymous";
   private static final String OPEN_IN_BROWSER_GIST = "OpenInBrowser";
   private static final String PRIVATE_GIST = "Private";
   public static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
@@ -55,7 +60,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private boolean myAnonymousGist;
   private boolean myOpenInBrowserGist = true;
   private boolean myPrivateGist;
-  private Collection<String> myTrustedHosts = new ArrayList<String>();
+  private final Collection<String> myTrustedHosts = new ArrayList<String>();
 
   private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
 
@@ -67,7 +72,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, getLogin());
     element.setAttribute(HOST, getHost());
-    element.setAttribute(ANONIMOUS_GIST, String.valueOf(isAnonymous()));
+    element.setAttribute(ANONYMOUS_GIST, String.valueOf(isAnonymous()));
     element.setAttribute(PRIVATE_GIST, String.valueOf(isPrivateGist()));
     element.setAttribute(OPEN_IN_BROWSER_GIST, String.valueOf(isOpenInBrowserGist()));
     Element trustedHosts = new Element(TRUSTED_HOSTS);
@@ -85,7 +90,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     try {
       setLogin(element.getAttributeValue(LOGIN));
       setHost(element.getAttributeValue(HOST));
-      setAnonymousGist(Boolean.valueOf(element.getAttributeValue(ANONIMOUS_GIST)));
+      setAnonymousGist(Boolean.valueOf(element.getAttributeValue(ANONYMOUS_GIST)));
       setPrivateGist(Boolean.valueOf(element.getAttributeValue(PRIVATE_GIST)));
       setOpenInBrowserGist(Boolean.valueOf(element.getAttributeValue(OPEN_IN_BROWSER_GIST)));
       for (Object trustedHost : element.getChildren(TRUSTED_HOSTS)) {
@@ -100,7 +105,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   // TODO return null if no login instead of empty string
   @NotNull
   public String getLogin() {
-    return myLogin != null ? myLogin : "";
+    return StringUtil.notNullize(myLogin);
   }
 
   @NotNull
@@ -116,11 +121,11 @@ public class GithubSettings implements PersistentStateComponent<Element> {
       password = "";
     }
 
-    return password != null ? password : "";
+    return StringUtil.notNullize(password);
   }
 
   public String getHost() {
-    return myHost != null ? myHost : GithubApiUtil.DEFAULT_GITHUB_HOST;
+    return StringUtil.notNullize(myHost, GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   public boolean isAnonymous() {
@@ -136,12 +141,25 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setLogin(final String login) {
-    myLogin = login != null ? login : "";
+    myLogin = StringUtil.notNullize(login);
   }
 
   public void setPassword(final String password) {
+    setPassword(password, true);
+  }
+
+  public void setPassword(final String password, final boolean rememberPassword) {
     try {
-      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password != null ? password : "");
+      if (rememberPassword) {
+        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, StringUtil.notNullize(password));
+      }
+      else {
+        final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+        if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
+          passwordSafe.getMemoryProvider()
+            .storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, StringUtil.notNullize(password));
+        }
+      }
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't set password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
@@ -149,7 +167,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setHost(final String host) {
-    myHost = host != null ? host : GithubApiUtil.DEFAULT_GITHUB_HOST;
+    myHost = StringUtil.notNullize(host, GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   public void setAnonymousGist(final boolean anonymousGist) {
@@ -175,9 +193,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  public void setAuth(@NotNull GithubAuthData auth) {
+  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
     setHost(auth.getHost());
     setLogin(auth.getLogin());
-    setPassword(auth.getPassword());
+    setPassword(auth.getPassword(), rememberPassword);
   }
 }

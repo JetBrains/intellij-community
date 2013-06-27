@@ -55,7 +55,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
 
   @Nullable
   static PsiElement getAnchor(PsiElement element) {
-    LOG.assertTrue(element.isValid());
+    LOG.assertTrue(element.isValid(), element);
     PsiElement anchor = null;
     if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {

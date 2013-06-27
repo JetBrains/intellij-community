@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentTasksList;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,6 +38,8 @@ public class ExternalSystemDataKeys {
 
   @NotNull public static final DataKey<ExternalSystemRecentTasksList> RECENT_TASKS_LIST
     = DataKey.create("external.system.recent.tasks.list");
+
+  @NotNull public static final Key<Boolean> NEWLY_IMPORTED_PROJECT = new Key<Boolean>("external.system.newly.imported");
 
   private ExternalSystemDataKeys() {
   }

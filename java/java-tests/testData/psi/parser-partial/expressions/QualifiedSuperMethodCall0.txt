@@ -14,6 +14,8 @@ PsiJavaFile:QualifiedSuperMethodCall0.java
           PsiJavaToken:LPARENTH('(')
           PsiJavaToken:RPARENTH(')')
       PsiJavaToken:DOT('.')
+      PsiReferenceParameterList
+        <empty list>
       PsiKeyword:super('super')
     PsiExpressionList
       PsiJavaToken:LPARENTH('(')

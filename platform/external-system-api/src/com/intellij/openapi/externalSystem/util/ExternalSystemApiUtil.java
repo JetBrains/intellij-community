@@ -184,7 +184,7 @@ public class ExternalSystemApiUtil {
    */
   @NotNull
   public static String toCanonicalPath(@NotNull String path) {
-    return PathUtil.getCanonicalPath(new File(path).getAbsolutePath());
+    return PathUtil.getCanonicalPath(normalizePath(new File(path).getAbsolutePath()));
   }
 
   @NotNull
@@ -215,6 +215,7 @@ public class ExternalSystemApiUtil {
   @NotNull
   public static <K, V> Map<DataNode<K>, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
     return groupBy(nodes, new Function<DataNode<V>, DataNode<K>>() {
+      @Nullable
       @Override
       public DataNode<K> fun(DataNode<V> node) {
         return node.getDataNode(key);
@@ -355,7 +356,10 @@ public class ExternalSystemApiUtil {
     if (!pathToUse.startsWith("/")) {
       pathToUse = '/' + pathToUse;
     }
-    classPath.add(PathManager.getResourceRoot(contextClass, pathToUse));
+    String root = PathManager.getResourceRoot(contextClass, pathToUse);
+    if (root != null) {
+      classPath.add(root);
+    }
   }
 
   @SuppressWarnings("ConstantConditions")

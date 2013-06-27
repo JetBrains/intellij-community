@@ -96,13 +96,12 @@ public class TypeMigrationLabeler {
       final PsiElement element = p.getFirst().retrieve();
       LOG.assertTrue(element != null);
       final PsiType type = ((PsiExpression)element).getType();
-      report[j++] = "Cannot convert type of expression <b>" +
-                    StringUtil.escapeXml(element.getText()) +
-                    "</b>" +
-                    " from <b>" +
-                    StringUtil.escapeXml(type.getCanonicalText()) +
-                    "</b> to <b>" + StringUtil.escapeXml(p.getSecond().getCanonicalText()) +
-                    "</b><br>";
+      report[j++] = "Cannot convert type of expression <b>" + StringUtil.escapeXml(element.getText()) + "</b>" +
+                    (type != null
+                     ? " from <b>" + StringUtil.escapeXml(type.getCanonicalText()) + "</b>" +
+                       " to <b>" + StringUtil.escapeXml(p.getSecond().getCanonicalText()) + "</b>"
+                     : "")
+                    + "<br>";
     }
 
     return report;
@@ -539,7 +538,6 @@ public class TypeMigrationLabeler {
   }
 
   void markFailedConversion(final Pair<PsiType, PsiType> typePair, final PsiExpression expression) {
-    LOG.assertTrue(expression.getType() != null);
     LOG.assertTrue(typePair.getSecond() != null);
     myFailedConversions.add(new Pair<PsiAnchor, PsiType>(PsiAnchor.create(expression), typePair.getSecond()));
   }

@@ -1,4 +1,6 @@
 package com.intellij.navigation
+
+import com.intellij.ide.util.gotoByName.ChooseByNameBase
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.GotoClassModel2
@@ -14,12 +16,20 @@ import com.intellij.util.concurrency.Semaphore
  */
 class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test trivial goto class"() {
-    def xxClass = myFixture.addClass("class Xxxxx {}")
-    def fooXxClass = myFixture.addClass("class FooXxxxx {}")
-    List<Object> elements = createPopup(new GotoClassModel2(project), "Xxx")
-    assert elements[0] == xxClass
-    assert elements[2] == fooXxClass
+  public void "test goto class order by matching degree"() {
+    def startMatch = myFixture.addClass("class UiUtil {}")
+    def wordSkipMatch = myFixture.addClass("class UiAbstractUtil {}")
+    def camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}")
+    def middleMatch = myFixture.addClass("class BaseUiUtil {}")
+    def elements = createPopup(new GotoClassModel2(project), "uiuti")
+    assert elements == [startMatch, wordSkipMatch, camelMatch, ChooseByNameBase.NON_PREFIX_SEPARATOR, middleMatch]
+  }
+
+  public void "test annotation syntax"() {
+    def match = myFixture.addClass("@interface Anno1 {}")
+    myFixture.addClass("class Anno2 {}")
+    def elements = createPopup(new GotoClassModel2(project), "@Anno")
+    assert elements == [match]
   }
 
   private List<Object> createPopup(ChooseByNameModel model, String text) {
