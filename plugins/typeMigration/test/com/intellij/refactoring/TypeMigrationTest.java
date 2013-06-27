@@ -834,4 +834,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          JavaPsiFacade.getInstance(myProject).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, scope),
                          PsiType.getJavaLangString(myPsiManager, scope));
   }
+
+  public void testT137() throws Exception {
+    doTestFirstParamType("foo", "Test", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  }
 }
