@@ -20,9 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -237,20 +234,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @Nullable
   private PsiElement resolveToJavaHome(@NotNull MavenProject mavenProject) {
-    Module module = myProjectsManager.findModule(mavenProject);
-    if (module == null) return null;
-
-    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk == null) return null;
-
-    VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return null;
-
-    VirtualFile jreDir = homeDirectory.findChild("jre");
+    String jreDir = MavenUtil.getModuleJre(myProjectsManager, mavenProject);
     if (jreDir == null) return null;
 
     PsiFile propFile = PsiFileFactory.getInstance(myProject).createFileFromText("SystemProperties.properties", PropertiesLanguage.INSTANCE,
-                                                                                "java.home=" + jreDir.getPath());
+                                                                                "java.home=" + jreDir);
 
     return ((PropertiesFile)propFile).getProperties().get(0).getPsiElement();
   }

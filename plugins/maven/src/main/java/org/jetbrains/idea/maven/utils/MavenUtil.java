@@ -33,12 +33,15 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -786,5 +789,26 @@ public class MavenUtil {
     }
 
     return (int)crc.getValue();
+  }
+
+  @Nullable
+  public static String getModuleJre(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+    Module module = mavenProjectsManager.findModule(mavenProject);
+    if (module == null) return null;
+
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk == null) return null;
+
+    VirtualFile homeDirectory = sdk.getHomeDirectory();
+    if (homeDirectory == null) return null;
+
+    if (!"jre".equals(homeDirectory.getName())) {
+      VirtualFile jreDir = homeDirectory.findChild("jre");
+      if (jreDir != null) {
+        homeDirectory = jreDir;
+      }
+    }
+
+    return homeDirectory.getPath();
   }
 }
