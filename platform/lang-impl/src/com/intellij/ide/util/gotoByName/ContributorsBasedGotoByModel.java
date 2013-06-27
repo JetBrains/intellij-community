@@ -78,7 +78,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
 
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, ProgressManager.getInstance().getProgressIndicator(), false,
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, false,
                                                 new Processor<ChooseByNameContributor>() {
                                                   @Override
                                                   public boolean process(ChooseByNameContributor contributor) {
@@ -99,6 +100,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
                                                     return true;
                                                   }
                                                 });
+    indicator.checkCanceled();
     long finish = System.currentTimeMillis();
     if (LOG.isDebugEnabled()) {
       LOG.debug("getNames(): "+(finish-start)+"ms; (got "+names.size()+" elements)");
