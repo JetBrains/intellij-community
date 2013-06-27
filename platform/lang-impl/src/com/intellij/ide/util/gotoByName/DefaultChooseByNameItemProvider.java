@@ -33,6 +33,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,18 +126,27 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   protected void sortNamesList(@NotNull String namePattern, @NotNull List<String> namesList) {
     final MinusculeMatcher matcher = buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    final Set<String> startMatches = ContainerUtil.newHashSet();
+    final TObjectIntHashMap<String> matchingDegrees = new TObjectIntHashMap<String>();
+    for (String name : namesList) {
+      if (matcher.isStartMatch(name)) {
+        startMatches.add(name);
+      }
+      matchingDegrees.put(name, matcher.matchingDegree(name));
+    }
+
     // Here we sort using namePattern to have similar logic with empty qualified patten case
     Collections.sort(namesList, new Comparator<String>() {
       @Override
       public int compare(String o1, String o2) {
-        boolean start1 = matcher.isStartMatch(o1);
-        boolean start2 = matcher.isStartMatch(o2);
+        boolean start1 = startMatches.contains(o1);
+        boolean start2 = startMatches.contains(o2);
         if (start1 != start2) return start1 ? -1 : 1;
 
-        int degree1 = matcher.matchingDegree(o2);
-        int degree2 = matcher.matchingDegree(o1);
-        if (degree1 < degree2) return -1;
-        if (degree1 > degree2) return 1;
+        int degree1 = matchingDegrees.get(o1);
+        int degree2 = matchingDegrees.get(o2);
+        if (degree2 < degree1) return -1;
+        if (degree2 > degree1) return 1;
 
         return o1.compareToIgnoreCase(o2);
       }
