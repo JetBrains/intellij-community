@@ -39,6 +39,14 @@ public interface Group extends Actions {
 	@NotNull
 	GenericAttributeValue<Boolean> getPopup();
 
+	/**
+	 * Returns the value of the compact child.
+	 * Attribute popup
+	 * @return the value of the compact child.
+	 */
+	@NotNull
+	GenericAttributeValue<Boolean> getCompact();
+
 
 	/**
 	 * Returns the value of the icon child.
