@@ -64,7 +64,7 @@ public class GithubShareDialog extends DialogWrapper {
       return;
     }
     if (!GITHUB_REPO_PATTERN.matcher(repositoryName).matches()){
-      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes and underscores");
+      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores");
       setOKActionEnabled(false);
       return;
     }
