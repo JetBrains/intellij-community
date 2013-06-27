@@ -269,7 +269,7 @@ public class JavaCompletionSorting {
           if (type == info.getType() && defaultType == info.getDefaultType()) {
             return info;
           }
-          return new ExpectedTypeInfoImpl(type, info.getKind(), 0, defaultType, info.getTailType());
+          return new ExpectedTypeInfoImpl(type, info.getKind(), defaultType, info.getTailType());
         }
       });
       myParameters = parameters;
