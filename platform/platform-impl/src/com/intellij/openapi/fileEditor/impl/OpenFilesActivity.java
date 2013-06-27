@@ -33,6 +33,7 @@ public class OpenFilesActivity implements StartupActivity, DumbAware {
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     if (fileEditorManager instanceof FileEditorManagerImpl) {
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
           manager.getMainSplitters().openFiles();

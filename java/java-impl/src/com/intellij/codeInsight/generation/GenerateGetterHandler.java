@@ -37,7 +37,7 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
     if (original instanceof PropertyClassMember) {
       final PropertyClassMember propertyClassMember = (PropertyClassMember)original;
-      final GenerationInfo[] getters = propertyClassMember.generateGetters();
+      final GenerationInfo[] getters = propertyClassMember.generateGetters(aClass);
       if (getters != null) {
         return getters;
       }

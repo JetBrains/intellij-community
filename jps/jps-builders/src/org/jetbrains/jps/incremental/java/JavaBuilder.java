@@ -268,6 +268,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         final int filesCount = files.size();
         boolean compiledOk = true;
+        int tempRootsErrorCount = 0;
+        int tempRootsWarningCount = 0;
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
@@ -283,27 +285,41 @@ public class JavaBuilder extends ModuleLevelBuilder {
               LOG.debug("  " + file.getAbsolutePath());
             }
           }
-          compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink);
-          if (compiledOk) {
-            final Collection<File> loadedTempFiles = diagnosticSink.getLoadedTempSources();
-            if (!loadedTempFiles.isEmpty()) {
-              // compile all implicitly loaded sources from temporary roots
-              compiledOk = compileJava(context, chunk, loadedTempFiles, classpath, platformCp, tempRoots, new DiagnosticSink(context, Collections.<File>emptySet()), outputSink);
+          try {
+            compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink);
+            if (compiledOk) {
+              final Collection<File> loadedTempFiles = diagnosticSink.getLoadedTempSources();
+              if (!loadedTempFiles.isEmpty()) {
+                // compile all implicitly loaded sources from temporary roots
+                final DiagnosticSink tempRootsSink = new DiagnosticSink(context, Collections.<File>emptySet());
+                compiledOk = compileJava(context, chunk, loadedTempFiles, classpath, platformCp, tempRoots, tempRootsSink, outputSink);
+                tempRootsErrorCount = tempRootsSink.getErrorCount();
+                tempRootsWarningCount = tempRootsSink.getWarningCount();
+              }
+            }
+          }
+          finally {
+            // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
+            for (File file : diagnosticSink.getFilesWithErrors()) {
+              if (!file.exists()) {
+                FSOperations.markDeleted(context, file);
+              }
             }
           }
         }
 
         context.checkCanceled();
 
-        if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
+        if (!compiledOk && (diagnosticSink.getErrorCount() + tempRootsErrorCount) == 0) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
         }
-        if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
+        final int totalErrorCount = diagnosticSink.getErrorCount() + tempRootsErrorCount;
+        if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && totalErrorCount > 0) {
           if (!compiledOk) {
             diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Errors occurred while compiling module '" + chunkName + "'"));
           }
           throw new StopBuildException(
-            "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
+            "Compilation failed: errors: " + totalErrorCount + "; warnings: " + (diagnosticSink.getWarningCount() + tempRootsWarningCount)
           );
         }
       }
@@ -786,12 +802,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return map;
   }
 
-  private class DiagnosticSink implements DiagnosticOutputConsumer {
+  private static class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
     private final Set<File> myTempRoots;
     private volatile int myErrorCount = 0;
     private volatile int myWarningCount = 0;
     private final Set<File> myLoadedTempSources = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    private final Set<File> myFilesWithErrors = new HashSet<File>();
 
     public DiagnosticSink(CompileContext context, Set<File> tempRoots) {
       myContext = context;
@@ -839,7 +856,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    private BuildMessage.Kind getKindByMessageText(String line) {
+    private static BuildMessage.Kind getKindByMessageText(String line) {
       final String lowercasedLine = line.toLowerCase(Locale.US);
       if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
         return BuildMessage.Kind.ERROR;
@@ -873,15 +890,23 @@ public class JavaBuilder extends ModuleLevelBuilder {
       catch (Exception e) {
         LOG.info(e);
       }
-      final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
+      final String srcPath;
+      if (sourceFile != null) {
+        myFilesWithErrors.add(sourceFile);
+        srcPath = FileUtil.toSystemIndependentName(sourceFile.getPath());
+      }
+      else {
+        srcPath = null;
+      }
       String message = diagnostic.getMessage(Locale.US);
       if (Utils.IS_TEST_MODE) {
         LOG.info(message);
       }
-      myContext.processMessage(
-        new CompilerMessage(BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
-                            diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
-                            diagnostic.getColumnNumber()));
+      myContext.processMessage(new CompilerMessage(
+        BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
+        diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
+        diagnostic.getColumnNumber()
+      ));
     }
 
     public int getErrorCount() {
@@ -890,6 +915,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     public int getWarningCount() {
       return myWarningCount;
+    }
+
+    public Collection<File> getFilesWithErrors() {
+      return myFilesWithErrors;
     }
   }
 

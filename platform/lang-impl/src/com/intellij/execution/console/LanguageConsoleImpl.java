@@ -661,6 +661,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }
     };
+    if (myProject.isDisposed()) {
+      return;
+    }
     myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileEditorListener);
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     if (editorManager.isFileOpen(myVirtualFile)) {

@@ -28,6 +28,7 @@ import sun.awt.AppContext;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
@@ -86,6 +87,16 @@ public final class DarculaLaf extends BasicLookAndFeel {
       superMethod.setAccessible(true);
       final UIDefaults metalDefaults = (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
+      if (SystemInfo.isLinux) {
+        Font font = findFont("DejaVu Sans");
+        if (font != null) {
+          for (Object key : defaults.keySet()) {
+            if (key instanceof String && ((String)key).endsWith(".font")) {
+              defaults.put(key, new FontUIResource(font.deriveFont(13f)));
+            }
+          }
+        }
+      }
 
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
@@ -100,6 +111,15 @@ public final class DarculaLaf extends BasicLookAndFeel {
       log(e);
     }
     return super.getDefaults();
+  }
+
+  private static Font findFont(String name) {
+    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
+      if (font.getName().equals(name)) {
+        return font;
+      }
+    }
+    return null;
   }
 
   private static void patchComboBox(UIDefaults metalDefaults, UIDefaults defaults) {

@@ -393,6 +393,7 @@ public class ExpressionParser {
         else if (dotTokenType == JavaTokenType.SUPER_KEYWORD) {
           dotPos.drop();
           final PsiBuilder.Marker refExpr = expr.precede();
+          builder.mark().done(JavaElementType.REFERENCE_PARAMETER_LIST);
           builder.advanceLexer();
           refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
           expr = refExpr;
