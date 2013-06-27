@@ -50,7 +50,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
-  private static final int VERSION = 24;
+  private static final int VERSION = 25;
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
@@ -131,13 +131,15 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             final Stub rootStub = StubTreeBuilder.buildStubTree(inputData);
             if (rootStub == null) return;
 
-            rememberIndexingStamp(inputData.getFile());
+            VirtualFile file = inputData.getFile();
+            int contentLength = file.getFileType().isBinary() ? -1 : inputData.getContentAsText().length();
+            rememberIndexingStamp(file, contentLength);
 
             final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
             SerializationManagerEx.getInstanceEx().serialize(rootStub, bytes);
 
-            final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
-            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub));
+            final int key = Math.abs(FileBasedIndex.getFileId(file));
+            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength));
           }
         });
 
@@ -146,11 +148,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     };
   }
 
-  private static void rememberIndexingStamp(final VirtualFile file) {
+  private static void rememberIndexingStamp(final VirtualFile file, long contentLength) {
     try {
       DataOutputStream stream = INDEXED_STAMP.writeAttribute(file);
       stream.writeLong(file.getTimeStamp());
-      stream.writeLong(file.getLength());
+      stream.writeLong(contentLength);
       stream.close();
     }
     catch (IOException e) {

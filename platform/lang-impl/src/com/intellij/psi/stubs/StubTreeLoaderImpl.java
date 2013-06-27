@@ -24,6 +24,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
@@ -104,9 +106,19 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     final int size = datas.size();
 
     if (size == 1) {
+      SerializedStubTree stubTree = datas.get(0);
+      
+      if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
+        return processError(vFile,
+                            "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+                            ", docSaved=" + saved +
+                            ", queried at " + vFile.getTimeStamp(),
+                            null);
+      }
+
       Stub stub;
       try {
-        stub = datas.get(0).getStub(false);
+        stub = stubTree.getStub(false);
       }
       catch (SerializerNotFoundException e) {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
@@ -124,6 +136,21 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
 
     return null;
+  }
+
+  private static int getCurrentTextContentLength(Project project, VirtualFile vFile, Document document) {
+    if (vFile.getFileType().isBinary()) {
+      return -1;
+    }
+    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(vFile);
+    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
+      return psiFile.getTextLength();
+    }
+    
+    if (document != null) {
+      return document.getTextLength();
+    }
+    return -1;
   }
 
   private static ObjectStubTree processError(final VirtualFile vFile, String message, @Nullable Exception e) {
