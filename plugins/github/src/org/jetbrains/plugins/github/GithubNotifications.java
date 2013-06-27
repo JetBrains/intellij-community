@@ -26,7 +26,7 @@ import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.io.IOException;
+
 
 /**
  * @author Aleksey Pivovarov
@@ -51,9 +51,8 @@ public class GithubNotifications {
     Notificator.getInstance(project).notify(notification);
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull IOException e) {
-    Notification notification =
-      new Notification(GITHUB_NOTIFICATION_GROUP, title, GithubUtil.getErrorTextFromException(e), NotificationType.ERROR);
+  public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
+    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR);
     Notificator.getInstance(project).notify(notification);
   }
 

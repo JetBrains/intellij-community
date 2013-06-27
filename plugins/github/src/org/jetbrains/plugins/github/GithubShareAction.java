@@ -141,9 +141,6 @@ public class GithubShareAction extends DumbAwareAction {
 
           // check access to private repos (network)
           final GithubUser userInfo = GithubUtil.getCurrentUserInfo(auth);
-          if (userInfo == null) {
-            return;
-          }
           userInfoRef.set(userInfo);
           authRef.set(auth);
         }
@@ -157,6 +154,7 @@ public class GithubShareAction extends DumbAwareAction {
       return;
     }
     if (repoNamesRef.isNull() || userInfoRef.isNull()) {
+      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", "Failed to gather user information");
       return;
     }
 
@@ -184,7 +182,7 @@ public class GithubShareAction extends DumbAwareAction {
             LOG.info("Successfully created GitHub repository");
           }
           else {
-            GithubNotifications.showErrorDialog(project, "Create GitHub Repository", "Failed to create new GitHub repository");
+            GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository");
             return;
           }
 
@@ -213,12 +211,12 @@ public class GithubShareAction extends DumbAwareAction {
             repository.update();
             if (addRemoteHandler.getExitCode() != 0) {
               GithubNotifications
-                .showErrorDialog(project, "Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote");
+                .showError(project, "Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote");
               return;
             }
           }
           catch (VcsException e) {
-            GithubNotifications.showErrorDialog(project, "Failed to add GitHub repository as remote", e.getMessage());
+            GithubNotifications.showError(project, "Failed to add GitHub repository as remote", e.getMessage());
             LOG.info("Failed to add GitHub as remote: " + e.getMessage());
             return;
           }
@@ -246,7 +244,7 @@ public class GithubShareAction extends DumbAwareAction {
       }
     }.queue();
     if (!exceptionRef.isNull()) {
-      GithubNotifications.showErrorDialog(project, "Failed to create new GitHub repository", exceptionRef.get().getMessage());
+      GithubNotifications.showError(project, "Failed to create new GitHub repository", exceptionRef.get());
     }
   }
 
@@ -273,7 +271,6 @@ public class GithubShareAction extends DumbAwareAction {
     LOG.info("No git detected, creating empty git repo");
     indicator.setText("Creating empty git repo");
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
-    //GitHandlerUtil.doSynchronously(h, GitBundle.getString("initializing.title"), h.printableCommandLine());
     GitHandlerUtil.runInCurrentThread(h, indicator, true, GitBundle.getString("initializing.title"));
     if (!h.errors().isEmpty()) {
       GitUIUtil.showOperationErrors(project, h.errors(), "git init");
@@ -302,7 +299,7 @@ public class GithubShareAction extends DumbAwareAction {
     // get repository
     final GitVcs gitVcs = GitVcs.getInstance(project);
     if (gitVcs == null){
-      GithubNotifications.showErrorDialog(project, "Failed to share", "Cannot find git initialized");
+      GithubNotifications.showError(project, "Failed to perform initial commit", "Cannot find git initialized");
       return false;
     }
 
@@ -313,7 +310,7 @@ public class GithubShareAction extends DumbAwareAction {
     }
     GitRepository repository = repositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
-      GithubNotifications.showErrorDialog(project, "Failed to share", "Cannot find git repository for root " + root);
+      GithubNotifications.showError(project, "Failed to perform initial commit", "Cannot find git repository for root " + root);
       return false;
     }
     if (!repository.isFresh()) {
@@ -337,7 +334,7 @@ public class GithubShareAction extends DumbAwareAction {
       }, indicator.getModalityState());
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
       if (!dialog.isOK() || files2add.isEmpty()) {
-        GithubNotifications.showErrorDialog(project, "Failed to commit file during post activities", "No files to commit");
+        GithubNotifications.showWarning(project, "Failed to commit file during post activities", "No files to commit");
         return false;
       }
       GitFileUtils.addFiles(project, root, files2add);
@@ -351,7 +348,7 @@ public class GithubShareAction extends DumbAwareAction {
     }
     catch (VcsException e) {
       LOG.info("Failed to perform initial commit");
-      GithubNotifications.showErrorDialog(project, "Failed to commit file during post activities", e.getMessage());
+      GithubNotifications.showError(project, "Failed to commit file during post activities", e.getMessage());
       return false;
     }
     return true;

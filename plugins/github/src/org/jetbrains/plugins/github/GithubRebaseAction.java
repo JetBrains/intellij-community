@@ -106,8 +106,8 @@ public class GithubRebaseAction extends DumbAwareAction {
     final String login = GithubSettings.getInstance().getLogin();
     final int index = pushUrl.lastIndexOf(login);
     if (index == -1) {
-      GithubNotifications.showErrorDialog(project, "Github remote repository doesn't seem to be your own repository: " + pushUrl,
-                                          CANNOT_PERFORM_GITHUB_REBASE);
+      GithubNotifications
+        .showWarningDialog(project, CANNOT_PERFORM_GITHUB_REBASE, "Github remote repository doesn't seem to be your own repository: " + pushUrl);
       return;
     }
     String repoName = pushUrl.substring(index + login.length() + 1);
@@ -130,14 +130,14 @@ public class GithubRebaseAction extends DumbAwareAction {
             }
           });
           if (repositoryInfoRef.isNull()) {
-            GithubNotifications.showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl,
-                                                CANNOT_PERFORM_GITHUB_REBASE);
+            GithubNotifications
+              .showWarning(project, CANNOT_PERFORM_GITHUB_REBASE, "Github repository doesn't seem to be your own repository: " + pushUrl);
             return;
           }
 
           if (!repositoryInfoRef.get().isFork()) {
             GithubNotifications
-              .showErrorDialog(project, CANNOT_PERFORM_GITHUB_REBASE, "Github repository '" + finalRepoName + "' is not a forked one");
+              .showWarning(project, CANNOT_PERFORM_GITHUB_REBASE, "Github repository '" + finalRepoName + "' is not a forked one");
             return;
           }
 
@@ -191,16 +191,16 @@ public class GithubRebaseAction extends DumbAwareAction {
             addRemoteHandler.addParameters("add", remoteForForkParentRepo.get(), parentRepoUrl);
             addRemoteHandler.run();
             if (addRemoteHandler.getExitCode() != 0) {
-              GithubNotifications
-                .showErrorDialog(project, CANNOT_PERFORM_GITHUB_REBASE, "Failed to add GitHub remote: '" + parentRepoUrl + "'");
+              GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Failed to add GitHub remote: '" + parentRepoUrl + "'");
+              return;
             }
 
             // catch newly added remote
             gitRepository.update();
           }
-          catch (VcsException e1) {
-            final String message = "Error happened during git operation: " + e1.getMessage();
-            GithubNotifications.showErrorDialog(project, CANNOT_PERFORM_GITHUB_REBASE, message);
+          catch (VcsException e) {
+            GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, e);
+            return;
           }
         }
 
