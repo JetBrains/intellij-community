@@ -102,6 +102,34 @@ public class GithubUtil {
     return dialog.getAuthData();
   }
 
+  @Nullable
+  public static GithubAuthData getValidAuthDataFromConfig(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+    GithubAuthData auth = getAuthData();
+    boolean valid = false;
+    try {
+      valid = checkAuthData(auth);
+    }
+    catch (IOException e) {
+      // ignore
+    }
+    if (!valid) {
+      final GithubLoginDialog dialog = new GithubLoginDialog(project);
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          dialog.show();
+        }
+      }, indicator.getModalityState());
+      if (!dialog.isOK()) {
+        return null;
+      }
+      return dialog.getAuthData();
+    }
+    else {
+      return auth;
+    }
+  }
+
   public static boolean checkAuthData(GithubAuthData auth) throws IOException {
     if (StringUtil.isEmptyOrSpaces(auth.getHost()) ||
         StringUtil.isEmptyOrSpaces(auth.getLogin()) ||

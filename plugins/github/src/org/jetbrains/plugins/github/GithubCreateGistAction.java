@@ -120,7 +120,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
       ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
         public void run(@NotNull ProgressIndicator indicator) {
-          authDataRef.set(GithubUtil.getValidAuthData(project, indicator));
+          authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
         }
       });
       if (authDataRef.isNull()) {
@@ -204,7 +204,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                    boolean isPrivate,
                                    @NotNull String description) {
     if (contents.isEmpty()) {
-      GithubNotifications.showWarning(project, "Failed to create gist", "Can't create empty gist");
+      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
       return null;
     }
     String requestBody = prepareJsonRequest(description, isPrivate, contents);
@@ -218,7 +218,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       }
       if (jsonElement == null) {
         LOG.info("Null JSON response returned by GitHub");
-        showError(project, "Failed to create gist", "Empty JSON response returned by GitHub", null, null);
+        showError(project, FAILED_TO_CREATE_GIST, "Empty JSON response returned by GitHub", null, null);
         return null;
       }
       if (!jsonElement.isJsonObject()) {
@@ -228,14 +228,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
       JsonElement htmlUrl = jsonElement.getAsJsonObject().get("html_url");
       if (htmlUrl == null) {
         LOG.info("Invalid JSON response: " + jsonElement);
-        showError(project, "Invalid GitHub response", "No html_url property", jsonElement.toString(), null);
+        showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response", jsonElement.toString(), null);
         return null;
       }
       return htmlUrl.getAsString();
     }
     catch (IOException e) {
       LOG.info("Exception when creating a Gist", e);
-      showError(project, "Failed to create gist", "", null, e);
+      showError(project, FAILED_TO_CREATE_GIST, "", null, e);
       return null;
     }
   }
@@ -290,7 +290,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     String content = readFile(file);
     if (content == null) {
-      showError(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file, null, null);
+      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file);
       LOG.info("Couldn't read the contents of the file " + file);
       return Collections.emptyList();
     }
