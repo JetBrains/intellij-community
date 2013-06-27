@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scheme name="Darcula" version="1" parent_scheme="Default">
   <option name="LINE_SPACING" value="1.0" />
-  <option name="EDITOR_FONT_SIZE" value="12" />
-  <option name="EDITOR_FONT_NAME" value="Menlo" />
+  <option name="EDITOR_FONT_SIZE" value="12" linux="13"/>
+  <option name="EDITOR_FONT_NAME" value="Menlo" linux="DejaVu Sans Mono"/>
   <colors>
     <option name="ADDED_LINES_COLOR" value="295622" />
     <option name="ANNOTATIONS_COLOR" value="8b999f" />
