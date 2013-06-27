@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.Producer;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -438,6 +439,41 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertResolved(myProjectPom, findPsiFile(f));
+  }
+
+  public void testResolveLATESTDependency() throws Exception {
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    String repoPath = helper.getTestDataPath("local1");
+    setRepositoryPath(repoPath);
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>[1,4.0]</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                      "<artifactId>project</artifactId>" +
+                      "<version>1</version>" +
+
+                      "<dependencies>" +
+                      "  <dependency>" +
+                      "    <groupId>junit</groupId>" +
+                      "    <artifactId>junit<caret></artifactId>" +
+                      "    <version>[1,4.0]</version>" +
+                      "  </dependency>" +
+                      "</dependencies>");
+
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
