@@ -1431,7 +1431,7 @@ public abstract class ChooseByNameBase {
       showCard(SEARCHING_CARD, 200);
 
       final Set<Object> elements = new LinkedHashSet<Object>();
-      Runnable action = new Runnable() {
+      final Runnable action = new Runnable() {
         @Override
         public void run() {
           try {
@@ -1455,7 +1455,14 @@ public abstract class ChooseByNameBase {
           }
         }
       };
-      ApplicationManager.getApplication().runReadAction(action);
+      Runnable readAction = new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(action);
+        }
+      };
+      ProgressManager.getInstance().runProcess(readAction, myCancelled);
+
 
       if (myCancelled.isCanceled()) {
         myShowCardAlarm.cancelAllRequests();
@@ -1465,7 +1472,7 @@ public abstract class ChooseByNameBase {
       final String cardToShow;
       if (elements.isEmpty() && !myCheckboxState) {
         myCheckboxState = true;
-        ApplicationManager.getApplication().runReadAction(action);
+        ProgressManager.getInstance().runProcess(readAction, myCancelled);
         cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
       }
       else {
