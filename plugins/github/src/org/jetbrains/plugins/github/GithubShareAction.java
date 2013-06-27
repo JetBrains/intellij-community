@@ -160,7 +160,7 @@ public class GithubShareAction extends DumbAwareAction {
 
     // Show dialog (window)
     final GithubShareDialog shareDialog =
-      new GithubShareDialog(project, repoNamesRef.get(), userInfoRef.get().getPlan().isPrivateRepoAllowed());
+      new GithubShareDialog(project, repoNamesRef.get(), userInfoRef.get().getMaxPrivateRepos() > userInfoRef.get().getPrivateRepos());
     shareDialog.show();
     if (!shareDialog.isOK()) {
       return;

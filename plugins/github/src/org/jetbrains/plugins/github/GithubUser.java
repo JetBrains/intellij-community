@@ -24,52 +24,27 @@ import org.jetbrains.annotations.NotNull;
  */
 class GithubUser {
 
-  enum Plan {
-    FREE,
-    MICRO,
-    SMALL,
-    MEDIUM,
-    BRONZE,
-    SILVER,
-    GOLD,
-    PLATINUM,
-    ENTERPRISE;
-
-    public boolean isPrivateRepoAllowed() {
-      return this != FREE;
-    }
-
-    public static Plan fromString(String name) {
-      for (Plan plan : values()) {
-
-        if (plan.name().equalsIgnoreCase(name)) {
-          return plan;
-        }
-      }
-      return defaultPlan();
-    }
-
-    private static Plan defaultPlan() {
-      return FREE;
-    }
-  }
-
-  @NotNull private final Plan myPlan;
   @NotNull private final String myLogin;
+  private int myPrivateRepos;
+  private int myMaxPrivateRepos;
 
-  GithubUser(@NotNull String login, @NotNull Plan plan) {
+  GithubUser(@NotNull String login, int privateRepos, int maxPrivateRepos) {
     myLogin = login;
-    myPlan = plan;
-  }
-
-  @NotNull
-  Plan getPlan() {
-    return myPlan;
+    myPrivateRepos = privateRepos;
+    myMaxPrivateRepos = maxPrivateRepos;
   }
 
   @NotNull
   String getLogin() {
     return myLogin;
+  }
+
+  int getMaxPrivateRepos() {
+    return myMaxPrivateRepos;
+  }
+
+  int getPrivateRepos() {
+    return myPrivateRepos;
   }
 
 }

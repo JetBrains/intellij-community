@@ -167,20 +167,10 @@ public class GithubUtil {
     }
 
     JsonObject obj = (JsonObject)result;
-    if (!obj.has("plan")) {
-      return null;
-    }
-    GithubUser.Plan plan = parsePlan(obj.get("plan"));
     String login = obj.get("login").getAsString();
-    return new GithubUser(login, plan);
-  }
-
-  @NotNull
-  private static GithubUser.Plan parsePlan(JsonElement plan) {
-    if (!plan.isJsonObject()) {
-      return GithubUser.Plan.FREE;
-    }
-    return GithubUser.Plan.fromString(plan.getAsJsonObject().get("name").getAsString());
+    int privateRepos = obj.get("owned_private_repos").getAsInt();
+    int maxPrivateRepos = obj.get("plan").getAsJsonObject().get("private_repos").getAsInt();
+    return new GithubUser(login, privateRepos, maxPrivateRepos);
   }
 
   @NotNull
