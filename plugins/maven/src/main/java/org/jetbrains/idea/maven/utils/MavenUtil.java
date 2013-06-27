@@ -791,12 +791,7 @@ public class MavenUtil {
     return (int)crc.getValue();
   }
 
-  @Nullable
-  public static String getModuleJre(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
-    Module module = mavenProjectsManager.findModule(mavenProject);
-    if (module == null) return null;
-
-    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+  public static String getSdkPath(@Nullable Sdk sdk) {
     if (sdk == null) return null;
 
     VirtualFile homeDirectory = sdk.getHomeDirectory();
@@ -810,5 +805,13 @@ public class MavenUtil {
     }
 
     return homeDirectory.getPath();
+  }
+
+  @Nullable
+  public static String getModuleJre(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+    Module module = mavenProjectsManager.findModule(mavenProject);
+    if (module == null) return null;
+
+    return getSdkPath(ModuleRootManager.getInstance(module).getSdk());
   }
 }
