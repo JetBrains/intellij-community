@@ -572,6 +572,17 @@ public class PyTypeTest extends PyTestCase {
            "    foo(3)\n");
   }
 
+  public void testUpperBoundGeneric() {
+    doTest("int or str",
+           "def foo(x):\n" +
+           "    '''\n" +
+           "    :type x: T (int or str)\n" +
+           "    :rtype: T\n" +
+           "    '''\n" +
+           "def bar(x):\n" +
+           "    expr = foo(x)\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
@@ -594,6 +605,7 @@ public class PyTypeTest extends PyTestCase {
     PyType expected = PyTypeParser.getTypeByName(expr, expectedType);
     if (expected != null) {
       assertNotNull(context.printTrace(), actual);
+      assertFalse(context.printTrace(), actual instanceof PyReturnTypeReference);
       assertTrue(msg(expected, actual, context), PyTypeChecker.match(expected, actual, context));
     }
   }
