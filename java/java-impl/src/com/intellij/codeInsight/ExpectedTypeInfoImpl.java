@@ -65,23 +65,6 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     this.myTailType = myTailType;
     this.dimCount = dimCount;
-
-    if (type == defaultType && type instanceof PsiClassType && dimCount == 0) {
-      final PsiClassType psiClassType = (PsiClassType)type;
-      final PsiClass psiClass = psiClassType.resolve();
-      if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-        final PsiType[] parameters = psiClassType.getParameters();
-        PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-        if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType && typeParameters.length == 1) {
-          final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
-          if (bound instanceof PsiClassType) {
-            defaultType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
-              .createType(psiClass, PsiSubstitutor.EMPTY.put(typeParameters[0], bound));
-          }
-        }
-      }
-    }
-
     this.defaultType = defaultType;
 
     PsiUtil.ensureValidType(type);
