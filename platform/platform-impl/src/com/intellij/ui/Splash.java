@@ -57,6 +57,7 @@ public class Splash extends JDialog implements StartupProgress {
 
 
   public Splash(String imageName, final Color textColor) {
+    super((Frame)null);
     setUndecorated(true);
     setResizable(false);
     setModal(false);
