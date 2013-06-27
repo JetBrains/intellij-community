@@ -451,7 +451,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       else if (declScope instanceof PsiForeachStatement) {
         final PsiExpression iteratedValue = ((PsiForeachStatement)declScope).getIteratedValue();
         addLink(type, iteratedValue);
-        addLink(iteratedValue, type);
       }
       else if (declScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declScope;
