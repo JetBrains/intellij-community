@@ -71,6 +71,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return myFactories[0];
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected ExternalSystemRunConfiguration doCreateConfiguration(@NotNull ProjectSystemId externalSystemId,
                                                                  @NotNull Project project,
@@ -124,7 +125,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    AbstractExternalSystemSettings<?,?> s = manager.getSettingsProvider().fun(project);
+    AbstractExternalSystemSettings<?, ?,?> s = manager.getSettingsProvider().fun(project);
     Map<String/* project dir path */, String/* project file path */> rootProjectPaths = ContainerUtilRt.newHashMap();
     for (ExternalProjectSettings projectSettings : s.getLinkedProjectsSettings()) {
       String path = projectSettings.getExternalProjectPath();

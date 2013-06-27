@@ -114,7 +114,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
     List<MyEntry> autoImportAware = ContainerUtilRt.newArrayList();
     Collection<ExternalSystemManager<?, ?, ?, ?, ?>> managers = ExternalSystemApiUtil.getAllManagers();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : managers) {
-      AbstractExternalSystemSettings<?, ?> systemSettings = manager.getSettingsProvider().fun(project);
+      AbstractExternalSystemSettings<?, ?, ?> systemSettings = manager.getSettingsProvider().fun(project);
       ExternalSystemAutoImportAware defaultImportAware = createDefault(systemSettings);
       final ExternalSystemAutoImportAware aware;
       if (manager instanceof ExternalSystemAutoImportAware) {
@@ -153,7 +153,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
   }
 
   @NotNull
-  private static ExternalSystemAutoImportAware createDefault(@NotNull final AbstractExternalSystemSettings<?, ?> systemSettings) {
+  private static ExternalSystemAutoImportAware createDefault(@NotNull final AbstractExternalSystemSettings<?, ?, ?> systemSettings) {
     return new ExternalSystemAutoImportAware() {
       @Nullable
       @Override
@@ -327,13 +327,13 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
   }
   
   private static class MyEntry {
-    
-    @NotNull public final ProjectSystemId externalSystemId;
-    @NotNull public final AbstractExternalSystemSettings<?, ?> systemSettings;
-    @NotNull public final ExternalSystemAutoImportAware aware;
+
+    @NotNull public final ProjectSystemId                         externalSystemId;
+    @NotNull public final AbstractExternalSystemSettings<?, ?, ?> systemSettings;
+    @NotNull public final ExternalSystemAutoImportAware           aware;
 
     MyEntry(@NotNull ProjectSystemId externalSystemId,
-            @NotNull AbstractExternalSystemSettings<?, ?> systemSettings,
+            @NotNull AbstractExternalSystemSettings<?, ?, ?> systemSettings,
             @NotNull ExternalSystemAutoImportAware aware)
     {
       this.externalSystemId = externalSystemId;

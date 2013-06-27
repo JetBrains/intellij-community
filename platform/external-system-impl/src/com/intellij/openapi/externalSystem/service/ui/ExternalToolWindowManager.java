@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +48,14 @@ public class ExternalToolWindowManager {
           if (!settings.getLinkedProjectsSettings().isEmpty()) {
             return;
           }
-          ToolWindow toolWindow = getToolWindow(project, manager.getSystemId());
+          final ToolWindow toolWindow = getToolWindow(project, manager.getSystemId());
           if (toolWindow != null) {
-            toolWindow.setAvailable(false, null);
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              @Override
+              public void run() {
+                toolWindow.setAvailable(false, null); 
+              }
+            });
           }
         }
       });

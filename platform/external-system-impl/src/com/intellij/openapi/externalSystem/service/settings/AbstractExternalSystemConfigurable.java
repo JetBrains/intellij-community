@@ -62,7 +62,7 @@ import java.util.List;
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<ProjectSettings>,
-  SystemSettings extends AbstractExternalSystemSettings<ProjectSettings, L>
+  SystemSettings extends AbstractExternalSystemSettings<SystemSettings, ProjectSettings, L>
   > implements SearchableConfigurable, Configurable.NoScroll
 {
 

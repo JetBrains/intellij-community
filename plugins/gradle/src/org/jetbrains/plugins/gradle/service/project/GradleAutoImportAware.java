@@ -45,7 +45,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
 
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     assert manager != null;
-    AbstractExternalSystemSettings<?,?> systemSettings = manager.getSettingsProvider().fun(project);
+    AbstractExternalSystemSettings<?, ?,?> systemSettings = manager.getSettingsProvider().fun(project);
     Collection<? extends ExternalProjectSettings> projectsSettings = systemSettings.getLinkedProjectsSettings();
     if (projectsSettings.isEmpty()) {
       return null;

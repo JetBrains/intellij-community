@@ -169,7 +169,7 @@ public class ExternalSystemUtil {
     if (manager == null) {
       return;
     }
-    AbstractExternalSystemSettings<?, ?> settings = manager.getSettingsProvider().fun(project);
+    AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(project);
     final Collection<? extends ExternalProjectSettings> projectsSettings = settings.getLinkedProjectsSettings();
     if (projectsSettings.isEmpty()) {
       return;

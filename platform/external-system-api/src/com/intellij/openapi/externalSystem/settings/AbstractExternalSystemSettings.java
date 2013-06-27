@@ -32,12 +32,16 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 4/3/13 4:04 PM
  */
-public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSettings, L extends ExternalSystemSettingsListener<S>> {
-  
+public abstract class AbstractExternalSystemSettings<
+  SS extends AbstractExternalSystemSettings<SS, PS, L>,
+  PS extends ExternalProjectSettings,
+  L extends ExternalSystemSettingsListener<PS>>
+{
+
   @NotNull private final Topic<L> myChangesTopic;
   @NotNull private final Project  myProject;
 
-  @NotNull private final Map<String/* project path */, S> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
+  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
 
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
@@ -59,24 +63,34 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
    * implementation then.
    * <p/>
    * That's why this method allows to wrap given 'generic listener' into external system-specific one.
-   * 
+   *
    * @param listener  target generic listener to wrap to external system-specific implementation
    */
-  public abstract void subscribe(@NotNull ExternalSystemSettingsListener<S> listener);
+  public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
+
+  public void copyFrom(@NotNull SS settings) {
+    myLinkedProjectsSettings.clear();
+    for (PS projectSettings : settings.getLinkedProjectsSettings()) {
+      myLinkedProjectsSettings.put(projectSettings.getExternalProjectPath(), projectSettings);
+    }
+    copyExtraSettingsFrom(settings);
+  }
+  
+  protected abstract void copyExtraSettingsFrom(@NotNull SS settings);
   
   @SuppressWarnings("unchecked")
   @NotNull
-  public Collection<S> getLinkedProjectsSettings() {
+  public Collection<PS> getLinkedProjectsSettings() {
     return myLinkedProjectsSettings.values();
   }
 
   @Nullable
-  public S getLinkedProjectSettings(@NotNull String linkedProjectPath) {
+  public PS getLinkedProjectSettings(@NotNull String linkedProjectPath) {
     return myLinkedProjectsSettings.get(linkedProjectPath);
   }
 
-  public void linkProject(@NotNull S settings) throws IllegalArgumentException {
-    S existing = getLinkedProjectSettings(settings.getExternalProjectPath());
+  public void linkProject(@NotNull PS settings) throws IllegalArgumentException {
+    PS existing = getLinkedProjectSettings(settings.getExternalProjectPath());
     if (existing != null) {
       throw new IllegalArgumentException(String.format(
         "Can't link external project '%s'. Reason: it's already registered at the current ide project",
@@ -96,7 +110,7 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
    *                           <code>false</code> otherwise
    */
   public boolean unlinkExternalProject(@NotNull String linkedProjectPath) {
-    S removed = myLinkedProjectsSettings.remove(linkedProjectPath);
+    PS removed = myLinkedProjectsSettings.remove(linkedProjectPath);
     if (removed == null) {
       return false;
     }
@@ -105,16 +119,16 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
     return true;
   }
 
-  public void setLinkedProjectsSettings(@NotNull Collection<S> settings) {
-    List<S> added = ContainerUtilRt.newArrayList();
-    Map<String, S> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
+  public void setLinkedProjectsSettings(@NotNull Collection<PS> settings) {
+    List<PS> added = ContainerUtilRt.newArrayList();
+    Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
-    for (S current : settings) {
+    for (PS current : settings) {
       myLinkedProjectsSettings.put(current.getExternalProjectPath(), current);
     }
     
-    for (S current : settings) {
-      S old = removed.remove(current.getExternalProjectPath());
+    for (PS current : settings) {
+      PS old = removed.remove(current.getExternalProjectPath());
       if (old == null) {
         added.add(current);
       }
@@ -140,7 +154,7 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
    * @param old      old settings state
    * @param current  current settings state
    */
-  protected abstract void checkSettings(@NotNull S old, @NotNull S current);
+  protected abstract void checkSettings(@NotNull PS old, @NotNull PS current);
 
   @NotNull
   public Topic<L> getChangesTopic() {
@@ -152,17 +166,17 @@ public abstract class AbstractExternalSystemSettings<S extends ExternalProjectSe
     return myProject.getMessageBus().syncPublisher(myChangesTopic);
   }
 
-  protected void fillState(@NotNull State<S> state) {
+  protected void fillState(@NotNull State<PS> state) {
     state.setLinkedExternalProjectsSettings(ContainerUtilRt.newTreeSet(myLinkedProjectsSettings.values()));
   }
 
   @SuppressWarnings("unchecked")
-  protected void loadState(@NotNull State<S> state) {
-    Set<S> settings = state.getLinkedExternalProjectsSettings();
+  protected void loadState(@NotNull State<PS> state) {
+    Set<PS> settings = state.getLinkedExternalProjectsSettings();
     if (settings != null) {
       myLinkedProjectsSettings.clear();
-      for (S s : settings) {
-        myLinkedProjectsSettings.put(s.getExternalProjectPath(), s);
+      for (PS projectSettings : settings) {
+        myLinkedProjectsSettings.put(projectSettings.getExternalProjectPath(), projectSettings);
       }
     }
   }

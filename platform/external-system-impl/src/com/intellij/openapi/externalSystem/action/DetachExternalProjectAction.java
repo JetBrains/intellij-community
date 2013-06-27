@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
@@ -31,7 +30,7 @@ import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTr
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -129,11 +128,10 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
       return MyInfo.EMPTY;
     }
 
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-    assert manager != null;
-    AbstractExternalSystemSettings<?, ?> settings = manager.getSettingsProvider().fun(ideProject);
+    ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
+    AbstractExternalSystemSettings<?, ?, ?> settings = settingsManager.getSettings(ideProject, externalSystemId);
     ExternalProjectSettings externalProjectSettings = settings.getLinkedProjectSettings(externalProject.getPath());
-    AbstractExternalSystemLocalSettings localSettings = manager.getLocalSettingsProvider().fun(ideProject);
+    AbstractExternalSystemLocalSettings localSettings = settingsManager.getLocalSettings(ideProject, externalSystemId);
     
     return new MyInfo(externalProjectSettings == null ? null : settings,
                       localSettings == null ? null : localSettings,
@@ -146,13 +144,13 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
 
     public static final MyInfo EMPTY = new MyInfo(null, null, null, null, null);
 
-    @Nullable public final AbstractExternalSystemSettings<?, ?> settings;
+    @Nullable public final AbstractExternalSystemSettings<?, ?, ?> settings;
     @Nullable public final AbstractExternalSystemLocalSettings  localSettings;
     @Nullable public final ExternalProjectPojo                  externalProject;
     @Nullable public final Project                              ideProject;
     @Nullable public final ProjectSystemId                      externalSystemId;
 
-    MyInfo(@Nullable AbstractExternalSystemSettings<?, ?> settings,
+    MyInfo(@Nullable AbstractExternalSystemSettings<?, ?, ?> settings,
            @Nullable AbstractExternalSystemLocalSettings localSettings,
            @Nullable ExternalProjectPojo externalProject,
            @Nullable Project ideProject,
