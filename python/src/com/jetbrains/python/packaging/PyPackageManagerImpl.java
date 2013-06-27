@@ -474,7 +474,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   private static PyPackage findPackageByName(String name, List<PyPackage> packages) {
     for (PyPackage pkg : packages) {
-      if (name.equals(pkg.getName())) {
+      if (name.equalsIgnoreCase(pkg.getName())) {
         return pkg;
       }
     }
