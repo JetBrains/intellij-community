@@ -1129,10 +1129,6 @@ public abstract class ChooseByNameBase {
           }
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-          if (!myListModel.isEmpty()) {
-            int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
-            ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
-          }
 
           if (!myCommands.isEmpty()) {
             myAlarm.addRequest(this, DELAY);
@@ -1143,6 +1139,11 @@ public abstract class ChooseByNameBase {
           if (!checkDisposed()) {
             showList();
             updateDocPosition();
+
+            if (!myListModel.isEmpty()) {
+              int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
+              ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
+            }
           }
         }
       }, DELAY);
