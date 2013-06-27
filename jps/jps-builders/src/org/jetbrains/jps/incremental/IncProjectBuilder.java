@@ -1131,7 +1131,7 @@ public class IncProjectBuilder {
     return doneSomething;
   }
 
-  private void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {
+  private static void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {
     for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
       if (compiledClass.isDirty()) {
         compiledClass.save();
