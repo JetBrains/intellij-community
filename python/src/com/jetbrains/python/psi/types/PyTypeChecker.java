@@ -156,12 +156,14 @@ public class PyTypeChecker {
     final boolean subIsInt = "int".equals(subName);
     final boolean subIsLong = "long".equals(subName);
     final boolean subIsFloat = "float".equals(subName);
+    final boolean subIsComplex = "complex".equals(subName);
     if (superName == null || subName == null ||
         superName.equals(subName) ||
         ("int".equals(superName) && subIsBool) ||
-        ("long".equals(superName) && (subIsBool || subIsInt)) ||
-        ("float".equals(superName) && (subIsBool || subIsInt || subIsLong)) ||
-        ("complex".equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat))) {
+        (("long".equals(superName) || "Integral".equals(superName)) && (subIsBool || subIsInt)) ||
+        (("float".equals(superName) || "Real".equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
+        (("complex".equals(superName) || "Complex".equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
+        ("Number".equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
       return true;
     }
     return false;
