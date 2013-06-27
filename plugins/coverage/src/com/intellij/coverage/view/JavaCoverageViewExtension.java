@@ -143,7 +143,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public AbstractTreeNode createRootNode() {
-    return new CoverageListRootNode(JavaPsiFacade.getInstance(myProject).findPackage(""), mySuitesBundle, myStateBean);
+    return new CoverageListRootNode(myProject, JavaPsiFacade.getInstance(myProject).findPackage(""), mySuitesBundle, myStateBean);
   }
 
   @Override
@@ -172,7 +172,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       final GlobalSearchScope searchScope = getSearchScope(mySuitesBundle, myProject);
       if (aPackage.getDirectories(searchScope).length == 0) continue;
       if (aPackage.getClasses(searchScope).length != 0) {
-        final CoverageListNode node = new CoverageListNode(aPackage, mySuitesBundle, myStateBean);
+        final CoverageListNode node = new CoverageListNode(myProject, aPackage, mySuitesBundle, myStateBean);
         topLevelNodes.add(node);
       }
       collectSubPackages(topLevelNodes, aPackage, mySuitesBundle, myStateBean);
@@ -180,7 +180,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
     for (PsiClass aClass : classes) {
       if (getClassCoverageInfo(aClass) == null) continue;
-      topLevelNodes.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
+      topLevelNodes.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
     }
     return topLevelNodes;
   }
@@ -215,7 +215,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
           return isInCoverageScope(aPackage, data);
         }
       })) {
-        final CoverageListNode node = new CoverageListNode(aPackage, data, stateBean);
+        final CoverageListNode node = new CoverageListNode(rootPackage.getProject(), aPackage, data, stateBean);
         children.add(node);
       }
       else if (!stateBean.myFlattenPackages) {
@@ -252,7 +252,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
           });
           for (PsiClass aClass : classes) {
             if (!(node instanceof CoverageListRootNode) && getClassCoverageInfo(aClass) == null) continue;
-            children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
+            children.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
           }
         }
       }
@@ -260,7 +260,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         for (CoverageSuite suite : mySuitesBundle.getSuites()) {
           final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
           for (PsiClass aClass : classes) {
-            children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
+            children.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
           }
         }
       }
