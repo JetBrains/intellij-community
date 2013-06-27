@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +32,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,22 +58,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     if (removeModelSpecificMarkup(base, pattern).isEmpty() && !base.canShowListForEmptyPattern()) return true;
 
-    Set<String> names = new THashSet<String>(Arrays.asList(base.getNames(everywhere)));
-
-    return consumeElements(base, everywhere, indicator, consumer, namePattern, qualifierPattern, names);
-  }
-
-  private boolean consumeElements(@NotNull ChooseByNameBase base,
-                                  boolean everywhere,
-                                  @NotNull ProgressIndicator indicator,
-                                  @NotNull Processor<Object> consumer,
-                                  @NotNull String namePattern,
-                                  @NotNull String qualifierPattern,
-                                  @NotNull Set<String> allNames) {
     ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
-    List<String> namesList = getNamesByPattern(base, new ArrayList<String>(allNames), indicator, matchingPattern);
-    allNames.removeAll(namesList);
+    List<String> namesList = getNamesByPattern(base, base.getNames(everywhere), matchingPattern);
     sortNamesList(matchingPattern, namesList);
 
     indicator.checkCanceled();
@@ -248,28 +234,22 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   @NotNull
   @Override
   public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
-    return getNamesByPattern(base, Arrays.asList(names), null, convertToMatchingPattern(base, pattern));
+    return getNamesByPattern(base, names, convertToMatchingPattern(base, pattern));
   }
 
   private static List<String> getNamesByPattern(@NotNull final ChooseByNameBase base,
-                                                @NotNull List<String> names,
-                                                @Nullable ProgressIndicator indicator,
-                                                final String pattern) 
+                                                @NotNull String[] names,
+                                                final String pattern)
     throws ProcessCanceledException {
     final Matcher matcher = buildPatternMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
 
     @NotNull final List<String> outListFiltered = new ArrayList<String>();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(names, indicator, false, new Processor<String>() {
-      @Override
-      public boolean process(String name) {
-        if (matches(base, pattern, matcher, name)) {
-          synchronized (outListFiltered) {
-            outListFiltered.add(name);
-          }
-        }
-        return true;
+    for (String name : names) {
+      ProgressManager.checkCanceled();
+      if (matches(base, pattern, matcher, name)) {
+        outListFiltered.add(name);
       }
-    });
+    }
     return outListFiltered;
   }
 
