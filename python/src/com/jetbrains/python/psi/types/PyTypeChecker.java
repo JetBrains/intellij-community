@@ -44,6 +44,32 @@ public class PyTypeChecker {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
                                @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
     // TODO: subscriptable types?, module types?, etc.
+    if (expected instanceof PyGenericType && substitutions != null) {
+      final PyGenericType generic = (PyGenericType)expected;
+      final PyType subst = substitutions.get(generic);
+      final PyType bound = generic.getBound();
+      if (!match(bound, actual, context, substitutions, recursive)) {
+        return false;
+      }
+      else if (subst != null) {
+        if (expected.equals(actual)) {
+          return true;
+        }
+        else if (recursive) {
+          return match(subst, actual, context, substitutions, false);
+        }
+        else {
+          return false;
+        }
+      }
+      else if (actual != null && !(actual instanceof PyReturnTypeReference)) {
+        substitutions.put(generic, actual);
+      }
+      else if (bound != null) {
+        substitutions.put(generic, bound);
+      }
+      return true;
+    }
     if (expected == null || actual == null) {
       return true;
     }
@@ -61,25 +87,6 @@ public class PyTypeChecker {
     }
     if (actual instanceof PyTypeReference) {
       return match(expected, ((PyTypeReference)actual).resolve(null, context), context, substitutions, false);
-    }
-    if (expected instanceof PyGenericType && substitutions != null) {
-      final PyGenericType generic = (PyGenericType)expected;
-      final PyType subst = substitutions.get(generic);
-      if (subst != null) {
-        if (expected.equals(actual)) {
-          return true;
-        }
-        else if (recursive) {
-          return match(subst, actual, context, substitutions, false);
-        }
-        else {
-          return false;
-        }
-      }
-      else {
-        substitutions.put(generic, actual);
-        return true;
-      }
     }
     if (isUnknown(actual)) {
       return true;

@@ -39,7 +39,7 @@ public class PyGenericType implements PyType {
   @NotNull
   @Override
   public String getName() {
-    return myName;
+    return myBound != null ? myName + " (" + myBound.getName() + ")" : myName;
   }
 
   @Override
@@ -71,7 +71,7 @@ public class PyGenericType implements PyType {
   @NotNull
   @Override
   public String toString() {
-    return "PyGenericType: " + myName;
+    return "PyGenericType: " + getName();
   }
 
   @Nullable

@@ -93,20 +93,19 @@ public class PyTypeCheckerInspection extends PyInspection {
           final String superName = PythonDocumentationProvider.getTypeName(superType, context);
           String expected = String.format("'%s'", superName);
           final boolean hasGenerics = PyTypeChecker.hasGenerics(superType, context);
+          ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           if (hasGenerics) {
             final PyType subst = PyTypeChecker.substitute(superType, substitutions, context);
             if (subst != null) {
               expected = String.format("'%s' (matched generic type '%s')",
                                        PythonDocumentationProvider.getTypeName(subst, context),
                                        superName);
-
+              highlightType = ProblemHighlightType.WEAK_WARNING;
             }
           }
           final String msg = String.format("Expected type %s, got '%s' instead",
                                            expected,
                                            PythonDocumentationProvider.getTypeName(subType, context));
-          final ProblemHighlightType highlightType = hasGenerics ? ProblemHighlightType.WEAK_WARNING :
-                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           registerProblem(node, msg, highlightType);
           return msg;
         }

@@ -215,4 +215,9 @@ public class PyUnionType implements PyType {
   public int hashCode() {
     return myMembers.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return "PyUnionType: " + getName();
+  }
 }
