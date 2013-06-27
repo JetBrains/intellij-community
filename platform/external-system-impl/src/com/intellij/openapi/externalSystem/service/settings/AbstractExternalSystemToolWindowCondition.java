@@ -16,13 +16,12 @@
 package com.intellij.openapi.externalSystem.service.settings;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +38,7 @@ public abstract class AbstractExternalSystemToolWindowCondition implements Condi
 
   @Override
   public boolean value(Project project) {
-    if (SystemProperties.getBooleanProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, false)) {
+    if (project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE) {
       return true;
     }
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);

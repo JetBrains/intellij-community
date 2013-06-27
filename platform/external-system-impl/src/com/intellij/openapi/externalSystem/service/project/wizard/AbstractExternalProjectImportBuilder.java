@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
@@ -14,7 +15,6 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -116,7 +116,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel)
   {
-    System.setProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
+    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
     final DataNode<ProjectData> externalProjectNode = getExternalProjectNode();
     if (externalProjectNode != null) {
       beforeCommit(externalProjectNode, project);
@@ -266,6 +266,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
         if (!StringUtil.isEmpty(errorDetails)) {
+          assert errorDetails != null;
           LOG.warn(errorDetails);
         }
         error.set(new ConfigurationException(ExternalSystemBundle.message("error.resolve.with.reason", errorMessage),
