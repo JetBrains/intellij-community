@@ -22,19 +22,16 @@ import java.util.regex.Pattern;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenGroovyConsoleFilter extends AbstractMavenConsoleFilter {
+public class MavenScalaConsoleFilter extends AbstractMavenConsoleFilter {
 
-  // Example of gmaven error line:
-  // [ERROR] /home/user/ideaProjects/simpleMaven/src/main/groovy/com/A.groovy: 17: [Static type checking] - Cannot assign value of type java.lang.String to variable of type int
-  private static final Pattern PATTERN = Pattern.compile("\\[ERROR\\] (\\S.+\\.groovy): (-?\\d{1,5}): .+", Pattern.DOTALL);
+  private static final Pattern PATTERN = Pattern.compile("\\[ERROR\\] (\\S.+\\.scala): ?(-?\\d{1,5}): .+", Pattern.DOTALL);
 
-  public MavenGroovyConsoleFilter(Project project) {
+  public MavenScalaConsoleFilter(Project project) {
     super(project, PATTERN);
   }
 
   @Override
   protected boolean lightCheck(String line) {
-    return line.startsWith("[ERROR] ") && line.contains(".groovy: ");
+    return line.startsWith("[ERROR] ") && line.contains(".scala:");
   }
-
 }
