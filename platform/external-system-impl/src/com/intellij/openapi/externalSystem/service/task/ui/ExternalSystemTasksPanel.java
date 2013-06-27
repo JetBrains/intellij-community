@@ -85,7 +85,10 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     myRecentTasksList = new ExternalSystemRecentTasksList(recentTasksModel, externalSystemId, project) {
       @Override
       protected void processMouseEvent(MouseEvent e) {
-        mySelectedTaskProvider = myRecentTasksList;
+        if (e.getClickCount() > 0) {
+          mySelectedTaskProvider = myRecentTasksList;
+          myAllTasksTree.getSelectionModel().clearSelection();
+        }
         super.processMouseEvent(e);
       }
     };
@@ -94,7 +97,10 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     myAllTasksTree = new ExternalSystemTasksTree(myAllTasksModel, settings.getExpandStates()) {
       @Override
       protected void processMouseEvent(MouseEvent e) {
-        mySelectedTaskProvider = myAllTasksTree;
+        if (e.getClickCount() > 0) {
+          mySelectedTaskProvider = myAllTasksTree;
+          myRecentTasksList.getSelectionModel().clearSelection();
+        }
         super.processMouseEvent(e);
       }
     };
