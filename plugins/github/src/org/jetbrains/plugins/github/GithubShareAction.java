@@ -17,9 +17,6 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +27,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -41,7 +37,6 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.Notificator;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
 import git4idea.commands.*;
@@ -109,7 +104,8 @@ public class GithubShareAction extends DumbAwareAction {
     boolean externalRemoteDetected = false;
     if (gitDetected) {
       if (GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-        showNotificationWithLink(project, "Project is already on GitHub", "GitHub", StringUtil.notNullize(GithubUtil.findGithubRemoteUrl(gitRepository)));
+        GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub",
+                                        StringUtil.notNullize(GithubUtil.findGithubRemoteUrl(gitRepository)));
         return;
       }
       else {
@@ -157,7 +153,7 @@ public class GithubShareAction extends DumbAwareAction {
       }
     });
     if (!exceptionRef.isNull()) {
-      Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to connect to GitHub");
+      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get().getMessage());
       return;
     }
     if (repoNamesRef.isNull() || userInfoRef.isNull()) {
@@ -188,7 +184,7 @@ public class GithubShareAction extends DumbAwareAction {
             LOG.info("Successfully created GitHub repository");
           }
           else {
-            showErrorDialog(project, "Failed to create new GitHub repository", "Create GitHub Repository", indicator);
+            GithubNotifications.showErrorDialog(project, "Create GitHub Repository", "Failed to create new GitHub repository");
             return;
           }
 
@@ -216,12 +212,13 @@ public class GithubShareAction extends DumbAwareAction {
             addRemoteHandler.run();
             repository.update();
             if (addRemoteHandler.getExitCode() != 0) {
-              showErrorDialog("Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote", indicator);
+              GithubNotifications
+                .showErrorDialog(project, "Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote");
               return;
             }
           }
           catch (VcsException e) {
-            showErrorDialog(e.getMessage(), "Failed to add GitHub repository as remote", indicator);
+            GithubNotifications.showErrorDialog(project, "Failed to add GitHub repository as remote", e.getMessage());
             LOG.info("Failed to add GitHub as remote: " + e.getMessage());
             return;
           }
@@ -237,15 +234,10 @@ public class GithubShareAction extends DumbAwareAction {
           Git git = ServiceManager.getService(Git.class);
           GitCommandResult result = git.push(repository, remoteName, remoteUrl, "refs/heads/master:refs/heads/master");
           if (result.success()) {
-            Notificator.getInstance(project).notify(
-              new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Success", "Successfully created project '" + name + "' on GitHub",
-                               NotificationType.INFORMATION));
+            GithubNotifications.showInfo(project, "Success", "Successfully created project '" + name + "' on GitHub");
           }
           else {
-            Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Push to GitHub failed",
-                                                         "Push failed: <br/>" + result.getErrorOutputAsHtmlString(),
-                                                         NotificationType.ERROR);
-            Notificator.getInstance(project).notify(notification);
+            GithubNotifications.showError(project, "Push to GitHub failed", "Push failed: <br/>" + result.getErrorOutputAsHtmlString());
           }
         }
         catch (IOException e) {
@@ -254,7 +246,7 @@ public class GithubShareAction extends DumbAwareAction {
       }
     }.queue();
     if (!exceptionRef.isNull()) {
-      Messages.showErrorDialog(exceptionRef.get().getMessage(), "Failed to create new GitHub repository");
+      GithubNotifications.showErrorDialog(project, "Failed to create new GitHub repository", exceptionRef.get().getMessage());
     }
   }
 
@@ -310,7 +302,7 @@ public class GithubShareAction extends DumbAwareAction {
     // get repository
     final GitVcs gitVcs = GitVcs.getInstance(project);
     if (gitVcs == null){
-      showErrorDialog(project, "Cannot find git initialized", "Failed to share", indicator);
+      GithubNotifications.showErrorDialog(project, "Failed to share", "Cannot find git initialized");
       return false;
     }
 
@@ -321,7 +313,7 @@ public class GithubShareAction extends DumbAwareAction {
     }
     GitRepository repository = repositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
-      showErrorDialog(project, "Cannot find git repository for root " + root, "Failed to share", indicator);
+      GithubNotifications.showErrorDialog(project, "Failed to share", "Cannot find git repository for root " + root);
       return false;
     }
     if (!repository.isFresh()) {
@@ -345,7 +337,7 @@ public class GithubShareAction extends DumbAwareAction {
       }, indicator.getModalityState());
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
       if (!dialog.isOK() || files2add.isEmpty()) {
-        showErrorDialog(project, "No files to commit", "Failed to commit file during post activities", indicator);
+        GithubNotifications.showErrorDialog(project, "Failed to commit file during post activities", "No files to commit");
         return false;
       }
       GitFileUtils.addFiles(project, root, files2add);
@@ -359,37 +351,10 @@ public class GithubShareAction extends DumbAwareAction {
     }
     catch (VcsException e) {
       LOG.info("Failed to perform initial commit");
-      showErrorDialog(project, e.getMessage(), "Failed to commit file during post activities", indicator);
+      GithubNotifications.showErrorDialog(project, "Failed to commit file during post activities", e.getMessage());
       return false;
     }
     return true;
-  }
-
-  private static void showErrorDialog(final String message, final String title, ProgressIndicator indicator) {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(message, title);
-      }
-    }, indicator.getModalityState());
-  }
-
-  private static void showErrorDialog(final Project project, final String message, final String title, ProgressIndicator indicator) {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(project, message, title);
-      }
-    }, indicator.getModalityState());
-  }
-
-  private static void showNotificationWithLink(@NotNull Project project,
-                                               @NotNull String message,
-                                               @NotNull String title,
-                                               @NotNull final String url) {
-    Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, message, "<a href='" + url + "'>" + title + "</a>",
-                                                 NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
-    Notificator.getInstance(project).notify(notification);
   }
 
   private static class GithubUntrackedFilesDialog extends SelectFilesDialog {

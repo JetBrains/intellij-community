@@ -18,9 +18,6 @@ package org.jetbrains.plugins.github;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,14 +35,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import git4idea.GitVcs;
 import git4idea.Notificator;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -129,7 +124,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         }
       });
       if (authDataRef.isNull()) {
-        showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
+        GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
         return;
       }
       auth = authDataRef.get();
@@ -147,7 +142,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
           BrowserUtil.launchBrowser(url);
         }
         else {
-          showNotificationWithLink(project, url);
+          GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url);
         }
       }
     });
@@ -175,12 +170,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
         resultHandler.consume(url.get());
       }
     }.queue();
-  }
-
-  private static void showNotificationWithLink(@NotNull Project project, @NotNull final String url) {
-    Notificator.getInstance(project)
-      .notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Gist Created Successfully", "Your gist url: <a href='open'>" + url + "</a>",
-              NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
   }
 
   @NotNull
@@ -215,7 +204,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                    boolean isPrivate,
                                    @NotNull String description) {
     if (contents.isEmpty()) {
-      showWarning(project, "Failed to create gist", "Can't create empty gist");
+      GithubNotifications.showWarning(project, "Failed to create gist", "Can't create empty gist");
       return null;
     }
     String requestBody = prepareJsonRequest(description, isPrivate, contents);
@@ -275,11 +264,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                 @Nullable Exception e) {
     Notificator.getInstance(project).notifyError(title, content);
     LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
-  }
-
-  private static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message) {
-    Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.WARNING);
-    Notificator.getInstance(project).notify(notification);
   }
 
   @NotNull

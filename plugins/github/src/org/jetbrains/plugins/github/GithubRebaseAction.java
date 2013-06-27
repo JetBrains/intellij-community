@@ -106,8 +106,8 @@ public class GithubRebaseAction extends DumbAwareAction {
     final String login = GithubSettings.getInstance().getLogin();
     final int index = pushUrl.lastIndexOf(login);
     if (index == -1) {
-      Messages.showErrorDialog(project, "Github remote repository doesn't seem to be your own repository: " + pushUrl,
-                               CANNOT_PERFORM_GITHUB_REBASE);
+      GithubNotifications.showErrorDialog(project, "Github remote repository doesn't seem to be your own repository: " + pushUrl,
+                                          CANNOT_PERFORM_GITHUB_REBASE);
       return;
     }
     String repoName = pushUrl.substring(index + login.length() + 1);
@@ -130,14 +130,14 @@ public class GithubRebaseAction extends DumbAwareAction {
             }
           });
           if (repositoryInfoRef.isNull()) {
-            Messages.showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl,
-                                     CANNOT_PERFORM_GITHUB_REBASE);
+            GithubNotifications.showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl,
+                                                CANNOT_PERFORM_GITHUB_REBASE);
             return;
           }
 
           if (!repositoryInfoRef.get().isFork()) {
-            Messages
-              .showErrorDialog(project, "Github repository '" + finalRepoName + "' is not a forked one", CANNOT_PERFORM_GITHUB_REBASE);
+            GithubNotifications
+              .showErrorDialog(project, CANNOT_PERFORM_GITHUB_REBASE, "Github repository '" + finalRepoName + "' is not a forked one");
             return;
           }
 
@@ -160,17 +160,16 @@ public class GithubRebaseAction extends DumbAwareAction {
         }
         catch (IOException e) {
           LOG.info(e);
-          GithubUtil.notifyError(project, "Couldn't get information about the repository", GithubUtil.getErrorTextFromException(e));
+          GithubNotifications.showError(project, "Couldn't get information about the repository", e);
         }
       }
     });
 
     final String parentRepoUrl = parentRepoUrlRef.get();
     if (remoteForForkParentRepo.isNull()) {
-      final int result = Messages.showYesNoDialog(project, "It is necessary to have '" +
-                                                           parentRepoUrl +
-                                                           "' as a configured remote. Add remote?", "Github Rebase",
-                                                  Messages.getQuestionIcon());
+      final int result = GithubNotifications.showYesNoDialog(project, "Github Rebase", "It is necessary to have '" +
+                                                                                       parentRepoUrl +
+                                                                                       "' as a configured remote. Add remote?");
       if (result != Messages.OK){
         return;
       }
@@ -192,7 +191,8 @@ public class GithubRebaseAction extends DumbAwareAction {
             addRemoteHandler.addParameters("add", remoteForForkParentRepo.get(), parentRepoUrl);
             addRemoteHandler.run();
             if (addRemoteHandler.getExitCode() != 0) {
-              showErrorMessage(project, "Failed to add GitHub remote: '" + parentRepoUrl + "'", indicator);
+              GithubNotifications
+                .showErrorDialog(project, CANNOT_PERFORM_GITHUB_REBASE, "Failed to add GitHub remote: '" + parentRepoUrl + "'");
             }
 
             // catch newly added remote
@@ -200,7 +200,7 @@ public class GithubRebaseAction extends DumbAwareAction {
           }
           catch (VcsException e1) {
             final String message = "Error happened during git operation: " + e1.getMessage();
-            showErrorMessage(project, message, indicator);
+            GithubNotifications.showErrorDialog(project, CANNOT_PERFORM_GITHUB_REBASE, message);
           }
         }
 
@@ -244,14 +244,5 @@ public class GithubRebaseAction extends DumbAwareAction {
       return false;
     }
     return true;
-  }
-
-  private static void showErrorMessage(final Project project, final String message, ProgressIndicator indicator) {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(project, message, CANNOT_PERFORM_GITHUB_REBASE);
-      }
-    }, indicator.getModalityState());
   }
 }

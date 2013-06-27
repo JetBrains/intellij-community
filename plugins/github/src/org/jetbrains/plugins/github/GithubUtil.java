@@ -17,14 +17,11 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConsumer;
 import git4idea.config.GitVcsApplicationSettings;
@@ -52,8 +49,6 @@ import java.util.List;
 public class GithubUtil {
 
   public static final Logger LOG = Logger.getInstance("github");
-
-  static final String GITHUB_NOTIFICATION_GROUP = "github";
 
   @Nullable
   public static GithubAuthData runAndGetValidAuth(@NotNull Project project,
@@ -251,13 +246,13 @@ public class GithubUtil {
       version = GitVersion.identifyVersion(executable);
     }
     catch (Exception e) {
-      Messages.showErrorDialog(project, e.getMessage(), GitBundle.getString("find.git.error.title"));
+      GithubNotifications.showErrorDialog(project, GitBundle.getString("find.git.error.title"), e.getMessage());
       return false;
     }
 
     if (!version.isSupported()) {
-      Messages.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
-                                 GitBundle.getString("find.git.success.title"));
+      GithubNotifications.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
+                                            GitBundle.getString("find.git.success.title"));
       return false;
     }
     return true;
@@ -294,22 +289,22 @@ public class GithubUtil {
     if (url.startsWith(getHttpsUrl())) {
       index = url.lastIndexOf('/');
       if (index == -1) {
-        Messages
-          .showErrorDialog(project, "Cannot extract info about repository name: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
+        GithubNotifications
+          .showError(project, "Cannot extract info about repository: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
         return null;
       }
       index = url.substring(0, index).lastIndexOf('/');
       if (index == -1) {
-        Messages
-          .showErrorDialog(project, "Cannot extract info about repository owner: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
+        GithubNotifications
+          .showError(project, "Cannot extract info about repository: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
         return null;
       }
     }
     else {
       index = url.lastIndexOf(':');
       if (index == -1) {
-        Messages.showErrorDialog(project, "Cannot extract info about repository name and owner: " + url,
-                                 GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
+        GithubNotifications
+          .showError(project, "Cannot extract info about repository: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
         return null;
       }
     }
@@ -363,10 +358,6 @@ public class GithubUtil {
   @NotNull
   public static String getErrorTextFromException(@NotNull IOException e) {
     return e.getMessage();
-  }
-
-  public static void notifyError(@NotNull Project project, @NotNull String title, @NotNull String message) {
-    new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR).notify(project);
   }
 
 }
