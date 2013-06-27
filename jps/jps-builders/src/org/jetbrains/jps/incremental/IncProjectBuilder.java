@@ -1057,6 +1057,10 @@ public class IncProjectBuilder {
         BUILDER_CATEGORY_LOOP:
         for (BuilderCategory category : BuilderCategory.values()) {
           final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
+          if (category == BuilderCategory.CLASS_POST_PROCESSOR) {
+            // ensure changes from instrumenters are visible to class post-processors
+            saveInstrumentedClasses(outputConsumer);
+          }
           if (builders.isEmpty()) {
             continue;
           }
@@ -1114,11 +1118,7 @@ public class IncProjectBuilder {
       while (nextPassRequired);
     }
     finally {
-      for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
-        if (compiledClass.isDirty()) {
-          compiledClass.save();
-        }
-      }
+      saveInstrumentedClasses(outputConsumer);
       outputConsumer.fireFileGeneratedEvents();
       outputConsumer.clear();
       for (BuilderCategory category : BuilderCategory.values()) {
@@ -1129,6 +1129,14 @@ public class IncProjectBuilder {
     }
 
     return doneSomething;
+  }
+
+  private void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {
+    for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
+      if (compiledClass.isDirty()) {
+        compiledClass.save();
+      }
+    }
   }
 
   private static void onChunkBuildComplete(CompileContext context, @NotNull BuildTargetChunk chunk) throws IOException {
