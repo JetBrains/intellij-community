@@ -78,6 +78,11 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
   }
 
   @NotNull
+  public static <R, T> FunctionalParser<R, T> maybe(@NotNull final FunctionalParser<R, T> parser) {
+    return parser.or(FunctionalParserBase.<R, T>pure(null));
+  }
+
+  @NotNull
   @Override
   public FunctionalParser<R, T> endOfInput() {
     return this.thenSkip(FunctionalParserBase.<T>finished());
@@ -213,6 +218,17 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
           return Pair.create(null, state);
         }
         throw new ParserException(String.format("Expected end of input, found %s", tokens.get(pos)), state);
+      }
+    };
+  }
+
+  @NotNull
+  private static <R, T> FunctionalParser<R, T> pure(@Nullable final R value) {
+    return new FunctionalParserBase<R, T>() {
+      @NotNull
+      @Override
+      public Pair<R, State> parse(@NotNull List<Token<T>> tokens, @NotNull State state) throws ParserException {
+        return Pair.create(value, state);
       }
     };
   }

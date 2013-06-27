@@ -180,4 +180,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testFieldWithNoneInStub() {
     doMultiFileTest();
   }
+
+  public void testBoundedGeneric() {
+    doTest();
+  }
 }

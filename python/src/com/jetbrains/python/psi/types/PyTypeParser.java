@@ -28,6 +28,7 @@ import java.util.*;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
 import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.many;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.maybe;
 import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.token;
 
 /**
@@ -134,11 +135,20 @@ public class PyTypeParser {
         .named("tuple-type");
 
     final FunctionalParser<ParseResult, PyElementType> typeParameter =
-      token(PARAMETER)
-        .map(new Function<Token<PyElementType>, ParseResult>() {
+      token(PARAMETER).then(maybe(op("(").skipThen(typeExpr).thenSkip(op(")"))))
+        .map(new Function<Pair<Token<PyElementType>, ParseResult>, ParseResult>() {
           @Override
-          public ParseResult fun(Token<PyElementType> token) {
-            return new ParseResult(new PyGenericType(token.getText().toString()), token.getRange());
+          public ParseResult fun(Pair<Token<PyElementType>, ParseResult> value) {
+            final Token<PyElementType> token = value.getFirst();
+            final String name = token.getText().toString();
+            final TextRange range = token.getRange();
+            final ParseResult boundResult = value.getSecond();
+            if (boundResult != null) {
+              final PyGenericType type = new PyGenericType(name, boundResult.getType());
+              final ParseResult result = new ParseResult(type, range);
+              return result.merge(boundResult).withType(type);
+            }
+            return new ParseResult(new PyGenericType(name, null), range);
           }
         })
         .named("type-parameter");
@@ -179,7 +189,7 @@ public class PyTypeParser {
                   final ParseResult third = value.getSecond();
                   final PyType firstType = first.getType();
                   if (firstType instanceof PyClassType) {
-                    final PyTupleType tupleType = PyTupleType.create(anchor, new PyType[] { second.getType(), third.getType() });
+                    final PyTupleType tupleType = PyTupleType.create(anchor, new PyType[]{second.getType(), third.getType()});
                     final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, tupleType);
                     return first.merge(second).merge(third).withType(type);
                   }
