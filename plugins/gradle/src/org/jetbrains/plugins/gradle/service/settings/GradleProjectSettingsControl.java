@@ -222,6 +222,10 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
     
     updateWrapperControls(getInitialSettings().getExternalProjectPath());
+    if (myUseWrapperButton.isSelected()) {
+      myGradleHomePathField.setEnabled(false);
+      return;
+    }
 
     if (StringUtil.isEmpty(gradleHome)) {
       myGradleHomeSettingType = LocationSettingType.UNKNOWN;
