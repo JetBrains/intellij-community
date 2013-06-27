@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -29,10 +30,11 @@ public class CoverageListNode extends AbstractTreeNode {
   protected CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
 
-  public CoverageListNode(final PsiNamedElement classOrPackage,
+  public CoverageListNode(Project project, 
+                          final PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
-    super(classOrPackage.getProject(), classOrPackage);
+    super(project, classOrPackage);
     myName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {

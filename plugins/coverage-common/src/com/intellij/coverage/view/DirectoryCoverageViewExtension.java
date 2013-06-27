@@ -59,7 +59,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
     if (value instanceof PsiFile) {
       return myAnnotator.getFileCoverageInformationString((PsiFile)value, mySuitesBundle, myCoverageDataManager);
     }
-    return myAnnotator.getDirCoverageInformationString((PsiDirectory)value, mySuitesBundle, myCoverageDataManager);
+    return value != null ? myAnnotator.getDirCoverageInformationString((PsiDirectory)value, mySuitesBundle, myCoverageDataManager) : null;
   }
 
 
@@ -75,7 +75,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   @Override
   public AbstractTreeNode createRootNode() {
     final VirtualFile baseDir = myProject.getBaseDir();
-    return new CoverageListRootNode(PsiManager.getInstance(myProject).findDirectory(baseDir), mySuitesBundle, myStateBean);
+    return new CoverageListRootNode(myProject, PsiManager.getInstance(myProject).findDirectory(baseDir), mySuitesBundle, myStateBean);
   }
 
   @Override
@@ -92,7 +92,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
         }
       });
       for (PsiDirectory subdirectory : subdirectories) {
-        children.add(new CoverageListNode(subdirectory, mySuitesBundle, myStateBean));
+        children.add(new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean));
       }
       final PsiFile[] psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
         @Override
@@ -101,7 +101,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
         }
       });
       for (PsiFile psiFile : psiFiles) {
-        children.add(new CoverageListNode(psiFile, mySuitesBundle, myStateBean));
+        children.add(new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean));
       }
 
       for (AbstractTreeNode childNode : children) {
