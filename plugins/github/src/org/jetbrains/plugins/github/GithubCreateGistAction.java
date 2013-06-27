@@ -22,7 +22,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -288,7 +290,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (file.isDirectory()) {
       return getContentFromDirectory(file, project, prefix);
     }
-    String content = readFile(file);
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    String content;
+    if (document != null) {
+      content = document.getText();
+    }
+    else {
+      content = readFile(file);
+    }
     if (content == null) {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file);
       LOG.info("Couldn't read the contents of the file " + file);
