@@ -57,10 +57,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
 
-    ChooseByNameModel model = base.getModel();
-    boolean empty = namePattern.isEmpty() ||
-                    namePattern.equals("@") && model instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
-    if (empty && !base.canShowListForEmptyPattern()) return true;
+    if (removeModelSpecificMarkup(base, pattern).isEmpty() && !base.canShowListForEmptyPattern()) return true;
 
     Set<String> names = new THashSet<String>(Arrays.asList(base.getNames(everywhere)));
 
@@ -277,16 +274,21 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   private static String convertToMatchingPattern(ChooseByNameBase base, String pattern) {
+    pattern = removeModelSpecificMarkup(base, pattern);
+
     if (!base.canShowListForEmptyPattern()) {
       LOG.assertTrue(!pattern.isEmpty(), base);
     }
 
-    if (base.getModel() instanceof GotoClassModel2 && (pattern.startsWith("@"))) {
-      pattern = pattern.substring(1);
-    }
-
     if (base.isSearchInAnyPlace() && !pattern.trim().isEmpty()) {
       pattern = "*" + pattern;
+    }
+    return pattern;
+  }
+
+  private static String removeModelSpecificMarkup(ChooseByNameBase base, String pattern) {
+    if (base.getModel() instanceof GotoClassModel2 && pattern.startsWith("@")) {
+      pattern = pattern.substring(1);
     }
     return pattern;
   }
