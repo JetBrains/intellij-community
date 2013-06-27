@@ -98,6 +98,7 @@ public class Splash extends JDialog implements StartupProgress {
   public void show() {
     super.show();
     toFront();
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     BOUNDS = getBounds();
     //Sometimes this causes deadlock in EDT
     // http://bugs.sun.com/view_bug.do?bug_id=6724890
