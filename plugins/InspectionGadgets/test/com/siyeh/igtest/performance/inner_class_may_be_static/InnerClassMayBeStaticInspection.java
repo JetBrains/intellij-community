@@ -47,3 +47,13 @@ class D {
         }
     }
 }
+class StaticInnerClass {
+
+  private int foo;
+
+  public class Baz extends StaticInnerClass  {
+    Baz() {
+      foo = -1;
+    }
+  }
+}
