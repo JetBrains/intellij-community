@@ -17,14 +17,12 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,15 +32,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -59,9 +54,9 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
@@ -85,7 +80,6 @@ public class GithubShareAction extends DumbAwareAction {
     setVisibleEnabled(e, true, true);
   }
 
-  // TODO: ??? Git preparations -> Modal thread
   // get gitRepository
   // check for existing git repo
   // check available repos (net)
@@ -93,8 +87,8 @@ public class GithubShareAction extends DumbAwareAction {
   // Show dialog (window)
   // create GitHub repo (net)
   // create local git repo
-  // make first commit
   // add GitHub as a remote host
+  // make first commit
   // push everything (net)
   @Override
   public void actionPerformed(final AnActionEvent e) {
@@ -115,7 +109,7 @@ public class GithubShareAction extends DumbAwareAction {
     boolean externalRemoteDetected = false;
     if (gitDetected) {
       if (GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-        showNotificationWithLink(project, "Project is already on GitHub", "GitHub", GithubUtil.findGithubRemoteUrl(gitRepository));
+        showNotificationWithLink(project, "Project is already on GitHub", "GitHub", StringUtil.notNullize(GithubUtil.findGithubRemoteUrl(gitRepository)));
         return;
       }
       else {
@@ -206,11 +200,6 @@ public class GithubShareAction extends DumbAwareAction {
             }
           }
 
-          // In this case we should create sample commit for binding project
-          if (!performFirstCommitIfRequired(project, root, indicator)) {
-            return;
-          }
-
           GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
           final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
           LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
@@ -234,6 +223,11 @@ public class GithubShareAction extends DumbAwareAction {
           catch (VcsException e) {
             showErrorDialog(e.getMessage(), "Failed to add GitHub repository as remote", indicator);
             LOG.info("Failed to add GitHub as remote: " + e.getMessage());
+            return;
+          }
+
+          // In this case we should create sample commit for binding project
+          if (!performFirstCommitIfRequired(project, root, indicator)) {
             return;
           }
 
@@ -307,11 +301,12 @@ public class GithubShareAction extends DumbAwareAction {
 
   }
 
-  // get repository
-  // create README
-  // ask for files to add (coming soon)
+  // check if there is no commits
+  // ask for files to add
   // commit
-  private boolean performFirstCommitIfRequired(final Project project, final VirtualFile root, @NotNull ProgressIndicator indicator) {
+  private static boolean performFirstCommitIfRequired(@NotNull Project project,
+                                               @NotNull final VirtualFile root,
+                                               @NotNull ProgressIndicator indicator) {
     // get repository
     final GitVcs gitVcs = GitVcs.getInstance(project);
     if (gitVcs == null){
@@ -333,83 +328,27 @@ public class GithubShareAction extends DumbAwareAction {
       return true;
     }
 
-    // Creating or modifying readme file
-    final Ref<Exception> exceptionRef = new Ref<Exception>();
-    final Ref<VirtualFile> readmeFileRef = new Ref<VirtualFile>();
-    LOG.info("Touching file 'README' for initial commit");
-    indicator.setText("Touching file 'README' for initial commit");
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            VirtualFile file = null;
-            try {
-              file = root.findChild("README");
-              if (file == null) {
-                file = root.createChildData(this, "README");
-                VfsUtil.saveText(file, "This file was created by " +
-                                       ApplicationInfoEx.getInstanceEx().getFullApplicationName() +
-                                       " for binding GitHub repository");
-              }
-              else {
-                VfsUtil.saveText(file, VfsUtil.loadText(file) +
-                                       "\nThis file was modified by " +
-                                       ApplicationInfoEx.getInstanceEx().getFullApplicationName() +
-                                       " for binding GitHub repository");
-              }
-            }
-            catch (IOException e) {
-              exceptionRef.set(e);
-              LOG.info("Failed to touch file 'README' for initial commit: " + e.getMessage());
-            }
-            readmeFileRef.set(file);
-          }
-        });
-      }
-    }, indicator.getModalityState());
-    final VirtualFile readmeFile = readmeFileRef.get();
-    if (!exceptionRef.isNull()) {
-      showErrorDialog(project, exceptionRef.get().getMessage(), "Failed to modify file during post activities", indicator);
-    }
-
     // commit
     LOG.info("Trying to commit");
     indicator.setText("Trying to commit");
     try {
       LOG.info("Adding files for commit");
       indicator.setText("Adding files to git");
-      // Add readme files to git
-      final ArrayList<VirtualFile> files2Add = new ArrayList<VirtualFile>();
-      if (readmeFile != null) {
-        files2Add.add(readmeFile);
-      }
-      final ChangeListManagerImpl changeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
 
-      // Force update
-      final Semaphore semaphore = new Semaphore();
-      semaphore.up();
-      changeListManager.invokeAfterUpdate(new Runnable() {
+      List<VirtualFile> untrackedFiles = new ArrayList<VirtualFile>(repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
+      final GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, untrackedFiles);
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
-          semaphore.down();
+          dialog.show();
         }
-      }, InvokeAfterUpdateMode.SILENT, null, null);
-      if (!semaphore.waitFor(30000)) {
-        throw new VcsException("Too long VCS update");
+      }, indicator.getModalityState());
+      final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
+      if (!dialog.isOK() || files2add.isEmpty()) {
+        showErrorDialog(project, "No files to commit", "Failed to commit file during post activities", indicator);
+        return false;
       }
-
-      for (VirtualFile file : changeListManager.getUnversionedFiles()) {
-        if (file.getPath().contains(Project.DIRECTORY_STORE_FOLDER)) {
-          continue;
-        }
-        if (readmeFile != null && readmeFile.equals(file)) {
-          continue;
-        }
-        files2Add.add(file);
-      }
-      GitFileUtils.addFiles(project, root, files2Add);
+      GitFileUtils.addFiles(project, root, files2add);
 
       LOG.info("Performing commit");
       indicator.setText("Performing commit");
@@ -451,5 +390,13 @@ public class GithubShareAction extends DumbAwareAction {
     Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, message, "<a href='" + url + "'>" + title + "</a>",
                                                  NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
     Notificator.getInstance(project).notify(notification);
+  }
+
+  private static class GithubUntrackedFilesDialog extends SelectFilesDialog {
+
+    public GithubUntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> untrackedFiles) {
+      super(project, untrackedFiles, "Add files to Git", VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION, true, false, false);
+      init();
+    }
   }
 }
