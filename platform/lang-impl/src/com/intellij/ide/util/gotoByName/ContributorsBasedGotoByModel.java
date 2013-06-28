@@ -102,7 +102,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
                                                     return true;
                                                   }
                                                 });
-    indicator.checkCanceled();
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
     long finish = System.currentTimeMillis();
     if (LOG.isDebugEnabled()) {
       LOG.debug("getNames(): "+(finish-start)+"ms; (got "+allNames.size()+" elements)");
