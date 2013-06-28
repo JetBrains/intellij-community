@@ -120,6 +120,13 @@ public class MavenProjectsTree {
     return result;
   }
 
+  private static void writeCollection(DataOutputStream out, Collection<String> list) throws IOException {
+    out.writeInt(list.size());
+    for (String each : list) {
+      out.writeUTF(each);
+    }
+  }
+
   private static List<MavenProject> readProjectsRecursively(DataInputStream in,
                                                             MavenProjectsTree tree) throws IOException {
     int count = in.readInt();
@@ -163,13 +170,6 @@ public class MavenProjectsTree {
       finally {
         readUnlock();
       }
-    }
-  }
-
-  private static void writeCollection(DataOutputStream out, Collection<String> list) throws IOException {
-    out.writeInt(list.size());
-    for (String each : list) {
-      out.writeUTF(each);
     }
   }
 
