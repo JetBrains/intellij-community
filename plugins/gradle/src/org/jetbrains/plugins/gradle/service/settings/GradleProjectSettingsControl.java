@@ -317,7 +317,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
         myAlarm.addRequest(this, diff);
         return;
       }
-      if (!myGradleHomePathField.isShowing()) {
+      if (myGradleHomePathField == null || !myGradleHomePathField.isShowing()) {
         // Don't schedule the balloon if the configurable is hidden.
         return;
       }

@@ -189,7 +189,8 @@ public abstract class AbstractExternalSystemConfigurable<
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected String getProjectName(@NotNull String path) {
-    return new File(path).getName();
+    File file = new File(path);
+    return file.isDirectory() ? file.getName() : file.getParentFile().getName();
   }
 
   private void prepareSystemSettings(@NotNull SystemSettings s) {
