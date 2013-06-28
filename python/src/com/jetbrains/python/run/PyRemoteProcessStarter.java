@@ -40,7 +40,7 @@ public class PyRemoteProcessStarter {
           }
           if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
               Messages.NO) {
-            throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
+            throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage(), e);
           }
         }
       }
