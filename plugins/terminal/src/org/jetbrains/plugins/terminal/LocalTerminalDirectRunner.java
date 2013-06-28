@@ -26,9 +26,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private final Charset myDefaultCharset;
   private final String myCommand;
 
-  public LocalTerminalDirectRunner(Project project, Charset charset, String command) {
+  public LocalTerminalDirectRunner(Project project, String command) {
     super(project);
-    myDefaultCharset = charset;
+    myDefaultCharset = Charset.forName("UTF-8");
     myCommand = command;
   }
 
