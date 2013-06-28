@@ -103,9 +103,9 @@ public class GithubShareAction extends DumbAwareAction {
     // check for existing git repo
     boolean externalRemoteDetected = false;
     if (gitDetected) {
-      if (GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-        GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub",
-                                        StringUtil.notNullize(GithubUtil.findGithubRemoteUrl(gitRepository)));
+      final String githubRemote = GithubUtil.findGithubRemoteUrl(gitRepository);
+      if (githubRemote != null) {
+        GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub", githubRemote);
         return;
       }
       else {

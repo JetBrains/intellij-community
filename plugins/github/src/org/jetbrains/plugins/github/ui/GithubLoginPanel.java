@@ -97,7 +97,7 @@ public class GithubLoginPanel {
     return String.valueOf(myPasswordField.getPassword());
   }
 
-  public boolean rememberPassword() {
+  public boolean shouldSavePassword() {
     return mySavePasswordCheckBox.isSelected();
   }
 

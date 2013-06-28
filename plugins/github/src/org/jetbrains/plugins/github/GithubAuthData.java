@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Aleksey Pivovarov
  */
 public class GithubAuthData {
-  private final String myHost;
-  private final String myLogin;
-  private final String myPassword;
+  private final @NotNull String myHost;
+  private final @NotNull String myLogin;
+  private final @NotNull String myPassword;
 
   public GithubAuthData(@NotNull String host, @NotNull String login, @NotNull String password) {
     myHost = host;
@@ -36,17 +36,17 @@ public class GithubAuthData {
 
   @NotNull
   public String getHost() {
-    return StringUtil.notNullize(myHost);
+    return myHost;
   }
 
   @NotNull
   public String getLogin() {
-    return StringUtil.notNullize(myLogin);
+    return myLogin;
   }
 
   @NotNull
   public String getPassword() {
-    return StringUtil.notNullize(myPassword);
+    return myPassword;
   }
 
 }

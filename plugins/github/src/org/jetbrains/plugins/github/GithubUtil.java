@@ -113,17 +113,7 @@ public class GithubUtil {
       // ignore
     }
     if (!valid) {
-      final GithubLoginDialog dialog = new GithubLoginDialog(project);
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          dialog.show();
-        }
-      }, indicator.getModalityState());
-      if (!dialog.isOK()) {
-        return null;
-      }
-      return dialog.getAuthData();
+      return getValidAuthData(project, indicator);
     }
     else {
       return auth;

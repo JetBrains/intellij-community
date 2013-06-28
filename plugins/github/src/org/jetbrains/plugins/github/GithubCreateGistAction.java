@@ -42,6 +42,7 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -196,7 +197,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
 
     LOG.error("File, files and editor can't be null all at once!");
-    return null;
+    throw new InvalidStateException("File, files and editor can't be null all at once!");
   }
 
   @Nullable
