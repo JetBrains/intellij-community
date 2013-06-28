@@ -33,6 +33,10 @@
     <component>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryKindLoader</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
