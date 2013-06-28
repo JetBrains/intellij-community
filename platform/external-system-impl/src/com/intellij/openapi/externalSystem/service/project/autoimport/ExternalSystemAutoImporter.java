@@ -34,6 +34,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -78,14 +79,24 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
   @NotNull private final Runnable                       myDocumentsSaveRequest = new Runnable() {
     @Override
     public void run() {
-      saveDocumentsIfNecessary(); 
+      saveDocumentsIfNecessary();
     }
   };
   @NotNull private final ExternalProjectRefreshCallback myRefreshCallback      = new ExternalProjectRefreshCallback() {
     @Override
-    public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
       if (externalProject != null) {
-        myProjectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), myProject, false);
+        ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
+          @Override
+          public void run() {
+            ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
+              @Override
+              public void run() {
+                myProjectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), myProject, true);
+              }
+            });
+          }
+        });
       }
     }
 
