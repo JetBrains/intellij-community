@@ -35,7 +35,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   protected PtyProcess createProcess() throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
-    envs.put("TERM", "vt100");
+    envs.put("TERM", "xterm");
     return new PtyProcess(myCommand, new String[]{myCommand}, envs);
   }
 
