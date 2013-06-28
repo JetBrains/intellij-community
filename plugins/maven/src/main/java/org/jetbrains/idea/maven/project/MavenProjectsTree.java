@@ -366,25 +366,25 @@ public class MavenProjectsTree {
   }
 
   public Collection<String> getAvailableProfiles() {
-    return getAvailableAndActiveProfiles(true, false).first;
-  }
+    Collection<String> res = new THashSet<String>();
 
-  private Pair<Collection<String>, Collection<String>> getAvailableAndActiveProfiles(boolean includeAvailable, boolean includeActive) {
-    Collection<String> available = includeAvailable ? new THashSet<String>() : null;
-    Collection<String> active = includeActive ? new THashSet<String>() : null;
     for (MavenProject each : getProjects()) {
-      if (available != null) available.addAll(each.getProfilesIds());
-      if (active != null) active.addAll(each.getActivatedProfilesIds());
+      res.addAll(each.getProfilesIds());
     }
-    return Pair.create(available, active);
+
+    return res;
   }
 
   public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
     Collection<Pair<String, MavenProfileKind>> result = new ArrayListSet<Pair<String, MavenProfileKind>>();
 
-    Pair<Collection<String>, Collection<String>> profiles = getAvailableAndActiveProfiles(true, true);
-    Collection<String> available = profiles.first;
-    Collection<String> active = profiles.second;
+    Collection<String> available = new THashSet<String>();
+    Collection<String> active = new THashSet<String>();
+    for (MavenProject each : getProjects()) {
+      available.addAll(each.getProfilesIds());
+      active.addAll(each.getActivatedProfilesIds());
+    }
+
     Collection<String> explicitProfiles = getExplicitProfiles();
 
     for (String each : available) {
