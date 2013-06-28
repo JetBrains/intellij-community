@@ -101,13 +101,12 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllClassNames() {
-    final Collection<String> names = JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject());
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @Override
   public void getAllClassNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject()));
+    JavaShortClassNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
   }
 
   @Override
@@ -147,13 +146,12 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllMethodNames() {
-    final Collection<String> names = JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject());
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @Override
   public void getAllMethodNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject()));
+    JavaMethodNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
   }
 
   @Override
@@ -186,13 +184,12 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllFieldNames() {
-    final Collection<String> names = JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject());
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @Override
   public void getAllFieldNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject()));
+    JavaFieldNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
   }
 
   private <T extends PsiMember> List<T> filterMembers(Collection<T> members, final GlobalSearchScope scope) {
