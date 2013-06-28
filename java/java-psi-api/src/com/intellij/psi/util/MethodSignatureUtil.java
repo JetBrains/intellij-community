@@ -49,17 +49,7 @@ public class MethodSignatureUtil {
     new TObjectHashingStrategy<MethodSignature>() {
       @Override
       public int computeHashCode(final MethodSignature signature) {
-        int result = signature.isConstructor() ? 0 : signature.getName().hashCode();
-
-        PsiType[] parameterTypes = signature.getParameterTypes();
-        result += 37 * parameterTypes.length;
-        PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
-        if (firstParamType != null) {
-          firstParamType = TypeConversionUtil.erasure(firstParamType, signature.getSubstitutor());
-          assert firstParamType != null : parameterTypes[0];
-          result = 31*result + firstParamType.hashCode();
-        }
-        return result;
+        return signature.hashCode();
       }
 
       @Override
