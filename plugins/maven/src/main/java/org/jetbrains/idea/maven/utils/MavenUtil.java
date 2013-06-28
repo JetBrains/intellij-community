@@ -22,6 +22,8 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.lexer.FilterLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XmlLexer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -755,40 +757,73 @@ public class MavenUtil {
     void waitFor();
   }
 
-  public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
-    String text = VfsUtil.loadText(xmlFile);
+  private static void processToken(CRC32 crc, Lexer lexer) {
+    String text = (String)lexer.getBufferSequence();
 
-    XmlLexer lexer = new XmlLexer();
-    lexer.start(text);
+    for (int i = lexer.getTokenStart(), end = lexer.getTokenEnd(); i < end; i++) {
+      char a = text.charAt(i);
+      crc.update(a);
+      crc.update(a >>> 8);
+    }
+  }
+
+  public static int crcWithoutSpaces(@NotNull String xmlText) {
+    Lexer lexer = new FilterLexer(new XmlLexer(), new FilterLexer.SetFilter(XmlTokenType.COMMENTS));
+    lexer.start(xmlText);
 
     CRC32 crc = new CRC32();
-
-    boolean isCommentOrSpace = false;
 
     while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
 
-      if (XmlTokenType.WHITESPACES.contains(tokenType) || XmlTokenType.COMMENTS.contains(tokenType) || tokenType == XmlTokenType.XML_REAL_WHITE_SPACE) {
-        if (!isCommentOrSpace) {
-          crc.update(1);
-          isCommentOrSpace = true;
+      if (tokenType == XmlTokenType.XML_DATA_CHARACTERS) {
+        processToken(crc, lexer);
+
+        int spacesCrc = 0;
+
+        IElementType t;
+        while (true) {
+          lexer.advance();
+          t = lexer.getTokenType();
+
+          if (t == XmlTokenType.XML_DATA_CHARACTERS) {
+            if (spacesCrc != 0) {
+              crc.update(spacesCrc & 0xFF);
+              crc.update((spacesCrc >>> 8) & 0xFF);
+            }
+
+            processToken(crc, lexer);
+            spacesCrc = 0;
+            continue;
+          }
+
+          if (XmlTokenType.WHITESPACES.contains(t) || t == XmlTokenType.XML_REAL_WHITE_SPACE) {
+            for (int i = lexer.getTokenStart(), end = lexer.getTokenEnd(); i < end; i++) {
+              spacesCrc = spacesCrc * 31 + xmlText.charAt(i);
+            }
+            continue;
+          }
+
+          break;
         }
+      }
+      else if (XmlTokenType.WHITESPACES.contains(tokenType) || tokenType == XmlTokenType.XML_REAL_WHITE_SPACE) {
+        // skip spaces
+        lexer.advance();
       }
       else {
-        isCommentOrSpace = false;
-
-        for (int start = lexer.getTokenStart(), end = lexer.getTokenEnd(); start < end; start++) {
-          char a = text.charAt(start);
-          crc.update(a);
-          crc.update(a >>> 8);
-        }
+        processToken(crc, lexer);
+        lexer.advance();
       }
-
-      lexer.advance();
     }
 
     return (int)crc.getValue();
+  }
+
+  public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
+    String text = VfsUtil.loadText(xmlFile);
+    return crcWithoutSpaces(text);
   }
 
   public static String getSdkPath(@Nullable Sdk sdk) {
