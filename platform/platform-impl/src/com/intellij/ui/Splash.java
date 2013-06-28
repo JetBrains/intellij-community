@@ -57,10 +57,17 @@ public class Splash extends JDialog implements StartupProgress {
 
 
   public Splash(String imageName, final Color textColor) {
-    super((Frame)null);
+    //It's a dirty hack to protect Splash Window to appear with a native window header on Ubuntu 13.04
+    super(SystemInfo.isLinux ? new Frame() {
+      {
+        setVisible(true);
+        setVisible(false);
+        dispose();
+      }
+    } : null, false);
+
     setUndecorated(true);
     setResizable(false);
-    setModal(false);
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
