@@ -124,10 +124,10 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @Override
       public void run() {
         AbstractExternalSystemSettings systemSettings = mySettingsManager.getSettings(project, myExternalSystemId);
-        systemSettings.copyFrom(myControl.getSystemSettings());
         final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
         Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
         projects.add(projectSettings);
+        systemSettings.copyFrom(myControl.getSystemSettings());
         systemSettings.setLinkedProjectsSettings(projects);
 
         if (externalProjectNode != null) {
@@ -282,7 +282,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final Project project = getProject(wizardContext);
     final File finalProjectFile = projectFile;
     final Ref<ConfigurationException> exRef = new Ref<ConfigurationException>();
-    executeAndRestoreSettings(project, new Runnable() {
+    executeAndRestoreDefaultProjectSettings(project, new Runnable() {
       @Override
       public void run() {
         try {
@@ -296,8 +296,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
           );
         }
         catch (IllegalArgumentException e) {
-          exRef.set(new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName)));
-        } 
+          exRef.set(
+            new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName)));
+        }
       }
     });
     ConfigurationException ex = exRef.get();
@@ -316,7 +317,12 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   @SuppressWarnings("unchecked")
-  private void executeAndRestoreSettings(@NotNull Project project, @NotNull Runnable task) {
+  private void executeAndRestoreDefaultProjectSettings(@NotNull Project project, @NotNull Runnable task) {
+    if (!project.isDefault()) {
+      task.run();
+      return;
+    }
+
     AbstractExternalSystemSettings systemSettings = mySettingsManager.getSettings(project, myExternalSystemId);
     Object systemStateToRestore = null;
     if (systemSettings instanceof PersistentStateComponent) {

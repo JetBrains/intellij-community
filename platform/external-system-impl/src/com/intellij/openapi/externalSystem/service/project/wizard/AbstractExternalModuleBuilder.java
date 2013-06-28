@@ -80,11 +80,6 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     myIcon = icon == null ? super.getNodeIcon() : icon;
   }
 
-  @NotNull
-  public ProjectSystemId getExternalSystemId() {
-    return myExternalSystemId;
-  }
-
   @Override
   public String getBuilderId() {
     return getClass().getName();

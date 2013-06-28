@@ -42,6 +42,9 @@ public abstract class AbstractExternalSystemSettings<
   @NotNull private final Project  myProject;
 
   @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
+  
+  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettingsView
+    = Collections.unmodifiableMap(myLinkedProjectsSettings);
 
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
@@ -81,7 +84,7 @@ public abstract class AbstractExternalSystemSettings<
   @SuppressWarnings("unchecked")
   @NotNull
   public Collection<PS> getLinkedProjectsSettings() {
-    return myLinkedProjectsSettings.values();
+    return myLinkedProjectsSettingsView.values();
   }
 
   @Nullable

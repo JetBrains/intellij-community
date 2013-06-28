@@ -18,22 +18,17 @@ package com.intellij.openapi.externalSystem.action;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.projectImport.ProjectImportProvider;
 
@@ -83,31 +78,11 @@ public class AttachExternalProjectAction extends AnAction implements DumbAware {
       return;
     }
 
-    AbstractExternalModuleBuilder moduleBuilder = null;
-    for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
-      if (builder instanceof AbstractExternalModuleBuilder
-          && externalSystemId.equals(((AbstractExternalModuleBuilder)builder).getExternalSystemId()))
-      {
-        moduleBuilder = (AbstractExternalModuleBuilder)builder;
-        break;
-      }
-    }
-    if (moduleBuilder == null) {
-      return;
-    }
-    
-
     AddModuleWizard wizard = ImportModuleAction.selectFileAndCreateWizard(project,
                                                                           null,
                                                                           manager.getExternalProjectDescriptor(),
                                                                           projectImportProviders);
-    if (wizard != null) {
-      WizardContext wizardContext = wizard.getWizardContext();
-      wizardContext.setProjectBuilder(moduleBuilder);
-      ModuleWizardStep[] steps = moduleBuilder.createWizardSteps(wizardContext, ModulesProvider.EMPTY_MODULES_PROVIDER);
-      for (ModuleWizardStep step : steps) {
-        step.getComponent();
-      }
+    if (wizard != null && (wizard.getStepCount() <= 0 || wizard.showAndGet())) {
       ImportModuleAction.createFromWizard(project, wizard);
     }
   }
