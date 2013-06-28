@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.THashMap;
@@ -156,14 +155,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   @Override
   public final Lock getWriteLock() {
     return myLock.writeLock();
-  }
-
-  @NotNull
-  @Override
-  public Collection<Key> getAllKeys() throws StorageException {
-    Set<Key> allKeys = new HashSet<Key>();
-    processAllKeys(new CommonProcessors.CollectProcessor<Key>(allKeys));
-    return allKeys;
   }
 
   @Override
