@@ -59,8 +59,6 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey("PY.STRING.U", STRING);
   public static final TextAttributesKey PY_NUMBER = TextAttributesKey.createTextAttributesKey("PY.NUMBER", NUMBER);
 
-  static final TextAttributesKey PY_LINE_COMMENT = TextAttributesKey.createTextAttributesKey("PY.LINE_COMMENT", LINE_COMMENT);
-
   static final TextAttributesKey PY_OPERATION_SIGN = TextAttributesKey.createTextAttributesKey("PY.OPERATION_SIGN", OPERATION_SIGN);
 
   static final TextAttributesKey PY_PARENTHS = TextAttributesKey.createTextAttributesKey("PY.PARENTHS", PARENTHESES);
@@ -72,6 +70,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   static final TextAttributesKey PY_COMMA = TextAttributesKey.createTextAttributesKey("PY.COMMA", COMMA);
 
   static final TextAttributesKey PY_DOT = TextAttributesKey.createTextAttributesKey("PY.DOT", DOT);
+
+  public static final TextAttributesKey PY_LINE_COMMENT = TextAttributesKey.createTextAttributesKey("PY.LINE_COMMENT", LINE_COMMENT);
 
   public static final TextAttributesKey PY_DOC_COMMENT = TextAttributesKey.createTextAttributesKey("PY.DOC_COMMENT", DOC_COMMENT);
 
