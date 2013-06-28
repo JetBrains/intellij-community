@@ -22,9 +22,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -54,8 +51,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -71,9 +66,17 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -757,73 +760,114 @@ public class MavenUtil {
     void waitFor();
   }
 
-  private static void processToken(CRC32 crc, Lexer lexer) {
-    String text = (String)lexer.getBufferSequence();
+  public static int crcWithoutSpaces(@NotNull InputStream in) throws IOException {
+    try {
+      final CRC32 crc = new CRC32();
 
-    for (int i = lexer.getTokenStart(), end = lexer.getTokenEnd(); i < end; i++) {
-      char a = text.charAt(i);
-      crc.update(a);
-      crc.update(a >>> 8);
-    }
-  }
+      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
 
-  public static int crcWithoutSpaces(@NotNull String xmlText) {
-    Lexer lexer = new FilterLexer(new XmlLexer(), new FilterLexer.SetFilter(XmlTokenType.COMMENTS));
-    lexer.start(xmlText);
+      parser.parse(in, new DefaultHandler(){
 
-    CRC32 crc = new CRC32();
+        boolean textContentOccur = false;
+        int spacesCrc;
 
-    while (true) {
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) break;
+        private void putString(@Nullable String string) {
+          if (string == null) return;
 
-      if (tokenType == XmlTokenType.XML_DATA_CHARACTERS) {
-        processToken(crc, lexer);
-
-        int spacesCrc = 0;
-
-        IElementType t;
-        while (true) {
-          lexer.advance();
-          t = lexer.getTokenType();
-
-          if (t == XmlTokenType.XML_DATA_CHARACTERS) {
-            if (spacesCrc != 0) {
-              crc.update(spacesCrc & 0xFF);
-              crc.update((spacesCrc >>> 8) & 0xFF);
-            }
-
-            processToken(crc, lexer);
-            spacesCrc = 0;
-            continue;
+          for (int i = 0, end = string.length(); i < end; i++) {
+            crc.update(string.charAt(i));
           }
-
-          if (XmlTokenType.WHITESPACES.contains(t) || t == XmlTokenType.XML_REAL_WHITE_SPACE) {
-            for (int i = lexer.getTokenStart(), end = lexer.getTokenEnd(); i < end; i++) {
-              spacesCrc = spacesCrc * 31 + xmlText.charAt(i);
-            }
-            continue;
-          }
-
-          break;
         }
-      }
-      else if (XmlTokenType.WHITESPACES.contains(tokenType) || tokenType == XmlTokenType.XML_REAL_WHITE_SPACE) {
-        // skip spaces
-        lexer.advance();
-      }
-      else {
-        processToken(crc, lexer);
-        lexer.advance();
-      }
-    }
 
-    return (int)crc.getValue();
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+          textContentOccur = false;
+
+          crc.update(1);
+          putString(qName);
+
+          for (int i = 0; i < attributes.getLength(); i++) {
+            putString(attributes.getQName(i));
+            putString(attributes.getValue(i));
+          }
+        }
+
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+          textContentOccur = false;
+
+          crc.update(2);
+          putString(qName);
+        }
+
+        private void processTextOrSpaces(char[] ch, int start, int length) {
+          for (int i = start, end = start + length; i < end; i++) {
+            char a = ch[i];
+
+            if (Character.isWhitespace(a)) {
+              if (textContentOccur) {
+                spacesCrc = spacesCrc * 31 + a;
+              }
+            }
+            else {
+              if (textContentOccur && spacesCrc != 0) {
+                crc.update(spacesCrc);
+                crc.update(spacesCrc >> 8);
+              }
+
+              crc.update(a);
+
+              textContentOccur = true;
+              spacesCrc = 0;
+            }
+          }
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+          processTextOrSpaces(ch, start, length);
+        }
+
+        @Override
+        public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+          processTextOrSpaces(ch, start, length);
+        }
+
+        @Override
+        public void processingInstruction(String target, String data) throws SAXException {
+          putString(target);
+          putString(data);
+        }
+
+        @Override
+        public void skippedEntity(String name) throws SAXException {
+          putString(name);
+        }
+
+        @Override
+        public void error(SAXParseException e) throws SAXException {
+          crc.update(100);
+        }
+      });
+
+      return (int)crc.getValue();
+    }
+    catch (ParserConfigurationException e) {
+      throw new RuntimeException(e);
+    }
+    catch (SAXException e) {
+      return -1;
+    }
   }
 
   public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
-    String text = VfsUtil.loadText(xmlFile);
-    return crcWithoutSpaces(text);
+    InputStream inputStream = xmlFile.getInputStream();
+    try {
+      return crcWithoutSpaces(inputStream);
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   public static String getSdkPath(@Nullable Sdk sdk) {

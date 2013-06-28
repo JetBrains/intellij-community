@@ -132,18 +132,54 @@ class MavenXmlCrcTest extends TestCase {
 </project>
 """)
 
+    different("""
+<project>
+</project>
+""", """
+< project>
+</project>
+""")
+
+    // All invalid xmls are same
+    same("""
+""", """
+<project>
+  <sss>
+</project>
+""")
+  }
+
+  public void testInvalidXml() {
+    assert crc("""
+<   project>
+</project>
+""") == -1
+
+    assert crc("""
+<project>
+""") == -1
+
+    assert crc("""
+<project>
+  <sss>
+</project>
+""") == -1
+  }
+
+  private static int crc(String text) {
+    return MavenUtil.crcWithoutSpaces(new ByteArrayInputStream(text.bytes))
   }
 
   private static void same(@Language("XML") String xml1, @Language("XML") String xml2) {
-    int crc1 = MavenUtil.crcWithoutSpaces(xml1);
-    int crc2 = MavenUtil.crcWithoutSpaces(xml2);
+    int crc1 = crc(xml1);
+    int crc2 = crc(xml2);
 
     assert crc1 == crc2;
   }
 
   private static void different(@Language("XML") String xml1, @Language("XML") String xml2) {
-    int crc1 = MavenUtil.crcWithoutSpaces(xml1);
-    int crc2 = MavenUtil.crcWithoutSpaces(xml2);
+    int crc1 = crc(xml1);
+    int crc2 = crc(xml2);
 
     assert crc1 != crc2;
   }
