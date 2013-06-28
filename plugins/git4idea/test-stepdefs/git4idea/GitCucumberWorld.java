@@ -29,7 +29,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
-import git4idea.test.GitTestInitUtil;
+import git4idea.test.GitTestUtil;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -141,7 +141,7 @@ public class GitCucumberWorld {
 
   @NotNull
   private static GitRepository createRepo(String root) {
-    GitTestInitUtil.initRepo(root);
+    GitTestUtil.initRepo(root);
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     vcsManager.setDirectoryMapping(root, GitVcs.NAME);
     VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));

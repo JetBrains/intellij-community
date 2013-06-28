@@ -17,17 +17,24 @@ package git4idea.test;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.dvcs.test.Executor.cd;
+import static com.intellij.dvcs.test.Executor.touch;
 import static com.intellij.dvcs.test.TestRepositoryUtil.createDir;
 import static com.intellij.dvcs.test.TestRepositoryUtil.createFile;
+import static git4idea.test.GitExecutor.git;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitTestUtil {
+
+  private static final String USER_NAME = "John Doe";
+  private static final String USER_EMAIL = "John.Doe@example.com";
 
   /**
    * <p>Creates file structure for given paths. Path element should be a relative (from project root)
@@ -58,4 +65,22 @@ public class GitTestUtil {
     return result;
   }
 
+  /**
+   * Init, set up username and make initial commit.
+   *
+   * @param repoRoot
+   */
+  public static void initRepo(@NotNull String repoRoot) {
+    cd(repoRoot);
+    git("init");
+    setupUsername();
+    touch("initial.txt");
+    git("add initial.txt");
+    git("commit -m initial");
+  }
+
+  public static void setupUsername() {
+    git("config user.name " + USER_NAME);
+    git("config user.email " + USER_EMAIL);
+  }
 }
