@@ -42,6 +42,8 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       if (parent instanceof PyReferenceExpression && ((PyReferenceExpression)parent).getQualifier() != null) {
         return;
       }
+      final FileViewProvider provider = element.getContainingFile().getViewProvider();
+      if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) return;
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return;
       }
