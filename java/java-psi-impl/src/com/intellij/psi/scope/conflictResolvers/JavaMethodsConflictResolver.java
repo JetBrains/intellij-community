@@ -98,6 +98,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private void checkLambdaApplicable(List<CandidateInfo> conflicts) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(myArgumentsList)) return;
     for (int i = 0; i < myActualParameterTypes.length; i++) {
       PsiType parameterType = myActualParameterTypes[i];
       if (parameterType instanceof PsiLambdaExpressionType) {
