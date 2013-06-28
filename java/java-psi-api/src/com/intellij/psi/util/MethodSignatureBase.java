@@ -89,15 +89,11 @@ public abstract class MethodSignatureBase implements MethodSignature {
 
   public int hashCode() {
     int result = getName().hashCode();
-
-    final PsiType[] parameterTypes = getParameterTypes();
+    final PsiType[] parameterTypes = getErasedParameterTypes();
     result += 37 * parameterTypes.length;
-    PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
-    if (firstParamType != null) {
-       //to avoid type parameters with different names conflict
-      final PsiType[] erasedTypes = myErasedParameterTypes;
-      firstParamType = erasedTypes != null ? erasedTypes[0] : TypeConversionUtil.erasure(firstParamType, mySubstitutor);
-      result += 37 * firstParamType.hashCode();
+    for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
+      PsiType type = parameterTypes[i];
+      result += 37 * type.hashCode();
     }
     return result;
   }
