@@ -72,11 +72,11 @@ public abstract class MethodSignatureBase implements MethodSignature {
   public PsiTypeParameter[] getTypeParameters() {
     return myTypeParameters;
   }
-  
+
   public PsiType[] getErasedParameterTypes() {
     PsiType[] result = myErasedParameterTypes;
     if (result == null) {
-      result = myErasedParameterTypes = MethodSignatureUtil.getErasedParameterTypes(this);
+      myErasedParameterTypes = result = MethodSignatureUtil.getErasedParameterTypes(this);
     }
     return result;
   }
