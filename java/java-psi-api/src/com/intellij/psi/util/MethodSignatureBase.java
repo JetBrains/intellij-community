@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 public abstract class MethodSignatureBase implements MethodSignature {
 
@@ -96,7 +94,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
       PsiType type = parameterTypes[i];
       if (type == null) continue;
-      result += 37 * type.hashCode();
+      result = 31 * result + type.hashCode();
     }
     return result;
   }
