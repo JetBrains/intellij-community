@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ImageOrColorPreviewProjectComponent implements StartupActivity, DumbAware {
+public class ImageOrColorPreviewProjectStartupActivity implements StartupActivity, DumbAware {
   @Override
   public void runActivity(Project project) {
     if (!project.isDefault()) {

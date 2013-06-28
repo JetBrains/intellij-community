@@ -839,7 +839,7 @@
                         serviceImplementation="com.intellij.ide.projectView.impl.nodes.PsiTreeAnchorizer"/>
 
     <!--todo approve set order="last" for OpenFilesActivity-->
-    <postStartupActivity implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent" order="first"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewProjectStartupActivity" order="first"/>
   </extensions>
 </idea-plugin>
 
