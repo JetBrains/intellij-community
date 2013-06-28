@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -92,14 +91,10 @@ public class MavenProjectsTree {
     try {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
-        result.myManagedFilesPaths = readList(in);
-        result.myIgnoredFilesPaths = readList(in);
-        result.myIgnoredFilesPatterns = readList(in);
-        result.myExplicitProfiles = readCollection(in, new Function<Integer, Set<String>>() {
-          public Set<String> fun(Integer integer) {
-            return new THashSet<String>();
-          }
-        });
+        result.myManagedFilesPaths = readCollection(in, new ArrayList<String>());
+        result.myIgnoredFilesPaths = readCollection(in, new ArrayList<String>());
+        result.myIgnoredFilesPatterns = readCollection(in, new ArrayList<String>());
+        result.myExplicitProfiles = readCollection(in, new THashSet<String>());
         result.myRootProjects.addAll(readProjectsRecursively(in, result));
       }
       catch (IOException e) {
@@ -117,17 +112,8 @@ public class MavenProjectsTree {
     return result;
   }
 
-  private static List<String> readList(DataInputStream in) throws IOException {
-    return readCollection(in, new Function<Integer, List<String>>() {
-      public List<String> fun(Integer integer) {
-        return new ArrayList<String>(integer);
-      }
-    });
-  }
-
-  private static <T extends Collection<String>> T readCollection(DataInputStream in, Function<Integer, T> factory) throws IOException {
+  private static <T extends Collection<String>> T readCollection(DataInputStream in, T result) throws IOException {
     int count = in.readInt();
-    T result = factory.fun(count);
     while (count-- > 0) {
       result.add(in.readUTF());
     }
