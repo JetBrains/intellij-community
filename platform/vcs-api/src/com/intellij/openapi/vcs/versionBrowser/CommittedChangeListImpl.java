@@ -60,6 +60,11 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     return myNumber;
   }
 
+  @Override
+  public String getBranch() {
+    return null;
+  }
+
   public AbstractVcs getVcs() {
     return null;
   }
