@@ -15,18 +15,25 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+
 import javax.swing.*;
+import java.util.Comparator;
 
 /**
  * @author yole
  */
 public class SelectGroupingAction extends LabeledComboBoxAction {
+  private final Project myProject;
   private final CommittedChangesTreeBrowser myBrowser;
 
-  public SelectGroupingAction(final CommittedChangesTreeBrowser browser) {
-    super("Group by");
+  public SelectGroupingAction(Project project, final CommittedChangesTreeBrowser browser) {
+    super(VcsBundle.message("committed.changes.group.title"));
+    myProject = project;
     myBrowser = browser;
-    getComboBox().setPrototypeDisplayValue("Date+");
+    getComboBox().setPrototypeDisplayValue("Date+++");
   }
 
   protected void selectionChanged(Object selection) {
@@ -34,6 +41,54 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
   }
 
   protected ComboBoxModel createModel() {
-    return new DefaultComboBoxModel(new Object[] { new DateChangeListGroupingStrategy(), ChangeListGroupingStrategy.USER });
+    DefaultComboBoxModel model =
+      new DefaultComboBoxModel(new Object[]{new DateChangeListGroupingStrategy(), ChangeListGroupingStrategy.USER});
+    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    for(AbstractVcs vcs: vcss) {
+      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+      if (provider != null) {
+        for(ChangeListColumn column: provider.getColumns()) {
+          if (ChangeListColumn.isCustom(column) && null != column.getComparator()) {
+            model.addElement(new CustomChangeListColumnGroupingStrategy(column));
+          }
+        }
+      }
+    }
+    return model;
+  }
+
+
+  private static class CustomChangeListColumnGroupingStrategy
+    implements ChangeListGroupingStrategy {
+
+    private final ChangeListColumn myColumn;
+
+    private CustomChangeListColumnGroupingStrategy(ChangeListColumn column) {
+      myColumn = column;
+    }
+
+    @Override
+    public void beforeStart() {
+    }
+
+    @Override
+    public boolean changedSinceApply() {
+      return false;
+    }
+
+    @Override
+    public String getGroupName(CommittedChangeList changeList) {
+      return changeList.getBranch();
+    }
+
+    @Override
+    public Comparator<CommittedChangeList> getComparator() {
+      return myColumn.getComparator();
+    }
+
+    @Override
+    public String toString() {
+      return myColumn.getTitle();
+    }
   }
 }
