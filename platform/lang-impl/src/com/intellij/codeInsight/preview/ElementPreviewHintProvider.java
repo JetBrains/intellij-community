@@ -59,7 +59,7 @@ public class ElementPreviewHintProvider implements ElementPreviewProvider {
   }
 
   @Override
-  public void hide(@Nullable PsiElement element) {
+  public void hide(@Nullable PsiElement element, @NotNull Editor editor) {
     hideCurrentHintIfAny();
   }
 

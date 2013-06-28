@@ -164,7 +164,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       elementRef = null;
       for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
         try {
-          provider.hide(element);
+          provider.hide(element, editor);
         }
         catch (Exception e) {
           LOG.error(e);

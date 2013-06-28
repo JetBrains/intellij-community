@@ -16,5 +16,5 @@ public interface ElementPreviewProvider {
 
   void show(@NotNull PsiElement element, @NotNull Editor editor, @NotNull Point point);
 
-  void hide(@Nullable("if disposed") PsiElement element);
+  void hide(@Nullable("if disposed") PsiElement element, @NotNull Editor editor);
 }
