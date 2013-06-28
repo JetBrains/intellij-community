@@ -31,7 +31,7 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
     new AtomicReference<ExternalSystemTaskState>(ExternalSystemTaskState.NOT_STARTED);
   private final AtomicReference<Throwable>               myError = new AtomicReference<Throwable>();
 
-  @NotNull transient private final Project myIdeProject;
+  @NotNull private final transient Project myIdeProject;
 
   @NotNull private final ExternalSystemTaskId myId;
   @NotNull private final ProjectSystemId      myExternalSystemId;

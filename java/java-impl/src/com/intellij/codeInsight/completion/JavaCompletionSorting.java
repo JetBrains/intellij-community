@@ -34,6 +34,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -260,7 +261,17 @@ public class JavaCompletionSorting {
 
     public PreferDefaultTypeWeigher(ExpectedTypeInfo[] expectedTypes, CompletionParameters parameters) {
       super("defaultType");
-      myExpectedTypes = expectedTypes;
+      myExpectedTypes = expectedTypes == null ? null : ContainerUtil.map2Array(expectedTypes, ExpectedTypeInfo.class, new Function<ExpectedTypeInfo, ExpectedTypeInfo>() {
+        @Override
+        public ExpectedTypeInfo fun(ExpectedTypeInfo info) {
+          PsiType type = removeClassWildcard(info.getType());
+          PsiType defaultType = removeClassWildcard(info.getDefaultType());
+          if (type == info.getType() && defaultType == info.getDefaultType()) {
+            return info;
+          }
+          return new ExpectedTypeInfoImpl(type, info.getKind(), defaultType, info.getTailType());
+        }
+      });
       myParameters = parameters;
 
       final Pair<PsiClass,Integer> pair = TypeArgumentCompletionProvider.getTypeParameterInfo(parameters.getPosition());
@@ -293,7 +304,7 @@ public class JavaCompletionSorting {
       }
 
       for (final ExpectedTypeInfo expectedInfo : myExpectedTypes) {
-        final PsiType defaultType = expectedInfo.getDefaultType();
+        final PsiType defaultType =  expectedInfo.getDefaultType();
         final PsiType expectedType = expectedInfo.getType();
         if (!expectedType.isValid()) {
           return MyResult.normal;
@@ -314,6 +325,25 @@ public class JavaCompletionSorting {
       }
 
       return MyResult.normal;
+    }
+
+    private static PsiType removeClassWildcard(PsiType type) {
+      if (type instanceof PsiClassType) {
+        final PsiClassType psiClassType = (PsiClassType)type;
+        final PsiClass psiClass = psiClassType.resolve();
+        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
+          final PsiType[] parameters = psiClassType.getParameters();
+          PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+          if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType && typeParameters.length == 1) {
+            final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
+            if (bound instanceof PsiClassType) {
+              return JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
+                .createType(psiClass, PsiSubstitutor.EMPTY.put(typeParameters[0], bound));
+            }
+          }
+        }
+      }
+      return type;
     }
 
     private enum MyResult {

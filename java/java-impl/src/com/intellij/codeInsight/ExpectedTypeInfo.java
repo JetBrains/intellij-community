@@ -44,9 +44,5 @@ public interface ExpectedTypeInfo {
 
   ExpectedTypeInfo[] intersect(ExpectedTypeInfo info);
 
-  boolean isArrayTypeInfo();
-
   TailType getTailType();
-
-  boolean isInsertExplicitTypeParams();
 }

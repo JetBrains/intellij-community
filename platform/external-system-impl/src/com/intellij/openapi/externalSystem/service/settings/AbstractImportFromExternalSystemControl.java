@@ -44,7 +44,7 @@ import java.awt.*;
 public abstract class AbstractImportFromExternalSystemControl<
   ProjectSettings extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<ProjectSettings>,
-  SystemSettings extends AbstractExternalSystemSettings<ProjectSettings, L>>
+  SystemSettings extends AbstractExternalSystemSettings<SystemSettings, ProjectSettings, L>>
 {
   @NotNull private final SystemSettings  mySystemSettings;
   @NotNull private final ProjectSettings myProjectSettings;
@@ -166,6 +166,11 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   @NotNull
+  public SystemSettings getSystemSettings() {
+    return mySystemSettings;
+  }
+
+  @NotNull
   public ProjectSettings getProjectSettings() {
     return myProjectSettings;
   }
@@ -186,7 +191,7 @@ public abstract class AbstractImportFromExternalSystemControl<
     else if (myCurrentProject != null) {
       ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
       assert manager != null;
-      AbstractExternalSystemSettings<?,?> settings = manager.getSettingsProvider().fun(myCurrentProject);
+      AbstractExternalSystemSettings<?, ?,?> settings = manager.getSettingsProvider().fun(myCurrentProject);
       if (settings.getLinkedProjectSettings(linkedProjectPath) != null) {
         throw new ConfigurationException(ExternalSystemBundle.message("error.project.already.registered"));
       }

@@ -169,7 +169,7 @@ public class ExternalSystemUtil {
     if (manager == null) {
       return;
     }
-    AbstractExternalSystemSettings<?, ?> settings = manager.getSettingsProvider().fun(project);
+    AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(project);
     final Collection<? extends ExternalProjectSettings> projectsSettings = settings.getLinkedProjectsSettings();
     if (projectsSettings.isEmpty()) {
       return;
@@ -348,7 +348,14 @@ public class ExternalSystemUtil {
                                     final boolean resolveLibraries,
                                     final boolean modal)
   {
-    final String projectName = new File(externalProjectPath).getParentFile().getName();
+    File projectFile = new File(externalProjectPath);
+    final String projectName;
+    if (projectFile.isFile()) {
+      projectName = projectFile.getParentFile().getName();
+    }
+    else {
+      projectName = projectFile.getName();
+    }
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override

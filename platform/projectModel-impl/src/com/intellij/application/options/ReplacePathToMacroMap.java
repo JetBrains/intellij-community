@@ -24,6 +24,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -75,7 +77,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   @Override
-  public String substitute(String text, boolean caseSensitive) {
+  public String substitute(@Nullable String text, boolean caseSensitive) {
     if (text == null) {
       //noinspection ConstantConditions
       return null;
@@ -87,7 +89,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return text;
   }
 
-  private String replacePathMacro(String text, final String path, boolean caseSensitive) {
+  private String replacePathMacro(@NotNull String text, @NotNull final String path, boolean caseSensitive) {
     if (text.length() < path.length() || path.isEmpty()) {
       return text;
     }
@@ -111,14 +113,14 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   @Override
-  public String substituteRecursively(String text, final boolean caseSensitive) {
+  public String substituteRecursively(@NotNull String text, final boolean caseSensitive) {
     for (final String path : getPathIndex()) {
       text = replacePathMacroRecursively(text, path, caseSensitive);
     }
     return text;
   }
 
-  private String replacePathMacroRecursively(String text, final String path, boolean caseSensitive) {
+  private String replacePathMacroRecursively(@NotNull final String text, @NotNull final String path, boolean caseSensitive) {
     if (text.length() < path.length()) {
       return text;
     }
@@ -167,7 +169,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return newText.toString();
   }
 
-  private static int getIndex(final Map.Entry<String, String> s) {
+  private static int getIndex(@NotNull final Map.Entry<String, String> s) {
     final String replacement = s.getValue();
     if (replacement.contains("..")) return 1;
     if (replacement.contains("$" + PathMacrosImpl.USER_HOME_MACRO_NAME + "$")) return 1;
@@ -176,7 +178,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return 2;
   }
 
-  private static int stripPrefix(String key) {
+  private static int stripPrefix(@NotNull String key) {
     key = StringUtil.trimStart(key, "jar:");
     key = StringUtil.trimStart(key, "file:");
     while (key.startsWith("/")) {
@@ -185,6 +187,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return key.length();
   }
 
+  @NotNull
   public List<String> getPathIndex() {
     if (myPathsIndex == null || myPathsIndex.size() != myMacroMap.size()) {
       List<Map.Entry<String, String>> entries = new ArrayList<Map.Entry<String, String>>(myMacroMap.entrySet());

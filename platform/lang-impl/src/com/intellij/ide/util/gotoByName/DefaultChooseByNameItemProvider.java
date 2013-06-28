@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +32,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
-import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,27 +56,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
 
-    ChooseByNameModel model = base.getModel();
-    boolean empty = namePattern.isEmpty() ||
-                    namePattern.equals("@") && model instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
-    if (empty && !base.canShowListForEmptyPattern()) return true;
+    if (removeModelSpecificMarkup(base, pattern).isEmpty() && !base.canShowListForEmptyPattern()) return true;
 
-    Set<String> names = new THashSet<String>(Arrays.asList(base.getNames(everywhere)));
-
-    return consumeElements(base, everywhere, indicator, consumer, namePattern, qualifierPattern, names);
-  }
-
-  private boolean consumeElements(@NotNull ChooseByNameBase base,
-                                  boolean everywhere,
-                                  @NotNull ProgressIndicator indicator,
-                                  @NotNull Processor<Object> consumer,
-                                  @NotNull String namePattern,
-                                  @NotNull String qualifierPattern,
-                                  @NotNull Set<String> allNames) {
     ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
-    List<String> namesList = getNamesByPattern(base, new ArrayList<String>(allNames), indicator, matchingPattern);
-    allNames.removeAll(namesList);
+    List<String> namesList = getNamesByPattern(base, base.getNames(everywhere), matchingPattern);
     sortNamesList(matchingPattern, namesList);
 
     indicator.checkCanceled();
@@ -125,18 +109,27 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   protected void sortNamesList(@NotNull String namePattern, @NotNull List<String> namesList) {
     final MinusculeMatcher matcher = buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    final Set<String> startMatches = ContainerUtil.newHashSet();
+    final TObjectIntHashMap<String> matchingDegrees = new TObjectIntHashMap<String>();
+    for (String name : namesList) {
+      if (matcher.isStartMatch(name)) {
+        startMatches.add(name);
+      }
+      matchingDegrees.put(name, matcher.matchingDegree(name));
+    }
+
     // Here we sort using namePattern to have similar logic with empty qualified patten case
     Collections.sort(namesList, new Comparator<String>() {
       @Override
       public int compare(String o1, String o2) {
-        boolean start1 = matcher.isStartMatch(o1);
-        boolean start2 = matcher.isStartMatch(o2);
+        boolean start1 = startMatches.contains(o1);
+        boolean start2 = startMatches.contains(o2);
         if (start1 != start2) return start1 ? -1 : 1;
 
-        int degree1 = matcher.matchingDegree(o2);
-        int degree2 = matcher.matchingDegree(o1);
-        if (degree1 < degree2) return -1;
-        if (degree1 > degree2) return 1;
+        int degree1 = matchingDegrees.get(o1);
+        int degree2 = matchingDegrees.get(o2);
+        if (degree2 < degree1) return -1;
+        if (degree2 > degree1) return 1;
 
         return o1.compareToIgnoreCase(o2);
       }
@@ -241,42 +234,41 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   @NotNull
   @Override
   public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
-    return getNamesByPattern(base, Arrays.asList(names), null, convertToMatchingPattern(base, pattern));
+    return getNamesByPattern(base, names, convertToMatchingPattern(base, pattern));
   }
 
   private static List<String> getNamesByPattern(@NotNull final ChooseByNameBase base,
-                                                @NotNull List<String> names,
-                                                @Nullable ProgressIndicator indicator,
-                                                final String pattern) 
+                                                @NotNull String[] names,
+                                                final String pattern)
     throws ProcessCanceledException {
     final Matcher matcher = buildPatternMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
 
     @NotNull final List<String> outListFiltered = new ArrayList<String>();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(names, indicator, false, new Processor<String>() {
-      @Override
-      public boolean process(String name) {
-        if (matches(base, pattern, matcher, name)) {
-          synchronized (outListFiltered) {
-            outListFiltered.add(name);
-          }
-        }
-        return true;
+    for (String name : names) {
+      ProgressManager.checkCanceled();
+      if (matches(base, pattern, matcher, name)) {
+        outListFiltered.add(name);
       }
-    });
+    }
     return outListFiltered;
   }
 
   private static String convertToMatchingPattern(ChooseByNameBase base, String pattern) {
+    pattern = removeModelSpecificMarkup(base, pattern);
+
     if (!base.canShowListForEmptyPattern()) {
       LOG.assertTrue(!pattern.isEmpty(), base);
     }
 
-    if (base.getModel() instanceof GotoClassModel2 && (pattern.startsWith("@"))) {
-      pattern = pattern.substring(1);
-    }
-
     if (base.isSearchInAnyPlace() && !pattern.trim().isEmpty()) {
       pattern = "*" + pattern;
+    }
+    return pattern;
+  }
+
+  private static String removeModelSpecificMarkup(ChooseByNameBase base, String pattern) {
+    if (base.getModel() instanceof GotoClassModel2 && pattern.startsWith("@")) {
+      pattern = pattern.substring(1);
     }
     return pattern;
   }

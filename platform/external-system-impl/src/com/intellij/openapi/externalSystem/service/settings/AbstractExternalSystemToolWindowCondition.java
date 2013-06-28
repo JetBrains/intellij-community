@@ -45,7 +45,7 @@ public abstract class AbstractExternalSystemToolWindowCondition implements Condi
     if (manager == null) {
       return false;
     }
-    AbstractExternalSystemSettings<?,?> settings = manager.getSettingsProvider().fun(project);
+    AbstractExternalSystemSettings<?, ?,?> settings = manager.getSettingsProvider().fun(project);
     return settings != null && !settings.getLinkedProjectsSettings().isEmpty();
   }
 }

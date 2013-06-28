@@ -40,7 +40,7 @@ import java.util.Set;
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings extends AbstractExternalSystemSettings<GradleProjectSettings, GradleSettingsListener>
+public class GradleSettings extends AbstractExternalSystemSettings<GradleSettings, GradleProjectSettings, GradleSettingsListener>
   implements PersistentStateComponent<GradleSettings.MyState>
 {
 
@@ -60,6 +60,11 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleProject
     getProject().getMessageBus().connect(getProject()).subscribe(GradleSettingsListener.TOPIC,
                                                                  new DelegatingGradleSettingsListenerAdapter(listener));
     
+  }
+
+  @Override
+  protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
+    myServiceDirectoryPath = settings.getServiceDirectoryPath();
   }
 
   @SuppressWarnings("unchecked")

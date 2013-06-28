@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,45 +201,19 @@ public class Utils{
   }
 
   private static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
-    AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
-    event.setInjectedContext(group.isInInjectedContext());
-    for (AnAction anAction : group.getChildren(event)) {
-      if (anAction == null) {
-        LOG.error("Null action found in group " + group + ", " + factory.getPresentation(group));
-        continue;
-      }
-      if (anAction instanceof Separator) {
-        continue;
-      }
-      final Project project = PlatformDataKeys.PROJECT.getData(context);
-      if (project != null && DumbService.getInstance(project).isDumb() && !anAction.isDumbAware()) {
-        continue;
-      }
-
-      final Presentation presentation = factory.getPresentation(anAction);
-      updateGroupChild(context, place, anAction, presentation);
-      if (anAction instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)anAction;
-
-        // popup menu must be visible itself
-        if (childGroup.isPopup()) {
-          if (!presentation.isVisible()) {
-            continue;
-          }
-        }
-
-        if (hasVisibleChildren(childGroup, factory, context, place)) {
-          return true;
-        }
-      }
-      else if (presentation.isVisible()) {
-        return true;
-      }
-    }
-
-    return false;
+    return hasChildrenWithState(group, factory, context, place, true, false);
   }
+
   private static boolean hasEnabledChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
+    return hasChildrenWithState(group, factory, context, place, false, true);
+  }
+
+  private static boolean hasChildrenWithState(ActionGroup group,
+                                              PresentationFactory factory,
+                                              DataContext context,
+                                              String place,
+                                              boolean checkVisible,
+                                              boolean checkEnabled) {
     AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
     event.setInjectedContext(group.isInInjectedContext());
     for (AnAction anAction : group.getChildren(event)) {
@@ -262,16 +236,16 @@ public class Utils{
 
         // popup menu must be visible itself
         if (childGroup.isPopup()) {
-          if (!presentation.isEnabled()) {
+          if ((checkVisible && !presentation.isVisible()) || (checkEnabled && !presentation.isEnabled())) {
             continue;
           }
         }
 
-        if (hasEnabledChildren(childGroup, factory, context, place)) {
+        if (hasChildrenWithState(childGroup, factory, context, place, checkVisible, checkEnabled)) {
           return true;
         }
       }
-      else if (presentation.isEnabled()) {
+      else if ((checkVisible && presentation.isVisible()) || (checkEnabled && presentation.isEnabled())) {
         return true;
       }
     }

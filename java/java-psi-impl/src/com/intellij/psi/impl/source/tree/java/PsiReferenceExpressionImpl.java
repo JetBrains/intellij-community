@@ -46,15 +46,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.*;
+import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -185,6 +184,14 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
+    @SuppressWarnings("SSBasedInspection")
+    private static final ThreadLocal<Stack<Object>> ourQualifiers = new ThreadLocal<Stack<Object>>() {
+      @Override
+      protected Stack<Object> initialValue() {
+        return new Stack<Object>();
+      }
+    };
+
     @Override
     @NotNull
     public JavaResolveResult[] resolve(@NotNull PsiJavaReference ref, boolean incompleteCode) {
@@ -192,29 +199,43 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
       PsiFile file = expression.getContainingFile();
-      resolveAllQualifiers(expression, file);
-      JavaResolveResult[] result = expression.resolve(parentType, file);
 
-      if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
-        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, file);
+      List<ResolveResult[]> qualifierResults = resolveAllQualifiers(expression, file);
+      ourQualifiers.get().push(qualifierResults);
+      try {
+        JavaResolveResult[] result = expression.resolve(parentType, file);
+
+        if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
+          result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, file);
+        }
+
+        JavaResolveUtil.substituteResults(expression, result);
+
+        return result;
       }
-
-      JavaResolveUtil.substituteResults(expression, result);
-
-      return result;
+      finally {
+        ourQualifiers.get().pop();
+      }
     }
 
-    private static void resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, final PsiFile containingFile) {
+    private static List<ResolveResult[]> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, final PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
-      if (qualifier == null) return;
+      if (qualifier == null) return Collections.emptyList();
+
+      final List<ResolveResult[]> qualifierResults = new SmartList<ResolveResult[]>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(PsiReferenceExpression expression) {
-          if (!(expression instanceof PsiReferenceExpressionImpl) || resolveCache.isCached(expression, true, false, true)) {
+          if (!(expression instanceof PsiReferenceExpressionImpl)) {
             return;
           }
+          ResolveResult[] cachedResults = resolveCache.getCachedResults(expression, true, false, true);
+          if (cachedResults == null) {
+            return;
+          }
+          qualifierResults.add(cachedResults);
           visitElement(expression);
         }
 
@@ -222,9 +243,10 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         protected void elementFinished(PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
           PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-          resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile);
+          qualifierResults.add(resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile));
         }
       });
+      return qualifierResults;
     }
   }
 

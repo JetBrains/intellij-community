@@ -17,17 +17,20 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ImportModuleAction;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.projectImport.ProjectImportProvider;
 
 /**
  * @author Denis Zhdanov
@@ -61,7 +64,26 @@ public class AttachExternalProjectAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
+    
+    ProjectImportProvider[] projectImportProviders = new ProjectImportProvider[1];
+    for (ProjectImportProvider provider : ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions()) {
+      if (provider instanceof AbstractExternalProjectImportProvider
+          && externalSystemId.equals(((AbstractExternalProjectImportProvider)provider).getExternalSystemId()))
+      {
+        projectImportProviders[0] = provider;
+        break;
+      }
+    }
+    if (projectImportProviders[0] == null) {
+      return;
+    }
 
-    ImportModuleAction.doImport(project);
+    AddModuleWizard wizard = ImportModuleAction.selectFileAndCreateWizard(project,
+                                                                          null,
+                                                                          manager.getExternalProjectDescriptor(),
+                                                                          projectImportProviders);
+    if (wizard != null && (wizard.getStepCount() <= 0 || wizard.showAndGet())) {
+      ImportModuleAction.createFromWizard(project, wizard);
+    }
   }
 }

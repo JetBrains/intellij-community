@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ExternalSystemManager<
   ProjectSettings extends ExternalProjectSettings,
   SettingsListener extends ExternalSystemSettingsListener<ProjectSettings>,
-  Settings extends AbstractExternalSystemSettings<ProjectSettings, SettingsListener>,
+  Settings extends AbstractExternalSystemSettings<Settings, ProjectSettings, SettingsListener>,
   LocalSettings extends AbstractExternalSystemLocalSettings,
   ExecutionSettings extends ExternalSystemExecutionSettings>
   extends ParametersEnhancer

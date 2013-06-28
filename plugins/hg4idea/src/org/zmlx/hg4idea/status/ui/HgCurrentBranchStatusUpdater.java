@@ -87,6 +87,9 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
+                if (project.isDisposed()) {
+                  return;
+                }
                 handleUpdate(project, branch, parents);
               }
             });

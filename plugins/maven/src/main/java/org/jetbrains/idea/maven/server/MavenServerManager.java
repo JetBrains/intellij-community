@@ -32,6 +32,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Alarm;
@@ -54,7 +55,6 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -336,6 +336,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           settings = settings.clone();
           settings.setOffline(false);
         }
+
+        settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
+
         return MavenServerManager.this.getOrCreateWrappee().createEmbedder(settings);
       }
     };

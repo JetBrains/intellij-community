@@ -2,9 +2,11 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides 'import from external model' functionality.
@@ -13,9 +15,17 @@ import com.intellij.projectImport.ProjectImportProvider;
  * @since 7/29/11 3:45 PM
  */
 public abstract class AbstractExternalProjectImportProvider extends ProjectImportProvider {
-
-  public AbstractExternalProjectImportProvider(ProjectImportBuilder builder) {
+  
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  
+  public AbstractExternalProjectImportProvider(ProjectImportBuilder builder, @NotNull ProjectSystemId externalSystemId) {
     super(builder);
+    myExternalSystemId = externalSystemId;
+  }
+
+  @NotNull
+  public ProjectSystemId getExternalSystemId() {
+    return myExternalSystemId;
   }
 
   @Override

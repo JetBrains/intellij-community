@@ -37,6 +37,17 @@ public class MavenServerSettings implements Serializable, Cloneable {
   @NotNull private UpdatePolicy myPluginUpdatePolicy = UpdatePolicy.DO_NOT_UPDATE;
   @NotNull private UpdatePolicy mySnapshotUpdatePolicy = UpdatePolicy.ALWAYS_UPDATE;
 
+  private String projectJdk;
+
+  @Nullable
+  public String getProjectJdk() {
+    return projectJdk;
+  }
+
+  public void setProjectJdk(@Nullable String projectJdk) {
+    this.projectJdk = projectJdk;
+  }
+
   public int getLoggingLevel() {
     return myLoggingLevel;
   }

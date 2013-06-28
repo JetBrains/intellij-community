@@ -27,7 +27,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 public class GradleProjectImportProvider extends AbstractExternalProjectImportProvider {
 
   public GradleProjectImportProvider(GradleProjectImportBuilder builder) {
-    super(builder);
+    super(builder, GradleConstants.SYSTEM_ID);
   }
 
   @Override

@@ -195,7 +195,7 @@ public abstract class AbstractExternalSystemLocalSettings {
       toForget.add(taskInfo.getSettings().getExternalProjectPath());
     }
     
-    AbstractExternalSystemSettings<?, ?> settings = manager.getSettingsProvider().fun(myProject);
+    AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(myProject);
     for (ExternalProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       toForget.remove(projectSettings.getExternalProjectPath());
     }

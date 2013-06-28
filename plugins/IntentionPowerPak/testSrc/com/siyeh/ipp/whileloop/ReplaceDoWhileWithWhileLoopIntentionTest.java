@@ -6,6 +6,8 @@ import com.siyeh.ipp.IPPTestCase;
 public class ReplaceDoWhileWithWhileLoopIntentionTest extends IPPTestCase {
 
   public void testWithoutBraces() { doTest(); }
+  public void testFinalVariable1() { doTest(); }
+  public void testFinalVariable2() { doTest(); }
 
   @Override
   protected String getRelativePath() {

@@ -164,6 +164,10 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
     mySystemProperties = FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "systemProperties");
 
+    if (settings.getProjectJdk() != null) {
+      mySystemProperties.setProperty("java.home", settings.getProjectJdk());
+    }
+
     myMavenSettings = buildSettings(FieldAccessor.<SettingsBuilder>get(MavenCli.class, cli, "settingsBuilder"),
                                     settings,
                                     mySystemProperties,

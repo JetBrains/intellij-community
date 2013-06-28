@@ -76,7 +76,7 @@ public class GradleUtil {
       gradleDir = new File(file.getParentFile(), "gradle");
     }
     else {
-      gradleDir = file;
+      gradleDir = new File(file, "gradle");
     }
     if (!gradleDir.isDirectory()) {
       return null;

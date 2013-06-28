@@ -21,20 +21,33 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     def wordSkipMatch = myFixture.addClass("class UiAbstractUtil {}")
     def camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}")
     def middleMatch = myFixture.addClass("class BaseUiUtil {}")
-    def elements = createPopup(new GotoClassModel2(project), "uiuti")
+    def elements = getPopupElements(new GotoClassModel2(project), "uiuti")
     assert elements == [startMatch, wordSkipMatch, camelMatch, ChooseByNameBase.NON_PREFIX_SEPARATOR, middleMatch]
   }
 
   public void "test annotation syntax"() {
     def match = myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")
-    def elements = createPopup(new GotoClassModel2(project), "@Anno")
+    def elements = getPopupElements(new GotoClassModel2(project), "@Anno")
     assert elements == [match]
   }
 
-  private List<Object> createPopup(ChooseByNameModel model, String text) {
-    def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null, "")
-    Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
+  public void "test no result for empty patterns"() {
+    myFixture.addClass("@interface Anno1 {}")
+    myFixture.addClass("class Anno2 {}")
+
+    def popup = createPopup(new GotoClassModel2(project))
+    assert getPopupElements(popup, "") == []
+    popup.close(false)
+
+    assert getPopupElements(new GotoClassModel2(project), "@") == []
+  }
+
+  private List<Object> getPopupElements(ChooseByNameModel model, String text) {
+    return getPopupElements(createPopup(model), text)
+  }
+
+  private static ArrayList<String> getPopupElements(ChooseByNamePopup popup, String text) {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
@@ -44,6 +57,12 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     } as Consumer<Set<?>>)
     assert semaphore.waitFor(1000)
     return elements
+  }
+
+  private ChooseByNamePopup createPopup(ChooseByNameModel model) {
+    def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null, "")
+    Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
+    popup
   }
 
   @Override

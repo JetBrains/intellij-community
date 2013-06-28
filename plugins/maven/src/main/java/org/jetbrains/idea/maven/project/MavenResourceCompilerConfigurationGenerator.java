@@ -20,6 +20,7 @@ import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReference
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.maven.model.impl.MavenIdBean;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
@@ -116,6 +117,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
+
       final Properties properties = getFilteringProperties(mavenProject);
       for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
         resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
@@ -158,7 +160,7 @@ public class MavenResourceCompilerConfigurationGenerator {
     });
   }
 
-  private static Properties getFilteringProperties(MavenProject mavenProject) {
+  private Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
 
     for (String each : mavenProject.getFilters()) {
@@ -178,6 +180,11 @@ public class MavenResourceCompilerConfigurationGenerator {
     properties.putAll(mavenProject.getProperties());
 
     properties.put("settings.localRepository", mavenProject.getLocalRepository().getAbsolutePath());
+
+    String jreDir = MavenUtil.getModuleJre(myMavenProjectsManager, mavenProject);
+    if (jreDir != null) {
+      properties.put("java.home", jreDir);
+    }
 
     return properties;
   }
