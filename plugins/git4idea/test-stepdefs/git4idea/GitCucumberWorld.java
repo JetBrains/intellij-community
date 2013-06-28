@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -37,7 +36,6 @@ import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -51,7 +49,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static com.intellij.dvcs.test.Executor.mkdir;
-import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -126,7 +123,7 @@ public class GitCucumberWorld {
     myAsyncTasks = new ArrayList<Future>();
 
     cd(myProjectRoot);
-    myRepository = createRepo(myProjectRoot);
+    myRepository = GitTestUtil.createRepository(myProject, myProjectRoot);
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
@@ -137,17 +134,6 @@ public class GitCucumberWorld {
 
   private static void assumeSupportedGitVersion() {
     assumeTrue(myVcs.getVersion().isSupported());
-  }
-
-  @NotNull
-  private static GitRepository createRepo(String root) {
-    GitTestUtil.initRepo(root);
-    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    vcsManager.setDirectoryMapping(root, GitVcs.NAME);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
-    GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(file);
-    assertNotNull("Couldn't find repository for root " + root, repository);
-    return repository;
   }
 
   @Before("@remote")
@@ -164,7 +150,7 @@ public class GitCucumberWorld {
   public void setUpStandardMultipleRootsConfig() {
     cd(myProjectRoot);
     String community = mkdir("community");
-    createRepo(community);
+    GitTestUtil.createRepository(myProject, community);
   }
 
   @After("@remote")

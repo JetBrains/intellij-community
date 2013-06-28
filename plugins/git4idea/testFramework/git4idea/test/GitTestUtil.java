@@ -16,9 +16,16 @@
 package git4idea.test;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +34,7 @@ import static com.intellij.dvcs.test.Executor.touch;
 import static com.intellij.dvcs.test.TestRepositoryUtil.createDir;
 import static com.intellij.dvcs.test.TestRepositoryUtil.createFile;
 import static git4idea.test.GitExecutor.git;
+import static junit.framework.Assert.assertNotNull;
 
 /**
  * @author Kirill Likhodedov
@@ -82,5 +90,21 @@ public class GitTestUtil {
   public static void setupUsername() {
     git("config user.name " + USER_NAME);
     git("config user.email " + USER_EMAIL);
+  }
+
+  /**
+   * Creates a Git repository in the given root directory;
+   * registers it in the Settings;
+   * return the {@link GitRepository} object for this newly created repository.
+   */
+  @NotNull
+  public static GitRepository createRepository(@NotNull Project project, @NotNull String root) {
+    initRepo(root);
+    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+    vcsManager.setDirectoryMapping(root, GitVcs.NAME);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file);
+    assertNotNull("Couldn't find repository for root " + root, repository);
+    return repository;
   }
 }
