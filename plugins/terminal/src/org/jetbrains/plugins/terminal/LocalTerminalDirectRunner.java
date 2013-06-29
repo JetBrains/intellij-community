@@ -24,9 +24,9 @@ import java.util.concurrent.Future;
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
 
   private final Charset myDefaultCharset;
-  private final String myCommand;
+  private final String[] myCommand;
 
-  public LocalTerminalDirectRunner(Project project, String command) {
+  public LocalTerminalDirectRunner(Project project, String[] command) {
     super(project);
     myDefaultCharset = Charset.forName("UTF-8");
     myCommand = command;
@@ -36,7 +36,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess() throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
     envs.put("TERM", "xterm");
-    return new PtyProcess(myCommand, new String[]{myCommand}, envs);
+    return new PtyProcess(myCommand[0], myCommand, envs);
   }
 
   @Override
