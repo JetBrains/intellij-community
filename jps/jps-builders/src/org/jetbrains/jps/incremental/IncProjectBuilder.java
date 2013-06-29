@@ -81,7 +81,7 @@ public class IncProjectBuilder {
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
-  private static final int MAX_BUILDER_THREADS;
+  public static final int MAX_BUILDER_THREADS;
   static {
     int maxThreads = 6;
     try {
