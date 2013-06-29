@@ -145,7 +145,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Override
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges)
+    throws IncorrectOperationException {
+    reformatText(file, ranges, null);
+  }
+
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
     if (ranges.isEmpty()) {
       return;
     }
@@ -163,7 +168,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
     LOG.assertTrue(file.isValid());
 
-    Editor editor = PsiUtilBase.findEditor(file);
+    if (editor == null) {
+      editor = PsiUtilBase.findEditor(file);
+    }
 
     // There is a possible case that cursor is located at the end of the line that contains only white spaces. For example:
     //     public void foo() {
