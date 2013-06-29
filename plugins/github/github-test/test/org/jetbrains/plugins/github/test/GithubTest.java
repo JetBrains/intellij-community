@@ -15,40 +15,56 @@
  */
 package org.jetbrains.plugins.github.test;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.PlatformUtilsCore;
+import git4idea.DialogManager;
+import git4idea.Notificator;
 import git4idea.config.GitVcsSettings;
 import git4idea.test.GitExecutor;
+import git4idea.test.TestDialogManager;
+import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.GithubSettings;
 
-import static com.intellij.dvcs.test.Executor.cd;
-import static git4idea.test.GitExecutor.git;
+import static org.junit.Assume.assumeNotNull;
 
 /**
- * The base class for JUnit platform tests of the github plugin.<br/>
- * Extend this test to write a test on GitHub which has the following features/limitations:
+ * <p>The base class for JUnit platform tests of the github plugin.<br/>
+ *    Extend this test to write a test on GitHub which has the following features/limitations:
  * <ul>
  * <li>This is a "platform test case", which means that IDEA [almost] production platform is set up before the test starts.</li>
  * <li>Project base directory is the root of everything. </li>
- * </ul>
+ * </ul></p>
+ * <p>All tests inherited from this class are required to have a login and a password to access the Github server.
+ *    They are set up in System properties: <br/>
+ *    <code>-Dtest.github.login=mylogin<br/>
+ *           -Dtest.github.password=mypassword</code>
+ * </p>
  *
  * @author Kirill Likhodedov
  */
 public abstract class GithubTest extends UsefulTestCase {
 
+  @NotNull protected static final String HOST = "github.com";
+
   @NotNull protected Project myProject;
   @NotNull protected VirtualFile myProjectRoot;
-  @NotNull protected GitVcsSettings mySettings;
+  @NotNull protected GitVcsSettings myGitSettings;
+  @NotNull protected GithubSettings myGitHubSettings;
+
+  @NotNull protected TestDialogManager myDialogManager;
+  @NotNull protected TestNotificator myNotificator;
 
   @NotNull private IdeaProjectTestFixture myProjectFixture;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GithubTest() {
-    PlatformTestCase.initPlatformLangPrefix();
+    System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, "PlatformLangXml");
   }
 
   @Override
@@ -60,11 +76,23 @@ public abstract class GithubTest extends UsefulTestCase {
     myProject = myProjectFixture.getProject();
     myProjectRoot = myProject.getBaseDir();
 
-    cd(myProjectRoot);
-    git("version");
+    String login = System.getProperty("test.github.login");
+    String password = System.getProperty("test.github.password");
 
-    mySettings = GitVcsSettings.getInstance(myProject);
-    mySettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+    // TODO change to assert when a stable Github testing server is ready
+    assumeNotNull(login);
+    assumeNotNull(password);
+
+    myGitSettings = GitVcsSettings.getInstance(myProject);
+    myGitSettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+
+    myGitHubSettings = GithubSettings.getInstance();
+    myGitHubSettings.setHost(HOST);
+    myGitHubSettings.setLogin(login);
+    myGitHubSettings.setPassword(password);
+
+    myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
+    myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
   }
 
   @Override

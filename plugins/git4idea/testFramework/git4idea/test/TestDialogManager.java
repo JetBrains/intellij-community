@@ -16,27 +16,16 @@
 package git4idea.test;
 
 import com.intellij.openapi.ui.DialogWrapper;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.DialogManager;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * TestDialogManager instead of showing the dialog, gives the control to a {@link TestDialogHandler} which can specify the dialog exit code
- * (thus simulation different user choices) or even change other elements in the dialog.
- * To use it a test should:
- * <ol>
- * <li>register {@link TestDialogManager} as the {@link DialogManager} implementation:
- * <pre><code>
- *     String key = "git4idea.DialogManager";
- *     MutablePicoContainer picoContainer = (MutablePicoContainer) myProject.getPicoContainer();
- *     picoContainer.unregisterComponent(key);
- *     picoContainer.registerComponentImplementation(key, TestDialogManager.class);
- *     TestDialogManager dialogManager = (TestDialogManager)DialogManager.getInstance(myProject);
- * </code></pre></li>
- *
- * <li>register its {@link TestDialogHandler}:
+ * <p>TestDialogManager instead of showing the dialog, gives the control to a {@link git4idea.test.TestDialogHandler} which can specify the dialog exit code
+ *    (thus simulation different user choices) or even change other elements in the dialog.</p>
+ * <p>To use it a test should register the {@link TestDialogHandler} implementation. For example:
  * <pre><code>
  *     myDialogManager.registerDialogHandler(GitConvertFilesDialog.class, new TestDialogHandler<GitConvertFilesDialog>() {
  *       &#064;Override public int handleDialog(GitConvertFilesDialog dialog) {
@@ -44,48 +33,24 @@ import java.util.Map;
  *         return GitConvertFilesDialog.OK_EXIT_CODE;
  *       }
  *     });
- * </code></pre></li></ol>
+ * </code></pre>
+ * <p>Only one TestDialogHandler can be registered per test for a certain DialogWrapper class.</p>
  * @see TestDialogHandler
  * @author Kirill Likhodedov
  */
-public class TestDialogManager {
+public class TestDialogManager extends DialogManager {
 
-  private Map<Class, TestDialogHandler> myHandlers = new HashMap<Class, TestDialogHandler>();
+  private final Map<Class, TestDialogHandler> myHandlers = ContainerUtil.newHashMap();
 
-  private DialogWrapper myLastShownDialog;
-
-  public void show(DialogWrapper dialog) throws IllegalAccessException, NoSuchFieldException {
-    final TestDialogHandler handler = myHandlers.get(dialog.getClass());
-    int exitCode = DialogWrapper.OK_EXIT_CODE;
-    if (handler != null) {
-      exitCode = handler.handleDialog(dialog);
-    }
-    closeDialog(dialog, exitCode);
-    myLastShownDialog = dialog;
+  @Override
+  protected void showDialog(@NotNull DialogWrapper dialog) {
+    TestDialogHandler handler = myHandlers.get(dialog.getClass());
+    int exitCode = handler != null ? handler.handleDialog(dialog) : DialogWrapper.OK_EXIT_CODE;
+    dialog.close(exitCode, exitCode == DialogWrapper.OK_EXIT_CODE);
   }
 
-  private static void closeDialog(DialogWrapper dialog, int exitCode) throws NoSuchFieldException, IllegalAccessException {
-    Field exitCodeField = DialogWrapper.class.getDeclaredField("myExitCode");
-    exitCodeField.setAccessible(true);
-    exitCodeField.set(dialog, exitCode);
-
-    Field closedField = DialogWrapper.class.getDeclaredField("myClosed");
-    closedField.setAccessible(true);
-    closedField.set(dialog, true);
-  }
-
-  /**
-   * Registers the dialog handler. Note that a test may register only one handler for one dialog type.
-   * For different dialog types it may register different handlers.
-   * @param dialogClass class of the dialog which will be handled instead of showing (dialog itself have to support this in its show() method).
-   * @param handler     handler which will be invoked when dialog is about to show.
-   */
-  public void registerDialogHandler(Class dialogClass, TestDialogHandler handler) {
+  public void registerDialogHandler(@NotNull Class<? extends DialogWrapper> dialogClass, @NotNull TestDialogHandler handler) {
     myHandlers.put(dialogClass, handler);
   }
 
-  @Nullable
-  public DialogWrapper getLastShownDialog() {
-    return myLastShownDialog;
-  }
 }

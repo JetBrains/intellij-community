@@ -15,6 +15,8 @@
  */
 package git4idea.test;
 
+import com.intellij.notification.Notification;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -22,8 +24,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.Notificator;
 import git4idea.repo.GitRepository;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.HashMap;
@@ -35,6 +40,7 @@ import static com.intellij.dvcs.test.TestRepositoryUtil.createDir;
 import static com.intellij.dvcs.test.TestRepositoryUtil.createFile;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 
 /**
  * @author Kirill Likhodedov
@@ -107,4 +113,18 @@ public class GitTestUtil {
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
   }
+
+  public static void assertNotification(@NotNull Project project, @Nullable Notification expected) {
+    if (expected == null) {
+      assertNull("Notification is unexpected here", expected);
+      return;
+    }
+
+    Notification actualNotification = ((TestNotificator)ServiceManager.getService(project, Notificator.class)).getLastNotification();
+    Assert.assertNotNull("No notification was shown", actualNotification);
+    Assert.assertEquals("Notification has wrong title", expected.getTitle(), actualNotification.getTitle());
+    Assert.assertEquals("Notification has wrong type", expected.getType(), actualNotification.getType());
+    Assert.assertEquals("Notification has wrong content", expected.getContent(), actualNotification.getContent());
+  }
+
 }
