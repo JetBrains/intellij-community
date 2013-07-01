@@ -485,4 +485,17 @@ class A {
 }''')
   }
 
+  void 'test Field And Parameter With The Same Name'() {
+    testHighlighting('''\
+class Aaa {
+    final int foo
+    final int bar
+
+    Aaa(int foo, int p) {
+        this.foo = foo      // this assignment is erroneously reported as invalid
+        this.bar = p        // this one is not reported
+    }
+}
+''')
+  }
 }
