@@ -62,7 +62,7 @@
     </context>
   </template>
   <template description="" name="!" toReformat="true" toShortenFQNames="true"
-            value="&lt;!doctype html&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta charset=&quot;UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;!doctype html&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta charset=&quot;UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LOCALE"/>
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
@@ -1032,21 +1032,21 @@
     </context>
   </template>
   <template description="" name="doc" toReformat="true" toShortenFQNames="true"
-            value="&lt;html&gt;&#10;&lt;head&gt;&#10;  &lt;meta charset=&quot;UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;html&gt;&#10;&lt;head&gt;&#10;&lt;meta charset=&quot;UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
   <template description="" name="doc4" toReformat="true" toShortenFQNames="true"
-            value="&lt;html&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;html&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
   <template description="" name="html:4t" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
@@ -1054,7 +1054,7 @@
     </context>
   </template>
   <template description="" name="html:4s" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot; &quot;http://www.w3.org/TR/html4/strict.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot; &quot;http://www.w3.org/TR/html4/strict.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
@@ -1062,7 +1062,7 @@
     </context>
   </template>
   <template description="" name="html:xt" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
@@ -1070,7 +1070,7 @@
     </context>
   </template>
   <template description="" name="html:xs" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
@@ -1078,7 +1078,7 @@
     </context>
   </template>
   <template description="" name="html:xxs" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot; &quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot; &quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
@@ -1086,30 +1086,30 @@
     </context>
   </template>
   <template description="" name="html:5" toReformat="true" toShortenFQNames="true"
-            value="&lt;!doctype html&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta charset=&quot;UTF-8&quot;&gt;&#10;  &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+            value="&lt;!doctype html&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta charset=&quot;UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LOCALE"/>
     <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="ol+" toReformat="true" toShortenFQNames="true" value="&lt;ol&gt;&#10;  &lt;li&gt;$END$&lt;/li&gt;&#10;&lt;/ol&gt;">
+  <template description="" name="ol+" toReformat="true" toShortenFQNames="true" value="&lt;ol&gt;&#10;&lt;li&gt;$END$&lt;/li&gt;&#10;&lt;/ol&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="ul+" toReformat="true" toShortenFQNames="true" value="&lt;ul&gt;&#10;  &lt;li&gt;$END$&lt;/li&gt;&#10;&lt;/ul&gt;">
+  <template description="" name="ul+" toReformat="true" toShortenFQNames="true" value="&lt;ul&gt;&#10;&lt;li&gt;$END$&lt;/li&gt;&#10;&lt;/ul&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="dl+" toReformat="true" toShortenFQNames="true" value="&lt;dl&gt;&#10;  &lt;dt&gt;$VAR0$&lt;/dt&gt;&#10;  &lt;dd&gt;$END$&lt;/dd&gt;&#10;&lt;/dl&gt;">
+  <template description="" name="dl+" toReformat="true" toShortenFQNames="true" value="&lt;dl&gt;&#10;&lt;dt&gt;$VAR0$&lt;/dt&gt;&#10;&lt;dd&gt;$END$&lt;/dd&gt;&#10;&lt;/dl&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="map+" toReformat="true" toShortenFQNames="true" value="&lt;map name=&quot;$VAR0$&quot;&gt;&#10;  &lt;area shape=&quot;$VAR1$&quot; coords=&quot;$VAR2$&quot; href=&quot;$VAR3$&quot; alt=&quot;$VAR4$&quot;/&gt;$END$&#10;&lt;/map&gt;">
+  <template description="" name="map+" toReformat="true" toShortenFQNames="true" value="&lt;map name=&quot;$VAR0$&quot;&gt;&#10;&lt;area shape=&quot;$VAR1$&quot; coords=&quot;$VAR2$&quot; href=&quot;$VAR3$&quot; alt=&quot;$VAR4$&quot;/&gt;$END$&#10;&lt;/map&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -1119,27 +1119,27 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="table+" toReformat="true" toShortenFQNames="true" value="&lt;table&gt;&#10;  &lt;tr&gt;&#10;    &lt;td&gt;$END$&lt;/td&gt;&#10;  &lt;/tr&gt;&#10;&lt;/table&gt;">
+  <template description="" name="table+" toReformat="true" toShortenFQNames="true" value="&lt;table&gt;&#10;&lt;tr&gt;&#10;&lt;td&gt;$END$&lt;/td&gt;&#10;&lt;/tr&gt;&#10;&lt;/table&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="colgroup+" toReformat="true" toShortenFQNames="true" value="&lt;colgroup&gt;&#10;  &lt;col/&gt;&#10;&lt;/colgroup&gt;">
+  <template description="" name="colgroup+" toReformat="true" toShortenFQNames="true" value="&lt;colgroup&gt;&#10;&lt;col/&gt;&#10;&lt;/colgroup&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="colg+" toReformat="true" toShortenFQNames="true" value="&lt;colgroup&gt;&#10;  &lt;col/&gt;&#10;&lt;/colgroup&gt;">
+  <template description="" name="colg+" toReformat="true" toShortenFQNames="true" value="&lt;colgroup&gt;&#10;&lt;col/&gt;&#10;&lt;/colgroup&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="tr+" toReformat="true" toShortenFQNames="true" value="&lt;tr&gt;&#10;  &lt;td&gt;$END$&lt;/td&gt;&#10;&lt;/tr&gt;">
+  <template description="" name="tr+" toReformat="true" toShortenFQNames="true" value="&lt;tr&gt;&#10;&lt;td&gt;$END$&lt;/td&gt;&#10;&lt;/tr&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="select+" toReformat="true" toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;&#10;  &lt;option value=&quot;$VAR2$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/select&gt;">
+  <template description="" name="select+" toReformat="true" toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;&#10;&lt;option value=&quot;$VAR2$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/select&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -1147,13 +1147,13 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="optgroup+" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;&#10;  &lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/optgroup&gt;">
+  <template description="" name="optgroup+" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;&#10;&lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/optgroup&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="" name="optg+" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;&#10;  &lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/optgroup&gt;">
+  <template description="" name="optg+" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;&#10;&lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/optgroup&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>

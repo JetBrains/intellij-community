@@ -1212,15 +1212,25 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String join(@NotNull Collection<? extends String> strings, @NotNull final String separator) {
-    final StringBuilder result = new StringBuilder();
+  public static String join(@NotNull Collection<? extends String> strings, @NotNull String separator) {
+    StringBuilder result = new StringBuilder();
+    join(strings, separator, result);
+    return result.toString();
+  }
+
+  public static void join(@NotNull Collection<? extends String> strings, @NotNull String separator, @NotNull StringBuilder result) {
+    boolean isFirst = true;
     for (String string : strings) {
       if (string != null && !string.isEmpty()) {
-        if (result.length() != 0) result.append(separator);
+        if (isFirst) {
+          isFirst = false;
+        }
+        else {
+          result.append(separator);
+        }
         result.append(string);
       }
     }
-    return result.toString();
   }
 
   @NotNull
@@ -2332,12 +2342,17 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String shortenTextWithEllipsis(@NotNull final String text, final int maxLength, final int suffixLength) {
+    return shortenTextWithEllipsis(text, maxLength, suffixLength, false);
+  }
+
+  @NotNull
+  public static String shortenTextWithEllipsis(@NotNull final String text, final int maxLength, final int suffixLength, boolean useEllipsisSymbol) {
     final int prefix_length = maxLength - suffixLength - 3;
     assert prefix_length > 0;
     String result;
     final int textLength = text.length();
     if (textLength > maxLength) {
-      result = text.substring(0, prefix_length) + "..." + text.substring(textLength - suffixLength);
+      result = text.substring(0, prefix_length) + (useEllipsisSymbol ? "\u2026" : "...") + text.substring(textLength - suffixLength);
     }
     else {
       result = text;
@@ -2346,8 +2361,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String shortenPathWithEllipsis(@NotNull final String path, final int max_length) {
-    return shortenTextWithEllipsis(path, max_length, (int)(max_length * 0.7));
+  public static String shortenPathWithEllipsis(@NotNull final String path, final int maxLength, boolean useEllipsisSymbol) {
+    return shortenTextWithEllipsis(path, maxLength, (int)(maxLength * 0.7), useEllipsisSymbol);
+  }
+
+  @NotNull
+  public static String shortenPathWithEllipsis(@NotNull final String path, final int maxLength) {
+    return shortenPathWithEllipsis(path, maxLength, false);
   }
 
   public static boolean charsEqual(char a, char b, boolean ignoreCase) {

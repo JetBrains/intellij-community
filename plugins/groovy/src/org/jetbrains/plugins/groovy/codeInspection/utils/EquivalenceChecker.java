@@ -727,8 +727,8 @@ public class EquivalenceChecker {
 
   private static boolean assignmentExpressionsAreEquivalent(@NotNull GrAssignmentExpression assignExp1,
                                                             @NotNull GrAssignmentExpression assignExp2) {
-    final IElementType sign1 = assignExp1.getOperationToken();
-    final IElementType sign2 = assignExp2.getOperationToken();
+    final IElementType sign1 = assignExp1.getOperationTokenType();
+    final IElementType sign2 = assignExp2.getOperationTokenType();
     if (sign1 != sign2) {
       return false;
     }

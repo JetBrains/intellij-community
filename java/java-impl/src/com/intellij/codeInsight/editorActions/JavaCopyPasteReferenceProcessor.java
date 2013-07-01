@@ -30,7 +30,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor");
 
   @Override
-  protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceTransferableData.ReferenceData> to) {
+  protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to) {
     if (element instanceof PsiJavaCodeReferenceElement) {
       if (!((PsiJavaCodeReferenceElement)element).isQualified()) {
         final JavaResolveResult resolveResult = ((PsiJavaCodeReferenceElement)element).advancedResolve(false);
@@ -61,13 +61,13 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   @Override
   protected PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
                                                                        RangeMarker bounds,
-                                                                       ReferenceTransferableData.ReferenceData[] referenceData) {
+                                                                       ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[referenceData.length];
     for (int i = 0; i < referenceData.length; i++) {
-      ReferenceTransferableData.ReferenceData data = referenceData[i];
+      ReferenceData data = referenceData[i];
 
       PsiClass refClass = facade.findClass(data.qClassName, file.getResolveScope());
       if (refClass == null) continue;
@@ -105,14 +105,14 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
   @Override
-  protected void restoreReferences(ReferenceTransferableData.ReferenceData[] referenceData,
+  protected void restoreReferences(ReferenceData[] referenceData,
                                         PsiJavaCodeReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement reference = refs[i];
       if (reference == null || !reference.isValid()) continue;
       try {
         PsiManager manager = reference.getManager();
-        ReferenceTransferableData.ReferenceData refData = referenceData[i];
+        ReferenceData refData = referenceData[i];
         PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
         if (refClass != null) {
           if (refData.staticMemberName == null) {

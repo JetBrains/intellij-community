@@ -418,7 +418,8 @@ public class MavenProjectsManagerWatcher {
         return true;
       }
 
-      if (newCrc.equals(crc)) {
+      if (newCrc == -1 // XML is invalid
+          || newCrc.equals(crc)) {
         return false;
       }
       else {

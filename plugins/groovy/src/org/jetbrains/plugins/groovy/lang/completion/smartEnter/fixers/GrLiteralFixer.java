@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -30,20 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
  */
 public class GrLiteralFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
   public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
-    if (psiElement instanceof GrString) {
-      String text = psiElement.getText();
-      if (StringUtil.startsWith(text, "\"\"\"")) {
-        if (!StringUtil.endsWith(text, "\"\"\"")) {
-          editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"\"\"");
-        }
-      }
-      else if (StringUtil.startsWith(text, "\"")) {
-        if (!StringUtil.endsWith(text, "\"")) {
-          editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"");
-        }
-      }
-    }
-    else if (psiElement instanceof GrLiteral) {
+    if (psiElement instanceof GrLiteral) {
       String text = psiElement.getText();
       if (StringUtil.startsWith(text, "'''")) {
         if (!StringUtil.endsWith(text, "'''")) {
@@ -53,6 +39,16 @@ public class GrLiteralFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySm
       else if (StringUtil.startsWith(text, "'")) {
         if (!StringUtil.endsWith(text, "'")) {
           editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "'");
+        }
+      }
+      else if (StringUtil.startsWith(text, "\"\"\"")) {
+        if (!StringUtil.endsWith(text, "\"\"\"")) {
+          editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"\"\"");
+        }
+      }
+      else if (StringUtil.startsWith(text, "\"")) {
+        if (!StringUtil.endsWith(text, "\"")) {
+          editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"");
         }
       }
     }

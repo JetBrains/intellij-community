@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scheme name="Darcula" version="1" parent_scheme="Default">
   <option name="LINE_SPACING" value="1.0" />
-  <option name="EDITOR_FONT_SIZE" value="12" linux="13"/>
-  <option name="EDITOR_FONT_NAME" value="Menlo" linux="DejaVu Sans Mono"/>
+  <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
+  <option name="EDITOR_FONT_NAME" value="Menlo" linux="Source Code Pro"/>
   <colors>
     <option name="ADDED_LINES_COLOR" value="295622" />
     <option name="ANNOTATIONS_COLOR" value="8b999f" />
@@ -293,7 +293,7 @@
     </option>
     <option name="CUSTOM_STRING_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
       </value>
     </option>
     <option name="CUSTOM_VALID_STRING_ESCAPE_ATTRIBUTES">
@@ -370,7 +370,7 @@
     </option>
     <option name="DEFAULT_INVALID_STRING_ESCAPE">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
         <option name="EFFECT_COLOR" value="ff0000" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
@@ -421,7 +421,7 @@
     </option>
     <option name="DEFAULT_STRING">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
       </value>
     </option>
     <option name="DEFAULT_VALID_STRING_ESCAPE">
@@ -554,7 +554,7 @@
     </option>
     <option name="GString">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
       </value>
     </option>
     <option name="Groovy method declaration">
@@ -749,7 +749,7 @@
     </option>
     <option name="JAVA_INVALID_STRING_ESCAPE">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
         <option name="EFFECT_COLOR" value="ff0000" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
@@ -776,7 +776,7 @@
     </option>
     <option name="JAVA_STRING">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
       </value>
     </option>
     <option name="JAVA_VALID_STRING_ESCAPE">
@@ -998,7 +998,7 @@
     </option>
     <option name="OC.STRING">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
       </value>
     </option>
     <option name="OC.STRUCT_FIELD">
@@ -1020,7 +1020,7 @@
     </option>
     <option name="PHP_EXEC_COMMAND_ID">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
         <option name="BACKGROUND" value="5e6465" />
       </value>
     </option>
@@ -1048,7 +1048,7 @@
     </option>
     <option name="PROPERTIES.VALUE">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
       </value>
     </option>
     <option name="PROTOCOL_REFERENCE">
@@ -1392,7 +1392,7 @@
     </option>
     <option name="SLIM_STRING_INTERPOLATED">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -1462,7 +1462,7 @@
     </option>
     <option name="String">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
       </value>
     </option>
     <option name="TAPESTRY_COMPONENT_PARAMATER">
@@ -1510,7 +1510,7 @@
     </option>
     <option name="TYPE_PARAMETER_NAME_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="247877" />
+        <option name="FOREGROUND" value="507874" />
       </value>
     </option>
     <option name="TYPO">
@@ -1521,7 +1521,7 @@
     </option>
     <option name="Type parameter">
       <value>
-        <option name="FOREGROUND" value="247877" />
+        <option name="FOREGROUND" value="507874" />
       </value>
     </option>
     <option name="UNMATCHED_BRACE_ATTRIBUTES">
@@ -1565,7 +1565,7 @@
     </option>
     <option name="VELOCITY_STRING">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -1650,7 +1650,7 @@
     </option>
     <option name="XPATH.STRING">
       <value>
-        <option name="FOREGROUND" value="a5c25c" />
+        <option name="FOREGROUND" value="6A8759" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>

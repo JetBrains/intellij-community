@@ -8,8 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import icons.TerminalIcons;
 
-import java.nio.charset.Charset;
-
 /**
  * @author traff
  */
@@ -31,12 +29,12 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
 
   public void runLocalTerminal(AnActionEvent event) {
     final Project project = event.getData(PlatformDataKeys.PROJECT);
-    setupRemoteCredentialsAndRunTerminal(project);
+    runLocalTerminal(project);
   }
 
-  public static void setupRemoteCredentialsAndRunTerminal(final Project project) {
-    String terminalCommand = SystemInfo.isMac ? "/bin/tcsh" : "/bin/bash";
+  public static void runLocalTerminal(final Project project) {
+    String[] terminalCommand = SystemInfo.isMac ? new String[]{"/bin/bash", "--login"} : new String[]{"/bin/bash"};
 
-    new LocalTerminalDirectRunner(project, Charset.defaultCharset(), terminalCommand).run();
+    new LocalTerminalDirectRunner(project, terminalCommand).run();
   }
 }

@@ -43,6 +43,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -242,6 +243,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         return container.forEach(new ValueContainer.ContainerAction<StubIdList>() {
           @Override
           public boolean perform(final int id, @NotNull final StubIdList value) {
+            ProgressManager.checkCanceled();
             if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {
@@ -285,11 +287,18 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   @Override
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
+    Set<K> allKeys = ContainerUtil.newTroveSet();
+    processAllKeys(indexKey, project, new CommonProcessors.CollectProcessor<K>(allKeys));
+    return allKeys;
+  }
+
+  @Override
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project, Processor<K> processor) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
-      return index.getAllKeys();
+      return index.processAllKeys(processor);
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -301,7 +310,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
       throw e;
     }
-    return Collections.emptyList();
+    return true;
   }
 
   @Override

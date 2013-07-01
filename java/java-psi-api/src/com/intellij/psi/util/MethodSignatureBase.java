@@ -70,11 +70,11 @@ public abstract class MethodSignatureBase implements MethodSignature {
   public PsiTypeParameter[] getTypeParameters() {
     return myTypeParameters;
   }
-  
+
   public PsiType[] getErasedParameterTypes() {
     PsiType[] result = myErasedParameterTypes;
     if (result == null) {
-      result = myErasedParameterTypes = MethodSignatureUtil.getErasedParameterTypes(this);
+      myErasedParameterTypes = result = MethodSignatureUtil.getErasedParameterTypes(this);
     }
     return result;
   }
@@ -89,15 +89,12 @@ public abstract class MethodSignatureBase implements MethodSignature {
 
   public int hashCode() {
     int result = getName().hashCode();
-
-    final PsiType[] parameterTypes = getParameterTypes();
+    final PsiType[] parameterTypes = getErasedParameterTypes();
     result += 37 * parameterTypes.length;
-    PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
-    if (firstParamType != null) {
-       //to avoid type parameters with different names conflict
-      final PsiType[] erasedTypes = myErasedParameterTypes;
-      firstParamType = erasedTypes != null ? erasedTypes[0] : TypeConversionUtil.erasure(firstParamType, mySubstitutor);
-      result += 37 * firstParamType.hashCode();
+    for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
+      PsiType type = parameterTypes[i];
+      if (type == null) continue;
+      result = 31 * result + type.hashCode();
     }
     return result;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
       return null;
     }
 
-    final ArrayList<ReferenceTransferableData.ReferenceData> array = new ArrayList<ReferenceTransferableData.ReferenceData>();
+    final ArrayList<ReferenceData> array = new ArrayList<ReferenceData>();
     for (int j = 0; j < startOffsets.length; j++) {
       final int startOffset = startOffsets[j];
       for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffsets[j])) {
@@ -63,10 +63,10 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
       return null;
     }
     
-    return new ReferenceTransferableData(array.toArray(new ReferenceTransferableData.ReferenceData[array.size()]));
+    return new ReferenceTransferableData(array.toArray(new ReferenceData[array.size()]));
   }
 
-  protected abstract void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceTransferableData.ReferenceData> to);
+  protected abstract void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to);
 
   @Override
   @Nullable
@@ -74,7 +74,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     ReferenceTransferableData referenceData = null;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
       try {
-        final DataFlavor flavor = ReferenceTransferableData.ReferenceData.getDataFlavor();
+        final DataFlavor flavor = ReferenceData.getDataFlavor();
         if (flavor != null) {
           referenceData = (ReferenceTransferableData)content.getTransferData(flavor);
         }
@@ -109,7 +109,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final ReferenceTransferableData.ReferenceData[] referenceData = value.getData();
+    final ReferenceData[] referenceData = value.getData();
     final TRef[] refs = findReferencesToRestore(file, bounds, referenceData);
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
       askReferencesToRestore(project, refs, referenceData);
@@ -124,12 +124,12 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
   }
 
   protected static void addReferenceData(final PsiElement element,
-                                final ArrayList<ReferenceTransferableData.ReferenceData> array,
+                                final ArrayList<ReferenceData> array,
                                 final int startOffset,
                                 final String qClassName, @Nullable final String staticMemberName) {
     final TextRange range = element.getTextRange();
     array.add(
-        new ReferenceTransferableData.ReferenceData(
+        new ReferenceData(
             range.getStartOffset() - startOffset,
             range.getEndOffset() - startOffset,
             qClassName, staticMemberName));
@@ -137,13 +137,13 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
 
   protected abstract TRef[] findReferencesToRestore(PsiFile file,
                                                                            RangeMarker bounds,
-                                                                           ReferenceTransferableData.ReferenceData[] referenceData);
+                                                                           ReferenceData[] referenceData);
 
-  protected abstract void restoreReferences(ReferenceTransferableData.ReferenceData[] referenceData,
+  protected abstract void restoreReferences(ReferenceData[] referenceData,
                                             TRef[] refs);
 
   private static void askReferencesToRestore(Project project, PsiElement[] refs,
-                                      ReferenceTransferableData.ReferenceData[] referenceData) {
+                                      ReferenceData[] referenceData) {
     PsiManager manager = PsiManager.getInstance(project);
 
     ArrayList<Object> array = new ArrayList<Object>();
@@ -152,7 +152,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
       PsiElement ref = refs[i];
       if (ref != null) {
         LOG.assertTrue(ref.isValid());
-        ReferenceTransferableData.ReferenceData data = referenceData[i];
+        ReferenceData data = referenceData[i];
         PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(data.qClassName, ref.getResolveScope());
         if (refClass == null) continue;
 

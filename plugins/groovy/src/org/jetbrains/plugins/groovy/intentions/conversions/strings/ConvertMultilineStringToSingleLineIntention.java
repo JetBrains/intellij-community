@@ -28,9 +28,10 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
@@ -59,12 +60,12 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
     }
     else {
       final GrStringImpl gstring = (GrStringImpl)element;
-      for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
-          appendSimpleStringValue(child.getPsi(), buffer, "\"");
+      for (GroovyPsiElement child : gstring.getAllContentParts()) {
+        if (child instanceof GrStringContent) {
+          appendSimpleStringValue(child, buffer, "\"");
         }
-        else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
-          buffer.append(child.getText());
+        else if (child instanceof GrStringInjection) {
+          buffer.append(child);
         }
       }
       old = gstring;

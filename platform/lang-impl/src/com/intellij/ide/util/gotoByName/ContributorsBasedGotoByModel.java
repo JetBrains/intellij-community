@@ -32,13 +32,15 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -74,7 +76,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   @NotNull
   @Override
   public String[] getNames(final boolean checkBoxState) {
-    final Set<String> names = new ConcurrentHashSet<String>();
+    final THashSet<String> allNames = ContainerUtil.newTroveSet();
 
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
@@ -85,7 +87,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
                                                   public boolean process(ChooseByNameContributor contributor) {
                                                     try {
                                                       if (!myProject.isDisposed()) {
-                                                        ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
+                                                        String[] names = contributor.getNames(myProject, checkBoxState);
+                                                        synchronized (allNames) {
+                                                          allNames.ensureCapacity(names.length);
+                                                          ContainerUtil.addAll(allNames, names);
+                                                        }
                                                       }
                                                     }
                                                     catch (ProcessCanceledException ex) {
@@ -100,12 +106,14 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
                                                     return true;
                                                   }
                                                 });
-    indicator.checkCanceled();
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
     long finish = System.currentTimeMillis();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("getNames(): "+(finish-start)+"ms; (got "+names.size()+" elements)");
+      LOG.debug("getNames(): "+(finish-start)+"ms; (got "+allNames.size()+" elements)");
     }
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(allNames);
   }
 
   private List<ChooseByNameContributor> filterDumb(ChooseByNameContributor[] contributors) {

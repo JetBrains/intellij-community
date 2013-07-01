@@ -111,7 +111,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
 
     // Ask for description and other params
-    final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project);
+    final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project, editor, file);
     dialog.show();
     if (!dialog.isOK()) {
       return;
@@ -132,22 +132,22 @@ public class GithubCreateGistAction extends DumbAwareAction {
       auth = authDataRef.get();
     }
 
-    createGistWithProgress(project, editor, file, files, auth, dialog.getDescription(), dialog.isPrivate(), new Consumer<String>() {
+    createGistWithProgress(project, editor, file, files, auth, dialog.getDescription(), dialog.getFileName(), dialog.isPrivate(),
+                           new Consumer<String>() {
+                             @Override
+                             public void consume(String url) {
+                               if (url == null) {
+                                 return;
+                               }
 
-      @Override
-      public void consume(String url) {
-        if (url == null) {
-          return;
-        }
-
-        if (dialog.isOpenInBrowser()) {
-          BrowserUtil.launchBrowser(url);
-        }
-        else {
-          GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url);
-        }
-      }
-    });
+                               if (dialog.isOpenInBrowser()) {
+                                 BrowserUtil.launchBrowser(url);
+                               }
+                               else {
+                                 GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url);
+                               }
+                             }
+                           });
   }
 
   private static void createGistWithProgress(@NotNull final Project project,
@@ -155,15 +155,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                              @Nullable final VirtualFile file,
                                              @Nullable final VirtualFile[] files,
                                              @Nullable final GithubAuthData auth,
-                                             @NotNull final String description,
-                                             final boolean aPrivate,
+                                             @NotNull final String description, @Nullable final String filename, final boolean aPrivate,
                                              @NotNull final Consumer<String> resultHandler) {
     final Ref<String> url = new Ref<String>();
     new Task.Backgroundable(project, "Creating Gist") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<NamedContent> contents = collectContents(project, editor, file, files);
-        String gistUrl = createGist(project, auth, contents, aPrivate, description);
+        String gistUrl = createGist(project, auth, contents, aPrivate, description, filename);
         url.set(gistUrl);
       }
 
@@ -196,7 +195,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
 
     LOG.error("File, files and editor can't be null all at once!");
-    return null;
+    throw new IllegalStateException("File, files and editor can't be null all at once!");
   }
 
   @Nullable
@@ -204,12 +203,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                    @Nullable GithubAuthData auth,
                                    @NotNull List<NamedContent> contents,
                                    boolean isPrivate,
-                                   @NotNull String description) {
+                                   @NotNull String description,
+                                   @Nullable String filename) {
     if (contents.isEmpty()) {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
       return null;
     }
-    String requestBody = prepareJsonRequest(description, isPrivate, contents);
+    String requestBody = prepareJsonRequest(description, isPrivate, contents, filename);
     try {
       JsonElement jsonElement;
       if (auth == null) {
@@ -269,16 +269,25 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static String prepareJsonRequest(@NotNull String description, boolean isPrivate, @NotNull List<NamedContent> contents) {
+  private static String prepareJsonRequest(@NotNull String description,
+                                           boolean isPrivate,
+                                           @NotNull List<NamedContent> contents,
+                                           @Nullable String filename) {
     JsonObject json = new JsonObject();
     json.addProperty("description", description);
     json.addProperty("public", Boolean.toString(!isPrivate));
 
     JsonObject files = new JsonObject();
+
     for (NamedContent content : contents) {
       JsonObject file = new JsonObject();
       file.addProperty("content", content.getText());
-      files.add(content.getName(), file);
+      if (contents.size() > 1 || filename == null) {
+        files.add(content.getName(), file);
+      }
+      else {
+        files.add(filename, file);
+      }
     }
 
     json.add("files", files);

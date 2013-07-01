@@ -940,6 +940,7 @@ public class GeneratedParserUtilBase {
       super(DUMMY_BLOCK);
     }
 
+    @NotNull
     @Override
     public PsiReference[] getReferences() {
       return PsiReference.EMPTY_ARRAY;

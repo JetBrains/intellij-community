@@ -7,5 +7,6 @@ Groovy script
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('Preved')
-    PsiElement(Gstring content)(', medved!')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)(', medved!')
     PsiElement(Gstring end)('"')

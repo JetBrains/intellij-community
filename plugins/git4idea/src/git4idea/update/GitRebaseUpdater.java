@@ -15,7 +15,6 @@
  */
 package git4idea.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -25,17 +24,13 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.Notificator;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
-import git4idea.merge.GitConflictResolver;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
-import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -98,7 +93,7 @@ public class GitRebaseUpdater extends GitUpdater {
     });
 
     if (failure.get()) {
-      updateResult.set(handleRebaseFailure(rebaseHandler, rebaseConflictDetector, untrackedFilesDetector));
+      updateResult.set(myRebaser.handleRebaseFailure(rebaseHandler, myRoot, rebaseConflictDetector, untrackedFilesDetector));
     }
     return updateResult.get();
   }
@@ -110,25 +105,6 @@ public class GitRebaseUpdater extends GitUpdater {
     LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
                                                gitBranchPair.getBranch().getName(), myRoot));
     return dest.getName();
-  }
-
-  private GitUpdateResult handleRebaseFailure(GitLineHandler pullHandler,
-                                              GitRebaseProblemDetector rebaseConflictDetector,
-                                              final GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector) {
-    if (rebaseConflictDetector.isMergeConflict()) {
-      LOG.info("handleRebaseFailure merge conflict");
-      final boolean allMerged = new MyConflictResolver(myProject, myGit, myRoot, myRebaser).merge();
-      return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
-    } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
-      LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
-                                                               untrackedWouldBeOverwrittenDetector.getFiles(), "rebase", null);
-      return GitUpdateResult.ERROR;
-    } else {
-      LOG.info("handleRebaseFailure error " + pullHandler.errors());
-      GitUIUtil.notifyImportantError(myProject, "Rebase error", GitUIUtil.stringifyErrors(pullHandler.errors()));
-      return GitUpdateResult.ERROR;
-    }
   }
 
   // TODO
@@ -208,31 +184,4 @@ public class GitRebaseUpdater extends GitUpdater {
     return result.success();
   }
 
-  private static class MyConflictResolver extends GitConflictResolver {
-    private final GitRebaser myRebaser;
-    private final VirtualFile myRoot;
-
-    public MyConflictResolver(Project project, @NotNull Git git, VirtualFile root, GitRebaser rebaser) {
-      super(project, git, ServiceManager.getService(GitPlatformFacade.class), Collections.singleton(root), makeParams());
-      myRebaser = rebaser;
-      myRoot = root;
-    }
-    
-    private static Params makeParams() {
-      Params params = new Params();
-      params.setReverse(true);
-      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
-      params.setErrorNotificationTitle("Can't continue rebase");
-      params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
-      return params;
-    }
-
-    @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-      return myRebaser.continueRebase(myRoot);
-    }
-
-    @Override protected boolean proceedAfterAllMerged() throws VcsException {
-      return myRebaser.continueRebase(myRoot);
-    }
-  }
 }

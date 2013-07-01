@@ -329,18 +329,9 @@ public class JavaCompletionSorting {
 
     private static PsiType removeClassWildcard(PsiType type) {
       if (type instanceof PsiClassType) {
-        final PsiClassType psiClassType = (PsiClassType)type;
-        final PsiClass psiClass = psiClassType.resolve();
+        final PsiClass psiClass = ((PsiClassType)type).resolve();
         if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-          final PsiType[] parameters = psiClassType.getParameters();
-          PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-          if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType && typeParameters.length == 1) {
-            final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
-            if (bound instanceof PsiClassType) {
-              return JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
-                .createType(psiClass, PsiSubstitutor.EMPTY.put(typeParameters[0], bound));
-            }
-          }
+          return GenericsUtil.eliminateWildcards(type);
         }
       }
       return type;

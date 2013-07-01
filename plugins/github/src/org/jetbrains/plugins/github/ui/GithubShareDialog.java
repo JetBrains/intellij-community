@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Set;
@@ -82,5 +83,10 @@ public class GithubShareDialog extends DialogWrapper {
 
   public String getDescription() {
     return myGithubSharePanel.getDescription();
+  }
+
+  @TestOnly
+  public void setRepositoryName(@NotNull String name) {
+    myGithubSharePanel.setRepositoryName(name);
   }
 }

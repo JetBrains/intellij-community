@@ -177,7 +177,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     BasicAction.saveAll();
 
-    new Task.Backgroundable(project, "Adding GitHub parent as a remote host") {
+    new Task.Backgroundable(project, "Rebase GitHub fork") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (remoteForForkParentRepo.isNull()) {
@@ -216,12 +216,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
           public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                action.actionPerformed(actionEvent);
-              }
-            });
+            action.actionPerformed(actionEvent);
           }
         }, indicator.getModalityState());
       }

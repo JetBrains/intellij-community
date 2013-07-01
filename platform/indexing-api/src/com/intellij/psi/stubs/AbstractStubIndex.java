@@ -18,6 +18,7 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
 
 import java.util.Collection;
 
@@ -27,6 +28,10 @@ import java.util.Collection;
 public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements StubIndexExtension<Key, Psi> {
   public Collection<Key> getAllKeys(Project project) {
     return StubIndex.getInstance().getAllKeys(getKey(), project);
+  }
+
+  public boolean processAllKeys(Project project, Processor<Key> processor) {
+    return StubIndex.getInstance().processAllKeys(getKey(), project, processor);
   }
 
   public Collection<Psi> get(Key key, final Project project, final GlobalSearchScope scope) {

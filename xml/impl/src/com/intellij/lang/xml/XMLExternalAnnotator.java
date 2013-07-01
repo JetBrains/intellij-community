@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -70,11 +71,11 @@ public class XMLExternalAnnotator extends ExternalAnnotator {
     }
 
     @Override
-    public void addMessage(PsiElement context, String message, ErrorType type) {
+    public void addMessage(PsiElement context, String message, @NotNull ErrorType type) {
       addMessageWithFixes(context, message, type);
     }
 
-    public void addMessageWithFixes(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+    public void addMessageWithFixes(final PsiElement context, final String message, @NotNull final ErrorType type, final IntentionAction... fixes) {
       if (message != null && message.length() > 0) {
         if (context instanceof XmlTag) {
           addMessagesForTag((XmlTag)context, message, type, fixes);

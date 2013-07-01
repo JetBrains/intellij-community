@@ -28,13 +28,14 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.HashSet;
+import git4idea.DialogManager;
+import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
@@ -68,7 +69,7 @@ public class GithubShareAction extends DumbAwareAction {
 
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null || project.isDefault()){
+    if (project == null || project.isDefault()) {
       setVisibleEnabled(e, false, false);
       return;
     }
@@ -103,9 +104,9 @@ public class GithubShareAction extends DumbAwareAction {
     // check for existing git repo
     boolean externalRemoteDetected = false;
     if (gitDetected) {
-      if (GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-        GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub",
-                                        StringUtil.notNullize(GithubUtil.findGithubRemoteUrl(gitRepository)));
+      final String githubRemote = GithubUtil.findGithubRemoteUrl(gitRepository);
+      if (githubRemote != null) {
+        GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub", githubRemote);
         return;
       }
       else {
@@ -161,7 +162,8 @@ public class GithubShareAction extends DumbAwareAction {
     // Show dialog (window)
     final GithubShareDialog shareDialog =
       new GithubShareDialog(project, repoNamesRef.get(), userInfoRef.get().getMaxPrivateRepos() > userInfoRef.get().getPrivateRepos());
-    shareDialog.show();
+    //shareDialog.show();
+    DialogManager.show(shareDialog);
     if (!shareDialog.isOK()) {
       return;
     }
@@ -230,12 +232,24 @@ public class GithubShareAction extends DumbAwareAction {
           LOG.info("Pushing to github master");
           indicator.setText("Pushing to github master");
           Git git = ServiceManager.getService(Git.class);
-          GitCommandResult result = git.push(repository, remoteName, remoteUrl, "refs/heads/master:refs/heads/master");
+
+          GitLocalBranch currentBranch = repository.getCurrentBranch();
+          if (currentBranch == null) {
+            GithubNotifications.showError(project, "Can't finish GitHub sharing process", "Successfully created project '" +
+                                                                                          name +
+                                                                                          "' on GitHub, but initial push failed: " +
+                                                                                          "no current branch");
+            return;
+          }
+          GitCommandResult result = git.push(repository, remoteName, remoteUrl, currentBranch.getName());
           if (result.success()) {
             GithubNotifications.showInfo(project, "Success", "Successfully created project '" + name + "' on GitHub");
           }
           else {
-            GithubNotifications.showError(project, "Push to GitHub failed", "Push failed: <br/>" + result.getErrorOutputAsHtmlString());
+            GithubNotifications.showError(project, "Can't finish GitHub sharing process", "Successfully created project '" +
+                                                                                          name +
+                                                                                          "' on GitHub, but initial push failed:<br/>" +
+                                                                                          result.getErrorOutputAsHtmlString());
           }
         }
         catch (IOException e) {
@@ -294,11 +308,11 @@ public class GithubShareAction extends DumbAwareAction {
   // ask for files to add
   // commit
   private static boolean performFirstCommitIfRequired(@NotNull Project project,
-                                               @NotNull final VirtualFile root,
-                                               @NotNull ProgressIndicator indicator) {
+                                                      @NotNull final VirtualFile root,
+                                                      @NotNull ProgressIndicator indicator) {
     // get repository
     final GitVcs gitVcs = GitVcs.getInstance(project);
-    if (gitVcs == null){
+    if (gitVcs == null) {
       GithubNotifications.showError(project, "Failed to perform initial commit", "Cannot find git initialized");
       return false;
     }
@@ -329,7 +343,7 @@ public class GithubShareAction extends DumbAwareAction {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
-          dialog.show();
+          DialogManager.show(dialog);
         }
       }, indicator.getModalityState());
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();

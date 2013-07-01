@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -92,14 +91,10 @@ public class MavenProjectsTree {
     try {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
-        result.myManagedFilesPaths = readList(in);
-        result.myIgnoredFilesPaths = readList(in);
-        result.myIgnoredFilesPatterns = readList(in);
-        result.myExplicitProfiles = readCollection(in, new Function<Integer, Set<String>>() {
-          public Set<String> fun(Integer integer) {
-            return new THashSet<String>();
-          }
-        });
+        result.myManagedFilesPaths = readCollection(in, new ArrayList<String>());
+        result.myIgnoredFilesPaths = readCollection(in, new ArrayList<String>());
+        result.myIgnoredFilesPatterns = readCollection(in, new ArrayList<String>());
+        result.myExplicitProfiles = readCollection(in, new THashSet<String>());
         result.myRootProjects.addAll(readProjectsRecursively(in, result));
       }
       catch (IOException e) {
@@ -117,21 +112,19 @@ public class MavenProjectsTree {
     return result;
   }
 
-  private static List<String> readList(DataInputStream in) throws IOException {
-    return readCollection(in, new Function<Integer, List<String>>() {
-      public List<String> fun(Integer integer) {
-        return new ArrayList<String>(integer);
-      }
-    });
-  }
-
-  private static <T extends Collection<String>> T readCollection(DataInputStream in, Function<Integer, T> factory) throws IOException {
+  private static <T extends Collection<String>> T readCollection(DataInputStream in, T result) throws IOException {
     int count = in.readInt();
-    T result = factory.fun(count);
     while (count-- > 0) {
       result.add(in.readUTF());
     }
     return result;
+  }
+
+  private static void writeCollection(DataOutputStream out, Collection<String> list) throws IOException {
+    out.writeInt(list.size());
+    for (String each : list) {
+      out.writeUTF(each);
+    }
   }
 
   private static List<MavenProject> readProjectsRecursively(DataInputStream in,
@@ -177,13 +170,6 @@ public class MavenProjectsTree {
       finally {
         readUnlock();
       }
-    }
-  }
-
-  private static void writeCollection(DataOutputStream out, Collection<String> list) throws IOException {
-    out.writeInt(list.size());
-    for (String each : list) {
-      out.writeUTF(each);
     }
   }
 
@@ -380,25 +366,25 @@ public class MavenProjectsTree {
   }
 
   public Collection<String> getAvailableProfiles() {
-    return getAvailableAndActiveProfiles(true, false).first;
-  }
+    Collection<String> res = new THashSet<String>();
 
-  private Pair<Collection<String>, Collection<String>> getAvailableAndActiveProfiles(boolean includeAvailable, boolean includeActive) {
-    Collection<String> available = includeAvailable ? new THashSet<String>() : null;
-    Collection<String> active = includeActive ? new THashSet<String>() : null;
     for (MavenProject each : getProjects()) {
-      if (available != null) available.addAll(each.getProfilesIds());
-      if (active != null) active.addAll(each.getActivatedProfilesIds());
+      res.addAll(each.getProfilesIds());
     }
-    return Pair.create(available, active);
+
+    return res;
   }
 
   public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
     Collection<Pair<String, MavenProfileKind>> result = new ArrayListSet<Pair<String, MavenProfileKind>>();
 
-    Pair<Collection<String>, Collection<String>> profiles = getAvailableAndActiveProfiles(true, true);
-    Collection<String> available = profiles.first;
-    Collection<String> active = profiles.second;
+    Collection<String> available = new THashSet<String>();
+    Collection<String> active = new THashSet<String>();
+    for (MavenProject each : getProjects()) {
+      available.addAll(each.getProfilesIds());
+      active.addAll(each.getActivatedProfilesIds());
+    }
+
     Collection<String> explicitProfiles = getExplicitProfiles();
 
     for (String each : available) {

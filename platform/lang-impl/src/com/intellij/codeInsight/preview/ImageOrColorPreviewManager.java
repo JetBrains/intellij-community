@@ -16,8 +16,6 @@
 
 package com.intellij.codeInsight.preview;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +33,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,21 +44,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.codeInsight.hint.HintManagerImpl.getHintPosition;
-
 public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener {
+  private static final Logger LOG = Logger.getInstance(ImageOrColorPreviewManager.class);
+
   private static final Key<KeyListener> EDITOR_LISTENER_ADDED = Key.create("previewManagerListenerAdded");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.html.preview.ImageOrColorPreviewManager");
-  private static final int HINT_HIDE_FLAGS = HintManager.HIDE_BY_ANY_KEY |
-                                             HintManager.HIDE_BY_OTHER_HINT |
-                                             HintManager.HIDE_BY_SCROLLING |
-                                             HintManager.HIDE_BY_TEXT_CHANGE |
-                                             HintManager.HIDE_IF_OUT_OF_EDITOR;
   private final Alarm alarm = new Alarm();
 
-  @Nullable
-  private LightweightHint hint;
   @Nullable
   private WeakReference<PsiElement> elementRef;
 
@@ -126,8 +115,8 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   private static boolean isSupportedFile(PsiFile psiFile) {
-    for (PreviewHintProvider hintProvider : Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
-      if (hintProvider.isSupportedFile(psiFile)) {
+    for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+      if (provider.isSupportedFile(psiFile)) {
         return true;
       }
     }
@@ -152,59 +141,41 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     return InjectedLanguageUtil.findElementAtNoCommit(psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
   }
 
-  private void hideCurrentHintIfAny() {
-    if (hint != null) {
-      hint.hide();
-      hint = null;
-      elementRef = null;
-    }
-  }
-
   @Override
   public void dispose() {
     alarm.cancelAllRequests();
-    hint = null;
     elementRef = null;
   }
 
   @Override
-  public void mouseMoved(@NotNull EditorMouseEvent e) {
-    Editor editor = e.getEditor();
+  public void mouseMoved(@NotNull EditorMouseEvent event) {
+    Editor editor = event.getEditor();
     if (editor.isOneLineMode()) {
       return;
     }
 
     alarm.cancelAllRequests();
-    Point point = e.getMouseEvent().getPoint();
-    if (hint == null && e.getMouseEvent().isShiftDown()) {
+    Point point = event.getMouseEvent().getPoint();
+    if (elementRef == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(point, editor), 100);
     }
-    else if (hint != null && elementRef != null && elementRef.get() != getPsiElementAt(point, editor)) {
-      hideCurrentHintIfAny();
+    else if (elementRef != null && elementRef.get() != getPsiElementAt(point, editor)) {
+      PsiElement element = elementRef.get();
+      elementRef = null;
+      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+        try {
+          provider.hide(element, editor);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 
   @Override
   public void mouseDragged(EditorMouseEvent e) {
     // nothing
-  }
-
-  @Nullable
-  private static LightweightHint getHint(@NotNull PsiElement element) {
-    for (PreviewHintProvider hintProvider : Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
-      JComponent preview;
-      try {
-        preview = hintProvider.getPreviewComponent(element);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        continue;
-      }
-      if (preview != null) {
-        return new LightweightHint(preview);
-      }
-    }
-    return null;
   }
 
   private final class PreviewRequest implements Runnable {
@@ -219,30 +190,21 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     @Override
     public void run() {
       PsiElement element = getPsiElementAt(point, editor);
-      if (element == null || !element.isValid()) {
+      if (element == null || !element.isValid() || (elementRef != null && elementRef.get() == element)) {
+        return;
+      }
+      if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument()) || DumbService.getInstance(element.getProject()).isDumb()) {
         return;
       }
 
-      if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument())) {
-        return;
-      }
-
-      if (DumbService.getInstance(element.getProject()).isDumb()) {
-        return;
-      }
-
-      LightweightHint newHint = getHint(element);
-      if (newHint == null) {
-        hideCurrentHintIfAny();
-      }
-      else if ((elementRef == null || elementRef.get() != element) && element.isValid()) {
-        hideCurrentHintIfAny();
-        hint = newHint;
-        elementRef = new WeakReference<PsiElement>(element);
-
-        HintManagerImpl.getInstanceImpl().showEditorHint(newHint, editor,
-                                                         getHintPosition(newHint, editor, editor.xyToLogicalPosition(point), HintManager.RIGHT_UNDER),
-                                                         HINT_HIDE_FLAGS, 0, false);
+      elementRef = new WeakReference<PsiElement>(element);
+      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+        try {
+          provider.show(element, editor, point);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
   }

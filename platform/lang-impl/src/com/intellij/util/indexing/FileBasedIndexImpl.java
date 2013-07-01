@@ -863,6 +863,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                     @Nullable Project project,
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
+    ProgressManager.checkCanceled();
     if (!needsFileContentLoading(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }

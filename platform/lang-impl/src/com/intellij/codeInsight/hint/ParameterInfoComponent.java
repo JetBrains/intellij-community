@@ -340,7 +340,7 @@ class ParameterInfoComponent extends JPanel {
       myLabel.setForeground(FOREGROUND_COLOR);
 
       if (flagsMap.isEmpty()) {
-        myLabel.setText(text);
+        myLabel.setText(XmlStringUtil.wrapInHtml(text));
       }
       else {
         String labelText = buildLabelText(text, flagsMap);
