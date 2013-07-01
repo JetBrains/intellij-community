@@ -35,16 +35,12 @@ class GithubUser {
   }
 
   @NotNull
-  String getLogin() {
+  public String getLogin() {
     return myLogin;
   }
 
-  int getMaxPrivateRepos() {
-    return myMaxPrivateRepos;
-  }
-
-  int getPrivateRepos() {
-    return myPrivateRepos;
+  public boolean canCreatePrivateRepo() {
+    return myMaxPrivateRepos > myPrivateRepos;
   }
 
 }
