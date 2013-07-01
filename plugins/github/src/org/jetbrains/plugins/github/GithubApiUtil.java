@@ -29,9 +29,7 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.auth.AuthenticationException;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,27 +46,31 @@ public class GithubApiUtil {
   private static final int CONNECTION_TIMEOUT = 5000;
   private static final Logger LOG = Logger.getInstance(GithubApiUtil.class);
 
+  private enum HttpVerb {
+    GET, POST, DELETE, HEAD
+  }
+
   @Nullable
   public static JsonElement getRequest(@NotNull String host, @NotNull String login, @NotNull String password,
                                        @NotNull String path) throws IOException {
-    return request(host, login, password, path, null, false);
+    return request(host, login, password, path, null, HttpVerb.GET);
   }
 
   @Nullable
   public static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, null, false);
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, null, HttpVerb.GET);
   }
 
   @Nullable
   public static JsonElement anonymousPostRequest(@NotNull String host, @NotNull String path, @Nullable String requestBody)
     throws IOException {
-    return request(host, null, null, path, requestBody, true);
+    return request(host, null, null, path, requestBody, HttpVerb.POST);
   }
 
   @Nullable
   public static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
     throws IOException {
-    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, requestBody, true);
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, requestBody, HttpVerb.POST);
   }
 
   @Nullable
@@ -76,17 +78,21 @@ public class GithubApiUtil {
                                         @NotNull GithubAuthData auth,
                                         @NotNull String path,
                                         @Nullable String requestBody) throws IOException {
-    return request(host, auth.getLogin(), auth.getPassword(), path, requestBody, true);
+    return request(host, auth.getLogin(), auth.getPassword(), path, requestBody, HttpVerb.POST);
+  }
+
+  @Nullable
+  public static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, null, HttpVerb.DELETE);
   }
 
   @Nullable
   private static JsonElement request(@NotNull String host, @Nullable String login, @Nullable String password,
                                      @NotNull String path,
-                                     @Nullable String requestBody,
-                                     boolean post) throws IOException {
+                                     @Nullable String requestBody, @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(host, login, password, path, requestBody, post);
+      method = doREST(host, login, password, path, requestBody, verb);
       String resp = method.getResponseBodyAsString();
       if (resp == null) {
         LOG.info(String.format("Unexpectedly empty response: %s", resp));
@@ -104,7 +110,7 @@ public class GithubApiUtil {
         final int end = s.indexOf(">; rel=\"next\"");
         final int begin = s.lastIndexOf('<', end);
         if (begin >= 0 && end >= 0) {
-          JsonElement next = request(s.substring(begin + 1, end), login, password, "", requestBody, post);
+          JsonElement next = request(s.substring(begin + 1, end), login, password, "", requestBody, verb);
           if (next != null) {
             JsonArray merged = ret.getAsJsonArray();
             merged.addAll(next.getAsJsonArray());
@@ -124,21 +130,30 @@ public class GithubApiUtil {
 
   @NotNull
   private static HttpMethod doREST(@NotNull String host, @Nullable String login, @Nullable String password, @NotNull String path,
-                                   @Nullable final String requestBody, final boolean post) throws IOException {
+                                   @Nullable final String requestBody,
+                                   @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(login, password);
     String uri = getApiUrl(host) + path;
     return GithubSslSupport.getInstance().executeSelfSignedCertificateAwareRequest(client, uri,
      new ThrowableConvertor<String, HttpMethod, IOException>() {
        @Override
        public HttpMethod convert(String uri) throws IOException {
-         if (post) {
-           PostMethod method = new PostMethod(uri);
-           if (requestBody != null) {
-             method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
-           }
-           return method;
+         switch (verb) {
+           case POST:
+             PostMethod method = new PostMethod(uri);
+             if (requestBody != null) {
+               method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
+             }
+             return method;
+           case GET:
+             return new GetMethod(uri);
+           case DELETE:
+             return new DeleteMethod(uri);
+           case HEAD:
+             return new HeadMethod(uri);
+           default:
+             throw new IllegalStateException("Wrong HttpVerb: unknown method");
          }
-         return new GetMethod(uri);
        }
      });
   }
