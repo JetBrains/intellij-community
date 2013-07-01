@@ -16,6 +16,7 @@
 
 package com.intellij.execution;
 
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
@@ -121,8 +122,9 @@ public class ProgramRunnerUtil {
                                           final boolean invalid,
                                           boolean isTemporary) {
     RunConfiguration configuration = settings.getConfiguration();
-    final Icon icon = settings.getFactory().getIcon(configuration);
-    LOG.assertTrue(icon != null, "Icon should not be null!");
+    ConfigurationFactory factory = settings.getFactory();
+    Icon icon =  factory != null ? factory.getIcon(configuration) : null;
+    if (icon == null) icon = AllIcons.RunConfigurations.Unknown;
 
     final Icon configurationIcon = isTemporary ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
