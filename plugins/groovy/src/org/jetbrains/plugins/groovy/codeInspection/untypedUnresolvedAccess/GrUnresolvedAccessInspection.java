@@ -93,6 +93,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
   public boolean myHighlightIfGroovyObjectOverridden = true;
   public boolean myHighlightIfMissingMethodsDeclared = true;
+  public boolean myHighlightInnerClasses = true;
 
   private static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {
     if (GrHighlightUtil.isDeclarationAssignment(referenceExpression)) return false;
@@ -125,10 +126,9 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel
-      .addCheckbox(GroovyInspectionBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden");
-    optionsPanel
-      .addCheckbox(GroovyInspectionBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared");
+    optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden");
+    optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared");
+    optionsPanel.addCheckbox(GroovyBundle.message("highlight.constructor.calls.of.a.non.static.inner.classes.without.enclosing.instance.passed"), "myHighlightInnerClasses");
     return optionsPanel;
   }
 
@@ -176,8 +176,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
     if (!(refElement.getParent() instanceof GrPackageDefinition) && resolved == null) {
       String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
-      HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(nameElement).descriptionAndTooltip(message).create();
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(nameElement).descriptionAndTooltip(message).create();
 
       // todo implement for nested classes
       HighlightDisplayKey displayKey = HighlightDisplayKey.find(SHORT_NAME);
@@ -187,6 +186,31 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(info, displayKey), refElement);
 
       return info;
+    }
+
+    if (refElement.getParent() instanceof GrNewExpression) {
+
+      boolean inStaticContext = isInStaticContext(refElement);
+
+      if (!inStaticContext && GroovySuppressableInspectionTool.isElementToolSuppressedIn(refElement, SHORT_NAME)) return null;
+
+      GrUnresolvedAccessInspection inspection = getInstance(refElement.getContainingFile(), refElement.getProject());
+      if (!inspection.myHighlightInnerClasses) return null;
+
+      GrNewExpression newExpression = (GrNewExpression)refElement.getParent();
+      if (resolved instanceof PsiClass) {
+        PsiClass clazz = (PsiClass)resolved;
+        if (newExpression.getQualifier() == null) {
+          final PsiClass outerClass = clazz.getContainingClass();
+          if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
+              outerClass != null &&
+              !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
+            String qname = clazz.getQualifiedName();
+            LOG.assertTrue(qname != null, clazz.getText());
+            return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
+          }
+        }
+      }
     }
 
     return null;
@@ -361,21 +385,26 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   }
 
   public static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
-    if (referenceExpression.getParent() instanceof GrMethodCall || referenceExpression.getQualifier() != null) return false;
-    GrMember context = PsiTreeUtil.getParentOfType(referenceExpression, GrMember.class, true, GrClosableBlock.class);
+    return isInStaticContext(referenceExpression) &&
+           !(referenceExpression.getParent() instanceof GrMethodCall) &&
+           referenceExpression.getQualifier() == null;
+  }
+
+  private static boolean isInStaticContext(PsiElement place) {
+    GrMember context = PsiTreeUtil.getParentOfType(place, GrMember.class, true, GrClosableBlock.class);
     return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(STATIC);
   }
 
   @Nullable
-  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceExpression ref,
-                                                      boolean compileStatic,
+  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
+                                                      boolean strongError,
                                                       @NotNull String message) {
     PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 
     HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(ref.getProject(), ref);
 
-    if (compileStatic || displayLevel == HighlightDisplayLevel.ERROR) {
+    if (strongError || displayLevel == HighlightDisplayLevel.ERROR) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
     }
 
