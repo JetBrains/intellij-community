@@ -37,7 +37,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   @Nullable
   private BuiltInServer server;
-  private boolean myEnabledInUnitTestMode;
+  private boolean myEnabledInUnitTestMode = true;
 
   @Override
   public int getPort() {

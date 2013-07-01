@@ -31,8 +31,6 @@ import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.BuiltInServerManager;
-import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
@@ -139,9 +137,8 @@ public class GitCucumberWorld {
   @Before("@remote")
   @Order(1)
   public void setUpRemoteOperations() {
-    ((BuiltInServerManagerImpl)BuiltInServerManager.getInstance()).setEnabledInUnitTestMode(true);
     // default port will be occupied by main idea instance => define the custom default to avoid searching of free port
-    System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
+    GitTestUtil.setDefaultBuiltInServerPort();
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
 
@@ -156,7 +153,6 @@ public class GitCucumberWorld {
   @After("@remote")
   @Order(1)
   public void tearDownRemoteOperations() {
-    ((BuiltInServerManagerImpl)BuiltInServerManager.getInstance()).setEnabledInUnitTestMode(false);
   }
 
   @After
