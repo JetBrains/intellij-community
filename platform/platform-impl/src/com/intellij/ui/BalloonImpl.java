@@ -725,16 +725,21 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
 
   public void hide() {
+    hide(false);
+  }
+
+  @Override
+  public void hide(boolean ok) {
     if (myDisposed) return;
 
-    hideAndDispose();
+    hideAndDispose(ok);
   }
 
   public void addListener(JBPopupListener listener) {
     myListeners.add(listener);
   }
 
-  private void hideAndDispose() {
+  private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
 
     myDisposed = true;
@@ -745,7 +750,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
         myFadedOut = true;
 
         for (JBPopupListener each : myListeners) {
-          each.onClosed(new LightweightWindowEvent(BalloonImpl.this));
+          each.onClosed(new LightweightWindowEvent(BalloonImpl.this, ok));
         }
 
         Disposer.dispose(BalloonImpl.this);
@@ -773,7 +778,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
   public void dispose() {
     if (myDisposed) return;
 
-    hideAndDispose();
+    hideAndDispose(false);
   }
 
   protected void onDisposed() {
