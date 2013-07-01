@@ -21,12 +21,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
-
 
 /**
  * @author Aleksey Pivovarov
@@ -64,81 +60,18 @@ public class GithubNotifications {
   }
 
   public static void showInfoDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
-    if (EventQueue.isDispatchThread()) {
-      Messages.showInfoMessage(project, message, title);
-    }
-    else {
-      try {
-        EventQueue.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showInfoMessage(project, message, title);
-          }
-        });
-      }
-      catch (Exception e) {
-        LOG.error("Notification error", e);
-      }
-    }
+    Messages.showInfoMessage(project, message, title);
   }
 
   public static void showWarningDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
-    if (EventQueue.isDispatchThread()) {
-      Messages.showWarningDialog(project, message, title);
-    }
-    else {
-      try {
-        EventQueue.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showWarningDialog(project, message, title);
-          }
-        });
-      }
-      catch (Exception e) {
-        LOG.error("Notification error", e);
-      }
-    }
+    Messages.showWarningDialog(project, message, title);
   }
 
   public static void showErrorDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
-    if (EventQueue.isDispatchThread()) {
-      Messages.showErrorDialog(project, message, title);
-    }
-    else {
-      try {
-        EventQueue.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(project, message, title);
-          }
-        });
-      }
-      catch (Exception e) {
-        LOG.error("Notification error", e);
-      }
-    }
+    Messages.showErrorDialog(project, message, title);
   }
 
   public static int showYesNoDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
-    if (EventQueue.isDispatchThread()) {
-      return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
-    }
-    else {
-      try {
-        final Ref<Integer> result = new Ref<Integer>();
-        EventQueue.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            result.set(Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon()));
-          }
-        });
-        return result.get();
-      }
-      catch (Exception e) {
-        LOG.error("Notification error", e);
-        return Messages.CANCEL;
-      }
-    }
+    return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }
 }
