@@ -3,6 +3,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.GotoClassModel2
+import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
@@ -74,6 +75,13 @@ class Intf {
 
     def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
     assert elements == [intf.findMethodsByName('xxx2', false), ChooseByNameBase.NON_PREFIX_SEPARATOR, intf.findMethodsByName('_xxx1', false)]
+  }
+
+  public void "test prefer exact extension matches"() {
+    def m = myFixture.addFileToProject("relaunch.m", "")
+    def mod = myFixture.addFileToProject("reference.mod", "")
+    def elements = getPopupElements(new GotoFileModel(project), "re*.m")
+    assert elements == [m, mod]
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {

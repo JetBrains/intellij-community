@@ -499,6 +499,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("*psfi", "PsiJavaFileBaseImpl", "PsiFileImpl", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
+  public void "test prefer matches to the end"() {
+    assertPreference("*e", "fileIndex", "file", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
   public void testPreferences() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
