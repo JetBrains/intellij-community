@@ -57,7 +57,7 @@ public class NetUtils {
     }
   }
 
-  private static boolean isLocalhost(String host) {
+  public static boolean isLocalhost(String host) {
     return host.equals("localhost") || host.equals("127.0.0.1");
   }
 
@@ -84,7 +84,7 @@ public class NetUtils {
     }
   }
 
-  private static boolean canConnectToRemoteSocket(String host, int port) {
+  public static boolean canConnectToRemoteSocket(String host, int port) {
     try {
       Socket socket = new Socket(host, port);
       socket.close();
