@@ -1426,4 +1426,28 @@ A.foo = 3 //no error
 }
 ''')
   }
+
+  void testFinalParameter() {
+    testHighlighting('''\
+def foo0(final i) {
+  <error descr="Cannot assign a value to final parameter 'i'">i</error> = 5
+  print i
+}
+
+def foo1(i) {
+  i = 5
+  print i
+}
+
+def foo2(final i = 4) {
+  <error descr="Cannot assign a value to final parameter 'i'">i</error> = 5
+  print i
+}
+
+def foo3(final i) {
+  print i
+}
+''')
+  }
+
 }
