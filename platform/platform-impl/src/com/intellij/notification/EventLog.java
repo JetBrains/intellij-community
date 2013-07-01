@@ -444,7 +444,7 @@ public class EventLog {
         hideBalloon(notification);
       }
 
-      RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
+      RelativePoint target = getProjectComponent(project).myConsole.getHyperlinkLocation(this);
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;
@@ -457,7 +457,7 @@ public class EventLog {
     private static void hideBalloon(Notification notification1) {
       Balloon balloon = notification1.getBalloon();
       if (balloon != null) {
-        balloon.hide();
+        balloon.hide(true);
       }
     }
   }

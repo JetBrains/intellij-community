@@ -172,7 +172,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       assert after >= before : "Escaper " + textEscaper + "("+textEscaper.getClass()+") must not mangle char buffer";
       if (!result) {
         // if there are invalid chars, adjust the range
-        int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - startOffset, rangeInsideHost);
+        int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - before, rangeInsideHost);
         relevantRange = relevantRange.intersection(new ProperTextRange(0, offsetInHost));
       }
     }

@@ -338,7 +338,12 @@ public abstract class InplaceRefactoring {
 
   protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {
     final TextRange textRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
-    return selectedElement != null && selectedElement.getTextRange().contains(textRange);
+    if (selectedElement != null){
+      final TextRange selectedElementRange = selectedElement.getTextRange();
+      LOG.assertTrue(selectedElementRange != null, selectedElement);
+      if (selectedElementRange != null && selectedElementRange.contains(textRange)) return true;
+    }
+    return false;
   }
 
   protected void beforeTemplateStart() {

@@ -29,6 +29,7 @@ import git4idea.repo.GitRepository;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManagerImpl;
 
 import java.io.File;
 import java.util.HashMap;
@@ -127,4 +128,10 @@ public class GitTestUtil {
     Assert.assertEquals("Notification has wrong content", expected.getContent(), actualNotification.getContent());
   }
 
+  /**
+   * Default port will be occupied by main idea instance => define the custom default to avoid searching of free port
+   */
+  public static void setDefaultBuiltInServerPort() {
+    System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
+  }
 }

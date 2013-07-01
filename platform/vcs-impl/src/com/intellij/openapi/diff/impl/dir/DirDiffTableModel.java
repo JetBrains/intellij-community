@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
 import com.intellij.openapi.Disposable;
@@ -23,8 +24,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -755,6 +759,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeSelected() {
+    if (!checkCanDelete()) {
+      return;
+    }
     rememberSelection();
     for (DirDiffElementImpl element : getSelectedElements()) {
       syncElement(element);
@@ -769,10 +776,65 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeAll() {
+    if (!checkCanDelete()) {
+      return;
+    }
     for (DirDiffElementImpl element : myElements.toArray(new DirDiffElementImpl[myElements.size()])) {
       syncElement(element);
     }
     selectFirstRow();
+  }
+
+  private boolean checkCanDelete() {
+    if (WarnOnDeletion.isWarnWhenDeleteItems()) {
+      int count = 0;
+      for (DirDiffElementImpl element : myElements) {
+        if (element.getOperation() == DirDiffOperation.DELETE) {
+          count++;
+        }
+      }
+      if (count > 0) {
+        if (!confirmDeletion(count)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private static boolean confirmDeletion(int count) {
+    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return WarnOnDeletion.isWarnWhenDeleteItems();
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        WarnOnDeletion.setWarnWhenDeleteItems(value);
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return true;
+      }
+
+      @Override
+      public String getDoNotShowMessage() {
+        return "Do not ask me again";
+      }
+    };
+
+    return DialogWrapper.OK_EXIT_CODE == Messages.showYesNoDialog("Delete " + count + " items?", "Confirm Delete",
+                                                                  "Delete",
+                                                                  CommonBundle.message("button.cancel"),
+                                                                  Messages.getQuestionIcon(),
+                                                                  option);
   }
 
   private void syncElement(DirDiffElementImpl element) {

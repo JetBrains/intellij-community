@@ -118,6 +118,15 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return false;
   }
 
+  @Nullable
+  protected MavenProject findMavenProject(ConvertContext context) {
+    PsiFile psiFile = context.getFile().getOriginalFile();
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) return null;
+
+    return MavenProjectsManager.getInstance(psiFile.getProject()).findProject(file);
+  }
+
   private ConverterStrategy selectStrategy(ConvertContext context) {
     if (MavenDomUtil.getImmediateParent(context, MavenDomProjectModel.class) != null) {
       return new ProjectStrategy();
@@ -193,15 +202,6 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Nullable
     protected PsiFile resolveBySpecifiedPath() {
       return null;
-    }
-
-    @Nullable
-    protected MavenProject findMavenProject(ConvertContext context) {
-      PsiFile psiFile = context.getFile().getOriginalFile();
-      VirtualFile file = psiFile.getVirtualFile();
-      if (file == null) return null;
-
-      return MavenProjectsManager.getInstance(psiFile.getProject()).findProject(file);
     }
 
     private PsiFile resolveInProjects(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
@@ -285,10 +285,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
       MavenProject mavenProject = findMavenProject(context);
       if (mavenProject != null) {
-        for (MavenArtifact artifact : mavenProject.getDependencies()) {
-          if (dependencyId.equals(DependencyConflictId.create(artifact))) {
-            return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
-          }
+        MavenArtifact artifact = mavenProject.getDependencyArtifactIndex().findArtifacts(dependencyId);
+        if (artifact != null && artifact.isResolved()) {
+          return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
         }
       }
 

@@ -66,10 +66,6 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
         return;
       }
     }
-    else if (urlDecoder.getPath().equals(BuiltInServer.START_TIME_PATH)) {
-      Responses.send(BuiltInServer.getApplicationStartTime(), request, context);
-      return;
-    }
 
     for (HttpRequestHandler handler : BuiltInServerManager.EP_NAME.getExtensions()) {
       try {

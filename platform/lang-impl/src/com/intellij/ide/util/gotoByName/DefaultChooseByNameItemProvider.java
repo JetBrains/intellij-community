@@ -66,6 +66,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     indicator.checkCanceled();
 
     List<Object> sameNameElements = new SmartList<Object>();
+    final TObjectIntHashMap<Object> sameNameWeights = new TObjectIntHashMap<Object>();
+    Comparator<Object> weightComparator = new Comparator<Object>() {
+      @Override
+      public int compare(Object o1, Object o2) {
+        return sameNameWeights.get(o2) - sameNameWeights.get(o1);
+      }
+    };
+
     List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
 
     MinusculeMatcher matcher = buildPatternMatcher(matchingPattern, NameUtil.MatchingCaseSensitivity.NONE);
@@ -84,13 +92,17 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                 : model.getElementsByName(name, everywhere, namePattern);
       if (elements.length > 1) {
         sameNameElements.clear();
+        sameNameWeights.clear();
         for (final Object element : elements) {
           indicator.checkCanceled();
-          if (matchesQualifier(element, base, patternsAndMatchers)) {
+          Integer degree = matchQualifier(element, base, patternsAndMatchers);
+          if (degree != null) {
             sameNameElements.add(element);
+            sameNameWeights.put(element, degree);
           }
         }
         sortByProximity(base, sameNameElements);
+        Collections.sort(sameNameElements, weightComparator);
         for (Object element : sameNameElements) {
           if (needSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
           if (!consumer.process(element)) return false;
@@ -98,7 +110,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
           afterStartMatch = isStartMatch;
         }
       }
-      else if (elements.length == 1 && matchesQualifier(elements[0], base, patternsAndMatchers)) {
+      else if (elements.length == 1 && matchQualifier(elements[0], base, patternsAndMatchers) != null) {
         if (needSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
         if (!consumer.process(elements[0])) return false;
         afterStartMatch = isStartMatch;
@@ -184,39 +196,46 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return answer.isEmpty() ? Collections.singletonList(s) : answer;
   }
 
-  private static boolean matchesQualifier(@NotNull Object element,
-                                          @NotNull final ChooseByNameBase base,
-                                          @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
+  private static Integer matchQualifier(@NotNull Object element,
+                                        @NotNull final ChooseByNameBase base,
+                                        @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
     final String name = base.getModel().getFullName(element);
-    if (name == null) return false;
+    if (name == null) return null;
 
     final List<String> suspects = split(name, base);
 
-    try {
-      int matchPosition = 0;
-      patterns:
-      for (Pair<String, MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
-        final String pattern = patternAndMatcher.first;
-        final MinusculeMatcher matcher = patternAndMatcher.second;
-        if (!pattern.isEmpty()) {
-          for (int j = matchPosition; j < suspects.size() - 1; j++) {
-            String suspect = suspects.get(j);
-            if (matches(base, pattern, matcher, suspect)) {
-              matchPosition = j + 1;
-              continue patterns;
+    int matchingDegree = 0;
+    int matchPosition = 0;
+    patterns:
+    for (Pair<String, MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
+      final String pattern = patternAndMatcher.first;
+      final MinusculeMatcher matcher = patternAndMatcher.second;
+      if (!pattern.isEmpty()) {
+        for (int j = matchPosition; j < suspects.size() - 1; j++) {
+          String suspect = suspects.get(j);
+          if (matches(base, pattern, matcher, suspect)) {
+            if (matcher.matches(suspect)) {
+              matchingDegree += matcher.matchingDegree(suspect);
             }
+            matchPosition = j + 1;
+            continue patterns;
           }
-
-          return false;
+          // pattern "foo/index" should prefer "bar/foo/index.html" to "foo/bar/index.html"
+          // hence penalize every non-adjacent match
+          matchingDegree -= (j + 1)*(j + 1);
         }
+
+        return null;
       }
     }
-    catch (Exception e) {
-      // Do nothing. No matches appears valid result for "bad" pattern
-      return false;
+
+    // penalize last skipped path parts
+    for (int j = matchPosition; j < suspects.size() - 1; j++) {
+      matchingDegree -= (j + 1)*(j + 1);
     }
 
-    return true;
+
+    return matchingDegree;
   }
 
   @NotNull

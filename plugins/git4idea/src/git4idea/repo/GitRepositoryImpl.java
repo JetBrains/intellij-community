@@ -197,8 +197,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     return new TempState(reader.readState(), reader.readCurrentRevision(), reader.readCurrentBranch(), reader.readBranches(remotes));
   }
 
+  // previous info can be null before the first update
   private static void notifyListeners(@NotNull GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
-    // previous info can be null before the first update
     if (Disposer.isDisposed(repository.getProject())) {
       return;
     }

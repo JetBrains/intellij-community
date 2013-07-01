@@ -28,7 +28,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -47,6 +46,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MavenProject {
+
+  private static final Key<MavenArtifactIndex> DEPENDENCIES_CACHE_KEY = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY");
+
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
 
@@ -828,6 +830,8 @@ public class MavenProject {
     List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies);
     dependenciesCopy.add(dependency);
     state.myDependencies = dependenciesCopy;
+
+    state.myCache.clear();
   }
 
   @NotNull
@@ -836,22 +840,12 @@ public class MavenProject {
   }
 
   public List<MavenArtifact> findDependencies(@NotNull MavenId id) {
-    List<MavenArtifact> result = new SmartList<MavenArtifact>();
-    for (MavenArtifact each : getDependencies()) {
-      if (id.equals(each.getGroupId(), each.getArtifactId(), each.getVersion())) result.add(each);
-    }
-    return result;
+    return getDependencyArtifactIndex().findArtifacts(id);
   }
 
   @NotNull
   public List<MavenArtifact> findDependencies(@Nullable String groupId, @Nullable String artifactId) {
-    List<MavenArtifact> result = new SmartList<MavenArtifact>();
-    for (MavenArtifact each : getDependencies()) {
-      if (Comparing.equal(artifactId, each.getArtifactId()) && Comparing.equal(groupId, each.getGroupId())) {
-        result.add(each);
-      }
-    }
-    return result;
+    return getDependencyArtifactIndex().findArtifacts(groupId, artifactId);
   }
 
   public boolean hasUnresolvedArtifacts() {
@@ -999,6 +993,16 @@ public class MavenProject {
       if (result != null) return result;
     }
     return Pair.create(type.getDefaultClassifier(), type.getDefaultExtension());
+  }
+
+  public MavenArtifactIndex getDependencyArtifactIndex() {
+    MavenArtifactIndex res = getCachedValue(DEPENDENCIES_CACHE_KEY);
+    if (res == null) {
+      res = MavenArtifactIndex.build(getDependencies());
+      res = putCachedValue(DEPENDENCIES_CACHE_KEY, res);
+    }
+
+    return res;
   }
 
   @Nullable

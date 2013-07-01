@@ -156,7 +156,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
             balloon.addListener(new JBPopupAdapter() {
               @Override
               public void onClosed(LightweightWindowEvent event) {
-                notification.expire();
+                if (!event.isOk()) {
+                  notification.expire();
+                }
               }
             });
           }

@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -401,13 +402,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         else {
           if (!(curHost instanceof PsiLiteralExpression)) {
+            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
+            ProperTextRange.assertProperRange(textRange, injection);
             result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
-                                      ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
+                                      textRange));
           }
           else {
             final List<TextRange> injectedArea = injection.getInjectedArea(curHost);
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
-              final TextRange textRange = injectedArea.get(j);
+              TextRange textRange = injectedArea.get(j);
+              ProperTextRange.assertProperRange(textRange, injection);
               result.add(Trinity.create(
                 curHost, InjectedLanguage.create(injection.getInjectedLanguageId(),
                                                  (separateFiles || j == 0 ? curPrefix : ""),

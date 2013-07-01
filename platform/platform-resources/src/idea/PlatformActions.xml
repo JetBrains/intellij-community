@@ -622,6 +622,7 @@
       <action id="DirDiffMenu.SetNoOperation" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetNoOperation" text="Set Do Nothing"/>
       <separator/>
       <action id="DirDiffMenu.SetDefault" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDefault" text="Set Default"/>
+      <action id="DirDiffMenu.WarnOnDeletion" class="com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion" text="Warn When Delete" />
     </group>
 
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction" text="Rerun"/>

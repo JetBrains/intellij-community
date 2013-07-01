@@ -114,7 +114,7 @@ public class ConsoleBuffer {
 
   public ConsoleBuffer(boolean useCyclicBuffer, int cyclicBufferSize, int cyclicBufferUnitSize) {
     myUseCyclicBuffer = useCyclicBuffer;
-    myCyclicBufferSize = cyclicBufferSize;
+    myCyclicBufferSize = Math.max(cyclicBufferSize, 0);
     myCyclicBufferUnitSize = cyclicBufferUnitSize;
     myContentTypesToNotStripOnCycling.add(ConsoleViewContentType.USER_INPUT);
   }

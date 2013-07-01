@@ -40,7 +40,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -867,12 +866,10 @@ public class CompositeElement extends TreeElement {
     @Override
     public void visitComposite(CompositeElement composite) {
       ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
-      if (composite.myWrapper != null) {
-        // someone else 've managed to create the PSI in the meantime. Abandon our attempts to cache everything.
-        stopWalking();
-        return;
+      if (composite.myWrapper == null) {
+        composite.createAndStorePsi();
       }
-      composite.createAndStorePsi();
+
       super.visitComposite(composite);
     }
   };
