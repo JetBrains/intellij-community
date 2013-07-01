@@ -285,10 +285,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
       MavenProject mavenProject = findMavenProject(context);
       if (mavenProject != null) {
-        for (MavenArtifact artifact : mavenProject.getDependencies()) {
-          if (dependencyId.equals(DependencyConflictId.create(artifact))) {
-            return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
-          }
+        MavenArtifact artifact = mavenProject.getDependencyArtifactIndex().findArtifacts(dependencyId);
+        if (artifact != null) {
+          return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
         }
       }
 
