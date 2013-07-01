@@ -237,7 +237,7 @@ public class MavenPropertyResolver {
     }
 
     if ("java.home".equals(propName)) {
-      String jreDir = MavenUtil.getModuleJre(projectsManager, mavenProject);
+      String jreDir = MavenUtil.getModuleJreHome(projectsManager, mavenProject);
       if (jreDir != null) {
         return jreDir;
       }

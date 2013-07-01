@@ -887,7 +887,7 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static String getModuleJre(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+  public static String getModuleJreHome(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
     Module module = mavenProjectsManager.findModule(mavenProject);
     if (module == null) return null;
 

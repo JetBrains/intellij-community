@@ -234,7 +234,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @Nullable
   private PsiElement resolveToJavaHome(@NotNull MavenProject mavenProject) {
-    String jreDir = MavenUtil.getModuleJre(myProjectsManager, mavenProject);
+    String jreDir = MavenUtil.getModuleJreHome(myProjectsManager, mavenProject);
     if (jreDir == null) return null;
 
     PsiFile propFile = PsiFileFactory.getInstance(myProject).createFileFromText("SystemProperties.properties", PropertiesLanguage.INSTANCE,
