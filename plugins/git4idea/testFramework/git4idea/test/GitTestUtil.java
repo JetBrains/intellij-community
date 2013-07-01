@@ -128,6 +128,9 @@ public class GitTestUtil {
     Assert.assertEquals("Notification has wrong content", expected.getContent(), actualNotification.getContent());
   }
 
+  /**
+   * Default port will be occupied by main idea instance => define the custom default to avoid searching of free port
+   */
   public static void setDefaultBuiltInServerPort() {
     System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
   }

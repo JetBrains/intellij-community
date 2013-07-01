@@ -137,7 +137,6 @@ public class GitCucumberWorld {
   @Before("@remote")
   @Order(1)
   public void setUpRemoteOperations() {
-    // default port will be occupied by main idea instance => define the custom default to avoid searching of free port
     GitTestUtil.setDefaultBuiltInServerPort();
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
