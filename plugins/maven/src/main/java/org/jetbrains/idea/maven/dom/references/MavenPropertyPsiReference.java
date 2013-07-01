@@ -187,7 +187,14 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
 
     if ("java.home".equals(myText)) {
-      PsiElement element = resolveToJavaHome(mavenProject);
+      PsiElement element = resolveToCustomSystemProperty("java.home", MavenUtil.getModuleJreHome(myProjectsManager, mavenProject));
+      if (element != null) {
+        return element;
+      }
+    }
+
+    if ("java.version".equals(myText)) {
+      PsiElement element = resolveToCustomSystemProperty("java.version", MavenUtil.getModuleJavaVersion(myProjectsManager, mavenProject));
       if (element != null) {
         return element;
       }
@@ -233,12 +240,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   @Nullable
-  private PsiElement resolveToJavaHome(@NotNull MavenProject mavenProject) {
-    String jreDir = MavenUtil.getModuleJreHome(myProjectsManager, mavenProject);
-    if (jreDir == null) return null;
+  private PsiElement resolveToCustomSystemProperty(@NotNull String propertyName, @Nullable String propertyValue) {
+    if (propertyValue == null) return null;
 
     PsiFile propFile = PsiFileFactory.getInstance(myProject).createFileFromText("SystemProperties.properties", PropertiesLanguage.INSTANCE,
-                                                                                "java.home=" + jreDir);
+                                                                                propertyName + '=' + propertyValue);
 
     return ((PropertiesFile)propFile).getProperties().get(0).getPsiElement();
   }

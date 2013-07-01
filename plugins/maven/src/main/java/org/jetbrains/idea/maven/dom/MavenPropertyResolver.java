@@ -243,6 +243,13 @@ public class MavenPropertyResolver {
       }
     }
 
+    if ("java.version".equals(propName)) {
+      String javaVersion = MavenUtil.getModuleJavaVersion(projectsManager, mavenProject);
+      if (javaVersion != null) {
+        return javaVersion;
+      }
+    }
+
     String result;
 
     result = MavenUtil.getPropertiesFromMavenOpts().get(propName);

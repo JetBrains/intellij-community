@@ -186,6 +186,11 @@ public class MavenResourceCompilerConfigurationGenerator {
       properties.put("java.home", jreDir);
     }
 
+    String javaVersion = MavenUtil.getModuleJavaVersion(myMavenProjectsManager, mavenProject);
+    if (javaVersion != null) {
+      properties.put("java.version", javaVersion);
+    }
+
     return properties;
   }
 

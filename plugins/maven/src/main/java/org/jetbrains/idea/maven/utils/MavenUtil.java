@@ -888,9 +888,22 @@ public class MavenUtil {
 
   @Nullable
   public static String getModuleJreHome(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+    return getSdkPath(getModuleJdk(mavenProjectsManager, mavenProject));
+  }
+
+  @Nullable
+  public static String getModuleJavaVersion(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+    Sdk sdk = getModuleJdk(mavenProjectsManager, mavenProject);
+    if (sdk == null) return null;
+
+    return sdk.getVersionString();
+  }
+
+  @Nullable
+  public static Sdk getModuleJdk(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
     Module module = mavenProjectsManager.findModule(mavenProject);
     if (module == null) return null;
 
-    return getSdkPath(ModuleRootManager.getInstance(module).getSdk());
+    return ModuleRootManager.getInstance(module).getSdk();
   }
 }
