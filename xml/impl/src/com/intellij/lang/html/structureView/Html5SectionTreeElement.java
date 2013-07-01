@@ -37,11 +37,14 @@ class Html5SectionTreeElement extends PsiTreeElementBase<XmlTag> {
     myHeader = header;
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return myChildrenComputable.compute();
   }
 
+  @Nullable
+  @Override
   public String getPresentableText() {
     if (myHeader != null) {
       return HtmlTagTreeElement.normalizeSpacesAndShortenIfLong(myHeader);
@@ -51,6 +54,7 @@ class Html5SectionTreeElement extends PsiTreeElementBase<XmlTag> {
     return tag == null ? null : HtmlTagTreeElement.normalizeSpacesAndShortenIfLong(tag.getValue().getTrimmedText());
   }
 
+  @Override
   public String getLocationString() {
     final XmlTag tag = getElement();
     if (tag == null) return null;
@@ -58,6 +62,7 @@ class Html5SectionTreeElement extends PsiTreeElementBase<XmlTag> {
     return HtmlTagTreeElement.getTagPresentation(tag);
   }
 
+  @Override
   public boolean isSearchInLocationString() {
     return true;
   }

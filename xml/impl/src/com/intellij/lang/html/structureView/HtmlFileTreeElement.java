@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
-
   private final boolean myInStructureViewPopup;
 
   public HtmlFileTreeElement(final boolean inStructureViewPopup, final XmlFile xmlFile) {
@@ -39,6 +38,7 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
     myInStructureViewPopup = inStructureViewPopup;
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     if (isHtml5SectionsMode()) {
@@ -71,11 +71,9 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
     }
     else {
       final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
-
       for (XmlTag tag : rootTags) {
         result.add(new HtmlTagTreeElement(tag));
       }
-
       return result;
     }
   }
@@ -97,6 +95,7 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
     return false;
   }
 
+  @Override
   @Nullable
   public String getPresentableText() {
     return toString(); // root element is not visible
