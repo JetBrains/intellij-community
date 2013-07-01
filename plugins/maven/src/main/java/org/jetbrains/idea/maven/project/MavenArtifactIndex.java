@@ -26,6 +26,10 @@ public class MavenArtifactIndex {
     myData = data;
   }
 
+  public Map<String, Map<String, List<MavenArtifact>>> getData() {
+    return myData;
+  }
+
   @NotNull
   public List<MavenArtifact> findArtifacts(@Nullable String groupId, @Nullable String artifactId) {
     Map<String, List<MavenArtifact>> groupMap = myData.get(groupId);
