@@ -36,8 +36,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import git4idea.Notificator;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,43 +130,27 @@ public class GithubCreateGistAction extends DumbAwareAction {
       auth = authDataRef.get();
     }
 
-    createGistWithProgress(project, editor, file, files, auth, dialog.getDescription(), dialog.getFileName(), dialog.isPrivate(),
-                           new Consumer<String>() {
-                             @Override
-                             public void consume(String url) {
-                               if (url == null) {
-                                 return;
-                               }
-
-                               if (dialog.isOpenInBrowser()) {
-                                 BrowserUtil.launchBrowser(url);
-                               }
-                               else {
-                                 GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url);
-                               }
-                             }
-                           });
-  }
-
-  private static void createGistWithProgress(@NotNull final Project project,
-                                             @Nullable final Editor editor,
-                                             @Nullable final VirtualFile file,
-                                             @Nullable final VirtualFile[] files,
-                                             @Nullable final GithubAuthData auth,
-                                             @NotNull final String description, @Nullable final String filename, final boolean aPrivate,
-                                             @NotNull final Consumer<String> resultHandler) {
     final Ref<String> url = new Ref<String>();
+    final GithubAuthData finalAuth = auth;
     new Task.Backgroundable(project, "Creating Gist") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<NamedContent> contents = collectContents(project, editor, file, files);
-        String gistUrl = createGist(project, auth, contents, aPrivate, description, filename);
+        String gistUrl = createGist(project, finalAuth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
 
       @Override
       public void onSuccess() {
-        resultHandler.consume(url.get());
+        if (url.isNull()) {
+          return;
+        }
+        if (dialog.isOpenInBrowser()) {
+          BrowserUtil.launchBrowser(url.get());
+        }
+        else {
+          GithubNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url.get());
+        }
       }
     }.queue();
   }
@@ -209,7 +191,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
       return null;
     }
-    String requestBody = prepareJsonRequest(description, isPrivate, contents, filename);
+    String requestBody = prepareCreateJsonRequest(description, isPrivate, contents, filename);
     try {
       JsonElement jsonElement;
       if (auth == null) {
@@ -218,61 +200,20 @@ public class GithubCreateGistAction extends DumbAwareAction {
       else {
         jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), auth, "/gists", requestBody);
       }
-      if (jsonElement == null) {
-        LOG.info("Null JSON response returned by GitHub");
-        showError(project, FAILED_TO_CREATE_GIST, "Empty JSON response returned by GitHub", null, null);
-        return null;
-      }
-      if (!jsonElement.isJsonObject()) {
-        LOG.error(String.format("Unexpected JSON result format: %s", jsonElement));
-        return null;
-      }
-      JsonElement htmlUrl = jsonElement.getAsJsonObject().get("html_url");
-      if (htmlUrl == null) {
-        LOG.info("Invalid JSON response: " + jsonElement);
-        showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response", jsonElement.toString(), null);
-        return null;
-      }
-      return htmlUrl.getAsString();
+      return getUrlFromJson(project, jsonElement);
     }
     catch (IOException e) {
       LOG.info("Exception when creating a Gist", e);
-      showError(project, FAILED_TO_CREATE_GIST, "", null, e);
+      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e.getMessage());
       return null;
     }
   }
 
-  @Nullable
-  private static String readFile(@NotNull final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      @Override
-      public String compute() {
-        try {
-          return new String(file.contentsToByteArray(), file.getCharset());
-        }
-        catch (IOException e) {
-          LOG.info("Couldn't read contents of the file " + file, e);
-          return null;
-        }
-      }
-    });
-  }
-
-  private static void showError(@NotNull Project project,
-                                @NotNull String title,
-                                @NotNull String content,
-                                @Nullable String details,
-                                @Nullable Exception e) {
-    Notificator.getInstance(project).notifyError(title, content);
-    LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
-  }
-
   @NotNull
-  private static String prepareJsonRequest(@NotNull String description,
-                                           boolean isPrivate,
-                                           @NotNull List<NamedContent> contents,
-                                           @Nullable String filename) {
+  private static String prepareCreateJsonRequest(@NotNull String description,
+                                                 boolean isPrivate,
+                                                 @NotNull List<NamedContent> contents,
+                                                 @Nullable String filename) {
     JsonObject json = new JsonObject();
     json.addProperty("description", description);
     json.addProperty("public", Boolean.toString(!isPrivate));
@@ -292,6 +233,55 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
     json.add("files", files);
     return json.toString();
+  }
+
+  @Nullable
+  private static String getUrlFromJson(@NotNull Project project, @Nullable JsonElement jsonElement) {
+    if (jsonElement == null) {
+      LOG.info("Null JSON response returned by GitHub");
+      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Empty JSON response returned by GitHub");
+      return null;
+    }
+    if (!jsonElement.isJsonObject()) {
+      LOG.error(String.format("Unexpected JSON result format: %s", jsonElement));
+      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response: " + jsonElement.toString());
+      return null;
+    }
+    JsonElement htmlUrl = jsonElement.getAsJsonObject().get("html_url");
+    if (htmlUrl == null) {
+      LOG.info("Invalid JSON response: " + jsonElement);
+      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response: " + jsonElement.toString());
+      return null;
+    }
+    return htmlUrl.getAsString();
+  }
+
+  @Nullable
+  private static NamedContent getContentFromEditor(@NotNull final Editor editor, @Nullable VirtualFile selectedFile) {
+    String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        return editor.getSelectionModel().getSelectedText();
+      }
+    });
+
+    if (text == null) {
+      text = editor.getDocument().getText();
+    }
+
+    if (StringUtil.isEmptyOrSpaces(text)) {
+      return null;
+    }
+
+    String name;
+    if (selectedFile == null) {
+      name = "";
+    }
+    else {
+      name = selectedFile.getName();
+    }
+    return new NamedContent(name, text);
   }
 
   @NotNull
@@ -330,6 +320,23 @@ public class GithubCreateGistAction extends DumbAwareAction {
     return contents;
   }
 
+  @Nullable
+  private static String readFile(@NotNull final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        try {
+          return new String(file.contentsToByteArray(), file.getCharset());
+        }
+        catch (IOException e) {
+          LOG.info("Couldn't read contents of the file " + file, e);
+          return null;
+        }
+      }
+    });
+  }
+
   private static String addPrefix(@NotNull String name, @Nullable String prefix, boolean addTrailingSlash) {
     String pref = prefix == null ? "" : prefix;
     pref += name;
@@ -342,35 +349,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static boolean isFileIgnored(@NotNull VirtualFile file, @NotNull Project project) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     return manager.isIgnoredFile(file) || FileTypeManager.getInstance().isFileIgnored(file);
-  }
-
-  @Nullable
-  private static NamedContent getContentFromEditor(@NotNull final Editor editor,
-                                                   @Nullable VirtualFile selectedFile) {
-    String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      @Override
-      public String compute() {
-        return editor.getSelectionModel().getSelectedText();
-      }
-    });
-
-    if (text == null) {
-      text = editor.getDocument().getText();
-    }
-
-    if (StringUtil.isEmptyOrSpaces(text)) {
-      return null;
-    }
-
-    String name;
-    if (selectedFile == null) {
-      name = "";
-    }
-    else {
-      name = selectedFile.getName();
-    }
-    return new NamedContent(name, text);
   }
 
   private static class NamedContent {
