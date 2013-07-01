@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
@@ -45,9 +46,7 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -1025,6 +1024,7 @@ public class Messages {
       setButtonsAlignment(SwingConstants.CENTER);
       setDoNotAskOption(doNotAskOption);
       init();
+      MacUtil.adjustFocusTraversal(myDisposable);
     }
 
     @NotNull
