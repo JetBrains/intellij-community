@@ -44,6 +44,7 @@ public class EditorTestUtil {
 
   public static final char BACKSPACE_FAKE_CHAR = '\uFFFF';
   public static final char SMART_ENTER_FAKE_CHAR = '\uFFFE';
+  public static final char SMART_LINE_SPLIT_CHAR = '\uFFFD';
 
   public static void performTypingAction(Editor editor, char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
@@ -52,6 +53,9 @@ public class EditorTestUtil {
       actionHandler.execute(editor, DataManager.getInstance().getDataContext());
     } else if (c == SMART_ENTER_FAKE_CHAR) {
       EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT);
+      actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+    } else if (c == SMART_LINE_SPLIT_CHAR) {
+      EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_SPLIT);
       actionHandler.execute(editor, DataManager.getInstance().getDataContext());
     }
     else if (c == '\n') {
