@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.CustomPortServerManager;
 
@@ -30,10 +31,10 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
   private final CustomPortServerManager user;
   private final ServerBootstrap bootstrap;
 
-  public SubServer(CustomPortServerManager user, ServerBootstrap bootstrap) {
+  public SubServer(CustomPortServerManager user, NioServerSocketChannelFactory channelFactory) {
     this.user = user;
     user.setManager(this);
-    this.bootstrap = bootstrap;
+    bootstrap = BuiltInServer.createServerBootstrap(channelFactory, openChannels);
   }
 
   public boolean bind(int port) {

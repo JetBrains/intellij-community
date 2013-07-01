@@ -63,20 +63,25 @@ public class BuiltInServer implements Disposable {
       throw new IllegalStateException("server already started");
     }
 
+    ServerBootstrap bootstrap = createServerBootstrap(channelFactory, openChannels);
+    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap);
+    bindCustomPorts(firstPort, port);
+    return port;
+  }
+
+  static ServerBootstrap createServerBootstrap(NioServerSocketChannelFactory channelFactory, ChannelGroup openChannels) {
     ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setOption("child.keepAlive", true);
     bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(new PortUnificationServerHandler(openChannels)));
-    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap);
-    bindCustomPorts(firstPort, port, bootstrap);
-    return port;
+    return bootstrap;
   }
 
-  private void bindCustomPorts(int firstPort, int port, ServerBootstrap bootstrap) {
+  private void bindCustomPorts(int firstPort, int port) {
     for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
       try {
         int customPortServerManagerPort = customPortServerManager.getPort();
-        SubServer subServer = new SubServer(customPortServerManager, bootstrap);
+        SubServer subServer = new SubServer(customPortServerManager, channelFactory);
         Disposer.register(this, subServer);
         if (customPortServerManagerPort != firstPort && customPortServerManagerPort != port) {
           subServer.bind(customPortServerManagerPort);
