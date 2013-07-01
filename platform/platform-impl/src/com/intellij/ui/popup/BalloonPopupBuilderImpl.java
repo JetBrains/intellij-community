@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
@@ -40,8 +41,8 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Nullable private Disposable myAnchor;
 
   JComponent myContent;
-  Color   myBorder             = new JBColor(Color.gray, Gray._200);
-  Color   myFill               = new Color(186, 238, 186, 230);
+  Color   myBorder             = new JBColor(JBColor.GRAY, Gray._200);
+  Color   myFill               = MessageType.INFO.getPopupBackground();
   boolean myHideOnMouseOutside = true;
   boolean myHideOnKeyOutside   = true;
   long    myFadeoutTime        = -1;
