@@ -48,7 +48,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   public BuiltInServerManager waitForStart() {
     Future<?> serverStartFuture = startServerInPooledThread();
     if (serverStartFuture != null) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
       try {
         serverStartFuture.get();
       }
