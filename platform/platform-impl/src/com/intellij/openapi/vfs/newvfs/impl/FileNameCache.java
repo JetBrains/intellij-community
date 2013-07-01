@@ -33,7 +33,14 @@ import org.jetbrains.annotations.Nullable;
 public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
   @NonNls private static final String EMPTY = "";
-  private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>> ourNameCache = new IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>(40000, 20000);
+  @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>[] ourNameCache = new IntSLRUCache[16];
+  static {
+    final int protectedSize = 40000 / ourNameCache.length;
+    final int probationalSize = 20000 / ourNameCache.length;
+    for(int i = 0; i < ourNameCache.length; ++i) {
+      ourNameCache[i] = new IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>(protectedSize, probationalSize);
+    }
+  }
 
   public static int storeName(@NotNull String name) {
     final int idx = FSRecords.getNameId(name);
@@ -50,8 +57,9 @@ public class FileNameCache {
 
     Object rawName = convertToBytesIfAsciiString(name);
     IntObjectLinkedMap.MapEntry<Object> entry = new IntObjectLinkedMap.MapEntry<Object>(id, rawName);
-    synchronized (ourNameCache) {
-      return ourNameCache.cacheEntry(entry);
+    final int stripe = id % ourNameCache.length;
+    synchronized (ourNameCache[stripe]) {
+      return ourNameCache[stripe].cacheEntry(entry);
     }
   }
 
@@ -72,8 +80,9 @@ public class FileNameCache {
 
   @NotNull
   private static IntObjectLinkedMap.MapEntry<Object> getEntry(int id) {
-    synchronized (ourNameCache) {
-      IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache.getCachedEntry(id);
+    final int stripe = id % ourNameCache.length;
+    synchronized (ourNameCache[stripe]) {
+      IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache[stripe].getCachedEntry(id);
       if (entry != null) {
         return entry;
       }
