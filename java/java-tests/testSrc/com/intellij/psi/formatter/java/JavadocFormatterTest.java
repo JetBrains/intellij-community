@@ -179,4 +179,41 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testExceptionAlignmentCorrect() {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_ALIGN_EXCEPTION_COMMENTS = true;
+
+    String before =
+      "public class Controller {\n" +
+      "\n" +
+      "    /**\n" +
+      "     * @throws NoSearchServersConfiguredException If no search engine servers are configured.\n" +
+      "     * @throws SearchServerUnavailableException If the search engine server is not accessible.\n" +
+      "     * @throws InvalidSearchServerResponseException If the search engine server response was invalid.\n" +
+      "     * @throws NotificationEncodingException If the request could not be encoded to UTF-8.\n" +
+      "     * @throws NotificationUnavailableException If the notification server is not available or sent back an invalid response code.\n" +
+      "     */\n" +
+      "    public int superDangerousMethod() {\n" +
+      "        return 68;\n" +
+      "    }\n" +
+      "}";
+
+    String after =
+      "public class Controller {\n" +
+      "\n" +
+      "    /**\n" +
+      "     * @throws NoSearchServersConfiguredException   If no search engine servers are configured.\n" +
+      "     * @throws SearchServerUnavailableException     If the search engine server is not accessible.\n" +
+      "     * @throws InvalidSearchServerResponseException If the search engine server response was invalid.\n" +
+      "     * @throws NotificationEncodingException        If the request could not be encoded to UTF-8.\n" +
+      "     * @throws NotificationUnavailableException     If the notification server is not available or sent back an invalid response code.\n" +
+      "     */\n" +
+      "    public int superDangerousMethod() {\n" +
+      "        return 68;\n" +
+      "    }\n" +
+      "}";
+
+    doTextTest(before, after);
+  }
 }
