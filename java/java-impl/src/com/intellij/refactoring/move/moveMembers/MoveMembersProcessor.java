@@ -116,7 +116,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiElement ref = psiReference.getElement();
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(ref.getLanguage());
         MoveMembersUsageInfo usage = null;
-        if (handler != null) {
+        if (handler != null && myTargetClass != null) {
           usage = handler.getUsage(member, psiReference, myMembersToMove, myTargetClass);
         }
         if (usage != null) {
