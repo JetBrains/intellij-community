@@ -44,9 +44,16 @@ public abstract class AbstractTerminalRunner<T extends Process> {
         try {
           doRun();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
           LOG.warn("Error running terminal", e);
-          Messages.showErrorDialog(AbstractTerminalRunner.this.getProject(), getTitle(), e.getMessage());
+          
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+
+            @Override
+            public void run() {
+              Messages.showErrorDialog(AbstractTerminalRunner.this.getProject(), e.getMessage(), getTitle());
+            }
+          });
         }
       }
     });
