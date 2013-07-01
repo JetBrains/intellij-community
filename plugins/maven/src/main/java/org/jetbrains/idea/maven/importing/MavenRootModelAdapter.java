@@ -352,7 +352,7 @@ public class MavenRootModelAdapter {
         urlExists = true;
         continue;
       }
-      if (clearAll || isRepositoryUrl(artifact, url)) {
+      if (clearAll || (isRepositoryUrl(artifact, url) && !url.startsWith(newUrl))) {
         library.removeRoot(url, type);
       }
     }
