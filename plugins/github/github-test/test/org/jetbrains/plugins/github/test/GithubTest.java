@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.PlatformUtilsCore;
 import git4idea.DialogManager;
 import git4idea.Notificator;
 import git4idea.config.GitVcsSettings;
@@ -65,7 +64,7 @@ public abstract class GithubTest extends UsefulTestCase {
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GithubTest() {
-    System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+    //System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, "PlatformLangXml");
     GitTestUtil.setDefaultBuiltInServerPort();
   }
 
