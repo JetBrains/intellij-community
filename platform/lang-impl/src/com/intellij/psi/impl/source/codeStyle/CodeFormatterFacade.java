@@ -90,11 +90,21 @@ public class CodeFormatterFacade {
   }
 
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
+    return doProcessRange(element, startOffset, endOffset, null);
+  }
+
+  /**
+   * rangeMarker will be disposed
+   */
+  public ASTNode processRange(@NotNull ASTNode element, @NotNull RangeMarker rangeMarker) {
+    return doProcessRange(element, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), rangeMarker);
+  }
+
+  private ASTNode doProcessRange(final ASTNode element, final int startOffset, final int endOffset, @Nullable RangeMarker rangeMarker) {
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
     assert psiElement != null;
     final PsiFile file = psiElement.getContainingFile();
     final Document document = file.getViewProvider().getDocument();
-    final RangeMarker rangeMarker = document != null && endOffset < document.getTextLength()? document.createRangeMarker(startOffset, endOffset):null;
 
     PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageManager
           .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
@@ -102,6 +112,10 @@ public class CodeFormatterFacade {
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
     if (builder != null) {
+      if (rangeMarker == null && document != null && endOffset < document.getTextLength()) {
+        rangeMarker = document.createRangeMarker(startOffset, endOffset);
+      }
+
       TextRange range = preprocess(element, TextRange.create(startOffset, endOffset));
       if (document instanceof DocumentWindow) {
         DocumentWindow documentWindow = (DocumentWindow)document;
