@@ -78,6 +78,24 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin");
   }
 
+  public void testVersionCompletion() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version><caret></version>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "2.0.2");
+  }
+
   @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testArtifactWithoutGroupCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
@@ -98,6 +116,23 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                              "build-helper-maven-plugin",
                              "maven-surefire-plugin",
                              "maven-eclipse-plugin");
+  }
+
+  public void testVersionWithoutGroupCompletion() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version><caret></version>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "2.0.2");
   }
 
   public void testResolvingPlugins() throws Exception {
