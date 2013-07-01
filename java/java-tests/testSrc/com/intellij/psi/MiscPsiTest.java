@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -228,4 +229,17 @@ public class MiscPsiTest extends PsiTestCase{
     assertTrue(aClass.isEnum());
     assertFalse(aClass.hasModifierProperty(PsiModifier.STATIC));
   }
+
+  public void testDoNotExpandNestedChameleons() throws Exception {
+    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class A {{{}}}");
+    file.getNode();
+
+    PsiCodeBlock initializer = file.getClasses()[0].getInitializers()[0].getBody();
+    assertFalse(assertInstanceOf(initializer.getNode(), LazyParseableElement.class).isParsed());
+
+    PsiCodeBlock nestedBlock = ((PsiBlockStatement)initializer.getStatements()[0]).getCodeBlock();
+    assertTrue(assertInstanceOf(initializer.getNode(), LazyParseableElement.class).isParsed());
+    assertFalse(assertInstanceOf(nestedBlock.getNode(), LazyParseableElement.class).isParsed());
+  }
+
 }
