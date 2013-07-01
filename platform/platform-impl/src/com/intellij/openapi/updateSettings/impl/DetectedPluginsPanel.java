@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -56,8 +57,15 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
                                            final int column) {
         final PluginDownloader downloader = (PluginDownloader)value;
         if (downloader != null) {
-          append(downloader.getPluginName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          final String pluginName = downloader.getPluginName();
+          append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
+          if (ideaPluginDescriptor != null) {
+            final String oldPluginName = ideaPluginDescriptor.getName();
+            if (!Comparing.strEqual(pluginName, oldPluginName)) {
+              append(" - " + oldPluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
+          }
           final String loadedVersion = downloader.getPluginVersion();
           if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
             final String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
