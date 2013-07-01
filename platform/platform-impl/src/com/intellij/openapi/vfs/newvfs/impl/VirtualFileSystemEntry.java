@@ -45,6 +45,7 @@ import java.nio.charset.Charset;
  */
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
+
   protected static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
@@ -53,10 +54,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static final int IS_SYMLINK_FLAG =  0x20000000;
   private static final int HAS_SYMLINK_FLAG = 0x40000000;
   private static final int IS_SPECIAL_FLAG =  0x80000000;
+  private static final int IS_WRITABLE_FLAG = 0x01000000;
+  private static final int IS_HIDDEN_FLAG =   0x02000000;
   private static final int INDEXED_FLAG =     0x04000000;
-  static final int CHILDREN_CACHED =          0x08000000;
+          static final int CHILDREN_CACHED =  0x08000000;
+
   private static final int ALL_FLAGS_MASK =
-    DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
+    DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
 
   private volatile int myNameId;
   private volatile VirtualDirectoryImpl myParent;
@@ -74,7 +78,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       setFlagInt(IS_SPECIAL_FLAG, PersistentFS.isSpecialFile(attributes));
       updateLinkStatus();
     }
-    
+
+    setFlagInt(IS_WRITABLE_FLAG, PersistentFS.isWritable(attributes));
+    setFlagInt(IS_HIDDEN_FLAG, PersistentFS.isHidden(attributes));
+
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
@@ -237,7 +244,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isWritable() {
-    return ourPersistence.isWritable(this);
+    return getFlagInt(IS_WRITABLE_FLAG);
   }
 
   @Override
@@ -412,8 +419,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public boolean is(String property) {
     if (property == PROP_SPECIAL) return getFlagInt(IS_SPECIAL_FLAG);
-    if (property == PROP_HIDDEN) return ourPersistence.isHidden(this);
+    if (property == PROP_HIDDEN) return getFlagInt(IS_HIDDEN_FLAG);
     return super.is(property);
+  }
+
+  public void updateProperty(String property, boolean value) {
+    if (property == PROP_WRITABLE) setFlagInt(IS_WRITABLE_FLAG, value);
+    if (property == PROP_HIDDEN) setFlagInt(IS_HIDDEN_FLAG, value);
   }
 
   @Override

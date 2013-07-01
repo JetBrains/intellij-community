@@ -1164,12 +1164,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     FSRecords.setName(id, newName);
   }
 
-  private static void executeSetWritable(@NotNull VirtualFile file, final boolean writableFlag) {
+  private static void executeSetWritable(@NotNull VirtualFile file, boolean writableFlag) {
     setFlag(file, IS_READ_ONLY, !writableFlag);
+    ((VirtualFileSystemEntry)file).updateProperty(VirtualFile.PROP_WRITABLE, writableFlag);
   }
 
-  private static void executeSetHidden(@NotNull VirtualFile file, final boolean hiddenFlag) {
+  private static void executeSetHidden(@NotNull VirtualFile file, boolean hiddenFlag) {
     setFlag(file, IS_HIDDEN, hiddenFlag);
+    ((VirtualFileSystemEntry)file).updateProperty(VirtualFile.PROP_HIDDEN, hiddenFlag);
   }
 
   private static void setFlag(@NotNull VirtualFile file, int mask, boolean value) {
