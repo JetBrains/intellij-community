@@ -65,6 +65,17 @@ class Impl extends Intf {
     assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
   }
 
+  public void "test disprefer underscore"() {
+    def intf = myFixture.addClass("""
+class Intf {
+  void _xxx1() {}
+  void xxx2() {}
+}""")
+
+    def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
+    assert elements == [intf.findMethodsByName('xxx2', false), ChooseByNameBase.NON_PREFIX_SEPARATOR, intf.findMethodsByName('_xxx1', false)]
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {
     return getPopupElements(createPopup(model), text)
   }

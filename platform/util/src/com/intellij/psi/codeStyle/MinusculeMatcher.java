@@ -190,20 +190,11 @@ public class MinusculeMatcher implements Matcher {
     Iterable<TextRange> fragments = matchingFragments(name);
     if (fragments != null) {
       Iterator<TextRange> iterator = fragments.iterator();
-      if (!iterator.hasNext() || isStartMatch(name, iterator.next().getStartOffset())) {
+      if (!iterator.hasNext() || iterator.next().getStartOffset() == 0) {
         return true;
       }
     }
     return false;
-  }
-
-  private static boolean isStartMatch(@NotNull String name, int startIndex) {
-    for (int i = 0; i < startIndex; i++) {
-      if (!isWordSeparator(name.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
