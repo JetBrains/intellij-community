@@ -139,6 +139,8 @@ public abstract class TokenSets {
       mDOLLAR_SLASH_REGEX_END
   );
 
+  public static final TokenSet GSTRING_CONTENT_PARTS = TokenSet.create(GSTRING_CONTENT, GSTRING_INJECTION);
+
   public static final TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
 
   public static final TokenSet RELATIONS = TokenSet.create(

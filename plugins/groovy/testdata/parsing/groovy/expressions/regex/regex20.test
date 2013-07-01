@@ -9,7 +9,8 @@ Groovy script
       PsiElement(()('(')
       Compound regular expression
         PsiElement(regex begin)('/')
-        PsiElement(regex content)('a\')
+        GrStringContentImpl(GString content element)
+          PsiElement(regex content)('a\')
         GString injection
           PsiElement($)('$')
           Closable block

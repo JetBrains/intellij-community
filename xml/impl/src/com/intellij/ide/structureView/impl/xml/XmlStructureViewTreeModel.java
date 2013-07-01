@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,7 @@ import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
-public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
+public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel {
   private final XmlFile myFile;
   private static final Class[] myClasses = new Class[]{XmlTag.class, XmlFile.class, XmlEntityDecl.class, XmlElementDecl.class, XmlAttlistDecl.class, XmlConditionalSection.class};
   private static final Sorter[] mySorters = {Sorter.ALPHA_SORTER};
@@ -67,9 +65,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   public Object getCurrentEditorElement() {
     final Object editorElement = super.getCurrentEditorElement();
     if (editorElement instanceof XmlTag) {
-      final Collection<StructureViewExtension> structureViewExtensions =
-          StructureViewFactoryEx.getInstanceEx(myFile.getProject()).getAllExtensions(XmlTag.class);
-      for(StructureViewExtension extension:structureViewExtensions) {
+      for (StructureViewExtension extension : StructureViewFactoryEx.getInstanceEx(myFile.getProject()).getAllExtensions(XmlTag.class)) {
         final Object element = extension.getCurrentEditorElement(getEditor(), (PsiElement)editorElement);
         if (element != null) return element;
       }

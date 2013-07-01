@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TestNotificator extends Notificator {
 
-  private static final String TEST_NOTIFICATION_GROUP = "Test";
+  public static final String TEST_NOTIFICATION_GROUP = "Test";
   private Notification myLastNotification;
 
   public TestNotificator(@NotNull Project project) {
@@ -38,6 +38,10 @@ public class TestNotificator extends Notificator {
 
   public Notification getLastNotification() {
     return myLastNotification;
+  }
+
+  public void notify(@NotNull Notification notification) {
+    myLastNotification = notification;
   }
 
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message, @NotNull NotificationType type) {

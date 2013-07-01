@@ -130,10 +130,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       // First bound
       return substitute(extendsTypes[0]);
     }
-    else {
-      // Object
-      return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
-    }
+    // Object
+    return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
   private abstract static class SubstitutionVisitorBase extends PsiTypeVisitorEx<PsiType> {
@@ -357,8 +355,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText(
           CommonClassNames.JAVA_LANG_OBJECT)) {
           if (originalBound == null ||
-              (!TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
-               !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound))) { //erasure is essential to avoid infinite recursion
+              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
+              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound)) { //erasure is essential to avoid infinite recursion
             if (wildcardType.isExtends()) {
               final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
               if (glb != null) {
@@ -375,52 +373,45 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     if (captureContext != null) {
-      LOG.assertTrue(substituted instanceof PsiWildcardType);
       substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard()
                     ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
     }
     return substituted;
   }
 
-  private PsiType correctExternalSubstitution(PsiType substituted, final PsiType original) {
-    if (original == null) return null;
-
-    if (substituted == null) {
-      return original.accept(new PsiTypeVisitor<PsiType>() {
-        @Override
-        public PsiType visitArrayType(PsiArrayType arrayType) {
-          return new PsiArrayType(arrayType.getComponentType().accept(this));
-        }
-
-        @Override
-        public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
-          return new PsiEllipsisType(ellipsisType.getComponentType().accept(this));
-        }
-
-        @Override
-        public PsiType visitClassType(PsiClassType classType) {
-          PsiClass aClass = classType.resolve();
-          if (aClass != null) {
-            if (aClass instanceof PsiTypeParameter) {
-              return rawTypeForTypeParameter((PsiTypeParameter)aClass);
-            }
-            else {
-              return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
-            }
-          }
-          else {
-            return classType;
-          }
-        }
-
-        @Override
-        public PsiType visitType(PsiType type) {
-          LOG.error(type.getInternalCanonicalText());
-          return null;
-        }
-      });
+  private PsiType correctExternalSubstitution(PsiType substituted, @NotNull PsiType original) {
+    if (substituted != null) {
+      return substituted;
     }
-    return substituted;
+    return original.accept(new PsiTypeVisitor<PsiType>() {
+      @Override
+      public PsiType visitArrayType(PsiArrayType arrayType) {
+        return new PsiArrayType(arrayType.getComponentType().accept(this));
+      }
+
+      @Override
+      public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
+        return new PsiEllipsisType(ellipsisType.getComponentType().accept(this));
+      }
+
+      @Override
+      public PsiType visitClassType(PsiClassType classType) {
+        PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+          return classType;
+        }
+        if (aClass instanceof PsiTypeParameter) {
+          return rawTypeForTypeParameter((PsiTypeParameter)aClass);
+        }
+        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+      }
+
+      @Override
+      public PsiType visitType(PsiType type) {
+        LOG.error(type.getInternalCanonicalText());
+        return null;
+      }
+    });
   }
 
   @Override

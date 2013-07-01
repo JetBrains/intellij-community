@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.impl.storage;
 
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -34,8 +35,8 @@ import java.util.concurrent.ConcurrentMap;
 public class BuildTargetStorages extends CompositeStorageOwner {
   private final BuildTarget<?> myTarget;
   private final BuildDataPaths myPaths;
-  private final ConcurrentMap<StorageProvider<?>, NotNullLazyValue<? extends StorageOwner>> myStorages 
-    = new ConcurrentHashMap<StorageProvider<?>, NotNullLazyValue<? extends StorageOwner>>(16, 0.75f, 1);
+  private final ConcurrentMap<StorageProvider<?>, AtomicNotNullLazyValue<? extends StorageOwner>> myStorages 
+    = new ConcurrentHashMap<StorageProvider<?>, AtomicNotNullLazyValue<? extends StorageOwner>>(16, 0.75f, 1);
 
   public BuildTargetStorages(BuildTarget<?> target, BuildDataPaths paths) {
     myTarget = target;
@@ -46,7 +47,7 @@ public class BuildTargetStorages extends CompositeStorageOwner {
   public <S extends StorageOwner> S getOrCreateStorage(@NotNull final StorageProvider<S> provider) throws IOException {
     NotNullLazyValue<? extends StorageOwner> lazyValue = myStorages.get(provider);
     if (lazyValue == null) {
-      NotNullLazyValue<S> newValue = new NotNullLazyValue<S>() {
+      AtomicNotNullLazyValue<S> newValue = new AtomicNotNullLazyValue<S>() {
         @NotNull
         @Override
         protected S compute() {
@@ -81,7 +82,7 @@ public class BuildTargetStorages extends CompositeStorageOwner {
     return new Iterable<StorageOwner>() {
       @Override
       public Iterator<StorageOwner> iterator() {
-        final Iterator<NotNullLazyValue<? extends StorageOwner>> iterator = myStorages.values().iterator();
+        final Iterator<AtomicNotNullLazyValue<? extends StorageOwner>> iterator = myStorages.values().iterator();
         return new Iterator<StorageOwner>() {
           @Override
           public boolean hasNext() {

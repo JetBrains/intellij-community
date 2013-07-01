@@ -28,13 +28,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.HashSet;
+import git4idea.DialogManager;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -162,7 +162,8 @@ public class GithubShareAction extends DumbAwareAction {
     // Show dialog (window)
     final GithubShareDialog shareDialog =
       new GithubShareDialog(project, repoNamesRef.get(), userInfoRef.get().getMaxPrivateRepos() > userInfoRef.get().getPrivateRepos());
-    shareDialog.show();
+    //shareDialog.show();
+    DialogManager.show(shareDialog);
     if (!shareDialog.isOK()) {
       return;
     }
@@ -342,7 +343,7 @@ public class GithubShareAction extends DumbAwareAction {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
-          dialog.show();
+          DialogManager.show(dialog);
         }
       }, indicator.getModalityState());
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();

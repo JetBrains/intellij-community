@@ -1,9 +1,9 @@
 package com.intellij.navigation
-
 import com.intellij.ide.util.gotoByName.ChooseByNameBase
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.GotoClassModel2
+import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
@@ -41,6 +41,28 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     popup.close(false)
 
     assert getPopupElements(new GotoClassModel2(project), "@") == []
+  }
+
+  public void "test filter overridden methods from goto symbol"() {
+    def intf = myFixture.addClass("""
+class Intf {
+  void xxx1() {}
+  void xxx2() {}
+}""")
+    def impl = myFixture.addClass("""
+class Impl extends Intf {
+    void xxx1() {}
+    void xxx3() {}
+}
+""")
+
+    def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
+
+    assert intf.findMethodsByName('xxx1', false)[0] in elements
+    assert intf.findMethodsByName('xxx2', false)[0] in elements
+
+    assert impl.findMethodsByName('xxx3', false)[0] in elements
+    assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {

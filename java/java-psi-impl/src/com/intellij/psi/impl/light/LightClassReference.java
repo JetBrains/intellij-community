@@ -31,7 +31,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   private final PsiElement myContext;
   private final GlobalSearchScope myResolveScope;
   private final PsiClass myRefClass;
-  private PsiSubstitutor mySubstitutor;
+  private final PsiSubstitutor mySubstitutor;
 
   private LightReferenceParameterList myParameterList;
 

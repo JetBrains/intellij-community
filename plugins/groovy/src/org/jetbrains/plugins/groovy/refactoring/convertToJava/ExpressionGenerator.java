@@ -432,7 +432,7 @@ public class ExpressionGenerator extends Generator {
   public void visitAssignmentExpression(final GrAssignmentExpression expression) {
     final GrExpression lValue = expression.getLValue();
     final GrExpression rValue = expression.getRValue();
-    final IElementType token = expression.getOperationToken();
+    final IElementType token = expression.getOperationTokenType();
 
     PsiElement realLValue = PsiUtil.skipParentheses(lValue, false);
     if (realLValue instanceof GrReferenceExpression && rValue != null) {
@@ -502,7 +502,7 @@ public class ExpressionGenerator extends Generator {
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
       final PsiElement resolved = resolveResult.getElement();
 
-      if (resolved instanceof PsiMethod && !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationToken())) {
+      if (resolved instanceof PsiMethod && !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationTokenType())) {
         lValue.accept(this);
         builder.append(" = ");
 
@@ -523,7 +523,7 @@ public class ExpressionGenerator extends Generator {
         });
       }
       else {
-        writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
+        writeSimpleBinaryExpression(expression.getOperationToken(), lValue, rValue);
       }
     }
   }
@@ -561,7 +561,7 @@ public class ExpressionGenerator extends Generator {
     if (rValue == null) return null;
 
     GrExpression lValue = expression.getLValue();
-    IElementType opToken = expression.getOperationToken();
+    IElementType opToken = expression.getOperationTokenType();
     if (opToken == mASSIGN) return rValue;
     Pair<String, IElementType> pair = getBinaryOperatorType(opToken);
     LOG.assertTrue(pair != null);

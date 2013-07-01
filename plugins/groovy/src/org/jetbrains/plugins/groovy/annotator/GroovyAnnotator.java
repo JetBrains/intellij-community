@@ -73,10 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterru
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -1265,9 +1262,10 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitGStringExpression(GrString gstring) {
-    for (String part : gstring.getTextParts()) {
-      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(part.length()), null)) {
-        myHolder.createErrorAnnotation(gstring, GroovyBundle.message("illegal.escape.character.in.string.literal"));
+    for (GrStringContent part : gstring.getContents()) {
+      final String text = part.getText();
+      if (!GrStringUtil.parseStringCharacters(text, new StringBuilder(text.length()), null)) {
+        myHolder.createErrorAnnotation(part, GroovyBundle.message("illegal.escape.character.in.string.literal"));
         return;
       }
     }

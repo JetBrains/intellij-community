@@ -243,6 +243,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         return container.forEach(new ValueContainer.ContainerAction<StubIdList>() {
           @Override
           public boolean perform(final int id, @NotNull final StubIdList value) {
+            ProgressManager.checkCanceled();
             if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {

@@ -685,12 +685,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessage(PsiElement context, String message, ErrorType type) {
+  public void addMessage(PsiElement context, String message, @NotNull ErrorType type) {
     addMessageWithFixes(context, message, type);
   }
 
   @Override
-  public void addMessageWithFixes(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+  public void addMessageWithFixes(final PsiElement context, final String message, @NotNull final ErrorType type, final IntentionAction... fixes) {
     if (message != null && !message.isEmpty()) {
       final PsiFile containingFile = context.getContainingFile();
       final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;

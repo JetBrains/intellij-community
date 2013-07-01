@@ -82,7 +82,7 @@ public class GroovyDivideByZeroInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      final IElementType tokenType = expression.getOperationToken();
+      final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(GroovyTokenTypes.mDIV_ASSIGN)
           && !tokenType.equals(GroovyTokenTypes.mMOD_ASSIGN)) {
         return;

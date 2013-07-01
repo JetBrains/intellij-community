@@ -37,7 +37,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   @Nullable
   private BuiltInServer server;
-  private boolean myEnabledInUnitTestMode;
+  private boolean myEnabledInUnitTestMode = true;
 
   @Override
   public int getPort() {
@@ -48,7 +48,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   public BuiltInServerManager waitForStart() {
     Future<?> serverStartFuture = startServerInPooledThread();
     if (serverStartFuture != null) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
       try {
         serverStartFuture.get();
       }

@@ -3,3 +3,5 @@
 .idea/workspace.xml
 /out
 .DS_Store
+/test-system
+/test-config

@@ -112,7 +112,8 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
 
   @Override
   protected String getLineBreaker(@NotNull PsiElement token) {
-    final String text = token.getParent().getText();
+    PsiElement parent = GrStringUtil.findContainingLiteral(token);
+    final String text = parent.getText();
     if (text.contains("'''") || text.contains("\"\"\"")) {
       return "\n";
     }
@@ -173,7 +174,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL || tokenType == GroovyElementTypes.GSTRING_INJECTION) {
-      boolean singleLine = !token.getParent().getText().contains("\"\"\"");
+      boolean singleLine = !GrStringUtil.findContainingLiteral(token).getText().contains("\"\"\"");
       StringBuilder b = new StringBuilder();
       GrStringUtil.escapeStringCharacters(s.length(), s, singleLine ? "\"" : "", singleLine, true, b);
       GrStringUtil.unescapeCharacters(b, singleLine ? "'" : "'\"", true);
