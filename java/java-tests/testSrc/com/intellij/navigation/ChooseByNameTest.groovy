@@ -84,6 +84,14 @@ class Intf {
     assert elements == [m, mod]
   }
 
+  public void "test prefer better path matches"() {
+    def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
+    def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
+    def barFooIndex = myFixture.addFileToProject("bar/foo/index.html", "bar foo")
+    def elements = getPopupElements(new GotoFileModel(project), "foo/index")
+    assert elements == [fooIndex, barFooIndex, fooBarIndex]
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {
     return getPopupElements(createPopup(model), text)
   }
