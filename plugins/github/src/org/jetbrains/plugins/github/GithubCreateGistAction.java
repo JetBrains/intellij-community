@@ -156,7 +156,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static List<NamedContent> collectContents(@NotNull Project project,
+  static List<NamedContent> collectContents(@NotNull Project project,
                                                     @Nullable Editor editor,
                                                     @Nullable VirtualFile file,
                                                     @Nullable VirtualFile[] files) {
@@ -181,7 +181,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String createGist(@NotNull Project project,
+  static String createGist(@NotNull Project project,
                                    @Nullable GithubAuthData auth,
                                    @NotNull List<NamedContent> contents,
                                    boolean isPrivate,
@@ -351,11 +351,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
     return manager.isIgnoredFile(file) || FileTypeManager.getInstance().isFileIgnored(file);
   }
 
-  private static class NamedContent {
+  static class NamedContent {
     @NotNull private final String myName;
     @NotNull private final String myText;
 
-    private NamedContent(@NotNull String name, @NotNull String text) {
+    public NamedContent(@NotNull String name, @NotNull String text) {
       myName = name;
       myText = text;
     }

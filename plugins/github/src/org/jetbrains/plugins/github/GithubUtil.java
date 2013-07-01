@@ -217,6 +217,26 @@ public class GithubUtil {
     }
   }
 
+  public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String repo) throws IOException {
+    String path = "/repos/" + auth.getLogin() + "/" + repo;
+    GithubApiUtil.deleteRequest(auth, path);
+  }
+
+  public static void deleteGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
+    String path = "/gists/" + id;
+    GithubApiUtil.deleteRequest(auth, path);
+  }
+
+  @Nullable
+  public static JsonObject getGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
+    String path = "/gists/" + id;
+    JsonElement result = GithubApiUtil.getRequest(auth, path);
+    if (result == null) {
+      return null;
+    }
+    return result.getAsJsonObject();
+  }
+
   @Nullable
   public static GitRemote findGitHubRemoteBranch(@NotNull GitRepository repository) {
     // i.e. find origin which points on my github repo

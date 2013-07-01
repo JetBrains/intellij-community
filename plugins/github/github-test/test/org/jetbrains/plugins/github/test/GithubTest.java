@@ -15,8 +15,13 @@
  */
 package org.jetbrains.plugins.github.test;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -24,13 +29,19 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import git4idea.DialogManager;
 import git4idea.Notificator;
+import git4idea.commands.GitHttpAuthService;
+import git4idea.commands.GitHttpAuthenticator;
 import git4idea.config.GitVcsSettings;
+import git4idea.remote.GitHttpAuthTestService;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestDialogManager;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubSettings;
+
+import java.io.IOException;
 
 import static org.junit.Assume.assumeNotNull;
 
@@ -51,8 +62,6 @@ import static org.junit.Assume.assumeNotNull;
  */
 public abstract class GithubTest extends UsefulTestCase {
 
-  @NotNull protected static final String HOST = "github.com";
-
   @NotNull protected Project myProject;
   @NotNull protected VirtualFile myProjectRoot;
   @NotNull protected GitVcsSettings myGitSettings;
@@ -69,6 +78,121 @@ public abstract class GithubTest extends UsefulTestCase {
     GitTestUtil.setDefaultBuiltInServerPort();
   }
 
+  protected void createProjectFiles() {
+    createFile("file.txt");
+    createFile("file");
+    createFile("folder/file1");
+    createFile("folder/file2");
+    createFile("folder/empty_file", "");
+    createFile("folder/empty_folder/");
+    createFile("folder/dir/file3");
+  }
+
+  protected void createFile(@NotNull String path) {
+    createFile(path, path.substring(path.lastIndexOf('/') + 1) + " content");
+  }
+
+  protected void createFile(@NotNull String path, @NotNull String content) {
+    String[] pathElements = path.split("/");
+    boolean lastIsDir = path.endsWith("/");
+    VirtualFile currentParent = myProjectRoot;
+    for (int i = 0; i < pathElements.length - 1; i++) {
+      currentParent = createDir(myProject, currentParent, pathElements[i]);
+    }
+
+    String lastElement = pathElements[pathElements.length - 1];
+    if (lastIsDir) {
+      createDir(myProject, currentParent, lastElement);
+    }
+    else {
+      createFile(myProject, currentParent, lastElement, content);
+    }
+  }
+
+  protected static VirtualFile createFile(@NotNull Project project,
+                                          @NotNull final VirtualFile parent,
+                                          @NotNull final String name,
+                                          @Nullable final String content) {
+    final Ref<VirtualFile> result = new Ref<VirtualFile>();
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          VirtualFile file = parent.createChildData(this, name);
+          if (content != null) {
+            file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
+          }
+          result.set(file);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute();
+    return result.get();
+  }
+
+  protected static VirtualFile createDir(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
+    final Ref<VirtualFile> result = new Ref<VirtualFile>();
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          VirtualFile dir = parent.findChild(name);
+          if (dir == null) {
+            dir = parent.createChildDirectory(this, name);
+          }
+          result.set(dir);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute();
+    return result.get();
+  }
+
+  protected void checkNotification(@NotNull NotificationType type, @Nullable String title, @Nullable String content) {
+    Notification actualNotification = ((TestNotificator)ServiceManager.getService(myProject, Notificator.class)).getLastNotification();
+    assertNotNull("No notification was shown", actualNotification);
+
+    System.out.println("Notification title: " + actualNotification.getTitle());
+    System.out.println("Notification content: " + actualNotification.getContent());
+
+    assertEquals("Notification has wrong type", type, actualNotification.getType());
+    if (title != null) {
+      assertEquals("Notification has wrong title", title, actualNotification.getTitle());
+    }
+    if (content != null) {
+      assertEquals("Notification has wrong content", content, actualNotification.getContent());
+    }
+  }
+
+  protected void registerHttpAuthService() {
+    GitHttpAuthTestService myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
+    myHttpAuthService.register(new GitHttpAuthenticator() {
+      @NotNull
+      @Override
+      public String askPassword(@NotNull String url) {
+        return myGitHubSettings.getPassword();
+      }
+
+      @NotNull
+      @Override
+      public String askUsername(@NotNull String url) {
+        return myGitHubSettings.getLogin();
+      }
+
+      @Override
+      public void saveAuthData() {
+      }
+
+      @Override
+      public void forgetPassword() {
+      }
+    });
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -78,10 +202,12 @@ public abstract class GithubTest extends UsefulTestCase {
     myProject = myProjectFixture.getProject();
     myProjectRoot = myProject.getBaseDir();
 
-    String login = System.getProperty("test.github.login");
-    String password = System.getProperty("test.github.password");
+    final String host = System.getProperty("test.github.host");
+    final String login = System.getProperty("test.github.login");
+    final String password = System.getProperty("test.github.password");
 
     // TODO change to assert when a stable Github testing server is ready
+    assumeNotNull(host);
     assumeNotNull(login);
     assumeNotNull(password);
 
@@ -89,7 +215,7 @@ public abstract class GithubTest extends UsefulTestCase {
     myGitSettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
 
     myGitHubSettings = GithubSettings.getInstance();
-    myGitHubSettings.setHost(HOST);
+    myGitHubSettings.setHost(host);
     myGitHubSettings.setLogin(login);
     myGitHubSettings.setPassword(password);
 
