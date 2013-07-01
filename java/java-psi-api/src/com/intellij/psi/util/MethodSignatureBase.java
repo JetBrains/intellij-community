@@ -92,11 +92,11 @@ public abstract class MethodSignatureBase implements MethodSignature {
   public int hashCode() {
     int result = getName().hashCode();
     final PsiType[] parameterTypes = getErasedParameterTypes();
-    result += 37 * parameterTypes.length;
+    result = 31 * result + parameterTypes.length;
     for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
       PsiType type = parameterTypes[i];
       if (type == null) continue;
-      result += 37 * type.hashCode();
+      result = 31 * result +  type.hashCode();
     }
     return result;
   }
