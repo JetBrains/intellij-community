@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author Max Medvedev
@@ -32,7 +33,7 @@ public class GrResolverPolicy implements GrControlFlowPolicy {
 
   @Override
   public boolean isVariableInitialized(@NotNull GrVariable variable) {
-    return variable.getInitializerGroovy() != null || hasTupleInitializer(variable);
+    return variable.getInitializerGroovy() != null || hasTupleInitializer(variable) || variable instanceof GrParameter;
   }
 
   private static boolean hasTupleInitializer(@NotNull GrVariable variable) {
