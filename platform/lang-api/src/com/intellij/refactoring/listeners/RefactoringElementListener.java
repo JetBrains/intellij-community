@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * {@linkplain RefactoringElementListenerProvider} receives a notification of what happened
  * to element it have been observing during a refactoring.
+ * @see com.intellij.refactoring.listeners.RefactoringElementAdapter
+ * @see com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
  * @author dsl
  */
 public interface RefactoringElementListener {
