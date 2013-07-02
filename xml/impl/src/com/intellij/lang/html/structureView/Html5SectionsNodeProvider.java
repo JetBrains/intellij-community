@@ -41,29 +41,35 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
   public static final String ACTION_ID = "HTML5_OUTLINE_MODE";
   public static final String HTML5_OUTLINE_PROVIDER_PROPERTY = "html5.sections.node.provider";
 
+  @Override
   @NotNull
   public String getName() {
     return ACTION_ID;
   }
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(XmlBundle.message("html5.outline.mode"), null, AllIcons.Xml.Html5);
   }
 
+  @Override
   public String getCheckBoxText() {
     return XmlBundle.message("html5.outline.mode");
   }
 
+  @Override
   public Shortcut[] getShortcut() {
     return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
   }
 
+  @Override
   @NotNull
   public String getPropertyName() {
     return HTML5_OUTLINE_PROVIDER_PROPERTY;
   }
 
+  @Override
   public Collection<Html5SectionTreeElement> provideNodes(final TreeElement node) {
     if (!(node instanceof HtmlFileTreeElement)) return Collections.emptyList();
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -126,7 +127,10 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     assert itemPresentation != null;
     renderer.setIcon(itemPresentation.getIcon(true));
 
-    renderer.append(itemPresentation.getLocationString(), new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+    String locationString = itemPresentation.getLocationString();
+    if (!StringUtil.isEmpty(locationString)) {
+      renderer.append(locationString, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+    }
     return true;
   }
 
