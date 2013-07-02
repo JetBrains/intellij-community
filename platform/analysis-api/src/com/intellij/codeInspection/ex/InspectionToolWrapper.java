@@ -222,10 +222,12 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public void cleanup() {
     myContext = null;
-    getTool().cleanup();
+    T tool = myTool;
+    if (tool != null) {
+      tool.cleanup();
+    }
   }
 
   @NotNull
   public abstract JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context);
-
 }
