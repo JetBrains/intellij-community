@@ -28,7 +28,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,13 +63,15 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     indicator.checkCanceled();
 
     List<Object> sameNameElements = new SmartList<Object>();
-    final TObjectIntHashMap<Object> sameNameWeights = new TObjectIntHashMap<Object>();
+    final Map<Object, MatchResult> sameNameWeights = new THashMap<Object, MatchResult>();
     Comparator<Object> weightComparator = new Comparator<Object>() {
       @Override
       public int compare(Object o1, Object o2) {
-        return sameNameWeights.get(o2) - sameNameWeights.get(o1);
+        return sameNameWeights.get(o1).compareTo(sameNameWeights.get(o2));
       }
     };
+
+    List<Object> qualifierMiddleMatched = new ArrayList<Object>();
 
     List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
 
@@ -91,27 +93,39 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
         sameNameWeights.clear();
         for (final Object element : elements) {
           indicator.checkCanceled();
-          Integer degree = matchQualifier(element, base, patternsAndMatchers);
-          if (degree != null) {
+          MatchResult qualifierResult = matchQualifier(element, base, patternsAndMatchers);
+          if (qualifierResult != null) {
             sameNameElements.add(element);
-            sameNameWeights.put(element, degree);
+            sameNameWeights.put(element, qualifierResult);
           }
         }
         sortByProximity(base, sameNameElements);
         Collections.sort(sameNameElements, weightComparator);
         for (Object element : sameNameElements) {
-          if (needSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+          if (!sameNameWeights.get(element).startMatch) {
+            qualifierMiddleMatched.add(element);
+            continue;
+          }
+
+          if (needSeparator && !startMiddleMatchVariants(consumer, qualifierMiddleMatched)) return false;
           if (!consumer.process(element)) return false;
           needSeparator = false;
           afterStartMatch = result.startMatch;
         }
       }
       else if (elements.length == 1 && matchQualifier(elements[0], base, patternsAndMatchers) != null) {
-        if (needSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+        if (needSeparator && !startMiddleMatchVariants(consumer, qualifierMiddleMatched)) return false;
         if (!consumer.process(elements[0])) return false;
         afterStartMatch = result.startMatch;
       }
     }
+    return ContainerUtil.process(qualifierMiddleMatched, consumer);
+  }
+
+  private static boolean startMiddleMatchVariants(Processor<Object> consumer, List<Object> qualifierMiddleMatched) {
+    if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+    if (!ContainerUtil.process(qualifierMiddleMatched, consumer)) return false;
+    qualifierMiddleMatched.clear();
     return true;
   }
 
@@ -167,7 +181,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return answer.isEmpty() ? Collections.singletonList(s) : answer;
   }
 
-  private static Integer matchQualifier(@NotNull Object element,
+  private static MatchResult matchQualifier(@NotNull Object element,
                                         @NotNull final ChooseByNameBase base,
                                         @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
     final String name = base.getModel().getFullName(element);
@@ -177,6 +191,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     int matchingDegree = 0;
     int matchPosition = 0;
+    boolean startMatch = true;
     patterns:
     for (Pair<String, MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
       final String pattern = patternAndMatcher.first;
@@ -187,6 +202,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
           MatchResult suspectMatch = matches(base, pattern, matcher, suspect);
           if (suspectMatch != null) {
             matchingDegree += suspectMatch.matchingDegree;
+            startMatch &= suspectMatch.startMatch;
             matchPosition = j + 1;
             continue patterns;
           }
@@ -205,7 +221,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
 
 
-    return matchingDegree;
+    return new MatchResult(name, matchingDegree, startMatch);
   }
 
   @NotNull
@@ -215,6 +231,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       @Override
       public Pair<String, MinusculeMatcher> fun(String s) {
         String namePattern = getNamePattern(base, s);
+        if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
+          namePattern = "*" + namePattern;
+        }
         return Pair.create(namePattern, buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
       }
     });

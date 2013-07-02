@@ -98,6 +98,14 @@ class Intf {
     assert elements == files
   }
 
+  public void "test middle matching for directories"() {
+    def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
+    def ooIndex = myFixture.addFileToProject("oo/index.html", "oo")
+    def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
+    def elements = getPopupElements(new GotoFileModel(project), "oo/index")
+    assert elements == [ooIndex, fooIndex, fooBarIndex]
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {
     return getPopupElements(createPopup(model), text)
   }
