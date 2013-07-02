@@ -26,11 +26,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureHandler;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.GroovyExtractMethodHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantHandler;
@@ -91,6 +94,16 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
   @Override
   public boolean isMemberInplaceRenameAvailable(PsiElement element, PsiElement context) {
+    PsiElement parent = context.getParent();
+
+    //don't try to inplace rename aliased imported references
+    if (parent instanceof GrReferenceElement) {
+      GroovyResolveResult result = ((GrReferenceElement)parent).advancedResolve();
+      PsiElement fileResolveContext = result.getCurrentFileResolveContext();
+      if (fileResolveContext instanceof GrImportStatement && ((GrImportStatement)fileResolveContext).isAliasedImport()) {
+        return false;
+      }
+    }
     return element instanceof GrMember;
   }
 
