@@ -92,6 +92,12 @@ class Intf {
     assert elements == [fooIndex, barFooIndex, fooBarIndex]
   }
 
+  public void "test sort same-named items by path"() {
+    def files = (30..10).collect { i -> myFixture.addFileToProject("foo$i/index.html", "foo$i") }.reverse()
+    def elements = getPopupElements(new GotoFileModel(project), "index")
+    assert elements == files
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {
     return getPopupElements(createPopup(model), text)
   }
