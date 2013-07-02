@@ -76,7 +76,8 @@ public class PyStatementEffectInspection extends PyInspection {
 
     private boolean checkStringLiteral(PyExpression expression) {
       if (expression instanceof PyStringLiteralExpression) {
-        if (expression.getText().contains(":type:")) {
+        String expressionText = expression.getText();
+        if (expressionText.contains("type:")) {
           PsiElement prevSibling = expression.getParent().getPrevSibling();
           while (prevSibling instanceof PsiWhiteSpace)
             prevSibling = prevSibling.getPrevSibling();

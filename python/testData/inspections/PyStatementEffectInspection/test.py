@@ -26,5 +26,8 @@ foo(),
 x = 3
 """:type: int"""
 
+x = 3
+"""@type: int"""
+
 y = 2
 <warning descr="Statement seems to have no effect">"""fake docstring"""</warning>
