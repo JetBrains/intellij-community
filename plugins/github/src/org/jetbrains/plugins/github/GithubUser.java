@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 class GithubUser {
 
   @NotNull private final String myLogin;
-  private int myPrivateRepos;
-  private int myMaxPrivateRepos;
+  private final int myPrivateRepos;
+  private final int myMaxPrivateRepos;
 
   GithubUser(@NotNull String login, int privateRepos, int maxPrivateRepos) {
     myLogin = login;
