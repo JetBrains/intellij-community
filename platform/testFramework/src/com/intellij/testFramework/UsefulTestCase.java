@@ -421,9 +421,9 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public <T> void assertDoesntContain(Collection<? extends T> collection, Collection<T> notExpected) {
-    ArrayList<T> copy = new ArrayList<T>(collection);
-    copy.retainAll(notExpected);
-    assertEmpty(copy);
+    ArrayList<T> expected = new ArrayList<T>(collection);
+    expected.removeAll(notExpected);
+    assertSameElements(collection, expected);
   }
 
   public static String toString(Collection<?> collection, String separator) {
