@@ -14,9 +14,9 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import cucumber.annotation.After;
@@ -83,7 +83,7 @@ public class GitCucumberWorld {
   @Before
   @Order(0)
   public void setUp() throws Throwable {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+    PlatformTestCase.initPlatformLangPrefix();
     IdeaTestApplication.getInstance(null);
 
     String tempFileName = getClass().getName() + "-" + new Random().nextInt();

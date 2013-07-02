@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.test;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -64,7 +65,7 @@ public abstract class GithubTest extends UsefulTestCase {
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GithubTest() {
-    //System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+    PlatformTestCase.initPlatformLangPrefix();
     GitTestUtil.setDefaultBuiltInServerPort();
   }
 
