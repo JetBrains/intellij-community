@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -24,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 /**
  * @author ilyas
  */
-public interface GrLabeledStatement extends GrStatement, GrNamedElement {
+public interface GrLabeledStatement extends GrStatement, GrNamedElement, PsiNameIdentifierOwner {
   @Nullable
   GrStatement getStatement();
 
