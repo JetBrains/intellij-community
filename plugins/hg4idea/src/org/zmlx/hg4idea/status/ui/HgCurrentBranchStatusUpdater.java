@@ -87,9 +87,6 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                if (project.isDisposed()) {
-                  return;
-                }
                 handleUpdate(project, branch, parents);
               }
             });
@@ -101,7 +98,9 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
 
   private void handleUpdate(@NotNull Project project, @Nullable String branch, @NotNull List<HgRevisionNumber> parents) {
     currentBranchStatus.updateFor(branch, parents);
-    project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
+    if (!project.isDisposed()) {
+      project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
+    }
   }
 
   public void activate() {
