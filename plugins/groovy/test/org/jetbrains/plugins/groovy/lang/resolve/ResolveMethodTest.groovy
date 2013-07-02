@@ -1593,4 +1593,47 @@ def foo() {
 }
 ''', PsiMethod)
   }
+
+  void testPreferCategoryMethods() {
+    def resolved = resolveByText('''
+class TimeCategory {
+    public static TimeDuration minus(final Date lhs, final Date rhs) {
+        return new TimeDuration()
+    }
+}
+
+class TimeDuration {}
+
+void bug() {
+    use (TimeCategory) {
+        def duration = new Date() - new Date()
+        print durat<caret>ion
+    }
+}
+''', GrVariable)
+
+    assertEquals("TimeDuration", resolved.typeGroovy.canonicalText)
+  }
+
+  void testPreferCategoryMethods2() {
+    def resolved = resolveByText('''
+class TimeCategory {
+    public static TimeDuration minus(final Date lhs, final Date rhs) {
+        return new TimeDuration((int) days, hours, minutes, seconds, (int) milliseconds);
+    }
+}
+
+class TimeDuration {}
+
+void bug() {
+    use (TimeCategory) {
+        def duration = new Date().minus(new Date())
+        print durat<caret>ion
+    }
+}
+''', GrVariable)
+
+    assertEquals("TimeDuration", resolved.typeGroovy.canonicalText)
+  }
+
 }

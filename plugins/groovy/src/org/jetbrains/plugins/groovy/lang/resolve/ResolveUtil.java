@@ -284,8 +284,8 @@ public class ResolveUtil {
         if (!psiClass.processDeclarations(processor, state, null, place)) return false;
       }
     }
-    if (!processNonCodeMembers(type, nonCodeProcessor, place, state)) return false;
     if (!processCategoryMembers(place, nonCodeProcessor, state)) return false;
+    if (!processNonCodeMembers(type, nonCodeProcessor, place, state)) return false;
     return true;
   }
 
