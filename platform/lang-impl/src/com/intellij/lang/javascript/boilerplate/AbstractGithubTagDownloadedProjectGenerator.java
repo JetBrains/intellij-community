@@ -2,14 +2,16 @@ package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.templates.github.*;
+import com.intellij.platform.templates.github.GeneratorException;
+import com.intellij.platform.templates.github.GithubTagInfo;
+import com.intellij.platform.templates.github.ZipUtil;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +82,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
 
   @Override
   public boolean isPrimaryGenerator() {
-    return "WebStorm".equals(ApplicationNamesInfo.getInstance().getProductName());
+    return PlatformUtils.isWebStorm();
   }
 
   private void unpackToDir(@Nullable Project project,
