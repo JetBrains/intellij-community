@@ -429,7 +429,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private void runAutoMake() {
-    final List<RequestFuture> futures = new ArrayList<RequestFuture>();
+    final List<RequestFuture> futures = new SmartList<RequestFuture>();
     for (final Project project : getActiveProjects()) {
       if (!canStartAutoMake(project)) {
         continue;
@@ -482,7 +482,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   public Collection<RequestFuture> cancelAutoMakeTasks(Project project) {
-    final Collection<RequestFuture> futures = new ArrayList<RequestFuture>();
+    final Collection<RequestFuture> futures = new SmartList<RequestFuture>();
     synchronized (myAutomakeFutures) {
       for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
