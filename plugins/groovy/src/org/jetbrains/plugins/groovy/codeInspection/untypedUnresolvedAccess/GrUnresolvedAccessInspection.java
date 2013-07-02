@@ -138,7 +138,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return profile.isToolEnabled(unusedDefKey, file);
   }
 
-  private static GrUnresolvedAccessInspection getInstance(PsiFile file, Project project) {
+  public static GrUnresolvedAccessInspection getInstance(PsiFile file, Project project) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     return (GrUnresolvedAccessInspection)profile.getUnwrappedTool(SHORT_NAME, file);
   }
@@ -194,8 +194,11 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
       if (!inStaticContext && GroovySuppressableInspectionTool.isElementToolSuppressedIn(refElement, SHORT_NAME)) return null;
 
-      GrUnresolvedAccessInspection inspection = getInstance(refElement.getContainingFile(), refElement.getProject());
-      if (!inspection.myHighlightInnerClasses) return null;
+      if (!inStaticContext) {
+        GrUnresolvedAccessInspection inspection = getInstance(refElement.getContainingFile(), refElement.getProject());
+        if (inspection == null) return null;
+        if (!inspection.myHighlightInnerClasses) return null;
+      }
 
       GrNewExpression newExpression = (GrNewExpression)refElement.getParent();
       if (resolved instanceof PsiClass) {
@@ -221,7 +224,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     PsiElement refNameElement = ref.getReferenceNameElement();
     if (refNameElement == null) return null;
 
-    boolean cannotBeDynamic = PsiUtil.isCompileStatic(ref) || isPropertyAccessInStaticMethod(ref);
+    boolean inStaticContext = PsiUtil.isCompileStatic(ref) || isPropertyAccessInStaticMethod(ref);
     GroovyResolveResult resolveResult = getBestResolveResult(ref);
 
     if (resolveResult.getElement() != null) {
@@ -229,16 +232,16 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
       if (isStaticOk(resolveResult)) return null;
       String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
-      return createAnnotationForRef(ref, cannotBeDynamic, message);
+      return createAnnotationForRef(ref, inStaticContext, message);
     }
 
     if (ResolveUtil.isKeyOfMap(ref) || isClassReference(ref)) {
       return null;
     }
 
-    if (!cannotBeDynamic) {
-      if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
+    if (!inStaticContext) {
       GrUnresolvedAccessInspection inspection = getInstance(ref.getContainingFile(), ref.getProject());
+      if (inspection == null) return null;
 
       if (!inspection.myHighlightIfGroovyObjectOverridden && areGroovyObjectMethodsOverridden(ref)) return null;
       if (!inspection.myHighlightIfMissingMethodsDeclared && areMissingMethodsDeclared(ref)) return null;
@@ -246,8 +249,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       if (GroovySuppressableInspectionTool.isElementToolSuppressedIn(ref, SHORT_NAME)) return null;
     }
 
-    if (cannotBeDynamic || shouldHighlightAsUnresolved(ref)) {
-      HighlightInfo info = createAnnotationForRef(ref, cannotBeDynamic, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
+    if (inStaticContext || shouldHighlightAsUnresolved(ref)) {
+      HighlightInfo info = createAnnotationForRef(ref, inStaticContext, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
       if (info == null) return null;
 
       HighlightDisplayKey displayKey = HighlightDisplayKey.find(SHORT_NAME);
@@ -259,7 +262,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
         registerAddImportFixes(ref, info, displayKey);
       }
 
-      registerReferenceFixes(ref, info, cannotBeDynamic, displayKey);
+      registerReferenceFixes(ref, info, inStaticContext, displayKey);
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarAdapter(info, displayKey));
       OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(info, displayKey), ref);
       return info;

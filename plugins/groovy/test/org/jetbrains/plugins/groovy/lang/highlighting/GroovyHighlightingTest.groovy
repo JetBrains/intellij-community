@@ -788,8 +788,8 @@ class A {
   class B {}
 }
 
-A.B foo = new <error descr="Cannot reference non-static symbol 'A.B' from static context">A.B</error>()
-''')
+A.B foo = new A.<warning descr="Cannot reference non-static symbol 'A.B' from static context">B</warning>()
+''', GrUnresolvedAccessInspection)
   }
 
   void testDuplicatedVar0() {
@@ -1448,6 +1448,80 @@ def foo3(final i) {
   print i
 }
 ''')
+  }
+
+  void testNonStaticInnerClass1() {
+    testHighlighting('''\
+class MyController {
+     static def list() {
+         def myInnerClass = new MyCommand.<error descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</error>()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''', GrUnresolvedAccessInspection)
+  }
+
+  void testNonStaticInnerClass2() {
+    testHighlighting('''\
+class MyController {
+     def list() {
+         def myInnerClass = new MyCommand.<warning descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</warning>()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''', GrUnresolvedAccessInspection)
+  }
+
+  void testNonStaticInnerClass3() {
+    myFixture.configureByText('_.groovy', '''\
+class MyController {
+     static def list() {
+         def myInnerClass = new MyCommand.<error descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</error>()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''')
+
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
+    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
+    myFixture.testHighlighting(true, false, true)
+  }
+
+  void testNonStaticInnerClass4() {
+    myFixture.configureByText('_.groovy', '''\
+class MyController {
+     def list() {
+         def myInnerClass = new MyCommand.MyInnerClass()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''')
+
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
+    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
+    myFixture.testHighlighting(true, false, true)
   }
 
 }
