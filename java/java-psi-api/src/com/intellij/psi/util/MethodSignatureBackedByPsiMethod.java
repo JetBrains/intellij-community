@@ -24,6 +24,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
 
   private final PsiMethod myMethod;
   private final boolean myIsRaw;
+  private final String myName;
 
   protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
                                              @NotNull PsiSubstitutor substitutor,
@@ -36,12 +37,13 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       LOG.error("Invalid method: "+method, new PsiInvalidElementAccessException(method));
     }
     myMethod = method;
+    myName = method.getName();
   }
 
   @NotNull
   @Override
   public String getName() {
-    return myMethod.getName();
+    return myName;
   }
 
   @Override

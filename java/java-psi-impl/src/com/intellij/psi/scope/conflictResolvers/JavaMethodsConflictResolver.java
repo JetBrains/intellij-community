@@ -33,10 +33,7 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -192,6 +189,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new HashMap<MethodSignature, CandidateInfo>();
+    Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    for (CandidateInfo conflict : conflicts) {
+      final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
+      for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+        superMethods.add(methodSignature.getMethod());
+      }
+    }
     nextConflict:
     for (int i=0; i<conflicts.size();i++) {
       ProgressManager.checkCanceled();
@@ -199,16 +203,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiMethod method = (PsiMethod)info.getElement();
       assert method != null;
 
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        for (int k=i-1; k>=0; k--) {
-          ProgressManager.checkCanceled();
-          PsiMethod existingMethod = (PsiMethod)conflicts.get(k).getElement();
-          if (PsiSuperMethodImplUtil.isSuperMethodSmart(existingMethod, method)) {
-            conflicts.remove(i);
-            i--;
-            continue nextConflict;
-          }
-        }
+      if (superMethods.contains(method)) {
+        conflicts.remove(i);
+        i--;
+        continue;
       }
 
       PsiClass class1 = method.getContainingClass();
