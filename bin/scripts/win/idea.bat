@@ -41,7 +41,8 @@ IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.p
 :: ---------------------------------------------------------------------
 :: Collect JVM options and properties.
 :: ---------------------------------------------------------------------
-SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
+IF "%VM_OPTIONS_FILE%" == "" SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
 SET ACC=
 FOR /F "usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
 IF EXIST "%VM_OPTIONS_FILE%" SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
