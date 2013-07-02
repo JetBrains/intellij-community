@@ -133,7 +133,7 @@ public class HgPushDialog extends DialogWrapper {
       @Override
       public void run() {
         final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-        final String defaultPath = HgPusher.getDefaultPushPath(myProject, repo);
+        final String defaultPath = HgUtil.getRepositoryDefaultPushPath(myProject, repo);
         final List<HgTagBranch> branches = HgPusher.getBranches(myProject, repo);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

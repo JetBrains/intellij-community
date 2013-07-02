@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,51 @@
  */
 package git4idea.repo;
 
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.dvcs.repo.AbstractRepositoryManager;
+import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
+import git4idea.roots.GitRootScanner;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
- * GitRepositoryManager initializes and stores {@link GitRepository GitRepositories} for Git roots defined in the project.
  * @author Kirill Likhodedov
  */
-public interface GitRepositoryManager {
+public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> implements RepositoryManager<GitRepository> {
 
-  /**
-   * Returns the {@link GitRepository} which tracks the Git repository located in the given directory,
-   * or {@code null} if the given file is not a Git root known to this {@link com.intellij.openapi.project.Project}.
-   */
-  @Nullable
-  GitRepository getRepositoryForRoot(@Nullable VirtualFile root);
+  @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  /**
-   * Returns the {@link GitRepository} which the given file belongs to, or {@code null} if the file is not under any Git repository.
-   */
-  @Nullable
-  GitRepository getRepositoryForFile(@NotNull VirtualFile file);
+  public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
+                              @NotNull ProjectLevelVcsManager vcsManager) {
+    super(project, vcsManager);
+    myPlatformFacade = platformFacade;
+  }
 
-  /**
-   * Returns the {@link GitRepository} which the given file belongs to, or {@code null} if the file is not under any Git repository.
-   */
-  @Nullable
-  GitRepository getRepositoryForFile(@NotNull FilePath file);
+  @Override
+  public void initComponent() {
+    myVcs = myPlatformFacade.getVcs(myProject);
+    Disposer.register(myProject, this);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      GitRootScanner.start(myProject);
+    }
+  }
 
-  /**
-   * @return all repositories tracked by the manager.
-   */
+
+  @Override
+  protected boolean isRootValid(@NotNull VirtualFile root) {
+    VirtualFile gitDir = root.findChild(GitUtil.DOT_GIT);
+    return gitDir != null && gitDir.exists();
+  }
+
   @NotNull
-  List<GitRepository> getRepositories();
-
-  boolean moreThanOneRoot();
-
-  /**
-   * Synchronously updates the specified information about Git repository under the given root.
-   * @param root   root directory of the Git repository.
-   *
-   */
-  void updateRepository(VirtualFile root);
-
-  void updateAllRepositories();
-
+  @Override
+  protected GitRepository createRepository(@NotNull VirtualFile root) {
+    return GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
+  }
 }

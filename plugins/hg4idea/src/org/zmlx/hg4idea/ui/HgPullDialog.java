@@ -24,7 +24,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRememberedInputs;
-import org.zmlx.hg4idea.command.HgShowConfigCommand;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -101,8 +100,7 @@ public class HgPullDialog extends DialogWrapper {
       @Override
       public void run() {
         VirtualFile repo = hgRepositorySelector.getRepository();
-        HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-        final String defaultPath = configCommand.getDefaultPath(repo);
+        final String defaultPath = HgUtil.getRepositoryDefaultPath(project,repo);
         if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override

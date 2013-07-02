@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.command.HgShowConfigCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -89,11 +88,6 @@ public class HgPusher {
         }
       }
     });
-  }
-
-  public static String getDefaultPushPath(@NotNull Project project, @NotNull VirtualFile repo) {
-    final HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-    return configCommand.getDefaultPushPath(repo);
   }
 
   @NotNull

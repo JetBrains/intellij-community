@@ -44,6 +44,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @Nullable private volatile String myCurrentBookmark = null;
   @NotNull private volatile Collection<String> myBranches = Collections.emptySet();
   @NotNull private volatile Collection<String> myBookmarks = Collections.emptySet();
+  @NotNull private volatile HgConfig myConfig;
   private boolean myIsFresh = true;
 
 
@@ -56,6 +57,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myState = State.NORMAL;
     myCurrentRevision = null;
     myReader = new HgRepositoryReader(VfsUtilCore.virtualToIoFile(myHgDir));
+    myConfig = new HgConfig(project, rootDir);
     update();
   }
 
@@ -101,6 +103,12 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @Override
   public String getCurrentBookmark() {
     return myCurrentBookmark;
+  }
+
+  @NotNull
+  @Override
+  public HgConfig getRepositoryConfig() {
+    return myConfig;
   }
 
   @Override

@@ -24,9 +24,7 @@ import git4idea.GitPlatformFacade
 import git4idea.Notificator
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
-import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NotNull
-
 /**
  *
  * @author Kirill Likhodedov
@@ -85,7 +83,7 @@ class GitTestPlatformFacade extends DvcsTestPlatformFacade implements GitPlatfor
 
   @NotNull
   @Override
-  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+  public GitTestRepositoryManager getRepositoryManager(@NotNull Project project) {
     return myRepositoryManager;
   }
 

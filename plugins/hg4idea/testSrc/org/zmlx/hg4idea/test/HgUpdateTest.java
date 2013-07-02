@@ -25,6 +25,7 @@ import org.zmlx.hg4idea.HgFileStatusEnum;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.provider.update.HgRegularUpdater;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +59,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     //do a simple pull without an update
     HgPullCommand pull = new HgPullCommand(myProject, projectRepoVirtualFile);
-    pull.setSource(new HgShowConfigCommand(myProject).getDefaultPath(projectRepoVirtualFile));
+    pull.setSource(HgUtil.getRepositoryDefaultPath(myProject, projectRepoVirtualFile));
     pull.setUpdate(false);
     pull.execute();
 

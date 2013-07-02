@@ -14,6 +14,8 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgOutgoingCommand extends HgRemoteChangesetsCommand {
 
@@ -21,8 +23,8 @@ public class HgOutgoingCommand extends HgRemoteChangesetsCommand {
     super(project, "outgoing");
   }
 
-  protected String getRepositoryUrl(VirtualFile repo) {
-    return new HgShowConfigCommand(project).getDefaultPushPath(repo);
+  @Nullable
+  protected String getRepositoryUrl(VirtualFile root) {
+    return HgUtil.getRepositoryDefaultPushPath(project, root);
   }
-
 }

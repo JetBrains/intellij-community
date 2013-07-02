@@ -15,6 +15,8 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -25,26 +27,14 @@ import java.util.Map;
 
 public class HgShowConfigCommand {
 
-  private final Project project;
+  @NotNull private final Project project;
 
-  public HgShowConfigCommand(Project project) {
+  public HgShowConfigCommand(@NotNull Project project) {
     this.project = project;
   }
 
-  public String getDefaultPath(VirtualFile repo) {
-    return execute(repo).get("paths.default");
-  }
-
-  public String getDefaultPushPath(VirtualFile repo) {
-    final Map<String, String> map = execute(repo);
-    String path = map.get("paths.default-push");
-    if (path == null) {
-      path = map.get("paths.default");
-    }
-    return path;
-  }
-
-  public Map<String, String> execute(VirtualFile repo) {
+  @NotNull
+  public Map<String, String> execute(@Nullable VirtualFile repo) {
     if (repo == null) {
       return Collections.emptyMap();
     }
@@ -66,5 +56,4 @@ public class HgShowConfigCommand {
     }
     return options;
   }
-
 }

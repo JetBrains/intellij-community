@@ -45,4 +45,7 @@ public interface HgRepository extends Repository {
 
   @Nullable
   String getCurrentBookmark();
+
+  @NotNull
+  HgConfig getRepositoryConfig();
 }

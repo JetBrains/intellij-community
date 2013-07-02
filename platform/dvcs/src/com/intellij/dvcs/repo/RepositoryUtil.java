@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -117,5 +117,16 @@ public class RepositoryUtil {
     public void consume(Object dummy) {
       myRepository.update();
     }
+  }
+
+  public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {
+    List<T> repos = new ArrayList<T>(repositories);
+    Collections.sort(repos, new Comparator<Repository>() {
+      @Override
+      public int compare(Repository o1, Repository o2) {
+        return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+      }
+    });
+    return repos;
   }
 }

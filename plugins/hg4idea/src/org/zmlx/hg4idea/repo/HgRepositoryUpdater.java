@@ -28,6 +28,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.util.List;
 
@@ -37,6 +38,7 @@ import java.util.List;
  * @author Nadya Zabrodina
  */
 final class HgRepositoryUpdater implements Disposable, BulkFileListener {
+  @NotNull private Project myProject;
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final QueueProcessor<Object> myUpdateQueue;
@@ -53,10 +55,10 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
 
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
 
-    Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
-    if (!project.isDisposed()) {
-      myMessageBusConnection = project.getMessageBus().connect();
+    myProject = repository.getProject();
+    myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), myProject.getDisposed());
+    if (!myProject.isDisposed()) {
+      myMessageBusConnection = myProject.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
     }
     else {
@@ -88,6 +90,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean mergeFileChanged = false;
     boolean bookmarksFileChanged = false;
     boolean currentBookmarkFileChanged = false;
+    boolean configHgrcChanged = false;
     for (VFileEvent event : events) {
       String filePath = event.getPath();
       if (filePath == null) {
@@ -109,11 +112,17 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       else if (myRepositoryFiles.isCurrentBookmarksFile(filePath)) {
         currentBookmarkFileChanged = true;
       }
-    }
 
+      else if (myRepositoryFiles.isConfigHgrcFile(filePath)) {
+        configHgrcChanged = true;
+      }
+    }
 
     if (branchHeadsChanged || branchFileChanged || mergeFileChanged || bookmarksFileChanged || currentBookmarkFileChanged) {
       myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
+    }
+    if (configHgrcChanged) {
+      myProject.getMessageBus().syncPublisher(HgVcs.UPDATE_CONFIG_TOPIC).update(myProject, null);
     }
   }
 }

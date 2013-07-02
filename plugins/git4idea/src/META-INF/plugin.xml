@@ -81,8 +81,7 @@
 
   <project-components>
     <component>
-      <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
-      <implementation-class>git4idea.repo.GitRepositoryManagerImpl</implementation-class>
+      <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
     </component>
   </project-components>
 
