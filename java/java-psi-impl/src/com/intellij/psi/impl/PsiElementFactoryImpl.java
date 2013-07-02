@@ -36,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +47,17 @@ import java.util.Map;
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
   private PsiClass myArrayClass;
   private PsiClass myArrayClass15;
+  private final ConcurrentHashMap<GlobalSearchScope, PsiClassType> myCachedObjectType = new ConcurrentHashMap<GlobalSearchScope, PsiClassType>();
 
-  public PsiElementFactoryImpl(final PsiManager manager) {
+
+  public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
+    manager.registerRunnableToRunOnChange(new Runnable() {
+      @Override
+      public void run() {
+        myCachedObjectType.clear();
+      }
+    });
   }
 
   @NotNull
@@ -56,14 +65,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiClass getArrayClass(@NotNull final LanguageLevel languageLevel) {
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
       if (myArrayClass == null) {
-        final String body = "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
+        @NonNls final String body = "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
         myArrayClass = createClassFromText(body, null).getInnerClasses()[0];
       }
       return myArrayClass;
     }
     else {
       if (myArrayClass15 == null) {
-        final String body = "public class __Array__<T>{\n public final int length;\n public T[] clone() {}\n}";
+        @NonNls final String body = "public class __Array__<T>{\n public final int length;\n public T[] clone() {}\n}";
         myArrayClass15 = createClassFromText(body, null).getInnerClasses()[0];
       }
       return myArrayClass15;
@@ -171,7 +180,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
-    StringBuilder builder = new StringBuilder();
+    @NonNls StringBuilder builder = new StringBuilder();
     builder.append("public <").append(name);
     if (superTypes.length > 1) {
       builder.append(" extends ");
@@ -199,7 +208,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
-    final String text = "class _Dummy_ { private " + type.getCanonicalText() + " " + name + "; }";
+    @NonNls final String text = "class _Dummy_ { private " + type.getCanonicalText() + " " + name + "; }";
     final PsiJavaFile aFile = createDummyJavaFile(text);
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
@@ -385,6 +394,18 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiClassType createTypeByFQClassName(@NotNull final String qName, @NotNull final GlobalSearchScope resolveScope) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) {
+      PsiClassType cachedObjectType = myCachedObjectType.get(resolveScope);
+      if (cachedObjectType != null) {
+        return cachedObjectType;
+      }
+      PsiClass aClass = JavaPsiFacade.getInstance(myManager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+      if (aClass != null) {
+        cachedObjectType = new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY);
+        cachedObjectType = myCachedObjectType.cacheOrGet(resolveScope, cachedObjectType);
+        return cachedObjectType;
+      }
+    }
     return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null);
   }
 
@@ -455,7 +476,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiParameterList createParameterList(@NotNull final String[] names, @NotNull final PsiType[] types) throws IncorrectOperationException {
-    final StringBuilder builder = new StringBuilder();
+    @NonNls StringBuilder builder = new StringBuilder();
     builder.append("void method(");
     for (int i = 0; i < names.length; i++) {
       if (i > 0) builder.append(", ");
@@ -468,7 +489,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiReferenceList createReferenceList(@NotNull final PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
-    final StringBuilder builder = new StringBuilder();
+    @NonNls final StringBuilder builder = new StringBuilder();
     builder.append("void method()");
     if (references.length > 0){
       builder.append(" throws ");
@@ -579,7 +600,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create variable with type \"null\".");
     }
 
-    final String text = "X " + name + (initializer != null ? " = x" : "") + ";";
+    @NonNls final String text = "X " + name + (initializer != null ? " = x" : "") + ";";
 
     final PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, null);
     final PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
@@ -596,7 +617,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiDocTag createParamTag(@NotNull final String parameterName, @NonNls final String description) throws IncorrectOperationException {
-    final StringBuilder builder = new StringBuilder();
+    @NonNls final StringBuilder builder = new StringBuilder();
     builder.append(" * @param ");
     builder.append(parameterName);
     builder.append(" ");
@@ -718,7 +739,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Unexpected type:" + exceptionType);
     }
 
-    final String text = "catch (" + exceptionType.getCanonicalText() +  " " + exceptionName + ") {}";
+    @NonNls final String text = "catch (" + exceptionType.getCanonicalText() +  " " + exceptionName + ") {}";
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {
