@@ -38,9 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -81,31 +79,31 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, false,
-                                                new Processor<ChooseByNameContributor>() {
-                                                  @Override
-                                                  public boolean process(ChooseByNameContributor contributor) {
-                                                    try {
-                                                      if (!myProject.isDisposed()) {
-                                                        String[] names = contributor.getNames(myProject, checkBoxState);
-                                                        synchronized (allNames) {
-                                                          allNames.ensureCapacity(names.length);
-                                                          ContainerUtil.addAll(allNames, names);
-                                                        }
-                                                      }
-                                                    }
-                                                    catch (ProcessCanceledException ex) {
-                                                      // index corruption detected, ignore
-                                                    }
-                                                    catch (IndexNotReadyException ex) {
-                                                      // index corruption detected, ignore
-                                                    }
-                                                    catch (Exception ex) {
-                                                      LOG.error(ex);
-                                                    }
-                                                    return true;
-                                                  }
-                                                });
+    Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
+      @Override
+      public boolean process(ChooseByNameContributor contributor) {
+        try {
+          if (!myProject.isDisposed()) {
+            String[] names = contributor.getNames(myProject, checkBoxState);
+            synchronized (allNames) {
+              allNames.ensureCapacity(names.length);
+              ContainerUtil.addAll(allNames, names);
+            }
+          }
+        }
+        catch (ProcessCanceledException ex) {
+          // index corruption detected, ignore
+        }
+        catch (IndexNotReadyException ex) {
+          // index corruption detected, ignore
+        }
+        catch (Exception ex) {
+          LOG.error(ex);
+        }
+        return true;
+      }
+    };
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, false, processor);
     if (indicator != null) {
       indicator.checkCanceled();
     }
@@ -129,7 +127,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   }
 
   @NotNull
-  public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern, @NotNull ProgressIndicator canceled) {
+  public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern, @NotNull final ProgressIndicator canceled) {
     final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
     Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
@@ -138,9 +136,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         if (myProject.isDisposed()) {
           return true;
         }
-
         try {
           for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
+            canceled.checkCanceled();
             if (item == null) {
               PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
               if (pluginId != null) {
@@ -167,7 +165,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
       }
     };
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, false, processor);
-
+    canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
     return ArrayUtil.toObjectArray(items);
   }
 
