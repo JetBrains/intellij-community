@@ -18,7 +18,6 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCompiledElement;
@@ -54,7 +53,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     if (removeModelSpecificMarkup(base, pattern).isEmpty() && !base.canShowListForEmptyPattern()) return true;
 
-    ChooseByNameModel model = base.getModel();
+    final ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
     List<MatchResult> namesList = new ArrayList<MatchResult>();
     processNamesByPattern(base, base.getNames(everywhere), matchingPattern, new CollectConsumer<MatchResult>(namesList));
@@ -64,10 +63,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     List<Object> sameNameElements = new SmartList<Object>();
     final Map<Object, MatchResult> sameNameWeights = new THashMap<Object, MatchResult>();
+
     Comparator<Object> weightComparator = new Comparator<Object>() {
+      Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model : new PathProximityComparator(model, myContext.get());
+
       @Override
       public int compare(Object o1, Object o2) {
-        return sameNameWeights.get(o1).compareTo(sameNameWeights.get(o2));
+        int result = modelComparator.compare(o1, o2);
+        return result != 0 ? result : sameNameWeights.get(o1).compareTo(sameNameWeights.get(o2));
       }
     };
 
@@ -99,7 +102,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
             sameNameWeights.put(element, qualifierResult);
           }
         }
-        sortByProximity(base, sameNameElements);
         Collections.sort(sameNameElements, weightComparator);
         for (Object element : sameNameElements) {
           if (!sameNameWeights.get(element).startMatch) {
@@ -131,17 +133,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   protected void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
     Collections.sort(namesList);
-  }
-
-  private void sortByProximity(@NotNull ChooseByNameBase base, @NotNull List<Object> sameNameElements) {
-    final ChooseByNameModel model = base.getModel();
-    if (model instanceof Comparator) {
-      //noinspection unchecked
-      Collections.sort(sameNameElements, (Comparator)model);
-    }
-    else {
-      Collections.sort(sameNameElements, new PathProximityComparator(model, myContext.get()));
-    }
   }
 
   @NotNull
@@ -314,33 +305,18 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       myProximityComparator = new PsiProximityComparator(context);
     }
 
+    private static boolean isCompiledWithoutSource(Object o) {
+      return o instanceof PsiCompiledElement && ((PsiCompiledElement)o).getNavigationElement() == o;
+    }
+
     @Override
     public int compare(final Object o1, final Object o2) {
       int rc = myProximityComparator.compare(o1, o2);
       if (rc != 0) return rc;
 
-      int compare = Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
-      if (compare == 0) {
-        int o1Weight;
-        int o2Weight;
-
-        if (o1 instanceof PsiCompiledElement) {
-          PsiElement navElement = ((PsiCompiledElement)o1).getNavigationElement();
-          o1Weight = navElement != o1 ? 0 : 1;
-        } else {
-          o1Weight = 0;
-        }
-
-        if (o2 instanceof PsiCompiledElement) {
-          PsiElement navElement = ((PsiCompiledElement)o2).getNavigationElement();
-          o2Weight = navElement != o2 ? 0 : 1;
-        } else {
-          o2Weight = 0;
-        }
-
-        compare = o1Weight - o2Weight;
-      }
-      return compare;
+      int o1Weight = isCompiledWithoutSource(o1) ? 1 : 0;
+      int o2Weight = isCompiledWithoutSource(o2) ? 1 : 0;
+      return o1Weight - o2Weight;
     }
   }
 

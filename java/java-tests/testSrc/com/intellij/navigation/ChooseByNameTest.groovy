@@ -106,6 +106,21 @@ class Intf {
     assert elements == [ooIndex, fooIndex, fooBarIndex]
   }
 
+  public void "test prefer files from current directory"() {
+    def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
+    def barIndex = myFixture.addFileToProject("bar/index.html", "bar")
+    def fooContext = myFixture.addFileToProject("foo/context.html", "")
+    def barContext = myFixture.addFileToProject("bar/context.html", "")
+
+    def popup = createPopup(new GotoFileModel(project), fooContext)
+    assert getPopupElements(popup, "index") == [fooIndex, barIndex]
+    popup.close(false)
+
+    popup = createPopup(new GotoFileModel(project), barContext)
+    assert getPopupElements(popup, "index") == [barIndex, fooIndex]
+
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {
     return getPopupElements(createPopup(model), text)
   }
@@ -122,8 +137,8 @@ class Intf {
     return elements
   }
 
-  private ChooseByNamePopup createPopup(ChooseByNameModel model) {
-    def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)null, "")
+  private ChooseByNamePopup createPopup(ChooseByNameModel model, PsiElement context = null) {
+    def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
     Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
     popup
   }
