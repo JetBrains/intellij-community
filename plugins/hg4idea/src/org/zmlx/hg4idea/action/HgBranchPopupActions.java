@@ -132,7 +132,7 @@ public class HgBranchPopupActions {
     @NotNull final VirtualFile myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
-      super("New Book&mark", "Create new bookmark", null);
+      super("New Bookmark", "Create new bookmark", null);
       myProject = project;
       myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;

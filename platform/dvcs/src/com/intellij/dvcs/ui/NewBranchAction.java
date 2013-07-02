@@ -33,7 +33,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
   protected Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    super("New &Branch", "Create and checkout new branch", IconUtil.getAddIcon());
+    super("New Branch", "Create and checkout new branch", IconUtil.getAddIcon());
     myRepositories = repositories;
     myProject = project;
   }
