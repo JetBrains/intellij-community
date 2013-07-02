@@ -51,11 +51,13 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     }
 
     @Override
-    protected boolean applyFix(RefElement[] refElements) {
+    protected boolean applyFix(RefEntity[] refElements) {
       final EntryPointsManager entryPointsManager =
         getContext().getExtension(GlobalJavaInspectionContextImpl.CONTEXT).getEntryPointsManager(getContext().getRefManager());
-      for (RefElement refElement : refElements) {
-        entryPointsManager.removeEntryPoint(refElement);
+      for (RefEntity refElement : refElements) {
+        if (refElement instanceof RefElement) {
+          entryPointsManager.removeEntryPoint((RefElement)refElement);
+        }
       }
 
       return true;

@@ -87,7 +87,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected boolean applyFix(RefElement[] refElements) {
+  protected boolean applyFix(RefEntity[] refElements) {
     throw new UnsupportedOperationException("");
   }
 

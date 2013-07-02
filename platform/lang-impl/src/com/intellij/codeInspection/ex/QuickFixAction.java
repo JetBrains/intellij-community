@@ -167,7 +167,7 @@ public class QuickFixAction extends AnAction {
     }
   }
 
-  public void doApplyFix(@NotNull final RefElement[] refElements, @NotNull InspectionResultsView view) {
+  public void doApplyFix(@NotNull final RefEntity[] refElements, @NotNull InspectionResultsView view) {
     final RefManagerImpl refManager = (RefManagerImpl)view.getGlobalInspectionContext().getRefManager();
 
     final boolean initial = refManager.isInProcess();
@@ -200,26 +200,26 @@ public class QuickFixAction extends AnAction {
     }
   }
 
-  public static void removeElements(@NotNull RefElement[] refElements, @NotNull Project project, @NotNull InspectionToolWrapper toolWrapper) {
+  public static void removeElements(@NotNull RefEntity[] refElements, @NotNull Project project, @NotNull InspectionToolWrapper toolWrapper) {
     refreshViews(project, refElements, toolWrapper);
     final ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
-    for (RefElement refElement : refElements) {
-      if (refElement == null) continue;
-      refElement.getRefManager().removeRefElement(refElement, deletedRefs);
+    for (RefEntity refElement : refElements) {
+      if (!(refElement instanceof RefElement)) continue;
+      refElement.getRefManager().removeRefElement((RefElement)refElement, deletedRefs);
     }
   }
 
-  private static Set<VirtualFile> getReadOnlyFiles(final RefElement[] refElements) {
+  private static Set<VirtualFile> getReadOnlyFiles(final RefEntity[] refElements) {
     Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
-    for (RefElement refElement : refElements) {
-      PsiElement psiElement = refElement.getElement();
+    for (RefEntity refElement : refElements) {
+      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
       if (psiElement == null || psiElement.getContainingFile() == null) continue;
       readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
     }
     return readOnlyFiles;
   }
 
-  private static RefElement[] getSelectedElements(AnActionEvent e) {
+  private static RefEntity[] getSelectedElements(AnActionEvent e) {
     final InspectionResultsView invoker = getInvoker(e);
     if (invoker == null) return new RefElement[0];
     List<RefEntity> selection = new ArrayList<RefEntity>(Arrays.asList(invoker.getTree().getSelectedElements()));
@@ -256,7 +256,7 @@ public class QuickFixAction extends AnAction {
       }
     });
 
-    return selection.toArray(new RefElement[selection.size()]);
+    return selection.toArray(new RefEntity[selection.size()]);
   }
 
   private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> selectedElements, @NotNull InspectionToolWrapper toolWrapper) {
@@ -270,10 +270,10 @@ public class QuickFixAction extends AnAction {
     }
   }
 
-  private static void refreshViews(@NotNull Project project, @NotNull RefElement[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
+  private static void refreshViews(@NotNull Project project, @NotNull RefEntity[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
-    for (RefElement element : refElements) {
-      final PsiElement psiElement = element != null ? element.getElement() : null;
+    for (RefEntity element : refElements) {
+      final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         ignoredElements.add(psiElement);
       }
@@ -283,8 +283,9 @@ public class QuickFixAction extends AnAction {
 
   /**
    * @return true if immediate UI update needed.
+   * @param refElements
    */
-  protected boolean applyFix(RefElement[] refElements) {
+  protected boolean applyFix(RefEntity[] refElements) {
     Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
     if (!readOnlyFiles.isEmpty()) {
       final Project project = refElements[0].getRefManager().getProject();

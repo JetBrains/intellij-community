@@ -162,11 +162,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(final RefElement[] refElements) {
+    protected boolean applyFix(final RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
       final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
-      for (RefElement refElement : refElements) {
-        PsiElement psiElement = refElement.getElement();
+      for (RefEntity refElement : refElements) {
+        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
         if (psiElement == null) continue;
         if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
         psiElements.add(psiElement);
@@ -199,10 +199,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(RefElement[] refElements) {
+    protected boolean applyFix(RefEntity[] refElements) {
       final EntryPointsManager entryPointsManager = getEntryPointsManager();
-      for (RefElement refElement : refElements) {
-        entryPointsManager.addEntryPoint(refElement, true);
+      for (RefEntity refElement : refElements) {
+        if (refElement instanceof RefElement) {
+          entryPointsManager.addEntryPoint((RefElement)refElement, true);
+        }
       }
 
       return true;
@@ -216,15 +218,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(RefElement[] refElements) {
+    protected boolean applyFix(RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
       ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
-      for (RefElement refElement : refElements) {
-        PsiElement psiElement = refElement.getElement();
+      for (RefEntity refElement : refElements) {
+        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
         if (psiElement == null) continue;
         if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
         commentOutDead(psiElement);
-        refElement.getRefManager().removeRefElement(refElement, deletedRefs);
+        refElement.getRefManager().removeRefElement((RefElement)refElement, deletedRefs);
       }
 
       EntryPointsManager entryPointsManager = getEntryPointsManager();
