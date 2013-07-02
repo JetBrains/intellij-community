@@ -129,12 +129,18 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @Override
   @NotNull
   public PsiClass[] getSupers() {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(getQualifiedName())) {
+      return PsiClass.EMPTY_ARRAY;
+    }
     return PsiClassImplUtil.getSupers(this);
   }
 
   @Override
   @NotNull
   public PsiClassType[] getSuperTypes() {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(getQualifiedName())) {
+      return PsiClassType.EMPTY_ARRAY;
+    }
     return PsiClassImplUtil.getSuperTypes(this);
   }
 
