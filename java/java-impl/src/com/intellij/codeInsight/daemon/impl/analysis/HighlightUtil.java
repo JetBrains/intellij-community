@@ -61,6 +61,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -2508,7 +2509,8 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkElementInReferenceList(@NotNull PsiJavaCodeReferenceElement ref,
                                                    @NotNull PsiReferenceList referenceList,
-                                                   @NotNull JavaResolveResult resolveResult) {
+                                                   @NotNull JavaResolveResult resolveResult,
+                                                   @NotNull MostlySingularMultiMap<MethodSignature,PsiMethod> duplicateMethods) {
     PsiElement resolved = resolveResult.getElement();
     HighlightInfo highlightInfo = null;
     PsiElement refGrandParent = referenceList.getParent();
@@ -2516,7 +2518,7 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiClass aClass = (PsiClass)resolved;
       if (refGrandParent instanceof PsiClass) {
         if (refGrandParent instanceof PsiTypeParameter) {
-          highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, resolveResult, ref);
+          highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, (PsiClass)refGrandParent, resolveResult, ref,duplicateMethods);
         }
         else {
           highlightInfo = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);

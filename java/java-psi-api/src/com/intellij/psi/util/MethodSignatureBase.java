@@ -41,9 +41,14 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myTypeParameters = typeParameters;
   }
 
-  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, PsiParameterList parameterList, @Nullable PsiTypeParameterList typeParameterList) {
+  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor,
+                                @Nullable PsiParameterList parameterList,
+                                @Nullable PsiTypeParameterList typeParameterList) {
     mySubstitutor = substitutor;
-    if (parameterList != null) {
+    if (parameterList == null) {
+      myParameterTypes = PsiType.EMPTY_ARRAY;
+    }
+    else {
       final PsiParameter[] parameters = parameterList.getParameters();
       myParameterTypes = parameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
@@ -51,9 +56,6 @@ public abstract class MethodSignatureBase implements MethodSignature {
         if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
         myParameterTypes[i] = substitutor.substitute(type);
       }
-    }
-    else {
-      myParameterTypes = PsiType.EMPTY_ARRAY;
     }
 
     myTypeParameters = typeParameterList == null ? PsiTypeParameter.EMPTY_ARRAY : typeParameterList.getTypeParameters();
@@ -74,7 +76,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
   public PsiType[] getErasedParameterTypes() {
     PsiType[] result = myErasedParameterTypes;
     if (result == null) {
-      myErasedParameterTypes = result = MethodSignatureUtil.getErasedParameterTypes(this);
+      myErasedParameterTypes = result = MethodSignatureUtil.calcErasedParameterTypes(this);
     }
     return result;
   }
