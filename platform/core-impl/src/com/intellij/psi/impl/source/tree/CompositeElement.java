@@ -855,7 +855,9 @@ public class CompositeElement extends TreeElement {
   // creates PSI and stores to the 'myWrapper', if not created already
   void createAllChildrenPsiIfNecessary() {
     synchronized (PsiLock.LOCK) { // guard for race condition with getPsi()
-      acceptTree(CREATE_CHILDREN_PSI);
+      for(TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        child.acceptTree(CREATE_CHILDREN_PSI);
+      }
     }
   }
   private static final RecursiveTreeElementWalkingVisitor CREATE_CHILDREN_PSI = new RecursiveTreeElementWalkingVisitor(false) {
