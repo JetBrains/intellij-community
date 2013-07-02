@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -143,7 +144,12 @@ public final class Responses {
   }
 
   public static void send(HttpResponse response, ChannelHandlerContext context, boolean close) {
-    ChannelFuture future = context.getChannel().write(response);
+    Channel channel = context.getChannel();
+    if (!channel.isOpen()) {
+      return;
+    }
+
+    ChannelFuture future = channel.write(response);
     if (close) {
       future.addListener(ChannelFutureListener.CLOSE);
     }
