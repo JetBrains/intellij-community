@@ -99,6 +99,9 @@ public class GrTypeComboBox extends ComboBox {
     }
 
     if (type != null && type.equalsToText(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) {
+      //suggest double as the second item after original BigDecimal
+      addItem(new PsiTypeItem(type));
+      types.remove(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
       addItem(new PsiTypeItem(PsiType.DOUBLE));
     }
 
