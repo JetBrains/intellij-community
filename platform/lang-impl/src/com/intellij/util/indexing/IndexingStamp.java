@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -141,7 +142,7 @@ public class IndexingStamp {
   }
 
   public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
-    synchronized (myTimestampsCache) {
+    synchronized (getStripedLock(file)) {
       Timestamps stamp = createOrGetTimeStamp(file);
       if (stamp != null) return stamp.get(indexName);
       return 0;
@@ -172,7 +173,7 @@ public class IndexingStamp {
   }
 
   public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
-    synchronized (myTimestampsCache) {
+    synchronized (getStripedLock(file)) {
       try {
         Timestamps stamp = createOrGetTimeStamp(file);
         if (stamp != null) stamp.set(indexName, indexCreationStamp);
@@ -200,7 +201,7 @@ public class IndexingStamp {
 
       if (files != null) {
         for(VirtualFile file:files) {
-          synchronized (myTimestampsCache) {
+          synchronized (getStripedLock(file)) {
             Timestamps timestamp = myTimestampsCache.remove(file);
             if (timestamp == null) continue;
             try {
@@ -218,5 +219,15 @@ public class IndexingStamp {
       }
       if (finishedFile != null) myFinishedFiles.offer(finishedFile);
     }
+  }
+
+  private static final Object[] ourLocks = new Object[16];
+  static {
+    for(int i = 0; i < ourLocks.length; ++i) ourLocks[i] = new Object();
+  }
+
+  private static Object getStripedLock(VirtualFile file) {
+    int id = ((VirtualFileWithId)file).getId();
+    return (id & 0xFF) % ourLocks.length;
   }
 }
