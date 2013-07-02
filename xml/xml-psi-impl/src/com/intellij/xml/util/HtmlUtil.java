@@ -119,7 +119,7 @@ public class HtmlUtil {
     "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment", "nobr"
   };
 
-  // flow elements are block or inline, so they shuld not close <p> for example
+  // flow elements are block or inline, so they should not close <p> for example
   @NonNls private static final String[] POSSIBLY_INLINE_TAGS =
     {"a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
       "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
