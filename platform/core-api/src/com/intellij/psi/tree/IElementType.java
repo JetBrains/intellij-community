@@ -194,8 +194,8 @@ public class IElementType {
     IElementType[] copy;
     ourRegistryReadLock.lock();
     try {
-      copy = new IElementType[ourCounter];
-      System.arraycopy(ourRegistry, 0, copy, 0, ourCounter);
+      copy = new IElementType[ourCounter - FIRST_TOKEN_INDEX];
+      System.arraycopy(ourRegistry, 0, copy, 0, ourCounter - FIRST_TOKEN_INDEX);
     } finally {
       ourRegistryReadLock.unlock();
     }
