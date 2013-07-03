@@ -807,7 +807,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder, myResolveHelper));
         }
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
-        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass,getDuplicateMethods(aClass)));
+        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
       }
       catch (IndexNotReadyException ignored) {
@@ -950,16 +950,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (resolved != null && parent instanceof PsiReferenceList) {
       if (!myHolder.hasErrorResults()) {
         PsiReferenceList referenceList = (PsiReferenceList)parent;
-        PsiElement refParent = referenceList.getParent();
-
-        MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods = refParent instanceof PsiClass ? getDuplicateMethods(
-          (PsiClass)refParent) : MostlySingularMultiMap.<MethodSignature, PsiMethod>emptyMap();
-        myHolder.add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result, duplicateMethods));
+        myHolder.add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result));
       }
     }
 
     if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference())) {
-      myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods((PsiClass)parent, getDuplicateMethods((PsiClass)parent)));
+      myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods((PsiClass)parent));
     }
 
     if (resolved instanceof PsiVariable) {

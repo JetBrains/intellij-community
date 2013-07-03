@@ -38,7 +38,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -389,8 +388,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkElementInTypeParameterExtendsList(@NotNull PsiReferenceList referenceList,
                                                                      @NotNull PsiClass aClass,
                                                                      @NotNull JavaResolveResult resolveResult,
-                                                                     @NotNull PsiElement element,
-                                                                     @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
+                                                                     @NotNull PsiElement element) {
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
     PsiClass extendFrom = (PsiClass)resolveResult.getElement();
     if (extendFrom == null) return null;
@@ -413,7 +411,7 @@ public class GenericsHighlightUtil {
     if (errorResult == null && JavaVersionService.getInstance().isAtLeast(referenceList, JavaSdkVersion.JDK_1_7) &&
         referenceElements.length > 1) {
       //todo suppress erased methods which come from the same class
-      return checkOverrideEquivalentMethods(aClass,duplicateMethods);
+      return checkOverrideEquivalentMethods(aClass);
     }
     return errorResult;
   }
@@ -467,14 +465,14 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkOverrideEquivalentMethods(@NotNull PsiClass aClass, @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
+  public static HighlightInfo checkOverrideEquivalentMethods(@NotNull PsiClass aClass) {
     final Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
     PsiManager manager = aClass.getManager();
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
       new THashMap<MethodSignature, MethodSignatureBackedByPsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
-      HighlightInfo info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods,duplicateMethods);
+      HighlightInfo info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
       if (info != null) return info;
     }
 
@@ -525,11 +523,10 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkSameErasureNotSubSignatureInner(final HierarchicalMethodSignature signature,
-                                                                    final PsiManager manager,
-                                                                    final PsiClass aClass,
-                                                                    final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods,
-                                                                    @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
+  private static HighlightInfo checkSameErasureNotSubSignatureInner(@NotNull HierarchicalMethodSignature signature,
+                                                                    @NotNull PsiManager manager,
+                                                                    @NotNull PsiClass aClass,
+                                                                    @NotNull Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
     PsiMethod method = signature.getMethod();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (!facade.getResolveHelper().isAccessible(method, aClass, null)) return null;
@@ -541,7 +538,7 @@ public class GenericsHighlightUtil {
           MethodSignatureUtil.findMethodBySuperMethod(aClass, sameErasure.getMethod(), false) != null ||
           !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) ||
             InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), sameErasure.getMethod().getContainingClass(), true))) {
-        info = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method,duplicateMethods);
+        info = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
         if (info != null) return info;
       }
     }
@@ -550,7 +547,7 @@ public class GenericsHighlightUtil {
     }
     List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
     for (HierarchicalMethodSignature superSignature : supers) {
-      info = checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods,duplicateMethods);
+      info = checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods);
       if (info != null) return info;
 
       if (superSignature.isRaw() && !signature.isRaw()) {
@@ -558,8 +555,6 @@ public class GenericsHighlightUtil {
         PsiType[] erasedTypes = superSignature.getErasedParameterTypes();
         for (int i = 0; i < erasedTypes.length; i++) {
           if (!Comparing.equal(parameterTypes[i], erasedTypes[i])) {
-            //duplicateMethods.removeAllValues(signatureToErase);
-            //duplicateMethods.add(signatureToErase,method);
             return getSameErasureMessage(false, method, superSignature.getMethod(),
                                          HighlightNamesUtil.getClassDeclarationTextRange(aClass));
           }
@@ -574,8 +569,7 @@ public class GenericsHighlightUtil {
   private static HighlightInfo checkSameErasureNotSubSignatureOrSameClass(final MethodSignatureBackedByPsiMethod signatureToCheck,
                                                                           final HierarchicalMethodSignature superSignature,
                                                                           final PsiClass aClass,
-                                                                          final PsiMethod superMethod,
-                                                                          @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
+                                                                          final PsiMethod superMethod) {
     final PsiMethod checkMethod = signatureToCheck.getMethod();
     if (superMethod.equals(checkMethod)) return null;
     PsiClass checkContainingClass = checkMethod.getContainingClass();
@@ -625,8 +619,6 @@ public class GenericsHighlightUtil {
       return null;
     }
     if (superContainingClass != null && !superContainingClass.isInterface() && checkContainingClass.isInterface() && !aClass.equals(superContainingClass)) return null;
-    //duplicateMethods.removeAllValues(checkMethod.getSignature(PsiSubstitutor.EMPTY)); // do not highlight other methods
-    //duplicateMethods.add(checkMethod.getSignature(PsiSubstitutor.EMPTY),checkMethod);
     if (aClass.equals(checkContainingClass)) {
       boolean sameClass = aClass.equals(superContainingClass);
       return getSameErasureMessage(sameClass, checkMethod, superMethod, HighlightNamesUtil.getMethodDeclarationTextRange(checkMethod));
@@ -636,9 +628,9 @@ public class GenericsHighlightUtil {
     }
   }
 
-  private static HighlightInfo getSameErasureMessage(final boolean sameClass, final PsiMethod method, final PsiMethod superMethod,
+  private static HighlightInfo getSameErasureMessage(final boolean sameClass, @NotNull PsiMethod method, @NotNull PsiMethod superMethod,
                                                      TextRange textRange) {
-    @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" :
+     @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" :
                                method.hasModifierProperty(PsiModifier.STATIC) ?
                                "generics.methods.have.same.erasure.hide" :
                                "generics.methods.have.same.erasure.override";
