@@ -237,6 +237,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA22005() throws Exception { doTest5(false);}
   public void testIDEA57259() throws Exception { doTest5(false);}
   public void testIDEA107957() throws Exception { doTest6(false);}
+  public void testIDEA109875() throws Exception { doTest6(false);}
   public void testIDEA106964() throws Exception { doTest5(false);}
   public void testIDEA107782() throws Exception { doTest5(false);}
   public void testInheritedWithDifferentArgsInTypeParams() throws Exception { doTest5(false);}
