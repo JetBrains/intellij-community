@@ -43,7 +43,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.Profile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +51,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -66,7 +64,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, ExportableComponent, JDOMExternalizable,
                                                                                    NamedComponent {
-  @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
@@ -89,8 +86,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
       @Override
       public InspectionProfileImpl readScheme(final Document document) {
-        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
-        load(profile, document.getRootElement());
+        InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
+        read(profile, document.getRootElement());
         return profile;
       }
 
@@ -130,7 +127,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
   }
 
-  private static void load(final InspectionProfileImpl profile, @NotNull Element element) {
+  private static void read(@NotNull final InspectionProfileImpl profile, @NotNull Element element) {
     try {
       profile.readExternal(element);
     }
@@ -226,47 +223,26 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()){
-      InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), myRegistrar, this);
-      Element rootElement = JDOMUtil.loadDocument(file).getRootElement();
-      final Element profileElement = rootElement.getChild("profile");
-      if (profileElement != null) {
-        rootElement = profileElement;
+      try {
+        return InspectionProfileLoadUtil.load(file, myRegistrar, this);
       }
-      load(profile, rootElement);
-      return profile;
+      catch (IOException e) {
+        throw e;
+      }
+      catch (JDOMException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
+                                     InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
+          }
+        }, ModalityState.NON_MODAL);
+      }
     }
     return getProfile(path, false);
-  }
-
-  private static String getProfileName(Document document) {
-    String name = getRootElementAttribute(document, PROFILE_NAME_TAG);
-    if (name != null) return name;
-    return "unnamed";
-  }
-
-  private static String getProfileName(File file) {
-    String name = getRootElementAttribute(file, PROFILE_NAME_TAG);
-    if (name != null) return name;
-    return FileUtil.getNameWithoutExtension(file);
-  }
-
-  private static String getRootElementAttribute(final Document document, @NonNls String name) {
-    Element root = document.getRootElement();
-    return root.getAttributeValue(name);
-  }
-
-  @Nullable
-  private static String getRootElementAttribute(final File file, @NonNls String name) {
-    try {
-      Document doc = JDOMUtil.loadDocument(file);
-      return getRootElementAttribute(doc, name);
-    }
-    catch (JDOMException e) {
-      return null;
-    }
-    catch (IOException e) {
-      return null;
-    }
   }
 
   @Override
@@ -331,9 +307,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     if (returnRootProfileIfNamedIsAbsent) {
       return getRootProfile();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @NotNull
@@ -371,6 +345,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return getProfile(name, true);
   }
 
+  @NotNull
   public SchemesManager<Profile, InspectionProfileImpl> getSchemesManager() {
     return mySchemesManager;
   }
