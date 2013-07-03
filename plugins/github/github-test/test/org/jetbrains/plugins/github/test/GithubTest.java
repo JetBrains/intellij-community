@@ -156,16 +156,13 @@ public abstract class GithubTest extends UsefulTestCase {
     Notification actualNotification = ((TestNotificator)ServiceManager.getService(myProject, Notificator.class)).getLastNotification();
     assertNotNull("No notification was shown", actualNotification);
 
-    System.out.println("Notification title: " + actualNotification.getTitle());
-    System.out.println("Notification content: " + actualNotification.getContent());
-
-    assertEquals("Notification has wrong type", type, actualNotification.getType());
     if (title != null) {
-      assertEquals("Notification has wrong title", title, actualNotification.getTitle());
+      assertEquals("Notification has wrong title (content: " + actualNotification.getContent() + ")", title, actualNotification.getTitle());
     }
     if (content != null) {
       assertEquals("Notification has wrong content", content, actualNotification.getContent());
     }
+    assertEquals("Notification has wrong type", type, actualNotification.getType());
   }
 
   protected void registerHttpAuthService() {
