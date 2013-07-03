@@ -17,32 +17,13 @@ package com.intellij.openapi.vfs;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface VFileProperty {
+import java.util.Locale;
+
+public enum VFileProperty {
+  HIDDEN, SPECIAL, SYMLINK;
+
   @NotNull
-  String getName();
-
-
-  class Impl implements VFileProperty {
-    private final String myName;
-
-    public Impl(@NotNull String name) {
-      myName = name;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
+  public String getName() {
+    return toString().toLowerCase(Locale.ENGLISH);
   }
-
-
-  VFileProperty HIDDEN = new Impl("hidden");
-  VFileProperty SPECIAL = new Impl("special");
-  VFileProperty SYMLINK = new Impl("symlink");
 }
