@@ -111,8 +111,7 @@ public class LayoutCodeDialog extends DialogWrapper {
       !myRbSelectedText.isSelected() &&
       !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty() && myRbFile.isSelected())
     );
-    myCbArrangeEntries.setEnabled(myRbFile.isSelected()
-                                  && myFile != null
+    myCbArrangeEntries.setEnabled(myFile != null
                                   && Rearranger.EXTENSION.forLanguage(myFile.getLanguage()) != null
     );
 
