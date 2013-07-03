@@ -3,7 +3,9 @@ package org.jetbrains.plugins.github;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import git4idea.commands.Git;
-import git4idea.test.GitExecutor;
+
+import static com.intellij.dvcs.test.Executor.cd;
+import static git4idea.test.GitExecutor.git;
 
 /**
  * @author Aleksey Pivovarov
@@ -42,10 +44,10 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     createProjectFiles();
 
-    GitExecutor.cd(myProjectRoot.getPath());
-    GitExecutor.git(myProjectRoot.getPath(), "init");
-    GitExecutor.git(myProjectRoot.getPath(), "add file.txt");
-    GitExecutor.git(myProjectRoot.getPath(), "commit -m init");
+    cd(myProjectRoot.getPath());
+    git("init");
+    git("add file.txt");
+    git("commit -m init");
 
     GithubShareAction.shareProjectOnGithub(myProject);
 
