@@ -55,7 +55,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static final String FAILED_TO_CREATE_GIST = "Can't create Gist";
 
   protected GithubCreateGistAction() {
-    super("Create Gist...", "Create github gist", GithubIcons.Github_icon);
+    super("Create Gist...", "Create GitHub Gist", GithubIcons.Github_icon);
   }
 
   @Override
