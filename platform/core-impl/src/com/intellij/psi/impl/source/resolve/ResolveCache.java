@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -189,6 +188,6 @@ public class ResolveCache {
     else {
       cached = new SoftGetter<TResult>(result);
     }
-    ConcurrencyUtil.cacheOrGet(map, ref, cached);
+    map.put(ref, cached);
   }
 }
