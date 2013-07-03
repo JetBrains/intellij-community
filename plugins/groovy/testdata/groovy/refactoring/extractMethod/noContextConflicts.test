@@ -19,7 +19,7 @@ class StringCategory {
         testMethod()
     }
 
-    private testMethod() {
+    private void testMethod() {
         use(StringCategory) {
             println "TeSt".lower()
         }

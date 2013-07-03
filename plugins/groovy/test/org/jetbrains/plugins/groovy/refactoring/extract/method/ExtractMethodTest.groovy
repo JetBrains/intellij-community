@@ -182,4 +182,20 @@ private String testMethod() {
 }
 ''')
   }
+
+  void testSingleExpressionAsReturnValue() {
+    doTest('''\
+int foo() {
+    <begin>1<end>
+}
+''', '''\
+int foo() {
+    testMethod()
+}
+
+private int testMethod() {
+    return 1
+}
+''')
+  }
 }

@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
@@ -103,10 +102,7 @@ public class InitialInfo implements ExtractInfoHelper {
       }
     }
     else if (ExtractUtil.isSingleExpression(statements)) {
-      final GrStatement single = statements[0];
-      if (!(single.getParent() instanceof GrCodeBlock)) {
-        outputType = ((GrExpression)single).getType();
-      }
+      outputType = ((GrExpression)statements[0]).getType();
     }
     else if (hasReturnValue) {
       assert returnStatements.size() > 0;
