@@ -192,9 +192,9 @@ public abstract class GithubTest extends UsefulTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    final String host = System.getProperty("test.github.host");
-    final String login = System.getProperty("test.github.login");
-    final String password = System.getProperty("test.github.password");
+    final String host = System.getenv("idea.test.github.host");
+    final String login = System.getenv("idea.test.github.login");
+    final String password = System.getenv("idea.test.github.password");
 
     // TODO change to assert when a stable Github testing server is ready
     assumeNotNull(host);
