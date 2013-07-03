@@ -43,6 +43,8 @@ public class StaticChecker {
 
     if (!(place instanceof GrReferenceExpression)) return true;
 
+    if (member instanceof PsiClass && PsiTreeUtil.isAncestor(member, place, false)) return true;
+
     GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
     final PsiClass containingClass = getContainingClass((PsiMember)member);
     if (qualifier != null) {

@@ -1524,4 +1524,21 @@ class MyCommand {
     myFixture.testHighlighting(true, false, true)
   }
 
+  void testInnerClassWithStaticMethod() {
+    testHighlighting('''\
+class A {
+    class B {
+        static foo() {}
+
+        static bar() {
+            B.foo() //correct
+        }
+    }
+
+    static foo() {
+      new <error descr="Cannot reference non-static symbol 'A.B' from static context">B</error>()
+    }
+}
+''')
+  }
 }
