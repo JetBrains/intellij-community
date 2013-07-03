@@ -768,6 +768,7 @@ def layout_core_upsource(String home, String target) {
       module("InspectionGadgetsAnalysis")
       module("xml-psi-api")
       module("xml-psi-impl")
+      module("resources") // IdeaPlugin.xml
     }
 
     jar("annotations.jar") {
