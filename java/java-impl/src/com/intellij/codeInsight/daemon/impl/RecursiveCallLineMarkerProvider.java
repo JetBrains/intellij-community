@@ -63,7 +63,7 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider {
 
   public static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
-    if (method == null) {
+    if (method == null || !method.getName().equals(methodCall.getMethodExpression().getReferenceName())) {
       return false;
     }
 
