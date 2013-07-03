@@ -18,6 +18,7 @@ package com.intellij.codeHighlighting;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
@@ -111,7 +112,9 @@ public class HighlightDisplayLevel {
   private static Icon createIconByMask(@NotNull TextAttributesKey key) {
     Icon icon = createIconByMaskFromExtensions(key);
     if (icon != null) return icon;
-    return createIconByMask(key.getDefaultAttributes().getErrorStripeColor());
+    TextAttributes defaultAttributes = key.getDefaultAttributes();
+    if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
+    return createIconByMask(defaultAttributes.getErrorStripeColor());
   }
 
   public interface IconCreator {
