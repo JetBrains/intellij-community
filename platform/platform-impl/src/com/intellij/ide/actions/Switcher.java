@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
@@ -1104,7 +1105,8 @@ public class Switcher extends AnAction implements DumbAware {
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
 
-        final Color color = FileColorManager.getInstance(myProject).getFileColor(virtualFile);
+        // calc color the same way editor tabs do this, i.e. including extensions
+        Color color = EditorTabbedContainer.calcTabColor(myProject, virtualFile);
 
         if (!selected &&  color != null) {
           setBackground(color);
