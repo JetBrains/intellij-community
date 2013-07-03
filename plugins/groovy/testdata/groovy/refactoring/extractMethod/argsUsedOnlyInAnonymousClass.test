@@ -10,8 +10,8 @@ def foo(b, c) {
     testMethod(b, c)
 }
 
-private testMethod(b, c) {
-    [].each(new Closure(this, this) {
+private ArrayList testMethod(b, c) {
+    return [].each(new Closure(this, this) {
         void call() {
             b.plus(c)
         }
