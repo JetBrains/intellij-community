@@ -63,7 +63,6 @@ public class HgBookmarkDialog extends DialogWrapper {
     JLabel icon = new JLabel(UIUtil.getQuestionIcon(), SwingConstants.LEFT);
     myBookmarkName = new JBTextField(13);
 
-
     JBLabel bookmarkLabel = new JBLabel("Bookmark name:");
     bookmarkLabel.setLabelFor(myBookmarkName);
 
