@@ -29,8 +29,8 @@ import static org.jetbrains.plugins.github.GithubCreateGistAction.NamedContent;
  * @author Aleksey Pivovarov
  */
 public abstract class GithubCreateGistTestBase extends GithubTest {
-  protected static String GIST_ID = null;
-  protected static JsonObject GIST = null;
+  protected String GIST_ID = null;
+  protected JsonObject GIST = null;
 
   @Override
   public void setUp() throws Exception {
@@ -43,14 +43,9 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     super.tearDown();
   }
 
-  protected void deleteGist() {
+  protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
-      try {
-        GithubUtil.deleteGist(GithubUtil.getAuthData(), GIST_ID);
-      }
-      catch (IOException e) {
-        System.err.println(e.getMessage());
-      }
+      GithubUtil.deleteGist(myGitHubSettings.getAuthData(), GIST_ID);
       GIST = null;
       GIST_ID = null;
     }
@@ -68,12 +63,12 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   }
 
   @NotNull
-  protected static JsonObject getGist() {
+  protected JsonObject getGist() {
     assertNotNull(GIST_ID);
 
     if (GIST == null) {
       try {
-        GIST = GithubUtil.getGist(GithubUtil.getAuthData(), GIST_ID);
+        GIST = GithubUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID);
       }
       catch (IOException e) {
         System.err.println(e.getMessage());
@@ -84,41 +79,41 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     return GIST;
   }
 
-  protected static void checkGistExists() {
+  protected void checkGistExists() {
     getGist();
   }
 
-  protected static void checkGistPublic() {
+  protected void checkGistPublic() {
     JsonObject result = getGist();
 
     assertTrue("Gist does not public", result.get("public").getAsBoolean());
   }
 
-  protected static void checkGistPrivate() {
+  protected void checkGistPrivate() {
     JsonObject result = getGist();
 
     assertFalse("Gist does not private", result.get("public").getAsBoolean());
   }
 
-  protected static void checkGistAnonymous() {
+  protected void checkGistAnonymous() {
     JsonObject result = getGist();
 
     assertTrue("Gist does not anonymous", result.get("user").isJsonNull());
   }
 
-  protected static void checkGistNotAnonymous() {
+  protected void checkGistNotAnonymous() {
     JsonObject result = getGist();
 
     assertFalse("Gist does not anonymous", result.get("user").isJsonNull());
   }
 
-  protected static void checkGistDescription(@NotNull String expected) {
+  protected void checkGistDescription(@NotNull String expected) {
     JsonObject result = getGist();
 
     assertEquals("Gist content differs from sample", expected, result.get("description").getAsString());
   }
 
-  protected static void checkGistContent(@NotNull List<NamedContent> expected) {
+  protected void checkGistContent(@NotNull List<NamedContent> expected) {
     JsonObject result = getGist();
 
     JsonObject files = result.get("files").getAsJsonObject();
@@ -129,7 +124,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     }
   }
 
-  protected static void checkEquals(@NotNull List<NamedContent> expected, @NotNull List<NamedContent> actual) {
+  protected void checkEquals(@NotNull List<NamedContent> expected, @NotNull List<NamedContent> actual) {
     for (NamedContent file : expected) {
       assertTrue("Not found: <" + file.getName() + "> " + file.getText(), actual.contains(file));
     }

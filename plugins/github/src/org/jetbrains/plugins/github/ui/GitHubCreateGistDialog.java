@@ -40,16 +40,12 @@ public class GitHubCreateGistDialog extends DialogWrapper {
     myGithubCreateGistPanel.setAnonymous(settings.isAnonymous());
     myGithubCreateGistPanel.setPrivate(settings.isPrivateGist());
     myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
-    if (editor != null) {
-      if (file != null) {
-        myGithubCreateGistPanel.showFileNameField(file.getName());
-      }
-      else {
-        myGithubCreateGistPanel.showFileNameField("");
-      }
-    }
-    else if (file != null && !file.isDirectory()) {
+
+    if (file != null && !file.isDirectory()) {
       myGithubCreateGistPanel.showFileNameField(file.getName());
+    }
+    else if (editor != null) {
+      myGithubCreateGistPanel.showFileNameField("");
     }
     setTitle("Create Gist");
     init();

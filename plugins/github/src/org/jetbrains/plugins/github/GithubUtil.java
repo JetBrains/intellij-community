@@ -54,7 +54,7 @@ public class GithubUtil {
   public static GithubAuthData runAndGetValidAuth(@NotNull Project project,
                                                   @NotNull ProgressIndicator indicator,
                                                   @NotNull ThrowableConsumer<GithubAuthData, IOException> task) throws IOException {
-    GithubAuthData auth = getAuthData();
+    GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
       task.consume(auth);
       return auth;
@@ -81,12 +81,6 @@ public class GithubUtil {
     }
   }
 
-  @NotNull
-  public static GithubAuthData getAuthData() {
-    GithubSettings settings = GithubSettings.getInstance();
-    return new GithubAuthData(settings.getHost(), settings.getLogin(), settings.getPassword());
-  }
-
   @Nullable
   public static GithubAuthData getValidAuthData(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
@@ -104,13 +98,13 @@ public class GithubUtil {
 
   @Nullable
   public static GithubAuthData getValidAuthDataFromConfig(@NotNull Project project, @NotNull ProgressIndicator indicator) {
-    GithubAuthData auth = getAuthData();
+    GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     boolean valid = false;
     try {
       valid = checkAuthData(auth);
     }
     catch (IOException e) {
-      // ignore
+      LOG.error("Connection error", e);
     }
     if (!valid) {
       return getValidAuthData(project, indicator);
@@ -303,17 +297,18 @@ public class GithubUtil {
    */
   @Nullable
   public static String getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
-    String url = removeEndingDotGit(remoteUrl);
+    remoteUrl = removeEndingDotGit(remoteUrl);
     int index;
-    index = url.lastIndexOf('/');
+    index = remoteUrl.lastIndexOf('/');
     if (index == -1) {
       return null;
     }
-    index = url.substring(0, index).lastIndexOf('/');
+    String url = remoteUrl.substring(0, index);
+    index = Math.max(url.lastIndexOf('/'), url.lastIndexOf(':'));
     if (index == -1) {
       return null;
     }
-    return url.substring(index + 1);
+    return remoteUrl.substring(index + 1);
   }
 
   /**

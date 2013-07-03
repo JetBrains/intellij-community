@@ -17,14 +17,12 @@ package org.jetbrains.plugins.github.test;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import git4idea.DialogManager;
@@ -41,8 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
-
-import java.io.IOException;
 
 import static org.junit.Assume.assumeNotNull;
 
@@ -83,77 +79,13 @@ public abstract class GithubTest extends UsefulTestCase {
   }
 
   protected void createProjectFiles() {
-    createFile("file.txt");
-    createFile("file");
-    createFile("folder/file1");
-    createFile("folder/file2");
-    createFile("folder/empty_file", "");
-    createFile("folder/empty_folder/");
-    createFile("folder/dir/file3");
-  }
-
-  protected void createFile(@NotNull String path) {
-    createFile(path, path.substring(path.lastIndexOf('/') + 1) + " content");
-  }
-
-  protected void createFile(@NotNull String path, @NotNull String content) {
-    String[] pathElements = path.split("/");
-    boolean lastIsDir = path.endsWith("/");
-    VirtualFile currentParent = myProjectRoot;
-    for (int i = 0; i < pathElements.length - 1; i++) {
-      currentParent = createDir(myProject, currentParent, pathElements[i]);
-    }
-
-    String lastElement = pathElements[pathElements.length - 1];
-    if (lastIsDir) {
-      createDir(myProject, currentParent, lastElement);
-    }
-    else {
-      createFile(myProject, currentParent, lastElement, content);
-    }
-  }
-
-  protected static VirtualFile createFile(@NotNull Project project,
-                                          @NotNull final VirtualFile parent,
-                                          @NotNull final String name,
-                                          @Nullable final String content) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile file = parent.createChildData(this, name);
-          if (content != null) {
-            file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
-          }
-          result.set(file);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
-    return result.get();
-  }
-
-  protected static VirtualFile createDir(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile dir = parent.findChild(name);
-          if (dir == null) {
-            dir = parent.createChildDirectory(this, name);
-          }
-          result.set(dir);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
-    return result.get();
+    VfsTestUtil.createFile(myProjectRoot, "file.txt", "file.txt content");
+    VfsTestUtil.createFile(myProjectRoot, "file", "file content");
+    VfsTestUtil.createFile(myProjectRoot, "folder/file1", "file1 content");
+    VfsTestUtil.createFile(myProjectRoot, "folder/file2", "file2 content");
+    VfsTestUtil.createFile(myProjectRoot, "folder/empty_file");
+    VfsTestUtil.createFile(myProjectRoot, "folder/dir/file3", "file3 content");
+    VfsTestUtil.createDir (myProjectRoot, "folder/empty_folder");
   }
 
   protected void checkNotification(@NotNull NotificationType type, @Nullable String title, @Nullable String content) {

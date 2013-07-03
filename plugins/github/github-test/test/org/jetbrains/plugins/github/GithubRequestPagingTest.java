@@ -25,10 +25,10 @@ import java.util.List;
  */
 public class GithubRequestPagingTest extends GithubTest {
 
-  public void testCase() throws Throwable {
+  public void testAvailableRepos() throws Throwable {
     GithubSettings.getInstance().setAuthData(auth2, false);
 
-    List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(GithubUtil.getAuthData());
+    List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(myGitHubSettings.getAuthData());
     List<String> realData = new ArrayList<String>();
     for (RepositoryInfo info : availableRepos) {
       realData.add(info.getName());

@@ -44,6 +44,7 @@ abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
     if (userAndRepository == null) {
       GithubNotifications
         .showError(project, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER, "Cannot extract info about repository: " + url);
+      return;
     }
 
     String githubUrl = GithubApiUtil.getGitHost() + "/" + userAndRepository + "/commit/" + revisionHash;

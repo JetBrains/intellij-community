@@ -198,4 +198,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     setLogin(auth.getLogin());
     setPassword(auth.getPassword(), rememberPassword);
   }
+
+  @NotNull
+  public GithubAuthData getAuthData() {
+    return new GithubAuthData(getHost(), getLogin(), getPassword());
+  }
 }

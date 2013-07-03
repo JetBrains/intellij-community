@@ -15,19 +15,12 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import git4idea.GitUtil;
-import git4idea.Notificator;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.test.GitExecutor;
 import git4idea.test.TestDialogHandler;
-import git4idea.test.TestNotificator;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
@@ -38,12 +31,14 @@ import java.util.Random;
  * @author Aleksey Pivovarov
  */
 public abstract class GithubShareProjectTestBase extends GithubTest {
-  protected static String PROJECT_NAME;
+  protected String PROJECT_NAME;
+  protected GitRepositoryManager myGitRepositoryManager;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
+    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
     Random rnd = new Random();
     PROJECT_NAME = "new_project_from_share_test_" + rnd.nextLong();
     registerHttpAuthService();
@@ -55,13 +50,8 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
     super.tearDown();
   }
 
-  protected void deleteGithubRepo() {
-    try {
-      GithubUtil.deleteGithubRepository(GithubUtil.getAuthData(), PROJECT_NAME);
-    }
-    catch (IOException e) {
-      System.err.println(e.getMessage());
-    }
+  protected void deleteGithubRepo() throws IOException {
+    GithubUtil.deleteGithubRepository(myGitHubSettings.getAuthData(), PROJECT_NAME);
   }
 
   protected void registerDefaultShareDialogHandler() {
@@ -85,27 +75,25 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void checkGithubExists() {
-    RepositoryInfo githubInfo = GithubUtil.getDetailedRepoInfo(GithubUtil.getAuthData(), GithubUtil.getAuthData().getLogin(), PROJECT_NAME);
+    GithubAuthData auth = myGitHubSettings.getAuthData();
+    RepositoryInfo githubInfo = GithubUtil.getDetailedRepoInfo(auth, auth.getLogin(), PROJECT_NAME);
     assertNotNull("Github repository does not exist", githubInfo);
   }
 
   protected void checkGitExists() {
-    final GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
-    final GitRepository gitRepository = manager.getRepositoryForFile(myProjectRoot);
+    final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
     assertNotNull("Git repository does not exist", gitRepository);
   }
 
   protected void checkRemoteConfigured() {
-    final GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
-    final GitRepository gitRepository = manager.getRepositoryForFile(myProjectRoot);
+    final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
     assertNotNull(gitRepository);
 
     assertNotNull("Github remote does not configured", GithubUtil.findGithubRemoteUrl(gitRepository));
   }
 
   protected void checkLastCommitPushed() {
-    final GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
-    final GitRepository gitRepository = manager.getRepositoryForFile(myProjectRoot);
+    final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
     assertNotNull(gitRepository);
 
     String hash = GitExecutor.git(gitRepository, "log -1 --pretty=%h");

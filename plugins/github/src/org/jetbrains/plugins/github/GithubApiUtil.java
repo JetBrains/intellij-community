@@ -151,7 +151,7 @@ public class GithubApiUtil {
            case HEAD:
              return new HeadMethod(uri);
            default:
-             throw new IllegalStateException("Wrong HttpVerb: unknown method");
+             throw new IllegalStateException("Wrong HttpVerb: unknown method: " + verb.toString());
          }
        }
      });

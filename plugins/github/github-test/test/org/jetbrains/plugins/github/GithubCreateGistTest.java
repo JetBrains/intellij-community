@@ -29,7 +29,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testSimple() throws Throwable {
     List<NamedContent> expected = createContent();
 
-    String url = GithubCreateGistAction.createGist(myProject, GithubUtil.getAuthData(), expected, true, "description", null);
+    String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, true, "description", null);
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -57,7 +57,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testUnusedFilenameField() throws Throwable {
     List<NamedContent> expected = createContent();
 
-    String url = GithubCreateGistAction.createGist(myProject, GithubUtil.getAuthData(), expected, true, "description", "filename");
+    String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, true, "description", "filename");
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -72,7 +72,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     List<NamedContent> content = Collections.singletonList(new NamedContent("file.txt", "file.txt content"));
     List<NamedContent> expected = Collections.singletonList(new NamedContent("filename", "file.txt content"));
 
-    String url = GithubCreateGistAction.createGist(myProject, GithubUtil.getAuthData(), content, true, "description", "filename");
+    String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), content, true, "description", "filename");
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -86,7 +86,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testPublic() throws Throwable {
     List<NamedContent> expected = createContent();
 
-    String url = GithubCreateGistAction.createGist(myProject, GithubUtil.getAuthData(), expected, false, "description", null);
+    String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, false, "description", null);
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -100,7 +100,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testEmpty() throws Throwable {
     List<NamedContent> expected = Collections.emptyList();
 
-    String url = GithubCreateGistAction.createGist(myProject, GithubUtil.getAuthData(), expected, true, "description", null);
+    String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, true, "description", null);
     assertNull("Gist was created", url);
 
     checkNotification(NotificationType.WARNING, "Can't create Gist", "Can't create empty gist");
@@ -109,7 +109,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testWrongLogin() throws Throwable {
     List<NamedContent> expected = createContent();
 
-    GithubAuthData auth = GithubUtil.getAuthData();
+    GithubAuthData auth = myGitHubSettings.getAuthData();
     GithubAuthData myAuth = new GithubAuthData(auth.getHost(), auth.getLogin() + "some_suffix", auth.getPassword());
     String url = GithubCreateGistAction.createGist(myProject, myAuth, expected, true, "description", null);
     assertNull("Gist was created", url);
@@ -120,7 +120,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testWrongPassword() throws Throwable {
     List<NamedContent> expected = createContent();
 
-    GithubAuthData auth = GithubUtil.getAuthData();
+    GithubAuthData auth = myGitHubSettings.getAuthData();
     GithubAuthData myAuth = new GithubAuthData(auth.getHost(), auth.getLogin(), auth.getPassword() + "some_suffix");
     String url = GithubCreateGistAction.createGist(myProject, myAuth, expected, true, "description", null);
     assertNull("Gist was created", url);
