@@ -195,13 +195,6 @@ public abstract class GithubTest extends UsefulTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
-    myProjectFixture.setUp();
-
-    myProject = myProjectFixture.getProject();
-    myProjectRoot = myProject.getBaseDir();
-
     final String host = System.getProperty("test.github.host");
     final String login = System.getProperty("test.github.login");
     final String password = System.getProperty("test.github.password");
@@ -210,6 +203,14 @@ public abstract class GithubTest extends UsefulTestCase {
     assumeNotNull(host);
     assumeNotNull(login);
     assumeNotNull(password);
+
+    super.setUp();
+
+    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
+    myProjectFixture.setUp();
+
+    myProject = myProjectFixture.getProject();
+    myProjectRoot = myProject.getBaseDir();
 
     myGitSettings = GitVcsSettings.getInstance(myProject);
     myGitSettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
