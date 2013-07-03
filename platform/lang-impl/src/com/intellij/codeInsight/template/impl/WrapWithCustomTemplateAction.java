@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 import java.util.Set;
@@ -63,6 +64,7 @@ public class WrapWithCustomTemplateAction extends AnAction {
 
     if (selection != null) {
       selection = selection.trim();
+      PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
       myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile, true));
     }
   }
