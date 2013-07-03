@@ -60,38 +60,21 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    final long startTime = System.nanoTime();
-    try {
-      final Project project = e.getData(PlatformDataKeys.PROJECT);
-      if (project == null || project.isDefault()) {
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-      final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-
-      if (editor == null && file == null && files == null) {
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-
-      if (editor != null && editor.getDocument().getTextLength() == 0) {
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(true);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null || project.isDefault()) {
+      e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabled(false);
+      return;
     }
-    finally {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("GithubCreateGistAction#update finished in: " + (System.nanoTime() - startTime) / 10e6 + "ms");
-      }
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+
+    if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
+      GithubUtil.setVisibleEnabled(e, false, false);
+      return;
     }
+    GithubUtil.setVisibleEnabled(e, true, true);
   }
 
   @Override
