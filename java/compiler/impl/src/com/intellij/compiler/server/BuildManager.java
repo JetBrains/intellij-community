@@ -500,11 +500,38 @@ public class BuildManager implements ApplicationComponent{
     final Project project, final boolean isRebuild, final boolean isMake,
     final boolean onlyCheckUpToDate, final List<TargetTypeBuildScope> scopes,
     final Collection<String> paths,
-    final Map<String, String> userData, final DefaultMessageHandler handler) {
+    final Map<String, String> userData, final DefaultMessageHandler messageHandler) {
 
     final String projectPath = getProjectPath(project);
     final UUID sessionId = UUID.randomUUID();
+    final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
+    final BuilderMessageHandler handler = new MessageHandlerWrapper(messageHandler) {
+      @Override
+      public void buildStarted(UUID sessionId) {
+        super.buildStarted(sessionId);
+        try {
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).buildStarted(project, sessionId, isAutomake);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
 
+      @Override
+      public void sessionTerminated(UUID sessionId) {
+        try {
+          super.sessionTerminated(sessionId);
+        }
+        finally {
+          try {
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).buildFinished(project, sessionId, isAutomake);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+      }
+    };
     // ensure server is listening
     if (myListenPort < 0) {
       try {
@@ -578,7 +605,7 @@ public class BuildManager implements ApplicationComponent{
                                                          userData, globals, currentFSChanges);
           }
 
-          myMessageDispatcher.registerBuildMessageHandler(sessionId, new BuilderMessageHandlerWrapper(handler) {
+          myMessageDispatcher.registerBuildMessageHandler(sessionId, new MessageHandlerWrapper(handler) {
             @Override
             public void sessionTerminated(UUID sessionId) {
               try {
@@ -979,34 +1006,6 @@ public class BuildManager implements ApplicationComponent{
       builder.append(FileUtil.toCanonicalPath(file));
     }
     return builder.toString();
-  }
-
-  private static class BuilderMessageHandlerWrapper implements BuilderMessageHandler {
-    private final DefaultMessageHandler myHandler;
-
-    public BuilderMessageHandlerWrapper(DefaultMessageHandler handler) {
-      myHandler = handler;
-    }
-
-    @Override
-    public void buildStarted(UUID sessionId) {
-      myHandler.buildStarted(sessionId);
-    }
-
-    @Override
-    public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
-      myHandler.handleBuildMessage(channel, sessionId, msg);
-    }
-
-    @Override
-    public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-      myHandler.handleFailure(sessionId, failure);
-    }
-
-    @Override
-    public void sessionTerminated(UUID sessionId) {
-      myHandler.sessionTerminated(sessionId);
-    }
   }
 
   private static abstract class BuildManagerPeriodicTask implements Runnable {
