@@ -327,6 +327,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     myStatusLine.setFraction((double)count / total);
     updateStatusLine();
+    TestsUIUtil.showIconProgress(project, count, total, failed.size());
   }
 
   private TestProxy getPackageClassNodeFor(final TestResultMessage result) {
@@ -456,6 +457,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   public void dispose() {
     super.dispose();
     tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
+    TestsUIUtil.clearIconProgress(project);
   }
 
   public TestProxy getFailedToStart() {
