@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -91,18 +92,19 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
   }
 
   public boolean processFile(NewVirtualFile file) {
-    if (file.isDirectory() || file.is(VirtualFile.PROP_SPECIAL)) return true;
+    if (file.isDirectory() || file.is(VFileProperty.SPECIAL)) {
+      return true;
+    }
     try {
       DataInputStream stream = FSRecords.readContent(file.getId());
       if (stream == null) return true;
       byte[] bytes = FileUtil.loadBytes(stream);
       totalSize.addAndGet(bytes.length);
       count.incrementAndGet();
-
       ProgressManager.getInstance().getProgressIndicator().setText(file.getPresentableUrl());
     }
-    catch (IOException e1) {
-      LOG.error(e1);
+    catch (IOException e) {
+      LOG.error(e);
     }
     return true;
   }

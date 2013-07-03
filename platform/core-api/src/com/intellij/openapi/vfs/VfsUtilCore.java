@@ -280,7 +280,7 @@ public class VfsUtilCore {
    * Returns {@code true} if given virtual file represents broken symbolic link (which points to non-existent file).
    */
   public static boolean isBrokenLink(@NotNull VirtualFile file) {
-    return file.isSymLink() && file.getCanonicalPath() == null;
+    return file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null;
   }
 
   /**

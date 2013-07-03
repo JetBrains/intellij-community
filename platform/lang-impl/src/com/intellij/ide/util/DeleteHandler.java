@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.psi.PsiDirectory;
@@ -193,7 +194,7 @@ public class DeleteHandler {
           if (!elementToDelete.isValid()) continue; //was already deleted
           if (elementToDelete instanceof PsiDirectory) {
             VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
-            if (virtualFile.isInLocalFileSystem() && !virtualFile.isSymLink()) {
+            if (virtualFile.isInLocalFileSystem() && !virtualFile.is(VFileProperty.SYMLINK)) {
               ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
               CommonRefactoringUtil.collectReadOnlyFiles(virtualFile, readOnlyFiles);
 

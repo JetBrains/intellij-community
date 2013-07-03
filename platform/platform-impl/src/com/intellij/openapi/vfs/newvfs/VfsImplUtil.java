@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,7 @@ public class VfsImplUtil {
     for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
-        if (file.isSymLink()) {
+        if (file.is(VFileProperty.SYMLINK)) {
           final NewVirtualFile canonicalFile = file.getCanonicalFile();
           file = canonicalFile != null ? canonicalFile.getParent() : null;
         }
@@ -71,7 +72,7 @@ public class VfsImplUtil {
     for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
-        if (file.isSymLink()) {
+        if (file.is(VFileProperty.SYMLINK)) {
           final String canonicalPath = file.getCanonicalPath();
           final NewVirtualFile canonicalFile = canonicalPath != null ? findFileByPathIfCached(vfs, canonicalPath) : null;
           file = canonicalFile != null ? canonicalFile.getParent() : null;
@@ -101,7 +102,7 @@ public class VfsImplUtil {
     for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
-        if (file.isSymLink()) {
+        if (file.is(VFileProperty.SYMLINK)) {
           final String canonicalPath = file.getCanonicalPath();
           final NewVirtualFile canonicalFile = canonicalPath != null ? refreshAndFindFileByPath(vfs, canonicalPath) : null;
           file = canonicalFile != null ? canonicalFile.getParent() : null;

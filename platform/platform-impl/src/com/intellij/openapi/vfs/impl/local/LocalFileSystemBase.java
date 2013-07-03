@@ -474,7 +474,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static boolean shallUseSafeStream(final Object requestor, @NotNull VirtualFile file) {
-    return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite() && !file.isSymLink();
+    return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite() && !file.is(VFileProperty.SYMLINK);
   }
 
   @Override

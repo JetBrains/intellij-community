@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -268,7 +269,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
-    if (fileType.isBinary() || file.is(VirtualFile.PROP_SPECIAL)) {
+    if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
     if (!isTooLargeForIntelligence(file)) {
@@ -539,8 +540,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     private final PsiFileImpl myFile;
     private volatile String myContent = null;
     private final long myModificationStamp;
-    
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private final List<FileElement> myFileElementHardRefs = new SmartList<FileElement>();
 
     private PsiFileContent(final PsiFileImpl file, final long modificationStamp) {

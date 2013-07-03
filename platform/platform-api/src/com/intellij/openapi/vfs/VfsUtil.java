@@ -75,7 +75,7 @@ public class VfsUtil extends VfsUtilCore {
                                    @Nullable VirtualFileFilter filter) throws IOException {
     @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = fromDir.getChildren();
     for (VirtualFile child : children) {
-      if (!child.isSymLink() && !child.is(VirtualFile.PROP_SPECIAL) && (filter == null || filter.accept(child))) {
+      if (!child.is(VFileProperty.SYMLINK) && !child.is(VFileProperty.SPECIAL) && (filter == null || filter.accept(child))) {
         if (!child.isDirectory()) {
           copyFile(requestor, child, toDir);
         }

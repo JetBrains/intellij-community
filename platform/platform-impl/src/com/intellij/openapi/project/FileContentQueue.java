@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,7 @@ public class FileContentQueue {
   private void addLast(VirtualFile file, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     FileContent content = new FileContent(file);
 
-    if (file.isValid() && !file.isDirectory() && !file.is(VirtualFile.PROP_SPECIAL) && !VfsUtilCore.isBrokenLink(file)) {
+    if (file.isValid() && !file.isDirectory() && !file.is(VFileProperty.SPECIAL) && !VfsUtilCore.isBrokenLink(file)) {
       if (!doLoadContent(content, indicator)) {
         content.setEmptyContent();
       }

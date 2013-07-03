@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -90,7 +91,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private void updateLinkStatus() {
-    boolean isSymLink = isSymLink();
+    boolean isSymLink = is(VFileProperty.SYMLINK);
     if (isSymLink) {
       String target = myParent.getFileSystem().resolveSymLink(this);
       putUserData(SYMLINK_TARGET, target != null ? FileUtil.toSystemIndependentName(target) : target);
@@ -412,14 +413,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean isSymLink() {
-    return getFlagInt(IS_SYMLINK_FLAG);
-  }
-
-  @Override
-  public boolean is(String property) {
-    if (property == PROP_SPECIAL) return getFlagInt(IS_SPECIAL_FLAG);
-    if (property == PROP_HIDDEN) return getFlagInt(IS_HIDDEN_FLAG);
+  public boolean is(@NotNull VFileProperty property) {
+    if (property == VFileProperty.SPECIAL) return getFlagInt(IS_SPECIAL_FLAG);
+    if (property == VFileProperty.HIDDEN) return getFlagInt(IS_HIDDEN_FLAG);
+    if (property == VFileProperty.SYMLINK) return getFlagInt(IS_SYMLINK_FLAG);
     return super.is(property);
   }
 
@@ -431,7 +428,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public String getCanonicalPath() {
     if (getFlagInt(HAS_SYMLINK_FLAG)) {
-      if (isSymLink()) {
+      if (is(VFileProperty.SYMLINK)) {
         return getUserData(SYMLINK_TARGET);
       }
       VirtualDirectoryImpl parent = myParent;

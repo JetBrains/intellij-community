@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -194,7 +195,7 @@ public class RefreshWorker {
         }
 
         if (SystemInfo.isWindows) {
-          boolean currentHidden = file.is(VirtualFile.PROP_HIDDEN);
+          boolean currentHidden = file.is(VFileProperty.HIDDEN);
           boolean upToDateHidden = attributes.isHidden();
           if (currentHidden != upToDateHidden) {
             scheduleAttributeChange(file, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
@@ -221,8 +222,8 @@ public class RefreshWorker {
                                                    @NotNull VirtualFile child,
                                                    @NotNull FileAttributes childAttributes) {
     boolean currentIsDirectory = child.isDirectory();
-    boolean currentIsSymlink = child.isSymLink();
-    boolean currentIsSpecial = child.is(VirtualFile.PROP_SPECIAL);
+    boolean currentIsSymlink = child.is(VFileProperty.SYMLINK);
+    boolean currentIsSpecial = child.is(VFileProperty.SPECIAL);
     boolean upToDateIsDirectory = childAttributes.isDirectory();
     boolean upToDateIsSymlink = childAttributes.isSymLink();
     boolean upToDateIsSpecial = childAttributes.isSpecial();

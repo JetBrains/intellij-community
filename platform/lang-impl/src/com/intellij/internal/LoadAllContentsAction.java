@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -66,7 +67,7 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
           @Override
           public boolean processFile(VirtualFile fileOrDir) {
-            if (fileOrDir.isDirectory() || fileOrDir.is(VirtualFile.PROP_SPECIAL)) {
+            if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
               return true;
             }
             try {
