@@ -134,12 +134,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
         else {
           int selection;
-          PsiExpression expression = expressions.get(0);
-          if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiLocalVariable) {
-            selection = 1;
-          }
-          else {
-            selection = -1;
+          if (statementsInRange.length == 1 &&
+              statementsInRange[0] instanceof PsiExpressionStatement &&
+              PsiUtilCore.hasErrorElementChild(statementsInRange[0])) {
+            selection = expressions.indexOf(((PsiExpressionStatement)statementsInRange[0]).getExpression());
+          } else {
+            PsiExpression expression = expressions.get(0);
+            if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiLocalVariable) {
+              selection = 1;
+            }
+            else {
+              selection = -1;
+            }
           }
           IntroduceTargetChooser.showChooser(editor, expressions,
             new Pass<PsiExpression>(){
