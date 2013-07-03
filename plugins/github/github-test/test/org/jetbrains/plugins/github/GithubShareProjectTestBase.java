@@ -89,7 +89,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
     final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
     assertNotNull(gitRepository);
 
-    assertNotNull("Github remote does not configured", GithubUtil.findGithubRemoteUrl(gitRepository));
+    assertNotNull("Github remote is not configured", GithubUtil.findGithubRemoteUrl(gitRepository));
   }
 
   protected void checkLastCommitPushed() {
