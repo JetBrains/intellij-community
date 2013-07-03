@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -464,8 +464,8 @@ public class FileUtilRt {
   }
 
   public static @Nullable <T, E extends Throwable> T doIOOperation(@NotNull RetriableIOOperation<T, E> ioTask) throws E {
-    for (int i = 0; i < MAX_FILE_IO_ATTEMPTS;) {
-      T result = ioTask.execute(++i == MAX_FILE_IO_ATTEMPTS);
+    for (int i = MAX_FILE_IO_ATTEMPTS; i > 0; i--) {
+      T result = ioTask.execute(i == 1);
       if (result != null) return result;
 
       try {
@@ -481,7 +481,9 @@ public class FileUtilRt {
     Boolean result = doIOOperation(new RetriableIOOperation<Boolean, RuntimeException>() {
       @Override
       public Boolean execute(boolean lastAttempt) {
-        return file.delete() || !file.exists();
+        if (file.delete() || !file.exists()) return Boolean.TRUE;
+        else if (lastAttempt) return Boolean.FALSE;
+        else return null;
       }
     });
     return Boolean.TRUE.equals(result);
