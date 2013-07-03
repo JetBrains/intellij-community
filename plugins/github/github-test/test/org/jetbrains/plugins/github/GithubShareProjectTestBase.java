@@ -32,16 +32,20 @@ import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import java.io.IOException;
+import java.util.Random;
 
 /**
  * @author Aleksey Pivovarov
  */
 public abstract class GithubShareProjectTestBase extends GithubTest {
-  protected static final String PROJECT_NAME = "new_project_from_test";
+  protected static String PROJECT_NAME;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    Random rnd = new Random();
+    PROJECT_NAME = "new_project_from_share_test_" + rnd.nextLong();
     registerHttpAuthService();
   }
 

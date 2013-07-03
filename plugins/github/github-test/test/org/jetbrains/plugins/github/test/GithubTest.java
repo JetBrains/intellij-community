@@ -39,6 +39,7 @@ import git4idea.test.TestDialogManager;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import java.io.IOException;
@@ -71,6 +72,9 @@ public abstract class GithubTest extends UsefulTestCase {
   @NotNull protected TestNotificator myNotificator;
 
   @NotNull private IdeaProjectTestFixture myProjectFixture;
+
+  @NotNull protected GithubAuthData auth1;
+  @NotNull protected GithubAuthData auth2;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GithubTest() {
@@ -193,13 +197,17 @@ public abstract class GithubTest extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     final String host = System.getenv("idea.test.github.host");
-    final String login = System.getenv("idea.test.github.login");
-    final String password = System.getenv("idea.test.github.password");
+    final String login = System.getenv("idea.test.github.login1");
+    final String password = System.getenv("idea.test.github.password1");
+    final String login2 = System.getenv("idea.test.github.login2");
+    final String password2 = System.getenv("idea.test.github.password2");
 
     // TODO change to assert when a stable Github testing server is ready
     assumeNotNull(host);
     assumeNotNull(login);
     assumeNotNull(password);
+    assumeNotNull(login2);
+    assumeNotNull(password2);
 
     super.setUp();
 
@@ -216,6 +224,9 @@ public abstract class GithubTest extends UsefulTestCase {
     myGitHubSettings.setHost(host);
     myGitHubSettings.setLogin(login);
     myGitHubSettings.setPassword(password);
+
+    auth1 = new GithubAuthData(host, login, password);
+    auth2 = new GithubAuthData(host, login2, password2);
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);

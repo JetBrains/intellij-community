@@ -26,6 +26,8 @@ import java.util.List;
 public class GithubRequestPagingTest extends GithubTest {
 
   public void testCase() throws Throwable {
+    GithubSettings.getInstance().setAuthData(auth2, false);
+
     List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(GithubUtil.getAuthData());
     List<String> realData = new ArrayList<String>();
     for (RepositoryInfo info : availableRepos) {
@@ -33,7 +35,7 @@ public class GithubRequestPagingTest extends GithubTest {
     }
 
     List<String> expectedData = new ArrayList<String>();
-    for (int i = 1; i <= 250; i++) {
+    for (int i = 1; i <= 251; i++) {
       expectedData.add(String.valueOf(i));
     }
 
