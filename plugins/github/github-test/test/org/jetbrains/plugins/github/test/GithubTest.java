@@ -153,7 +153,7 @@ public abstract class GithubTest extends UsefulTestCase {
   }
 
   protected void checkNotification(@NotNull NotificationType type, @Nullable String title, @Nullable String content) {
-    Notification actualNotification = ((TestNotificator)ServiceManager.getService(myProject, Notificator.class)).getLastNotification();
+    Notification actualNotification = myNotificator.getLastNotification();
     assertNotNull("No notification was shown", actualNotification);
 
     if (title != null) {
