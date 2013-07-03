@@ -208,7 +208,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     VirtualFile parent = vFile.getParent();
     final PsiDirectory parentDir = getCachedDirectory(parent);
-    if (parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
+    if (parent != null && parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
 
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
@@ -219,6 +219,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
           if (VirtualFile.PROP_NAME.equals(propertyName)) {
             final String newName = (String)event.getNewValue();
+
+            if (parentDir == null) return;
 
             if (vFile.isDirectory()) {
               PsiDirectory psiDir = myFileManager.findDirectory(vFile);

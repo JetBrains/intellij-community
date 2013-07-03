@@ -211,6 +211,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract boolean isWritable();
 
+  public void setWritable(boolean writable) throws IOException {
+    throw new IOException("Not supported");
+  }
+
   /**
    * Checks whether this file is a directory.
    *
