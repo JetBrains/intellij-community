@@ -209,6 +209,11 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     return sb.toString();
   }
+  
+  public String getTime() {
+    final long time = end - start;
+    return time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time / 1000.0) + " s";
+  }
 
   public TestProxy testStarted(TestResultMessage result) {
     return testStarted(result, true);

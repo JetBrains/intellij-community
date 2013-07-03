@@ -161,25 +161,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
             final TestConsoleProperties consoleProperties = console.getProperties();
             if (consoleProperties == null) return;
-            final String testRunDebugId = consoleProperties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
             final TestNGResults resultsView = console.getResultsView();
-            final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-            if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
-              final MessageType type = resultsView == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
-                                       ? MessageType.WARNING
-                                       : (resultsView.getStatus() == MessageHelper.FAILED_TEST
-                                          ? MessageType.ERROR
-                                          : MessageType.INFO);
-              final String message;
-              if (resultsView == null) {
-                message = myStarted ? "Tests were interrupted" : "Tests were not started";
-              }
-              else {
-                message = resultsView.getStatusLine();
-              }
-              toolWindowManager.notifyByBalloon(testRunDebugId, type, message, null, null);
-              TestsUIUtil.NOTIFICATION_GROUP.createNotification(message, type).notify(project);
-            }
+            TestsUIUtil.notifyByBalloon(project, myStarted, console.getResultsView().getRoot(), consoleProperties, "in " + resultsView.getTime());
           }
         };
         SwingUtilities.invokeLater(notificationRunnable);

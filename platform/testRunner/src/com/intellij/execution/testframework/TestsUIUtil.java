@@ -226,7 +226,7 @@ public class TestsUIUtil {
           myType = MessageType.INFO;
         }
         if (myComment != null) {
-          myText += " (" + myComment + ")";
+          myText += " " + myComment;
         }
         myBalloonText = myTitle + ": " + myText;
       }
