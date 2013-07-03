@@ -64,12 +64,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
-  public DefaultProjectProfileManager(@NotNull final Project project, final ApplicationProfileManager applicationProfileManager,
-                                      final DependencyValidationManager holder) {
+  public DefaultProjectProfileManager(@NotNull final Project project,
+                                      @NotNull ApplicationProfileManager applicationProfileManager,
+                                      @NotNull DependencyValidationManager holder) {
     myProject = project;
     myHolder = holder;
     myApplicationProfileManager = applicationProfileManager;
-    LOG.assertTrue(myApplicationProfileManager != null);
   }
 
   @NotNull

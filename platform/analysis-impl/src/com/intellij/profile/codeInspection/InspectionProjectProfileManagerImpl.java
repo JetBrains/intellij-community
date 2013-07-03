@@ -61,10 +61,10 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   private final NamedScopeManager myLocalScopesHolder;
   private NamedScopesHolder.ScopeListener myScopeListener;
 
-  public InspectionProjectProfileManagerImpl(final Project project,
-                                             InspectionProfileManager inspectionProfileManager,
-                                             DependencyValidationManager holder,
-                                             NamedScopeManager localScopesHolder) {
+  public InspectionProjectProfileManagerImpl(@NotNull Project project,
+                                             @NotNull InspectionProfileManager inspectionProfileManager,
+                                             @NotNull DependencyValidationManager holder,
+                                             @NotNull NamedScopeManager localScopesHolder) {
     super(project, inspectionProfileManager, holder);
     myLocalScopesHolder = localScopesHolder;
     mySeverityRegistrar = new SeverityRegistrar();
@@ -133,7 +133,9 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
 
   @Override
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+    StartupManager startupManager = StartupManager.getInstance(myProject);
+    if (startupManager == null) return; // upsource
+    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {
         final Set<Profile> profiles = new HashSet<Profile>();
@@ -170,8 +172,8 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
         Disposer.register(myProject, new Disposable() {
           @Override
           public void dispose() {
-              myHolder.removeScopeListener(myScopeListener);
-              myLocalScopesHolder.removeScopeListener(myScopeListener);
+            myHolder.removeScopeListener(myScopeListener);
+            myLocalScopesHolder.removeScopeListener(myScopeListener);
           }
         });
       }

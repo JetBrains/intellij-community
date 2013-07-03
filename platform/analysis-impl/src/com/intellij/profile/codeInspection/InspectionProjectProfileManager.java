@@ -34,7 +34,9 @@ import org.jetbrains.annotations.NotNull;
  * Date: 30-Nov-2005
  */
 public abstract class InspectionProjectProfileManager extends DefaultProjectProfileManager implements ProjectComponent, PersistentStateComponent<Element> {
-  public InspectionProjectProfileManager(final Project project, InspectionProfileManager inspectionProfileManager, DependencyValidationManager holder) {
+  public InspectionProjectProfileManager(@NotNull Project project,
+                                         @NotNull InspectionProfileManager inspectionProfileManager,
+                                         @NotNull DependencyValidationManager holder) {
     super(project, inspectionProfileManager, holder);
   }
 

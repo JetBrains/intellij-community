@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -53,10 +52,6 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
   public InspectionProfileManager() {
   }
 
-  @Override
-  @NotNull
-  public abstract Collection<Profile> getProfiles();
-
   protected abstract void initProfiles();
 
   public abstract Profile loadProfile(@NotNull String path) throws IOException, JDOMException;
@@ -66,13 +61,6 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
   public String getComponentName() {
     return "InspectionProfileManager";
   }
-
-  @Override
-  public abstract void updateProfile(@NotNull Profile profile);
-
-
-  @Override
-  public abstract Profile createProfile();
 
   @Override
   public void addProfileChangeListener(@NotNull final ProfileChangeAdapter listener) {
@@ -103,16 +91,6 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
     }
   }
 
-  @Override
-  public abstract Profile getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent);
-
-  @Override
-  @NotNull
-  public abstract Profile getRootProfile();
-
-  @Override
-  public abstract void deleteProfile(final String profile);
-
   @Nullable
   public static File getProfileDirectory() {
     String directoryPath = PathManager.getConfigPath() + File.separator + INSPECTION_DIR;
@@ -124,10 +102,6 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
     }
     return directory;
   }
-
-  @Override
-  @NotNull
-  public abstract String[] getAvailableProfileNames();
 
   @Override
   public Profile getProfile(@NotNull final String name) {
