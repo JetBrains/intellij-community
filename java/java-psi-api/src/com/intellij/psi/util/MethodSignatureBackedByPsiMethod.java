@@ -33,9 +33,6 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
                                              @NotNull PsiTypeParameter[] methodTypeParameters) {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
-    if (!method.isValid()) {
-      LOG.error("Invalid method: "+method, new PsiInvalidElementAccessException(method));
-    }
     myMethod = method;
     myName = method.getName();
   }
@@ -86,7 +83,6 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     PsiType[] parameterTypes = new PsiType[parameters.length];
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameters[i].getType();
-      assert type.isValid();
       parameterTypes[i] = isRaw ? TypeConversionUtil.erasure(substitutor.substitute(type)) : type;
     }
 
