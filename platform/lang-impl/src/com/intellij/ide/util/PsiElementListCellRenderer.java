@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
 
-        assert name != null : "Null name for PSI element " + element;
+        assert name != null : "Null name for PSI element " + element + " (by " + PsiElementListCellRenderer.this + ")";
         SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
         if (!element.isValid()) {
           append(" Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
