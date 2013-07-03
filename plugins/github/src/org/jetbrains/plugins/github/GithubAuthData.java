@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Aleksey Pivovarov
  */
 public class GithubAuthData {
-  private final @NotNull String myHost;
-  private final @NotNull String myLogin;
-  private final @NotNull String myPassword;
+  @NotNull private final String myHost;
+  @NotNull private final String myLogin;
+  @NotNull private final String myPassword;
 
   public GithubAuthData(@NotNull String host, @NotNull String login, @NotNull String password) {
     myHost = host;
