@@ -405,9 +405,13 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 
+    if (strongError) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
+    }
+
     HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(ref.getProject(), ref);
 
-    if (strongError || displayLevel == HighlightDisplayLevel.ERROR) {
+    if (displayLevel == HighlightDisplayLevel.ERROR) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
     }
 
