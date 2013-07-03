@@ -498,4 +498,14 @@ class Aaa {
 }
 ''')
   }
+
+  void testEnumConstants() {
+    testHighlighting('''\
+enum E {
+  abc, cde
+
+  final int <warning descr="Variable 'x' might not have been initialized">x</warning>
+}
+''')
+  }
 }
