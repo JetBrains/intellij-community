@@ -269,7 +269,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                 break;
               }
             }
-            myManager.dropResolveCaches();
           }
           catch (ProcessCanceledException e) {
             canceled.set(true);
