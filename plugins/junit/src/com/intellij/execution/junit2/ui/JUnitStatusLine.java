@@ -135,6 +135,7 @@ class JUnitStatusLine extends TestStatusLine {
       if (!event.isRunning()) {
         final CompletionEvent completionEvent = (CompletionEvent) event;
         myStateInfo.setDone(completionEvent);
+        myProgress.setDone(completionEvent);
         if (completionEvent.isTerminated() && !myProgress.hasDefects()) {
           myProgressBar.setColor(ColorProgressBar.YELLOW);
         }

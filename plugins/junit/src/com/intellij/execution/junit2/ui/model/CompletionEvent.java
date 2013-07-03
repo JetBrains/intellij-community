@@ -23,7 +23,7 @@ public class CompletionEvent extends StateEvent {
 
   public CompletionEvent(final boolean normalExit, final long time) {
     super(normalExit ? TerminatedType.DONE: TerminatedType.TERNINATED, 
-          time >= 0 ? Formatters.printTime(time) : "");
+          time >= 0 ? "in " + Formatters.printTime(time) : "");
     myNormalExit = normalExit;
   }
 

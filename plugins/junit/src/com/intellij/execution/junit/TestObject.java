@@ -27,6 +27,7 @@ import com.intellij.execution.junit2.segments.Extractor;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
 import com.intellij.execution.junit2.ui.TestsPacketsReceiver;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
+import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.RootTestInfo;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
@@ -403,7 +404,15 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected void notifyByBalloon(JUnitRunningModel model, boolean started, JUnitConsoleProperties consoleProperties) {
-    TestsUIUtil.notifyByBalloon(myProject, started, model != null ? model.getRoot() : null, consoleProperties);
+    String comment;
+    if (model != null) {
+      final CompletionEvent done = model.getProgress().getDone();
+      comment = done != null ? done.getComment() : null;
+    }
+    else {
+      comment = null;
+    }
+    TestsUIUtil.notifyByBalloon(myProject, started, model != null ? model.getRoot() : null, consoleProperties, comment);
   }
 
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
