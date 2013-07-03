@@ -15,12 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.declaration;
 
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -95,9 +93,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       return false;
     }
 
-    final ExtensionsArea rootArea = Extensions.getRootArea();
-    final ExtensionPoint<Condition<PsiElement>> extensionPoint = rootArea.getExtensionPoint("com.intellij.cantBeStatic");
-    final Condition<PsiElement>[] addins = extensionPoint.getExtensions();
+    final Condition<PsiElement>[] addins = InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensions();
     for (Condition<PsiElement> addin : addins) {
       if (addin.value(method)) {
         return false;
