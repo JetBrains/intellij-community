@@ -238,32 +238,23 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static GitRemote findGitHubRemoteBranch(@NotNull GitRepository repository) {
-    // i.e. find origin which points on my github repo
-    // Check that given repository is properly configured git repository
+  public static String findGithubRemoteUrl(@NotNull GitRepository repository) {
+    String githubUrl = null;
     for (GitRemote gitRemote : repository.getRemotes()) {
-      if (getGithubUrl(gitRemote) != null) {
-        return gitRemote;
+      for (String remoteUrl : gitRemote.getUrls()) {
+        if (isGithubUrl(remoteUrl)) {
+          final String remoteName = gitRemote.getName();
+          if ("github".equals(remoteName) || "origin".equals(remoteName)) {
+            return remoteUrl;
+          }
+          if (githubUrl == null) {
+            githubUrl = remoteUrl;
+          }
+          break;
+        }
       }
     }
-    return null;
-  }
-
-  @Nullable
-  public static String getGithubUrl(final GitRemote gitRemote) {
-    final GithubSettings githubSettings = GithubSettings.getInstance();
-    final String host = githubSettings.getHost();
-    final String username = githubSettings.getLogin();
-
-    // TODO this doesn't work with organizational accounts
-    final String userRepoMarkerSSHProtocol = host + ":" + username + "/";
-    final String userRepoMarkerOtherProtocols = host + "/" + username + "/";
-    for (String pushUrl : gitRemote.getUrls()) {
-      if (pushUrl.contains(userRepoMarkerSSHProtocol) || pushUrl.contains(userRepoMarkerOtherProtocols)) {
-        return pushUrl;
-      }
-    }
-    return null;
+    return githubUrl;
   }
 
   public static boolean testGitExecutable(final Project project) {
@@ -286,24 +277,20 @@ public class GithubUtil {
     return true;
   }
 
-  static boolean isRepositoryOnGitHub(@NotNull GitRepository repository) {
+  public static boolean isRepositoryOnGitHub(@NotNull GitRepository repository) {
     return findGithubRemoteUrl(repository) != null;
   }
 
-  @Nullable
-  static String findGithubRemoteUrl(@NotNull GitRepository repository) {
-    for (GitRemote remote : repository.getRemotes()) {
-      for (String url : remote.getUrls()) {
-        if (isGithubUrl(url)) {
-          return url;
-        }
-      }
-    }
-    return null;
-  }
-
   public static boolean isGithubUrl(@NotNull String url) {
-    return url.contains(GithubApiUtil.removeProtocolPrefix(GithubSettings.getInstance().getHost()));
+    final String host = GithubApiUtil.getGitHostWithoutProtocol();
+    final String https = "https://" + host + '/';
+    final String http = "http://" + host + '/';
+    final String ssh = "git@" + host + '/';
+    final String git = "git://" + host + '/';
+    if (url.startsWith(https) || url.startsWith(http) || url.startsWith(ssh) || url.startsWith(git)) {
+      return true;
+    }
+    return false;
   }
 
   static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
@@ -311,76 +298,57 @@ public class GithubUtil {
     e.getPresentation().setEnabled(enabled);
   }
 
+  /**
+   * git@github.com:user/repo.git -> user/repo
+   */
   @Nullable
-  public static String getUserAndRepositoryOrShowError(@NotNull Project project, @NotNull String url) {
+  public static String getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
+    String url = removeEndingDotGit(remoteUrl);
     int index;
-    if (url.startsWith(getHttpsUrl())) {
-      index = url.lastIndexOf('/');
-      if (index == -1) {
-        GithubNotifications
-          .showError(project, "Cannot extract info about repository: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
-        return null;
-      }
-      index = url.substring(0, index).lastIndexOf('/');
-      if (index == -1) {
-        GithubNotifications
-          .showError(project, "Cannot extract info about repository: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
-        return null;
-      }
+    index = url.lastIndexOf('/');
+    if (index == -1) {
+      return null;
     }
-    else {
-      index = url.lastIndexOf(':');
-      if (index == -1) {
-        GithubNotifications
-          .showError(project, "Cannot extract info about repository: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
-        return null;
-      }
+    index = url.substring(0, index).lastIndexOf('/');
+    if (index == -1) {
+      return null;
     }
-    String repoInfo = url.substring(index + 1);
-    if (repoInfo.endsWith(".git")) {
-      repoInfo = repoInfo.substring(0, repoInfo.length() - 4);
-    }
-    return repoInfo;
+    return url.substring(index + 1);
   }
 
-  @NotNull
-  static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
+  /**
+   * git@github.com:user/repo -> https://github.com/user/repo
+   */
+  @Nullable
+  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
     remoteUrl = removeEndingDotGit(remoteUrl);
-    if (remoteUrl.startsWith("http")) {
+    if (remoteUrl.startsWith("https://")) {
       return remoteUrl;
+    }
+    if (remoteUrl.startsWith("http://")) {
+      return "https" + remoteUrl.substring(4);
     }
     if (remoteUrl.startsWith("git://")) {
       return "https" + remoteUrl.substring(3);
     }
-    return convertFromSshToHttp(remoteUrl);
-  }
-
-  @NotNull
-  private static String convertFromSshToHttp(@NotNull String remoteUrl) {
-    // Format: git@github.com:account/repository
-    int indexOfAt = remoteUrl.indexOf("@");
-    if (indexOfAt < 0) {
-      throw new IllegalStateException("Invalid remote Github SSH url: " + remoteUrl);
+    if (remoteUrl.startsWith("git@")) {
+      return "https://" + remoteUrl.substring(4).replace(':', '/');
     }
-    String withoutPrefix = remoteUrl.substring(indexOfAt + 1, remoteUrl.length());
-    return "https://" + withoutPrefix.replace(':', '/');
+    LOG.error("Invalid remote Github url: " + remoteUrl);
+    return null;
   }
 
   @NotNull
   private static String removeEndingDotGit(@NotNull String url) {
     final String DOT_GIT = ".git";
+    final String DOT_GIT_SLASH = ".git/";
     if (url.endsWith(DOT_GIT)) {
       return url.substring(0, url.length() - DOT_GIT.length());
     }
+    if (url.endsWith(DOT_GIT_SLASH)) {
+      return url.substring(0, url.length() - DOT_GIT_SLASH.length());
+    }
     return url;
-  }
-
-  /**
-   * @deprecated The host may be defined in different formats. Use {@link GithubApiUtil#getApiUrl(String)} instead.
-   */
-  @Deprecated
-  public static String getHttpsUrl() {
-    return "https://" + GithubSettings.getInstance().getHost();
   }
 
   @NotNull

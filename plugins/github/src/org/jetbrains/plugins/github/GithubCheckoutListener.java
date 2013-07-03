@@ -9,7 +9,6 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import git4idea.GitUtil;
-import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nullable;
@@ -52,11 +51,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     }
 
     // Check that given repository is properly configured git repository
-    final GitRemote gitRemote = GithubUtil.findGitHubRemoteBranch(gitRepository);
-    if (gitRemote == null) {
-      return null;
-    }
-    String url = GithubUtil.getGithubUrl(gitRemote);
+    String url = GithubUtil.findGithubRemoteUrl(gitRepository);
     if (url == null) {
       return null;
     }

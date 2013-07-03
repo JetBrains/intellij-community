@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import icons.GithubIcons;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
@@ -38,10 +40,10 @@ abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
                                            GitUtil.getPrintableRemotes(repository.getRemotes())));
       return;
     }
-    url = GithubUtil.makeGithubRepoUrlFromRemoteUrl(url);
-    String userAndRepository = GithubUtil.getUserAndRepositoryOrShowError(project, url);
+    String userAndRepository = GithubUtil.getUserAndRepositoryFromRemoteUrl(url);
     if (userAndRepository == null) {
-      return;
+      GithubNotifications
+        .showError(project, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER, "Cannot extract info about repository: " + url);
     }
 
     String githubUrl = GithubApiUtil.getGitHost() + "/" + userAndRepository + "/commit/" + revisionHash;

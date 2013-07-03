@@ -68,7 +68,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    // Check that given repository is properly configured git repository
     if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
       setVisibleEnabled(e, false, false);
       return;
@@ -89,7 +88,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     setVisibleEnabled(e, true, true);
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -100,8 +98,16 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository repository = manager.getRepositoryForFile(virtualFile);
+    if (repository == null) {
+      notifyError(project, "Can't find git repository", null);
+      return;
+    }
 
     final String githubRemoteUrl = GithubUtil.findGithubRemoteUrl(repository);
+    if (githubRemoteUrl == null) {
+      notifyError(project, "Can't find github remote", null);
+      return;
+    }
 
     final String rootPath = repository.getRoot().getPath();
     final String path = virtualFile.getPath();
@@ -117,13 +123,22 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
     String relativePath = path.substring(rootPath.length());
     String urlToOpen = makeUrlToOpen(e, relativePath, branch, githubRemoteUrl);
+    if (urlToOpen == null) {
+      notifyError(project, "Can't create properly url", githubRemoteUrl);
+      return;
+    }
     BrowserUtil.launchBrowser(urlToOpen);
   }
 
+  @Nullable
   private static String makeUrlToOpen(@NotNull AnActionEvent e, @NotNull String relativePath, @NotNull String branch,
                                       @NotNull String githubRemoteUrl) {
     final StringBuilder builder = new StringBuilder();
-    builder.append(GithubUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl)).append("/blob/").append(branch).append(relativePath);
+    final String githubRepoUrl = GithubUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl);
+    if (githubRepoUrl == null) {
+      return null;
+    }
+    builder.append(githubRepoUrl).append("/blob/").append(branch).append(relativePath);
 
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null && editor.getDocument().getLineCount() >= 1) {
@@ -161,6 +176,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   private static void notifyError(@NotNull Project project, @NotNull String message, @Nullable String logDetails) {
     Notificator.getInstance(project).notifyError(CANNOT_OPEN_IN_BROWSER, message);
-    LOG.info(message + (logDetails == null ? "" : logDetails));
+    LOG.info(message + (logDetails == null ? "" : " " + logDetails));
   }
 }

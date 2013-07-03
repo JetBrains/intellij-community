@@ -77,8 +77,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     // Check that given repository is properly configured git repository
-    final GitRemote gitHubRemoteBranch = GithubUtil.findGitHubRemoteBranch(gitRepository);
-    if (gitHubRemoteBranch == null) {
+    if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
       setVisibleEnabled(e, false, false);
       return;
     }
@@ -100,8 +99,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
     final GitRepository gitRepository = manager.getRepositoryForFile(project.getBaseDir());
     // Check that given repository is properly configured git repository
-    final GitRemote remote = GithubUtil.findGitHubRemoteBranch(gitRepository);
-    final String pushUrl = GithubUtil.getGithubUrl(remote);
+    final String pushUrl = GithubUtil.findGithubRemoteUrl(gitRepository);
 
     final String login = GithubSettings.getInstance().getLogin();
     final int index = pushUrl.lastIndexOf(login);

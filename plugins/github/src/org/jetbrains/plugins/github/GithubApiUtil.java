@@ -62,8 +62,7 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement anonymousPostRequest(@NotNull String host, @NotNull String path, @Nullable String requestBody)
-    throws IOException {
+  public static JsonElement postRequest(@NotNull String host, @NotNull String path, @Nullable String requestBody) throws IOException {
     return request(host, null, null, path, requestBody, HttpVerb.POST);
   }
 
@@ -169,6 +168,9 @@ public class GithubApiUtil {
     else if (url.startsWith("git@")) {
       return url.substring(4);
     }
+    else if (url.startsWith("git://")) {
+      return url.substring(6);
+    }
     else {
       return url;
     }
@@ -179,6 +181,10 @@ public class GithubApiUtil {
     return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
   }
 
+  /**
+   * E.g.: https://api.github.com
+   *       https://my.company.url/api/v3
+   */
   @NotNull
   public static String getApiUrl() {
     return getApiUrl(GithubSettings.getInstance().getHost());
@@ -187,11 +193,21 @@ public class GithubApiUtil {
   /**
    * Returns the "host" part of Git URLs.
    * E.g.: https://github.com
+   *       https://my.company.url
    * Note: there is no trailing slash in the returned url.
    */
   @NotNull
   public static String getGitHost() {
-    return "https://" + removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
+    return "https://" + getGitHostWithoutProtocol();
+  }
+
+  /**
+   * E.g.: github.com
+   *       my.company.url
+   */
+  @NotNull
+  public static String getGitHostWithoutProtocol() {
+    return removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
   }
 
   /*
@@ -200,7 +216,7 @@ public class GithubApiUtil {
    http://developer.github.com/v3/
   */
   @NotNull
-  private static String getApiUrlWithoutProtocol(String urlFromSettings) {
+  private static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
     String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings));
     final String API_PREFIX = "api.";
     final String ENTERPRISE_API_SUFFIX = "/api/v3";
@@ -220,7 +236,7 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static String removeTrailingSlash(@NotNull String s) {
+  private static String removeTrailingSlash(@NotNull String s) {
     if (s.endsWith("/")) {
       return s.substring(0, s.length() - 1);
     }
