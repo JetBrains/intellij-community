@@ -375,7 +375,7 @@ public class GithubShareAction extends DumbAwareAction {
                                                                                     "no current branch");
       return false;
     }
-    GitCommandResult result = git.push(repository, remoteName, remoteUrl, currentBranch.getName());
+    GitCommandResult result = git.push(repository, remoteName, remoteUrl, currentBranch.getName(), true);
     if (!result.success()) {
       GithubNotifications.showError(project, "Can't finish GitHub sharing process", "Successfully created project '" +
                                                                                     name +

@@ -191,6 +191,13 @@ public class GitTestImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+                               boolean updateTracking, @NotNull GitLineHandlerListener... listeners) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
                                @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException();
   }
