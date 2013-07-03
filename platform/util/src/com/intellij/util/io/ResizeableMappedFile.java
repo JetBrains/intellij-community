@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class ResizeableMappedFile implements Forceable {
     final File lengthFile = getLengthFile();
     DataOutputStream stream = null;
     try {
-      stream = FileUtilRt.doIOOperation(new FileUtilRt.RetriableIOOperation<DataOutputStream, FileNotFoundException>() {
+      stream = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
         @Nullable
         @Override
         public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {

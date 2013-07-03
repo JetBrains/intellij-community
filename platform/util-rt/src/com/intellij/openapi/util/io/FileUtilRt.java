@@ -459,11 +459,11 @@ public class FileUtilRt {
     return true;
   }
 
-  public interface RetriableIOOperation<T, E extends Throwable> {
+  public interface RepeatableIOOperation<T, E extends Throwable> {
     @Nullable T execute(boolean lastAttempt) throws E;
   }
 
-  public static @Nullable <T, E extends Throwable> T doIOOperation(@NotNull RetriableIOOperation<T, E> ioTask) throws E {
+  public static @Nullable <T, E extends Throwable> T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
     for (int i = MAX_FILE_IO_ATTEMPTS; i > 0; i--) {
       T result = ioTask.execute(i == 1);
       if (result != null) return result;
@@ -478,7 +478,7 @@ public class FileUtilRt {
   }
 
   protected static boolean deleteFile(@NotNull final File file) {
-    Boolean result = doIOOperation(new RetriableIOOperation<Boolean, RuntimeException>() {
+    Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
       @Override
       public Boolean execute(boolean lastAttempt) {
         if (file.delete() || !file.exists()) return Boolean.TRUE;
