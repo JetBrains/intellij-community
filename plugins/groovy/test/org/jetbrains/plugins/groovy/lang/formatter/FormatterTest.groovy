@@ -745,6 +745,9 @@ bar()
 ''')
   }
 
+  void testInKeyword() {
+    checkFormatting('foo in  bar', 'foo in bar')
+  }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
