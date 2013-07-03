@@ -461,7 +461,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
                         TextRange.from(0, 4), TextRange.from(10, 1));
   }
 
-  public void "test plus/minus in the pattern should allow to be space-surrounded"() {
+  public void "test plus or minus in the pattern should allow to be space-surrounded"() {
     assertMatches("a+b", "alpha+beta")
     assertMatches("a+b", "alpha_gamma+beta")
     assertMatches("a+b", "alpha + beta")
