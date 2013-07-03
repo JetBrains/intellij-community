@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -80,7 +81,7 @@ public class HgAnnotateCommand {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z");
         String date = "";
         try {
-          date = new SimpleDateFormat("yyyy-MM-dd").format(dateFormat.parse(dateGroup));
+          date = DateFormatUtil.formatPrettyDate(dateFormat.parse(dateGroup));
         }
         catch (ParseException e) {
           LOG.error("Couldn't parse annotation date ", e);
