@@ -27,6 +27,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -189,7 +190,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        superMethods.add(methodSignature.getMethod());
+        final PsiMethod superMethod = methodSignature.getMethod();
+        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(superMethod.getContainingClass().getQualifiedName())) {
+          superMethods.add(superMethod);
+        }
       }
     }
     nextConflict:
@@ -198,7 +202,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiMethod method = (PsiMethod)info.getElement();
       assert method != null;
 
-      if (superMethods.contains(method)) {
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && superMethods.contains(method)) {
         conflicts.remove(i);
         i--;
         continue;
