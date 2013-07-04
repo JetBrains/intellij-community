@@ -56,6 +56,14 @@ public class PyProtectedMemberInspection extends PyInspection {
           final PyClass resolvedClass = PsiTreeUtil.getParentOfType(resolvedExpression, PyClass.class);
           if (parentClass.isSubclass(resolvedClass))
             return;
+
+          PyClass outerClass = PsiTreeUtil.getParentOfType(parentClass, PyClass.class);
+          while (outerClass != null) {
+            if (outerClass.isSubclass(resolvedClass))
+              return;
+
+            outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class);
+          }
         }
         registerProblem(node, PyBundle.message("INSP.protected.member.$0.access", name));
       }

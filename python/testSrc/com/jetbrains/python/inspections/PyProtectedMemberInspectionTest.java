@@ -18,7 +18,12 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
   public void testTrueNegative() {
     doTest();
   }
+
   public void testDoubleUnderscore() {
+    doTest();
+  }
+
+  public void testOuterClass() {
     doTest();
   }
 
