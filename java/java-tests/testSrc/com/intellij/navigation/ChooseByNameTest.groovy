@@ -41,7 +41,13 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     assert getPopupElements(popup, "") == []
     popup.close(false)
 
-    assert getPopupElements(new GotoClassModel2(project), "@") == []
+    popup = createPopup(new GotoClassModel2(project))
+    assert getPopupElements(popup, "@") == []
+    popup.close(false)
+
+    popup = createPopup(new GotoFileModel(project))
+    assert getPopupElements(popup, "foo/") == []
+    popup.close(false)
   }
 
   public void "test filter overridden methods from goto symbol"() {
