@@ -251,6 +251,22 @@ public class GithubUtil {
     return githubUrl;
   }
 
+  @Nullable
+  public static String findGithubUpstreamRemote(@NotNull GitRepository repository) {
+    for (GitRemote gitRemote : repository.getRemotes()) {
+      final String remoteName = gitRemote.getName();
+      if ("upstream".equals(remoteName)) {
+        for (String remoteUrl : gitRemote.getUrls()) {
+          if (isGithubUrl(remoteUrl)) {
+            return remoteUrl;
+          }
+        }
+        return gitRemote.getFirstUrl();
+      }
+    }
+    return null;
+  }
+
   public static boolean testGitExecutable(final Project project) {
     final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
     final String executable = settings.getPathToGit();
