@@ -138,6 +138,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                 @Override
                 public void run() {
                   myProjectDataManager.importData(externalProjectNode.getKey(), Collections.singleton(externalProjectNode), project, true);
+                  myExternalProjectNode = null;
                 }
               });
             }
