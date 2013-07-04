@@ -52,6 +52,10 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     checkGistPrivate();
     checkGistDescription("description");
     checkGistContent(expected);
+
+    // anonymous gists - undeletable
+    GIST_ID = null;
+    GIST = null;
   }
 
   public void testUnusedFilenameField() throws Throwable {
