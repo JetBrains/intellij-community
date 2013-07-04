@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -40,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -641,6 +643,12 @@ public class PyExtractMethodUtil {
       @Override
       protected String getHelpId() {
         return "python.reference.extractMethod";
+      }
+
+      @NotNull
+      @Override
+      protected FileType getFileType() {
+        return PythonFileType.INSTANCE;
       }
     };
     dialog.show();
