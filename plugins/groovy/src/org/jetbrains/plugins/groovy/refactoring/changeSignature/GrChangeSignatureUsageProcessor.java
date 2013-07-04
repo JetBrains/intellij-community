@@ -270,7 +270,6 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     Set<GrParameter> toRemove = new HashSet<GrParameter>(oldParameters.length);
     ContainerUtil.addAll(toRemove, oldParameters);
 
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     GrParameter anchor = null;
     final GrDocComment docComment = method.getDocComment();
     final GrDocTag[] tags = docComment == null ? null : docComment.getTags();
@@ -278,15 +277,6 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     
     for (JavaParameterInfo newParameter : newParameters) {
-      PsiType type;
-      if (newParameter instanceof GrParameterInfo && ((GrParameterInfo)newParameter).hasNoType()) {
-        type = null;
-      }
-      else {
-        type = substitutor.substitute(newParameter.createType(context, method.getManager()));
-      }
-
-
       //if old parameter name differs from base method parameter name we don't change it
       final String newName;
       final int oldIndex = newParameter.getOldIndex();
@@ -303,25 +293,32 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         newName = newParameter.getName();
       }
 
-      if (docComment != null) {
-        if (oldIndex >= 0) {
-          final GrParameter oldParameter = oldParameters[oldIndex];
-          final String oldName = oldParameter.getName();
-          for (GrDocTag tag : tags) {
-            if ("@param".equals(tag.getName())) {
-              final GrDocParameterReference parameterReference = tag.getDocParameterReference();
-              if (parameterReference != null && oldName.equals(parameterReference.getText())) {
-                parameterReference.handleElementRename(newName);
-              }
+      final GrParameter oldParameter = oldIndex >= 0 ? oldParameters[oldIndex] : null;
+
+      if (docComment != null && oldParameter != null) {
+        final String oldName = oldParameter.getName();
+        for (GrDocTag tag : tags) {
+          if ("@param".equals(tag.getName())) {
+            final GrDocParameterReference parameterReference = tag.getDocParameterReference();
+            if (parameterReference != null && oldName.equals(parameterReference.getText())) {
+              parameterReference.handleElementRename(newName);
             }
           }
         }
       }
 
-      GrParameter grParameter = factory.createParameter(newName, type == null ? null : type.getCanonicalText(),
-                                                        getInitializer(newParameter), parameterList);
-      
-      
+      GrParameter grParameter = createNewParameter(substitutor, context, parameterList, newParameter, newName);
+      if (oldParameter != null) {
+        grParameter.getModifierList().replace(oldParameter.getModifierList());
+      }
+
+      if ("def".equals(newParameter.getTypeText())) {
+        grParameter.getModifierList().setModifierProperty(GrModifier.DEF, true);
+      }
+      else if (StringUtil.isEmpty(newParameter.getTypeText())) {
+        grParameter.getModifierList().setModifierProperty(GrModifier.DEF, false);
+      }
+
       anchor = (GrParameter)parameterList.addAfter(grParameter, anchor);
     }
 
@@ -345,6 +342,21 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       CodeStyleManager.getInstance(method.getProject()).reformat(method.getThrowsList());
     }
     return true;
+  }
+
+  private static GrParameter createNewParameter(@NotNull PsiSubstitutor substitutor,
+                                                @NotNull PsiMethod context,
+                                                @NotNull GrParameterList parameterList,
+                                                @NotNull JavaParameterInfo newParameter,
+                                                @NotNull String newName) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(parameterList.getProject());
+    String typeText = newParameter.getTypeText();
+    if (newParameter instanceof GrParameterInfo && (typeText.isEmpty() || "def".equals(typeText))) {
+      return factory.createParameter(newName, null, getInitializer(newParameter), parameterList);
+    }
+
+    PsiType type = substitutor.substitute(newParameter.createType(context, parameterList.getManager()));
+    return factory.createParameter(newName, type == null ? null : type.getCanonicalText(), getInitializer(newParameter), parameterList);
   }
 
   private static PsiSubstitutor calculateSubstitutor(PsiMethod derivedMethod, PsiMethod baseMethod) {

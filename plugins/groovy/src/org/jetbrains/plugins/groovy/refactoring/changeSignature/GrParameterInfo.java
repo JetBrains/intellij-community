@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
@@ -42,6 +43,9 @@ public class GrParameterInfo implements JavaParameterInfo {
     final PsiType type = parameter.getDeclaredType();
     if (type != null) {
       myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
+    }
+    else if (parameter.hasModifierProperty(GrModifier.DEF)) {
+      myTypeWrapper = CanonicalTypes.createTypeWrapper(JavaPsiFacade.getElementFactory(parameter.getProject()).createTypeFromText("def", null));
     }
     else {
       myTypeWrapper = null;

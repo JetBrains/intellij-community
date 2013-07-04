@@ -359,15 +359,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrParameter createParameter(String name,
                                      @Nullable String typeText,
                                      @Nullable String initializer,
-                                     @Nullable GroovyPsiElement context) throws IncorrectOperationException {
+                                     @Nullable GroovyPsiElement context,
+                                     String... modifiers) throws IncorrectOperationException {
     try {
       StringBuilder fileText = new StringBuilder();
       fileText.append("def dsfsadfnbhfjks_weyripouh_huihnrecuio(");
-      if (typeText != null) {
-        fileText.append(typeText).append(" ");
+      for (String modifier : modifiers) {
+        fileText.append(modifier).append(' ');
       }
-      else {
-        fileText.append("def ");
+      if (StringUtil.isNotEmpty(typeText)) {
+        fileText.append(typeText).append(' ');
       }
       fileText.append(name);
       if (initializer != null && initializer.length() > 0) {

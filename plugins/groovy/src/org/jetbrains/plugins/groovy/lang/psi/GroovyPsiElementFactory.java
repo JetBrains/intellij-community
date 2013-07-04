@@ -167,7 +167,8 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrParameter createParameter(String name,
                                               @Nullable String typeText,
                                               @Nullable String initializer,
-                                              @Nullable GroovyPsiElement context) throws IncorrectOperationException;
+                                              @Nullable GroovyPsiElement context,
+                                              String... modifiers) throws IncorrectOperationException;
 
   public abstract GrCodeReferenceElement createTypeOrPackageReference(String qName);
 
