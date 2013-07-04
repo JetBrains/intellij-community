@@ -569,8 +569,11 @@ public abstract class HgUtil {
   }
 
   @Nullable
-  public static String getRepositoryNamedConfig(@NotNull Project project, @NotNull VirtualFile root, @Nullable String configName) {
+  public static String getRepositoryNamedConfig(@NotNull Project project,
+                                                @NotNull VirtualFile root,
+                                                @NotNull String section,
+                                                @Nullable String configName) {
     HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
-    return hgRepository != null ? hgRepository.getRepositoryConfig().getNamedConfig(configName) : null;
+    return hgRepository != null ? hgRepository.getRepositoryConfig().getNamedConfig(section, configName) : null;
   }
 }

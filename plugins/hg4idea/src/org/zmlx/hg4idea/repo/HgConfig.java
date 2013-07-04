@@ -19,7 +19,8 @@ public class HgConfig implements HgUpdater {
 
   @NotNull private VirtualFile myRepo;
   @NotNull private Project myProject;
-  @NotNull private Map<String, String> myConfigMap = Collections.emptyMap();
+  @NotNull private Map<String, Map<String, String>> myConfigMap = Collections.emptyMap();
+  @Nullable private String myDefaultPath;    // cache most recent config
 
 
   public HgConfig(@NotNull Project project, @NotNull VirtualFile repo) {
@@ -36,27 +37,26 @@ public class HgConfig implements HgUpdater {
     // but default values for extension and repository root are not included in hgrc, so perform showconfig is better
     // in windows configuration Mercurial.ini file may be used instead of hgrc
     myConfigMap = new HgShowConfigCommand(myProject).execute(myRepo);
+    myDefaultPath = getNamedConfig("paths", "default");
   }
 
   @Nullable
   public String getDefaultPath() {
-    return myConfigMap.get("paths.default");
+    return myDefaultPath;
   }
 
   @Nullable
   public String getDefaultPushPath() {
-    String path = myConfigMap.get("paths.default-push");
-    if (path == null) {
-      path = myConfigMap.get("paths.default");
-    }
-    return path;
+    String path = getNamedConfig("paths", "default-push");
+    return path != null ? path : myDefaultPath;
   }
 
   @Nullable
-  public String getNamedConfig(@Nullable String configName) {
-    if (StringUtil.isEmptyOrSpaces(configName)) {
+  public String getNamedConfig(@NotNull String sectionName, @Nullable String configName) {
+    if (StringUtil.isEmptyOrSpaces(sectionName) || StringUtil.isEmptyOrSpaces(configName)) {
       return null;
     }
-    return myConfigMap.get(configName);
+    Map<String, String> sectionValues = myConfigMap.get(sectionName);
+    return sectionValues != null ? sectionValues.get(configName) : null;
   }
 }

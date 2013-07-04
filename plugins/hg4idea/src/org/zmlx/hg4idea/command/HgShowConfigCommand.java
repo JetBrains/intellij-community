@@ -34,7 +34,7 @@ public class HgShowConfigCommand {
   }
 
   @NotNull
-  public Map<String, String> execute(@Nullable VirtualFile repo) {
+  public Map<String, Map<String, String>> execute(@Nullable VirtualFile repo) {
     if (repo == null) {
       return Collections.emptyMap();
     }
@@ -47,13 +47,28 @@ public class HgShowConfigCommand {
       return Collections.emptyMap();
     }
 
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, Map<String, String>> configMap = new HashMap<String, Map<String, String>>();
     for (String line : result.getOutputLines()) {
       List<String> option = StringUtil.split(line, "=", true, false);
       if (option.size() == 2) {
-        options.put(option.get(0).trim(), option.get(1).trim());
+        String sectionAndName = option.get(0).trim();
+        String value = option.get(1).trim();
+        int dotIndex = sectionAndName.indexOf('.');
+
+        if (dotIndex > 0) {
+          String sectionName = sectionAndName.substring(0, dotIndex);
+          String optionName = sectionAndName.substring(dotIndex + 1, sectionAndName.length());
+          if (configMap.containsKey(sectionName)) {
+            configMap.get(sectionName).put(optionName, value);
+          }
+          else {
+            HashMap<String, String> sectionMap = new HashMap<String, String>();
+            sectionMap.put(optionName, value);
+            configMap.put(sectionName, sectionMap);
+          }
+        }
       }
     }
-    return options;
+    return configMap;
   }
 }

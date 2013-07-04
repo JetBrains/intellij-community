@@ -2,7 +2,6 @@ package hg4idea.test.config;
 
 import com.intellij.openapi.util.io.FileUtil;
 import hg4idea.test.HgPlatformTest;
-import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -29,6 +28,26 @@ public class HgConfigTest extends HgPlatformTest {
                  FileUtil.toSystemIndependentName(defaultPath));
   }
 
+  public void testPushPathInClonedRepo() {
+    cd(myChildRepo);
+    String pushPath = "somePath";
+    appendToHgrc(myChildRepo, "\n[paths]\n" +
+                              "default-push=" + pushPath);
+    updateRepoConfig(myProject, myChildRepo);
+    final String defaultPushPath = HgUtil.getRepositoryDefaultPushPath(myProject, myChildRepo);
+    assertNotNull(defaultPushPath);
+    assertEquals(FileUtil.toSystemIndependentName(myChildRepo.getCanonicalPath() + "/" + pushPath),
+                 FileUtil.toSystemIndependentName(defaultPushPath));
+  }
+
+  public void testPushPathWithoutAppropriateConfig() {
+    cd(myChildRepo);
+    final String defaultPushPath = HgUtil.getRepositoryDefaultPushPath(myProject, myChildRepo);
+    assertNotNull(defaultPushPath);
+    assertEquals(myRepository.getCanonicalPath(),
+                 FileUtil.toSystemIndependentName(defaultPushPath));
+  }
+
   public void testLargeExtensionInClonedRepo() {
     cd(myChildRepo);
     File hgrc = new File(new File(myChildRepo.getPath(), ".hg"), "hgrc");
@@ -41,9 +60,7 @@ public class HgConfigTest extends HgPlatformTest {
       e.printStackTrace();
       fail("Can not update hgrc file.");
     }
-    HgRepository hgRepository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(myChildRepo);
-    assertNotNull(hgRepository);
-    hgRepository.getRepositoryConfig().update(myProject, null);
-    assertNotNull(HgUtil.getRepositoryNamedConfig(myProject, myChildRepo, "extensions.largefiles"));
+    updateRepoConfig(myProject, myChildRepo);
+    assertNotNull(HgUtil.getRepositoryNamedConfig(myProject, myChildRepo, "extensions", "largefiles"));
   }
 }
