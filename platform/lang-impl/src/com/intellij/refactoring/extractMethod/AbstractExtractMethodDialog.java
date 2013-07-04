@@ -55,12 +55,11 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
                              final ExtractMethodDecorator decorator) {
     super(project, true);
     myDefaultName = defaultName;
-    CodeFragment fragment1 = fragment;
     myValidator = validator;
     myDecorator = decorator;
-    myArguments = new ArrayList<String>(fragment1.getInputVariables());
+    myArguments = new ArrayList<String>(fragment.getInputVariables());
     Collections.sort(myArguments);
-    myOutputVariables = new ArrayList<String>(fragment1.getOutputVariables());
+    myOutputVariables = new ArrayList<String>(fragment.getOutputVariables());
     Collections.sort(myOutputVariables);
     setModal(true);
     setTitle(RefactoringBundle.message("extract.method.title"));
@@ -134,9 +133,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
         Messages.showInfoMessage(error, RefactoringBundle.message("error.title"));
         return;
       }
-      final StringBuilder builder = new StringBuilder();
-      builder.append(error).append(". ").append(RefactoringBundle.message("do.you.wish.to.continue"));
-      if (Messages.showOkCancelDialog(builder.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != 0){
+      if (Messages.showOkCancelDialog(error + ". " + RefactoringBundle.message("do.you.wish.to.continue"), RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != 0){
         return;
       }
     }
