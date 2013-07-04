@@ -133,7 +133,10 @@ class Intf {
       elements = set as List
       semaphore.up()
     } as Consumer<Set<?>>)
-    assert semaphore.waitFor(1000)
+    if (!semaphore.waitFor(1000)) {
+      printThreadDump()
+      fail()
+    }
     return elements
   }
 
