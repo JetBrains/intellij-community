@@ -97,7 +97,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       @Override
       public boolean value(final Object o) {
         if (o instanceof MyNode) {
-          final Object editableObject = ((MyNode)o).getConfigurable().getEditableObject();
+          final NamedConfigurable namedConfigurable = ((MyNode)o).getConfigurable();
+          final Object editableObject = namedConfigurable != null ? namedConfigurable.getEditableObject() : null;
           return editableObject instanceof NamedScope;
         }
         return false;
