@@ -91,6 +91,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
+    createGistAction(project, editor, file, files);
+  }
+
+  static void createGistAction(@NotNull final Project project,
+                               @Nullable final Editor editor,
+                               @Nullable final VirtualFile file,
+                               @Nullable final VirtualFile[] files) {
+
     // Ask for description and other params
     final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project, editor, file);
     dialog.show();
@@ -98,28 +106,18 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    GithubAuthData auth = null;
-    if (!dialog.isAnonymous()) {
-      final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-        public void run(@NotNull ProgressIndicator indicator) {
-          authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
-        }
-      });
-      if (authDataRef.isNull()) {
-        GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
-        return;
-      }
-      auth = authDataRef.get();
+    final GithubAuthData auth = dialog.isAnonymous() ? null : getValidAuthData(project);
+    if (!dialog.isAnonymous() && auth == null) {
+      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
+      return;
     }
 
     final Ref<String> url = new Ref<String>();
-    final GithubAuthData finalAuth = auth;
     new Task.Backgroundable(project, "Creating Gist") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<NamedContent> contents = collectContents(project, editor, file, files);
-        String gistUrl = createGist(project, finalAuth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
+        String gistUrl = createGist(project, auth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
 
@@ -138,11 +136,22 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
+  @Nullable
+  private static GithubAuthData getValidAuthData(@NotNull final Project project) {
+    final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
+      }
+    });
+    return authDataRef.get();
+  }
+
   @NotNull
   static List<NamedContent> collectContents(@NotNull Project project,
-                                                    @Nullable Editor editor,
-                                                    @Nullable VirtualFile file,
-                                                    @Nullable VirtualFile[] files) {
+                                            @Nullable Editor editor,
+                                            @Nullable VirtualFile file,
+                                            @Nullable VirtualFile[] files) {
     if (editor != null) {
       NamedContent content = getContentFromEditor(editor, file);
       return content == null ? Collections.<NamedContent>emptyList() : Collections.singletonList(content);
@@ -165,11 +174,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Nullable
   static String createGist(@NotNull Project project,
-                                   @Nullable GithubAuthData auth,
-                                   @NotNull List<NamedContent> contents,
-                                   boolean isPrivate,
-                                   @NotNull String description,
-                                   @Nullable String filename) {
+                           @Nullable GithubAuthData auth,
+                           @NotNull List<NamedContent> contents,
+                           boolean isPrivate,
+                           @NotNull String description,
+                           @Nullable String filename) {
     if (contents.isEmpty()) {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
       return null;

@@ -236,7 +236,7 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  private static String removeTrailingSlash(@NotNull String s) {
+  public static String removeTrailingSlash(@NotNull String s) {
     if (s.endsWith("/")) {
       return s.substring(0, s.length() - 1);
     }

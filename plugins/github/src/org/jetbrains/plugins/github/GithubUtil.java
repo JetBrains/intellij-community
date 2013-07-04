@@ -335,13 +335,10 @@ public class GithubUtil {
 
   @NotNull
   private static String removeEndingDotGit(@NotNull String url) {
+    url = GithubApiUtil.removeTrailingSlash(url);
     final String DOT_GIT = ".git";
-    final String DOT_GIT_SLASH = ".git/";
     if (url.endsWith(DOT_GIT)) {
       return url.substring(0, url.length() - DOT_GIT.length());
-    }
-    if (url.endsWith(DOT_GIT_SLASH)) {
-      return url.substring(0, url.length() - DOT_GIT_SLASH.length());
     }
     return url;
   }
