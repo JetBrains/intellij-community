@@ -64,10 +64,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
 
     MavenGeneralSettingsEditor generalSettingsEditor = new MavenGeneralSettingsEditor(getProject());
     group.addEditor(generalSettingsEditor.getPanel().getDisplayName(), generalSettingsEditor);
-
-    group.addEditor("Mmm", new MavenRunConfigurationSettings(getProject()));
-    //group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralConfigurableWithUseProjectSettings(getProject()));
-    //group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenGeneralConfigurableWithUseProjectSettings(getProject()));
+    group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<MavenRunConfiguration>());
     return group;
   }
