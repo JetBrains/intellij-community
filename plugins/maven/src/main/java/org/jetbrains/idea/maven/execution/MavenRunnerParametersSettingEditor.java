@@ -38,8 +38,4 @@ public class MavenRunnerParametersSettingEditor extends SettingsEditor<MavenRunC
   protected void disposeEditor() {
     myPanel.disposeUIResources();
   }
-
-  public MavenRunnerParametersPanel getPanel() {
-    return myPanel;
-  }
 }

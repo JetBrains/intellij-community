@@ -35,10 +35,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.*;
 
 public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunProfile {
   private MavenSettings mySettings;
@@ -59,11 +56,9 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<MavenRunConfiguration>();
 
-    MavenRunnerParametersSettingEditor parameterSettingEditor = new MavenRunnerParametersSettingEditor(getProject());
-    group.addEditor(parameterSettingEditor.getPanel().getDisplayName(), parameterSettingEditor);
+    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
 
-    MavenGeneralSettingsEditor generalSettingsEditor = new MavenGeneralSettingsEditor(getProject());
-    group.addEditor(generalSettingsEditor.getPanel().getDisplayName(), generalSettingsEditor);
+    group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralSettingsEditor(getProject()));
     group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<MavenRunConfiguration>());
     return group;

@@ -88,8 +88,4 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
   public Project getProject() {
     return myProject;
   }
-
-  public MavenGeneralPanel getPanel() {
-    return myPanel;
-  }
 }
