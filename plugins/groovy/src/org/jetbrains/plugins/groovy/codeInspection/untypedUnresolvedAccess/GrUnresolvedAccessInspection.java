@@ -195,8 +195,9 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       if (!inStaticContext && GroovySuppressableInspectionTool.isElementToolSuppressedIn(refElement, SHORT_NAME)) return null;
 
       if (!inStaticContext) {
+        if (!isInspectionEnabled(refElement.getContainingFile(), refElement.getProject())) return null;
         GrUnresolvedAccessInspection inspection = getInstance(refElement.getContainingFile(), refElement.getProject());
-        if (inspection == null) return null;
+        assert inspection != null;
         if (!inspection.myHighlightInnerClasses) return null;
       }
 
@@ -240,8 +241,9 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     if (!inStaticContext) {
+      if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
       GrUnresolvedAccessInspection inspection = getInstance(ref.getContainingFile(), ref.getProject());
-      if (inspection == null) return null;
+      assert inspection != null;
 
       if (!inspection.myHighlightIfGroovyObjectOverridden && areGroovyObjectMethodsOverridden(ref)) return null;
       if (!inspection.myHighlightIfMissingMethodsDeclared && areMissingMethodsDeclared(ref)) return null;
