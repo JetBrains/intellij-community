@@ -67,8 +67,8 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
 
         if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
 
-        final String prefix = result.getPrefixMatcher().getPrefix();
-        final TemplateImpl template = findApplicableTemplate(file, offset, prefix, parameters.getLookup().getEditor());
+        String templatePrefix = findLiveTemplatePrefix(file, parameters.getLookup().getEditor(), result.getPrefixMatcher().getPrefix());
+        final TemplateImpl template = findApplicableTemplate(file, offset, templatePrefix);
         if (template != null) {
           result = result.withPrefixMatcher(template.getKey());
           result.addElement(new LiveTemplateLookupElement(template, true));
@@ -108,22 +108,25 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   }
 
   @Nullable
-  public static TemplateImpl findApplicableTemplate(final PsiFile file, int offset, final String key, final Editor editor) {
-    final Set<String> possiblePrefixes = ContainerUtil.newLinkedHashSet(key);
+  public static TemplateImpl findApplicableTemplate(final PsiFile file, int offset, @NotNull final String possiblePrefix) {
+    return ContainerUtil.find(listApplicableTemplates(file, offset), new Condition<TemplateImpl>() {
+      @Override
+      public boolean value(TemplateImpl template) {
+        return possiblePrefix.equals(template.getKey());
+      }
+    });
+  }
+
+  @NotNull
+  public static String findLiveTemplatePrefix(@NotNull PsiFile file, @NotNull Editor editor, @NotNull String defaultValue) {
     final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
     for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       final String customKey = customLiveTemplate.computeTemplateKey(callback);
       if (customKey != null) {
-        possiblePrefixes.add(customKey);
+        return customKey;
       }
     }
-
-    return ContainerUtil.find(listApplicableTemplates(file, offset), new Condition<TemplateImpl>() {
-      @Override
-      public boolean value(TemplateImpl template) {
-        return possiblePrefixes.contains(template.getKey());
-      }
-    });
+    return defaultValue;
   }
 
   public static class Skipper extends CompletionPreselectSkipper {

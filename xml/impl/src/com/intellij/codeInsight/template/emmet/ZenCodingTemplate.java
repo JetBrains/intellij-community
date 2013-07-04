@@ -65,7 +65,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private static ZenCodingNode parse(@NotNull String text,
+  public static ZenCodingNode parse(@NotNull String text,
                                      @NotNull CustomTemplateCallback callback,
                                      @NotNull ZenCodingGenerator generator, @Nullable String surroundedText) {
     List<ZenCodingToken> tokens = new EmmetLexer().lex(text);
@@ -154,12 +154,14 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
 
-  private static void expand(String key,
+  public static void expand(String key,
                              @NotNull CustomTemplateCallback callback,
                              String surroundedText,
                              @NotNull ZenCodingGenerator defaultGenerator) {
     ZenCodingNode node = parse(key, callback, defaultGenerator, surroundedText);
-    assert node != null;
+    if (node == null) {
+      return;
+    }
     if (surroundedText == null) {
       if (node instanceof TemplateNode) {
         if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) &&
