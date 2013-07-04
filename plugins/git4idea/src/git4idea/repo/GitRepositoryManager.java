@@ -50,7 +50,6 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
     }
   }
 
-
   @Override
   protected boolean isRootValid(@NotNull VirtualFile root) {
     VirtualFile gitDir = root.findChild(GitUtil.DOT_GIT);

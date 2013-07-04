@@ -23,19 +23,17 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   implements Disposable, RepositoryManager<T>, VcsListener {
 
   private static final Logger LOG = Logger.getInstance(RepositoryManager.class);
+
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull protected AbstractVcs myVcs;
 
   @NotNull protected final Map<VirtualFile, T> myRepositories = new HashMap<VirtualFile, T>();
-
   @NotNull protected final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
-  protected AbstractRepositoryManager(@NotNull Project project,
-                                      @NotNull ProjectLevelVcsManager vcsManager) {
+  protected AbstractRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
     super(project);
     myVcsManager = vcsManager;
   }
-
 
   @Override
   public void dispose() {
@@ -187,7 +185,6 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
 
   @NotNull
   protected abstract T createRepository(@NotNull VirtualFile root);
-
 
   @Override
   @NotNull
