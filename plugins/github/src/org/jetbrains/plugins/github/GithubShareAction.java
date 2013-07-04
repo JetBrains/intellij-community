@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
@@ -50,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -347,7 +349,7 @@ public class GithubShareAction extends DumbAwareAction {
       LOG.info("Performing commit");
       indicator.setText("Performing commit");
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
-      handler.addParameters("-m", "First commit");
+      handler.addParameters("-m", dialog.getCommitMessage());
       handler.endOptions();
       handler.run();
     }
@@ -388,9 +390,26 @@ public class GithubShareAction extends DumbAwareAction {
 
   public static class GithubUntrackedFilesDialog extends SelectFilesDialog {
 
+    private JTextArea myCommitMessageTextArea;
+
     public GithubUntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> untrackedFiles) {
-      super(project, untrackedFiles, "Add files to Git", VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION, true, false, false);
+      super(project, untrackedFiles, null, VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION, true, false, false);
+      setTitle("Add Files For Initial Commit");
       init();
+    }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      JPanel panel = new JPanel(new VerticalFlowLayout());
+      myCommitMessageTextArea = new JTextArea("Initial commit");
+      panel.add(new JLabel("Commit message:"));
+      panel.add(myCommitMessageTextArea);
+      return panel;
+    }
+
+    @NotNull
+    public String getCommitMessage() {
+      return myCommitMessageTextArea.getText();
     }
   }
 
