@@ -33,7 +33,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CommandLineState implements RunnableState {
+public abstract class CommandLineState implements RunProfileState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
   private TextConsoleBuilder myConsoleBuilder;
 

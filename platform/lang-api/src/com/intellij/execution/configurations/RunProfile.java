@@ -23,17 +23,45 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * Base interface for run configurations.
+ *
+ * @see RunConfiguration
+ * @see ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)
+ */
 public interface RunProfile {
    /**
-    * todo - javadoc
+    * Prepares for executing a specific instance of the run configuration.
+    *
+    * @param executor the execution mode selected by the user (run, debug, profile etc.)
+    * @param env the environment object containing additional settings for executing the configuration.
+    * @return the RunProfileState describing the process which is about to be started, or null if it's impossible to start the process.
     */
   @Nullable
-  RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException ;
+  RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException;
 
+  /**
+   * Returns the name of the run configuration.
+   *
+   * @return the name of the run configuration.
+   */
   String getName();
 
+  /**
+   * Returns the icon for the run configuration.
+   *
+   * @return the icon for the run configuration.
+   */
   @Nullable
   Icon getIcon();
 
+  /**
+   * Checks whether the run configuration settings are valid.
+   *
+   * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
+   * but the execution should still be allowed
+   * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
+   * configuration.
+   */
   void checkConfiguration() throws RuntimeConfigurationException;
 }

@@ -131,7 +131,7 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
   public void checkConfiguration() throws RuntimeConfigurationException {
   }
   
-  public static class MyRunnableState implements RunnableState {
+  public static class MyRunnableState implements RunProfileState {
     
     @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
     @NotNull private final Project myProject;
