@@ -33,7 +33,6 @@ import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -182,6 +181,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         else {
           generateDefaultBinOp(lExpr, rExpr, type);
         }
+      }
+      else if (op == JavaTokenType.PLUSEQ && type != null && type.equalsToText(JAVA_LANG_STRING)) {
+        lExpr.accept(this);
+        rExpr.accept(this);
+        addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, lExpr.getProject()));
       }
       else {
         generateDefaultBinOp(lExpr, rExpr, type);
@@ -1343,7 +1347,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         } else if (type == ConditionChecker.Type.IS_NULL_METHOD || type == ConditionChecker.Type.IS_NOT_NULL_METHOD) {
           addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
           addInstruction(new BinopInstruction(type == ConditionChecker.Type.IS_NULL_METHOD ? JavaTokenType.EQEQ : JavaTokenType.NE, null, expression.getProject()));
-          
+
           ConditionalGotoInstruction ifFails = new ConditionalGotoInstruction(-1, true, null);
           GotoInstruction gotoEnd = new GotoInstruction(exitPoint);
 
@@ -1594,29 +1598,33 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    PsiVariable var = resolveToVariable(refExpr);
+    PsiElement target = refExpr.resolve();
+    PsiVariable var = getAccessedVariable(target);
     if (var == null) {
       return null;
     }
 
-    boolean isCall = expression instanceof PsiMethodCallExpression;
+    PsiMethod accessMethod = target instanceof PsiMethod ? (PsiMethod)target : null;
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
-      return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, isCall);
+      DfaVariableValue result = myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, accessMethod);
+      if (var instanceof PsiField) {
+        myFields.add(result);
+      }
+      return result;
     }
 
     if (DfaUtil.isFinalField(var) || DfaUtil.isPlainMutableField(var)) {
       DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
       if (qualifierValue != null) {
-        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, isCall || qualifierValue.isViaMethods());
+        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, accessMethod);
       }
     }
     return null;
   }
 
   @Nullable
-  private static PsiVariable resolveToVariable(PsiReferenceExpression refExpr) {
-    PsiElement target = refExpr.resolve();
+  private static PsiVariable getAccessedVariable(final PsiElement target) {
     if (target instanceof PsiVariable) {
       return (PsiVariable)target;
     }
