@@ -48,18 +48,12 @@ public class HgConfigTest extends HgPlatformTest {
                  FileUtil.toSystemIndependentName(defaultPushPath));
   }
 
-  public void testLargeExtensionInClonedRepo() {
+  public void testLargeExtensionInClonedRepo() throws IOException {
     cd(myChildRepo);
     File hgrc = new File(new File(myChildRepo.getPath(), ".hg"), "hgrc");
     assert hgrc.exists();
-    try {
-      FileUtil.appendToFile(hgrc, "\n[extensions]\n" +
-                                  "largefiles =");
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-      fail("Can not update hgrc file.");
-    }
+    FileUtil.appendToFile(hgrc, "\n[extensions]\n" +
+                                "largefiles =");
     updateRepoConfig(myProject, myChildRepo);
     assertNotNull(HgUtil.getRepositoryNamedConfig(myProject, myChildRepo, "extensions", "largefiles"));
   }
