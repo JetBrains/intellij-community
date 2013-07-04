@@ -468,10 +468,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                   "    <groupId>direct-system-dependency</groupId>" +
                   "    <artifactId>direct-system-dependency</artifactId>" +
                   "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>unexisted.dependency</groupId>" +
-                  "    <artifactId>unexisted-dependency</artifactId>" +
-                  "  </dependency>" +
                   "</dependencies>");
 
     createProjectPom("<groupId>test</groupId>" +
@@ -494,10 +490,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                       "  <dependency>" +
                       "    <groupId>direct-system-dependency</groupId>" +
                       "    <artifactId>direct-system-dependency</artifactId>" +
-                      "  </dependency>" +
-                      "  <dependency>" +
-                      "    <groupId><error>unexisted.dependency</error></groupId>" +
-                      "    <artifactId><error>unexisted-dependency</error></artifactId>" +
                       "  </dependency>" +
                       "</dependencies>");
 
