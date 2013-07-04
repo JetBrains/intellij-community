@@ -24,7 +24,7 @@ public class HgConfigTest extends HgPlatformTest {
     cd(myChildRepo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(myProject, myChildRepo);
     assertNotNull(defaultPath);
-    assertEquals(myRepository.getCanonicalPath(),
+    assertEquals(myRepository.getPath(),
                  FileUtil.toSystemIndependentName(defaultPath));
   }
 
@@ -36,7 +36,7 @@ public class HgConfigTest extends HgPlatformTest {
     updateRepoConfig(myProject, myChildRepo);
     final String defaultPushPath = HgUtil.getRepositoryDefaultPushPath(myProject, myChildRepo);
     assertNotNull(defaultPushPath);
-    assertEquals(FileUtil.toSystemIndependentName(myChildRepo.getCanonicalPath() + "/" + pushPath),
+    assertEquals(FileUtil.toSystemIndependentName(myChildRepo.getPath() + "/" + pushPath),
                  FileUtil.toSystemIndependentName(defaultPushPath));
   }
 
@@ -44,7 +44,7 @@ public class HgConfigTest extends HgPlatformTest {
     cd(myChildRepo);
     final String defaultPushPath = HgUtil.getRepositoryDefaultPushPath(myProject, myChildRepo);
     assertNotNull(defaultPushPath);
-    assertEquals(myRepository.getCanonicalPath(),
+    assertEquals(myRepository.getPath(),
                  FileUtil.toSystemIndependentName(defaultPushPath));
   }
 
