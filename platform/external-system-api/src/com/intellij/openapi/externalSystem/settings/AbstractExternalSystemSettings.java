@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +38,12 @@ public abstract class AbstractExternalSystemSettings<
   SS extends AbstractExternalSystemSettings<SS, PS, L>,
   PS extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<PS>>
+  implements Disposable
 {
 
   @NotNull private final Topic<L> myChangesTopic;
-  @NotNull private final Project  myProject;
+  
+  private Project  myProject;
 
   @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
   
@@ -49,6 +53,12 @@ public abstract class AbstractExternalSystemSettings<
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
     myProject = project;
+    Disposer.register(project, this);
+  }
+
+  @Override
+  public void dispose() {
+    myProject = null;
   }
 
   @NotNull
