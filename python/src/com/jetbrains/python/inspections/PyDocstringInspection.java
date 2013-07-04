@@ -192,8 +192,9 @@ public class PyDocstringInspection extends PyInspection {
       }));
       boolean hasMissing = false;
       for (PyParameter p : realParams) {
-        if ((!isClassMethod && !p.getText().equals(PyNames.CANONICAL_SELF)) ||
-            (isClassMethod && !p.getText().equals("cls"))) {
+        String paramText = p.getText();
+        if ((!isClassMethod && !paramText.equals(PyNames.CANONICAL_SELF))  && !paramText.equals("*") ||
+            (isClassMethod && !paramText.equals("cls"))) {
           if (!params.contains(p.getName())) {
             hasMissing = true;
             missing.add(p);

@@ -132,7 +132,7 @@ public class PythonInspectionsTest extends PyTestCase {
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
-      doHighlightingTest(PyDocstringInspection.class);
+      doHighlightingTest(PyDocstringInspection.class, LanguageLevel.PYTHON33);
     }
     finally {
       documentationSettings.setFormat(DocStringFormat.PLAIN);

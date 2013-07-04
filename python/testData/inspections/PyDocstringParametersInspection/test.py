@@ -24,6 +24,15 @@ def foo():
   """
   pass
 
+def compare(a, b, *, key=None):
+    """
+
+    :param a:
+    :param b:
+    :param key:
+    :return:
+    """
+    pass
 
 def foo(a, <weak_warning descr="Missing parameter c in docstring">c</weak_warning>):
   """
