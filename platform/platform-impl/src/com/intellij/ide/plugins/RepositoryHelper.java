@@ -18,12 +18,10 @@ package com.intellij.ide.plugins;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +44,7 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator) throws Exception {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
-    String url = appInfo.getPluginsListUrl() + "?build=" + getDownloadBuildNumber();
+    String url = appInfo.getPluginsListUrl() + "?build=" + appInfo.getBuild().asString();
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", appInfo.getPluginManagerUrl()));
@@ -96,7 +94,9 @@ public class RepositoryHelper {
     }
   }
 
-  private synchronized static List<IdeaPluginDescriptor> readPluginsStream(InputStream is, ProgressIndicator indicator, String file) throws Exception {
+  private synchronized static List<IdeaPluginDescriptor> readPluginsStream(InputStream is,
+                                                                           ProgressIndicator indicator,
+                                                                           String file) throws Exception {
     File temp = createLocalPluginsDescriptions(file);
 
     OutputStream os = new FileOutputStream(temp, false);
@@ -149,12 +149,5 @@ public class RepositoryHelper {
 
   public static String getDownloadUrl() {
     return ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl() + "?action=download&id=";
-  }
-
-  // temp. hack to deal with plugin repository
-  public static String getDownloadBuildNumber() {
-    BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
-    String string = buildNumber.asString();
-    return buildNumber.isSnapshot() ? string.replace(".SNAPSHOT", ".998") : string;
   }
 }
