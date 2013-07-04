@@ -59,7 +59,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
   MavenRunConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
-        throw new UnsupportedOperationException();
+        return new MavenRunConfiguration(project, this, "");
       }
 
       public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {

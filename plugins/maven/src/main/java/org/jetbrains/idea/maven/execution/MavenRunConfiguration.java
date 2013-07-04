@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunProfile {
@@ -57,7 +58,12 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<MavenRunConfiguration>();
-    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
+
+    MavenRunnerParametersSettingEditor parameterSettingEditor = new MavenRunnerParametersSettingEditor(getProject());
+    group.addEditor(parameterSettingEditor.getPanel().getDisplayName(), parameterSettingEditor);
+
+    MavenGeneralSettingsEditor generalSettingsEditor = new MavenGeneralSettingsEditor(getProject());
+    group.addEditor(generalSettingsEditor.getPanel().getDisplayName(), generalSettingsEditor);
 
     group.addEditor("Mmm", new MavenRunConfigurationSettings(getProject()));
     //group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralConfigurableWithUseProjectSettings(getProject()));

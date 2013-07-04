@@ -21,8 +21,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenGeneralConfigurableWithUseProjectSettings;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 
 import javax.swing.*;
 
@@ -35,16 +33,7 @@ public class MavenRunConfigurationSettings extends SettingsEditor<MavenRunConfig
 
   public MavenRunConfigurationSettings(@NotNull final Project p) {
     myCompositeConfigurable = new CompositeConfigurable(
-      new MavenGeneralConfigurableWithUseProjectSettings(p) {
-        protected MavenGeneralSettings getState() {
-          return configuration.getGeneralSettings();
-        }
-
-      @Override
-      public void setState(@Nullable MavenGeneralSettings state) {
-        configuration.setGeneralSettings(state);
-      }
-    }, new MavenRunnerConfigurableWithUseProjectSettings(p) {
+      new MavenRunnerConfigurableWithUseProjectSettings(p) {
         protected MavenRunnerSettings getState() {
           return configuration.getRunnerSettings();
         }
