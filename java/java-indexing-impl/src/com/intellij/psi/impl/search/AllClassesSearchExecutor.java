@@ -22,6 +22,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,12 +30,18 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   @Override
@@ -51,37 +58,40 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     }
     return true;
   }
+  
+  private static String[] getAllClassNames(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<String[]>() {
+      @Nullable
+      @Override
+      public Result<String[]> compute() {
+        String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+          @Override
+          public String[] compute() {
+            return PsiShortNamesCache.getInstance(project).getAllClassNames();
+          }
+        });
+        return Result.create(names, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
+  }
 
   private static boolean processAllClassesInGlobalScope(final GlobalSearchScope scope, final Processor<PsiClass> processor, final AllClassesSearch.SearchParameters parameters) {
-    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
-
-    final Set<String> names = new THashSet<String>();
+    String[] names = getAllClassNames(parameters.getProject());
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        cache.processAllClassNames(new Processor<String>() {
-          int i = 0;
-          @Override
-          public boolean process(String s) {
-            if (parameters.nameMatches(s)) {
-              names.add(s);
-            }
-            if (indicator != null && i++ % 512 == 0) {
-              indicator.checkCanceled();
-            }
-
-            return true;
-          }
-        });
+    List<String> sorted = new ArrayList<String>(names.length);
+    for (int i = 0; i < names.length; i++) {
+      String name = names[i];
+      if (parameters.nameMatches(name)) {
+        sorted.add(name);
       }
-    });
-
-    List<String> sorted = new ArrayList<String>(names);
+      if (indicator != null && i % 512 == 0) {
+        indicator.checkCanceled();
+      }
+    }
 
     if (indicator != null) {
       indicator.checkCanceled();
@@ -94,6 +104,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
     });
 
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
     for (final String name : sorted) {
       ProgressIndicatorProvider.checkCanceled();
       final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
