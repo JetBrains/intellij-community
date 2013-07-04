@@ -35,11 +35,7 @@ public class MavenRunConfigurationSettings extends SettingsEditor<MavenRunConfig
 
   public MavenRunConfigurationSettings(@NotNull final Project p) {
     myCompositeConfigurable = new CompositeConfigurable(
-      new MavenRunnerParametersConfigurable(p) {
-        protected MavenRunnerParameters getParameters() {
-          return configuration.getRunnerParameters();
-        }
-      }, new MavenGeneralConfigurableWithUseProjectSettings(p) {
+      new MavenGeneralConfigurableWithUseProjectSettings(p) {
         protected MavenGeneralSettings getState() {
           return configuration.getGeneralSettings();
         }

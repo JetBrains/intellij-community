@@ -15,10 +15,8 @@
  */
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -27,6 +25,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -57,7 +56,14 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
 
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new MavenRunConfigurationSettings(getProject());
+    SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<MavenRunConfiguration>();
+    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
+
+    group.addEditor("Mmm", new MavenRunConfigurationSettings(getProject()));
+    //group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralConfigurableWithUseProjectSettings(getProject()));
+    //group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenGeneralConfigurableWithUseProjectSettings(getProject()));
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<MavenRunConfiguration>());
+    return group;
   }
 
   public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
