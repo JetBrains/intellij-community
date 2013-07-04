@@ -115,7 +115,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     //workaround: --follow  options doesn't work with largefiles extension;
     //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html
     logCommand
-      .setFollowCopies(!filePath.isDirectory() && HgUtil.getRepositoryNamedConfig(project, vcsRoot, "extensions", "largefiles") == null);
+      .setFollowCopies(!filePath.isDirectory() && HgUtil.getConfig(project, vcsRoot, "extensions", "largefiles") == null);
     logCommand.setIncludeRemoved(true);
     try {
       return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);

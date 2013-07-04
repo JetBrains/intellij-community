@@ -55,6 +55,6 @@ public class HgConfigTest extends HgPlatformTest {
     FileUtil.appendToFile(hgrc, "\n[extensions]\n" +
                                 "largefiles =");
     updateRepoConfig(myProject, myChildRepo);
-    assertNotNull(HgUtil.getRepositoryNamedConfig(myProject, myChildRepo, "extensions", "largefiles"));
+    assertNotNull(HgUtil.getConfig(myProject, myChildRepo, "extensions", "largefiles"));
   }
 }
