@@ -106,7 +106,12 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   public void getAllClassNames(@NotNull HashSet<String> set) {
-    JavaShortClassNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
+    processAllClassNames(new CommonProcessors.CollectProcessor<String>(set));
+  }
+
+  @Override
+  public boolean processAllClassNames(Processor<String> processor) {
+    return JavaShortClassNameIndex.getInstance().processAllKeys(myManager.getProject(), processor);
   }
 
   @Override

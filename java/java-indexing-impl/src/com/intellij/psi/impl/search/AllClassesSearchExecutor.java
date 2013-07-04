@@ -31,12 +31,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   @Override
@@ -54,31 +52,36 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  private static boolean processAllClassesInGlobalScope(final GlobalSearchScope scope, final Processor<PsiClass> processor, AllClassesSearch.SearchParameters parameters) {
+  private static boolean processAllClassesInGlobalScope(final GlobalSearchScope scope, final Processor<PsiClass> processor, final AllClassesSearch.SearchParameters parameters) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
 
-    final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
-      @Override
-      public String[] compute() {
-        return cache.getAllClassNames();
-      }
-    });
-
+    final Set<String> names = new THashSet<String>();
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
     }
 
-    List<String> sorted = new ArrayList<String>(names.length);
-    for (int i = 0; i < names.length; i++) {
-      String name = names[i];
-      if (parameters.nameMatches(name)) {
-        sorted.add(name);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        cache.processAllClassNames(new Processor<String>() {
+          int i = 0;
+          @Override
+          public boolean process(String s) {
+            if (parameters.nameMatches(s)) {
+              names.add(s);
+            }
+            if (indicator != null && i++ % 512 == 0) {
+              indicator.checkCanceled();
+            }
+
+            return true;
+          }
+        });
       }
-      if (indicator != null && i % 512 == 0) {
-        indicator.checkCanceled();
-      }
-    }
+    });
+
+    List<String> sorted = new ArrayList<String>(names);
 
     if (indicator != null) {
       indicator.checkCanceled();
