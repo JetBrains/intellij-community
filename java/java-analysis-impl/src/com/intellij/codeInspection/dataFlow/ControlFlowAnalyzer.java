@@ -1599,15 +1599,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    PsiVariable var = resolveToVariable(refExpr);
+    PsiElement target = refExpr.resolve();
+    PsiVariable var = getAccessedVariable(target);
     if (var == null) {
       return null;
     }
 
-    boolean isCall = expression instanceof PsiMethodCallExpression;
+    PsiMethod accessMethod = target instanceof PsiMethod ? (PsiMethod)target : null;
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
-      DfaVariableValue result = myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, isCall);
+      DfaVariableValue result = myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, accessMethod);
       if (var instanceof PsiField) {
         myFields.add(result);
       }
@@ -1617,15 +1618,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (DfaPsiUtil.isFinalField(var) || DfaPsiUtil.isPlainMutableField(var)) {
       DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
       if (qualifierValue != null) {
-        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, isCall || qualifierValue.isViaMethods());
+        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, accessMethod);
       }
     }
     return null;
   }
 
   @Nullable
-  private static PsiVariable resolveToVariable(PsiReferenceExpression refExpr) {
-    PsiElement target = refExpr.resolve();
+  private static PsiVariable getAccessedVariable(final PsiElement target) {
     if (target instanceof PsiVariable) {
       return (PsiVariable)target;
     }

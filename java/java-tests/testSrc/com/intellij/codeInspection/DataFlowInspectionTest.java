@@ -171,6 +171,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testEqualsHasNoSideEffects() { doTest(); }
 
+  public void testHonorGetterAnnotation() { doTest(); }
+
   public void testIsNullCheck() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getIsNullCheckMethods().add(
       buildConditionChecker("Value", "isNull", ConditionChecker.Type.IS_NULL_METHOD,
