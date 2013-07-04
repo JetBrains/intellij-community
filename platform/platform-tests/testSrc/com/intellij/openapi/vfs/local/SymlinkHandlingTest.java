@@ -340,7 +340,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   }
 
   private void assertVisitedPaths(String... expected) {
-    VirtualFile vDir = myFileSystem.findFileByIoFile(myTempDir);
+    VirtualFile vDir = refreshAndFind(myTempDir);
     assertNotNull(vDir);
 
     Set<String> expectedSet = new HashSet<String>(expected.length + 1, 1);
