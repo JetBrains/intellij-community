@@ -17,10 +17,12 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +34,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class AbstractExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
+public abstract class AbstractExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
   private JPanel myContentPane;
   private AbstractParameterTablePanel myParametersPanel;
   private JTextField myMethodNameTextField;
-  private JTextArea mySignaturePreviewTextArea;
+  private MethodSignatureComponent mySignaturePreviewTextArea;
   private JTextArea myOutputVariablesTextArea;
+  private final Project myProject;
   private final String myDefaultName;
   private final ExtractMethodValidator myValidator;
   private final ExtractMethodDecorator myDecorator;
@@ -54,6 +57,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
                              final ExtractMethodValidator validator,
                              final ExtractMethodDecorator decorator) {
     super(project, true);
+    myProject = project;
     myDefaultName = defaultName;
     myValidator = validator;
     myDecorator = decorator;
@@ -168,7 +172,11 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
         AbstractExtractMethodDialog.this.updateSignature();
       }
     };
+    mySignaturePreviewTextArea = new MethodSignatureComponent("", myProject, getFileType());
   }
+
+  @NotNull
+  protected abstract FileType getFileType();
 
   private void updateOutputVariables() {
     final StringBuilder builder = new StringBuilder();
@@ -189,7 +197,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   }
 
   private void updateSignature() {
-    mySignaturePreviewTextArea.setText(myDecorator.createMethodPreview(getMethodName(), myVariableData));
+    mySignaturePreviewTextArea.setSignature(myDecorator.createMethodPreview(getMethodName(), myVariableData));
   }
 
   private void updateOkStatus() {
