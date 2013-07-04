@@ -102,7 +102,7 @@ public class HgStatusWidget extends EditorBasedWidget
     }
     VirtualFile root = HgUtil.getRootForSelectedFile(project);
     if (root != null) {
-      return HgBranchPopup.getInstance(project, HgRepositoryImpl.getFullInstance(root, project, project)).asListPopup();
+      return HgBranchPopup.getInstance(project, HgRepositoryImpl.getInstance(root, project, project)).asListPopup();
     }
     return null;
   }

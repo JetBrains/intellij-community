@@ -62,8 +62,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   }
 
   @NotNull
-  public static HgRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project,
-                                             @NotNull Disposable parentDisposable) {
+  public static HgRepository getInstance(@NotNull VirtualFile root, @NotNull Project project,
+                                         @NotNull Disposable parentDisposable) {
     HgRepositoryImpl repository = new HgRepositoryImpl(root, project, parentDisposable);
     repository.setupUpdater();
     return repository;

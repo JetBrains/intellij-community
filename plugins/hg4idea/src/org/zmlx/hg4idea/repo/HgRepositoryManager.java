@@ -37,6 +37,6 @@ public class HgRepositoryManager extends AbstractRepositoryManager<HgRepository>
   @NotNull
   @Override
   protected HgRepository createRepository(@NotNull VirtualFile root) {
-    return HgRepositoryImpl.getFullInstance(root, myProject, this);
+    return HgRepositoryImpl.getInstance(root, myProject, this);
   }
 }

@@ -110,7 +110,7 @@ public class HgBranchPopup {
     popupGroup.addSeparator("Repositories");
     boolean isMultiRepoConfig = repositories.size() > 1;
     for (VirtualFile repository : repositories) {
-      HgRepository repo = HgRepositoryImpl.getFullInstance(repository, myProject, myProject);
+      HgRepository repo = HgRepositoryImpl.getInstance(repository, myProject, myProject);
       popupGroup.add(new RootAction<HgRepository>(repo, isMultiRepoConfig ? myCurrentRepository : null,
                                                   new HgBranchPopupActions(repo.getProject(), repo).createActions(null),
                                                   HgUtil.getDisplayableBranchText(repo),
