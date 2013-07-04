@@ -127,7 +127,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       if (textRange == null) return -1;
       textRange = manager.injectedToHost(psiElement, textRange);
       final int startOffset = textRange.getStartOffset();
-      LOG.assertTrue(startOffset < document.getTextLength(), getDescriptionTemplate());
+      final int textLength = document.getTextLength();
+      LOG.assertTrue(startOffset < textLength || startOffset == 0 && textLength == 0, getDescriptionTemplate());
       myLineNumber =  document.getLineNumber(startOffset) + 1;
     }
     return myLineNumber;
