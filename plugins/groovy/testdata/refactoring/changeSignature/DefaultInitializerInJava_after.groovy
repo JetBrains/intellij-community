@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 class GClass {
-  public void test(def p = 1) {}
+  public void test(p = 1) {}
 }

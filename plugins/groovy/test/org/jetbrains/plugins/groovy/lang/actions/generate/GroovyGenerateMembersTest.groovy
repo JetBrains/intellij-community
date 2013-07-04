@@ -223,7 +223,7 @@ class Test {
 class Test {
     def foo
 
-    void setFoo(def foo) {
+    void setFoo(foo) {
         this.foo = foo
     }
 }'''
@@ -262,7 +262,7 @@ class Test {
 class Test {
     static foo
 
-    static void setFoo(def foo) {
+    static void setFoo(foo) {
         Test.foo = foo
     }
 }'''

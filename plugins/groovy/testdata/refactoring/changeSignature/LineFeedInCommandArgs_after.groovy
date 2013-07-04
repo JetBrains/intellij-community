@@ -1,4 +1,4 @@
-def foo(def b) {
+def foo(b) {
   print b
 }
 
