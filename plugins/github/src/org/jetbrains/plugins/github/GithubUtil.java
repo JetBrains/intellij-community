@@ -168,6 +168,16 @@ public class GithubUtil {
   }
 
   @NotNull
+  public static List<RepositoryInfo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
+    final String request = "/users/" + user + "/repos";
+    JsonElement result = GithubApiUtil.getRequest(auth, request);
+    if (result == null) {
+      return Collections.emptyList();
+    }
+    return parseRepositoryInfos(result);
+  }
+
+  @NotNull
   private static List<RepositoryInfo> parseRepositoryInfos(@NotNull JsonElement result) {
     if (!result.isJsonArray()) {
       LOG.assertTrue(result.isJsonObject(), String.format("Unexpected JSON result format: %s", result));
