@@ -48,6 +48,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
 
   @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
+    @SuppressWarnings("ConstantConditions")
     final FileEditor fileEditor = context.getFileEditorProvider().openFileEditor();
 
     StructureViewWrapper customStructureView = CUSTOM_STRUCTURE_VIEW_KEY.get(context.getVirtualFile());
