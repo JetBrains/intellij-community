@@ -125,7 +125,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   protected static void updateRepoConfig(@NotNull Project project, @Nullable VirtualFile repo) {
     HgRepository hgRepository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repo);
     assertNotNull(hgRepository);
-    hgRepository.getRepositoryConfig().update(project, null);
+    hgRepository.updateConfig();
   }
 
   protected void createRepository(VirtualFile root) {

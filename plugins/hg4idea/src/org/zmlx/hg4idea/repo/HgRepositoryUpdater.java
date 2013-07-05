@@ -28,7 +28,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcs;
 
 import java.util.List;
 
@@ -38,34 +37,38 @@ import java.util.List;
  * @author Nadya Zabrodina
  */
 final class HgRepositoryUpdater implements Disposable, BulkFileListener {
-  @NotNull private Project myProject;
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final QueueProcessor<Object> myUpdateQueue;
   @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
   @Nullable private final VirtualFile myBranchHeadsDir;
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
+  @NotNull private final QueueProcessor<Object> myUpdateConfigQueue;
 
 
-  HgRepositoryUpdater(@NotNull HgRepository repository) {
+  HgRepositoryUpdater(@NotNull final HgRepository repository) {
     VirtualFile hgDir = repository.getHgDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);
     myRepositoryFiles = HgRepositoryFiles.getInstance(hgDir);
     RepositoryUtil.visitVcsDirVfs(hgDir, HgRepositoryFiles.getSubDirRelativePaths());
 
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
-
-    myProject = repository.getProject();
-    myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), myProject.getDisposed());
-    if (!myProject.isDisposed()) {
-      myMessageBusConnection = myProject.getMessageBus().connect();
+    Project project = repository.getProject();
+    myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
+    myUpdateConfigQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository){
+      @Override
+      public void consume(Object dummy) {
+        repository.updateConfig();
+      }
+    }, project.getDisposed());
+    if (!project.isDisposed()) {
+      myMessageBusConnection = project.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
     }
     else {
       myMessageBusConnection = null;
     }
   }
-
 
   @Override
   public void dispose() {
@@ -122,7 +125,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
     }
     if (configHgrcChanged) {
-      myProject.getMessageBus().syncPublisher(HgVcs.UPDATE_CONFIG_TOPIC).update(myProject, null);
+      myUpdateConfigQueue.add(Void.TYPE);
     }
   }
 }

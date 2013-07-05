@@ -48,4 +48,6 @@ public interface HgRepository extends Repository {
 
   @NotNull
   HgConfig getRepositoryConfig();
+
+  void updateConfig();
 }

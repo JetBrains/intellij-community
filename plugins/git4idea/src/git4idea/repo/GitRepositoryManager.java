@@ -19,7 +19,6 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
@@ -36,24 +35,16 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
                               @NotNull ProjectLevelVcsManager vcsManager) {
-    super(project, vcsManager);
+    super(project, vcsManager, platformFacade.getVcs(project), GitUtil.DOT_GIT);
     myPlatformFacade = platformFacade;
   }
 
   @Override
   public void initComponent() {
-    myVcs = myPlatformFacade.getVcs(myProject);
-    Disposer.register(myProject, this);
-    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    super.initComponent();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       GitRootScanner.start(myProject);
     }
-  }
-
-  @Override
-  protected boolean isRootValid(@NotNull VirtualFile root) {
-    VirtualFile gitDir = root.findChild(GitUtil.DOT_GIT);
-    return gitDir != null && gitDir.exists();
   }
 
   @NotNull

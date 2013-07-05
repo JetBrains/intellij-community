@@ -49,7 +49,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
 
   @SuppressWarnings("ConstantConditions")
-  protected HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project,
+  private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project,
                              @NotNull Disposable parentDisposable) {
     super(project, rootDir, parentDisposable);
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
@@ -57,7 +57,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myState = State.NORMAL;
     myCurrentRevision = null;
     myReader = new HgRepositoryReader(VfsUtilCore.virtualToIoFile(myHgDir));
-    myConfig = new HgConfig(project, rootDir);
+    myConfig = HgConfig.getInstance(project, rootDir);
     update();
   }
 
@@ -141,5 +141,9 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
       myBookmarks = myReader.readBookmarks();
       myCurrentBookmark = myReader.readCurrentBookmark();
     }
+  }
+
+  public void updateConfig(){
+    myConfig = HgConfig.getInstance(getProject(),getRoot());
   }
 }

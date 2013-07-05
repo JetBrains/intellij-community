@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -25,14 +26,25 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   private static final Logger LOG = Logger.getInstance(RepositoryManager.class);
 
   @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull protected AbstractVcs myVcs;
+  @NotNull private final AbstractVcs myVcs;
+  @NotNull private final String myRootDirName;
 
   @NotNull protected final Map<VirtualFile, T> myRepositories = new HashMap<VirtualFile, T>();
+
   @NotNull protected final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
-  protected AbstractRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
+  protected AbstractRepositoryManager(@NotNull Project project,
+                                      @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs, @NotNull String rootDirName) {
     super(project);
     myVcsManager = vcsManager;
+    myVcs = vcs;
+    myRootDirName = rootDirName;
+  }
+
+  @Override
+  public void initComponent() {
+    Disposer.register(myProject, this);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
   }
 
   @Override
@@ -87,7 +99,7 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
     final AbstractVcs vcs = vcsRoot.getVcs();
     if (!myVcs.equals(vcs)) {
       if (vcs != null) {
-        LOG.debug(String.format("getRepositoryForFile returned non-(%s) root for file %s", vcs.getDisplayName(), filePath));
+        LOG.debug(String.format("getRepositoryForFile returned non-(%s) root for file %s", myVcs.getDisplayName(), filePath));
       }
       return null;
     }
@@ -181,7 +193,10 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
     }
   }
 
-  protected abstract boolean isRootValid(@NotNull VirtualFile root);
+  private boolean isRootValid(@NotNull VirtualFile root) {
+    VirtualFile gitDir = root.findChild(myRootDirName);
+    return gitDir != null && gitDir.exists();
+  }
 
   @NotNull
   protected abstract T createRepository(@NotNull VirtualFile root);
