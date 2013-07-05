@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
@@ -95,7 +96,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof GitCommit) {
           GitCommit commit = (GitCommit)userObject;
-          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthorName() + "\n\n" + commit.getFullMessage();
+          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthorName() + "\n\n" +
+                 IssueLinkHtmlRenderer.formatTextWithLinks(myProject, commit.getFullMessage());
         }
         return "";
       }
