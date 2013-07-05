@@ -194,8 +194,8 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   }
 
   private boolean isRootValid(@NotNull VirtualFile root) {
-    VirtualFile gitDir = root.findChild(myRootDirName);
-    return gitDir != null && gitDir.exists();
+    VirtualFile vcsDir = root.findChild(myRootDirName);
+    return vcsDir != null && vcsDir.exists();
   }
 
   @NotNull
