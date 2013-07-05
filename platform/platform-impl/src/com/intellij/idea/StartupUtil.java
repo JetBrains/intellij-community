@@ -15,13 +15,10 @@
  */
 package com.intellij.idea;
 
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -112,16 +109,6 @@ public class StartupUtil {
     loadSystemLibraries(log);
 
     appStarter.start(newConfigFolder);
-  }
-
-  static void runStartupWizard() {
-    final List<ApplicationInfoEx.PluginChooserPage> pages = ApplicationInfoImpl.getShadowInstance().getPluginChooserPages();
-    if (!pages.isEmpty()) {
-      final StartupWizard startupWizard = new StartupWizard(pages);
-      startupWizard.setCancelText("Skip");
-      startupWizard.show();
-      PluginManagerCore.invalidatePlugins();
-    }
   }
 
   /**
