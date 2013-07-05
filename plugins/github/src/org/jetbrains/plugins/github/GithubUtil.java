@@ -226,11 +226,12 @@ public class GithubUtil {
   @NotNull
   private static RepositoryInfo parseSingleRepositoryInfo(@NotNull JsonObject result) {
     String name = result.get("name").getAsString();
+    String browserUrl = result.get("html_url").getAsString();
     String cloneUrl = result.get("clone_url").getAsString();
     String ownerName = result.get("owner").getAsJsonObject().get("login").getAsString();
     String parentName = result.has("parent") ? result.get("parent").getAsJsonObject().get("full_name").getAsString() : null;
     boolean fork = result.get("fork").getAsBoolean();
-    return new RepositoryInfo(name, cloneUrl, ownerName, parentName, fork);
+    return new RepositoryInfo(name, browserUrl, cloneUrl, ownerName, parentName, fork);
   }
 
   @Nullable

@@ -12,17 +12,23 @@ import org.jetbrains.annotations.Nullable;
 public class RepositoryInfo {
 
   @NotNull private final String myName;
+  @NotNull private final String myBrowserUrl;
   @NotNull private final String myCloneUrl;
   @NotNull private final String myOwnerName;
   @Nullable private final String myParentName;
   private final boolean myFork;
 
-  public RepositoryInfo(@NotNull String name, @NotNull String cloneUrl, @NotNull String ownerName, @Nullable String parentName,
+  public RepositoryInfo(@NotNull String name,
+                        @NotNull String browserUrl,
+                        @NotNull String cloneUrl,
+                        @NotNull String ownerName,
+                        String parentName,
                         boolean fork) {
     myName = name;
-    myParentName = parentName;
+    myBrowserUrl = browserUrl;
     myCloneUrl = cloneUrl;
     myOwnerName = ownerName;
+    myParentName = parentName;
     myFork = fork;
   }
 
@@ -56,4 +62,8 @@ public class RepositoryInfo {
     return myCloneUrl;
   }
 
+  @NotNull
+  public String getBrowserUrl() {
+    return myBrowserUrl;
+  }
 }
