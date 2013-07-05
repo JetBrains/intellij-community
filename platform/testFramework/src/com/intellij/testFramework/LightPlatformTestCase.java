@@ -469,8 +469,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     enableInspectionTool(myAvailableInspectionTools, toolWrapper);
   }
 
-  private static void enableInspectionTool(@NotNull Map<String, InspectionToolWrapper> availableLocalTools,
-                                           @NotNull InspectionToolWrapper toolWrapper) {
+  public static void enableInspectionTool(@NotNull Map<String, InspectionToolWrapper> availableLocalTools,
+                                          @NotNull InspectionToolWrapper toolWrapper) {
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
