@@ -706,13 +706,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     myRoot.setChecked(false);
     myRoot.dropCache();
     List<Set<String>> keySetList = new ArrayList<Set<String>>();
-    final Set<String> quated = new HashSet<String>();
+    final Set<String> quoted = new HashSet<String>();
     if (filter != null && !filter.isEmpty()) {
-      keySetList.addAll(SearchUtil.findKeys(filter, quated));
+      keySetList.addAll(SearchUtil.findKeys(filter, quoted));
     }
     Project project = myProjectProfileManager.getProject();
     for (Descriptor descriptor : myDescriptors.keySet()) {
-      if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
+      if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quoted)) {
         continue;
       }
       final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(descriptor.getKey().toString(), project);
@@ -733,7 +733,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     if (filter != null && forceInclude && myRoot.getChildCount() == 0) {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-      if (filters.size() > 1) {
+      if (filters.size() > 1 || !quoted.isEmpty()) {
         fillTreeData(filter, false);
       }
     }
@@ -1137,7 +1137,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private class MyFilterComponent extends FilterComponent {
     private MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
-      setHistory(Arrays.asList("\"New in 12\""));
+      setHistory(Arrays.asList("\"New in 13\""));
     }
 
     @Override
