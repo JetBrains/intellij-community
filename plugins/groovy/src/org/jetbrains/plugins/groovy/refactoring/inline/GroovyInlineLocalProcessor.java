@@ -23,7 +23,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.BaseUsageViewDescriptor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -192,7 +192,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+    CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
     for (UsageInfo usage : usages) {
       GrVariableInliner.inlineReference(usage, myLocal, mySettings.getInitializer());

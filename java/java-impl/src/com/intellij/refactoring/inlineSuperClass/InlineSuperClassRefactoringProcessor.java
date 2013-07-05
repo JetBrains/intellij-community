@@ -32,10 +32,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
-import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
@@ -290,7 +287,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         } else {
           super.performRefactoring(pushDownUsages);
         }
-        RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+        CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
         for (UsageInfo usageInfo : usages) {
           if (!(usageInfo instanceof ReplaceExtendsListUsageInfo || usageInfo instanceof RemoveImportUsageInfo)) {
             try {

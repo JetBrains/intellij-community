@@ -33,6 +33,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -176,12 +177,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         elementListener.elementMoved(element);
       }
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
-      Arrays.sort(usages, new Comparator<UsageInfo>() {
-        @Override
-        public int compare(final UsageInfo o1, final UsageInfo o2) {
-          return o1.getElement() == o2.getElement() ? o2.getRangeInElement().getStartOffset() - o1.getRangeInElement().getStartOffset() : 0;
-        }
-      });
+      CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
       // fix references in moved files to outer files
       for (PsiFile movedFile : movedFiles) {

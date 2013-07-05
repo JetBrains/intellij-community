@@ -172,22 +172,6 @@ public class RefactoringUtil {
     }
   }
 
-  //order of usages accross different files is irrelevant
-  public static void sortDepthFirstRightLeftOrder(final UsageInfo[] usages) {
-    Arrays.sort(usages, new Comparator<UsageInfo>() {
-      public int compare(final UsageInfo usage1, final UsageInfo usage2) {
-        final PsiElement element1 = usage1.getElement();
-        final PsiElement element2 = usage2.getElement();
-        if (element1 == null) {
-          if (element2 == null) return 0;
-          return 1;
-        }
-        if (element2 == null) return -1;
-        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-      }
-    });
-  }
-
   @Nullable
   public static String suggestNewOverriderName(String oldOverriderName, String oldBaseName, String newBaseName) {
     if (oldOverriderName.equals(oldBaseName)) {
