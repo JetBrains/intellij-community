@@ -25,23 +25,24 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public class JDParamListOwnerComment extends JDComment{
-  protected ArrayList<NameDesc> parmsList;
-  private static final @NonNls String PARAM_TAG = "@param ";
+public class JDParamListOwnerComment extends JDComment {
+  protected List<NameDesc> myParamsList;
 
-  public JDParamListOwnerComment(CommentFormatter formatter) {
+  public JDParamListOwnerComment(@NotNull CommentFormatter formatter) {
     super(formatter);
   }
 
   @Override
-  protected void generateSpecial(String prefix, StringBuffer sb) {
-     if (parmsList != null) {
+  protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
+     if (myParamsList != null) {
       int before = sb.length();
-      generateList(prefix, sb, parmsList, PARAM_TAG,
+      generateList(prefix, sb, myParamsList, JDTag.PARAM.getWithEndWhitespace(),
                    myFormatter.getSettings().JD_ALIGN_PARAM_COMMENTS,
                    myFormatter.getSettings().JD_KEEP_EMPTY_PARAMETER,
                    myFormatter.getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE
@@ -55,22 +56,25 @@ public class JDParamListOwnerComment extends JDComment{
     }
   }
 
-  public NameDesc getParameter(String name) {
-    return getNameDesc(name, parmsList);
+  @Nullable
+  public NameDesc getParameter(@Nullable String name) {
+    return getNameDesc(name, myParamsList);
   }
 
-  public void addParameter(String name, String description) {
-    if (parmsList == null) {
-      parmsList = new ArrayList<NameDesc>();
+  public void addParameter(@NotNull String name, @Nullable String description) {
+    if (myParamsList == null) {
+      myParamsList = ContainerUtilRt.newArrayList();
     }
-    parmsList.add(new NameDesc(name, description));
+    myParamsList.add(new NameDesc(name, description));
   }
 
-  static NameDesc getNameDesc(String name, ArrayList<NameDesc> list) {
+  @Nullable
+  private static NameDesc getNameDesc(@Nullable String name, @Nullable List<NameDesc> list) {
     if (list == null) return null;
-    for (Object aList : list) {
-      NameDesc parameter = (NameDesc)aList;
-      if (parameter.name.equals(name)) return parameter;
+    for (NameDesc aList : list) {
+      if (aList.name.equals(name)) {
+        return aList;
+      }
     }
     return null;
   }
@@ -79,10 +83,10 @@ public class JDParamListOwnerComment extends JDComment{
    * Generates parameters or exceptions
    *
    */
-  protected void generateList(String prefix,
-                              StringBuffer sb,
-                              ArrayList<NameDesc> list,
-                              String tag,
+  protected void generateList(@NotNull String prefix,
+                              @NotNull StringBuilder sb,
+                              @NotNull List<NameDesc> list,
+                              @NotNull String tag,
                               boolean align_comments,
                               boolean generate_empty_tags,
                               boolean wrapDescription)
@@ -104,7 +108,7 @@ public class JDParamListOwnerComment extends JDComment{
       }
     }
 
-    StringBuffer fill = new StringBuffer(prefix.length() + tag.length() + max + 1);
+    StringBuilder fill = new StringBuilder(prefix.length() + tag.length() + max + 1);
     fill.append(prefix);
     StringUtil.repeatSymbol(fill, ' ', max + 1 + tag.length());
 
@@ -113,7 +117,8 @@ public class JDParamListOwnerComment extends JDComment{
       if (isNull(nd.desc) && !generate_empty_tags) continue;
       if (wrapDescription && !isNull(nd.desc)) {
         sb.append(prefix).append(tag).append(nd.name).append("\n");
-        sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, wrapParametersPrefix));
+        sb.append(wrapParametersPrefix);
+        sb.append(myFormatter.getParser().formatJDTagDescription(nd.desc, wrapParametersPrefix));
       }
       else if (align_comments) {
         sb.append(prefix);
@@ -121,10 +126,12 @@ public class JDParamListOwnerComment extends JDComment{
         sb.append(nd.name);
         int spacesNumber = max + 1 - nd.name.length();
         StringUtil.repeatSymbol(sb, ' ', Math.max(0, spacesNumber));
-        sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, fill, false));
+        sb.append(myFormatter.getParser().formatJDTagDescription(nd.desc, fill));
       }
       else {
-        sb.append(myFormatter.getParser().splitIntoCLines(tag + nd.name + " " + nd.desc, prefix, true));
+        sb.append(prefix);
+        String description = (nd.desc == null) ? "" : nd.desc;
+        sb.append(myFormatter.getParser().formatJDTagDescription(tag + nd.name + " " + description, prefix));
       }
     }
   }
