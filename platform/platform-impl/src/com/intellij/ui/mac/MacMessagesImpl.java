@@ -21,12 +21,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.SunToolkit;
 
@@ -52,13 +52,13 @@ public class MacMessagesImpl extends MacMessages {
 
   private static final Callback SHEET_DID_END = new Callback() {
     public void callback(ID self, String selector, ID alert, ID returnCode, ID contextInfo) {
-      cfRelease(self);
       synchronized (lock) {
         Window documentRoot = windowFromId.get(contextInfo.longValue());
         processResult(documentRoot);
         resultsFromDocumentRoot.put(documentRoot, returnCode.intValue());
         queuesFromDocumentRoot.get(windowFromId.get(contextInfo.longValue())).runFromQueue();
       }
+      cfRelease(self);
     }
   };
 
@@ -74,7 +74,7 @@ public class MacMessagesImpl extends MacMessages {
       ID buttons = invoke(params, "objectAtIndex:", 8);
       ID doNotAskChecked = invoke(params, "objectAtIndex:", 9);
 
-      ID alert = invoke(invoke("NSAlert", "alloc"), "init");
+      ID alert = invoke(invoke(invoke("NSAlert", "alloc"), "init"), "autorelease");
 
       invoke(alert, "setMessageText:", title);
       invoke(alert, "setInformativeText:", message);
@@ -332,77 +332,211 @@ public class MacMessagesImpl extends MacMessages {
     pumpEventsDocumentExclusively(w);
   }
 
+  private static enum COMMON_DIALOG_PARAM_TYPE {
+    title,
+    message,
+    errorStyle,
+    doNotAskDialogOption1,
+    doNotAskDialogOption2,
+    nativeFocusedWindow
+  }
 
-  public int showMessageDialog(final String title, final String message, final String[] buttons, final boolean errorStyle,
-                               @Nullable Window window, final int defaultOptionIndex,
-                               final int focusedOptionIndex, @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+  private static enum MESSAGE_DIALOG_PARAM_TYPE {
+    buttonsArray,
+    errorStyle,
+    defaultOptionIndex,
+    focusedOptionIndex
+  }
 
+  private static enum ALERT_DIALOG_PARAM_TYPE {
+    defaultText,
+    alternateText,
+    otherText
+  }
+
+  private static class DialogParamsWrapper {
+    private ID window = null;
+    private HashMap params = null;
+    private DialogType dialogType = null;
+
+    private enum DialogType {
+      alert,
+      message
+    }
+
+    private DialogParamsWrapper(@NotNull DialogType t, @NotNull HashMap p) {
+      dialogType = t;
+      params = p;
+    }
+
+    private void setNativeWindow (final ID w) {
+      window = w;
+    }
+
+    private ID getParamsAsID() {
+      LOG.assertTrue(window != null, "Native window must be set first.");
+      params.put(COMMON_DIALOG_PARAM_TYPE.nativeFocusedWindow, window);
+
+      ID paramsAsID = null;
+
+      switch (dialogType) {
+        case alert: {
+          paramsAsID = getParamsForAlertDialog(params);
+          break;
+        }
+        case message: {
+          paramsAsID = getParamsForMessageDialog(params);
+          break;
+        }
+      }
+      return paramsAsID;
+    }
+
+
+    private static ID getParamsForAlertDialog(HashMap params) {
+      return invoke("NSArray", "arrayWithObjects:",
+                    params.get(COMMON_DIALOG_PARAM_TYPE.title),
+                    params.get(ALERT_DIALOG_PARAM_TYPE.defaultText),
+                    params.get(ALERT_DIALOG_PARAM_TYPE.alternateText),
+                    params.get(ALERT_DIALOG_PARAM_TYPE.otherText),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.message),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.nativeFocusedWindow),
+                    nsString(""),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.errorStyle),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption1),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2),
+                    null);
+    }
+
+    private static ID getParamsForMessageDialog(HashMap params) {
+      return invoke("NSArray", "arrayWithObjects:",
+                    params.get(COMMON_DIALOG_PARAM_TYPE.title),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.message),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.nativeFocusedWindow),
+                    nsString(""),
+                    params.get(MESSAGE_DIALOG_PARAM_TYPE.errorStyle),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption1),
+                    params.get(MESSAGE_DIALOG_PARAM_TYPE.defaultOptionIndex),
+                    params.get(MESSAGE_DIALOG_PARAM_TYPE.focusedOptionIndex),
+                    params.get(MESSAGE_DIALOG_PARAM_TYPE.buttonsArray),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2),
+                    null);
+    }
+  }
+
+
+  public static int showAlertDialog(final String title,
+                                    final String defaultText,
+                                    @Nullable final String alternateText,
+                                    @Nullable final String otherText,
+                                    final String message,
+                                    @Nullable Window window ,
+                                    final boolean errorStyle,
+                                    @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+
+    HashMap params  = new HashMap ();
+
+    ID pool = invoke(invoke("NSAutoreleasePool", "alloc"), "init");
+    try {
+
+      params.put(COMMON_DIALOG_PARAM_TYPE.title, nsString(title));
+      params.put(ALERT_DIALOG_PARAM_TYPE.defaultText, nsString(UIUtil.removeMnemonic(defaultText)));
+      params.put(ALERT_DIALOG_PARAM_TYPE.alternateText, nsString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)));
+      params.put(ALERT_DIALOG_PARAM_TYPE.otherText, nsString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)));
+      // replace % -> %% to avoid formatted parameters (causes SIGTERM)
+      params.put(COMMON_DIALOG_PARAM_TYPE.message, nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")));
+      params.put(COMMON_DIALOG_PARAM_TYPE.errorStyle, nsString(errorStyle ? "error" : "-1"));
+      params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption1, nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
+                                                                          // TODO: state=!doNotAsk.shouldBeShown()
+                                                                          ? "-1"
+                                                                          : doNotAskDialogOption.getDoNotShowMessage()));
+      params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2, nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"));
+
+
+      return convertRetunCodeFromNativeAlertDialog(showDialog(window, "showSheet:",
+                                                              new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)), alternateText);
+    }
+    finally {
+      invoke(pool, "release");
+    }
+  }
+
+  public int showMessageDialog(final String title,
+                               final String message,
+                               final String[] buttons,
+                               final boolean errorStyle,
+                               @Nullable Window window,
+                               final int defaultOptionIndex,
+                               final int focusedOptionIndex,
+                               @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption)
+  {
+
+    ID pool = invoke(invoke("NSAutoreleasePool", "alloc"), "init");
+    try {
+      final ID buttonsArray = invoke("NSMutableArray", "array");
+      for (String s : buttons) {
+        ID s1 = nsString(UIUtil.removeMnemonic(s));
+        invoke(buttonsArray, "addObject:", s1);
+      }
+
+      HashMap params  = new HashMap ();
+
+      params.put(COMMON_DIALOG_PARAM_TYPE.title, nsString(title));
+      // replace % -> %% to avoid formatted parameters (causes SIGTERM)
+      params.put(COMMON_DIALOG_PARAM_TYPE.message, nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")));
+
+      params.put(MESSAGE_DIALOG_PARAM_TYPE.errorStyle, nsString(errorStyle ? "error" : "-1"));
+      params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption1, nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
+                                                                          // TODO: state=!doNotAsk.shouldBeShown()
+                                                                          ? "-1"
+                                                                          : doNotAskDialogOption.getDoNotShowMessage()));
+      params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2, nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"));
+      params.put(MESSAGE_DIALOG_PARAM_TYPE.defaultOptionIndex, Integer.toString(defaultOptionIndex));
+      params.put(MESSAGE_DIALOG_PARAM_TYPE.focusedOptionIndex, Integer.toString(focusedOptionIndex));
+      params.put(MESSAGE_DIALOG_PARAM_TYPE.buttonsArray, buttonsArray);
+
+
+      return convertReturnCodeFromNativeMessageDialog(showDialog(window, "showVariableButtonsSheet:",
+                                                                 new DialogParamsWrapper(DialogParamsWrapper.DialogType.message, params)));
+    }
+    finally {
+      invoke(pool, "release");
+    }
+  }
+
+  //title, message, errorStyle, window, paramsArray, doNotAskDialogOption, "showVariableButtonsSheet:"
+  private static Window showDialog(@Nullable Window window,
+                                   final String methodName, DialogParamsWrapper paramsWrapper) {
 
     Window foremostWindow = getForemostWindow(window);
+
     String foremostWindowTitle = getWindowTitle(foremostWindow);
 
     Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
     final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
 
-    if (foremostWindow != null) {
+    paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
-      final FocusTrackback[] focusTrackback = {new FocusTrackback(new Object(), documentRoot, true)};
+    final ID paramsArray = paramsWrapper.getParamsAsID();
 
-      final ID delegate = invoke(Foundation.getObjcClass("NSAlertDelegate_"), "new");
-      invoke(delegate, "autorelease");
-      cfRetain(delegate);
 
-      final ID buttonsArray = invoke("NSMutableArray", "array");
-      for (String s : buttons) {
-        ID s1 = nsString(UIUtil.removeMnemonic(s));
-        invoke(buttonsArray, "addObject:", s1);
-        cfRelease(s1);
+    final ID delegate = invoke(invoke(getObjcClass("NSAlertDelegate_"), "alloc"), "init");
+
+    IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
+
+    runOrPostponeForWindow(documentRoot, new Runnable() {
+      @Override
+      public void run() {
+        invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
+               createSelector(methodName), paramsArray, false);
       }
+    });
 
-      final ID paramsArray = invoke("NSArray", "arrayWithObjects:", nsString(title),
-                                    // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-                                    nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")),
-                                    nativeFocusedWindow, nsString(""), nsString(errorStyle ? "error" : "-1"),
-                                    nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
-                                             // TODO: state=!doNotAsk.shouldBeShown()
-                                             ? "-1"
-                                             : doNotAskDialogOption.getDoNotShowMessage()),
-                                    nsString(Integer.toString(defaultOptionIndex)),
-                                    nsString(Integer.toString(focusedOptionIndex)), buttonsArray,
-                                    nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"), null);
+    startModal(documentRoot, nativeFocusedWindow);
 
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
-
-      runOrPostponeForWindow(documentRoot, new Runnable() {
-        @Override
-        public void run() {
-          invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-                 createSelector("showVariableButtonsSheet:"), paramsArray, false);
-        }
-      });
-
-      startModal(documentRoot, nativeFocusedWindow);
-
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
-
-
-      if (focusTrackback[0] != null &&
-          !(focusTrackback[0].isSheduledForRestore() || focusTrackback[0].isWillBeSheduledForRestore())) {
-        focusTrackback[0].setWillBeSheduledForRestore();
-
-        IdeFocusManager mgr = IdeFocusManager.findInstanceByComponent(documentRoot);
-        Runnable r = new Runnable() {
-          public void run() {
-            if (focusTrackback[0] != null) focusTrackback[0].restoreFocus();
-            focusTrackback[0] = null;
-          }
-        };
-        mgr.doWhenFocusSettlesDown(r);
-      }
-      return convertReturnCodeFromNativeMessageDialog(documentRoot);
-    }
-    return -1;
+    IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
+    return documentRoot;
   }
 
   private static int convertReturnCodeFromNativeMessageDialog(Window documentRoot) {
@@ -419,62 +553,6 @@ public class MacMessagesImpl extends MacMessages {
       throw new RuntimeException("The window is not a frame and not a dialog!");
     }
     return windowTitle;
-  }
-
-  public static int showAlertDialog(final String title,
-                                    final String defaultText,
-                                    @Nullable final String alternateText,
-                                    @Nullable final String otherText,
-                                    final String message,
-                                    @Nullable Window window ,
-                                    final boolean errorStyle,
-                                    @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
-
-    Window foremostWindow = getForemostWindow(window);
-    String foremostWindowTitle = getWindowTitle(foremostWindow);
-
-    Window documentRoot = getDocumentRootFromWindow(foremostWindow);
-
-    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
-
-    ID pool = invoke("NSAutoreleasePool", "new");
-    try {
-
-      final ID delegate = invoke(getObjcClass("NSAlertDelegate_"), "new");
-      cfRetain(delegate);
-
-      final ID paramsArray = invoke("NSArray", "arrayWithObjects:", nsString(title), nsString(UIUtil.removeMnemonic(defaultText)),
-                                    nsString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)),
-                                    nsString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
-                                    // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-                                    nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")),
-                                    nativeFocusedWindow, nsString(""), nsString(errorStyle ? "error" : "-1"),
-                                    nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
-                                             // TODO: state=!doNotAsk.shouldBeShown()
-                                             ? "-1"
-                                             : doNotAskDialogOption.getDoNotShowMessage()),
-                                    nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"), null);
-
-
-
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
-
-      runOrPostponeForWindow(documentRoot, new Runnable() {
-        @Override
-        public void run() {
-          invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-                 createSelector("showSheet:"), paramsArray, false);
-        }
-      });
-      startModal(documentRoot, nativeFocusedWindow);
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
-
-    }
-    finally {
-      invoke(pool, "release");
-    }
-    return convertRetunCodeFromNativeAlertDialog(documentRoot, alternateText);
-
   }
 
   private static int convertRetunCodeFromNativeAlertDialog(Window documentRoot, String alternateText) {
@@ -542,6 +620,7 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
+  @NotNull
   private static Window getForemostWindow(final Window window) {
     Window _window = null;
 
@@ -585,6 +664,11 @@ public class MacMessagesImpl extends MacMessages {
           LOG.error(e);
         }
       }
+    }
+
+    while (getWindowTitle(_window) == null) {
+      _window = _window.getOwner();
+      //At least our frame should have a title
     }
 
     return _window;
