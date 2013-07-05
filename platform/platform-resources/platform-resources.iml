@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lvcs-impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="remote-servers-impl" />
   </component>
 </module>
 
