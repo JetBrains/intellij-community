@@ -16,6 +16,13 @@ import com.intellij.util.concurrency.Semaphore
  * @author peter
  */
 class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
+  ChooseByNamePopup myPopup
+
+  @Override
+  protected void tearDown() throws Exception {
+    myPopup = null
+    super.tearDown()
+  }
 
   public void "test goto class order by matching degree"() {
     def startMatch = myFixture.addClass("class UiUtil {}")
@@ -127,6 +134,16 @@ class Intf {
 
   }
 
+  public void "test find method by qualified name"() {
+    def method = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }").methods[0]
+    assert getPopupElements(new GotoSymbolModel2(project), 'zzzZzz') == [method]
+    assert getPopupElements(new GotoSymbolModel2(project), 'goo.zzzZzz') == [method]
+    assert getPopupElements(new GotoSymbolModel2(project), 'foo.bar.goo.zzzZzz') == [method]
+    assert getPopupElements(new GotoSymbolModel2(project), 'foo.zzzZzz') == [method]
+    assert getPopupElements(new GotoSymbolModel2(project), 'bar.zzzZzz') == [method]
+    assert getPopupElements(new GotoSymbolModel2(project), 'bar.goo.zzzZzz') == [method]
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {
     return getPopupElements(createPopup(model), text)
   }
@@ -147,7 +164,11 @@ class Intf {
   }
 
   private ChooseByNamePopup createPopup(ChooseByNameModel model, PsiElement context = null) {
-    def popup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
+    if (myPopup) {
+      myPopup.close(false)
+    }
+
+    def popup = myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
     Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
     popup
   }
