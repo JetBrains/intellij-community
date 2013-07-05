@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.GithubUtil.GithubUser;
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
 /**
@@ -165,7 +164,7 @@ public class GithubShareAction extends DumbAwareAction {
         final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
         LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
 
-        final String remoteUrl = GithubApiUtil.getGitHost() + "/" + githubInfo.getUser().getLogin() + "/" + name + ".git";
+        final String remoteUrl = GithubUrlUtil.getGitHost() + "/" + githubInfo.getUser().getLogin() + "/" + name + ".git";
         final String remoteName = finalExternalRemoteDetected ? "github" : "origin";
 
         //git remote add origin git@github.com:login/name.git

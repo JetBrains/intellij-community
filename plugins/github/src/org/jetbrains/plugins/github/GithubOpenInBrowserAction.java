@@ -138,7 +138,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   private static String makeUrlToOpen(@NotNull AnActionEvent e, @NotNull String relativePath, @NotNull String branch,
                                       @NotNull String githubRemoteUrl) {
     final StringBuilder builder = new StringBuilder();
-    final String githubRepoUrl = GithubUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl);
+    final String githubRepoUrl = GithubUrlUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl);
     if (githubRepoUrl == null) {
       return null;
     }

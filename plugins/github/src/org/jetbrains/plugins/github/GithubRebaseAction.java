@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.jetbrains.plugins.github.GithubUtil.GithubUserAndRepository;
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
 /**
@@ -127,13 +126,13 @@ public class GithubRebaseAction extends DumbAwareAction {
           }
         }
 
-        if (!GithubUtil.isGithubUrl(upstreamRemoteUrl)) {
+        if (!GithubUrlUtil.isGithubUrl(upstreamRemoteUrl)) {
           GithubNotifications
             .showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Configured upstream is not a GitHub repository: " + upstreamRemoteUrl);
           return;
         }
         else {
-          final GithubUserAndRepository userAndRepo = GithubUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
+          final GithubUserAndRepository userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
           final String login = GithubSettings.getInstance().getLogin();
           if (userAndRepo != null) {
             if (userAndRepo.getUserName() == login) {
@@ -173,7 +172,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       return null;
     }
 
-    final String parentRepoUrl = GithubApiUtil.getGitHost() + '/' + repositoryInfo.getParentName() + ".git";
+    final String parentRepoUrl = GithubUrlUtil.getGitHost() + '/' + repositoryInfo.getParentName() + ".git";
 
     LOG.info("Adding GitHub parent as a remote host");
     indicator.setText("Adding GitHub parent as a remote host...");
@@ -189,7 +188,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find github remote");
       return null;
     }
-    final GithubUserAndRepository userAndRepo = GithubUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    final GithubUserAndRepository userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (userAndRepo == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't process remote: " + remoteUrl);
       return null;

@@ -277,7 +277,7 @@ public class GithubUtil {
     String githubUrl = null;
     for (GitRemote gitRemote : repository.getRemotes()) {
       for (String remoteUrl : gitRemote.getUrls()) {
-        if (isGithubUrl(remoteUrl)) {
+        if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
           final String remoteName = gitRemote.getName();
           if ("github".equals(remoteName) || "origin".equals(remoteName)) {
             return remoteUrl;
@@ -298,7 +298,7 @@ public class GithubUtil {
       final String remoteName = gitRemote.getName();
       if ("upstream".equals(remoteName)) {
         for (String remoteUrl : gitRemote.getUrls()) {
-          if (isGithubUrl(remoteUrl)) {
+          if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
             return remoteUrl;
           }
         }
@@ -332,71 +332,9 @@ public class GithubUtil {
     return findGithubRemoteUrl(repository) != null;
   }
 
-  public static boolean isGithubUrl(@NotNull String url) {
-    final String host = GithubApiUtil.getGitHostWithoutProtocol();
-    final String https = "https://" + host + '/';
-    final String http = "http://" + host + '/';
-    final String ssh = "git@" + host + '/';
-    final String git = "git://" + host + '/';
-    if (url.startsWith(https) || url.startsWith(http) || url.startsWith(ssh) || url.startsWith(git)) {
-      return true;
-    }
-    return false;
-  }
-
   static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(enabled);
-  }
-
-  /**
-   * git@github.com:user/repo.git -> user/repo
-   */
-  @Nullable
-  public static GithubUserAndRepository getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
-    remoteUrl = removeEndingDotGit(remoteUrl);
-    int index1 = remoteUrl.lastIndexOf('/');
-    if (index1 == -1) {
-      return null;
-    }
-    String url = remoteUrl.substring(0, index1);
-    int index2 = Math.max(url.lastIndexOf('/'), url.lastIndexOf(':'));
-    if (index2 == -1) {
-      return null;
-    }
-    return new GithubUserAndRepository(remoteUrl.substring(index2 + 1, index1), remoteUrl.substring(index1 + 1));
-  }
-
-  /**
-   * git@github.com:user/repo -> https://github.com/user/repo
-   */
-  @Nullable
-  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
-    remoteUrl = removeEndingDotGit(remoteUrl);
-    if (remoteUrl.startsWith("https://")) {
-      return remoteUrl;
-    }
-    if (remoteUrl.startsWith("http://")) {
-      return "https" + remoteUrl.substring(4);
-    }
-    if (remoteUrl.startsWith("git://")) {
-      return "https" + remoteUrl.substring(3);
-    }
-    if (remoteUrl.startsWith("git@")) {
-      return "https://" + remoteUrl.substring(4).replace(':', '/');
-    }
-    LOG.error("Invalid remote GitHub url: " + remoteUrl);
-    return null;
-  }
-
-  @NotNull
-  private static String removeEndingDotGit(@NotNull String url) {
-    url = GithubApiUtil.removeTrailingSlash(url);
-    final String DOT_GIT = ".git";
-    if (url.endsWith(DOT_GIT)) {
-      return url.substring(0, url.length() - DOT_GIT.length());
-    }
-    return url;
   }
 
   @NotNull
@@ -404,56 +342,4 @@ public class GithubUtil {
     return e.getMessage();
   }
 
-  /**
-   * Information about a user on GitHub.
-   *
-   * @author Kirill Likhodedov
-   */
-  public static class GithubUser {
-
-    @NotNull private final String myLogin;
-    private final int myPrivateRepos;
-    private final int myMaxPrivateRepos;
-
-    GithubUser(@NotNull String login, int privateRepos, int maxPrivateRepos) {
-      myLogin = login;
-      myPrivateRepos = privateRepos;
-      myMaxPrivateRepos = maxPrivateRepos;
-    }
-
-    @NotNull
-    public String getLogin() {
-      return myLogin;
-    }
-
-    public boolean canCreatePrivateRepo() {
-      return myMaxPrivateRepos > myPrivateRepos;
-    }
-
-  }
-
-  public static class GithubUserAndRepository {
-    @NotNull final private String myUserName;
-    @NotNull final private String myRepositoryName;
-
-    public GithubUserAndRepository(@NotNull String userName, @NotNull String repositoryName) {
-      myUserName = userName;
-      myRepositoryName = repositoryName;
-    }
-
-    @NotNull
-    public String getUserName() {
-      return myUserName;
-    }
-
-    @NotNull
-    public String getRepositoryName() {
-      return myRepositoryName;
-    }
-
-    @NotNull
-    public String toString() {
-      return myUserName + '/' + myRepositoryName;
-    }
-  }
 }

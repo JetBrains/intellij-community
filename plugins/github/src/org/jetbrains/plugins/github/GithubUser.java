@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,32 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.AuthData;
-import git4idea.jgit.GitHttpAuthDataProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
+ * Information about a user on GitHub.
+ *
  * @author Kirill Likhodedov
  */
-public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
+public class GithubUser {
 
-  @Nullable
-  @Override
-  public AuthData getAuthData(@NotNull String url) {
-    if (!GithubUrlUtil.isGithubUrl(url)) {
-      return null;
-    }
+  @NotNull private final String myLogin;
+  private final int myPrivateRepos;
+  private final int myMaxPrivateRepos;
 
-    GithubSettings settings = GithubSettings.getInstance();
-    String login = settings.getLogin();
-    if (StringUtil.isEmptyOrSpaces(login)) {
-      return null;
-    }
+  GithubUser(@NotNull String login, int privateRepos, int maxPrivateRepos) {
+    myLogin = login;
+    myPrivateRepos = privateRepos;
+    myMaxPrivateRepos = maxPrivateRepos;
+  }
 
-    return new AuthData(login, settings.getPassword());
+  @NotNull
+  public String getLogin() {
+    return myLogin;
+  }
+
+  public boolean canCreatePrivateRepo() {
+    return myMaxPrivateRepos > myPrivateRepos;
   }
 
 }
