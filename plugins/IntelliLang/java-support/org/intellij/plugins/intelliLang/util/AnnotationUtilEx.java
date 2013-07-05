@@ -195,6 +195,23 @@ public class AnnotationUtilEx {
                                                   boolean inHierarchy) {
     if (!PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
+    return getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);
+  }
+
+
+  /**
+   * The parameter <code>allowIndirect</code> determines if the method should look for indirect annotations, i.e.
+   * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
+   * one level of indirection and returns an array of [base-annotation, indirect annotation]
+   * <p/>
+   * The <code>annotationName</code> parameter is a pair of the target annotation class' fully qualified name as a
+   * String and as a Set. This is done for performance reasons because the Set is required by the
+   * {@link com.intellij.codeInsight.AnnotationUtil} utility class and allows to avoid unecessary object constructions.
+   */
+
+  public static PsiAnnotation[] getAnnotationsFromImpl(PsiModifierListOwner owner,
+                                                        Pair<String, ? extends Set<String>> annotationName,
+                                                        boolean allowIndirect, boolean inHierarchy) {
     final PsiAnnotation directAnnotation = inHierarchy?
       AnnotationUtil.findAnnotationInHierarchy(owner, annotationName.second) :
       AnnotationUtil.findAnnotation(owner, annotationName.second);

@@ -27,6 +27,7 @@ import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 
 import java.util.Collections;
@@ -52,21 +54,18 @@ public class GrConcatenationInjector implements MultiHostInjector {
     assert context instanceof GrLiteral;
     final GrLiteral literal = (GrLiteral)context;
 
-    if (!(literal instanceof PsiLanguageInjectionHost)) return;
-    final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)literal;
-
     final PsiElement parent = literal.getParent();
     if (parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getRValue() == literal) {
       final GrExpression lvalue = ((GrAssignmentExpression)parent).getLValue();
       if (lvalue instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)lvalue).resolve();
         if (resolved instanceof PsiModifierListOwner) {
-          processAnnotations(registrar, host, (PsiModifierListOwner)resolved);
+          processAnnotations(registrar, literal, (PsiModifierListOwner)resolved);
         }
       }
     }
     else if (parent instanceof GrVariable) {
-      processAnnotations(registrar, host, ((GrVariable)parent));
+      processAnnotations(registrar, literal, ((GrVariable)parent));
     }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
@@ -80,7 +79,7 @@ public class GrConcatenationInjector implements MultiHostInjector {
 
           if (map != null) {
             final Pair<PsiParameter, PsiType> pair = map.get(literal);
-            processAnnotations(registrar, host, pair.first);
+            processAnnotations(registrar, literal, pair.first);
           }
         }
       }
@@ -93,7 +92,7 @@ public class GrConcatenationInjector implements MultiHostInjector {
     final Pair<String, ? extends Set<String>> pair =
       Configuration.getInstance().getAdvancedConfiguration().getLanguageAnnotationPair();
 
-    final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(annotationOwner, pair, true);
+    final PsiAnnotation[] annotations = getAnnotationFrom(annotationOwner, pair, true, true);
     if (annotations.length > 0) {
       final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
       final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
@@ -113,6 +112,22 @@ public class GrConcatenationInjector implements MultiHostInjector {
       );
       InjectorUtils.registerInjection(language, Collections.singletonList(info), host.getContainingFile(), registrar);
     }
+  }
+
+  @NotNull
+  public static PsiAnnotation[] getAnnotationFrom(PsiModifierListOwner owner,
+                                                  Pair<String, ? extends Set<String>> annotationName,
+                                                  boolean allowIndirect,
+                                                  boolean inHierarchy) {
+    if (!isLanguageAnnotationTargetGroovy(owner)) return PsiAnnotation.EMPTY_ARRAY;
+
+    return AnnotationUtilEx.getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);
+  }
+
+  private static boolean isLanguageAnnotationTargetGroovy(PsiModifierListOwner owner) {
+    return owner instanceof GrMethod && ((GrMethod)owner).getReturnTypeElementGroovy() == null ||
+           owner instanceof GrVariable && ((GrVariable)owner).getTypeElementGroovy() == null ||
+           PsiUtilEx.isLanguageAnnotationTarget(owner);
   }
 
   @NotNull
