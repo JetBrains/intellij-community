@@ -573,11 +573,11 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       final List<String> names = new ArrayList<String>();
 
       myFastMode = myInheritorsProvider.searchForInheritorsOfBaseClass().forEach(new Processor<T>() {
-        private int count;
+        private long start = System.currentTimeMillis();
 
         @Override
         public boolean process(T aClass) {
-          if (count++ > 1000) {
+          if (System.currentTimeMillis() - start > 500) {
             return false;
           }
           if ((getTreeClassChooserDialog().getFilter().isAccepted(aClass)) && aClass.getName() != null) {
@@ -587,7 +587,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
         }
       });
       if (!myFastMode) {
-        return getNames(checkBoxState);
+        return myInheritorsProvider.getNames();
       }
       if ((getTreeClassChooserDialog().getFilter().isAccepted(myInheritorsProvider.getBaseClass())) &&
           myInheritorsProvider.getBaseClass().getName() != null) {
