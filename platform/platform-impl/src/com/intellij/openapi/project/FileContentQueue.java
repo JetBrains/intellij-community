@@ -248,7 +248,7 @@ public class FileContentQueue {
 
     synchronized (myProceedWithLoadingLock) {
       myLoadedBytesInQueue -= result.getLength();
-      myProceedWithLoadingLock.notify();
+      myProceedWithLoadingLock.notify(); // we ask only content loading thread to proceed, TODO: fix if more than one loading thread
     }
 
     return result;
@@ -257,7 +257,7 @@ public class FileContentQueue {
   public void release(@NotNull FileContent content) {
     synchronized (myProceedWithProcessingLock) {
       myBytesBeingProcessed -= content.getLength();
-      myProceedWithProcessingLock.notify();
+      myProceedWithProcessingLock.notifyAll(); // ask all sleeping threads to proceed, there can be more than one of them
     }
   }
 
