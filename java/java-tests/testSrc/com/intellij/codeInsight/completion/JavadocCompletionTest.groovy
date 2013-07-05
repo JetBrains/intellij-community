@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ProcessingContext
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
 /**
  * @author mike
@@ -33,7 +34,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNamesInClass() throws Exception {
     configureByFile("ClassTagName.java");
-    assertStringItems("author", "deprecated", "param", "see", "serial", "since", "version");
+    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "param", "see", "serial", "since", "version");
   }
 
   public void testNamesInField() throws Exception {
@@ -48,7 +49,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNamesInMethod1() throws Exception {
     configureByFile("MethodTagName1.java");
-    assertStringItems("see", "serialData", "since", "throws", "class");
+    assertStringItems("see", "serialData", "since", "throws");
   }
 
   public void testParamValueCompletion() throws Exception {
@@ -196,6 +197,39 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java");
     myFixture.type('\n');
     checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void "test suggest param names"() {
+    myFixture.configureByText "a.java", '''
+class Foo {
+  /**
+  * @par<caret>
+  */
+  void foo(int intParam, Object param2) {
+  }
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'param', 'param intParam', 'param param2'
+    myFixture.type('\n intParam\n@para')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'param', 'param param2'
+  }
+
+  public void "test see super class"() {
+    myFixture.addClass("package foo; public interface Foo {}")
+    myFixture.addClass("package bar; public class Bar {} ")
+    myFixture.configureByText "a.java", '''
+import foo.*;
+import bar.*;
+
+/**
+ * @se<caret>
+ */
+class Impl extends Bar implements Foo {}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'see', 'see bar.Bar', 'see foo.Foo'
   }
 
   public void testCustomReferenceProvider() throws Exception {
