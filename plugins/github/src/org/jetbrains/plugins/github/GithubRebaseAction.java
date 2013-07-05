@@ -65,14 +65,19 @@ public class GithubRebaseAction extends DumbAwareAction {
 
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin()) ||
-        project == null || project.isDefault()) {
+    final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    if (root == null || project == null || project.isDefault()) {
+      setVisibleEnabled(e, false, false);
+      return;
+    }
+
+    if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())) {
       setVisibleEnabled(e, false, false);
       return;
     }
 
     final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    final GitRepository gitRepository = manager.getRepositoryForFile(project.getBaseDir());
+    final GitRepository gitRepository = manager.getRepositoryForFile(root);
     if (gitRepository == null){
       setVisibleEnabled(e, false, false);
       return;
@@ -89,15 +94,16 @@ public class GithubRebaseAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null || !GithubUtil.testGitExecutable(project)) {
+    final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+
+    if (root == null || project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
       return;
     }
 
-    rebaseMyGithubFork(project);
+    rebaseMyGithubFork(project, root);
   }
 
-  private static void rebaseMyGithubFork(@NotNull final Project project) {
-    final VirtualFile root = project.getBaseDir();
+  private static void rebaseMyGithubFork(@NotNull final Project project, @NotNull final VirtualFile root) {
     final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository gitRepository = manager.getRepositoryForFile(root);
     if (gitRepository == null) {
@@ -115,7 +121,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         if (upstreamRemoteUrl == null) {
           LOG.info("Configuring upstream remote");
           indicator.setText("Configuring upstream remote...");
-          upstreamRemoteUrl = configureUpstreamRemote(project, gitRepository, indicator);
+          upstreamRemoteUrl = configureUpstreamRemote(project, root, gitRepository, indicator);
           if (upstreamRemoteUrl == null) {
             return;
           }
@@ -146,13 +152,14 @@ public class GithubRebaseAction extends DumbAwareAction {
 
         LOG.info("Rebasing current branch");
         indicator.setText("Rebasing current branch...");
-        rebaseCurrentBranch(project, gitRepository, indicator);
+        rebaseCurrentBranch(project, root, gitRepository, indicator);
       }
     }.queue();
   }
 
   @Nullable
   static String configureUpstreamRemote(@NotNull Project project,
+                                        @NotNull VirtualFile root,
                                         @NotNull GitRepository gitRepository,
                                         @NotNull ProgressIndicator indicator) {
     RepositoryInfo repositoryInfo = loadRepositoryInfo(project, gitRepository, indicator);
@@ -170,7 +177,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     LOG.info("Adding GitHub parent as a remote host");
     indicator.setText("Adding GitHub parent as a remote host...");
-    return addParentAsUpstreamRemote(project, parentRepoUrl, gitRepository);
+    return addParentAsUpstreamRemote(project, root, parentRepoUrl, gitRepository);
   }
 
   @Nullable
@@ -213,9 +220,10 @@ public class GithubRebaseAction extends DumbAwareAction {
 
   @Nullable
   private static String addParentAsUpstreamRemote(@NotNull Project project,
+                                                  @NotNull VirtualFile root,
                                                   @NotNull String parentRepoUrl,
                                                   @NotNull GitRepository gitRepository) {
-    final GitSimpleHandler handler = new GitSimpleHandler(project, project.getBaseDir(), GitCommand.REMOTE);
+    final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     handler.setSilent(true);
 
     try {
@@ -249,6 +257,7 @@ public class GithubRebaseAction extends DumbAwareAction {
   }
 
   private static void rebaseCurrentBranch(@NotNull final Project project,
+                                          @NotNull final VirtualFile root,
                                           @NotNull final GitRepository gitRepository,
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
@@ -258,26 +267,27 @@ public class GithubRebaseAction extends DumbAwareAction {
                                new Runnable() {
                                  @Override
                                  public void run() {
-                                   doRebaseCurrentBranch(project, indicator);
+                                   doRebaseCurrentBranch(project, root, indicator);
                                  }
                                });
     process.execute();
   }
 
-  private static void doRebaseCurrentBranch(@NotNull final Project project, @NotNull final ProgressIndicator indicator) {
+  private static void doRebaseCurrentBranch(@NotNull final Project project,
+                                            @NotNull final VirtualFile root,
+                                            @NotNull final ProgressIndicator indicator) {
     final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    final VirtualFile root = project.getBaseDir();
 
     final GitRebaser rebaser = new GitRebaser(project, ServiceManager.getService(Git.class), indicator);
 
-    final GitLineHandler handler = new GitLineHandler(project, project.getBaseDir(), GitCommand.REBASE);
+    final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
     handler.addParameters("upstream/master");
 
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     handler.addLineListener(rebaseConflictDetector);
 
     final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
-      new GitUntrackedFilesOverwrittenByOperationDetector(project.getBaseDir());
+      new GitUntrackedFilesOverwrittenByOperationDetector(root);
     handler.addLineListener(untrackedFilesDetector);
 
     GitTask pullTask = new GitTask(project, handler, "Rebasing from upstream/master");
@@ -293,7 +303,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
       @Override
       protected void onFailure() {
-        GitUpdateResult result = rebaser.handleRebaseFailure(handler, project.getBaseDir(), rebaseConflictDetector, untrackedFilesDetector);
+        GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseConflictDetector, untrackedFilesDetector);
         repositoryManager.updateRepository(root);
         if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
             result == GitUpdateResult.SUCCESS ||

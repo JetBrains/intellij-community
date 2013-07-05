@@ -92,18 +92,19 @@ public class GithubShareAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null || !GithubUtil.testGitExecutable(project)) {
+    final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+
+    if (root == null || project == null || project.isDisposed()) {
       return;
     }
 
-    shareProjectOnGithub(project);
+    shareProjectOnGithub(project, root);
   }
 
-  public static void shareProjectOnGithub(@NotNull final Project project) {
+  public static void shareProjectOnGithub(@NotNull final Project project, @NotNull final VirtualFile root) {
     BasicAction.saveAll();
 
     // get gitRepository
-    final VirtualFile root = project.getBaseDir();
     final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository gitRepository = manager.getRepositoryForFile(root);
     final boolean gitDetected = gitRepository != null;
@@ -128,7 +129,6 @@ public class GithubShareAction extends DumbAwareAction {
     // Show dialog (window)
     final GithubShareDialog shareDialog =
       new GithubShareDialog(project, githubInfo.getRepositoryNames(), githubInfo.getUser().canCreatePrivateRepo());
-    //shareDialog.show();
     DialogManager.show(shareDialog);
     if (!shareDialog.isOK()) {
       return;
@@ -289,7 +289,7 @@ public class GithubShareAction extends DumbAwareAction {
       LOG.info("Failed to create empty git repo: " + h.errors());
       return false;
     }
-    GitInit.refreshAndConfigureVcsMappings(project, root, "");
+    GitInit.refreshAndConfigureVcsMappings(project, root, root.getPath());
     return true;
   }
 
