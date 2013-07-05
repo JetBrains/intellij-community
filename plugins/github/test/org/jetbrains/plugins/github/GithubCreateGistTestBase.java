@@ -39,8 +39,12 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   @Override
   public void tearDown() throws Exception {
-    deleteGist();
-    super.tearDown();
+    try {
+      deleteGist();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void deleteGist() throws IOException {

@@ -46,8 +46,12 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
 
   @Override
   public void tearDown() throws Exception {
-    deleteGithubRepo();
-    super.tearDown();
+    try {
+      deleteGithubRepo();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void deleteGithubRepo() throws IOException {
