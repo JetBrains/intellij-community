@@ -235,21 +235,15 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static RepositoryInfo getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name) {
-    try {
-      final String request = "/repos/" + owner + "/" + name;
-      JsonElement jsonObject = GithubApiUtil.getRequest(auth, request);
-      if (jsonObject == null) {
-        LOG.info(String.format("Information about repository is unavailable. Owner: %s, Name: %s", owner, name));
-        return null;
-      }
-      return parseSingleRepositoryInfo(jsonObject.getAsJsonObject());
-    }
-    catch (IOException e) {
-      LOG.info(
-        String.format("Exception was thrown when trying to retrieve information about repository.  Owner: %s, Name: %s", owner, name));
+  public static RepositoryInfo getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name)
+    throws IOException {
+    final String request = "/repos/" + owner + "/" + name;
+    JsonElement jsonObject = GithubApiUtil.getRequest(auth, request);
+    if (jsonObject == null) {
+      LOG.info(String.format("Information about repository is unavailable. Owner: %s, Name: %s", owner, name));
       return null;
     }
+    return parseSingleRepositoryInfo(jsonObject.getAsJsonObject());
   }
 
   public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String repo) throws IOException {

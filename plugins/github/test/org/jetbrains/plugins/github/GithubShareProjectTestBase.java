@@ -78,7 +78,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
                                           });
   }
 
-  protected void checkGithubExists() {
+  protected void checkGithubExists() throws IOException {
     GithubAuthData auth = myGitHubSettings.getAuthData();
     RepositoryInfo githubInfo = GithubUtil.getDetailedRepoInfo(auth, auth.getLogin(), PROJECT_NAME);
     assertNotNull("GitHub repository does not exist", githubInfo);
