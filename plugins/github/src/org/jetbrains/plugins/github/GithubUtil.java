@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowableConvertor;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -72,6 +73,35 @@ public class GithubUtil {
       if (GithubSslSupport.isCertificateException(e)) {
         if (sslSupport.askIfShouldProceed(auth.getHost())) {
           return runAndGetValidAuth(project, indicator, task);
+        }
+        else {
+          return null;
+        }
+      }
+      throw e;
+    }
+  }
+
+  @Nullable
+  public static <T> T runWithValidAuth(@NotNull Project project,
+                                       @NotNull ProgressIndicator indicator,
+                                       @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
+    GithubAuthData auth = GithubSettings.getInstance().getAuthData();
+    try {
+      return task.convert(auth);
+    }
+    catch (AuthenticationException e) {
+      auth = getValidAuthData(project, indicator);
+      if (auth == null) {
+        return null;
+      }
+      return task.convert(auth);
+    }
+    catch (IOException e) {
+      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
+      if (GithubSslSupport.isCertificateException(e)) {
+        if (sslSupport.askIfShouldProceed(auth.getHost())) {
+          return runWithValidAuth(project, indicator, task);
         }
         else {
           return null;

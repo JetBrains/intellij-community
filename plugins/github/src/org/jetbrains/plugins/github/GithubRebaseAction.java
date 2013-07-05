@@ -23,11 +23,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowableConvertor;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
@@ -195,24 +194,26 @@ public class GithubRebaseAction extends DumbAwareAction {
     final String user = userAndRepo.substring(0, index);
     final String repositoryName = userAndRepo.substring(index + 1);
 
-    final Ref<RepositoryInfo> repositoryInfoRef = new Ref<RepositoryInfo>();
+    RepositoryInfo repositoryInfo = null;
     try {
-      GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
-        @Override
-        public void consume(GithubAuthData authData) throws IOException {
-          repositoryInfoRef.set(GithubUtil.getDetailedRepoInfo(authData, user, repositoryName));
-        }
-      });
+      repositoryInfo =
+        GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, RepositoryInfo, IOException>() {
+          @Override
+          public RepositoryInfo convert(GithubAuthData authData) throws IOException {
+            return GithubUtil.getDetailedRepoInfo(authData, user, repositoryName);
+          }
+        });
     }
     catch (IOException e) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't load repository info: " + e.getMessage());
+      return null;
     }
-    if (repositoryInfoRef.isNull()) {
+    if (repositoryInfo == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't load repository info");
       return null;
     }
 
-    return repositoryInfoRef.get();
+    return repositoryInfo;
   }
 
   @Nullable
