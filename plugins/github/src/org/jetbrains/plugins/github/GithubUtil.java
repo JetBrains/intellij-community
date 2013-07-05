@@ -355,7 +355,7 @@ public class GithubUtil {
     if (remoteUrl.startsWith("git@")) {
       return "https://" + remoteUrl.substring(4).replace(':', '/');
     }
-    LOG.error("Invalid remote Github url: " + remoteUrl);
+    LOG.error("Invalid remote GitHub url: " + remoteUrl);
     return null;
   }
 

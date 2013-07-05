@@ -113,7 +113,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
 
     final Ref<String> url = new Ref<String>();
-    new Task.Backgroundable(project, "Creating Gist") {
+    new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<NamedContent> contents = collectContents(project, editor, file, files);

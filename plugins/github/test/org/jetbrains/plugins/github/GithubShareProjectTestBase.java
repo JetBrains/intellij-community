@@ -81,7 +81,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   protected void checkGithubExists() {
     GithubAuthData auth = myGitHubSettings.getAuthData();
     RepositoryInfo githubInfo = GithubUtil.getDetailedRepoInfo(auth, auth.getLogin(), PROJECT_NAME);
-    assertNotNull("Github repository does not exist", githubInfo);
+    assertNotNull("GitHub repository does not exist", githubInfo);
   }
 
   protected void checkGitExists() {
@@ -93,7 +93,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
     final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
     assertNotNull(gitRepository);
 
-    assertNotNull("Github remote is not configured", GithubUtil.findGithubRemoteUrl(gitRepository));
+    assertNotNull("GitHub remote is not configured", GithubUtil.findGithubRemoteUrl(gitRepository));
   }
 
   protected void checkLastCommitPushed() {

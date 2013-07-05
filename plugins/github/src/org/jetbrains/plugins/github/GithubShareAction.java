@@ -137,12 +137,12 @@ public class GithubShareAction extends DumbAwareAction {
 
     // finish the job in background
     final boolean finalExternalRemoteDetected = externalRemoteDetected;
-    new Task.Backgroundable(project, "Sharing project on GitHub") {
+    new Task.Backgroundable(project, "Sharing project on GitHub...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         // create GitHub repo (network)
         LOG.info("Creating GitHub repository");
-        indicator.setText("Creating GitHub repository");
+        indicator.setText("Creating GitHub repository...");
         final String url = createGithubRepository(project, githubInfo.getAuthData(), name, description, isPrivate);
         if (url == null) {
           return;
@@ -153,7 +153,7 @@ public class GithubShareAction extends DumbAwareAction {
         LOG.info("Binding local project with GitHub");
         if (!gitDetected) {
           LOG.info("No git detected, creating empty git repo");
-          indicator.setText("Creating empty git repo");
+          indicator.setText("Creating empty git repo...");
           if (!createEmptyGitRepository(project, root, indicator)) {
             return;
           }
@@ -168,7 +168,7 @@ public class GithubShareAction extends DumbAwareAction {
 
         //git remote add origin git@github.com:login/name.git
         LOG.info("Adding GitHub as a remote host");
-        indicator.setText("Adding GitHub as a remote host");
+        indicator.setText("Adding GitHub as a remote host...");
         if (!addGithubRemote(project, root, remoteName, remoteUrl, repository)) {
           return;
         }
@@ -180,7 +180,7 @@ public class GithubShareAction extends DumbAwareAction {
 
         //git push origin master
         LOG.info("Pushing to github master");
-        indicator.setText("Pushing to github master");
+        indicator.setText("Pushing to github master...");
         if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name)) {
           return;
         }
@@ -327,7 +327,7 @@ public class GithubShareAction extends DumbAwareAction {
     LOG.info("Trying to commit");
     try {
       LOG.info("Adding files for commit");
-      indicator.setText("Adding files to git");
+      indicator.setText("Adding files to git...");
 
       // ask for files to add
       List<VirtualFile> untrackedFiles = new ArrayList<VirtualFile>(repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
@@ -347,7 +347,7 @@ public class GithubShareAction extends DumbAwareAction {
 
       // commit
       LOG.info("Performing commit");
-      indicator.setText("Performing commit");
+      indicator.setText("Performing commit...");
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
       handler.addParameters("-m", dialog.getCommitMessage());
       handler.endOptions();
