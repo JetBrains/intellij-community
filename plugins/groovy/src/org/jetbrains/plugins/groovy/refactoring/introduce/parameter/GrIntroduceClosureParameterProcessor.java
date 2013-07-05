@@ -178,7 +178,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     if (!mySettings.generateDelegate() && toSearchFor != null) {
       Collection<PsiReference> refs;
       if (toSearchFor instanceof GrField) {
-        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope(), true).findAll();
+        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope()).findAll();
         final GrAccessorMethod[] getters = ((GrField)toSearchFor).getGetters();
         for (GrAccessorMethod getter : getters) {
           refs.addAll(MethodReferencesSearch.search(getter, getter.getResolveScope(), true).findAll());
@@ -188,7 +188,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         refs = findUsagesForLocal(toReplaceIn, ((GrVariable)toSearchFor));
       }
       else {
-        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope(), true).findAll();
+        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope()).findAll();
       }
 
       for (PsiReference ref1 : refs) {

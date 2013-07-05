@@ -27,7 +27,6 @@ import com.intellij.psi.impl.light.JavaIdentifier;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
@@ -40,7 +39,6 @@ import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -344,14 +342,6 @@ public class PsiUtil {
     }
 
     return result.toArray(new PsiType[result.size()]);
-  }
-
-  public static SearchScope restrictScopeToGroovyFiles(SearchScope originalScope) {
-    if (originalScope instanceof GlobalSearchScope) {
-      return GlobalSearchScope
-        .getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileTypeLoader.getGroovyEnabledFileTypes());
-    }
-    return originalScope;
   }
 
   @Nullable

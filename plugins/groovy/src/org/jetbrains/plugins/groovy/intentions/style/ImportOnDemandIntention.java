@@ -54,7 +54,7 @@ public class ImportOnDemandIntention extends Intention {
     if (!(containingFile instanceof GroovyFile)) return;
     ((GroovyFile)containingFile).addImport(importStatement);
 
-    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile), true)) {
+    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
       final PsiElement refElement = reference.getElement();
       if (refElement == null) continue;
       final PsiElement parent = refElement.getParent();

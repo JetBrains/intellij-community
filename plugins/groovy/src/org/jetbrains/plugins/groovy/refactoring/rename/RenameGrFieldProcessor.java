@@ -77,7 +77,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     for (GrAccessorMethod getter : getters) {
       refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(getter, projectScope, true).findAll(), getter));
     }
-    refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(ReferencesSearch.search(field, projectScope, true).findAll(), field));
+    refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(ReferencesSearch.search(field, projectScope, false).findAll(), field));
     return refs;
   }
 
