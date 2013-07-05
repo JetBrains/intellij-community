@@ -8,6 +8,8 @@
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
   <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/InspectionGadgets.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>
@@ -314,7 +316,7 @@
                             order="last, before default"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
-                            order="last, before javaLegacy"/>
+                            order="last, before javaLegacy, before wordCompletion"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor" id="smartNull"
                             order="last, before javaSmart"/>

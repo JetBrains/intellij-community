@@ -1,15 +1,6 @@
 <idea-plugin version="2">
-  <name>Inspection Gadgets</name>
-  <id>InspectionGadgets</id>
-  <vendor>JetBrains</vendor>
-
-  <category>inspection</category>
-  <version>1.0</version>
-
-  <resource-bundle>com.siyeh.InspectionGadgetsBundle</resource-bundle>
 
   <extensions xmlns="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection language="JAVA" shortName="CastToConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle" key="cast.to.concrete.class.display.name"
