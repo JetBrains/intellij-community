@@ -328,16 +328,24 @@ public class PsiSuperMethodImplUtil {
     return map.values();
   }
 
-  @NotNull public static HierarchicalMethodSignature getHierarchicalMethodSignature(PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    HierarchicalMethodSignature result = null;
-    if (aClass != null) {
-      result = getSignaturesMap(aClass).get(method.getSignature(PsiSubstitutor.EMPTY));
-    }
-    if (result == null) {
-      result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
-    }
-    return result;
+  @NotNull
+  public static HierarchicalMethodSignature getHierarchicalMethodSignature(final PsiMethod method) {
+    return CachedValuesManager.getManager(method.getProject())
+      .getCachedValue(method, new CachedValueProvider<HierarchicalMethodSignature>() {
+        @Nullable
+        @Override
+        public Result<HierarchicalMethodSignature> compute() {
+          PsiClass aClass = method.getContainingClass();
+          HierarchicalMethodSignature result = null;
+          if (aClass != null) {
+            result = getSignaturesMap(aClass).get(method.getSignature(PsiSubstitutor.EMPTY));
+          }
+          if (result == null) {
+            result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
+          }
+          return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      });
   }
 
   private static Map<MethodSignature, HierarchicalMethodSignature> getSignaturesMap(final PsiClass aClass) {
