@@ -26,10 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog;
-import com.intellij.refactoring.extractMethod.AbstractVariableData;
-import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
-import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
+import com.intellij.refactoring.extractMethod.*;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -99,7 +96,7 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
-    final PyDuplicatesFinder finder = new PyDuplicatesFinder(statement1, statement2);
+    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2);
 
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -201,7 +198,7 @@ public class PyExtractMethodUtil {
 
   private static void processDuplicates(@NotNull final PsiElement callElement,
                                         @NotNull final PyFunction generatedMethod,
-                                        @NotNull final PyDuplicatesFinder finder,
+                                        @NotNull final SimpleDuplicatesFinder finder,
                                         @NotNull final Editor editor) {
     ScopeOwner owner = ScopeUtil.getScopeOwner(callElement);
     if (owner instanceof PsiFile) return;
