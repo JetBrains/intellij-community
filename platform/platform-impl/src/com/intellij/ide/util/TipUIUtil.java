@@ -20,11 +20,14 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -92,16 +95,31 @@ public class TipUIUtil {
         return;
       }
       final String actionId = text.substring(actionIdStart, actionIdEnd);
-      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
-      String shortcutText = "";
-      for (final Shortcut shortcut : shortcuts) {
-        if (shortcut instanceof KeyboardShortcut) {
-          shortcutText = KeymapUtil.getShortcutText(shortcut);
-          break;
+      String shortcutText = getShortcutText(actionId, KeymapManager.getInstance().getActiveKeymap());
+      if (shortcutText == null) {
+        Keymap defKeymap = KeymapManager.getInstance().getKeymap(DefaultKeymap.getInstance().getDefaultKeymapName());
+        if (defKeymap != null) {
+          shortcutText = getShortcutText(actionId, defKeymap);
+          if (shortcutText != null) {
+            shortcutText += " in default keymap";
+          }
         }
+      }
+      if (shortcutText == null) {
+        shortcutText = "<no shortcut for action " + actionId + ">";
       }
       text.replace(lastIndex, actionIdEnd + 1, shortcutText);
       lastIndex += shortcutText.length();
     }
+  }
+
+  @Nullable
+  private static String getShortcutText(String actionId, Keymap keymap) {
+    for (final Shortcut shortcut : keymap.getShortcuts(actionId)) {
+      if (shortcut instanceof KeyboardShortcut) {
+        return KeymapUtil.getShortcutText(shortcut);
+      }
+    }
+    return null;
   }
 }
