@@ -69,6 +69,9 @@ public class FileContentQueue {
             file = myFilesToLoadQueue.poll();
           }
 
+          synchronized (myProceedWithProcessingLock) {
+            while (myBytesBeingProcessed > 0) myProceedWithProcessingLock.wait();
+          }
           // put end-of-queue marker only if not canceled
           try {
             myLoadedContentsQueue.put(new FileContent(null));
@@ -248,7 +251,7 @@ public class FileContentQueue {
 
     synchronized (myProceedWithLoadingLock) {
       myLoadedBytesInQueue -= result.getLength();
-      myProceedWithLoadingLock.notify(); // we ask only content loading thread to proceed, TODO: fix if more than one loading thread
+      myProceedWithLoadingLock.notifyAll(); // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
     }
 
     return result;
