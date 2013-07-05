@@ -1,26 +1,20 @@
-package com.intellij.codeInsight.completion;
-
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
-import com.intellij.lang.StdLanguages;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.List;
-
-
+package com.intellij.codeInsight.completion
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
+import com.intellij.lang.StdLanguages
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
+import com.intellij.psi.javadoc.PsiDocTag
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ProcessingContext
+import org.jetbrains.annotations.NotNull
 /**
  * @author mike
  */
@@ -211,7 +205,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
       @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element) {
+        def ref = new PsiReferenceBase<PsiElement>(element) {
 
           @Override
           public PsiElement resolve() {
@@ -221,9 +215,10 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
           @Override
           @NotNull
           public Object[] getVariants() {
-            return new Object[]{"1", "2", "3"};
+            return ["1", "2", "3"]
           }
-        }};
+        }
+        return [ref]
       }
     };
     try {
