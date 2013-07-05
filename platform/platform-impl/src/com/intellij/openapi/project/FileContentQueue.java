@@ -274,7 +274,7 @@ public class FileContentQueue {
   public void pushback(@NotNull FileContent content) {
     synchronized (myProceedWithLoadingLock) {
       myLoadedBytesInQueue += content.getLength();
-      myLoadedContentsQueue.addFirst(content);
     }
+    myLoadedContentsQueue.addFirst(content);
   }
 }
