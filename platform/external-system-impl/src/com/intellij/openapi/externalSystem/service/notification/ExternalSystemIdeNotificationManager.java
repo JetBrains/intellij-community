@@ -15,6 +15,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +85,7 @@ public class ExternalSystemIdeNotificationManager {
     applyNotification(notification, project);
   }
   
-  private void applyNotification(@NotNull Notification notification, @NotNull Project project) {
+  private void applyNotification(@NotNull final Notification notification, @NotNull final Project project) {
     final Notification oldNotification = myNotification.get();
     if (oldNotification != null && myNotification.compareAndSet(oldNotification, null)) {
       oldNotification.expire();
@@ -94,6 +95,13 @@ public class ExternalSystemIdeNotificationManager {
       return;
     }
 
-    notification.notify(project);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (!project.isDisposed() && project.isOpen()) {
+          notification.notify(project);
+        }
+      }
+    });
   }
 }
