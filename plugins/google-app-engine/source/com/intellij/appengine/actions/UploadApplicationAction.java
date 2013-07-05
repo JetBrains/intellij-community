@@ -57,7 +57,7 @@ public class UploadApplicationAction extends AnAction {
           return;
         }
       }
-      final AppEngineUploader uploader = AppEngineUploader.createUploader(project, artifact);
+      final AppEngineUploader uploader = AppEngineUploader.createUploader(project, artifact, null);
       if (uploader != null) {
         uploader.startUploading();
       }

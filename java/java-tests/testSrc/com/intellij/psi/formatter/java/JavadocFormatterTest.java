@@ -216,4 +216,140 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
     doTextTest(before, after);
   }
+
+  public void testReturnTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @return this is a return value documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters, which should be greater than any sane right margin.\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }\n";
+
+    String after = "/**\n" +
+                   " * @return this is a return value documentation with a very long description\n" +
+                   " * that is longer than the right margin. It is more than 200 characters\n" +
+                   " * long, not including the comment indent and the asterisk characters, which\n" +
+                   " * should be greater than any sane right margin.\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}\n";
+
+    doClassTest(before, after);
+  }
+
+
+  public void testReturnTagAlignmentWithPreTagOnFirstLine() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @return <pre>this is a return value documentation with a very long description\n" +
+                    "     * that is longer than the right margin.</pre>\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @return <pre>this is a return value documentation with a very long\n" +
+                   " * description\n" +
+                   " * that is longer than the right margin.</pre>\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
+
+  public void testSeeTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @see this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @see this is an additional documentation with a very long description\n" +
+                   " * that is longer than the right margin. It is more than 200 characters\n" +
+                   " * long, not including the comment indent and the asterisk characters which\n" +
+                   " * should be greater than any sane right margin\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
+
+  public void testDummySinceTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @since this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @since this is an additional documentation with a very long description\n" +
+                   " * that is longer than the right margin. It is more than 200 characters\n" +
+                   " * long, not including the comment indent and the asterisk characters which\n" +
+                   " * should be greater than any sane right margin\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
+
+  public void testDummyDeprecatedTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @deprecated this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @deprecated this is an additional documentation with a very long\n" +
+                   " * description that is longer than the right margin. It is more than 200\n" +
+                   " * characters long, not including the comment indent and the asterisk\n" +
+                   " * characters which should be greater than any sane right margin\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
 }

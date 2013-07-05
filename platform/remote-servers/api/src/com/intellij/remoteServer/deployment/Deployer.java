@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.codeStyle.javadoc;
+package com.intellij.remoteServer.deployment;
 
+import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
-*
-* @author Dmitry Skavish
-*/
-public class NameDesc {
-  @NotNull public final String name;
-  @Nullable public final String desc;
-
-  public NameDesc(@NotNull String name, @Nullable String desc) {
-    this.name = name;
-    this.desc = desc;
-  }
-
+ * @author nik
+ */
+public abstract class Deployer<C extends ServerConfiguration> {
   @NotNull
-  @Override
-  public String toString() {
-    return name;
-  }
+  public abstract List<DeploymentSource> getAvailableDeploymentSources();
+
+  public abstract void startDeployment(@NotNull RemoteServer<C> server, @NotNull DeploymentSource source);
 }

@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Method comment
@@ -25,26 +27,23 @@ import java.util.ArrayList;
  * @author Dmitry Skavish
  */
 public class JDMethodComment extends JDParamListOwnerComment {
+  private String myReturnTag;
+  private List<NameDesc> myThrowsList;
 
-  private static final @NonNls String THROWS_TAG = "@throws ";
-  private static final @NonNls String EXCEPTION_TAG = "@exception ";
-
-  private String returnTag;
-  private ArrayList<NameDesc> throwsList;
-
-  public JDMethodComment(CommentFormatter formatter) {
+  public JDMethodComment(@NotNull CommentFormatter formatter) {
     super(formatter);
   }
 
   @Override
-  protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
+  protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
     super.generateSpecial(prefix, sb);
 
-    if (returnTag != null) {
-      if (returnTag.trim().length() != 0 || myFormatter.getSettings().JD_KEEP_EMPTY_RETURN) {
+    if (myReturnTag != null) {
+      if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || myReturnTag.trim().length() != 0) {
+        JDTag tag = JDTag.RETURN;
         sb.append(prefix);
-        sb.append("@return ");
-        sb.append(myFormatter.getParser().splitIntoCLines(returnTag, prefix + "        ", false));
+        sb.append(tag.getWithEndWhitespace());
+        sb.append(myFormatter.getParser().formatJDTagDescription(myReturnTag, prefix, true, tag.getDescriptionPrefix(prefix).length()));
         if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_RETURN) {
           sb.append(prefix);
           sb.append('\n');
@@ -52,9 +51,9 @@ public class JDMethodComment extends JDParamListOwnerComment {
       }
     }
 
-    if (throwsList != null) {
-      String tag = myFormatter.getSettings().JD_USE_THROWS_NOT_EXCEPTION ? THROWS_TAG : EXCEPTION_TAG;
-      generateList(prefix, sb, throwsList, tag,
+    if (myThrowsList != null) {
+      JDTag tag = myFormatter.getSettings().JD_USE_THROWS_NOT_EXCEPTION ? JDTag.THROWS : JDTag.EXCEPTION;
+      generateList(prefix, sb, myThrowsList, tag.getWithEndWhitespace(),
                    myFormatter.getSettings().JD_ALIGN_EXCEPTION_COMMENTS,
                    myFormatter.getSettings().JD_KEEP_EMPTY_EXCEPTION,
                    myFormatter.getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE
@@ -62,19 +61,14 @@ public class JDMethodComment extends JDParamListOwnerComment {
     }
   }
 
-  public void setReturnTag(String returnTag) {
-    this.returnTag = returnTag;
+  public void setReturnTag(@NotNull String returnTag) {
+    this.myReturnTag = returnTag;
   }
 
-  public ArrayList<NameDesc> getThrowsList() {
-    return throwsList;
-  }
-
-  public void addThrow(String className, String description) {
-    if (throwsList == null) {
-      throwsList = new ArrayList<NameDesc>();
+  public void addThrow(@NotNull String className, @Nullable String description) {
+    if (myThrowsList == null) {
+      myThrowsList = ContainerUtilRt.newArrayList();
     }
-    throwsList.add(new NameDesc(className, description));
+    myThrowsList.add(new NameDesc(className, description));
   }
-
 }

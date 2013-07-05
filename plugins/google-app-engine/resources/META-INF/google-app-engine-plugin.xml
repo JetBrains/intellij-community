@@ -22,6 +22,8 @@
     <localInspection language="JAVA" shortName="AppEngineForbiddenCode" displayName="Forbidden code in App Engine applications"
                      groupName="Google App Engine" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
+
+    <remoteServer.type implementation="com.intellij.appengine.cloud.AppEngineCloudType"/>
   </extensions>
 
   <actions>

@@ -16,6 +16,7 @@
 package com.intellij.appengine.facet;
 
 import com.intellij.CommonBundle;
+import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.util.PropertiesComponent;
@@ -39,12 +40,14 @@ public class AppEngineAccountDialog extends DialogWrapper {
   private JPasswordField myPasswordField;
   private JTextField myUserEmailField;
   private final Project myProject;
+  @Nullable private final AppEngineServerConfiguration myConfiguration;
 
-  public AppEngineAccountDialog(@NotNull Project project) {
+  public AppEngineAccountDialog(@NotNull Project project, @Nullable AppEngineServerConfiguration configuration) {
     super(project);
     myProject = project;
+    myConfiguration = configuration;
     setTitle("AppEngine Account");
-    myUserEmailField.setText(StringUtil.notNullize(getStoredEmail(project)));
+    myUserEmailField.setText(StringUtil.notNullize(getStoredEmail(myConfiguration, project)));
     init();
   }
 
@@ -67,14 +70,22 @@ public class AppEngineAccountDialog extends DialogWrapper {
   }
 
   @Nullable
-  public static String getStoredEmail(@NotNull Project project) {
-    return PropertiesComponent.getInstance(project).getValue(EMAIL_KEY);
+  public static String getStoredEmail(@Nullable AppEngineServerConfiguration configuration, @NotNull Project project) {
+    if (configuration != null) {
+      return configuration.getEmail();
+    }
+    return PropertiesComponent.getInstance(project).getValue(EMAIL_KEY);//todo[nik] remove this
   }
 
   @Override
   protected void doOKAction() {
     final String email = getEmail();
-    PropertiesComponent.getInstance(myProject).setValue(EMAIL_KEY, email);
+    if (myConfiguration != null) {
+      myConfiguration.setEmail(email);
+    }
+    else {
+      PropertiesComponent.getInstance(myProject).setValue(EMAIL_KEY, email);
+    }
     if (myRememberPasswordCheckBox.isSelected()) {
       try {
         PasswordSafe.getInstance().storePassword(myProject, AppEngineAccountDialog.class, getPasswordKey(email), getPassword());
