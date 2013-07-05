@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.formatter;
-
+package org.jetbrains.plugins.groovy.lang.formatter
 
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author ilyas
  */
@@ -350,6 +348,9 @@ def cl =  {
   }
 
   void testIndentAfterLabelColon() {
+    groovySettings.indentOptions.LABEL_INDENT_SIZE = 2
+    groovySettings.indentOptions.INDENT_SIZE = 2
+    groovyCustomSettings.INDENT_LABEL_BLOCKS = true
     doTest('''
 class A extends spock.lang.Specification {
   def 'test'() {

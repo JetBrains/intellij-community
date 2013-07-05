@@ -219,7 +219,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (psiParent instanceof GrLabeledStatement && newChildIndex == 2) {
-      final Indent indent = GroovyIndentProcessor.indentLabelBlock(psiParent, getContext().getGroovySettings())
+      final Indent indent = getContext().getGroovySettings().INDENT_LABEL_BLOCKS
                             ? Indent.getLabelIndent()
                             : Indent.getNoneIndent();
       return new ChildAttributes(indent, null);
