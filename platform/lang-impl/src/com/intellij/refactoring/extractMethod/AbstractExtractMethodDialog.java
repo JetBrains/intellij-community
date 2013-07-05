@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
+public class AbstractExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
   private JPanel myContentPane;
   private AbstractParameterTablePanel myParametersPanel;
   private JTextField myMethodNameTextField;
@@ -50,17 +50,20 @@ public abstract class AbstractExtractMethodDialog extends DialogWrapper implemen
 
   private final List<String> myArguments;
   private final ArrayList<String> myOutputVariables;
+  private final FileType myFileType;
 
   public AbstractExtractMethodDialog(final Project project,
-                             final String defaultName,
-                             final CodeFragment fragment,
-                             final ExtractMethodValidator validator,
-                             final ExtractMethodDecorator decorator) {
+                                     final String defaultName,
+                                     final CodeFragment fragment,
+                                     final ExtractMethodValidator validator,
+                                     final ExtractMethodDecorator decorator,
+                                     final FileType type) {
     super(project, true);
     myProject = project;
     myDefaultName = defaultName;
     myValidator = validator;
     myDecorator = decorator;
+    myFileType = type;
     myArguments = new ArrayList<String>(fragment.getInputVariables());
     Collections.sort(myArguments);
     myOutputVariables = new ArrayList<String>(fragment.getOutputVariables());
@@ -172,11 +175,8 @@ public abstract class AbstractExtractMethodDialog extends DialogWrapper implemen
         AbstractExtractMethodDialog.this.updateSignature();
       }
     };
-    mySignaturePreviewTextArea = new MethodSignatureComponent("", myProject, getFileType());
+    mySignaturePreviewTextArea = new MethodSignatureComponent("", myProject, myFileType);
   }
-
-  @NotNull
-  protected abstract FileType getFileType();
 
   private void updateOutputVariables() {
     final StringBuilder builder = new StringBuilder();
