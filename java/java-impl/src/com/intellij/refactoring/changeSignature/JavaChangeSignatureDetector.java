@@ -111,8 +111,9 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public String extractSignature(PsiElement element, @NotNull ChangeInfo initialChangeInfo) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && isInsideMethodSignature(element, method) && method == initialChangeInfo.getMethod()) {
-      final TextRange signatureRange = getSignatureRange(method);
-      return element.getContainingFile().getText().substring(signatureRange.getStartOffset(), signatureRange.getEndOffset());
+      final PsiCodeBlock body = method.getBody();
+      final TextRange signatureRange = new TextRange(0, body != null ? body.getStartOffsetInParent() : method.getTextLength());
+      return signatureRange.substring(method.getText());
     } else if (element instanceof PsiIdentifier && element.getParent() instanceof PsiNamedElement) {
       return element.getText();
     }
