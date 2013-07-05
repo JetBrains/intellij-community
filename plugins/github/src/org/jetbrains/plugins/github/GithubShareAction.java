@@ -175,14 +175,14 @@ public class GithubShareAction extends DumbAwareAction {
         }
 
         // create sample commit for binding project
-        if (!performFirstCommitIfRequired(project, root, repository, indicator)) {
+        if (!performFirstCommitIfRequired(project, root, repository, indicator, name, url)) {
           return;
         }
 
         //git push origin master
         LOG.info("Pushing to github master");
         indicator.setText("Pushing to github master...");
-        if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name)) {
+        if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)) {
           return;
         }
 
@@ -318,7 +318,9 @@ public class GithubShareAction extends DumbAwareAction {
 
   private static boolean performFirstCommitIfRequired(@NotNull final Project project, @NotNull VirtualFile root,
                                                       @NotNull GitRepository repository,
-                                                      @NotNull ProgressIndicator indicator) {
+                                                      @NotNull ProgressIndicator indicator,
+                                                      @NotNull String name,
+                                                      @NotNull String url) {
     // check if there is no commits
     if (!repository.isFresh()) {
       return true;
@@ -344,7 +346,8 @@ public class GithubShareAction extends DumbAwareAction {
 
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
       if (!dialog.isOK() || files2add.isEmpty()) {
-        GithubNotifications.showWarning(project, "Failed to commit file during post activities", "No files to commit");
+        GithubNotifications
+          .showWarningURL(project, "Can't finish GitHub sharing process", "No files to commit. ", "'" + name + "'", " on GitHub", url);
         return false;
       }
       GitFileUtils.addFiles(project, root, files2add);
@@ -359,7 +362,8 @@ public class GithubShareAction extends DumbAwareAction {
     }
     catch (VcsException e) {
       LOG.info("Failed to perform initial commit");
-      GithubNotifications.showError(project, "Failed to commit file during post activities", e.getMessage());
+      GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
+                                       " on GitHub, but initial commit failed:<br/>" + e.getMessage(), url);
       return false;
     }
     LOG.info("Successfully created initial commit");
@@ -369,24 +373,19 @@ public class GithubShareAction extends DumbAwareAction {
   private static boolean pushCurrentBranch(@NotNull Project project,
                                            @NotNull GitRepository repository,
                                            @NotNull String remoteName,
-                                           @NotNull String remoteUrl,
-                                           @NotNull String name) {
+                                           @NotNull String remoteUrl, @NotNull String name, @NotNull String url) {
     Git git = ServiceManager.getService(Git.class);
 
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
-      GithubNotifications.showError(project, "Can't finish GitHub sharing process", "Successfully created project '" +
-                                                                                    name +
-                                                                                    "' on GitHub, but initial push failed: " +
-                                                                                    "no current branch");
+      GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
+                                       " on GitHub, but initial push failed: no current branch", url);
       return false;
     }
     GitCommandResult result = git.push(repository, remoteName, remoteUrl, currentBranch.getName(), true);
     if (!result.success()) {
-      GithubNotifications.showError(project, "Can't finish GitHub sharing process", "Successfully created project '" +
-                                                                                    name +
-                                                                                    "' on GitHub, but initial push failed:<br/>" +
-                                                                                    result.getErrorOutputAsHtmlString());
+      GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
+                                       " on GitHub, but initial push failed:<br/>" + result.getErrorOutputAsHtmlString(), url);
       return false;
     }
     return true;

@@ -167,8 +167,8 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     if (!repositoryInfo.isFork()) {
-      GithubNotifications
-        .showWarning(project, CANNOT_PERFORM_GITHUB_REBASE, "GitHub repository '" + repositoryInfo.getName() + "' is not a forked one");
+      GithubNotifications.showWarningURL(project, CANNOT_PERFORM_GITHUB_REBASE, "GitHub repository ", "'" + repositoryInfo.getName() + "'",
+                                         " is not a forked one", repositoryInfo.getBrowserUrl());
       return null;
     }
 

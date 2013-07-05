@@ -59,6 +59,30 @@ public class GithubNotifications {
     Notificator.getInstance(project).notify(notification);
   }
 
+  public static void showWarningURL(@NotNull Project project,
+                                    @NotNull String title,
+                                    @NotNull String prefix,
+                                    @NotNull String highlight,
+                                    @NotNull String postfix,
+                                    @NotNull String url) {
+    Notification notification =
+      new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
+                       NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
+    Notificator.getInstance(project).notify(notification);
+  }
+
+  public static void showErrorURL(@NotNull Project project,
+                                  @NotNull String title,
+                                  @NotNull String prefix,
+                                  @NotNull String highlight,
+                                  @NotNull String postfix,
+                                  @NotNull String url) {
+    Notification notification =
+      new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
+                       NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
+    Notificator.getInstance(project).notify(notification);
+  }
+
   public static void showInfoDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
     Messages.showInfoMessage(project, message, title);
   }
