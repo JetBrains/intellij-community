@@ -69,9 +69,6 @@ public class FileContentQueue {
             file = myFilesToLoadQueue.poll();
           }
 
-          synchronized (myProceedWithProcessingLock) {
-            while (myBytesBeingProcessed > 0) myProceedWithProcessingLock.wait();
-          }
           // put end-of-queue marker only if not canceled
           try {
             myLoadedContentsQueue.put(new FileContent(null));
@@ -225,6 +222,16 @@ public class FileContentQueue {
             }
             virtualFileToLoad = myFilesToLoadQueue.poll();
           }
+
+          // take last content which is loaded by another thread
+          while(!myContentLoadingThreadTerminated) {
+            try {
+              result = myLoadedContentsQueue.poll(300, TimeUnit.MILLISECONDS);
+              if (result != null) break;
+            } catch (InterruptedException ex) {
+              throw new RuntimeException(ex);
+            }
+          }
         }
       } else {
         try {
@@ -265,6 +272,9 @@ public class FileContentQueue {
   }
 
   public void pushback(@NotNull FileContent content) {
-    myLoadedContentsQueue.addFirst(content);
+    synchronized (myProceedWithLoadingLock) {
+      myLoadedBytesInQueue += content.getLength();
+      myLoadedContentsQueue.addFirst(content);
+    }
   }
 }
