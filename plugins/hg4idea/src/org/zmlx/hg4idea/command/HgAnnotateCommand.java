@@ -77,8 +77,8 @@ public class HgAnnotateCommand {
       if (matcher.matches()) {
         String user = matcher.group(USER_GROUP);
         HgRevisionNumber rev = HgRevisionNumber.getInstance(matcher.group(REVISION_GROUP), matcher.group(CHANGESET_GROUP));
-        String dateGroup = matcher.group(DATE_GROUP);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy Z");
+        String dateGroup = matcher.group(DATE_GROUP).trim();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
         String date = "";
         try {
           date = DateFormatUtil.formatPrettyDate(dateFormat.parse(dateGroup));
