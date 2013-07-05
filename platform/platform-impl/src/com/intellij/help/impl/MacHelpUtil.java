@@ -21,13 +21,14 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
  */
 public class MacHelpUtil {
-  static boolean invokeHelp(@NonNls String id) {
-    id = "top".equals(id) ? "startpage" : id;
+  static boolean invokeHelp(@NonNls @Nullable String id) {
+    id = id == null || "top".equals(id) ? "startpage" : id;
 
     final ID mainBundle = Foundation.invoke("NSBundle", "mainBundle");
     final ID helpBundle = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleHelpBookName"));
