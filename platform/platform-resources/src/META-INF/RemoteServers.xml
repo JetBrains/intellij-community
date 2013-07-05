@@ -1,0 +1,19 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.remoteServer.configuration.RemoteServersManager"
+                        serviceImplementation="com.intellij.remoteServer.configuration.impl.RemoteServersManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.deployment.DeploymentSourceUtil"
+                        serviceImplementation="com.intellij.remoteServer.deployment.impl.DeploymentSourceUtilImpl"/>
+    <applicationConfigurable instance="com.intellij.remoteServer.configuration.impl.RemoteServerListConfigurable"/>
+    <programRunner implementation="com.intellij.remoteServer.run.DeployToServerRunner"/>
+  </extensions>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.remoteServer.run.DeployToServerConfigurationTypesRegistrar</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

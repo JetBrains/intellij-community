@@ -56,6 +56,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "testFramework-java",
     "debugger-openapi",
     "compiler-openapi",
+    "remote-servers-api",
     "dom-openapi",
     "execution-openapi",
     "jsp-openapi",
@@ -64,6 +65,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules,
     "compiler-impl",
+    "remote-servers-impl",
     "debugger-impl",
     "dom-impl",
     "execution-impl",
