@@ -21,6 +21,7 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
@@ -1331,7 +1332,10 @@ class Foo {
   }
 }
 '''
-    type 'int['
+    type 'int'
+    myFixture.assertPreferredCompletionItems 0, 'int', 'Integer'
+    assert ((PsiTypeLookupItem) myFixture.lookupElements[0]).bracketsCount == 1
+    type '['
     myFixture.checkResult '''
 class Foo {
   void foo() {
