@@ -74,7 +74,7 @@ public class MacMessagesImpl extends MacMessages {
       ID buttons = invoke(params, "objectAtIndex:", 8);
       ID doNotAskChecked = invoke(params, "objectAtIndex:", 9);
 
-      ID alert = invoke(invoke(invoke("NSAlert", "alloc"), "init"), "autorelease");
+      ID alert = invoke(invoke("NSAlert", "alloc"), "init");
 
       invoke(alert, "setMessageText:", title);
       invoke(alert, "setInformativeText:", message);
@@ -114,6 +114,7 @@ public class MacMessagesImpl extends MacMessages {
 
       invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", focusedWindow, self,
              createSelector("alertDidEnd:returnCode:contextInfo:"), focusedWindow);
+      cfRelease(alert);
     }
   };
 
