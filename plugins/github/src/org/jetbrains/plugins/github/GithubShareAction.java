@@ -17,8 +17,7 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,11 +26,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.HashSet;
@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -315,8 +316,7 @@ public class GithubShareAction extends DumbAwareAction {
     return true;
   }
 
-  private static boolean performFirstCommitIfRequired(@NotNull Project project,
-                                                      @NotNull VirtualFile root,
+  private static boolean performFirstCommitIfRequired(@NotNull final Project project, @NotNull VirtualFile root,
                                                       @NotNull GitRepository repository,
                                                       @NotNull ProgressIndicator indicator) {
     // check if there is no commits
@@ -330,14 +330,18 @@ public class GithubShareAction extends DumbAwareAction {
       indicator.setText("Adding files to git...");
 
       // ask for files to add
-      List<VirtualFile> untrackedFiles = new ArrayList<VirtualFile>(repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
-      final GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, untrackedFiles);
+      final List<VirtualFile> untrackedFiles = new ArrayList<VirtualFile>(repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
+      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<GithubUntrackedFilesDialog>();
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
+          GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, untrackedFiles);
           DialogManager.show(dialog);
+          dialogRef.set(dialog);
         }
       }, indicator.getModalityState());
+      final GithubUntrackedFilesDialog dialog = dialogRef.get();
+
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
       if (!dialog.isOK() || files2add.isEmpty()) {
         GithubNotifications.showWarning(project, "Failed to commit file during post activities", "No files to commit");
@@ -388,28 +392,51 @@ public class GithubShareAction extends DumbAwareAction {
     return true;
   }
 
-  public static class GithubUntrackedFilesDialog extends SelectFilesDialog {
+  public static class GithubUntrackedFilesDialog extends SelectFilesDialog implements TypeSafeDataProvider {
 
-    private JTextArea myCommitMessageTextArea;
+    @NotNull private final Project myProject;
+    private CommitMessage myCommitMessagePanel;
 
     public GithubUntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> untrackedFiles) {
-      super(project, untrackedFiles, null, VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION, true, false, false);
+      super(project, untrackedFiles, null, null, true, false, false);
+      myProject = project;
       setTitle("Add Files For Initial Commit");
       init();
     }
 
     @Override
     protected JComponent createNorthPanel() {
-      JPanel panel = new JPanel(new VerticalFlowLayout());
-      myCommitMessageTextArea = new JTextArea("Initial commit");
-      panel.add(new JLabel("Commit message:"));
-      panel.add(myCommitMessageTextArea);
+      return null;
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      final JComponent tree = super.createCenterPanel();
+      final JPanel panel = new JPanel(new BorderLayout());
+
+      myCommitMessagePanel = new CommitMessage(myProject);
+      myCommitMessagePanel.setCommitMessage("Initial commit");
+
+      Splitter splitter = new Splitter(true);
+      splitter.setHonorComponentsMinimumSize(true);
+      splitter.setFirstComponent(tree);
+      splitter.setSecondComponent(myCommitMessagePanel);
+      splitter.setProportion(0.7f);
+      panel.add(splitter, BorderLayout.CENTER);
+
       return panel;
     }
 
     @NotNull
     public String getCommitMessage() {
-      return myCommitMessageTextArea.getText();
+      return myCommitMessagePanel.getComment();
+    }
+
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      if (key == VcsDataKeys.COMMIT_MESSAGE_CONTROL) {
+        sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, myCommitMessagePanel);
+      }
     }
   }
 
