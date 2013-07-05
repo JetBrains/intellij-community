@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 
+import static org.jetbrains.plugins.github.GithubUtil.GithubUserAndRepository;
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
 /**
@@ -126,10 +127,10 @@ public class GithubRebaseAction extends DumbAwareAction {
           return;
         }
         else {
-          final String userAndRepo = GithubUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
+          final GithubUserAndRepository userAndRepo = GithubUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
           final String login = GithubSettings.getInstance().getLogin();
           if (userAndRepo != null) {
-            if (userAndRepo.startsWith(login + '/')) {
+            if (userAndRepo.getUserName() == login) {
               GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE,
                                             "Configured upstream seems to be your own repository: " + upstreamRemoteUrl);
               return;
@@ -181,26 +182,20 @@ public class GithubRebaseAction extends DumbAwareAction {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find github remote");
       return null;
     }
-    final String userAndRepo = GithubUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    final GithubUserAndRepository userAndRepo = GithubUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (userAndRepo == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't process remote: " + remoteUrl);
       return null;
     }
-    int index = userAndRepo.indexOf('/');
-    if (index == -1) {
-      GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't process remote: " + remoteUrl);
-      return null;
-    }
-    final String user = userAndRepo.substring(0, index);
-    final String repositoryName = userAndRepo.substring(index + 1);
 
-    RepositoryInfo repositoryInfo = null;
+    RepositoryInfo repositoryInfo;
     try {
       repositoryInfo =
         GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, RepositoryInfo, IOException>() {
           @Override
+          @Nullable
           public RepositoryInfo convert(GithubAuthData authData) throws IOException {
-            return GithubUtil.getDetailedRepoInfo(authData, user, repositoryName);
+            return GithubUtil.getDetailedRepoInfo(authData, userAndRepo.getUserName(), userAndRepo.getRepositoryName());
           }
         });
     }

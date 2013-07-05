@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static org.jetbrains.plugins.github.GithubUtil.GithubUser;
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
 /**
@@ -393,7 +394,6 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   public static class GithubUntrackedFilesDialog extends SelectFilesDialog implements TypeSafeDataProvider {
-
     @NotNull private final Project myProject;
     private CommitMessage myCommitMessagePanel;
 

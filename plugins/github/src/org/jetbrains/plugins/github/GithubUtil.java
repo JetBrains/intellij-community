@@ -352,19 +352,18 @@ public class GithubUtil {
    * git@github.com:user/repo.git -> user/repo
    */
   @Nullable
-  public static String getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
+  public static GithubUserAndRepository getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
     remoteUrl = removeEndingDotGit(remoteUrl);
-    int index;
-    index = remoteUrl.lastIndexOf('/');
-    if (index == -1) {
+    int index1 = remoteUrl.lastIndexOf('/');
+    if (index1 == -1) {
       return null;
     }
-    String url = remoteUrl.substring(0, index);
-    index = Math.max(url.lastIndexOf('/'), url.lastIndexOf(':'));
-    if (index == -1) {
+    String url = remoteUrl.substring(0, index1);
+    int index2 = Math.max(url.lastIndexOf('/'), url.lastIndexOf(':'));
+    if (index2 == -1) {
       return null;
     }
-    return remoteUrl.substring(index + 1);
+    return new GithubUserAndRepository(remoteUrl.substring(index2 + 1, index1), remoteUrl.substring(index1 + 1));
   }
 
   /**
@@ -404,4 +403,56 @@ public class GithubUtil {
     return e.getMessage();
   }
 
+  /**
+   * Information about a user on GitHub.
+   *
+   * @author Kirill Likhodedov
+   */
+  public static class GithubUser {
+
+    @NotNull private final String myLogin;
+    private final int myPrivateRepos;
+    private final int myMaxPrivateRepos;
+
+    GithubUser(@NotNull String login, int privateRepos, int maxPrivateRepos) {
+      myLogin = login;
+      myPrivateRepos = privateRepos;
+      myMaxPrivateRepos = maxPrivateRepos;
+    }
+
+    @NotNull
+    public String getLogin() {
+      return myLogin;
+    }
+
+    public boolean canCreatePrivateRepo() {
+      return myMaxPrivateRepos > myPrivateRepos;
+    }
+
+  }
+
+  public static class GithubUserAndRepository {
+    @NotNull final private String myUserName;
+    @NotNull final private String myRepositoryName;
+
+    public GithubUserAndRepository(@NotNull String userName, @NotNull String repositoryName) {
+      myUserName = userName;
+      myRepositoryName = repositoryName;
+    }
+
+    @NotNull
+    public String getUserName() {
+      return myUserName;
+    }
+
+    @NotNull
+    public String getRepositoryName() {
+      return myRepositoryName;
+    }
+
+    @NotNull
+    public String toString() {
+      return myUserName + '/' + myRepositoryName;
+    }
+  }
 }

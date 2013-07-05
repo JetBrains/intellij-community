@@ -40,14 +40,14 @@ abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
                                            GitUtil.getPrintableRemotes(repository.getRemotes())));
       return;
     }
-    String userAndRepository = GithubUtil.getUserAndRepositoryFromRemoteUrl(url);
+    GithubUtil.GithubUserAndRepository userAndRepository = GithubUtil.getUserAndRepositoryFromRemoteUrl(url);
     if (userAndRepository == null) {
       GithubNotifications
         .showError(project, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER, "Cannot extract info about repository: " + url);
       return;
     }
 
-    String githubUrl = GithubApiUtil.getGitHost() + "/" + userAndRepository + "/commit/" + revisionHash;
+    String githubUrl = GithubApiUtil.getGitHost() + "/" + userAndRepository.toString() + "/commit/" + revisionHash;
     BrowserUtil.launchBrowser(githubUrl);
   }
 

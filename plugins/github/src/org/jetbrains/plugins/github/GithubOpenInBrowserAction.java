@@ -101,7 +101,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     if (repository == null) {
       StringBuilder details = new StringBuilder("file: " + virtualFile.getPresentableUrl() + "; Git repositories: ");
       for (GitRepository repo : manager.getRepositories()) {
-        details.append(repo.getPresentableUrl() + "; ");
+        details.append(repo.getPresentableUrl()).append("; ");
       }
       notifyError(project, "Can't find git repository", details.toString());
       return;
