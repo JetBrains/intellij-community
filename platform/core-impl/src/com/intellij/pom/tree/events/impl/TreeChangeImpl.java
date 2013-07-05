@@ -155,7 +155,16 @@ public class TreeChangeImpl implements TreeChange {
     finally {
       if (optimizedIndex != haveNotCalculated && index != optimizedIndex) {
         ASTNode prev = child.getTreePrev();
-        LOG.error("Failed to calculate optimized index for add change at offset:"+prev + "," + myChanges.get(prev) + "," + isAfter(prev, child) + "," + optimizedIndex + "," + index);
+        Pair<ASTNode, Integer> pair = mySortedChanges.get(index);
+        ChangeInfo prevChange = myChanges.get(prev);
+        ChangeInfo prevChange2 = myChanges.get(pair.getFirst());
+        LOG.error("Failed to calculate optimized index for add change at offset: prev node:"+prev + ", prev change:" + prevChange +
+                  ",prev change length:" + (prevChange != null ? prevChange.getOldLength() : null) + ", prev text length:" + prev.getTextLength() +
+                  ",prev offset:" + mySortedChanges.get(mySortedChanges.size() - 1).getSecond() +  ", node:" + child + ", nodeOffset:" +
+                  nodeOffset + ", optimizedIndex:"+optimizedIndex + ", real index:" + index + ", same node:" + (pair.getFirst() == child) +
+                  ", at place:"+ pair.getSecond() + ", node:" +pair.getFirst() + ", change:"+prevChange2 + ", prevChange oldLength:" +
+                  (prevChange2 != null ? prevChange2.getOldLength():null) + ", prevchange length2:" + pair.getFirst().getTextLength() + "," +
+                  toString());
         ourEnableAddChangeAtOffsetOptimization = false;
       }
     }
