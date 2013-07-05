@@ -24,26 +24,27 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
+  private static final Key<TimedReference<SoftReference<Pair<String[], Long>>>> ALL_CLASS_NAMES_CACHE = Key.create("ALL_CLASS_NAMES_CACHE");
   @Override
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
@@ -60,17 +61,22 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   }
   
   private static String[] getAllClassNames(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<String[]>() {
-      @Nullable
+    return ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
       @Override
-      public Result<String[]> compute() {
-        String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
-          @Override
-          public String[] compute() {
-            return PsiShortNamesCache.getInstance(project).getAllClassNames();
-          }
-        });
-        return Result.create(names, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      public String[] compute() {
+        final long modCount = PsiManager.getInstance(project).getModificationTracker().getJavaStructureModificationCount();
+        TimedReference<SoftReference<Pair<String[], Long>>> ref1 = project.getUserData(ALL_CLASS_NAMES_CACHE);
+        SoftReference<Pair<String[], Long>> ref2 = ref1 == null ? null : ref1.get();
+        Pair<String[], Long> pair = ref2 == null ? null : ref2.get();
+        if (pair != null && pair.second.equals(modCount)) {
+          return pair.first;
+        }
+
+        String[] names = PsiShortNamesCache.getInstance(project).getAllClassNames();
+        ref1 = new TimedReference<SoftReference<Pair<String[], Long>>>(null);
+        ref1.set(new SoftReference<Pair<String[], Long>>(Pair.create(names, modCount)));
+        project.putUserData(ALL_CLASS_NAMES_CACHE, ref1);
+        return names;
       }
     });
   }
