@@ -300,7 +300,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     // For simple String literals like 'abcdef'
     CaretModel caretModel = editor.getCaretModel();
     if (nodeElementType == mSTRING_LITERAL) {
-      if (GrStringUtil.isSingleQuoteString((GrLiteral)stringElement)) {
+      if (isSingleQuoteString(stringElement)) {
 
         //the case of print '\<caret>'
         if (isSlashBeforeCaret(caretOffset, fileText)) {
@@ -340,9 +340,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         }
       }
       if (parent == null) return false;
-      if (parent instanceof GrLiteral &&
-          GrStringUtil.isSinglelineStringLiteral((GrLiteral)parent) &&
-          GrStringUtil.isDoubleQuoteString((GrLiteral)parent)) {
+      if (isDoubleQuotedString(parent)) {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
@@ -399,6 +397,14 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     return false;
+  }
+
+  private static boolean isDoubleQuotedString(PsiElement element) {
+    return "\"".equals(GrStringUtil.getStartQuote(element.getText()));
+  }
+
+  private static boolean isSingleQuoteString(PsiElement element) {
+    return "'".equals(GrStringUtil.getStartQuote(element.getText()));
   }
 
   @Nullable
