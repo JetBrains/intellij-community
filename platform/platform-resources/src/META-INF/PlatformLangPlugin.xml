@@ -88,7 +88,6 @@
   </extensions>
 
   <xi:include href="xdebugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ultimate.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
