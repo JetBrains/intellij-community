@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -118,7 +119,7 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        return GrStringUtil.isMultilineStringElement(element.getNode());
+        return element instanceof GrLiteral && GrStringUtil.isMultilineStringLiteral((GrLiteral)element);
       }
     };
   }

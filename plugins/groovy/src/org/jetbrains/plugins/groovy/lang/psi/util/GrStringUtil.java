@@ -846,13 +846,6 @@ public class GrStringUtil {
     }
   }
 
-  public static boolean isRegex(GrLiteral literal) {
-    if (literal instanceof GrRegex) return true;
-
-    final IElementType elementType = literal.getFirstChild().getNode().getElementType();
-    return elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL;
-  }
-
   public static boolean isWellEndedString(PsiElement element) {
     final String text = element.getText();
 
@@ -879,30 +872,6 @@ public class GrStringUtil {
     return false;
   }
 
-  public static void getOperandText(@NotNull GrLiteral operand, @NotNull StringBuilder builder) {
-    if (operand instanceof GrRegex) {
-      StringBuilder b = new StringBuilder();
-      parseRegexCharacters(removeQuotes(operand.getText()), b, null, operand.getText().startsWith("/"));
-      escapeSymbolsForGString(b, false, false);
-    }
-    else if (operand instanceof GrString) {
-      builder.append(removeQuotes(operand.getText()));
-    }
-    else {
-      Object value = operand.getValue();
-      if (value == null) {
-        value = removeQuotes(operand.getText());
-      }
-
-      String text = value.toString();
-      StringBuilder buffer = new StringBuilder(text.length());
-      boolean containsLineFeeds = text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0;
-      escapeStringCharacters(text.length(), text, "$", false, true, buffer);
-      unescapeCharacters(buffer, containsLineFeeds?"'\"":"'", containsLineFeeds);
-      builder.append(buffer);
-    }
-  }
-
   public static void fixAllTripleQuotes(StringBuilder builder, int position) {
     for (int i = builder.indexOf("'''", position); i >= 0; i = builder.indexOf("'''", i)) {
       builder.replace(i + 2, i + 3, "\\'");
@@ -920,39 +889,14 @@ public class GrStringUtil {
     return text.length() < 3 && text.equals("''") || text.length() >= 3 && !text.startsWith("'''");
   }
 
-  public static boolean isPlainGString(ASTNode node) {
-    String text = node.getText();
-    return text.length() < 3 && text.equals("\"\"") || text.length() >= 3 && !text.startsWith("\"\"\"");
+  public static boolean isMultilineStringLiteral(GrLiteral literal) {
+    String quote = getStartQuote(literal.getText());
+    return TRIPLE_QUOTES.equals(quote) || TRIPLE_DOUBLE_QUOTES.equals(quote) || SLASH.equals(quote) || DOLLAR_SLASH.equals(quote);
   }
 
-  public static boolean isMultilineStringElement(ASTNode node) {
-    PsiElement element = node.getPsi();
-    if (element instanceof GrLiteral) {
-      if (element instanceof GrString) return !((GrString) element).isPlainString();
-      return isSimpleStringLiteral(((GrLiteral) element)) && !isPlainStringLiteral(node) ||
-          isSimpleGStringLiteral(((GrLiteral) element)) && !isPlainGString(node);
-    }
-    return false;
-  }
-
-  public static boolean isSimpleStringLiteral(GrLiteral literal) {
-    PsiElement child = literal.getFirstChild();
-    if (child != null && child.getNode() != null) {
-      ASTNode node = child.getNode();
-      assert node != null;
-      return node.getElementType() == mSTRING_LITERAL;
-    }
-    return false;
-  }
-
-  public static boolean isSimpleGStringLiteral(GrLiteral literal) {
-    PsiElement child = literal.getFirstChild();
-    if (child != null && child.getNode() != null) {
-      ASTNode node = child.getNode();
-      assert node != null;
-      return node.getElementType() == mGSTRING_LITERAL;
-    }
-    return false;
+  public static boolean isSinglelineStringLiteral(GrLiteral literal) {
+    String quote = getStartQuote(literal.getText());
+    return QUOTE.equals(quote) || DOUBLE_QUOTES.equals(quote);
   }
 
   public static StringBuilder getLiteralTextByValue(String value) {
@@ -978,6 +922,9 @@ public class GrStringUtil {
     return parent;
   }
 
+  /**
+   * Checks whether a literal is a string literal of any kind
+   */
   public static boolean isStringLiteral(GrLiteral literal) {
     if (literal instanceof GrString) return true;
 
@@ -988,4 +935,28 @@ public class GrStringUtil {
 
     return false;
   }
+
+  public static boolean isRegex(GrLiteral literal) {
+    if (literal instanceof GrRegex) return true;
+
+    String quote = getStartQuote(literal.getText());
+    return SLASH.equals(quote) || DOLLAR_SLASH.equals(quote);
+  }
+
+  public static boolean isSlashyString(GrLiteral literal) {
+    return SLASH.equals(getStartQuote(literal.getText()));
+  }
+
+  public static boolean isDollarSlashyString(GrLiteral literal) {
+    return DOLLAR_SLASH.equals(getStartQuote(literal.getText()));
+  }
+
+  public static boolean isSingleQuoteString(GrLiteral literal) {
+    return QUOTE.equals(getStartQuote(literal.getText()));
+  }
+
+  public static boolean isDoubleQuoteString(GrLiteral literal) {
+    return DOUBLE_QUOTES.equals(getStartQuote(literal.getText()));
+  }
+
 }
