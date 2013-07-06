@@ -16,6 +16,7 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
@@ -83,14 +84,6 @@ public class JavacMain {
     }
     
     final List<JavaSourceTransformer> transformers = getSourceTransformers();
-    transformers.add(new JavaSourceTransformer() { 
-      // dummy transformer to notify about sources that were accessed during compilation 
-      @Override
-      public CharSequence transform(File sourceFile, CharSequence content) throws TransformError {
-        diagnosticConsumer.javaFileLoaded(sourceFile);
-        return content;
-      }
-    });
 
     final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
 
@@ -191,7 +184,7 @@ public class JavacMain {
   private static List<JavaSourceTransformer> getSourceTransformers() {
     final Class<JavaSourceTransformer> transformerClass = JavaSourceTransformer.class;
     final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());
-    final List<JavaSourceTransformer> transformers = new ArrayList<JavaSourceTransformer>();
+    final List<JavaSourceTransformer> transformers = new SmartList<JavaSourceTransformer>();
     for (JavaSourceTransformer t : loader) {
       transformers.add(t);
     }
@@ -219,8 +212,7 @@ public class JavacMain {
   private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {
     final List<String> result = new ArrayList<String>();
     if (usingJavac) {
-      result.add("-Xprefer:source"); 
-      result.add("-implicit:none"); // the option supported by javac only
+      result.add("-implicit:class"); // the option supported by javac only
     }
     else { // is Eclipse
       result.add("-noExit");
