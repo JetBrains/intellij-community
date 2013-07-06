@@ -39,10 +39,14 @@ public class ConvertToRegexIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     if (!(element instanceof GrLiteral)) return;
 
+
     StringBuilder buffer = new StringBuilder();
     buffer.append("/");
 
-    if (element instanceof GrLiteralImpl) {
+    if (GrStringUtil.isDollarSlashyString(((GrLiteral)element))) {
+      buffer.append(GrStringUtil.removeQuotes(element.getText()));
+    }
+    else if (element instanceof GrLiteralImpl) {
       Object value = ((GrLiteralImpl)element).getValue();
       if (value instanceof String) {
         GrStringUtil.escapeSymbolsForSlashyStrings(buffer, (String)value);
@@ -83,7 +87,7 @@ public class ConvertToRegexIntention extends Intention {
       public boolean satisfiedBy(PsiElement element) {
         return element instanceof GrLiteral &&
                GrStringUtil.isStringLiteral((GrLiteral)element) &&
-               !GrStringUtil.isRegex((GrLiteral)element);
+               !GrStringUtil.isSlashyString(((GrLiteral)element));
       }
     };
   }
