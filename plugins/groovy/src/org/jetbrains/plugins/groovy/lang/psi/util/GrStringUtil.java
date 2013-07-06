@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -122,6 +123,7 @@ public class GrStringUtil {
             break;
 
           default:
+            buffer.append('\\');
             buffer.append(ch);
             break;
         }
@@ -974,5 +976,16 @@ public class GrStringUtil {
     if (parent instanceof GrStringContent) parent = parent.getParent();
 
     return parent;
+  }
+
+  public static boolean isStringLiteral(GrLiteral literal) {
+    if (literal instanceof GrString) return true;
+
+    if (literal instanceof GrLiteralImpl) {
+      IElementType type = GrLiteralImpl.getLiteralType(literal);
+      return TokenSets.STRING_LITERAL_SET.contains(type);
+    }
+
+    return false;
   }
 }
