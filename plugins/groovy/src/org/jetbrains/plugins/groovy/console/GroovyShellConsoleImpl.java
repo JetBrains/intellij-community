@@ -58,34 +58,68 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
   protected String addToHistoryInner(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean erase, boolean preserveMarkup) {
     final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
 
-    GroovyShellCodeFragment codeFragment = (GroovyShellCodeFragment)myFile;
-    GrTopStatement[] definitions = codeFragment.getTopStatements();
+    if ("purge variables".equals(result.trim())) {
+      clearVariables();
+    }
+    else if ("purge classes".equals(result.trim())) {
+      clearClasses();
+    }
+    else if ("purge imports".equals(result.trim())) {
+      clearImports();
+    }
+    else if ("purge all".equals(result.trim())) {
+      clearVariables();
+      clearClasses();
+      clearImports();
+    }
+    else {
+      processCode();
+    }
 
-    for (GrTopStatement statement : definitions) {
+    return result;
+  }
+
+  private void processCode() {
+    for (GrTopStatement statement : getFile().getTopStatements()) {
       if (statement instanceof GrImportStatement) {
-        codeFragment.addImportsFromString(importToString((GrImportStatement)statement));
+        getFile().addImportsFromString(importToString((GrImportStatement)statement));
       }
       else if (statement instanceof GrMethod) {
-        codeFragment.addVariable(((GrMethod)statement).getName(), generateClosure((GrMethod)statement));
+        getFile().addVariable(((GrMethod)statement).getName(), generateClosure((GrMethod)statement));
       }
       else if (statement instanceof GrAssignmentExpression) {
         GrAssignmentExpression assignment = (GrAssignmentExpression)statement;
         GrExpression left = assignment.getLValue();
         if (left instanceof GrReferenceExpression && !((GrReferenceExpression)left).isQualified()) {
-          codeFragment.addVariable(((GrReferenceExpression)left).getReferenceName(), assignment.getRValue());
+          getFile().addVariable(((GrReferenceExpression)left).getReferenceName(), assignment.getRValue());
         }
       }
       else if (statement instanceof GrTypeDefinition) {
-        codeFragment.addTypeDefinition(prepareTypeDefinition((GrTypeDefinition)statement));
+        getFile().addTypeDefinition(prepareTypeDefinition((GrTypeDefinition)statement));
       }
     }
 
-    PsiType scriptType = ((GroovyShellCodeFragment)myFile).getInferredScriptReturnType();
+    PsiType scriptType = getFile().getInferredScriptReturnType();
     if (scriptType != null) {
-      codeFragment.addVariable("_", scriptType);
+      getFile().addVariable("_", scriptType);
     }
+  }
 
-    return result;
+  @NotNull
+  public GroovyShellCodeFragment getFile() {
+    return (GroovyShellCodeFragment)myFile;
+  }
+
+  private void clearVariables() {
+    getFile().clearVariables();
+  }
+
+  private void clearClasses() {
+    getFile().clearClasses();
+  }
+
+  private void clearImports() {
+    getFile().clearImports();
   }
 
   @NotNull

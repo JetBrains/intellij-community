@@ -142,4 +142,12 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
   public void addTypeDefinition(GrTypeDefinition typeDefinition) {
     myTypeDefinitions.put(typeDefinition.getName(), typeDefinition);
   }
+
+  public void clearVariables() {
+    myVariables.clear();
+  }
+
+  public void clearClasses() {
+    myTypeDefinitions.clear();
+  }
 }

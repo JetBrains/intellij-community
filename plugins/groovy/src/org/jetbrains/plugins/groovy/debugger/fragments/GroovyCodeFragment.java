@@ -285,4 +285,9 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
       return null;
     }
   }
+
+  public void clearImports() {
+    myPseudoImports.clear();
+    myOnDemandImports.clear();
+  }
 }
