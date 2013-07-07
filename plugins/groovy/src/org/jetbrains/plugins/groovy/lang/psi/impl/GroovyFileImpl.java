@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.editor.GroovyImportHelper;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -69,7 +70,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImplicitImports;
-import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImports;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -167,9 +167,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     GrImportStatement[] importStatements = getImportStatements();
-    if (!processImports(state, lastParent, place, processor, importStatements, false)) return false;
+    if (!processImports(processor, state, lastParent, place, importStatements, false)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place, facade, getPackageName())) return false;
-    if (!processImports(state, lastParent, place, processor, importStatements, true)) return false;
+    if (!processImports(processor, state, lastParent, place, importStatements, true)) return false;
 
     if (processClasses && !processImplicitImports(processor, state, lastParent, place, this)) {
       return false;
@@ -201,6 +201,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     return true;
+  }
+
+  protected boolean processImports(PsiScopeProcessor processor,
+                                   ResolveState state,
+                                   PsiElement lastParent,
+                                   PsiElement place,
+                                   GrImportStatement[] importStatements,
+                                   boolean onDemand) {
+    return GroovyImportHelper.processImports(state, lastParent, place, processor, importStatements, onDemand);
   }
 
   private boolean processBindings(@NotNull final PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {

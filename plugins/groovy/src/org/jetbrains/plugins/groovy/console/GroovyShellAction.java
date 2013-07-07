@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.console;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.console.ConsoleHistoryController;
-import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
@@ -48,7 +47,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.PlatformIcons;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
@@ -107,7 +105,7 @@ public class GroovyShellAction extends DumbAwareAction {
     });
   }
 
-  private static void runGroovyShell(Project project) {
+  private void runGroovyShell(Project project) {
     List<Module> modules = new ArrayList<Module>();
     final Map<Module, String> versions = new HashMap<Module, String>();
 
@@ -120,7 +118,7 @@ public class GroovyShellAction extends DumbAwareAction {
     }
 
     if (modules.size() == 1) {
-      runShell(modules.get(0));
+      doRun(modules.get(0));
       return;
     }
 
@@ -147,7 +145,7 @@ public class GroovyShellAction extends DumbAwareAction {
         @Override
         public PopupStep onChosen(Module selectedValue, boolean finalChoice) {
           PropertiesComponent.getInstance(selectedValue.getProject()).setValue(GROOVY_SHELL_LAST_MODULE, selectedValue.getName());
-          runShell(selectedValue);
+          doRun(selectedValue);
           return null;
         }
       };
@@ -161,7 +159,7 @@ public class GroovyShellAction extends DumbAwareAction {
     JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
   }
 
-  private static void runShell(final Module module) {
+  private void doRun(final Module module) {
     final GroovyShellRunner shellRunner = GroovyShellRunner.getAppropriateRunner(module);
     if (shellRunner == null) return;
 
@@ -228,7 +226,7 @@ public class GroovyShellAction extends DumbAwareAction {
 
   private static class GroovyConsoleView extends LanguageConsoleViewImpl {
     protected GroovyConsoleView(final Project project) {
-      super(new LanguageConsoleImpl(project, "Groovy Console", GroovyFileType.GROOVY_LANGUAGE));
+      super(new GroovyShellConsoleImpl(project, "Groovy Console"));
     }
   }
 }

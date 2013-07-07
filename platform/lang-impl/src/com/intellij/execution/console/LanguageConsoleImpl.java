@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,8 +139,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
-    myFile = ObjectUtils.assertNotNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
     assert myEditorDocument != null;
+    myFile = createFile(myVirtualFile, myEditorDocument, myProject);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
@@ -465,6 +465,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return addToHistoryInner(textRange, editor, false, preserveMarkup);
   }
 
+  @NotNull
   protected String addToHistoryInner(final TextRange textRange,
                                      final EditorEx editor,
                                      final boolean erase,
@@ -504,6 +505,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
+  @NotNull
   protected String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
@@ -759,6 +761,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
 
     console.printToHistoryOnEdt(string, attributes);
+  }
+
+  @NotNull
+  protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
+    return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
   }
 
   private class MyLayout extends AbstractLayoutManager {
