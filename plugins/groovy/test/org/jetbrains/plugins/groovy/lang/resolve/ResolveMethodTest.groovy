@@ -1890,4 +1890,15 @@ class GrTypeDefinition  {
     assert expr.multiResolve(false).length == 1
     assert expr.multiResolve(true).length > 1
   }
+
+  void testNegatedIf() {
+    resolveByText('''\
+def foo(x) {
+  if (!(x instanceof String)) return
+
+  x.subst<caret>ring(1)
+}
+''', PsiMethod)
+
+  }
 }
