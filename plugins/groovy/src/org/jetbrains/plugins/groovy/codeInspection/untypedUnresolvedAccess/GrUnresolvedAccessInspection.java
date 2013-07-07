@@ -45,6 +45,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,8 +81,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
+import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.STATIC;
 import static org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.isCall;
@@ -97,6 +100,13 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   public boolean myHighlightIfGroovyObjectOverridden = true;
   public boolean myHighlightIfMissingMethodsDeclared = true;
   public boolean myHighlightInnerClasses = true;
+
+  private static final LightCacheKey<Map<String, Boolean>> GROOVY_OBJECT_METHODS_CACHE = new LightCacheKey<Map<String, Boolean>>() {
+    @Override
+    protected long getModificationCount(PsiElement holder) {
+      return holder.getManager().getModificationTracker().getModificationCount();
+    }
+  };
 
   private static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {
     if (GrHighlightUtil.isDeclarationAssignment(referenceExpression)) return false;
@@ -321,17 +331,37 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   }
 
   private static boolean checkMethodInPlace(GrReferenceExpression ref, PsiMethod patternMethod) {
-    PsiElement container = PsiTreeUtil.getParentOfType(ref, GrClosableBlock.class, PsiMember.class);
+    PsiElement container = PsiTreeUtil.getParentOfType(ref, GrClosableBlock.class, PsiMember.class, PsiFile.class);
+    assert container != null;
     return checkContainer(patternMethod, container);
   }
 
-  private static boolean checkContainer(final PsiMethod patternMethod, PsiElement container) {
+  private static boolean checkContainer(@NotNull final PsiMethod patternMethod, @NotNull PsiElement container) {
+    final String name = patternMethod.getName();
+
+    Map<String, Boolean> cached = GROOVY_OBJECT_METHODS_CACHE.getCachedValue(container);
+    if (cached == null) {
+      GROOVY_OBJECT_METHODS_CACHE.putCachedValue(container, cached = ContainerUtil.<String, Boolean>newConcurrentMap());
+    }
+
+    Boolean cachedResult = cached.get(name);
+    if (cachedResult != null) {
+      return cachedResult.booleanValue();
+    }
+
+    boolean result = doCheckContainer(patternMethod, container, name);
+    cached.put(name, result);
+
+    return result;
+  }
+
+  private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
     final Ref<Boolean> result = new Ref<Boolean>(false);
     PsiScopeProcessor processor = new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod &&
-            patternMethod.getName().equals(((PsiMethod)element).getName()) &&
+            name.equals(((PsiMethod)element).getName()) &&
             patternMethod.getParameterList().getParametersCount() == ((PsiMethod)element).getParameterList().getParametersCount() &&
             validateMethod((PsiMethod)element, patternMethod)) {
           result.set(true);
