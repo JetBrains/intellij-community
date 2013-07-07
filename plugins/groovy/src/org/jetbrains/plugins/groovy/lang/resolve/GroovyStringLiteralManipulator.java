@@ -41,7 +41,7 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
       newContent = GrStringUtil.escapeSymbolsForString(newContent, !startQuote.equals("'''"), true);
     }
     else if (StringUtil.startsWithChar(startQuote, '\"')) {
-      newContent = GrStringUtil.escapeSymbolsForGString(newContent, !startQuote.equals("\"\"\""), true);
+      newContent = GrStringUtil.escapeSymbolsForGString(newContent, !startQuote.equals("\"\"\""), false);
     }
     else if ("/".equals(startQuote)) {
       newContent = GrStringUtil.escapeSymbolsForSlashyStrings(newContent);

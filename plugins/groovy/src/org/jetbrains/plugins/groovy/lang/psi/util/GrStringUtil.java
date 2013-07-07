@@ -257,15 +257,15 @@ public class GrStringUtil {
     buffer.append(hexCode);
   }
 
-  public static String escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection) {
+  public static String escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean unescapeSymbols) {
     StringBuilder b = new StringBuilder();
-    escapeSymbolsForGString(s, isSingleLine, forInjection, b);
+    escapeSymbolsForGString(s, isSingleLine, unescapeSymbols, b);
     return b.toString();
   }
 
-  public static void escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection, StringBuilder b) {
+  public static void escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean unescapeSymbols, StringBuilder b) {
     escapeStringCharacters(s.length(), s, isSingleLine ? "$\"" : "$", isSingleLine, true, b);
-    if (!forInjection) {
+    if (unescapeSymbols) {
       unescapeCharacters(b, isSingleLine ? "'" : "'\"", true);
     }
     if (!isSingleLine) escapeLastSymbols(b, '\"');
@@ -479,7 +479,7 @@ public class GrStringUtil {
     else {
       final String text = removeQuotes(literal.getText());
       boolean escapeDoubleQuotes = !text.contains("\n") && grString.isPlainString();
-      literalText = escapeSymbolsForGString(text, escapeDoubleQuotes, false);
+      literalText = escapeSymbolsForGString(text, escapeDoubleQuotes, true);
     }
 
     if (literalText.contains("\n")) {
@@ -824,10 +824,10 @@ public class GrStringUtil {
       for (PsiElement child = regex.getFirstChild(); child!=null; child = child.getNextSibling()) {
         final IElementType type = child.getNode().getElementType();
         if (type == mREGEX_CONTENT || type == GSTRING_CONTENT) {
-          builder.append(escapeSymbolsForGString(unescapeSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), false));
+          builder.append(escapeSymbolsForGString(unescapeSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), true));
         }
         else if (type == mDOLLAR_SLASH_REGEX_CONTENT) {
-          builder.append(escapeSymbolsForGString(unescapeDollarSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), false));
+          builder.append(escapeSymbolsForGString(unescapeDollarSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), true));
         }
         else if (type == GSTRING_INJECTION) {
           builder.append(child.getText());
@@ -959,4 +959,11 @@ public class GrStringUtil {
     return DOUBLE_QUOTES.equals(getStartQuote(literal.getText()));
   }
 
+  public static boolean isTripleQuoteString(GrLiteral literal) {
+    return TRIPLE_QUOTES.equals(getStartQuote(literal.getText()));
+  }
+
+  public static boolean isTripleDoubleQuoteString(GrLiteral literal) {
+    return TRIPLE_DOUBLE_QUOTES.equals(getStartQuote(literal.getText()));
+  }
 }
