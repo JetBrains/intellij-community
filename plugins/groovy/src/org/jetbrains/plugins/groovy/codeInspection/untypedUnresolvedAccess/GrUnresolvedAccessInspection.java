@@ -33,6 +33,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +42,7 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
 import org.jetbrains.annotations.Nls;
@@ -305,16 +308,78 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   }
 
   private static boolean areGroovyObjectMethodsOverridden(GrReferenceExpression ref) {
+    PsiMethod patternMethod = findPatternMethod(ref);
+    if (patternMethod == null) return false;
+
+    GrExpression qualifier = ref.getQualifier();
+    if (qualifier != null) {
+      return checkGroovyObjectMethodsByQualifier(ref, patternMethod);
+    }
+    else {
+      return checkMethodInPlace(ref, patternMethod);
+    }
+  }
+
+  private static boolean checkMethodInPlace(GrReferenceExpression ref, PsiMethod patternMethod) {
+    PsiElement container = PsiTreeUtil.getParentOfType(ref, GrClosableBlock.class, PsiMember.class);
+    return checkContainer(patternMethod, container);
+  }
+
+  private static boolean checkContainer(final PsiMethod patternMethod, PsiElement container) {
+    final Ref<Boolean> result = new Ref<Boolean>(false);
+    PsiScopeProcessor processor = new PsiScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+        if (element instanceof PsiMethod &&
+            patternMethod.getName().equals(((PsiMethod)element).getName()) &&
+            patternMethod.getParameterList().getParametersCount() == ((PsiMethod)element).getParameterList().getParametersCount() &&
+            validateMethod((PsiMethod)element, patternMethod)) {
+          result.set(true);
+          return false;
+        }
+        return true;
+      }
+
+      @Nullable
+      @Override
+      public <T> T getHint(@NotNull Key<T> hintKey) {
+        return null;
+      }
+
+      @Override
+      public void handleEvent(Event event, @Nullable Object associated) {
+      }
+    };
+    ResolveUtil.treeWalkUp(container, processor, true);
+    return result.get();
+  }
+
+  private static boolean checkGroovyObjectMethodsByQualifier(GrReferenceExpression ref, PsiMethod patternMethod) {
     PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
     if (!(qualifierType instanceof PsiClassType)) return false;
 
     PsiClass resolved = ((PsiClassType)qualifierType).resolve();
     if (resolved == null) return false;
 
-    PsiClass groovyObject =
-      JavaPsiFacade.getInstance(ref.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT, ref.getResolveScope());
-    if (groovyObject == null) return false;
+    PsiMethod found = resolved.findMethodBySignature(patternMethod, true);
+    if (found == null) return false;
 
+    return validateMethod(found, patternMethod);
+  }
+
+  private static boolean validateMethod(PsiMethod found, PsiMethod patternMethod) {
+    PsiClass aClass = found.getContainingClass();
+    if (aClass == null) return false;
+    String qname = aClass.getQualifiedName();
+    if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname)) return false;
+    if (GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) return false;
+    return true;
+  }
+
+  private static PsiMethod findPatternMethod(GrReferenceExpression ref) {
+    PsiClass groovyObject = JavaPsiFacade.getInstance(ref.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT,
+                                                                                  ref.getResolveScope());
+    if (groovyObject == null) return null;
 
     String methodName;
     if (ref.getParent() instanceof GrCall) {
@@ -328,19 +393,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     PsiMethod[] patternMethods = groovyObject.findMethodsByName(methodName, false);
-    if (patternMethods.length != 1) return false;
-
-    PsiMethod patternMethod = patternMethods[0];
-    PsiMethod found = resolved.findMethodBySignature(patternMethod, true);
-    if (found == null) return false;
-
-    PsiClass aClass = found.getContainingClass();
-    if (aClass == null) return false;
-    String qname = aClass.getQualifiedName();
-    if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname)) return false;
-    if (GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) return false;
-
-    return true;
+    if (patternMethods.length != 1) return null;
+    return patternMethods[0];
   }
 
   private static void addEmptyIntentionIfNeeded(@Nullable HighlightInfo info) {
