@@ -1,27 +1,35 @@
 class DelegatePlain {
+	private final BarImpl bar = new BarImpl();
+	private final FooImpl foo = new FooImpl();
 
-  private final BarImpl bar = new BarImpl();
+	private static class FooImpl implements Foo {
+		public void foo() {
+		}
 
-  private final FooImpl foo = new FooImpl();
+		public void bar(java.util.ArrayList<java.lang.String> list) {
+		}
+	}
 
-  private static class FooImpl implements Foo {
-    public void foo() {
-    }
+	private static class BarImpl implements Bar {
+		public void bar(java.util.ArrayList<java.lang.String> list) {
+		}
+	}
 
-    public void bar(java.util.ArrayList<java.lang.String> list) {
-    }
-  }
+	private static interface Foo extends Bar {
+		void foo();
+	}
 
-  private static class BarImpl implements Bar {
-    public void bar(java.util.ArrayList<java.lang.String> list) {
-    }
-  }
+	private static interface Bar {
+		void bar(java.util.ArrayList<java.lang.String> list);
+	}
 
-  private static interface Foo extends Bar {
-    void foo();
-  }
+	@java.lang.SuppressWarnings("all")
+	public void bar(final java.util.ArrayList<java.lang.String> list) {
+		this.bar.bar(list);
+	}
 
-  private static interface Bar {
-    void bar(java.util.ArrayList<java.lang.String> list);
-  }
+	@java.lang.SuppressWarnings("all")
+	public void foo() {
+		this.foo.foo();
+	}
 }

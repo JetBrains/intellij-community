@@ -9,8 +9,8 @@ class LoggerSlf4jWithImport {
 }
 
 class LoggerSlf4jOuter {
-  @lombok.extern.slf4j.Slf4j
-  static class Inner {
-
-  }
+	@lombok.extern.slf4j.Slf4j
+	static class Inner {
+		
+	}
 }

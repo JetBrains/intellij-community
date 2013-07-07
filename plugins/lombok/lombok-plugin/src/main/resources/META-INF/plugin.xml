@@ -3,10 +3,8 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <!--This line will be changed by maven plugin-->
-  <version>100</version>
-  <!--This line will be changed by maven plugin-->
-  <idea-version since-build="93.13"/>
+  <version>0.6</version>
+  <idea-version since-build="123.72"/>
 
   <description><![CDATA[
     A plugin that adds first-class support for Project Lombok
@@ -14,8 +12,8 @@
   </description>
   <category>Tools Integration</category>
 
-  <depends>InspectionGadgets</depends>
-  <depends>IntentionPowerPack</depends>
+  <!--<depends>InspectionGadgets</depends>-->
+  <!--<depends>IntentionPowerPack</depends>-->
 
   <application-components>
     <component>
@@ -35,6 +33,11 @@
 
   <change-notes><![CDATA[
 		<ul>
+		<li>0.6
+				<ol>
+				    <li>Issue #23 Updated to run with IntelliJ 12</li>
+				<ol>
+			</li>
 		 <li>0.5
 				<ol>
 				    <li>Issue #23 Initial support for IntelliJ 12</li>

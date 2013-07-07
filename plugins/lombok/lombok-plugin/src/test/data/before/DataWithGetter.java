@@ -1,6 +1,5 @@
-@lombok.Data
-@lombok.Getter
+@lombok.Data @lombok.Getter
 class DataWithGetter {
-  private int x, y;
-  private final String z;
+	private int x, y;
+	private final String z;
 }

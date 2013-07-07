@@ -1,4 +1,3 @@
 class GetFoo {
-  @lombok.Getter
-  private int foo;
+	@lombok.Getter private int foo;
 }

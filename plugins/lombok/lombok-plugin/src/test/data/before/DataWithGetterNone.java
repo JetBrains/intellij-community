@@ -1,6 +1,5 @@
-@lombok.Data
-@lombok.Getter(lombok.AccessLevel.NONE)
+@lombok.Data @lombok.Getter(lombok.AccessLevel.NONE)
 class DataWithGetterNone {
-  private int x, y;
-  private final String z;
+	private int x, y;
+	private final String z;
 }

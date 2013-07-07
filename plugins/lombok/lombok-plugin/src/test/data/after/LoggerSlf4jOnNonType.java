@@ -1,4 +1,4 @@
 class LoggerSlf4jOnNonType {
-  void foo() {
-  }
+	void foo() {
+	}
 }

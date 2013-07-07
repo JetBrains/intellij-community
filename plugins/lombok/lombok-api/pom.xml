@@ -20,7 +20,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 
-    <lombok.version>0.11.6</lombok.version>
+    <lombok.version>0.11.8</lombok.version>
     <lombok-pg.version>0.11.3</lombok-pg.version>
     <lombok-maven-plugin.version>0.11.6.0</lombok-maven-plugin.version>
 
