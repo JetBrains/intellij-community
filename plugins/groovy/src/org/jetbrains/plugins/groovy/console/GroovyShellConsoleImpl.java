@@ -26,12 +26,14 @@ import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -53,7 +55,7 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
 
   @NotNull
   @Override
-  protected String addToHistoryInner(TextRange textRange, EditorEx editor, boolean erase, boolean preserveMarkup) {
+  protected String addToHistoryInner(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean erase, boolean preserveMarkup) {
     final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
 
     GroovyShellCodeFragment codeFragment = (GroovyShellCodeFragment)myFile;
@@ -73,6 +75,9 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
           codeFragment.addVariable(((GrReferenceExpression)left).getReferenceName(), assignment.getRValue());
         }
       }
+      else if (statement instanceof GrTypeDefinition) {
+        codeFragment.addTypeDefinition(prepareTypeDefinition((GrTypeDefinition)statement));
+      }
     }
 
     PsiType scriptType = ((GroovyShellCodeFragment)myFile).getInferredScriptReturnType();
@@ -83,7 +88,15 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
     return result;
   }
 
-  private GrClosableBlock generateClosure(GrMethod method) {
+  @NotNull
+  private GrTypeDefinition prepareTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    GroovyFile file = factory.createGroovyFile("", false, myFile);
+    return (GrTypeDefinition)file.add(typeDefinition);
+  }
+
+  @NotNull
+  private GrClosableBlock generateClosure(@NotNull GrMethod method) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
     StringBuilder buffer = new StringBuilder();
 

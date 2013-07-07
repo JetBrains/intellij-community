@@ -27,7 +27,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Map;
 
@@ -36,13 +38,18 @@ import java.util.Map;
  */
 public class GroovyShellCodeFragment extends GroovyCodeFragment {
   private final Map<String, PsiVariable> myVariables = ContainerUtil.newHashMap();
-
-  public GroovyShellCodeFragment(Project project, CharSequence text) {
-    super(project, text);
-  }
+  private final Map<String, GrTypeDefinition> myTypeDefinitions = ContainerUtil.newHashMap();
 
   public GroovyShellCodeFragment(Project project, LightVirtualFile virtualFile) {
     super(project, virtualFile);
+  }
+
+  @Override
+  protected GroovyCodeFragment clone() {
+    GroovyShellCodeFragment clone = (GroovyShellCodeFragment)super.clone();
+    clone.myVariables.putAll(myVariables);
+    clone.myTypeDefinitions.putAll(myTypeDefinitions);
+    return clone;
   }
 
 
@@ -67,10 +74,21 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
       return false;
     }
 
+    if (!processTypeDefinitions(processor, state)) {
+      return false;
+    }
+
     return true;
   }
 
   private boolean processVariables(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
+    ClassHint classHint = processor.getHint(ClassHint.KEY);
+    if (classHint != null &&
+        !classHint.shouldProcess(ClassHint.ResolveKind.METHOD) &&
+        !classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
+      return true;
+    }
+
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint != null ? nameHint.getName(state) : null;
 
@@ -91,5 +109,37 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
     }
 
     return true;
+  }
+
+  private boolean processTypeDefinitions(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
+    ClassHint classHint = processor.getHint(ClassHint.KEY);
+    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
+      return true;
+    }
+
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    String name = nameHint != null ? nameHint.getName(state) : null;
+
+    if (name != null) {
+      final GrTypeDefinition definition = myTypeDefinitions.get(name);
+      if (definition != null) {
+        if (processor.execute(definition, state)) {
+          return false;
+        }
+      }
+    }
+    else {
+      for (GrTypeDefinition definition : myTypeDefinitions.values()) {
+        if (!processor.execute(definition, state)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  public void addTypeDefinition(GrTypeDefinition typeDefinition) {
+    myTypeDefinitions.put(typeDefinition.getName(), typeDefinition);
   }
 }
