@@ -18,7 +18,7 @@ package org.intellij.plugins.intelliLang.inject.java;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLiteral;
 import com.intellij.psi.injection.Injectable;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,9 +34,9 @@ import java.util.List;
  * Provides completion for available Language-IDs in
  * <pre>@Language("[ctrl-space]")</pre>
  */
-final class LanguageReference extends StringLiteralReference {
+public final class LanguageReference extends StringLiteralReference {
 
-  public LanguageReference(PsiLiteralExpression value) {
+  public LanguageReference(PsiLiteral value) {
     super(value);
   }
 
