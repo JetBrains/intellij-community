@@ -28,7 +28,9 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.display.BackBuffer;
 import com.jediterm.terminal.display.StyleState;
-import com.jediterm.terminal.ui.SwingTerminalPanel;
+import com.jediterm.terminal.ui.SystemSettingsProvider;
+import com.jediterm.terminal.ui.TerminalPanel;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -37,11 +39,14 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
-public class JBTerminalPanel extends SwingTerminalPanel {
+public class JBTerminalPanel extends TerminalPanel {
   private final EditorColorsScheme myColorScheme;
 
-  public JBTerminalPanel(BackBuffer backBuffer, StyleState styleState, EditorColorsScheme scheme) {
-    super(backBuffer, styleState);
+  public JBTerminalPanel(@NotNull SystemSettingsProvider settingsProvider,
+                         @NotNull BackBuffer backBuffer,
+                         @NotNull StyleState styleState,
+                         @NotNull EditorColorsScheme scheme) {
+    super(settingsProvider, backBuffer, styleState);
     myColorScheme = scheme;
 
     styleState.setDefaultStyle(new TextStyle(myColorScheme.getDefaultForeground(), myColorScheme.getDefaultBackground()));

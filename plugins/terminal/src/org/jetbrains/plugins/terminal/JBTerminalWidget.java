@@ -10,8 +10,8 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.terminal.display.BackBuffer;
 import com.jediterm.terminal.display.StyleState;
-import com.jediterm.terminal.ui.SwingJediTerminal;
-import com.jediterm.terminal.ui.SwingTerminalPanel;
+import com.jediterm.terminal.ui.JediTermWidget;
+import com.jediterm.terminal.ui.SystemSettingsProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,13 +21,17 @@ import java.awt.*;
 import java.util.EnumMap;
 import java.util.Map;
 
-public class JBTerminal extends SwingJediTerminal {
-  public JBTerminal() {
+public class JBTerminalWidget extends JediTermWidget {
+
+  public JBTerminalWidget(SystemSettingsProvider settingsProvider) {
+    super(settingsProvider);
   }
 
   @Override
-  protected SwingTerminalPanel createTerminalPanel(StyleState styleState, BackBuffer backBuffer) {
-    return new JBTerminalPanel(backBuffer, styleState, getColorScheme());
+  protected JBTerminalPanel createTerminalPanel(@NotNull SystemSettingsProvider settingsProvider,
+                                                @NotNull StyleState styleState,
+                                                @NotNull BackBuffer backBuffer) {
+    return new JBTerminalPanel(settingsProvider, backBuffer, styleState, getColorScheme());
   }
 
   public EditorColorsScheme getColorScheme() {

@@ -33,8 +33,13 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
   }
 
   public static void runLocalTerminal(final Project project) {
+   
+    
+  }
+
+  public static LocalTerminalDirectRunner createTerminalRunner(Project project) {
     String[] terminalCommand = SystemInfo.isMac ? new String[]{"/bin/bash", "--login"} : new String[]{"/bin/bash"};
 
-    new LocalTerminalDirectRunner(project, terminalCommand).run();
+    return new LocalTerminalDirectRunner(project, terminalCommand);
   }
 }
