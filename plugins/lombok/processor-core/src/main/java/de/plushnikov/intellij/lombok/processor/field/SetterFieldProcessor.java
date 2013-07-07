@@ -19,7 +19,6 @@ import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
-import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,8 +82,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-      final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
-      final boolean isBoolean = booleanType.equals(psiField.getType());
+
+      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
       final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);
 
       for (String methodName : methodNames) {
@@ -113,8 +112,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
-    final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
-    final String methodName = getSetterName(psiField, booleanType.equals(psiFieldType));
+
+    final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
 
     PsiClass psiClass = psiField.getContainingClass();
     assert psiClass != null;
@@ -148,7 +147,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {
-    return PsiPrimitiveTypeFactory.getInstance().getVoidType();
+    return PsiType.VOID;
   }
 
 }

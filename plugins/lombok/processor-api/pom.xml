@@ -11,38 +11,8 @@
   <name>Lombok processor api modul for IntelliJ IDEA plugin</name>
   <description>Base api for all of Lombok processors for IntelliJ IDEA</description>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>idea-openapi</artifactId>
-      <type>pom</type>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>util</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>annotations</artifactId>
-    </dependency>
-  </dependencies>
   <build>
     <plugins>
-      <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <classifier>${idea.version}</classifier>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>

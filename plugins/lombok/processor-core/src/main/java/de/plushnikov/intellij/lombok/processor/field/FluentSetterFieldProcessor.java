@@ -1,17 +1,15 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
-import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.FluentSetter;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Inspect and validate @FluentSetter lombok-pg annotation on a field
@@ -38,6 +36,6 @@ public class FluentSetterFieldProcessor extends SetterFieldProcessor {
   @Override
   protected PsiType getReturnType(@NotNull PsiField psiField) {
     final PsiClass containingClass = psiField.getContainingClass();
-    return null != containingClass ? PsiClassUtil.getClassType(containingClass) : PsiPrimitiveTypeFactory.getInstance().getNullType();
+    return null != containingClass ? PsiClassUtil.getClassType(containingClass) : PsiType.NULL;
   }
 }

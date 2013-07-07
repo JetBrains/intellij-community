@@ -15,7 +15,6 @@ import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
-import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +74,6 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
     final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
-    final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createGetter = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -87,7 +85,7 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
         //Skip fields that start with $
         createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists
-        final Collection<String> methodNames = LombokUtils.toAllGetterNames(psiField.getName(), booleanType.equals(psiField.getType()));
+        final Collection<String> methodNames = LombokUtils.toAllGetterNames(psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
         createGetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
       }
       if (createGetter) {

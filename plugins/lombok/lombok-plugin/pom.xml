@@ -14,56 +14,12 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>intellij-facade-api</artifactId>
-      <classifier>${idea.version}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>intellij-facade-factory</artifactId>
-      <classifier>${idea.version}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>processor-api</artifactId>
-      <classifier>${idea.version}</classifier>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>processor-core</artifactId>
-      <classifier>${idea.version}</classifier>
       <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>idea-openapi</artifactId>
-      <type>pom</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>util</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>util-rt</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>idea</artifactId>
-      <type>pom</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>annotations</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>extensions</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -71,16 +27,8 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jdom</groupId>
-      <artifactId>jdom</artifactId>
-    </dependency>
-    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.picocontainer</groupId>
-      <artifactId>picocontainer</artifactId>
     </dependency>
   </dependencies>
 
@@ -90,30 +38,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>de.plushnikov.maven.plugin</groupId>
-        <artifactId>intellij-plugin-modul-importer-plugin</artifactId>
-        <version>0.1</version>
-        <configuration>
-          <pathToMetaInfDirectory>src/main/resources</pathToMetaInfDirectory>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <classifier>${idea.version}</classifier>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>

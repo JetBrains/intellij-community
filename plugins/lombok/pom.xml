@@ -42,123 +42,7 @@
     </developer>
   </developers>
 
-  <profiles>
-    <profile>
-      <id>intellij-last</id>
-      <activation>
-        <property>
-          <name>!IntelliJ</name>
-        </property>
-      </activation>
-      <properties>
-        <idea.version>${idea12.version}</idea.version>
-        <plugin.supported.build.from>118.749</plugin.supported.build.from><!--118.749-->
-        <plugin.supported.build.to />
-      </properties>
-    </profile>
-    <profile>
-      <id>intellij-11</id>
-      <activation>
-        <property>
-          <name>IntelliJ</name>
-          <value>11</value>
-        </property>
-      </activation>
-      <properties>
-        <idea.version>${idea11.version}</idea.version>
-        <plugin.supported.build.from>110.3</plugin.supported.build.from>
-        <plugin.supported.build.to>118.748</plugin.supported.build.to>
-      </properties>
-    </profile>
-    <profile>
-      <id>intellij-10</id>
-      <activation>
-        <property>
-          <name>IntelliJ</name>
-          <value>10</value>
-        </property>
-      </activation>
-      <properties>
-        <idea.version>${idea10.version}</idea.version>
-        <plugin.supported.build.from>99.18</plugin.supported.build.from>
-        <plugin.supported.build.to>110.0</plugin.supported.build.to>
-      </properties>
-    </profile>
-    <profile>
-      <id>intellij-9</id>
-      <activation>
-        <property>
-          <name>IntelliJ</name>
-          <value>9</value>
-        </property>
-      </activation>
-      <properties>
-        <idea.version>${idea9.version}</idea.version>
-        <plugin.supported.build.from>93.13</plugin.supported.build.from>
-        <plugin.supported.build.to>96.0</plugin.supported.build.to>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>plugin-release</id>
-      <activation>
-        <property>
-          <name>performRelease</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <!-- Automatically attach sources to build artifact as artifact-version-sources.jar and deploy to local repository -->
-            <artifactId>maven-source-plugin</artifactId>
-            <inherited>true</inherited>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <inherited>true</inherited>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <properties>
-    <idea9.version>9.0.4</idea9.version>
-    <idea10.version>10.5.4</idea10.version>
-    <idea11.version>11.1.4</idea11.version>
-    <idea12.version>12.0.0</idea12.version>
-
     <!-- maven.build.timestamp since 2.1.0-M1 -->
     <maven.min.version>2.2.1</maven.min.version>
     <!-- Idea requires JDK 1.6 -->
@@ -199,125 +83,29 @@
 
   <modules>
     <module>lombok-plugin</module>
-    <module>intellij-facade-api</module>
-    <module>intellij-facade-9</module>
-    <module>intellij-facade-10</module>
-    <module>intellij-facade-11</module>
-    <module>intellij-facade-factory</module>
     <module>processor-api</module>
     <module>processor-core</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
-      <!-- Project dependencies-->
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>intellij-facade-api</artifactId>
-        <version>${project.version}</version>
-        <classifier>${idea.version}</classifier>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>intellij-facade-factory</artifactId>
-        <version>${project.version}</version>
-        <classifier>${idea.version}</classifier>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>intellij-facade-9</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>intellij-facade-10</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>intellij-facade-11</artifactId>
-        <version>${project.version}</version>
-      </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>processor-api</artifactId>
         <version>${project.version}</version>
-        <classifier>${idea.version}</classifier>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>processor-core</artifactId>
         <version>${project.version}</version>
-        <classifier>${idea.version}</classifier>
         <scope>runtime</scope>
-      </dependency>
-
-      <!-- === IntelliJ IDEA === -->
-      <dependency>
-        <groupId>org.jetbrains.idea</groupId>
-        <artifactId>idea-openapi</artifactId>
-        <version>${idea.version}</version>
-        <scope>provided</scope>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.jetbrains.idea</groupId>
-        <artifactId>extensions</artifactId>
-        <version>${idea.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jetbrains.idea</groupId>
-        <artifactId>util</artifactId>
-        <version>${idea.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jetbrains.idea</groupId>
-        <artifactId>util-rt</artifactId>
-        <version>${idea.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jetbrains.idea</groupId>
-        <artifactId>annotations</artifactId>
-        <version>${idea.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jetbrains.idea</groupId>
-        <artifactId>idea</artifactId>
-        <version>${idea.version}</version>
-        <type>pom</type>
-        <scope>provided</scope>
-      </dependency>
-
-      <!--Experimental dependencies for tests-->
-      <dependency>
-        <groupId>org.jetbrains.idea</groupId>
-        <artifactId>bootstrap</artifactId>
-        <version>${idea.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.picocontainer</groupId>
-        <artifactId>picocontainer</artifactId>
-        <version>1.2</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jdom</groupId>
-        <artifactId>jdom</artifactId>
-        <version>1.1</version>
-        <scope>test</scope>
       </dependency>
 
       <!-- general and test dependencies-->
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.10</version>
+        <version>4.11</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -343,9 +131,9 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.0</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
-            <compilerVersion>1.6</compilerVersion>
+            <source>1.7</source>
+            <target>1.7</target>
+            <compilerVersion>1.7</compilerVersion>
             <showDeprecation>true</showDeprecation>
             <showWarnings>true</showWarnings>
             <fork>true</fork>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>lombok-api</groupId>
+    <artifactId>lombok-api</artifactId>
+    <version>0.6</version>
+
+  <properties>
+    <!-- maven.build.timestamp since 2.1.0-M1 -->
+    <maven.min.version>2.2.1</maven.min.version>
+    <!-- Idea requires JDK 1.6 -->
+    <jdk.min.version>1.6</jdk.min.version>
+
+    <downloadSources>true</downloadSources>
+    <createChecksum>true</createChecksum>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+
+    <lombok.version>0.11.6</lombok.version>
+    <lombok-pg.version>0.11.3</lombok-pg.version>
+    <lombok-maven-plugin.version>0.11.6.0</lombok-maven-plugin.version>
+
+    <lombok-annotations.includes>lombok/extern/**,
+      lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,
+      lombok/Getter.java,lombok/Setter.java,lombok/Equals*.java,lombok/NonNull.java,lombok/Synchronized.java,
+      lombok/ToString.java,lombok/SneakyThrows.java,lombok/val.java
+    </lombok-annotations.includes>
+    <lombok-pg-annotations.includes>
+      lombok/AutoGenMethodStub.java,lombok/Builder.java,lombok/EnumId.java,lombok/FluentSetter.java,lombok/ListenerSupport.java,lombok/Singleton.java,
+      lombok/DoPrivileged.java,lombok/WriteLock.java,lombok/ReadLock.java,lombok/Await.java,lombok/Signal.java,lombok/Position.java,
+      lombok/AwaitBeforeAndSignalAfter.java.java,lombok/BoundPropertySupport.java,lombok/BoundSetter.java,lombok/LazyGetter.java,
+      lombok/Sanitize.java,lombok/Validate.java,lombok/VisibleForTesting.java,lombok/ExtensionMethod.java,lombok/Action.java,
+      lombok/Actions.java,lombok/TypeArguments.java,lombok/Rethrow.java,lombok/Rethrows.java
+    </lombok-pg-annotations.includes>
+  </properties>
+
+  <prerequisites>
+    <maven>${maven.min.version}</maven>
+  </prerequisites>
+
+  <dependencies>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.projectlombok</groupId>
+                  <artifactId>lombok</artifactId>
+                  <version>${lombok.version}</version>
+                  <type>jar</type>
+                  <classifier>sources</classifier>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/generated-sources/lombok</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.github.peichhorn</groupId>
+                  <artifactId>lombok-pg</artifactId>
+                  <version>${lombok-pg.version}</version>
+                  <type>jar</type>
+                  <classifier>sources</classifier>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/generated-sources/lombok-pg</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <includes>${lombok-annotations.includes},${lombok-pg-annotations.includes}</includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/lombok</source>
+                <source>${project.build.directory}/generated-sources/lombok-pg</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

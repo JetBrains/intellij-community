@@ -28,6 +28,9 @@
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
     <projectConfigurable  implementation="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
+
+    <renameHandler implementation="de.plushnikov.intellij.lombok.extension.LombokElementRenameHandler" order="FIRST"/>
+    <treeGenerator implementation="de.plushnikov.intellij.lombok.extension.LombokLightMethodTreeGenerator"/>
   </extensions>
 
   <change-notes><![CDATA[
