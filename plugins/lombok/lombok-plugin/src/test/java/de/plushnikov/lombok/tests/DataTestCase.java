@@ -4,47 +4,49 @@ import org.junit.Test;
 
 import de.plushnikov.lombok.LombokParsingTestCase;
 
+import java.io.IOException;
+
 public class DataTestCase extends LombokParsingTestCase {
   public DataTestCase() {
   }
 
   @Test
-  public void testDataExtended() {
+  public void testDataExtended() throws IOException {
     doTest();
   }
 
   @Test
-  public void testDataIgnore() {
+  public void testDataIgnore() throws IOException {
     doTest();
   }
 
   @Test
-  public void testDataOnEnum() {
+  public void testDataOnEnum() throws IOException {
     doTest();
   }
 
   @Test
-  public void testDataOnLocalClass() {
+  public void testDataOnLocalClass() throws IOException {
     doTest();
   }
 
   @Test
-  public void testDataPlain() {
+  public void testDataPlain() throws IOException {
     doTest();
   }
 
   @Test
-  public void testDataWithGetter() {
+  public void testDataWithGetter() throws IOException {
     doTest();
   }
 
   @Test
-  public void testDataWithGetterNone() {
+  public void testDataWithGetterNone() throws IOException {
     doTest();
   }
 
   @Test
-  public void testDataStaticConstructor() {
+  public void testDataStaticConstructor() throws IOException {
     // Test for issue #9
     doTest();
   }

@@ -3,6 +3,8 @@ package de.plushnikov.lombok;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -20,9 +22,8 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -132,16 +133,11 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     }
   }
 
-//  @Override
-//  protected String getBasePath() {
-//    return "/data/";
-//  }
-
-  public void doTest() {
+  public void doTest() throws IOException {
     doTest(getTestName(true).replace('$', '/') + ".java");
   }
 
-  protected void doTest(String fileName) {
+  protected void doTest(String fileName) throws IOException {
     final PsiFile psiLombokFile = createPseudoPhysicalFile(getProject(), fileName, loadLombokFile(fileName));
     final PsiFile psiDelombokFile = createPseudoPhysicalFile(getProject(), fileName, loadDeLombokFile(fileName));
 
@@ -268,28 +264,24 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
         true);
   }
 
-  protected String loadLombokFile(String fileName) {
-    return loadFileContent(fileName, "/before/");
+  protected String loadLombokFile(String fileName) throws IOException {
+    return loadFileContent("/before/", fileName);
   }
 
-  protected String loadDeLombokFile(String fileName) {
-    return loadFileContent(fileName, "/after/");
+  protected String loadDeLombokFile(String fileName) throws IOException {
+    return loadFileContent("/after/", fileName);
   }
 
-  private String loadFileContent(String fileName, String subDir) {
-    final String resourceName = "src/test/testData/data/" + subDir + fileName;
-    final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(resourceName);
-    if (null == resourceAsStream) {
-      throw new RuntimeException(String.format("Resource '%s' not available in classpath", resourceName));
-    }
+  @Override
+  protected String getTestDataPath() {
+    return "./lombok-plugin/src/test/data";
+  }
 
-    final String content;
-    try {
-      content = FileUtil.loadTextAndClose(new InputStreamReader(resourceAsStream));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return content;
+  private String loadFileContent(String subDir, String fileName) throws IOException {
+    final File fromFile = new File(getTestDataPath(), subDir);
+    String text = FileUtil.loadFile(new File(fromFile, fileName), CharsetToolkit.UTF8).trim();
+    text = StringUtil.convertLineSeparators(text);
+    return text;
   }
 
 }

@@ -3,65 +3,67 @@ package de.plushnikov.lombok.tests;
 import de.plushnikov.lombok.LombokParsingTestCase;
 import org.junit.Test;
 
+import java.io.IOException;
+
 public class GetterTestCase extends LombokParsingTestCase {
 
   @Test
-  public void testGetterAccessLevel() {
+  public void testGetterAccessLevel() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterAlreadyExists() {
+  public void testGetterAlreadyExists() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterBoolean() {
+  public void testGetterBoolean() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterLazy() {
+  public void testGetterLazy()throws IOException  {
     doTest();
   }
 
   @Test
-  public void testGetterLazyEahcToString() {
+  public void testGetterLazyEahcToString() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterLazyInvalid() {
+  public void testGetterLazyInvalid() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterLazyNative() {
+  public void testGetterLazyNative() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterOnClass() {
+  public void testGetterOnClass() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterOnStatic() {
+  public void testGetterOnStatic() throws IOException {
     doTest();
   }
 
   @Test
-  public void testGetterPlain() {
+  public void testGetterPlain()throws IOException  {
     doTest();
   }
 
   @Test
-  public void testGetterWithDollar() {
+  public void testGetterWithDollar()throws IOException  {
     doTest();
   }
 
   @Test
-  public void testMultiFieldGetter() {
+  public void testMultiFieldGetter()throws IOException  {
     doTest();
   }
 }

@@ -3,47 +3,49 @@ package de.plushnikov.lombok.tests;
 import de.plushnikov.lombok.LombokParsingTestCase;
 import org.junit.Test;
 
+import java.io.IOException;
+
 public class LoggerTestCase extends LombokParsingTestCase {
   public LoggerTestCase() {
   }
 
   @Test
-  public void testLoggerCommons() {
+  public void testLoggerCommons()throws IOException {
     doTest();
   }
 
   @Test
-  public void testLoggerJul() {
+  public void testLoggerJul() throws IOException {
     doTest();
   }
 
   @Test
-  public void testLoggerLog4j() {
+  public void testLoggerLog4j() throws IOException {
     doTest();
   }
 
   @Test
-  public void testLoggerSlf4j() {
+  public void testLoggerSlf4j() throws IOException {
     doTest();
   }
 
   @Test
-  public void testLoggerSlf4jAlreadyExists() {
+  public void testLoggerSlf4jAlreadyExists()throws IOException  {
     doTest();
   }
 
   @Test
-  public void testLoggerSlf4jOnNonType() {
+  public void testLoggerSlf4jOnNonType()throws IOException  {
     doTest();
   }
 
   @Test
-  public void testLoggerSlf4jTypes() {
+  public void testLoggerSlf4jTypes() throws IOException {
     doTest();
   }
 
   @Test
-  public void testLoggerSlf4jWithPackage() {
+  public void testLoggerSlf4jWithPackage() throws IOException {
     doTest();
   }
 }
