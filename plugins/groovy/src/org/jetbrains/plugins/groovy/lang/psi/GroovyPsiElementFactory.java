@@ -94,7 +94,13 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
    */
   public abstract GrImportStatement createImportStatementFromText(@NotNull String qName, boolean isStatic, boolean isOnDemand, @Nullable String alias);
 
-  public abstract GrImportStatement createImportStatementFromText(String text);
+  public abstract GrImportStatement createImportStatementFromText(@NotNull String text);
+
+  public abstract GrImportStatement createImportStatement(@NotNull String qname,
+                                                          boolean isStatic,
+                                                          boolean isOnDemand,
+                                                          @Nullable String alias,
+                                                          @Nullable PsiElement context);
 
   public abstract PsiElement createWhiteSpace();
 
