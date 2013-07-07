@@ -1636,4 +1636,15 @@ void bug() {
     assertEquals("TimeDuration", resolved.typeGroovy.canonicalText)
   }
 
+
+  void testNegatedIf() {
+    resolveByText('''\
+def foo(x) {
+  if (!(x instanceof String)) return
+
+  x.subst<caret>ring(1)
+}
+''', PsiMethod)
+
+  }
 }

@@ -6,7 +6,7 @@ if (i in String) i = i.substring(2)
 3(4,6) Condition Relational expression
 4(5) instanceof: i in String
 5(10)  Negating goto instruction, condition=3Relational expression
-6(7,10) instanceof: i in String
+6(7) instanceof: i in String
 7(8) READ i
 8(9) WRITE i
 9(10) element: Assignment expression MAYBE_RETURN
