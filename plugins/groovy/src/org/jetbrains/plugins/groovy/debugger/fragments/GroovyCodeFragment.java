@@ -17,6 +17,9 @@ package org.jetbrains.plugins.groovy.debugger.fragments;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -50,6 +53,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
    */
   private final LinkedHashMap<String, GrImportStatement> myPseudoImports = ContainerUtil.newLinkedHashMap();
   private final ArrayList<GrImportStatement> myOnDemandImports = ContainerUtil.newArrayList();
+  private FileViewProvider myViewProvider = null;
 
   public GroovyCodeFragment(Project project, CharSequence text) {
     this(project, new LightVirtualFile("Dummy.groovy", GroovyFileType.GROOVY_FILE_TYPE, text));
@@ -70,6 +74,20 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
 
   public void setSuperType(PsiType superType) {
     mySuperType = superType;
+  }
+
+  @Override
+  @NotNull
+  public FileViewProvider getViewProvider() {
+    if (myViewProvider != null) return myViewProvider;
+    return super.getViewProvider();
+  }
+
+  @Override
+  public boolean isValid() {
+    if (!super.isValid()) return false;
+    PsiElement context = getContext();
+    return context == null || context.isValid();
   }
 
   /**
@@ -172,6 +190,21 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     }
 
     return true;
+  }
+
+  @Override
+  protected GroovyCodeFragment clone() {
+    final GroovyCodeFragment clone = (GroovyCodeFragment)cloneImpl((FileElement)calcTreeElement().clone());
+    clone.myOriginalFile = this;
+    clone.myPseudoImports.putAll(myPseudoImports);
+    FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
+    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(
+      getName(),
+      getLanguage(),
+      getText()), false);
+    cloneViewProvider.forceCachedPsi(clone);
+    clone.myViewProvider = cloneViewProvider;
+    return clone;
   }
 
   protected boolean processPseudoImports(PsiScopeProcessor processor,
