@@ -21,14 +21,21 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  * @author Max Medvedev
@@ -41,7 +48,7 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
   @NotNull
   @Override
   protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
-    return new GroovyCodeFragment(project, virtualFile);
+    return new GroovyShellCodeFragment(project, virtualFile);
   }
 
   @NotNull
@@ -49,33 +56,63 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
   protected String addToHistoryInner(TextRange textRange, EditorEx editor, boolean erase, boolean preserveMarkup) {
     final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
 
-    if (result.startsWith("import")) {
-      String prepared = prepareImport(result);
-      if (prepared != null) {
-        ((GroovyCodeFragment)myFile).addImportsFromString(prepared);
+    GroovyShellCodeFragment codeFragment = (GroovyShellCodeFragment)myFile;
+    GrTopStatement[] definitions = codeFragment.getTopStatements();
+
+    for (GrTopStatement statement : definitions) {
+      if (statement instanceof GrImportStatement) {
+        codeFragment.addImportsFromString(importToString((GrImportStatement)statement));
       }
+      else if (statement instanceof GrMethod) {
+        codeFragment.addVariable(((GrMethod)statement).getName(), generateClosure((GrMethod)statement));
+      }
+      else if (statement instanceof GrAssignmentExpression) {
+        GrAssignmentExpression assignment = (GrAssignmentExpression)statement;
+        GrExpression left = assignment.getLValue();
+        if (left instanceof GrReferenceExpression && !((GrReferenceExpression)left).isQualified()) {
+          codeFragment.addVariable(((GrReferenceExpression)left).getReferenceName(), assignment.getRValue());
+        }
+      }
+    }
+
+    PsiType scriptType = ((GroovyShellCodeFragment)myFile).getInferredScriptReturnType();
+    if (scriptType != null) {
+      codeFragment.addVariable("_", scriptType);
     }
 
     return result;
   }
 
+  private GrClosableBlock generateClosure(GrMethod method) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    StringBuilder buffer = new StringBuilder();
+
+    buffer.append('{');
+    GrParameter[] parameters = method.getParameters();
+    for (GrParameter parameter : parameters) {
+      buffer.append(parameter.getText());
+      buffer.append(',');
+    }
+    if (parameters.length > 0) buffer.delete(buffer.length() - 1, buffer.length());
+    buffer.append("->}");
+
+    return factory.createClosureFromText(buffer.toString(), myFile);
+  }
+
   @Nullable
-  private String prepareImport(String rawImport) {
-    try {
-      GrImportStatement anImport = GroovyPsiElementFactory.getInstance(getProject()).createImportStatementFromText(rawImport);
-      StringBuilder buffer = new StringBuilder();
+  private static String importToString(@NotNull GrImportStatement anImport) {
+    StringBuilder buffer = new StringBuilder();
 
-      String qname = anImport.getImportReference().getClassNameText();
-      buffer.append(qname);
-      if (!anImport.isOnDemand()) {
-        String importedName = anImport.getImportedName();
-        buffer.append(":").append(importedName);
-      }
+    GrCodeReferenceElement reference = anImport.getImportReference();
+    if (reference == null) return null;
+    String qname = reference.getClassNameText();
+    if (qname == null) return null;
+    buffer.append(qname);
+    if (!anImport.isOnDemand()) {
+      String importedName = anImport.getImportedName();
+      buffer.append(":").append(importedName);
+    }
 
-      return buffer.toString();
-    }
-    catch (IncorrectOperationException ignored) {
-      return null;
-    }
+    return buffer.toString();
   }
 }

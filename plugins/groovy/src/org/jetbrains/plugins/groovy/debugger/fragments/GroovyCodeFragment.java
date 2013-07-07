@@ -203,9 +203,9 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
 
   private boolean processSingleImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
     NameHint nameHint = processor.getHint(NameHint.KEY);
+    String name = nameHint != null ? nameHint.getName(state) : null;
 
-    if (nameHint != null) {
-      final String name = nameHint.getName(state);
+    if (name != null) {
       final GrImportStatement anImport = myPseudoImports.get(name);
       if (anImport != null) {
         if (!anImport.processDeclarations(processor, state, lastParent, place)) {
