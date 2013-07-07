@@ -12,8 +12,8 @@
   </description>
   <category>Tools Integration</category>
 
-  <!--<depends>InspectionGadgets</depends>-->
-  <!--<depends>IntentionPowerPack</depends>-->
+  <depends>InspectionGadgets</depends>
+  <depends>IntentionPowerPack</depends>
 
   <application-components>
     <component>
@@ -36,6 +36,8 @@
 		<li>0.6
 				<ol>
 				    <li>Issue #23 Updated to run with IntelliJ 12</li>
+				    <li>Issue #42 IllegalArgumentException with Intellij 12</li>
+				    <li>Issue #48 IllegalArgumentException with Intellij 12</li>
 				<ol>
 			</li>
 		 <li>0.5
