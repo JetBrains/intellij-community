@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/lombok-api/lombok-api.iml" filepath="$PROJECT_DIR$/lombok-api/lombok-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lombok-intellij-plugin.iml" filepath="$PROJECT_DIR$/lombok-intellij-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" filepath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-api/processor-api.iml" filepath="$PROJECT_DIR$/processor-api/processor-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-core/processor-core.iml" filepath="$PROJECT_DIR$/processor-core/processor-core.iml" />
+    </modules>
+  </component>
+</project>
+
