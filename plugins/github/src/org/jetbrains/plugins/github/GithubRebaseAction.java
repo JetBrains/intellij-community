@@ -55,7 +55,7 @@ import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
  * @date 12/8/10
  */
 public class GithubRebaseAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(GithubRebaseAction.class.getName());
+  private static final Logger LOG = GithubUtil.LOG;
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Can't perform github rebase";
 
   public GithubRebaseAction() {

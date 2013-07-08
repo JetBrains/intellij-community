@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Aleksey Pivovarov
  */
 public class GithubNotifications {
-  private static final Logger LOG = Logger.getInstance(GithubNotifications.class);
+  private static final Logger LOG = GithubUtil.LOG;
 
   private static final String GITHUB_NOTIFICATION_GROUP = "github";
 

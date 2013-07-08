@@ -44,7 +44,7 @@ public class GithubApiUtil {
   public static final String DEFAULT_GITHUB_HOST = "github.com";
 
   private static final int CONNECTION_TIMEOUT = 5000;
-  private static final Logger LOG = Logger.getInstance(GithubApiUtil.class);
+  private static final Logger LOG = GithubUtil.LOG;
 
   private enum HttpVerb {
     GET, POST, DELETE, HEAD

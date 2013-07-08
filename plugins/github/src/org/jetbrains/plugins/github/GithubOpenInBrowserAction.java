@@ -46,7 +46,7 @@ import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
-  private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
+  private static final Logger LOG = GithubUtil.LOG;
 
   protected GithubOpenInBrowserAction() {
     super("Open in browser", "Open corresponding GitHub link in browser", GithubIcons.Github_icon);

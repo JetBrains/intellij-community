@@ -64,7 +64,7 @@ import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
  * @author oleg
  */
 public class GithubShareAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(GithubShareAction.class.getName());
+  private static final Logger LOG = GithubUtil.LOG;
 
   public GithubShareAction() {
     super("Share project on GitHub", "Easily share project on GitHub", GithubIcons.Github_icon);

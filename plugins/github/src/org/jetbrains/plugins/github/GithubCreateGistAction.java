@@ -51,7 +51,7 @@ import java.util.List;
  * @date 9/27/11
  */
 public class GithubCreateGistAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(GithubCreateGistAction.class);
+  private static final Logger LOG = GithubUtil.LOG;
   private static final String FAILED_TO_CREATE_GIST = "Can't create Gist";
 
   protected GithubCreateGistAction() {

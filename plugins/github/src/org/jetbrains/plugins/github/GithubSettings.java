@@ -62,7 +62,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private boolean myPrivateGist;
   private final Collection<String> myTrustedHosts = new ArrayList<String>();
 
-  private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
+  private static final Logger LOG = GithubUtil.LOG;
 
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
