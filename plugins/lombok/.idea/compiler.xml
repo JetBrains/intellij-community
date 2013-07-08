@@ -28,6 +28,9 @@
         <module name="lombok-api" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel target="1.6">
+      <module name="lombok-api" target="1.6" />
+    </bytecodeTargetLevel>
   </component>
 </project>
 

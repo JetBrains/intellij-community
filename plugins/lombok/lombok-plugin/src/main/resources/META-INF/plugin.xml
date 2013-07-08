@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.6</version>
+  <version>0.6.2</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -33,6 +33,11 @@
 
   <change-notes><![CDATA[
 		<ul>
+		<li>0.6.2
+				<ol>
+				    <li>Issue #50 Compiled with java 1.7 -> Don't work under java 1.6 vms</li>
+				<ol>
+			</li>
 		<li>0.6
 				<ol>
 				    <li>Issue #23 Updated to run with IntelliJ 12</li>
