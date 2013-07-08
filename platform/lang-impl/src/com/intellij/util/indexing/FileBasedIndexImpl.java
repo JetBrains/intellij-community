@@ -1831,9 +1831,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public void run() {
         if (file.isValid()) {
-          ID stubId = IndexInfrastructure.getStubId(indexId, file.getFileType());
+          FileType fileType = file.getFileType();
+          ID stubId = IndexInfrastructure.getStubId(indexId, fileType);
           if (currentFC != null) {
-            IndexingStamp.update(file, stubId, getIndexCreationStamp(stubId, file));
+            IndexingStamp.update(file, stubId, getIndexCreationStamp(stubId, fileType));
           }
           else {
             // mark the file as unindexed
@@ -2069,8 +2070,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
+              FileType fileType = file.getFileType();
               for (ID<?, ?> indexId : affectedIndices) {
-                ID id = IndexInfrastructure.getStubId(indexId, file.getFileType());
+                ID id = IndexInfrastructure.getStubId(indexId, fileType);
                 IndexingStamp.update(file, id, IndexInfrastructure.INVALID_STAMP2);
               }
             }
@@ -2096,7 +2098,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           myFutureInvalidations.offer(new InvalidationTask(file) {
             @Override
             public void run() {
-              removeFileDataFromIndices(myRequiringContentIndices, file);
+              List<ID<?, ?>> candidates = new ArrayList<ID<?, ?>>(affectedIndexCandidates);
+              candidates.retainAll(myRequiringContentIndices);
+              removeFileDataFromIndices(candidates, file);
             }
           });
         }
@@ -2271,8 +2275,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           if (onlyRemoveOutdatedData || isTooLarge(file)) {
             // on shutdown there is no need to re-index the file, just remove outdated data from indices
             final List<ID<?, ?>> affected = new ArrayList<ID<?, ?>>();
-            for (final ID<?, ?> indexId : myRequiringContentIndices) {  // non requiring content indices should be flushed
-              if (getInputFilter(indexId).acceptInput(file)) {
+            for (final ID<?, ?> indexId : getAffectedIndexCandidates(file)) {  // non requiring content indices should be flushed
+              if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
                 affected.add(indexId);
               }
             }
@@ -2396,8 +2400,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return IndexingStamp.isFileIndexed(file, id, IndexInfrastructure.getIndexCreationStamp(id));
   }
 
-  private static long getIndexCreationStamp(ID<?, ?> indexId, VirtualFile file) {
-    return IndexInfrastructure.getIndexCreationStamp(indexId, file);
+  private static long getIndexCreationStamp(ID<?, ?> indexId, FileType fileType) {
+    return IndexInfrastructure.getIndexCreationStamp(indexId, fileType);
   }
 
   private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
