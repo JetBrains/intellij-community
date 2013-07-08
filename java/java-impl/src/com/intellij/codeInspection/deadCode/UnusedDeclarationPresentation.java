@@ -82,7 +82,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    public int getElementProblemCount(final RefJavaElement refElement) {
+    public int getElementProblemCount(@NotNull final RefJavaElement refElement) {
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > - 1) return problemCount;
       if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
@@ -220,7 +220,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     protected boolean applyFix(RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
-      ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
+      List<RefElement> deletedRefs = new ArrayList<RefElement>(1);
       for (RefEntity refElement : refElements) {
         PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
         if (psiElement == null) continue;

@@ -26,6 +26,7 @@ package com.intellij.codeInspection.reference;
 
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   @NonNls public static final String FQNAME_ATTR = "FQNAME";
@@ -95,7 +96,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   }
 
   @Override
-  public boolean resolve(RefManager manager) {
+  public boolean resolve(@NotNull RefManager manager) {
     if (myRefElement != null) {
       if (myRefElement instanceof RefElement && myRefElement.isValid()) return true;
       return false;

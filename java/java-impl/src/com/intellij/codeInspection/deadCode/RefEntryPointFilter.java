@@ -27,10 +27,11 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.reference.RefParameter;
 import com.intellij.codeInspection.util.RefFilter;
+import org.jetbrains.annotations.NotNull;
 
 public class RefEntryPointFilter extends RefFilter {
   @Override
-  public int getElementProblemCount(RefJavaElement refElement) {
+  public int getElementProblemCount(@NotNull RefJavaElement refElement) {
     if (refElement instanceof RefParameter) return 0;
     return refElement.isEntry() && !refElement.isSyntheticJSP() ? 1 : 0;
   }

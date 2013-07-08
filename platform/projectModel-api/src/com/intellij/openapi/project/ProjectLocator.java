@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class ProjectLocator {
-  
+
   public static ProjectLocator getInstance() {
     return ServiceManager.getService(ProjectLocator.class);
   }

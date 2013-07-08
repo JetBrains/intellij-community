@@ -155,7 +155,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public boolean isOldProblemsIncluded() {
     final GlobalInspectionContextImpl context = getContext();
-    return context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && getOldContent() != null;
+    return context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && getOldContent() != null;
   }
 
 
