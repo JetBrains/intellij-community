@@ -286,7 +286,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       return null;
     }
     if (base.getModel() instanceof CustomMatcherModel) {
-      return ((CustomMatcherModel)base.getModel()).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
+      try {
+        return ((CustomMatcherModel)base.getModel()).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
+      }
+      catch (Exception e) {
+        LOG.info(e);
+        return null; // no matches appears valid result for "bad" pattern
+      }
     }
     return matcher.matches(name) ? new MatchResult(name, matcher.matchingDegree(name), matcher.isStartMatch(name)) : null;
   }
