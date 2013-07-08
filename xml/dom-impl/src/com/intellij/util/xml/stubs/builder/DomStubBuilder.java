@@ -72,7 +72,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
       return fileStub;
     }
     finally {
-      XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
+      XmlUtil.BUILDING_DOM_STUBS.set(Boolean.FALSE);
       psiFile.putUserData(CONTENT_FOR_DOM_STUBS, null);
     }
   }
