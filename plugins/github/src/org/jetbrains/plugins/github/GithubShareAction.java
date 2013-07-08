@@ -91,22 +91,22 @@ public class GithubShareAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
-    if (root == null || project == null || project.isDisposed()) {
+    if (project == null || project.isDisposed()) {
       return;
     }
 
-    shareProjectOnGithub(project, root);
+    shareProjectOnGithub(project, file);
   }
 
-  public static void shareProjectOnGithub(@NotNull final Project project, @NotNull final VirtualFile root) {
+  public static void shareProjectOnGithub(@NotNull final Project project, @Nullable final VirtualFile file) {
     BasicAction.saveAll();
 
     // get gitRepository
-    final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    final GitRepository gitRepository = manager.getRepositoryForFile(root);
+    final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     final boolean gitDetected = gitRepository != null;
+    final VirtualFile root = gitDetected ? gitRepository.getRoot() : project.getBaseDir();
 
     // check for existing git repo
     boolean externalRemoteDetected = false;

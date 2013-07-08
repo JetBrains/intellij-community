@@ -4,13 +4,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.checkout.CheckoutListener;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.tasks.GitHubRepository;
 import org.jetbrains.plugins.github.tasks.GitHubRepositoryType;
@@ -39,13 +36,7 @@ public class GithubCheckoutListener implements CheckoutListener {
 
   @Nullable
   private static Pair<String, String> getGithubProjectInfo(final Project project) {
-    final VirtualFile root = project.getBaseDir();
-    if (root == null) {
-      return null;
-    }
-    // Check if git is already initialized and presence of remote branch
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    final GitRepository gitRepository = manager.getRepositoryForFile(root);
+    final GitRepository gitRepository = GithubUtil.getGitRepository(project, null);
     if (gitRepository == null) {
       return null;
     }

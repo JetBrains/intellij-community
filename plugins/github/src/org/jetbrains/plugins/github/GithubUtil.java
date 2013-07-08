@@ -23,13 +23,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
+import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -334,6 +337,25 @@ public class GithubUtil {
   @NotNull
   public static String getErrorTextFromException(@NotNull IOException e) {
     return e.getMessage();
+  }
+
+  @Nullable
+  public static GitRepository getGitRepository(@NotNull Project project, @Nullable VirtualFile file) {
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    List<GitRepository> repositories = manager.getRepositories();
+    if (repositories.size() == 0) {
+      return null;
+    }
+    if (repositories.size() == 1) {
+      return repositories.get(0);
+    }
+    if (file != null) {
+      GitRepository repository = manager.getRepositoryForFile(file);
+      if (repository != null) {
+        return repository;
+      }
+    }
+    return manager.getRepositoryForFile(project.getBaseDir());
   }
 
 }

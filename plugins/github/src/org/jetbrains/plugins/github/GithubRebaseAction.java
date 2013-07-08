@@ -64,8 +64,8 @@ public class GithubRebaseAction extends DumbAwareAction {
 
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    if (root == null || project == null || project.isDefault()) {
+    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    if (project == null || project.isDefault()) {
       setVisibleEnabled(e, false, false);
       return;
     }
@@ -75,8 +75,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       return;
     }
 
-    final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    final GitRepository gitRepository = manager.getRepositoryForFile(root);
+    final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     if (gitRepository == null){
       setVisibleEnabled(e, false, false);
       return;
@@ -93,22 +92,22 @@ public class GithubRebaseAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
-    if (root == null || project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
+    if (project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
       return;
     }
 
-    rebaseMyGithubFork(project, root);
+    rebaseMyGithubFork(project, file);
   }
 
-  private static void rebaseMyGithubFork(@NotNull final Project project, @NotNull final VirtualFile root) {
-    final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    final GitRepository gitRepository = manager.getRepositoryForFile(root);
+  private static void rebaseMyGithubFork(@NotNull final Project project, @Nullable final VirtualFile file) {
+    final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     if (gitRepository == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find git repository");
       return;
     }
+    final VirtualFile root = gitRepository.getRoot();
 
     BasicAction.saveAll();
 
