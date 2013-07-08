@@ -631,7 +631,7 @@ public class XmlUtil {
     return tagName.subSequence(pos + 1, tagName.length());
   }
 
-  public static boolean isStubBuilding(PsiFile file) {
+  public static boolean isStubBuilding() {
     return BUILDING_DOM_STUBS.get();
   }
 
