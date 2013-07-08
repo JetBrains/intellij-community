@@ -135,7 +135,7 @@ public class GithubRebaseAction extends DumbAwareAction {
           final GithubUserAndRepository userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
           final String login = GithubSettings.getInstance().getLogin();
           if (userAndRepo != null) {
-            if (userAndRepo.getUserName() == login) {
+            if (userAndRepo.getUserName().equals(login)) {
               GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE,
                                             "Configured upstream seems to be your own repository: " + upstreamRemoteUrl);
               return;
