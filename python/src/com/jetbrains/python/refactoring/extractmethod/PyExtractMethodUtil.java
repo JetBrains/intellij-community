@@ -2,21 +2,12 @@ package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.codeFragment.CodeFragment;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.find.FindManager;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -26,20 +17,18 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog;
-import com.intellij.refactoring.extractMethod.AbstractVariableData;
-import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
-import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
+import com.intellij.refactoring.extractMethod.*;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -98,7 +87,7 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
-    final PyDuplicatesFinder finder = new PyDuplicatesFinder(statement1, statement2);
+    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2);
 
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -200,7 +189,7 @@ public class PyExtractMethodUtil {
 
   private static void processDuplicates(@NotNull final PsiElement callElement,
                                         @NotNull final PyFunction generatedMethod,
-                                        @NotNull final PyDuplicatesFinder finder,
+                                        @NotNull final SimpleDuplicatesFinder finder,
                                         @NotNull final Editor editor) {
     ScopeOwner owner = ScopeUtil.getScopeOwner(callElement);
     if (owner instanceof PsiFile) return;
@@ -215,57 +204,19 @@ public class PyExtractMethodUtil {
         }
       }
     }
-    final List<Pair<PsiElement, PsiElement>> duplicates = finder.findDuplicates(scope, generatedMethod);
-
-    if (duplicates.size() > 0) {
-      final String message = RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
-                                                       ApplicationNamesInfo.getInstance().getProductName(), duplicates.size());
-      final boolean isUnittest = ApplicationManager.getApplication().isUnitTestMode();
-      final int exitCode = !isUnittest ?  Messages.showYesNoDialog(callElement.getProject(), message,
-                                                    RefactoringBundle.message("refactoring.extract.method.dialog.title"), Messages.getInformationIcon()) :
-                                          DialogWrapper.OK_EXIT_CODE;
-      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-        boolean replaceAll = false;
-        for (Pair<PsiElement, PsiElement> match : duplicates) {
-          final List<PsiElement> elementsRange = PyPsiUtils.collectElements(match.getFirst(), match.getSecond());
-          if (!replaceAll) {
-            highlightInEditor(callElement.getProject(), match, editor);
-
-            int promptResult = FindManager.PromptResult.ALL;
-            if (!isUnittest) {
-              ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), callElement.getProject());
-              promptDialog.show();
-              promptResult = promptDialog.getExitCode();
-            }
-            if (promptResult == FindManager.PromptResult.SKIP) continue;
-            if (promptResult == FindManager.PromptResult.CANCEL) break;
-
-            if (promptResult == FindManager.PromptResult.OK) {
-              replaceElements(elementsRange, callElement);
-            }
-            else if (promptResult == FindManager.PromptResult.ALL) {
-              replaceElements(elementsRange, callElement);
-              replaceAll = true;
-            }
-          }
-          else {
-            replaceElements(elementsRange, callElement);
-          }
-        }
-      }
-    }
-  }
-
-  private static void highlightInEditor(@NotNull final Project project, @NotNull final Pair<PsiElement, PsiElement> pair,
-                                        @NotNull final Editor editor) {
-    final HighlightManager highlightManager = HighlightManager.getInstance(project);
-    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    final int startOffset = pair.getFirst().getTextRange().getStartOffset();
-    final int endOffset = pair.getSecond().getTextRange().getEndOffset();
-    highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, null);
-    final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(startOffset);
-    editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+    ExtractMethodHelper.processDuplicates(callElement, generatedMethod, scope, finder, editor,
+                                          new Function<Pair<PsiElement, PsiElement>, List<PsiElement>>() {
+                                            @Override
+                                            public List<PsiElement> fun(Pair<PsiElement, PsiElement> pair) {
+                                              return PyPsiUtils.collectElements(pair.first, pair.second);
+                                            }
+                                          },
+                                          new Consumer<Pair<List<PsiElement>, PsiElement>>() {
+                                            @Override
+                                            public void consume(Pair<List<PsiElement>, PsiElement> pair) {
+                                              replaceElements(pair.first, pair.second);
+                                            }
+                                          });
   }
 
   private static void processGlobalWrites(@NotNull final PyFunction function, @NotNull final PyCodeFragment fragment) {
@@ -637,7 +588,8 @@ public class PyExtractMethodUtil {
       }
     };
 
-    final AbstractExtractMethodDialog dialog = new AbstractExtractMethodDialog(project, "method_name", fragment, validator, decorator) {
+    final AbstractExtractMethodDialog dialog = new AbstractExtractMethodDialog(project, "method_name", fragment, validator, decorator,
+                                                                               PythonFileType.INSTANCE) {
       @Override
       protected String getHelpId() {
         return "python.reference.extractMethod";
