@@ -1,9 +1,6 @@
 package com.jetbrains.rest.sphinx;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -31,15 +28,18 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
 
     if (project == null) return;
 
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    final Module module = modules.length == 0 ? null : modules [0];
+    Module module = e.getData(LangDataKeys.MODULE);
+    if (module == null) {
+      Module[] modules = ModuleManager.getInstance(project).getModules();
+      module = modules.length == 0 ? null : modules [0];
+    }
 
     if (module == null) return;
-
     final SphinxBaseCommand action = new SphinxBaseCommand();
+    final Module finalModule = module;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        action.execute(module);
+        action.execute(finalModule);
       }
     }, ModalityState.NON_MODAL);
   }
