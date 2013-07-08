@@ -27,18 +27,18 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
 
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final AbstractVcs myVcs;
-  @NotNull private final String myRootDirName;
+  @NotNull private final String myRepoDirName;
 
   @NotNull protected final Map<VirtualFile, T> myRepositories = new HashMap<VirtualFile, T>();
 
   @NotNull protected final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
-  protected AbstractRepositoryManager(@NotNull Project project,
-                                      @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs, @NotNull String rootDirName) {
+  protected AbstractRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
+                                      @NotNull String repoDirName) {
     super(project);
     myVcsManager = vcsManager;
     myVcs = vcs;
-    myRootDirName = rootDirName;
+    myRepoDirName = repoDirName;
   }
 
   @Override
@@ -194,7 +194,7 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   }
 
   private boolean isRootValid(@NotNull VirtualFile root) {
-    VirtualFile vcsDir = root.findChild(myRootDirName);
+    VirtualFile vcsDir = root.findChild(myRepoDirName);
     return vcsDir != null && vcsDir.exists();
   }
 
