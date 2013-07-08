@@ -308,7 +308,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
         });
 
         if (reference.getQualifier() == null) {
-          GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
+          if (!GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
+            GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
+          }
 
           if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result)) {
             result.stopHere();

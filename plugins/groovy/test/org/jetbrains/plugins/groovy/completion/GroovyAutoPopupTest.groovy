@@ -283,7 +283,9 @@ Abcdefg <caret>'''
 void foo(File... files) { }
 foo(new <caret>)
 '''
-    type 'File('
+    type 'File'
+    myFixture.assertPreferredCompletionItems 0, 'File', 'File', 'FileInputStream'
+    type '('
     assert myFixture.editor.document.text.contains('new File()')
   }
 
