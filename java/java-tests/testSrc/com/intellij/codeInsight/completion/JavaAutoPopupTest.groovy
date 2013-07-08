@@ -741,7 +741,7 @@ class Foo {
     myFixture.checkResult(" class Foo { { int iteraaa; iteraaa<caret> } } ")
     assert !lookup
   }
-  
+
   public void testChoosingItemDuringCopyCommit() {
     registerContributor(LongReplacementOffsetContributor)
 
@@ -1024,8 +1024,7 @@ public class UTest {
     myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
     myFixture.configureByText "a.java", "import xxxxx.*; class Foo { S<caret> }"
     type 'Ystem'
-    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
-    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
+    myFixture.assertPreferredCompletionItems 1, 'System', 'SYSTEM_EXCEPTION'
   }
 
   public void testSamePrefixIgnoreCase2() {
@@ -1033,9 +1032,7 @@ public class UTest {
     myFixture.addClass("package xxxxx; public class SYstem {}")
     myFixture.configureByText "a.java", "import xxxxx.*; class Foo { S<caret> }"
     type 'Ystem'
-    assert 'xxxxx.SYstem' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
-    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
-    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[2]).qualifiedName
+    myFixture.assertPreferredCompletionItems 0, 'SYstem', 'System', 'SYSTEM_EXCEPTION'
   }
 
   private FileEditor openEditorForUndo() {
