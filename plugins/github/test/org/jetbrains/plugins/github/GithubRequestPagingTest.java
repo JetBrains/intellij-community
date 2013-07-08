@@ -20,12 +20,20 @@ import org.jetbrains.plugins.github.test.GithubTest;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assume.assumeNotNull;
+
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubRequestPagingTest extends GithubTest {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    assumeNotNull(myLogin2);
+  }
 
   public void testAvailableRepos() throws Throwable {
+
     List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(myGitHubSettings.getAuthData(), myLogin2);
     List<String> realData = new ArrayList<String>();
     for (RepositoryInfo info : availableRepos) {

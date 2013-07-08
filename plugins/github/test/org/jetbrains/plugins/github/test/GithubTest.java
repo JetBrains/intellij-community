@@ -139,7 +139,6 @@ public abstract class GithubTest extends UsefulTestCase {
     assumeNotNull(host);
     assumeNotNull(login1);
     assumeNotNull(password1);
-    assumeNotNull(login2);
     //assumeNotNull(password2);
 
     super.setUp();
