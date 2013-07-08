@@ -418,8 +418,8 @@ public class GroovyCompletionUtil {
     return type != null ? builder.withTypeText(type.getPresentableText()) : builder;
   }
 
-  public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull GroovyPsiElement place) {
-    final GroovyResolveResult[] constructors = ResolveUtil.getAllClassConstructors(clazz, place, PsiSubstitutor.EMPTY, null);
+  public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull PsiElement place) {
+    final GroovyResolveResult[] constructors = ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, null, place);
 
     boolean hasParameters = false;
     boolean hasAccessibleConstructors = false;

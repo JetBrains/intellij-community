@@ -814,19 +814,16 @@ public class PsiUtil {
     return false;
   }
 
-  public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place,
-                                                               GroovyResolveResult[] classCandidates,
+  @NotNull
+  public static GroovyResolveResult[] getConstructorCandidates(@NotNull PsiElement place,
+                                                               @NotNull GroovyResolveResult classCandidate,
                                                                @Nullable PsiType[] argTypes) {
-    for (GroovyResolveResult classResult : classCandidates) {
-      final PsiElement element = classResult.getElement();
-      if (element instanceof PsiClass) {
-        PsiClass clazz = (PsiClass)element;
-        PsiSubstitutor substitutor = classResult.getSubstitutor();
-        return ResolveUtil.getAllClassConstructors(clazz, place, substitutor, argTypes);
-      }
-    }
+    final PsiElement element = classCandidate.getElement();
+    if (!(element instanceof PsiClass)) return GroovyResolveResult.EMPTY_ARRAY;
 
-    return GroovyResolveResult.EMPTY_ARRAY;
+    PsiClass clazz = (PsiClass)element;
+    PsiSubstitutor substitutor = classCandidate.getSubstitutor();
+    return ResolveUtil.getAllClassConstructors(clazz, substitutor, argTypes, place);
   }
 
   public static boolean isAccessedForReading(GrExpression expr) {
@@ -884,7 +881,7 @@ public class PsiUtil {
     final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
                                          ? (GroovyResolveResult)resolveResult
                                          : new GroovyResolveResultImpl(psiClass, context, null, substitutor, true, true);
-    return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
+    return getConstructorCandidates(context, grResult, argTypes);
   }
 
   @Nullable

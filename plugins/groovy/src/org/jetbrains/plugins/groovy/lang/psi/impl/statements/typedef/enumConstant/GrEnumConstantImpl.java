@@ -203,7 +203,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
     PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
     PsiClass clazz = getContainingClass();
-    return ResolveUtil.getAllClassConstructors(clazz, this, PsiSubstitutor.EMPTY, argTypes);
+    return ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, argTypes, this);
   }
 
   @NotNull

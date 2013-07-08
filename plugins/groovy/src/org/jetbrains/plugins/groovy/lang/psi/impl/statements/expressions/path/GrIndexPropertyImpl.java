@@ -120,6 +120,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     }
 
 
+    //don't use short PsiUtil.getArgumentTypes(...) because it use incorrect 'isSetter' value
     PsiType[] args = PsiUtil
       .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, null, false);
     final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(candidates);
@@ -151,7 +152,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   private GroovyResolveResult[] resolveImpl(boolean incompleteCode, @Nullable GrExpression upToArgument, @Nullable Boolean isSetter) {
     if (isSetter == null) isSetter = PsiUtil.isLValue(this);
-    assert isSetter != null;
 
     GrExpression invoked = getInvokedExpression();
     PsiType thisType = invoked.getType();
@@ -162,8 +162,8 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
     GrArgumentList argList = getArgumentList();
 
-    PsiType[] argTypes = PsiUtil
-      .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument, false);
+    //don't use short PsiUtil.getArgumentTypes(...) because it use incorrect 'isSetter' value
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument, false);
     if (argTypes == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     final GlobalSearchScope resolveScope = getResolveScope();
