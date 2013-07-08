@@ -156,7 +156,7 @@ class Intf {
       elements = set as List
       semaphore.up()
     } as Consumer<Set<?>>)
-    if (!semaphore.waitFor(1000)) {
+    if (!semaphore.waitFor(10000)) {
       printThreadDump()
       fail()
     }
