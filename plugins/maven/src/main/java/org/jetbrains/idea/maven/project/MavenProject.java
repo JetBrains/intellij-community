@@ -484,32 +484,6 @@ public class MavenProject {
     return res;
   }
 
-  //private String getCompilerArgument() {
-  //  return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), "compilerArgument");
-  //}
-  //
-  //private String getCompilerArguments(){
-  //  StringBuilder compilerArguments = new StringBuilder();
-  //  Element compilerArgumentsElement = MavenJDOMUtil.findChildByPath(getCompilerConfig(), "compilerArguments");
-  //  if(compilerArgumentsElement != null){
-  //    List compilerArgumentsElements = compilerArgumentsElement.getChildren();
-  //    for(Object compilerArgumentsElementKey: compilerArgumentsElements){
-  //      String key = ((Element)compilerArgumentsElementKey).getName();
-  //      String value = ((Element)compilerArgumentsElementKey).getValue();
-  //      compilerArguments.append(prepareKeyValue(key)).append(" ").append(prepareValueContent(value));
-  //    }
-  //  }
-  //  return compilerArguments.toString();
-  //}
-  //
-  //private static String prepareValueContent(String value) {
-  //  return (value == null || value.length() == 0)? "" : value + " ";
-  //}
-  //
-  //private static String prepareKeyValue(final String key) {
-  //  return (key.startsWith( "-A" ))? key.substring(2) : key;
-  //}
-
   @Nullable
   public List<String> getDeclaredAnnotationProcessors() {
     Element compilerConfig = getCompilerConfig();
@@ -556,19 +530,6 @@ public class MavenProject {
     return null;
   }
   
-  //private String getArgumentsForAnnotationProcessor(){
-  //  return getCompilerArguments() + formatCompilerArgument(getCompilerArgument()) ;
-  //}
-  
-  //private static String formatCompilerArgument(String compilerArgument){
-  //  String[] splitArguments = compilerArgument.split("\\s+");
-  //  List<String> formattedArguments = new ArrayList<String>();
-  //  for(String splitArgument: splitArguments){
-  //    formattedArguments.add((splitArgument.startsWith( "-A" ))? splitArgument.substring(2) : splitArgument);
-  //  }
-  //  return StringUtil.join(formattedArguments, " ");
-  //}
-
   @NotNull
   public String getOutputDirectory() {
     return myState.myOutputDirectory;
