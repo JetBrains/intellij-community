@@ -69,8 +69,6 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private final SeverityRegistrar mySeverityRegistrar;
-  @NonNls private static final String INSPECTION_DIR = "inspection";
-  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION_DIR;
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
