@@ -513,7 +513,7 @@ public class MacMessagesImpl extends MacMessages {
 
     Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
+    final ID nativeFocusedWindow = invoke(MacUtil.findWindowForTitle(foremostWindowTitle), "retain");
 
     paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
@@ -533,6 +533,8 @@ public class MacMessagesImpl extends MacMessages {
     });
 
     startModal(documentRoot, nativeFocusedWindow);
+
+    invoke(nativeFocusedWindow, "release");
 
     IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
     return documentRoot;
