@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -77,7 +78,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -221,7 +224,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
           final PsiClass outerClass = clazz.getContainingClass();
           if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
               outerClass != null &&
-              !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
+              !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
+              !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
             String qname = clazz.getQualifiedName();
             LOG.assertTrue(qname != null, clazz.getText());
             return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
@@ -231,6 +235,17 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     return null;
+  }
+
+  private static boolean hasEnclosingInstanceInArgList(GrArgumentList list, PsiClass enclosingClass) {
+    if (PsiImplUtil.hasNamedArguments(list)) return false;
+
+    GrExpression[] args = list.getExpressionArguments();
+    if (args.length == 0) return false;
+
+    PsiType type = args[0].getType();
+    PsiClassType enclosingClassType = JavaPsiFacade.getElementFactory(list.getProject()).createType(enclosingClass);
+    return TypesUtil.isAssignableByMethodCallConversion(enclosingClassType, type, list);
   }
 
   @Nullable
@@ -244,9 +259,12 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     if (resolveResult.getElement() != null) {
       if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
 
-      if (isStaticOk(resolveResult)) return null;
-      String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
-      return createAnnotationForRef(ref, inStaticContext, message);
+      if (!isStaticOk(resolveResult)) {
+        String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
+        return createAnnotationForRef(ref, inStaticContext, message);
+      }
+
+      return null;
     }
 
     if (ResolveUtil.isKeyOfMap(ref) || isClassReference(ref)) {

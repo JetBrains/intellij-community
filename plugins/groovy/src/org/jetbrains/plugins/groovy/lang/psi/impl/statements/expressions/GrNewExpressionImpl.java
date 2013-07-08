@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -46,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -193,7 +193,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     for (GroovyResolveResult classResult : referenceElement.multiResolve(false)) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
-        ContainerUtil.addAll(result, ResolveUtil.getAllClassConstructors((PsiClass)element, this, classResult.getSubstitutor(), null));
+        ContainerUtil.addAll(result, ResolveUtil.getAllClassConstructors((PsiClass)element, classResult.getSubstitutor(), null, this));
       }
     }
 
@@ -208,15 +208,15 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    //ResolveCache.getInstance(getProject()).resolveWithCaching()
     GrCodeReferenceElement ref = getReferenceElement();
     if (ref == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-    final GroovyResolveResult[] classResults = ref.multiResolve(false);
-    if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
+    GroovyResolveResult classCandidate = inferClassCandidate(ref);
+    if (classCandidate == null) return GroovyResolveResult.EMPTY_ARRAY;
+    assert classCandidate.getElement() instanceof PsiClass;
 
     if (incompleteCode) {
-      return PsiUtil.getConstructorCandidates(ref, classResults, null);
+      return PsiUtil.getConstructorCandidates(ref, classCandidate, null);
     }
 
     final GrArgumentList argumentList = getArgumentList();
@@ -224,7 +224,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
     if (argumentList.getNamedArguments().length > 0 && argumentList.getExpressionArguments().length == 0) {
       PsiType mapType = new GrMapType(argumentList, getNamedArguments());
-      GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classResults, new PsiType[]{mapType}); //one Map parameter, actually
+      GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classCandidate, new PsiType[]{mapType}); //one Map parameter, actually
       for (GroovyResolveResult result : constructorResults) {
         final PsiElement resolved = result.getElement();
         if (resolved instanceof PsiMethod) {
@@ -235,67 +235,28 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
           }
         }
       }
-      final GroovyResolveResult[] emptyConstructors = PsiUtil.getConstructorCandidates(ref, classResults, PsiType.EMPTY_ARRAY);
+      final GroovyResolveResult[] emptyConstructors = PsiUtil.getConstructorCandidates(ref, classCandidate, PsiType.EMPTY_ARRAY);
       if (emptyConstructors.length > 0) {
         return emptyConstructors;
       }
     }
 
-    return PsiUtil.getConstructorCandidates(ref, classResults, PsiUtil.getArgumentTypes(ref, true));
+    PsiType[] types = PsiUtil.getArgumentTypes(ref, true);
+
+    if (types != null) {
+      types = GrInnerClassConstructorUtil.addEnclosingArgIfNeeded(types, this, (PsiClass)classCandidate.getElement());
+    }
+    return PsiUtil.getConstructorCandidates(ref, classCandidate, types);
   }
 
-  private class MyRef implements PsiPolyVariantReference {
-    @NotNull
-    @Override
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return GrNewExpressionImpl.this.multiResolve(incompleteCode);
+  @Nullable
+  private static GroovyResolveResult inferClassCandidate(@NotNull GrCodeReferenceElement ref) {
+    final GroovyResolveResult[] classResults = ref.multiResolve(false);
+    for (GroovyResolveResult result : classResults) {
+      if (result.getElement() instanceof PsiClass) {
+        return result;
+      }
     }
-
-    @Override
-    public PsiElement getElement() {
-      return GrNewExpressionImpl.this;
-    }
-
-    @Override
-    public TextRange getRangeInElement() {
-      return getReferenceElement().getRangeInElement();
-    }
-
-    @Override
-    public PsiElement resolve() {
-      return resolveMethod();
-    }
-
-    @NotNull
-    @Override
-    public String getCanonicalText() {
-      return "new expression reference";
-    }
-
-    @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return GrNewExpressionImpl.this;
-    }
-
-    @Override
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      return GrNewExpressionImpl.this;
-    }
-
-    @Override
-    public boolean isReferenceTo(PsiElement element) {
-      return getManager().areElementsEquivalent(resolveMethod(), element);
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return multiResolve(true);
-    }
-
-    @Override
-    public boolean isSoft() {
-      return false;
-    }
+    return null;
   }
 }
