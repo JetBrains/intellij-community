@@ -25,7 +25,8 @@ public class CommentLanguageInjector implements MultiHostInjector {
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
-    final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
+    if (!host.isValidHost()) return;
+    ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
     if (manipulator == null) return;
     TextRange rangeInElement = manipulator.getRangeInElement(host);
     if (rangeInElement.isEmpty()) return;
