@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -56,5 +57,11 @@ public class HgConfig {
     }
     Map<String, String> sectionValues = myConfigMap.get(sectionName);
     return sectionValues != null ? sectionValues.get(configName) : null;
+  }
+
+  @NotNull
+  public Collection<String> getPaths() {
+    Map<String, String> pathOptions = myConfigMap.get("paths");
+    return pathOptions != null ? pathOptions.values() : Collections.<String>emptyList();
   }
 }
