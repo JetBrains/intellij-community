@@ -513,21 +513,47 @@ public class MavenProject {
   @Nullable
   public List<String> getDeclaredAnnotationProcessors() {
     Element compilerConfig = getCompilerConfig();
-    if (compilerConfig == null) return null;
+    if (compilerConfig != null) {
+      Element processors = compilerConfig.getChild("annotationProcessors");
+      if (processors != null) {
+        List<String> res = new ArrayList<String>();
 
-    Element processors = compilerConfig.getChild("annotationProcessors");
-    if (processors == null) return null;
+        for (Element element : processors.getChildren("annotationProcessor")){
+          String processorClassName = element.getTextTrim();
+          if (!processorClassName.isEmpty()) {
+            res.add(processorClassName);
+          }
+        }
 
-    List<String> res = new ArrayList<String>();
-
-    for (Element element : (List<Element>)processors.getChildren("annotationProcessor")){
-      String processorClassName = element.getTextTrim();
-      if (!processorClassName.isEmpty()) {
-        res.add(processorClassName);
+        return res;
       }
     }
 
-    return res;
+    MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
+    if (bscMavenPlugin != null) {
+      Element cfg = bscMavenPlugin.getGoalConfiguration("process");
+      if (cfg == null) {
+        cfg = bscMavenPlugin.getConfigurationElement();
+      }
+
+      if (cfg != null) {
+        Element processors = cfg.getChild("processors");
+        if (processors != null) {
+          List<String> res = new ArrayList<String>();
+
+          for (Element element : processors.getChildren("processor")){
+            String processorClassName = element.getTextTrim();
+            if (!processorClassName.isEmpty()) {
+              res.add(processorClassName);
+            }
+          }
+
+          return res;
+        }
+      }
+    }
+
+    return null;
   }
   
   //private String getArgumentsForAnnotationProcessor(){
