@@ -515,7 +515,7 @@ public class MacMessagesImpl extends MacMessages {
 
     Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
+    final ID nativeFocusedWindow = invoke(MacUtil.findWindowForTitle(foremostWindowTitle), "retain");
 
     paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
@@ -529,12 +529,13 @@ public class MacMessagesImpl extends MacMessages {
     runOrPostponeForWindow(documentRoot, new Runnable() {
       @Override
       public void run() {
-        invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-               createSelector(methodName), paramsArray, false);
+        invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector(methodName), paramsArray, false);
       }
     });
 
     startModal(documentRoot, nativeFocusedWindow);
+
+    invoke(nativeFocusedWindow, "release");
 
     IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
     return documentRoot;
