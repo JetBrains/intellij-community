@@ -44,8 +44,6 @@ import java.util.List;
  */
 public class GithubCheckoutProvider implements CheckoutProvider {
 
-  private static final Logger LOG = GithubUtil.LOG;
-
   @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     if (!GithubUtil.testGitExecutable(project)) {
@@ -65,7 +63,6 @@ public class GithubCheckoutProvider implements CheckoutProvider {
             });
         }
         catch (IOException e) {
-          LOG.info(e);
           GithubNotifications.showError(project, "Couldn't get the list of GitHub repositories", e);
         }
       }

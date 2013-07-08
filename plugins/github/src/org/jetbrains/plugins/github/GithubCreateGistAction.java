@@ -195,8 +195,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return getUrlFromJson(project, jsonElement);
     }
     catch (IOException e) {
-      LOG.info("Exception when creating a Gist", e);
-      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e.getMessage());
+      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e);
       return null;
     }
   }
@@ -230,18 +229,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
   @Nullable
   private static String getUrlFromJson(@NotNull Project project, @Nullable JsonElement jsonElement) {
     if (jsonElement == null) {
-      LOG.info("Null JSON response returned by GitHub");
       GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Empty JSON response returned by GitHub");
       return null;
     }
     if (!jsonElement.isJsonObject()) {
-      LOG.error(String.format("Unexpected JSON result format: %s", jsonElement));
       GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response: " + jsonElement.toString());
       return null;
     }
     JsonElement htmlUrl = jsonElement.getAsJsonObject().get("html_url");
     if (htmlUrl == null) {
-      LOG.info("Invalid JSON response: " + jsonElement);
       GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response: " + jsonElement.toString());
       return null;
     }
@@ -291,7 +287,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     if (content == null) {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file);
-      LOG.info("Couldn't read the contents of the file " + file);
       return Collections.emptyList();
     }
     if (StringUtil.isEmptyOrSpaces(content)) {

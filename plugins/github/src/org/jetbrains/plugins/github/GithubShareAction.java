@@ -255,16 +255,15 @@ public class GithubShareAction extends DumbAwareAction {
       return null;
     }
     if (result == null) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository");
+      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", "result is null");
       return null;
     }
     if (!result.isJsonObject()) {
-      LOG.error(String.format("Unexpected JSON result format: %s", result));
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository");
+      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
       return null;
     }
     if (!result.getAsJsonObject().has("html_url")) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository");
+      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
       return null;
     }
     return result.getAsJsonObject().get("html_url").getAsString();
@@ -310,7 +309,6 @@ public class GithubShareAction extends DumbAwareAction {
     }
     catch (VcsException e) {
       GithubNotifications.showError(project, "Failed to add GitHub repository as remote", e.getMessage());
-      LOG.info("Failed to add GitHub as remote: " + e.getMessage());
       return false;
     }
     return true;
@@ -361,7 +359,6 @@ public class GithubShareAction extends DumbAwareAction {
       handler.run();
     }
     catch (VcsException e) {
-      LOG.info("Failed to perform initial commit");
       GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
                                        " on GitHub, but initial commit failed:<br/>" + e.getMessage(), url);
       return false;
