@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
@@ -55,7 +56,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
     Project project = repository.getProject();
     myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
-    myUpdateConfigQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository){
+    myUpdateConfigQueue = new QueueProcessor<Object>(new Consumer<Object>() {
       @Override
       public void consume(Object dummy) {
         repository.updateConfig();
