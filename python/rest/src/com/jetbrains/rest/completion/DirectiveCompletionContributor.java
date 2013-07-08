@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
@@ -36,8 +35,8 @@ public class DirectiveCompletionContributor extends CompletionContributor {
            }
            Sdk sdk = ProjectRootManager.getInstance(parameters.getPosition().getProject()).getProjectSdk();
            if (sdk != null) {
-             String sphinx = RestUtil.findRunner(sdk.getHomePath(), "sphinx-quickstart"+ (SystemInfo.isWindows ? ".exe" : ""));
-             if (sphinx != null && !sphinx.isEmpty()) {
+             String sphinx = RestUtil.findQuickStart(sdk.getHomePath());
+             if (sphinx != null) {
                for (String tag : RestUtil.SPHINX_DIRECTIVES) {
                  result.addElement(LookupElementBuilder.create(tag));
                }

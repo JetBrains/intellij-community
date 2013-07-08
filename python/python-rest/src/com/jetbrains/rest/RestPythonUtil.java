@@ -36,7 +36,8 @@ public class RestPythonUtil {
           PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
           try {
             final PyPackage sphinx = manager.findPackage("Sphinx");
-            presentation.setEnabled(sphinx != null);
+            String quickStart = RestUtil.findQuickStart(sdk.getHomePath());
+            presentation.setEnabled(sphinx != null && quickStart != null);
           }
           catch (PyExternalProcessException ignored) {
           }

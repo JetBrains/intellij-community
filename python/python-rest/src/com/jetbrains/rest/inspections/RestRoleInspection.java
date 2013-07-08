@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -20,7 +19,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.rest.*;
+import com.jetbrains.rest.RestBundle;
+import com.jetbrains.rest.RestFile;
+import com.jetbrains.rest.RestTokenTypes;
+import com.jetbrains.rest.RestUtil;
 import com.jetbrains.rest.psi.RestDirectiveBlock;
 import com.jetbrains.rest.psi.RestRole;
 import com.jetbrains.rest.quickfixes.AddIgnoredRoleFix;
@@ -112,8 +114,8 @@ public class RestRoleInspection extends RestInspection {
 
       Sdk sdk = ProjectRootManager.getInstance(node.getProject()).getProjectSdk();
       if (sdk != null) {
-        String sphinx = RestUtil.findRunner(sdk.getHomePath(), "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : ""));
-        if (sphinx != null && !sphinx.isEmpty()) {
+        String sphinx = RestUtil.findQuickStart(sdk.getHomePath());
+        if (sphinx != null) {
           if (RestUtil.SPHINX_ROLES.contains(node.getText()) || RestUtil.SPHINX_ROLES.contains(":py"+node.getText())
              || mySphinxRoles.contains(node.getRoleName())) return;
         }

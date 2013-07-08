@@ -2,6 +2,7 @@ package com.jetbrains.rest;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,24 +17,28 @@ public class RestUtil {
   private RestUtil() {}
 
   @Nullable
-  public static String findRunner(final String sdkHome, String runnerName) {
-    String shortRunner = null;
-    if (runnerName.endsWith(".py")) shortRunner = runnerName.substring(0, runnerName.length()-3);
-    File bin_path = new File(sdkHome);
-    File bin_dir = bin_path.getParentFile();
-    if (bin_dir == null) return null;
-    File runner = new File(bin_dir, runnerName);
+  public static String findQuickStart(final String sdkHome) {
+    final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
+    File binPath = new File(sdkHome);
+    File binDir = binPath.getParentFile();
+    if (binDir == null) return null;
+    File runner = new File(binDir, runnerName);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File(bin_dir, "scripts"), runnerName);
+    runner = new File(new File(binDir, "scripts"), runnerName);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File(bin_dir.getParentFile(), "scripts"), runnerName);
+    runner = new File(new File(binDir.getParentFile(), "scripts"), runnerName);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File(bin_dir.getParentFile(), "local"), runnerName);
+    runner = new File(new File(binDir.getParentFile(), "local"), runnerName);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File (new File(bin_dir.getParentFile(), "local"), "bin"), runnerName);
+    runner = new File(new File (new File(binDir.getParentFile(), "local"), "bin"), runnerName);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
 
-    if (shortRunner != null) return findRunner(sdkHome, shortRunner);
+    // Search in standard unix path
+    runner = new File(new File("/usr", "bin"), runnerName);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    runner = new File(new File (new File("/usr", "local"), "bin"), runnerName);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+
     return null;
   }
 

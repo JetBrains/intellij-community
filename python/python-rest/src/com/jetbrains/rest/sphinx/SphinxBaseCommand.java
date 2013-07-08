@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.ReSTService;
@@ -84,8 +83,6 @@ public class SphinxBaseCommand {
     }
   }
 
-  protected static final String ourCommand = "sphinx-quickstart"+ (SystemInfo.isWindows ? ".exe" : "");
-
   public void execute(@NotNull final Module module) {
     final Project project = module.getProject();
 
@@ -141,9 +138,10 @@ public class SphinxBaseCommand {
     assert script_params != null;
 
     String commandPath = getCommandPath(sdk);
-    if (commandPath != null) {
-      cmd.setExePath(commandPath);
+    if (commandPath == null) {
+      throw new ExecutionException("Cannot find sphinx-quickstart.");
     }
+    cmd.setExePath(commandPath);
 
     if (params != null) {
       for (String p : params) {
@@ -171,6 +169,6 @@ public class SphinxBaseCommand {
 
   @Nullable
   private static String getCommandPath(Sdk sdk) {
-    return RestUtil.findRunner(sdk.getHomePath(), ourCommand);
+    return RestUtil.findQuickStart(sdk.getHomePath());
   }
 }
