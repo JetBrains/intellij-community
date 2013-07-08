@@ -189,17 +189,17 @@ public class GithubUtil {
 
   @NotNull
   public static List<RepositoryInfo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
-    final String request = "/user/repos";
-    JsonElement result = GithubApiUtil.getRequest(auth, request);
-    if (result == null) {
-      return Collections.emptyList();
-    }
-    return parseRepositoryInfos(result);
+    return doGetAvailableRepos(auth, null);
   }
 
   @NotNull
   public static List<RepositoryInfo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
-    final String request = "/users/" + user + "/repos";
+    return doGetAvailableRepos(auth, user);
+  }
+
+  @NotNull
+  private static List<RepositoryInfo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
+    String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
     JsonElement result = GithubApiUtil.getRequest(auth, request);
     if (result == null) {
       return Collections.emptyList();
