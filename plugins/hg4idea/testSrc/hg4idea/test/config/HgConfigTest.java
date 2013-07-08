@@ -31,7 +31,7 @@ public class HgConfigTest extends HgPlatformTest {
                  FileUtil.toSystemIndependentName(defaultPath));
   }
 
-  public void testPushPathInClonedRepo() {
+  public void testPushPathInClonedRepo() throws IOException {
     cd(myChildRepo);
     String pushPath = "somePath";
     appendToHgrc(myChildRepo, "\n[paths]\n" +
@@ -51,7 +51,7 @@ public class HgConfigTest extends HgPlatformTest {
                  FileUtil.toSystemIndependentName(defaultPushPath));
   }
 
-  public void testMultiPathConfig() {
+  public void testMultiPathConfig() throws IOException {
     cd(myChildRepo);
     final String path1 = "https://bitbucket.org/nadushnik/hgtestrepo";
     final String path2 = "https://bitbucket.org/nadushnik/javarepo";

@@ -92,32 +92,20 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     super.tearDown();
   }
 
-  private static void setUpHgrc(@NotNull VirtualFile repositoryRoot) {
+  private static void setUpHgrc(@NotNull VirtualFile repositoryRoot) throws IOException {
     cd(".hg");
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("hg4idea"));
     String pathToHgrc = "testData\\repo\\dot_hg";
     File hgrcFile = new File(new File(pluginRoot, FileUtil.toSystemIndependentName(pathToHgrc)), "hgrc");
     File hgrc = new File(new File(repositoryRoot.getPath(), ".hg"), "hgrc");
-    try {
-      FileUtil.appendToFile(hgrc, FileUtil.loadFile(hgrcFile));
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-      fail("Can not update hgrc file.");
-    }
+    FileUtil.appendToFile(hgrc, FileUtil.loadFile(hgrcFile));
     assertTrue(hgrc.exists());
   }
 
-  protected static void appendToHgrc(@NotNull VirtualFile repositoryRoot, @NotNull String text) {
+  protected static void appendToHgrc(@NotNull VirtualFile repositoryRoot, @NotNull String text) throws IOException {
     cd(".hg");
     File hgrc = new File(new File(repositoryRoot.getPath(), ".hg"), "hgrc");
-    try {
-      FileUtil.appendToFile(hgrc, text);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-      fail("Can not update hgrc file.");
-    }
+    FileUtil.appendToFile(hgrc, text);
     assertTrue(hgrc.exists());
   }
 
