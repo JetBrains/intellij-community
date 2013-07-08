@@ -152,10 +152,10 @@ public class HgMergeProviderTest extends HgPlatformTest {
     //Add a file with the same name, but different content in child repository, don't commit.
     cd(myChildRepo);
     touch(bFile, "local");
+    myChildRepo.refresh(false, true);
     hg("add " + bFile);
 
     updateProject();
-
     verifyMergeData(myChildRepo.findChild(bFile), "", "local", "server");
   }
 
