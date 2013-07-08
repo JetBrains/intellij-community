@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.HashSet;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -52,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -160,7 +160,7 @@ public class GithubShareAction extends DumbAwareAction {
           }
         }
 
-        GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+        GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
         final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
         LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
 
@@ -407,7 +407,6 @@ public class GithubShareAction extends DumbAwareAction {
     @Override
     protected JComponent createCenterPanel() {
       final JComponent tree = super.createCenterPanel();
-      final JPanel panel = new JPanel(new BorderLayout());
 
       myCommitMessagePanel = new CommitMessage(myProject);
       myCommitMessagePanel.setCommitMessage("Initial commit");
@@ -417,9 +416,8 @@ public class GithubShareAction extends DumbAwareAction {
       splitter.setFirstComponent(tree);
       splitter.setSecondComponent(myCommitMessagePanel);
       splitter.setProportion(0.7f);
-      panel.add(splitter, BorderLayout.CENTER);
 
-      return panel;
+      return splitter;
     }
 
     @NotNull
