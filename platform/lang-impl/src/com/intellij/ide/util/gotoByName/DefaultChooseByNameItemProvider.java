@@ -62,7 +62,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     indicator.checkCanceled();
 
     List<Object> sameNameElements = new SmartList<Object>();
-    final Map<Object, MatchResult> sameNameWeights = new THashMap<Object, MatchResult>();
+    final Map<Object, MatchResult> qualifierMatchResults = new THashMap<Object, MatchResult>();
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model : new PathProximityComparator(model, myContext.get());
@@ -70,7 +70,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       @Override
       public int compare(Object o1, Object o2) {
         int result = modelComparator.compare(o1, o2);
-        return result != 0 ? result : sameNameWeights.get(o1).compareTo(sameNameWeights.get(o2));
+        return result != 0 ? result : qualifierMatchResults.get(o1).compareTo(qualifierMatchResults.get(o2));
       }
     };
 
@@ -93,18 +93,18 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                 : model.getElementsByName(name, everywhere, namePattern);
       if (elements.length > 1) {
         sameNameElements.clear();
-        sameNameWeights.clear();
+        qualifierMatchResults.clear();
         for (final Object element : elements) {
           indicator.checkCanceled();
           MatchResult qualifierResult = matchQualifier(element, base, patternsAndMatchers);
           if (qualifierResult != null) {
             sameNameElements.add(element);
-            sameNameWeights.put(element, qualifierResult);
+            qualifierMatchResults.put(element, qualifierResult);
           }
         }
         Collections.sort(sameNameElements, weightComparator);
         for (Object element : sameNameElements) {
-          if (!sameNameWeights.get(element).startMatch) {
+          if (!qualifierMatchResults.get(element).startMatch) {
             qualifierMiddleMatched.add(element);
             continue;
           }
