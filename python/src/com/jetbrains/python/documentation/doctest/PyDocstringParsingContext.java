@@ -14,25 +14,25 @@ import org.jetbrains.annotations.Nullable;
  * User : ktisha
  */
 public class PyDocstringParsingContext extends ParsingContext {
-  private final StatementParsing stmtParser;
-  private final ExpressionParsing exprParser;
+  private final StatementParsing myStatementParser;
+  private final ExpressionParsing myExpressionParser;
 
   public PyDocstringParsingContext(final PsiBuilder builder,
                                    LanguageLevel languageLevel,
                                    StatementParsing.FUTURE futureFlag) {
     super(builder, languageLevel, futureFlag);
-    stmtParser = new PyDocstringStatementParsing(this, futureFlag);
-    exprParser = new PyDocstringExpressionParsing(this);
+    myStatementParser = new PyDocstringStatementParsing(this, futureFlag);
+    myExpressionParser = new PyDocstringExpressionParsing(this);
   }
 
   @Override
   public ExpressionParsing getExpressionParser() {
-    return exprParser;
+    return myExpressionParser;
   }
 
   @Override
   public StatementParsing getStatementParser() {
-    return stmtParser;
+    return myStatementParser;
   }
 
   private static class PyDocstringExpressionParsing extends ExpressionParsing {
@@ -51,6 +51,11 @@ public class PyDocstringParsingContext extends ParsingContext {
     protected PyDocstringStatementParsing(ParsingContext context,
                                           @Nullable FUTURE futureFlag) {
       super(context, futureFlag);
+    }
+
+    @Override
+    protected IElementType getReferenceType() {
+      return PyDocstringTokenTypes.DOC_REFERENCE;
     }
 
     @Override
