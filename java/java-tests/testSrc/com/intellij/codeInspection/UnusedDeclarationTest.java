@@ -17,7 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -129,12 +129,12 @@ public class UnusedDeclarationTest extends InspectionTestCase {
 
   public void testAdditionalAnnotations() {
     final String testAnnotation = "Annotated";
-    EntryPointsManagerImpl.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.add(testAnnotation);
+    EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.add(testAnnotation);
     try {
       doTest();
     }
     finally {
-      EntryPointsManagerImpl.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.remove(testAnnotation);
+      EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.remove(testAnnotation);
     }
   }
 
