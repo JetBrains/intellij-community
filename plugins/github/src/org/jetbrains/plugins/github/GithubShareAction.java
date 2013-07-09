@@ -357,6 +357,8 @@ public class GithubShareAction extends DumbAwareAction {
       handler.addParameters("-m", dialog.getCommitMessage());
       handler.endOptions();
       handler.run();
+
+      VcsFileUtil.refreshFiles(project, dialog.getSelectedFiles());
     }
     catch (VcsException e) {
       GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
