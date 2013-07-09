@@ -100,6 +100,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     myTestToRun = JDOMExternalizerUtil.readField(element, TEST_TO_RUN_FIELD);
     myKeywords = JDOMExternalizerUtil.readField(element, KEYWORDS_FIELD);

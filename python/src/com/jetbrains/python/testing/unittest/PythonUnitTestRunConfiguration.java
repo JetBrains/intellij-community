@@ -50,6 +50,7 @@ public class PythonUnitTestRunConfiguration extends
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     myIsPureUnittest = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "PUREUNITTEST"));
     myParams = JDOMExternalizerUtil.readField(element, "PARAMS");

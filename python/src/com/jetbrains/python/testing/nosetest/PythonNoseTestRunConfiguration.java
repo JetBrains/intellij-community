@@ -46,6 +46,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     myParams = JDOMExternalizerUtil.readField(element, "PARAMS");
     useParam = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_PARAM"));

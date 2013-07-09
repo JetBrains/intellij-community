@@ -96,6 +96,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   }
 
   public void readExternal(Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
