@@ -24,13 +24,11 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.ExtensionPoints;
+import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -38,11 +36,13 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -59,7 +59,7 @@ import java.util.*;
     name = "EntryPointsManager",
     storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)}
 )
-public class EntryPointsManagerImpl implements PersistentStateComponent<Element>, EntryPointsManager {
+public class EntryPointsManagerImpl extends EntryPointsManager implements PersistentStateComponent<Element> {
   @NonNls private static final String[] STANDARD_ANNOS = {
     "javax.ws.rs.*",
   };
@@ -72,7 +72,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     if (annos == null) {
       annos = new ArrayList<String>();
       Collections.addAll(annos, STANDARD_ANNOS);
-      final EntryPoint[] extensions = Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
+      final EntryPoint[] extensions = Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
       for (EntryPoint extension : extensions) {
         final String[] ignoredAnnotations = extension.getIgnoreAnnotations();
         if (ignoredAnnotations != null) {
@@ -100,7 +100,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     myPersistentEntryPoints =
         new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
     Disposer.register(project, this);
-    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
@@ -124,7 +124,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   }
 
   public static EntryPointsManagerImpl getInstance(Project project) {
-    return ServiceManager.getService(project, EntryPointsManagerImpl.class);
+    return (EntryPointsManagerImpl)ServiceManager.getService(project, EntryPointsManager.class);
   }
 
   @Override
@@ -184,7 +184,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   }
 
   @Override
-  public void resolveEntryPoints(final RefManager manager) {
+  public void resolveEntryPoints(@NotNull final RefManager manager) {
     if (!myResolved) {
       myResolved = true;
       cleanup();
@@ -214,7 +214,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   }
 
   @Override
-  public void addEntryPoint(RefElement newEntryPoint, boolean isPersistent) {
+  public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (newEntryPoint instanceof RefClass) {
       RefClass refClass = (RefClass)newEntryPoint;
@@ -260,7 +260,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   }
 
   @Override
-  public void removeEntryPoint(RefElement anEntryPoint) {
+  public void removeEntryPoint(@NotNull RefElement anEntryPoint) {
     if (anEntryPoint instanceof RefClass) {
       RefClass refClass = (RefClass)anEntryPoint;
       if (!refClass.isInterface()) {
@@ -296,6 +296,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
   }
 
+  @NotNull
   @Override
   public RefElement[] getEntryPoints() {
     validateEntryPoints();
@@ -356,7 +357,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
   @Override
   public void configureAnnotations() {
-    final ArrayList<String> list = new ArrayList<String>(ADDITIONAL_ANNOTATIONS);
+    final List<String> list = new ArrayList<String>(ADDITIONAL_ANNOTATIONS);
     final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Do not check if annotated by", true);
     new DialogWrapper(myProject) {
       {
@@ -379,14 +380,13 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }.show();
   }
 
-  public static JButton createConfigureAnnotationsBtn(final JComponent parent) {
+  @Override
+  public JButton createConfigureAnnotationsBtn() {
     final JButton configureAnnotations = new JButton("Configure annotations...");
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
-        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-        EntryPointsManagerImpl.getInstance(project).configureAnnotations();
+        configureAnnotations();
       }
     });
     return configureAnnotations;
@@ -444,12 +444,15 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     myAddNonJavaEntries = addNonJavaEntries;
   }
 
-  public boolean isEntryPoint(@NotNull PsiModifierListOwner element) {
+  @Override
+  public boolean isEntryPoint(@NotNull PsiElement element) {
+    if (!(element instanceof PsiModifierListOwner)) return false;
+    PsiModifierListOwner owner = (PsiModifierListOwner)element;
     if (!ADDITIONAL_ANNOTATIONS.isEmpty() && ADDITIONAL_ANNOTATIONS.contains(Deprecated.class.getName()) &&
         element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated()) {
       return true;
     }
-    return AnnotationUtil.isAnnotated(element, ADDITIONAL_ANNOTATIONS) ||
-           AnnotationUtil.isAnnotated(element, getAdditionalAnnotations());
+    return AnnotationUtil.isAnnotated(owner, ADDITIONAL_ANNOTATIONS) ||
+           AnnotationUtil.isAnnotated(owner, getAdditionalAnnotations());
   }
 }

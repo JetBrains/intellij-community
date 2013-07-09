@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.emptyMethod;
 
-import com.intellij.ExtensionPoints;
+import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -51,7 +51,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class EmptyMethodInspection extends GlobalJavaInspectionTool {
+public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
@@ -166,7 +166,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     if (AnnotationUtil.isAnnotated(owner, EXCLUDE_ANNOS)) {
       return false;
     }
-    for (final Object extension : Extensions.getExtensions(ExtensionPoints.EMPTY_METHOD_TOOL)) {
+    for (final Object extension : Extensions.getExtensions(ToolExtensionPoints.EMPTY_METHOD_TOOL)) {
       if (((Condition<RefMethod>) extension).value(refMethod)) {
         return false;
       }
@@ -358,7 +358,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     }
 
     @Override
-    public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
        applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<PsiElement>(), null);
     }
 

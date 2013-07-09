@@ -91,7 +91,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @NotNull
-  UnusedDeclarationInspection getTool() {
+  private UnusedDeclarationInspection getTool() {
     return (UnusedDeclarationInspection)getToolWrapper().getTool();
   }
 
@@ -162,7 +162,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(final RefEntity[] refElements) {
+    protected boolean applyFix(@NotNull final RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
       final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
       for (RefEntity refElement : refElements) {
@@ -199,7 +199,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(RefEntity[] refElements) {
+    protected boolean applyFix(@NotNull RefEntity[] refElements) {
       final EntryPointsManager entryPointsManager = getEntryPointsManager();
       for (RefEntity refElement : refElements) {
         if (refElement instanceof RefElement) {
@@ -218,7 +218,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(RefEntity[] refElements) {
+    protected boolean applyFix(@NotNull RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
       List<RefElement> deletedRefs = new ArrayList<RefElement>(1);
       for (RefEntity refElement : refElements) {

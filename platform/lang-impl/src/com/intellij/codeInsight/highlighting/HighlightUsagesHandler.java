@@ -18,6 +18,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
@@ -37,7 +38,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -159,7 +159,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (text == null) return;
 
     if (editor instanceof EditorWindow) {
-      // highlight selection in the whole editor, not injected fragment only  
+      // highlight selection in the whole editor, not injected fragment only
       editor = ((EditorWindow)editor).getDelegate();
     }
 
@@ -286,7 +286,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return null;
     }
 
-    PsiElement identifier = getNameIdentifier(element);
+    PsiElement identifier = IdentifierUtil.getNameIdentifier(element);
     if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
       return injectedManager.injectedToHost(identifier, identifier.getTextRange());
     }
@@ -402,26 +402,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     int start = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getStartOffset());
     int end = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getEndOffset());
     return new TextRange(start, end);
-  }
-
-  @Nullable
-  public static PsiElement getNameIdentifier(@NotNull PsiElement element) {
-    if (element instanceof PsiNameIdentifierOwner) {
-      return ((PsiNameIdentifierOwner)element).getNameIdentifier();
-    }
-
-    if (element.isPhysical() &&
-        element instanceof PsiNamedElement &&
-        element.getContainingFile() != null &&
-        element.getTextRange() != null) {
-      // Quite hacky way to get name identifier. Depends on getTextOffset overriden properly.
-      final PsiElement potentialIdentifier = element.findElementAt(element.getTextOffset() - element.getTextRange().getStartOffset());
-      if (potentialIdentifier != null && Comparing.equal(potentialIdentifier.getText(), ((PsiNamedElement)element).getName(), false)) {
-        return potentialIdentifier;
-      }
-    }
-
-    return null;
   }
 
   public static void setStatusText(Project project, final String elementName, int refCount, boolean clearHighlights) {

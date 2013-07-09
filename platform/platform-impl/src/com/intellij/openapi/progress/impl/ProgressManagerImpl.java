@@ -47,7 +47,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ProgressManagerImpl extends ProgressManager implements Disposable{
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
-  private static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
@@ -212,35 +211,18 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     return ref.get();
   }
 
+  @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    ProgressIndicator oldIndicator = null;
-
-    boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());
-    if (set) {
-      progress.checkCanceled();
-      myThreadIndicator.set(progress);
-    }
-
     boolean modal = progress != null && progress.isModal();
     if (modal) myCurrentModalProgressCount.incrementAndGet();
     if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
     try {
-      process.run();
+      super.executeProcessUnderProgress(process, progress);
     }
     finally {
-      if (set) {
-        myThreadIndicator.set(oldIndicator);
-      }
-
-      if (modal) myCurrentModalProgressCount.decrementAndGet();
       if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
-
-      if (progress != null) {
-        synchronized (progress) {
-          progress.notifyAll();
-        }
-      }
+      if (modal) myCurrentModalProgressCount.decrementAndGet();
     }
   }
 

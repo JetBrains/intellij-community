@@ -163,4 +163,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   public String getDefaultGroupDisplayName() {
     return getGroupDisplayName();
   }
+
+  @Attribute("presentation")
+  public String presentation;
 }

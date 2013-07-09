@@ -20,17 +20,14 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
-import com.intellij.codeInspection.ex.InspectionPresentationProvider;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
-public class DummyEntryPointsTool extends UnusedDeclarationInspection implements InspectionPresentationProvider {
+public class DummyEntryPointsTool extends UnusedDeclarationInspection {
   public DummyEntryPointsTool() {
   }
 
@@ -63,11 +60,5 @@ public class DummyEntryPointsTool extends UnusedDeclarationInspection implements
   @NotNull
   public String getShortName() {
     return "";
-  }
-
-  @NotNull
-  @Override
-  public InspectionToolPresentation createPresentation(@NotNull InspectionToolWrapper toolWrapper) {
-    return new DummyEntryPointsPresentation(this, toolWrapper);
   }
 }

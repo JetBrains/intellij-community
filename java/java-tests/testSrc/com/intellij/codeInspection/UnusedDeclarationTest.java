@@ -28,6 +28,7 @@ import com.intellij.testFramework.InspectionTestCase;
  */
 public class UnusedDeclarationTest extends InspectionTestCase {
   private UnusedDeclarationInspection myTool;
+  private GlobalInspectionToolWrapper myToolWrapper;
 
   @Override
   protected String getTestDataPath() {
@@ -37,11 +38,12 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTool = new UnusedDeclarationInspection();
+    myToolWrapper = getUnusedDeclarationWrapper();
+    myTool = (UnusedDeclarationInspection)myToolWrapper.getTool();
   }
 
   private void doTest() {
-    doTest("deadCode/" + getTestName(true), new GlobalInspectionToolWrapper(myTool));
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
   }
 
   public void testSCR6067() {

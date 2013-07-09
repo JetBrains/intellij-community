@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeInspection.GlobalJavaInspectionContext;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -51,9 +52,9 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     }
 
     @Override
-    protected boolean applyFix(RefEntity[] refElements) {
+    protected boolean applyFix(@NotNull RefEntity[] refElements) {
       final EntryPointsManager entryPointsManager =
-        getContext().getExtension(GlobalJavaInspectionContextImpl.CONTEXT).getEntryPointsManager(getContext().getRefManager());
+        getContext().getExtension(GlobalJavaInspectionContext.CONTEXT).getEntryPointsManager(getContext().getRefManager());
       for (RefEntity refElement : refElements) {
         if (refElement instanceof RefElement) {
           entryPointsManager.removeEntryPoint((RefElement)refElement);

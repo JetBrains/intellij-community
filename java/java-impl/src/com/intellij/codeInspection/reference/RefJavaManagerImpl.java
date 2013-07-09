@@ -122,11 +122,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return file != null ? DEAD_CODE_TOOL.get(file, myRefManager).get() : null;
   }
 
-  public boolean isEntryPoint(PsiElement element) {
-    UnusedDeclarationInspection tool = getDeadCodeTool(element);
-    return tool != null && tool.isEntryPoint(element);
-  }
-
   @Override
   public RefPackage getDefaultPackage() {
     if (myDefaultPackage == null) {
@@ -349,7 +344,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   private static void appendPackageElement(final Element element, final String packageName) {
     final Element packageElement = new Element("package");
-    packageElement.addContent(packageName.length() > 0 ? packageName : InspectionsBundle.message("inspection.export.results.default"));
+    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.export.results.default") : packageName);
     element.addContent(packageElement);
   }
 

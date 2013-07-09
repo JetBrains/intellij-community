@@ -16,8 +16,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -99,7 +99,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (element != null && editor != null) {
-      PsiElement nameIdentifier = HighlightUsagesHandler.getNameIdentifier(element);
+      PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(element);
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
       } else {
