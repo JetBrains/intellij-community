@@ -1,8 +1,6 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -29,7 +27,6 @@ import com.jetbrains.python.psi.resolve.RootVisitorHost;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
-import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -358,43 +355,24 @@ class PyDocumentationBuilder {
   private static void addFormattedDocString(PsiElement element, @NotNull String docstring,
                                             ChainIterable<String> formattedOutput, ChainIterable<String> unformattedOutput) {
     final Project project = element.getProject();
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) module = ModuleManager.getInstance(project).getModules()[0];
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-    List<String> result = new ArrayList<String>();
+
+    List<String> formatted = PyStructuredDocstringFormatter.formatDocstring(element, docstring);
+    if (formatted != null) {
+      unformattedOutput.add(formatted);
+      return;
+    }
+
+    boolean isFirstLine;
+    final List<String> result = new ArrayList<String>();
     String[] lines = removeCommonIndentation(docstring);
-    String preparedDocstring = StringUtil.join(lines, "\n");
-    if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
-        DocStringUtil.isEpydocDocString(preparedDocstring)) {
-      final EpydocString epydocString = new EpydocString(preparedDocstring);
-      String formatted = EpydocRunner.formatDocstring(module, docstring);
-      if (formatted == null) {
-        formatted = epydocString.getDescription();
-      }
-      result.add(formatted);
-      result.add(formatStructuredDocString(epydocString));
-      unformattedOutput.add(result);
-      return;
-    }
-    else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
-      DocStringUtil.isSphinxDocString(preparedDocstring)) {
-      String formatted = ReSTRunner.formatDocstring(module, docstring);
-      if (formatted == null) {
-        formatted = new SphinxDocString(preparedDocstring).getDescription();
-      }
-      result.add(formatted);
-      unformattedOutput.add(result);
-      return;
-    }
-    boolean is_first;
 
     // reconstruct back, dropping first empty fragment as needed
-    is_first = true;
+    isFirstLine = true;
     int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
     for (String line : lines) {
-      if (is_first && ourSpacesPattern.matcher(line).matches()) continue; // ignore all initial whitespace
-      if (is_first) {
-        is_first = false;
+      if (isFirstLine && ourSpacesPattern.matcher(line).matches()) continue; // ignore all initial whitespace
+      if (isFirstLine) {
+        isFirstLine = false;
       }
       else {
         result.add(BR);
@@ -477,7 +455,7 @@ class PyDocumentationBuilder {
     }
   }
 
-  private static String[] removeCommonIndentation(String docstring) {
+  public static String[] removeCommonIndentation(String docstring) {
     // detect common indentation
     String[] lines = LineTokenizer.tokenize(docstring, false);
     boolean is_first = true;
@@ -511,82 +489,6 @@ class PyDocumentationBuilder {
       result.add(line);
     }
     return result.toArray(new String[result.size()]);
-  }
-
-  private static String formatStructuredDocString(StructuredDocString docString) {
-    StringBuilder result = new StringBuilder();
-
-    final String attributeDescription = docString.getAttributeDescription();
-    if (attributeDescription != null) {
-      result.append(attributeDescription);
-      final String attrType = docString.getParamType(null);
-      if (attrType != null) {
-        result.append(" <i>Type: ").append(attrType).append("</i>");
-      }
-    }
-
-    formatParameterDescriptions(docString, result, false);
-    formatParameterDescriptions(docString, result, true);
-
-    final String returnDescription = docString.getReturnDescription();
-    final String returnType = docString.getReturnType();
-    if (returnDescription != null || returnType != null) {
-      result.append("<br><b>Return value:</b><br>");
-      if (returnDescription != null) {
-        result.append(returnDescription);
-      }
-      if (returnType != null) {
-        result.append(" <i>Type: ").append(returnType).append("</i>");
-      }
-    }
-
-    final List<String> raisedException = docString.getRaisedExceptions();
-    if (raisedException.size() > 0) {
-      result.append("<br><b>Raises:</b><br>");
-      for (String s : raisedException) {
-        result.append("<b>").append(s).append("</b> - ").append(docString.getRaisedExceptionDescription(s)).append("<br>");
-      }
-    }
-
-    List<String> additionalTags = docString.getAdditionalTags();
-    if (!additionalTags.isEmpty()) {
-      result.append("<br/><br/><b>Additional:</b><br/>");
-      result.append("<table>");
-      for (String tagName : additionalTags) {
-        final List<Substring> args = docString.getTagArguments(tagName);
-        for (Substring arg : args) {
-          final String s = arg.toString();
-          result.append("<tr><td align=\"right\"><b>").append(tagName);
-          result.append(" ").append(s).append(":</b>");
-          result.append("</td><td>").append(docString.getTagValue(tagName, s)).append("</td></tr>");
-        }
-        result.append("</table>");
-      }
-    }
-    return result.toString();
-  }
-
-  private static void formatParameterDescriptions(StructuredDocString docString,
-                                                  StringBuilder result,
-                                                  boolean keyword) {
-    List<String> parameters = keyword ? docString.getKeywordArguments() : docString.getParameters();
-    if (parameters.size() > 0) {
-      result.append("<br><b>").append(keyword ? "Keyword arguments:" : "Parameters").append("</b><br>");
-      for (String parameter : parameters) {
-        final String description = keyword ? docString.getKeywordArgumentDescription(parameter) : docString.getParamDescription(parameter);
-        result.append("<b>");
-        result.append(parameter);
-        result.append("</b>: ");
-        if (description != null) {
-          result.append(description);
-        }
-        final String paramType = docString.getParamType(parameter);
-        if (paramType != null) {
-          result.append(" <i>Type: ").append(paramType).append("</i>");
-        }
-        result.append("<br>");
-      }
-    }
   }
 
   private void addModulePath(PyFile followed) {
