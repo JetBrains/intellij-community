@@ -6,8 +6,6 @@ import org.junit.Test;
 import java.io.IOException;
 
 public class SetterTestCase extends LombokParsingTestCase {
-  public SetterTestCase() {
-  }
 
   @Test
   public void testSetterAccessLevel() throws IOException {
@@ -20,7 +18,17 @@ public class SetterTestCase extends LombokParsingTestCase {
   }
 
   @Test
+  public void testSetterDeprecated() throws IOException {
+    doTest();
+  }
+
+  @Test
   public void testSetterOnClass() throws IOException {
+    doTest();
+  }
+
+  @Test
+  public void testSetterOnMethodOnParam() throws IOException {
     doTest();
   }
 

@@ -1,15 +1,7 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -73,8 +65,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    final String methodVisibity = LombokProcessorUtil.getMethodModifier(psiAnnotation);
-    return null != methodVisibity;
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
+    return null != methodVisibility;
   }
 
   protected boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
@@ -88,7 +80,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
       for (String methodName : methodNames) {
         for (PsiMethod classMethod : classMethods) {
-          if (classMethod.getName().equals(methodName) && classMethod.getParameterList().getParametersCount() == 1) {
+          if (classMethod.getName().equalsIgnoreCase(methodName) && (classMethod.isVarArgs() || classMethod.getParameterList().getParametersCount() == 1)) {
             final String setterMethodName = getSetterName(psiField, isBoolean);
 
             builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
