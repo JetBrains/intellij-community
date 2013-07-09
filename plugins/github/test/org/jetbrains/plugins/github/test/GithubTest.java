@@ -37,7 +37,6 @@ import git4idea.test.TestDialogManager;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import static org.junit.Assume.assumeNotNull;
@@ -63,6 +62,7 @@ public abstract class GithubTest extends UsefulTestCase {
   @NotNull protected VirtualFile myProjectRoot;
   @NotNull protected GitVcsSettings myGitSettings;
   @NotNull protected GithubSettings myGitHubSettings;
+  @NotNull private GitHttpAuthTestService myHttpAuthService;
 
   @NotNull protected TestDialogManager myDialogManager;
   @NotNull protected TestNotificator myNotificator;
@@ -163,10 +163,15 @@ public abstract class GithubTest extends UsefulTestCase {
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
+    myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
 
   @Override
   protected void tearDown() throws Exception {
+    myHttpAuthService.cleanup();
+    myDialogManager.cleanup();
+    myNotificator.cleanup();
+
     myProjectFixture.tearDown();
     super.tearDown();
   }

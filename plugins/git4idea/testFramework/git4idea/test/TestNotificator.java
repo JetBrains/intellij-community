@@ -78,4 +78,7 @@ public class TestNotificator extends Notificator {
     myLastNotification = createNotification(notificationGroup, title, message, type, listener);
   }
 
+  public void cleanup() {
+    myLastNotification = null;
+  }
 }
