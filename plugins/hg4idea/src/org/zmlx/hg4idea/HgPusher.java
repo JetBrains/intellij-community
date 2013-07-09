@@ -88,7 +88,7 @@ public class HgPusher {
                     push(myProject, pushCommand.get());
                   }
                 }
-              };
+              }.queue();
             }
           }
         });
