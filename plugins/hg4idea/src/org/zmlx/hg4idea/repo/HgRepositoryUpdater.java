@@ -41,7 +41,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final QueueProcessor<Object> myUpdateQueue;
-  @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
   @Nullable private final VirtualFile myBranchHeadsDir;
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
   @NotNull private final QueueProcessor<Object> myUpdateConfigQueue;
@@ -123,7 +122,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
 
     if (branchHeadsChanged || branchFileChanged || mergeFileChanged || bookmarksFileChanged || currentBookmarkFileChanged) {
-      myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
+      myUpdateQueue.add(Void.TYPE);
     }
     if (configHgrcChanged) {
       myUpdateConfigQueue.add(Void.TYPE);
