@@ -736,26 +736,29 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private String makeDescription() {
       StringBuilder desc = new StringBuilder();
-      desc.append("<html>");
-      desc.append("<table>");
-      desc.append("<tr>");
-      desc.append("<td nowrap>");
-      desc.append("<table>");
-      desc.append("<tr>");
-      desc.append("<td nowrap>Project:</td>");
-      desc.append("<td nowrap>").append(myMavenProject.getMavenId()).append("</td>");
-      desc.append("</tr>");
-      desc.append("<tr>");
-      desc.append("<td nowrap>Location:</td>");
-      desc.append("<td nowrap>").append(myMavenProject.getPath()).append("</td>");
-      desc.append("</tr>");
-      desc.append("</table>");
-      desc.append("</td>");
-      desc.append("</tr>");
+      desc.append("<html>" +
+                  "<table>" +
+                  "<tr>" +
+                  "<td nowrap>" +
+                  "<table>" +
+                  "<tr>" +
+                  "<td nowrap>Project:</td>" +
+                  "<td nowrap>").append(myMavenProject.getMavenId())
+        .append("</td>" +
+                "</tr>" +
+                "<tr>" +
+                "<td nowrap>Location:</td>" +
+                "<td nowrap>").append(myMavenProject.getPath())
+        .append("</td>" +
+                "</tr>" +
+                "</table>" +
+                "</td>" +
+                "</tr>");
+
       appendProblems(desc);
 
-      desc.append("</table>");
-      desc.append("</html>");
+      desc.append("</table></html>");
+
       return desc.toString();
     }
 
@@ -763,9 +766,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       List<MavenProjectProblem> problems = myMavenProject.getProblems();
       if (problems.isEmpty()) return;
 
-      desc.append("<tr>");
-      desc.append("<td nowrap>");
-      desc.append("<table>");
+      desc.append("<tr>" +
+                  "<td nowrap>" +
+                  "<table>");
+
       boolean first = true;
       for (MavenProjectProblem each : problems) {
         desc.append("<tr>");
@@ -780,9 +784,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         desc.append("<td nowrap valign=top>").append(wrappedText(each)).append("</td>");
         desc.append("</tr>");
       }
-      desc.append("</table>");
-      desc.append("</td>");
-      desc.append("</tr>");
+      desc.append("</table>" +
+                  "</td>" +
+                  "</tr>");
     }
 
     private String wrappedText(MavenProjectProblem each) {
