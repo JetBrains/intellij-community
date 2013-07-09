@@ -47,7 +47,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
           if (!endsWithSlash)
             injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
         }
-        if (endsWithSlash) {
+        if (endsWithSlash && !trimmedString.endsWith("\\")) {
           endsWithSlash = false;
           injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
                                             TextRange.create(start, getEndOffset(currentPosition, string, maxPosition)),  null, null);
