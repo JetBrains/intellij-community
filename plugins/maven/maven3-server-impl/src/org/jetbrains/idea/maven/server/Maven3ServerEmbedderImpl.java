@@ -624,7 +624,18 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   public void resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
           throws ArtifactResolutionException, ArtifactNotFoundException {
-      getComponent(ArtifactResolver.class).resolve(artifact, repos, myLocalRepository);
+
+    MavenExecutionRequest request = new DefaultMavenExecutionRequest();
+    request.setRemoteRepositories(repos);
+    try {
+      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(request, myMavenSettings);
+      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(request);
+    }
+    catch (MavenExecutionRequestPopulationException e) {
+      throw new RuntimeException(e);
+    }
+
+    getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
   }
 
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
