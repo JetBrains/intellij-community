@@ -137,7 +137,7 @@ public class GithubUrlUtil {
     }
     final String username = remoteUrl.substring(index2 + 1, index1);
     final String reponame = remoteUrl.substring(index1 + 1);
-    if (username.length() == 0 || reponame.length() == 0) {
+    if (username.isEmpty() || reponame.isEmpty()) {
       return null;
     }
     return new GithubUserAndRepository(username, reponame);
