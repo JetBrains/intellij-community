@@ -22,9 +22,10 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.ui.EditorTextField;
 
 public class FileEditorRule implements GetDataRule {
+  @Override
   public Object getData(DataProvider dataProvider) {
     final Editor editor = (Editor)dataProvider.getData(PlatformDataKeys.EDITOR.getName());
-    if (editor == null) {
+    if (editor == null || editor.isDisposed()) {
       return null;
     }
 
