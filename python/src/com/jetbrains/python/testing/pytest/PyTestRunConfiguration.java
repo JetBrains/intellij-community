@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -36,12 +37,12 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
   private static final String KEYWORDS_FIELD = "keywords";
   private static final String PARAMS_FIELD = "params";
 
-  public PyTestRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
-    super(module, factory, name);
+  public PyTestRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
+    super(new RunConfigurationModule(project), factory, name);
   }
 
   protected ModuleBasedConfiguration createInstance() {
-    return new PyTestRunConfiguration(getName(), getConfigurationModule(), getFactory());
+    return new PyTestRunConfiguration(getName(), getProject(), getFactory());
   }
 
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {

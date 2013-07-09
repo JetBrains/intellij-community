@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -26,15 +27,15 @@ public class PythonUnitTestRunConfiguration extends
   private String myParams = "";
   private boolean useParam = false;
 
-  public PythonUnitTestRunConfiguration(RunConfigurationModule module,
+  public PythonUnitTestRunConfiguration(Project project,
                                         ConfigurationFactory configurationFactory,
                                         String name) {
-    super(module, configurationFactory, name);
+    super(new RunConfigurationModule(project), configurationFactory, name);
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new PythonUnitTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
+    return new PythonUnitTestRunConfiguration(getProject(), getFactory(), getName());
   }
 
   @Override

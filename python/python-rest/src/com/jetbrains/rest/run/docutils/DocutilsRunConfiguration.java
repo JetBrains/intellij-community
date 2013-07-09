@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.rest.run.RestConfigurationEditor;
 import com.jetbrains.rest.run.RestRunConfiguration;
@@ -17,14 +18,14 @@ import org.jetbrains.annotations.NotNull;
 public class DocutilsRunConfiguration extends RestRunConfiguration {
 
   public DocutilsRunConfiguration(final String name,
-                                  final RunConfigurationModule module,
+                                  final Project project,
                                   final ConfigurationFactory factory) {
-    super(name, module, factory);
+    super(name, new RunConfigurationModule(project), factory);
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new DocutilsRunConfiguration(getName(), getConfigurationModule(), getFactory());
+    return new DocutilsRunConfiguration(getName(), getProject(), getFactory());
   }
 
   @Override

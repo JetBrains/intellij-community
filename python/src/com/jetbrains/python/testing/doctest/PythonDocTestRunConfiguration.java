@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
@@ -18,15 +19,15 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
                                           implements PythonDocTestRunConfigurationParams {
   protected String myPluralTitle = "Doctests";
   protected String myTitle = "Doctest";
-  public PythonDocTestRunConfiguration(RunConfigurationModule module,
+  public PythonDocTestRunConfiguration(Project project,
                                        ConfigurationFactory configurationFactory,
                                        String name) {
-    super(module, configurationFactory, name);
+    super(new RunConfigurationModule(project), configurationFactory, name);
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new PythonDocTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
+    return new PythonDocTestRunConfiguration(getProject(), getFactory(), getName());
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -22,15 +23,15 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
                                           implements PythonAtTestRunConfigurationParams {
   protected String myTitle = "Attest";
   protected String myPluralTitle = "Attests";
-  public PythonAtTestRunConfiguration(RunConfigurationModule module,
+  public PythonAtTestRunConfiguration(Project project,
                                       ConfigurationFactory configurationFactory,
                                       String name) {
-    super(module, configurationFactory, name);
+    super(new RunConfigurationModule(project), configurationFactory, name);
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new PythonAtTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
+    return new PythonAtTestRunConfiguration(getProject(), getFactory(), getName());
   }
 
   @Override

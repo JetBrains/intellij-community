@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.rest.run.RestConfigurationEditor;
 import com.jetbrains.rest.run.RestRunConfiguration;
@@ -16,14 +17,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SphinxRunConfiguration extends RestRunConfiguration {
   public SphinxRunConfiguration(final String name,
-                                final RunConfigurationModule module,
+                                final Project project,
                                 final ConfigurationFactory factory) {
-    super(name, module, factory);
+    super(name, new RunConfigurationModule(project), factory);
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new SphinxRunConfiguration(getName(), getConfigurationModule(), getFactory());
+    return new SphinxRunConfiguration(getName(), getProject(), getFactory());
   }
 
   @Override

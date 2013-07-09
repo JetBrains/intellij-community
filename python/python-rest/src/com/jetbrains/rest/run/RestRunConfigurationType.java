@@ -63,7 +63,7 @@ public class RestRunConfigurationType implements ConfigurationType {
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new DocutilsRunConfiguration("", new RunConfigurationModule(project), this);
+      return new DocutilsRunConfiguration("", project, this);
     }
   }
 
@@ -73,7 +73,7 @@ public class RestRunConfigurationType implements ConfigurationType {
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new SphinxRunConfiguration("", new RunConfigurationModule(project), this);
+      return new SphinxRunConfiguration("", project, this);
     }
   }
 }

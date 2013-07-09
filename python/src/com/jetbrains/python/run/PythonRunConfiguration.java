@@ -8,6 +8,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -37,13 +38,13 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private String myScriptName;
   private String myScriptParameters;
 
-  protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
-    super(name, module, configurationFactory);
+  protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory, String name) {
+    super(name, new RunConfigurationModule(project), configurationFactory);
     setUnbufferedEnv();
   }
 
   protected ModuleBasedConfiguration createInstance() {
-    return new PythonRunConfiguration(getConfigurationModule(), getFactory(), getName());
+    return new PythonRunConfiguration(getProject(), getFactory(), getName());
   }
 
   @Override

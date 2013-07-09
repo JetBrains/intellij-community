@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -27,15 +28,15 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   protected String myPluralTitle = "Nosetests";
   private boolean useParam = false;
 
-  public PythonNoseTestRunConfiguration(RunConfigurationModule module,
+  public PythonNoseTestRunConfiguration(Project project,
                                         ConfigurationFactory configurationFactory,
                                         String name) {
-    super(module, configurationFactory, name);
+    super(new RunConfigurationModule(project), configurationFactory, name);
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new PythonNoseTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
+    return new PythonNoseTestRunConfiguration(getProject(), getFactory(), getName());
   }
 
   @Override
