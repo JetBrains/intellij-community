@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -49,6 +50,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -472,6 +474,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myContent = content;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
@@ -507,6 +510,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       return getVirtualFile().getModificationStamp();
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "VirtualFileContent{size=" + getVirtualFile().getLength() + "}";
@@ -514,6 +518,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private class DocumentContent implements Content {
+    @NonNls
     @Override
     public String toString() {
       final Document document = getDocument();
@@ -556,11 +561,16 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     @Override
     public CharSequence getText() {
-      if (myContent == null) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-        myContent = myFile.calcTreeElement().getText();
+      String content = myContent;
+      if (content == null) {
+        myContent = content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            return myFile.calcTreeElement().getText();
+          }
+        });
       }
-      return myContent;
+      return content;
     }
 
     @Override
