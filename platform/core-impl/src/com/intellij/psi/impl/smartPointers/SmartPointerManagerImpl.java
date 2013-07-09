@@ -43,13 +43,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Key<Boolean> BELTS_ARE_FASTEN_KEY = Key.create("BELTS_ARE_FASTEN_KEY");
 
   private final Project myProject;
+  private final Object lock = new Object();
 
   public SmartPointerManagerImpl(Project project) {
     myProject = project;
   }
 
   public void fastenBelts(@NotNull PsiFile file, int offset, @Nullable RangeMarker[] cachedRangeMarkers) {
-    synchronized (file) {
+    synchronized (lock) {
       if (areBeltsFastened(file)) return;
 
       file.putUserData(BELTS_ARE_FASTEN_KEY, Boolean.TRUE);
@@ -82,7 +83,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   public void unfastenBelts(@NotNull PsiFile file, int offset) {
-    synchronized (file) {
+    synchronized (lock) {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
       file.putUserData(BELTS_ARE_FASTEN_KEY, null);
 
@@ -154,9 +155,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return pointer;
   }
 
-  private static <E extends PsiElement> void initPointer(@NotNull SmartPointerEx<E> pointer, PsiFile containingFile) {
+  private <E extends PsiElement> void initPointer(@NotNull SmartPointerEx<E> pointer, PsiFile containingFile) {
     if (containingFile == null) return;
-    synchronized (containingFile) {
+    synchronized (lock) {
       List<SmartPointerEx> pointers = getPointers(containingFile);
       if (pointers == null) {
         pointers = new UnsafeWeakList<SmartPointerEx>(); // we synchronise access anyway by containingFile
