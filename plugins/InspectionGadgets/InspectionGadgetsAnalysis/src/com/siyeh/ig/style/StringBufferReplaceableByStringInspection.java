@@ -396,14 +396,14 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
   private static class ReplaceableByStringVisitor extends JavaRecursiveElementVisitor {
 
-    private final PsiCodeBlock myCodeBlock;
+    private final PsiElement myParent;
     private PsiVariable myVariable;
     private boolean myReplaceable = true;
     private boolean myToStringFound = false;
 
     public ReplaceableByStringVisitor(@NotNull PsiVariable variable) {
       myVariable = variable;
-      myCodeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      myParent = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiIfStatement.class, PsiLoopStatement.class);
     }
 
     public boolean isReplaceable() {
@@ -460,8 +460,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         myReplaceable = false;
         return;
       }
-      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
-      if (!myCodeBlock.equals(codeBlock)) {
+      final PsiElement element = PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, PsiIfStatement.class, PsiLoopStatement.class);
+      if (!myParent.equals(element)) {
         myReplaceable = false;
         return;
       }
