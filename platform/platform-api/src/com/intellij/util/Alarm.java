@@ -338,6 +338,8 @@ public class Alarm implements Disposable {
       synchronized (LOCK) {
         if (myFuture != null) {
           myFuture.cancel(false);
+          // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
+          ((ScheduledThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)myFuture);
         }
         myTask = null;
       }
