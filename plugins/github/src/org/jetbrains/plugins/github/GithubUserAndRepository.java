@@ -43,4 +43,22 @@ public class GithubUserAndRepository {
   public String toString() {
     return myUserName + '/' + myRepositoryName;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null || !(obj instanceof GithubUserAndRepository)) {
+      return false;
+    }
+
+    GithubUserAndRepository that = (GithubUserAndRepository)obj;
+    return myUserName.equals(that.getUserName()) && myRepositoryName.equals(that.getRepositoryName());
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * myUserName.hashCode() + myRepositoryName.hashCode();
+  }
 }

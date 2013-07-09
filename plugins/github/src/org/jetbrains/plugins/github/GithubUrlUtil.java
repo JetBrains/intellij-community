@@ -27,7 +27,7 @@ public class GithubUrlUtil {
   public static String removeProtocolPrefix(String url) {
     int index = url.indexOf('@');
     if (index != -1) {
-      return url.substring(index + 1);
+      return url.substring(index + 1).replace(':', '/');
     }
     index = url.indexOf("://");
     if (index != -1) {
@@ -81,11 +81,11 @@ public class GithubUrlUtil {
   /*
      All API access is over HTTPS, and accessed from the api.github.com domain
      (or through yourdomain.com/api/v3/ for enterprise).
-     http://developer.github.com/v3/
+     http://developer.github.com/api/v3/
     */
   @NotNull
-  private static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
-    String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings));
+  static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
+    String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings.toLowerCase()));
     final String API_PREFIX = "api.";
     final String ENTERPRISE_API_SUFFIX = "/api/v3";
 
@@ -119,11 +119,13 @@ public class GithubUrlUtil {
   }
 
   /**
+   * assumed isGithubUrl(remoteUrl)
+   *
    * git@github.com:user/repo.git -> user/repo
    */
   @Nullable
   public static GithubUserAndRepository getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
-    remoteUrl = removeEndingDotGit(remoteUrl);
+    remoteUrl = removeProtocolPrefix(removeEndingDotGit(remoteUrl));
     int index1 = remoteUrl.lastIndexOf('/');
     if (index1 == -1) {
       return null;
@@ -133,29 +135,31 @@ public class GithubUrlUtil {
     if (index2 == -1) {
       return null;
     }
-    return new GithubUserAndRepository(remoteUrl.substring(index2 + 1, index1), remoteUrl.substring(index1 + 1));
+    final String username = remoteUrl.substring(index2 + 1, index1);
+    final String reponame = remoteUrl.substring(index1 + 1);
+    if (username.length() == 0 || reponame.length() == 0) {
+      return null;
+    }
+    return new GithubUserAndRepository(username, reponame);
   }
 
   /**
+   * assumed isGithubUrl(remoteUrl)
+   *
    * git@github.com:user/repo -> https://github.com/user/repo
    */
   @Nullable
   public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
-    remoteUrl = removeEndingDotGit(remoteUrl);
-    if (remoteUrl.startsWith("https://")) {
-      return remoteUrl;
+    return makeGithubRepoUrlFromRemoteUrl(remoteUrl, getGitHost());
+  }
+
+  @Nullable
+  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
+    GithubUserAndRepository repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    if (repo == null) {
+      return null;
     }
-    if (remoteUrl.startsWith("http://")) {
-      return "https" + remoteUrl.substring(4);
-    }
-    if (remoteUrl.startsWith("git://")) {
-      return "https" + remoteUrl.substring(3);
-    }
-    if (remoteUrl.startsWith("git@")) {
-      return "https://" + remoteUrl.substring(4).replace(':', '/');
-    }
-    GithubUtil.LOG.error("Invalid remote GitHub url: " + remoteUrl);
-    return null;
+    return host + '/' + repo.getUserName() + '/' + repo.getRepositoryName();
   }
 
   @NotNull
