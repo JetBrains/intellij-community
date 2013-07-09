@@ -22,6 +22,7 @@
 
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.ui.GraphicsUtil;
@@ -50,14 +51,21 @@ public class JBTerminalPanel extends TerminalPanel {
     myColorScheme = scheme;
 
     styleState.setDefaultStyle(new TextStyle(myColorScheme.getDefaultForeground(), myColorScheme.getDefaultBackground()));
+
+    setSelectionColor(new TextStyle(myColorScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR),
+                                    myColorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
   }
 
   protected Font createFont() {
     Font normalFont = Font.decode(myColorScheme.getConsoleFontName());
+    //Font normalFont = null;
     if (normalFont == null) {
       return super.createFont();
     }
-    return normalFont;
+    else {
+      normalFont = normalFont.deriveFont(myColorScheme.getConsoleFontSize());
+      return normalFont;
+    }
   }
 
   protected void setupAntialiasing(Graphics graphics, boolean antialiasing) {
@@ -95,3 +103,4 @@ public class JBTerminalPanel extends TerminalPanel {
     return (String)contents.getTransferData(DataFlavor.stringFlavor);
   }
 }
+
