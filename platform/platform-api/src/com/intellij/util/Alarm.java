@@ -381,6 +381,7 @@ public class Alarm implements Disposable {
       isShuttingDown.set(myDisposed);
     }
 
+    @NotNull
     @Override
     public List<Runnable> shutdownNow() {
       throw new UnsupportedOperationException();
