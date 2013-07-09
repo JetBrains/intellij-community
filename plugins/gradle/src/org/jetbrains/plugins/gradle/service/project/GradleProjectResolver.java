@@ -374,7 +374,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       libraryData = ideProject.createChild(ProjectKeys.LIBRARY, library);
     }
 
-    return new LibraryDependencyData(ownerModule.getData(), libraryData.getData());
+    return new LibraryDependencyData(ownerModule.getData(), libraryData.getData(), LibraryLevel.PROJECT);
   }
 
   @Nullable
