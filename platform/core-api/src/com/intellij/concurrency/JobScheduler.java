@@ -21,6 +21,8 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
@@ -29,7 +31,9 @@ public abstract class JobScheduler {
 
   static {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-      public Thread newThread(final Runnable r) {
+      @NotNull
+      @Override
+      public Thread newThread(@NotNull final Runnable r) {
         final Thread thread = new Thread(r, "Periodic tasks thread");
         thread.setDaemon(true);
         thread.setPriority(Thread.NORM_PRIORITY);
@@ -62,6 +66,7 @@ public abstract class JobScheduler {
     return ServiceManager.getService(JobScheduler.class);
   }
 
+  @NotNull
   public static ScheduledExecutorService getScheduler() {
     return ourScheduledExecutorService;
   }
@@ -85,12 +90,12 @@ public abstract class JobScheduler {
     }
 
     @Override
-    public long getDelay(TimeUnit unit) {
+    public long getDelay(@NotNull TimeUnit unit) {
       return task.getDelay(unit);
     }
 
     @Override
-    public int compareTo(Delayed o) {
+    public int compareTo(@NotNull Delayed o) {
       return task.compareTo(o);
     }
 
@@ -102,7 +107,7 @@ public abstract class JobScheduler {
       } finally {
         long executionTime = System.currentTimeMillis() - started;
         if (executionTime > limit) {
-          String msg = limit + " ms execution limit failed for:" + traceRunnableOrCallable + "," + executionTime;
+          @NonNls String msg = limit + " ms execution limit failed for:" + traceRunnableOrCallable + "," + executionTime;
           LOG.info(msg);
         }
       }
@@ -129,7 +134,7 @@ public abstract class JobScheduler {
     }
 
     @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public V get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       return task.get(timeout, unit);
     }
   }
