@@ -62,9 +62,8 @@ public class HgConfigTest extends HgPlatformTest {
                               "\npath3=" + path3);
     updateRepoConfig(myProject, myChildRepo);
     final Collection<String> paths = HgUtil.getRepositoryPaths(myProject, myChildRepo);
-    final Collection<String> expectedPaths = Arrays.asList(myRepository.getPath(), path1, path2, path3);
-    TestRepositoryUtil.assertEqualCollections(expectedPaths,
-                                              paths);
+    final Collection<String> expectedPaths = Arrays.asList(FileUtil.toSystemDependentName(myRepository.getPath()), path1, path2, path3);
+    TestRepositoryUtil.assertEqualCollections(paths,expectedPaths);
   }
 
   public void testLargeExtensionInClonedRepo() throws IOException {
