@@ -38,7 +38,7 @@ public class KeyProcessorContext {
   private KeyEvent myInputEvent;
 
   @NotNull
-  public List<AnAction> getActions() {
+  List<AnAction> getActions() {
     return myActions;
   }
 
