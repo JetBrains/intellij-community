@@ -33,6 +33,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,8 +42,10 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -73,12 +78,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
+import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.STATIC;
 import static org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.isCall;
@@ -94,6 +103,13 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   public boolean myHighlightIfGroovyObjectOverridden = true;
   public boolean myHighlightIfMissingMethodsDeclared = true;
   public boolean myHighlightInnerClasses = true;
+
+  private static final LightCacheKey<Map<String, Boolean>> GROOVY_OBJECT_METHODS_CACHE = new LightCacheKey<Map<String, Boolean>>() {
+    @Override
+    protected long getModificationCount(PsiElement holder) {
+      return holder.getManager().getModificationTracker().getModificationCount();
+    }
+  };
 
   private static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {
     if (GrHighlightUtil.isDeclarationAssignment(referenceExpression)) return false;
@@ -208,7 +224,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
           final PsiClass outerClass = clazz.getContainingClass();
           if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
               outerClass != null &&
-              !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
+              !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
+              !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
             String qname = clazz.getQualifiedName();
             LOG.assertTrue(qname != null, clazz.getText());
             return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
@@ -218,6 +235,17 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     return null;
+  }
+
+  private static boolean hasEnclosingInstanceInArgList(GrArgumentList list, PsiClass enclosingClass) {
+    if (PsiImplUtil.hasNamedArguments(list)) return false;
+
+    GrExpression[] args = list.getExpressionArguments();
+    if (args.length == 0) return false;
+
+    PsiType type = args[0].getType();
+    PsiClassType enclosingClassType = JavaPsiFacade.getElementFactory(list.getProject()).createType(enclosingClass);
+    return TypesUtil.isAssignableByMethodCallConversion(enclosingClassType, type, list);
   }
 
   @Nullable
@@ -231,9 +259,12 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     if (resolveResult.getElement() != null) {
       if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
 
-      if (isStaticOk(resolveResult)) return null;
-      String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
-      return createAnnotationForRef(ref, inStaticContext, message);
+      if (!isStaticOk(resolveResult)) {
+        String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
+        return createAnnotationForRef(ref, inStaticContext, message);
+      }
+
+      return null;
     }
 
     if (ResolveUtil.isKeyOfMap(ref) || isClassReference(ref)) {
@@ -305,16 +336,98 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   }
 
   private static boolean areGroovyObjectMethodsOverridden(GrReferenceExpression ref) {
+    PsiMethod patternMethod = findPatternMethod(ref);
+    if (patternMethod == null) return false;
+
+    GrExpression qualifier = ref.getQualifier();
+    if (qualifier != null) {
+      return checkGroovyObjectMethodsByQualifier(ref, patternMethod);
+    }
+    else {
+      return checkMethodInPlace(ref, patternMethod);
+    }
+  }
+
+  private static boolean checkMethodInPlace(GrReferenceExpression ref, PsiMethod patternMethod) {
+    PsiElement container = PsiTreeUtil.getParentOfType(ref, GrClosableBlock.class, PsiMember.class, PsiFile.class);
+    assert container != null;
+    return checkContainer(patternMethod, container);
+  }
+
+  private static boolean checkContainer(@NotNull final PsiMethod patternMethod, @NotNull PsiElement container) {
+    final String name = patternMethod.getName();
+
+    Map<String, Boolean> cached = GROOVY_OBJECT_METHODS_CACHE.getCachedValue(container);
+    if (cached == null) {
+      GROOVY_OBJECT_METHODS_CACHE.putCachedValue(container, cached = ContainerUtil.<String, Boolean>newConcurrentMap());
+    }
+
+    Boolean cachedResult = cached.get(name);
+    if (cachedResult != null) {
+      return cachedResult.booleanValue();
+    }
+
+    boolean result = doCheckContainer(patternMethod, container, name);
+    cached.put(name, result);
+
+    return result;
+  }
+
+  private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
+    final Ref<Boolean> result = new Ref<Boolean>(false);
+    PsiScopeProcessor processor = new PsiScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+        if (element instanceof PsiMethod &&
+            name.equals(((PsiMethod)element).getName()) &&
+            patternMethod.getParameterList().getParametersCount() == ((PsiMethod)element).getParameterList().getParametersCount() &&
+            validateMethod((PsiMethod)element, patternMethod)) {
+          result.set(true);
+          return false;
+        }
+        return true;
+      }
+
+      @Nullable
+      @Override
+      public <T> T getHint(@NotNull Key<T> hintKey) {
+        return null;
+      }
+
+      @Override
+      public void handleEvent(Event event, @Nullable Object associated) {
+      }
+    };
+    ResolveUtil.treeWalkUp(container, processor, true);
+    return result.get();
+  }
+
+  private static boolean checkGroovyObjectMethodsByQualifier(GrReferenceExpression ref, PsiMethod patternMethod) {
     PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
     if (!(qualifierType instanceof PsiClassType)) return false;
 
     PsiClass resolved = ((PsiClassType)qualifierType).resolve();
     if (resolved == null) return false;
 
-    PsiClass groovyObject =
-      JavaPsiFacade.getInstance(ref.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT, ref.getResolveScope());
-    if (groovyObject == null) return false;
+    PsiMethod found = resolved.findMethodBySignature(patternMethod, true);
+    if (found == null) return false;
 
+    return validateMethod(found, patternMethod);
+  }
+
+  private static boolean validateMethod(PsiMethod found, PsiMethod patternMethod) {
+    PsiClass aClass = found.getContainingClass();
+    if (aClass == null) return false;
+    String qname = aClass.getQualifiedName();
+    if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname)) return false;
+    if (GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) return false;
+    return true;
+  }
+
+  private static PsiMethod findPatternMethod(GrReferenceExpression ref) {
+    PsiClass groovyObject = JavaPsiFacade.getInstance(ref.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT,
+                                                                                  ref.getResolveScope());
+    if (groovyObject == null) return null;
 
     String methodName;
     if (ref.getParent() instanceof GrCall) {
@@ -328,19 +441,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     PsiMethod[] patternMethods = groovyObject.findMethodsByName(methodName, false);
-    if (patternMethods.length != 1) return false;
-
-    PsiMethod patternMethod = patternMethods[0];
-    PsiMethod found = resolved.findMethodBySignature(patternMethod, true);
-    if (found == null) return false;
-
-    PsiClass aClass = found.getContainingClass();
-    if (aClass == null) return false;
-    String qname = aClass.getQualifiedName();
-    if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname)) return false;
-    if (GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) return false;
-
-    return true;
+    if (patternMethods.length != 1) return null;
+    return patternMethods[0];
   }
 
   private static void addEmptyIntentionIfNeeded(@Nullable HighlightInfo info) {

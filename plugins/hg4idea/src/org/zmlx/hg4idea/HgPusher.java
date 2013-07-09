@@ -16,6 +16,8 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,13 +81,17 @@ public class HgPusher {
             if (dialog.isOK()) {
               dialog.rememberSettings();
               pushCommand.set(preparePushCommand(myProject, dialog));
+              new Task.Backgroundable(myProject, "Pushing...", false) {
+                @Override
+                public void run(@NotNull ProgressIndicator indicator) {
+                  if (pushCommand.get() != null) {
+                    push(myProject, pushCommand.get());
+                  }
+                }
+              }.queue();
             }
           }
         });
-
-        if (pushCommand.get() != null) {
-          push(myProject, pushCommand.get());
-        }
       }
     });
   }

@@ -59,7 +59,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     return myText;
   }
 
-  public void setText(final String text) {
+  public void setText(@NotNull String text) {
     myText = text;
   }
 
@@ -69,6 +69,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     return true;
   }
 
+  @NotNull
   public QuickFix getFix() {
     return myFix;
   }
@@ -87,8 +88,8 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected boolean applyFix(RefEntity[] refElements) {
-    throw new UnsupportedOperationException("");
+  protected boolean applyFix(@NotNull RefEntity[] refElements) {
+    return true;
   }
 
   @Override

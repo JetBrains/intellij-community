@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
@@ -68,11 +69,12 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
-    final List<CommonProblemDescriptor> descriptions =
-      ProgressManager.getInstance().runProcess(new Computable<List<CommonProblemDescriptor>>() {
+    final List<ProblemDescriptor> descriptions =
+      ProgressManager.getInstance().runProcess(new Computable<List<ProblemDescriptor>>() {
         @Override
-        public List<CommonProblemDescriptor> compute() {
-          return InspectionRunningUtil.runInspectionOnFile(file, myToolWrapper);
+        public List<ProblemDescriptor> compute() {
+          InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(project);
+          return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
         }
       }, new EmptyProgressIndicator());
 
@@ -85,13 +87,13 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       }
     });
     boolean fixesWereAvailable = false;
-    for (CommonProblemDescriptor descriptor : descriptions) {
+    for (ProblemDescriptor descriptor : descriptions) {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         fixesWereAvailable = true;
         for (QuickFix<CommonProblemDescriptor> fix : fixes) {
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
-            final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+            final PsiElement element = descriptor.getPsiElement();
             if (element != null && element.isValid()) {
               fix.applyFix(project, descriptor);
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

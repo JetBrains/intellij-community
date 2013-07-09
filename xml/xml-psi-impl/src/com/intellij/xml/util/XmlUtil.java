@@ -168,7 +168,12 @@ public class XmlUtil {
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
 
   public static final String XHTML4_SCHEMA_LOCATION;
-  public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls private static final String URN = "urn:";
@@ -626,8 +631,8 @@ public class XmlUtil {
     return tagName.subSequence(pos + 1, tagName.length());
   }
 
-  public static boolean isStubBuilding(PsiFile file) {
-    return Boolean.TRUE.equals(file.getUserData(BUILDING_DOM_STUBS));
+  public static boolean isStubBuilding() {
+    return BUILDING_DOM_STUBS.get();
   }
 
   /**

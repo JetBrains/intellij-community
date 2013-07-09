@@ -38,7 +38,7 @@ public class LocalDescriptorsUtil {
 
       RefElement refElement = context.getRefManager().getReference(problemElement);
       if (refElement == null && problemElement != null) {  // no need to lose collected results
-        refElement = GlobalInspectionUtil.retrieveRefElement(element, context);
+        refElement = GlobalInspectionContextUtil.retrieveRefElement(element, context);
       }
       return refElement;
     }

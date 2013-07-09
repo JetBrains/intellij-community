@@ -697,7 +697,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
           addEdge(elseEnd, end);
         }
         else if (elseBranch == null) {
-          addEdge(conditionEnd != null ? conditionEnd : ifInstruction, end);
+      //    addEdge(conditionEnd != null ? conditionEnd : ifInstruction, end);
         }
       }
     }

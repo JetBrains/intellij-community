@@ -559,13 +559,15 @@ public abstract class HgUtil {
   @Nullable
   public static String getRepositoryDefaultPath(@NotNull Project project, @NotNull VirtualFile root) {
     HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
-    return hgRepository != null ? hgRepository.getRepositoryConfig().getDefaultPath() : null;
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getDefaultPath();
   }
 
   @Nullable
   public static String getRepositoryDefaultPushPath(@NotNull Project project, @NotNull VirtualFile root) {
     HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
-    return hgRepository != null ? hgRepository.getRepositoryConfig().getDefaultPushPath() : null;
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getDefaultPushPath();
   }
 
   @Nullable
@@ -574,6 +576,15 @@ public abstract class HgUtil {
                                  @NotNull String section,
                                  @Nullable String configName) {
     HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
-    return hgRepository != null ? hgRepository.getRepositoryConfig().getNamedConfig(section, configName) : null;
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getNamedConfig(section, configName);
+  }
+
+  @NotNull
+  public static Collection<String> getRepositoryPaths(@NotNull Project project,
+                                                      @NotNull VirtualFile root) {
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getPaths();
   }
 }

@@ -17,8 +17,7 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,14 +26,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.HashSet;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -63,7 +64,7 @@ import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
  * @author oleg
  */
 public class GithubShareAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(GithubShareAction.class.getName());
+  private static final Logger LOG = GithubUtil.LOG;
 
   public GithubShareAction() {
     super("Share project on GitHub", "Easily share project on GitHub", GithubIcons.Github_icon);
@@ -90,21 +91,22 @@ public class GithubShareAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null || !GithubUtil.testGitExecutable(project)) {
+    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+
+    if (project == null || project.isDisposed()) {
       return;
     }
 
-    shareProjectOnGithub(project);
+    shareProjectOnGithub(project, file);
   }
 
-  public static void shareProjectOnGithub(@NotNull final Project project) {
+  public static void shareProjectOnGithub(@NotNull final Project project, @Nullable final VirtualFile file) {
     BasicAction.saveAll();
 
     // get gitRepository
-    final VirtualFile root = project.getBaseDir();
-    final GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    final GitRepository gitRepository = manager.getRepositoryForFile(root);
+    final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     final boolean gitDetected = gitRepository != null;
+    final VirtualFile root = gitDetected ? gitRepository.getRoot() : project.getBaseDir();
 
     // check for existing git repo
     boolean externalRemoteDetected = false;
@@ -126,7 +128,6 @@ public class GithubShareAction extends DumbAwareAction {
     // Show dialog (window)
     final GithubShareDialog shareDialog =
       new GithubShareDialog(project, githubInfo.getRepositoryNames(), githubInfo.getUser().canCreatePrivateRepo());
-    //shareDialog.show();
     DialogManager.show(shareDialog);
     if (!shareDialog.isOK()) {
       return;
@@ -137,12 +138,12 @@ public class GithubShareAction extends DumbAwareAction {
 
     // finish the job in background
     final boolean finalExternalRemoteDetected = externalRemoteDetected;
-    new Task.Backgroundable(project, "Sharing project on GitHub") {
+    new Task.Backgroundable(project, "Sharing project on GitHub...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         // create GitHub repo (network)
         LOG.info("Creating GitHub repository");
-        indicator.setText("Creating GitHub repository");
+        indicator.setText("Creating GitHub repository...");
         final String url = createGithubRepository(project, githubInfo.getAuthData(), name, description, isPrivate);
         if (url == null) {
           return;
@@ -153,35 +154,35 @@ public class GithubShareAction extends DumbAwareAction {
         LOG.info("Binding local project with GitHub");
         if (!gitDetected) {
           LOG.info("No git detected, creating empty git repo");
-          indicator.setText("Creating empty git repo");
+          indicator.setText("Creating empty git repo...");
           if (!createEmptyGitRepository(project, root, indicator)) {
             return;
           }
         }
 
-        GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+        GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
         final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
         LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
 
-        final String remoteUrl = GithubApiUtil.getGitHost() + "/" + githubInfo.getUser().getLogin() + "/" + name + ".git";
+        final String remoteUrl = GithubUrlUtil.getGitHost() + "/" + githubInfo.getUser().getLogin() + "/" + name + ".git";
         final String remoteName = finalExternalRemoteDetected ? "github" : "origin";
 
         //git remote add origin git@github.com:login/name.git
         LOG.info("Adding GitHub as a remote host");
-        indicator.setText("Adding GitHub as a remote host");
+        indicator.setText("Adding GitHub as a remote host...");
         if (!addGithubRemote(project, root, remoteName, remoteUrl, repository)) {
           return;
         }
 
         // create sample commit for binding project
-        if (!performFirstCommitIfRequired(project, root, repository, indicator)) {
+        if (!performFirstCommitIfRequired(project, root, repository, indicator, name, url)) {
           return;
         }
 
         //git push origin master
         LOG.info("Pushing to github master");
-        indicator.setText("Pushing to github master");
-        if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name)) {
+        indicator.setText("Pushing to github master...");
+        if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)) {
           return;
         }
 
@@ -254,16 +255,15 @@ public class GithubShareAction extends DumbAwareAction {
       return null;
     }
     if (result == null) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository");
+      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", "result is null");
       return null;
     }
     if (!result.isJsonObject()) {
-      LOG.error(String.format("Unexpected JSON result format: %s", result));
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository");
+      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
       return null;
     }
     if (!result.getAsJsonObject().has("html_url")) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository");
+      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
       return null;
     }
     return result.getAsJsonObject().get("html_url").getAsString();
@@ -287,7 +287,7 @@ public class GithubShareAction extends DumbAwareAction {
       LOG.info("Failed to create empty git repo: " + h.errors());
       return false;
     }
-    GitInit.refreshAndConfigureVcsMappings(project, root, "");
+    GitInit.refreshAndConfigureVcsMappings(project, root, root.getPath());
     return true;
   }
 
@@ -309,16 +309,16 @@ public class GithubShareAction extends DumbAwareAction {
     }
     catch (VcsException e) {
       GithubNotifications.showError(project, "Failed to add GitHub repository as remote", e.getMessage());
-      LOG.info("Failed to add GitHub as remote: " + e.getMessage());
       return false;
     }
     return true;
   }
 
-  private static boolean performFirstCommitIfRequired(@NotNull Project project,
-                                                      @NotNull VirtualFile root,
+  private static boolean performFirstCommitIfRequired(@NotNull final Project project, @NotNull VirtualFile root,
                                                       @NotNull GitRepository repository,
-                                                      @NotNull ProgressIndicator indicator) {
+                                                      @NotNull ProgressIndicator indicator,
+                                                      @NotNull String name,
+                                                      @NotNull String url) {
     // check if there is no commits
     if (!repository.isFresh()) {
       return true;
@@ -327,35 +327,42 @@ public class GithubShareAction extends DumbAwareAction {
     LOG.info("Trying to commit");
     try {
       LOG.info("Adding files for commit");
-      indicator.setText("Adding files to git");
+      indicator.setText("Adding files to git...");
 
       // ask for files to add
-      List<VirtualFile> untrackedFiles = new ArrayList<VirtualFile>(repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
-      final GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, untrackedFiles);
+      final List<VirtualFile> untrackedFiles = new ArrayList<VirtualFile>(repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
+      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<GithubUntrackedFilesDialog>();
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
+          GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, untrackedFiles);
           DialogManager.show(dialog);
+          dialogRef.set(dialog);
         }
       }, indicator.getModalityState());
+      final GithubUntrackedFilesDialog dialog = dialogRef.get();
+
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
       if (!dialog.isOK() || files2add.isEmpty()) {
-        GithubNotifications.showWarning(project, "Failed to commit file during post activities", "No files to commit");
+        GithubNotifications
+          .showWarningURL(project, "Can't finish GitHub sharing process", "No files to commit. ", "'" + name + "'", " on GitHub", url);
         return false;
       }
       GitFileUtils.addFiles(project, root, files2add);
 
       // commit
       LOG.info("Performing commit");
-      indicator.setText("Performing commit");
+      indicator.setText("Performing commit...");
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
       handler.addParameters("-m", dialog.getCommitMessage());
       handler.endOptions();
       handler.run();
+
+      VcsFileUtil.refreshFiles(project, dialog.getSelectedFiles());
     }
     catch (VcsException e) {
-      LOG.info("Failed to perform initial commit");
-      GithubNotifications.showError(project, "Failed to commit file during post activities", e.getMessage());
+      GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
+                                       " on GitHub, but initial commit failed:<br/>" + e.getMessage(), url);
       return false;
     }
     LOG.info("Successfully created initial commit");
@@ -365,51 +372,66 @@ public class GithubShareAction extends DumbAwareAction {
   private static boolean pushCurrentBranch(@NotNull Project project,
                                            @NotNull GitRepository repository,
                                            @NotNull String remoteName,
-                                           @NotNull String remoteUrl,
-                                           @NotNull String name) {
+                                           @NotNull String remoteUrl, @NotNull String name, @NotNull String url) {
     Git git = ServiceManager.getService(Git.class);
 
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
-      GithubNotifications.showError(project, "Can't finish GitHub sharing process", "Successfully created project '" +
-                                                                                    name +
-                                                                                    "' on GitHub, but initial push failed: " +
-                                                                                    "no current branch");
+      GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
+                                       " on GitHub, but initial push failed: no current branch", url);
       return false;
     }
     GitCommandResult result = git.push(repository, remoteName, remoteUrl, currentBranch.getName(), true);
     if (!result.success()) {
-      GithubNotifications.showError(project, "Can't finish GitHub sharing process", "Successfully created project '" +
-                                                                                    name +
-                                                                                    "' on GitHub, but initial push failed:<br/>" +
-                                                                                    result.getErrorOutputAsHtmlString());
+      GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
+                                       " on GitHub, but initial push failed:<br/>" + result.getErrorOutputAsHtmlString(), url);
       return false;
     }
     return true;
   }
 
-  public static class GithubUntrackedFilesDialog extends SelectFilesDialog {
-
-    private JTextArea myCommitMessageTextArea;
+  public static class GithubUntrackedFilesDialog extends SelectFilesDialog implements TypeSafeDataProvider {
+    @NotNull private final Project myProject;
+    private CommitMessage myCommitMessagePanel;
 
     public GithubUntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> untrackedFiles) {
-      super(project, untrackedFiles, null, VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION, true, false, false);
+      super(project, untrackedFiles, null, null, true, false, false);
+      myProject = project;
       setTitle("Add Files For Initial Commit");
       init();
     }
 
     @Override
     protected JComponent createNorthPanel() {
-      JPanel panel = new JPanel(new VerticalFlowLayout());
-      myCommitMessageTextArea = new JTextArea("Initial commit");
-      panel.add(new JLabel("Commit message:"));
-      panel.add(myCommitMessageTextArea);
-      return panel;
+      return null;
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      final JComponent tree = super.createCenterPanel();
+
+      myCommitMessagePanel = new CommitMessage(myProject);
+      myCommitMessagePanel.setCommitMessage("Initial commit");
+
+      Splitter splitter = new Splitter(true);
+      splitter.setHonorComponentsMinimumSize(true);
+      splitter.setFirstComponent(tree);
+      splitter.setSecondComponent(myCommitMessagePanel);
+      splitter.setProportion(0.7f);
+
+      return splitter;
     }
 
     @NotNull
     public String getCommitMessage() {
-      return myCommitMessageTextArea.getText();
+      return myCommitMessagePanel.getComment();
+    }
+
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      if (key == VcsDataKeys.COMMIT_MESSAGE_CONTROL) {
+        sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, myCommitMessagePanel);
+      }
     }
   }
 

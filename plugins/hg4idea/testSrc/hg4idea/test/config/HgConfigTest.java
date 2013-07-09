@@ -1,11 +1,14 @@
 package hg4idea.test.config;
 
+import com.intellij.dvcs.test.TestRepositoryUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static com.intellij.dvcs.test.Executor.cd;
 
@@ -28,7 +31,7 @@ public class HgConfigTest extends HgPlatformTest {
                  FileUtil.toSystemIndependentName(defaultPath));
   }
 
-  public void testPushPathInClonedRepo() {
+  public void testPushPathInClonedRepo() throws IOException {
     cd(myChildRepo);
     String pushPath = "somePath";
     appendToHgrc(myChildRepo, "\n[paths]\n" +
@@ -46,6 +49,21 @@ public class HgConfigTest extends HgPlatformTest {
     assertNotNull(defaultPushPath);
     assertEquals(myRepository.getPath(),
                  FileUtil.toSystemIndependentName(defaultPushPath));
+  }
+
+  public void testMultiPathConfig() throws IOException {
+    cd(myChildRepo);
+    final String path1 = "https://bitbucket.org/nadushnik/hgtestrepo";
+    final String path2 = "https://bitbucket.org/nadushnik/javarepo";
+    final String path3 = "https://bitbucket.org/nadushnik/hgTestRepo2";
+    appendToHgrc(myChildRepo, "\n[paths]" +
+                              "\npath1=" + path1 +
+                              "\npath2=" + path2 +
+                              "\npath3=" + path3);
+    updateRepoConfig(myProject, myChildRepo);
+    final Collection<String> paths = HgUtil.getRepositoryPaths(myProject, myChildRepo);
+    final Collection<String> expectedPaths = Arrays.asList(FileUtil.toSystemDependentName(myRepository.getPath()), path1, path2, path3);
+    TestRepositoryUtil.assertEqualCollections(paths,expectedPaths);
   }
 
   public void testLargeExtensionInClonedRepo() throws IOException {

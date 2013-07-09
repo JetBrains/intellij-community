@@ -178,11 +178,9 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     if (isMethodCall(place, parent)) {
       assert parent instanceof GrMethodCall && place instanceof GrReferenceExpression;
 
-      GrMethodCall call = (GrMethodCall)parent;
       GrReferenceExpression ref = (GrReferenceExpression)place;
 
-      PsiType[] argTypes =
-        PsiUtil.getArgumentTypes(call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), false, null, false);
+      PsiType[] argTypes = PsiUtil.getArgumentTypes(ref, false);
       if (argTypes == null) return;
 
       String[] types = new String[argTypes.length];

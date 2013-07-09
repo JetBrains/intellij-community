@@ -29,8 +29,6 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiMatcherImpl;
-import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -141,7 +139,7 @@ public class HighlightControlFlowUtil {
       for (PsiMethod constructor : constructors) {
         PsiCodeBlock ctrBody = constructor.getBody();
         if (ctrBody == null) return false;
-        final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
+        final List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
         for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
           PsiMethod redirectedConstructor = redirectedConstructors.get(j);
           final PsiCodeBlock body = redirectedConstructor.getBody();
@@ -170,21 +168,9 @@ public class HighlightControlFlowUtil {
     return false;
   }
 
-  /**
-   * return all constructors which are referred from this constructor by
-   *  this (...) at the beginning of the constructor body
-   * @return referring constructor
-   */
-  @Nullable public static List<PsiMethod> getChainedConstructors(PsiMethod constructor) {
-    final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
-    visitConstructorChain(constructor, info);
-    if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
-    return info.visitedConstructors;
-  }
-
   public static boolean isRecursivelyCalledConstructor(PsiMethod constructor) {
-    final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
-    visitConstructorChain(constructor, info);
+    final JavaHighlightUtil.ConstructorVisitorInfo info = new JavaHighlightUtil.ConstructorVisitorInfo();
+    JavaHighlightUtil.visitConstructorChain(constructor, info);
     if (info.recursivelyCalledConstructor == null) return false;
     // our constructor is reached from some other constructor by constructor chain
     return info.visitedConstructors.indexOf(info.recursivelyCalledConstructor) <=
@@ -211,42 +197,6 @@ public class HighlightControlFlowUtil {
 
     public boolean isWriteRefFound() {
       return myIsWriteRefFound;
-    }
-  }
-
-  private static class ConstructorVisitorInfo {
-    List<PsiMethod> visitedConstructors;
-    PsiMethod recursivelyCalledConstructor;
-  }
-
-  private static void visitConstructorChain(PsiMethod constructor, ConstructorVisitorInfo info) {
-    while (true) {
-      if (constructor == null) return;
-      final PsiCodeBlock body = constructor.getBody();
-      if (body == null) return;
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) return;
-      final PsiStatement statement = statements[0];
-      final PsiElement element = new PsiMatcherImpl(statement)
-          .dot(PsiMatchers.hasClass(PsiExpressionStatement.class))
-          .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
-          .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
-          .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
-          .dot(PsiMatchers.hasText(PsiKeyword.THIS))
-          .parent(null)
-          .parent(null)
-          .getElement();
-      if (element == null) return;
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-      PsiMethod method = methodCall.resolveMethod();
-      if (method == null) return;
-      if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {
-        info.recursivelyCalledConstructor = method;
-        return;
-      }
-      if (info.visitedConstructors == null) info.visitedConstructors = new ArrayList<PsiMethod>(5);
-      info.visitedConstructors.add(method);
-      constructor = method;
     }
   }
 
@@ -337,7 +287,7 @@ public class HighlightControlFlowUtil {
           // static variables already initialized in class initializers
           if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
           // as a last chance, field may be initialized in this() call
-          final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
+          final List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
           for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
             PsiMethod redirectedConstructor = redirectedConstructors.get(j);
             // variable must be initialized before its usage
@@ -377,7 +327,7 @@ public class HighlightControlFlowUtil {
               return null;
             }
             // as a last chance, field may be initialized in this() call
-            final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
+            final List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
             for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
               PsiMethod redirectedConstructor = redirectedConstructors.get(j);
               // variable must be initialized before its usage
@@ -536,7 +486,7 @@ public class HighlightControlFlowUtil {
         final PsiMethod ctr = codeBlock.getParent() instanceof PsiMethod ?
                               (PsiMethod)codeBlock.getParent() : null;
         // assignment to final field in several constructors threatens us only if these are linked (there is this() call in the beginning)
-        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? getChainedConstructors(ctr) : null;
+        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? JavaHighlightUtil.getChainedConstructors(ctr) : null;
         for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
           PsiMethod redirectedConstructor = redirectedConstructors.get(j);
           if (redirectedConstructor.getBody() != null &&

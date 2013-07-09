@@ -436,7 +436,7 @@
     <projectService serviceInterface="com.intellij.slicer.SliceManager"
                     serviceImplementation="com.intellij.slicer.SliceManager"/>
 
-    <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManagerImpl"
+    <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
@@ -466,7 +466,8 @@
 
     <globalInspection shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"/>
+                     implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"
+                     presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation"/>
     <globalInspection shortName="UnusedLibrary" bundle="messages.InspectionsBundle" key="unused.library.display.name"
                      groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection"/>

@@ -15,18 +15,10 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManagerImpl;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,46 +26,10 @@ import java.util.List;
  *         Date: 3/2/12
  */
 public class InspectionRunningUtil {
-  public static List<CommonProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
+  public static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
                                                                   @NotNull LocalInspectionTool inspectionTool) {
-    return runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool));
-  }
-
-  @NotNull
-  public static List<CommonProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file, @NotNull InspectionToolWrapper toolWrapper) {
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
-    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-    toolWrapper.initialize(context);
-    RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
-    refManager.inspectionReadActionStarted();
-    try {
-      if (toolWrapper instanceof LocalInspectionToolWrapper) {
-        LocalInspectionTool localTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
-        List<ProblemDescriptor> descriptors =
-          InspectionEngine.inspect(Collections.singletonList(localTool), file, managerEx, false, false, new DaemonProgressIndicator());
-        return new ArrayList<CommonProblemDescriptor>(descriptors);
-      }
-      if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-        final GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-        if (globalTool instanceof GlobalSimpleInspectionTool) {
-          GlobalSimpleInspectionTool simpleTool = (GlobalSimpleInspectionTool)globalTool;
-          ProblemsHolder problemsHolder = new ProblemsHolder(managerEx, file, false);
-          InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-          simpleTool.checkFile(file, managerEx, problemsHolder, context, presentation);
-          return new ArrayList<CommonProblemDescriptor>(presentation.getProblemDescriptors());
-        }
-        RefElement fileRef = refManager.getReference(file);
-        CommonProblemDescriptor[] descriptors = globalTool.checkElement(fileRef, new AnalysisScope(file), managerEx, context);
-        if (descriptors != null) {
-          return Arrays.asList(descriptors);
-        }
-      }
-      return Collections.emptyList();
-    }
-    finally {
-      refManager.inspectionReadActionFinished();
-      toolWrapper.cleanup();
-      context.cleanup();
-    }
+    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
+    GlobalInspectionContext context = inspectionManager.createNewGlobalContext(false);
+    return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
   }
 }

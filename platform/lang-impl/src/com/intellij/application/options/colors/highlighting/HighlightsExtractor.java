@@ -80,9 +80,13 @@ public class HighlightsExtractor {
       myIsOpeningTag = false;
       openTag++;
     }
+    if (!isValidTagFirstChar(text.charAt(openTag + 1))) {
+      myIndex = openTag + 1;
+      return "";
+    }
+    
     int closeTag = text.indexOf('>', openTag + 1);
-    if (closeTag == -1) return null;
-
+    if (closeTag == -1) return null;    
     final String tagName = text.substring(openTag + 1, closeTag);
 
     if (myIsOpeningTag) {
@@ -92,6 +96,10 @@ public class HighlightsExtractor {
     }
     myIndex = Math.max(myStartOffset, myEndOffset + 1);
     return tagName;
+  }
+  
+  private static boolean isValidTagFirstChar(char c) {
+    return Character.isLetter(c) || c == '_';
   }
 
   public String cutDefinedTags(String text) {
@@ -113,17 +121,22 @@ public class HighlightsExtractor {
         sb.append(text.substring(index, text.length()));
         break;
       }
-
-      String tag;
-      if (text.charAt(from + 1) == '/') {
-        tag = text.substring(from + 2, to);
-      } else {
-        tag = text.substring(from + 1, to);
+      int tagNameStart = from + 1;
+      if (text.charAt(tagNameStart) == '/') {
+        tagNameStart ++;
       }
-      if (myTags.containsKey(tag)) {
-        sb.append(text.substring(index, from));
-        index = to + 1;
-        continue;
+
+      if (isValidTagFirstChar(text.charAt(tagNameStart))) {
+        String tag;
+        tag = text.substring(tagNameStart, to);
+        if (myTags.containsKey(tag)) {
+          sb.append(text.substring(index, from));
+          index = to + 1;
+          continue;
+        }
+      }
+      else {
+        to = from;
       }
       sb.append(text.substring(index, to + 1));
       index = to + 1;

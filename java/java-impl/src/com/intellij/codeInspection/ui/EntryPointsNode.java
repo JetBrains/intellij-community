@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
+import com.intellij.codeInspection.deadCode.DummyEntryPointsEP;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -33,7 +33,7 @@ public class EntryPointsNode extends InspectionNode {
   }
 
   private static InspectionToolWrapper createDummyWrapper(@NotNull GlobalInspectionContextImpl context) {
-    InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsTool());
+    InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
     toolWrapper.initialize(context);
     return toolWrapper;
   }

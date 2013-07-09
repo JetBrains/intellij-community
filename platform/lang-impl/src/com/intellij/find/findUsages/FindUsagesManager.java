@@ -319,11 +319,25 @@ public class FindUsagesManager implements JDOMExternalizable {
     usageSearcher.generate(new Processor<Usage>() {
       @Override
       public boolean process(final Usage usage) {
+        if (isInComment(usage)) return true;
         used.set(true);
         return false;
       }
     });
     return used.get();
+  }
+
+  private static boolean isInComment(Usage usage) {
+    if (!(usage instanceof UsageInfo2UsageAdapter)) return false;
+    UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+    if (!usageInfo.isNonCodeUsage()) return false;
+    SmartPsiFileRange psiRangePointer = usageInfo.getPsiFileRange();
+    if (psiRangePointer == null) return false;
+    Segment range = psiRangePointer.getRange();
+    PsiFile file = psiRangePointer.getContainingFile();
+    if (file == null || range == null) return false;
+    PsiElement element = file.findElementAt(range.getStartOffset());
+    return element instanceof PsiComment;
   }
 
   @NotNull
@@ -502,7 +516,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           long current = System.currentTimeMillis();
           if (current - lastCleared >= 500) {
             lastCleared = current;
-            // fraction is changed when each file is processed => 
+            // fraction is changed when each file is processed =>
             // resolve caches used when searching in that file are likely to be not needed anymore
             PsiManager.getInstance(project).dropResolveCaches();
           }

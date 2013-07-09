@@ -69,8 +69,9 @@ public abstract class GithubTest extends UsefulTestCase {
 
   @NotNull private IdeaProjectTestFixture myProjectFixture;
 
-  @NotNull protected GithubAuthData auth1;
-  @NotNull protected GithubAuthData auth2;
+  @NotNull protected String myHost;
+  @NotNull protected String myLogin1;
+  @NotNull protected String myLogin2;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GithubTest() {
@@ -129,17 +130,16 @@ public abstract class GithubTest extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     final String host = System.getenv("idea.test.github.host");
-    final String login = System.getenv("idea.test.github.login1");
-    final String password = System.getenv("idea.test.github.password1");
+    final String login1 = System.getenv("idea.test.github.login1");
+    final String password1 = System.getenv("idea.test.github.password1");
     final String login2 = System.getenv("idea.test.github.login2");
-    final String password2 = System.getenv("idea.test.github.password2");
+    //final String password2 = System.getenv("idea.test.github.password2");
 
     // TODO change to assert when a stable Github testing server is ready
     assumeNotNull(host);
-    assumeNotNull(login);
-    assumeNotNull(password);
-    assumeNotNull(login2);
-    assumeNotNull(password2);
+    assumeNotNull(login1);
+    assumeNotNull(password1);
+    //assumeNotNull(password2);
 
     super.setUp();
 
@@ -154,11 +154,12 @@ public abstract class GithubTest extends UsefulTestCase {
 
     myGitHubSettings = GithubSettings.getInstance();
     myGitHubSettings.setHost(host);
-    myGitHubSettings.setLogin(login);
-    myGitHubSettings.setPassword(password);
+    myGitHubSettings.setLogin(login1);
+    myGitHubSettings.setPassword(password1);
 
-    auth1 = new GithubAuthData(host, login, password);
-    auth2 = new GithubAuthData(host, login2, password2);
+    myHost = host;
+    myLogin1 = login1;
+    myLogin2 = login2;
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);

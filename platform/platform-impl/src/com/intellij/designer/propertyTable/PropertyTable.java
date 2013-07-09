@@ -84,8 +84,8 @@ public abstract class PropertyTable extends JBTable {
 
   private final AbstractTableModel myModel = new PropertyTableModel();
   private List<PropertiesContainer> myContainers = Collections.emptyList();
-  private List<Property> myProperties = Collections.emptyList();
-  private final Set<String> myExpandedProperties = new HashSet<String>();
+  protected List<Property> myProperties = Collections.emptyList();
+  protected final Set<String> myExpandedProperties = new HashSet<String>();
 
   private boolean mySkipUpdate;
   private boolean myStoppingEditing;

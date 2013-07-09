@@ -82,4 +82,6 @@ public interface GlobalInspectionContext extends UserDataHolder {
 
   @NotNull
   StdJobDescriptors getStdJobDescriptors();
+
+  void cleanup();
 }

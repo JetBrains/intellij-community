@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import git4idea.jgit.GitHttpAuthDataProvider;
@@ -31,7 +29,7 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
   @Nullable
   @Override
   public AuthData getAuthData(@NotNull String url) {
-    if (!GithubUtil.isGithubUrl(url)) {
+    if (!GithubUrlUtil.isGithubUrl(url)) {
       return null;
     }
 

@@ -72,6 +72,9 @@
   <item name="java.util.concurrent.ExecutorService boolean awaitTermination(long, java.util.concurrent.TimeUnit) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.concurrent.ExecutorService java.util.List&lt;java.lang.Runnable&gt; shutdownNow()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

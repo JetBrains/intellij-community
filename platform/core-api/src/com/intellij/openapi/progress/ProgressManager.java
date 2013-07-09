@@ -192,4 +192,31 @@ public abstract class ProgressManager {
   public abstract void run(@NotNull Task task);
 
   public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
+
+  protected static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
+  public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
+    ProgressIndicator oldIndicator = null;
+
+    boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());
+    if (set) {
+      progress.checkCanceled();
+      myThreadIndicator.set(progress);
+    }
+
+    try {
+      process.run();
+    }
+    finally {
+      if (set) {
+        myThreadIndicator.set(oldIndicator);
+      }
+
+      if (progress != null) {
+        synchronized (progress) {
+          progress.notifyAll();
+        }
+      }
+    }
+  }
+
 }

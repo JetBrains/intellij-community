@@ -35,7 +35,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -209,7 +209,7 @@ public class QuickFixAction extends AnAction {
     }
   }
 
-  private static Set<VirtualFile> getReadOnlyFiles(final RefEntity[] refElements) {
+  private static Set<VirtualFile> getReadOnlyFiles(@NotNull RefEntity[] refElements) {
     Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
     for (RefEntity refElement : refElements) {
       PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
@@ -283,13 +283,13 @@ public class QuickFixAction extends AnAction {
 
   /**
    * @return true if immediate UI update needed.
-   * @param refElements
    */
-  protected boolean applyFix(RefEntity[] refElements) {
+  protected boolean applyFix(@NotNull RefEntity[] refElements) {
     Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
     if (!readOnlyFiles.isEmpty()) {
       final Project project = refElements[0].getRefManager().getProject();
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyFiles));
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(
+        VfsUtilCore.toVirtualFileArray(readOnlyFiles));
       if (operationStatus.hasReadonlyFiles()) return false;
     }
     return true;

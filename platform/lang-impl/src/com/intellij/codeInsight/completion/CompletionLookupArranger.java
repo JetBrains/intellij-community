@@ -351,7 +351,7 @@ public class CompletionLookupArranger extends LookupArranger {
     String selectedText = lookup.getEditor().getSelectionModel().getSelectedText();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isPrefixItem(lookup, item, true) && !isLiveTemplate(item) ||
+      if (isAlphaSorted() && isPrefixItem(lookup, item, true) && !isLiveTemplate(item) ||
           item.getLookupString().equals(selectedText)) {
         return i;
       }

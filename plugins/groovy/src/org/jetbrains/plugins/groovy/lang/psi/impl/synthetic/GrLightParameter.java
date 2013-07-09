@@ -37,6 +37,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;
   private volatile GrModifierList myModifierList;
+  private volatile GrExpression myInitializer = null;
   private final PsiElement myScope;
   private final GrTypeElement myTypeElement;
   private final PsiType myTypeGroovy;
@@ -72,7 +73,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
 
   @Override
   public GrExpression getInitializerGroovy() {
-    return null;
+    return myInitializer;
   }
 
   @Override
@@ -144,8 +145,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
 
   @Override
   public void setInitializerGroovy(GrExpression initializer) {
-    //todo?
-    throw new UnsupportedOperationException();
+    myInitializer = initializer;
   }
 
   @Override

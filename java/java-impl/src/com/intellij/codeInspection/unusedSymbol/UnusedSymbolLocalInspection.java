@@ -22,10 +22,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.psi.PsiModifierListOwner;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
@@ -136,7 +138,8 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
       myReportUnusedParametersInPublics.addActionListener(listener);
-      myAnnos.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(myPanel),
+      Project project = ProjectUtil.guessCurrentProject(myPanel);
+      myAnnos.add(EntryPointsManager.getInstance(project).createConfigureAnnotationsBtn(),
                   new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                          new Insets(10, 0, 0, 0), 0, 0));
     }

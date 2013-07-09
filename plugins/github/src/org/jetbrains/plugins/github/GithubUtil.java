@@ -23,12 +23,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowableConvertor;
+import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +76,35 @@ public class GithubUtil {
       if (GithubSslSupport.isCertificateException(e)) {
         if (sslSupport.askIfShouldProceed(auth.getHost())) {
           return runAndGetValidAuth(project, indicator, task);
+        }
+        else {
+          return null;
+        }
+      }
+      throw e;
+    }
+  }
+
+  @Nullable
+  public static <T> T runWithValidAuth(@NotNull Project project,
+                                       @NotNull ProgressIndicator indicator,
+                                       @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
+    GithubAuthData auth = GithubSettings.getInstance().getAuthData();
+    try {
+      return task.convert(auth);
+    }
+    catch (AuthenticationException e) {
+      auth = getValidAuthData(project, indicator);
+      if (auth == null) {
+        return null;
+      }
+      return task.convert(auth);
+    }
+    catch (IOException e) {
+      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
+      if (GithubSslSupport.isCertificateException(e)) {
+        if (sslSupport.askIfShouldProceed(auth.getHost())) {
+          return runWithValidAuth(project, indicator, task);
         }
         else {
           return null;
@@ -159,7 +192,17 @@ public class GithubUtil {
 
   @NotNull
   public static List<RepositoryInfo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
-    final String request = "/user/repos";
+    return doGetAvailableRepos(auth, null);
+  }
+
+  @NotNull
+  public static List<RepositoryInfo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
+    return doGetAvailableRepos(auth, user);
+  }
+
+  @NotNull
+  private static List<RepositoryInfo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
+    String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
     JsonElement result = GithubApiUtil.getRequest(auth, request);
     if (result == null) {
       return Collections.emptyList();
@@ -186,29 +229,24 @@ public class GithubUtil {
   @NotNull
   private static RepositoryInfo parseSingleRepositoryInfo(@NotNull JsonObject result) {
     String name = result.get("name").getAsString();
+    String browserUrl = result.get("html_url").getAsString();
     String cloneUrl = result.get("clone_url").getAsString();
     String ownerName = result.get("owner").getAsJsonObject().get("login").getAsString();
     String parentName = result.has("parent") ? result.get("parent").getAsJsonObject().get("full_name").getAsString() : null;
     boolean fork = result.get("fork").getAsBoolean();
-    return new RepositoryInfo(name, cloneUrl, ownerName, parentName, fork);
+    return new RepositoryInfo(name, browserUrl, cloneUrl, ownerName, parentName, fork);
   }
 
   @Nullable
-  public static RepositoryInfo getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name) {
-    try {
-      final String request = "/repos/" + owner + "/" + name;
-      JsonElement jsonObject = GithubApiUtil.getRequest(auth, request);
-      if (jsonObject == null) {
-        LOG.info(String.format("Information about repository is unavailable. Owner: %s, Name: %s", owner, name));
-        return null;
-      }
-      return parseSingleRepositoryInfo(jsonObject.getAsJsonObject());
-    }
-    catch (IOException e) {
-      LOG.info(
-        String.format("Exception was thrown when trying to retrieve information about repository.  Owner: %s, Name: %s", owner, name));
+  public static RepositoryInfo getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name)
+    throws IOException {
+    final String request = "/repos/" + owner + "/" + name;
+    JsonElement jsonObject = GithubApiUtil.getRequest(auth, request);
+    if (jsonObject == null) {
+      LOG.info(String.format("Information about repository is unavailable. Owner: %s, Name: %s", owner, name));
       return null;
     }
+    return parseSingleRepositoryInfo(jsonObject.getAsJsonObject());
   }
 
   public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String repo) throws IOException {
@@ -236,7 +274,7 @@ public class GithubUtil {
     String githubUrl = null;
     for (GitRemote gitRemote : repository.getRemotes()) {
       for (String remoteUrl : gitRemote.getUrls()) {
-        if (isGithubUrl(remoteUrl)) {
+        if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
           final String remoteName = gitRemote.getName();
           if ("github".equals(remoteName) || "origin".equals(remoteName)) {
             return remoteUrl;
@@ -257,7 +295,7 @@ public class GithubUtil {
       final String remoteName = gitRemote.getName();
       if ("upstream".equals(remoteName)) {
         for (String remoteUrl : gitRemote.getUrls()) {
-          if (isGithubUrl(remoteUrl)) {
+          if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
             return remoteUrl;
           }
         }
@@ -291,77 +329,33 @@ public class GithubUtil {
     return findGithubRemoteUrl(repository) != null;
   }
 
-  public static boolean isGithubUrl(@NotNull String url) {
-    final String host = GithubApiUtil.getGitHostWithoutProtocol();
-    final String https = "https://" + host + '/';
-    final String http = "http://" + host + '/';
-    final String ssh = "git@" + host + '/';
-    final String git = "git://" + host + '/';
-    if (url.startsWith(https) || url.startsWith(http) || url.startsWith(ssh) || url.startsWith(git)) {
-      return true;
-    }
-    return false;
-  }
-
   static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(enabled);
   }
 
-  /**
-   * git@github.com:user/repo.git -> user/repo
-   */
-  @Nullable
-  public static String getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
-    remoteUrl = removeEndingDotGit(remoteUrl);
-    int index;
-    index = remoteUrl.lastIndexOf('/');
-    if (index == -1) {
-      return null;
-    }
-    String url = remoteUrl.substring(0, index);
-    index = Math.max(url.lastIndexOf('/'), url.lastIndexOf(':'));
-    if (index == -1) {
-      return null;
-    }
-    return remoteUrl.substring(index + 1);
-  }
-
-  /**
-   * git@github.com:user/repo -> https://github.com/user/repo
-   */
-  @Nullable
-  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
-    remoteUrl = removeEndingDotGit(remoteUrl);
-    if (remoteUrl.startsWith("https://")) {
-      return remoteUrl;
-    }
-    if (remoteUrl.startsWith("http://")) {
-      return "https" + remoteUrl.substring(4);
-    }
-    if (remoteUrl.startsWith("git://")) {
-      return "https" + remoteUrl.substring(3);
-    }
-    if (remoteUrl.startsWith("git@")) {
-      return "https://" + remoteUrl.substring(4).replace(':', '/');
-    }
-    LOG.error("Invalid remote Github url: " + remoteUrl);
-    return null;
-  }
-
-  @NotNull
-  private static String removeEndingDotGit(@NotNull String url) {
-    url = GithubApiUtil.removeTrailingSlash(url);
-    final String DOT_GIT = ".git";
-    if (url.endsWith(DOT_GIT)) {
-      return url.substring(0, url.length() - DOT_GIT.length());
-    }
-    return url;
-  }
-
   @NotNull
   public static String getErrorTextFromException(@NotNull IOException e) {
     return e.getMessage();
+  }
+
+  @Nullable
+  public static GitRepository getGitRepository(@NotNull Project project, @Nullable VirtualFile file) {
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    List<GitRepository> repositories = manager.getRepositories();
+    if (repositories.size() == 0) {
+      return null;
+    }
+    if (repositories.size() == 1) {
+      return repositories.get(0);
+    }
+    if (file != null) {
+      GitRepository repository = manager.getRepositoryForFile(file);
+      if (repository != null) {
+        return repository;
+      }
+    }
+    return manager.getRepositoryForFile(project.getBaseDir());
   }
 
 }

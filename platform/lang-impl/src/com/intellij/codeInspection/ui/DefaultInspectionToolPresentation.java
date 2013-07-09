@@ -137,7 +137,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return getContext().getRefManager();
   }
   @Override
-  @NotNull
   public GlobalInspectionContextImpl getContext() {
     return myContext;
   }
@@ -155,7 +154,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public boolean isOldProblemsIncluded() {
     final GlobalInspectionContextImpl context = getContext();
-    return context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && getOldContent() != null;
+    return context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && getOldContent() != null;
   }
 
 
@@ -165,29 +164,29 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
-  public void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions) {
+  public void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptors) {
     if (refElement == null) return;
-    if (descriptions.length == 0) return;
+    if (descriptors.length == 0) return;
     if (filterSuppressed) {
       if (ourOutputPath == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
         synchronized (lock) {
           Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
           CommonProblemDescriptor[] problems = problemElements.get(refElement);
-          problems = problems == null ? descriptions : ArrayUtil.mergeArrays(problems, descriptions, CommonProblemDescriptor.ARRAY_FACTORY);
+          problems = problems == null ? descriptors : ArrayUtil.mergeArrays(problems, descriptors, CommonProblemDescriptor.ARRAY_FACTORY);
           problemElements.put(refElement, problems);
         }
-        for (CommonProblemDescriptor description : descriptions) {
+        for (CommonProblemDescriptor description : descriptors) {
           getProblemToElements().put(description, refElement);
           collectQuickFixes(description.getFixes(), refElement);
         }
       }
       else {
-        writeOutput(descriptions, refElement);
+        writeOutput(descriptors, refElement);
       }
     }
     else { //just need to collect problems
-      for (CommonProblemDescriptor description : descriptions) {
-        getProblemToElements().put(description, refElement);
+      for (CommonProblemDescriptor descriptor : descriptors) {
+        getProblemToElements().put(descriptor, refElement);
       }
     }
 
@@ -205,9 +204,9 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       else if (toolNode.isTooBigForOnlineRefresh()) {
         return;
       }
-      final HashMap<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
-      problems.put(refElement, descriptions);
-      final HashMap<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
+      final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+      problems.put(refElement, descriptors);
+      final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
       final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
       Set<RefEntity> content = contents.get(groupName);
       if (content == null) {

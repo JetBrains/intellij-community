@@ -53,7 +53,7 @@ public class InspectionProfileLoadUtil {
   }
 
   @NotNull
-  static String getProfileName(@NotNull Document document) {
+  public static String getProfileName(@NotNull Document document) {
     String name = getRootElementAttribute(document, PROFILE_NAME_TAG);
     if (name != null) return name;
     return "unnamed";

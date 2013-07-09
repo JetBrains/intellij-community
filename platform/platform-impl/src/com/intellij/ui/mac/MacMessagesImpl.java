@@ -331,7 +331,7 @@ public class MacMessagesImpl extends MacMessages {
     pumpEventsDocumentExclusively(w);
   }
 
-  private static enum COMMON_DIALOG_PARAM_TYPE {
+  private enum COMMON_DIALOG_PARAM_TYPE {
     title,
     message,
     errorStyle,
@@ -340,14 +340,13 @@ public class MacMessagesImpl extends MacMessages {
     nativeFocusedWindow
   }
 
-  private static enum MESSAGE_DIALOG_PARAM_TYPE {
+  private enum MESSAGE_DIALOG_PARAM_TYPE {
     buttonsArray,
-    errorStyle,
     defaultOptionIndex,
     focusedOptionIndex
   }
 
-  private static enum ALERT_DIALOG_PARAM_TYPE {
+  private enum ALERT_DIALOG_PARAM_TYPE {
     defaultText,
     alternateText,
     otherText
@@ -413,7 +412,7 @@ public class MacMessagesImpl extends MacMessages {
                     params.get(COMMON_DIALOG_PARAM_TYPE.message),
                     params.get(COMMON_DIALOG_PARAM_TYPE.nativeFocusedWindow),
                     nsString(""),
-                    params.get(MESSAGE_DIALOG_PARAM_TYPE.errorStyle),
+                    params.get(COMMON_DIALOG_PARAM_TYPE.errorStyle),
                     params.get(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption1),
                     params.get(MESSAGE_DIALOG_PARAM_TYPE.defaultOptionIndex),
                     params.get(MESSAGE_DIALOG_PARAM_TYPE.focusedOptionIndex),
@@ -449,11 +448,13 @@ public class MacMessagesImpl extends MacMessages {
                                                                           // TODO: state=!doNotAsk.shouldBeShown()
                                                                           ? "-1"
                                                                           : doNotAskDialogOption.getDoNotShowMessage()));
-      params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2, nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"));
+      params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2, nsString(doNotAskDialogOption != null
+                                                                          && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"));
 
 
-      return convertRetunCodeFromNativeAlertDialog(showDialog(window, "showSheet:",
-                                                              new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)), alternateText);
+      return convertReturnCodeFromNativeAlertDialog(
+        showDialog(window, "showSheet:",
+                   new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)), alternateText);
     }
     finally {
       invoke(pool, "release");
@@ -484,14 +485,14 @@ public class MacMessagesImpl extends MacMessages {
       // replace % -> %% to avoid formatted parameters (causes SIGTERM)
       params.put(COMMON_DIALOG_PARAM_TYPE.message, nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")));
 
-      params.put(MESSAGE_DIALOG_PARAM_TYPE.errorStyle, nsString(errorStyle ? "error" : "-1"));
+      params.put(COMMON_DIALOG_PARAM_TYPE.errorStyle, nsString(errorStyle ? "error" : "-1"));
       params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption1, nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                                                           // TODO: state=!doNotAsk.shouldBeShown()
                                                                           ? "-1"
                                                                           : doNotAskDialogOption.getDoNotShowMessage()));
       params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2, nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"));
-      params.put(MESSAGE_DIALOG_PARAM_TYPE.defaultOptionIndex, Integer.toString(defaultOptionIndex));
-      params.put(MESSAGE_DIALOG_PARAM_TYPE.focusedOptionIndex, Integer.toString(focusedOptionIndex));
+      params.put(MESSAGE_DIALOG_PARAM_TYPE.defaultOptionIndex, nsString(Integer.toString(defaultOptionIndex)));
+      params.put(MESSAGE_DIALOG_PARAM_TYPE.focusedOptionIndex, nsString(Integer.toString(focusedOptionIndex)));
       params.put(MESSAGE_DIALOG_PARAM_TYPE.buttonsArray, buttonsArray);
 
 
@@ -513,7 +514,7 @@ public class MacMessagesImpl extends MacMessages {
 
     Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
+    final ID nativeFocusedWindow = invoke(MacUtil.findWindowForTitle(foremostWindowTitle), "autorelease");
 
     paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
@@ -554,7 +555,7 @@ public class MacMessagesImpl extends MacMessages {
     return windowTitle;
   }
 
-  private static int convertRetunCodeFromNativeAlertDialog(Window documentRoot, String alternateText) {
+  private static int convertReturnCodeFromNativeAlertDialog(Window documentRoot, String alternateText) {
     Integer result = resultsFromDocumentRoot.remove(documentRoot);
 
     // DEFAULT = 1

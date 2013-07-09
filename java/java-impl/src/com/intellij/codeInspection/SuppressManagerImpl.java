@@ -41,7 +41,7 @@ public class SuppressManagerImpl extends SuppressManager {
   }
 
   @NotNull
-  private static SuppressIntentionAction[] convertBatchToSuppressIntentionActions(@NotNull SuppressQuickFix[] actions) {
+  public static SuppressIntentionAction[] convertBatchToSuppressIntentionActions(@NotNull SuppressQuickFix[] actions) {
     return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<SuppressQuickFix, SuppressIntentionAction>() {
       @Override
       public SuppressIntentionAction fun(SuppressQuickFix fix) {

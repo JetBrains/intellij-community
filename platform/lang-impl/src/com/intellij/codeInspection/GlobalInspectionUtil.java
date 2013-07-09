@@ -18,14 +18,12 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.ex.GlobalInspectionContextUtil;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,16 +37,6 @@ import java.util.List;
  */
 public class GlobalInspectionUtil {
   private static final String LOC_MARKER = " #loc";
-
-  public static RefElement retrieveRefElement(@NotNull PsiElement element, @NotNull GlobalInspectionContext globalContext) {
-    PsiFile elementFile = element.getContainingFile();
-    RefElement refElement = globalContext.getRefManager().getReference(elementFile);
-    if (refElement == null) {
-      PsiElement context = InjectedLanguageManager.getInstance(elementFile.getProject()).getInjectionHost(elementFile);
-      if (context != null) refElement = globalContext.getRefManager().getReference(context.getContainingFile());
-    }
-    return refElement;
-  }
 
   @NotNull
   public static String createInspectionMessage(@NotNull String message) {
@@ -77,7 +65,7 @@ public class GlobalInspectionUtil {
                                                                    fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]));
     descriptor.setProblemGroup(problemGroup);
     problemDescriptionsProcessor.addProblemElement(
-      retrieveRefElement(elt, globalContext),
+      GlobalInspectionContextUtil.retrieveRefElement(elt, globalContext),
       descriptor
     );
   }

@@ -24,14 +24,12 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -39,8 +37,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.InspectionToolsConfigurable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
@@ -62,7 +58,6 @@ import java.util.regex.Pattern;
 
 public class InspectionManagerEx extends InspectionManagerBase {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
-  @NonNls private String myCurrentProfileName;
   private final NotNullLazyValue<ContentManager> myContentManager;
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
 
@@ -170,31 +165,24 @@ public class InspectionManagerEx extends InspectionManagerBase {
   }
 
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
+    final GlobalInspectionContextImpl inspectionContext;
     if (reuse) {
       if (myGlobalInspectionContext == null) {
-        myGlobalInspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
+        myGlobalInspectionContext = inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
       }
-      myRunningContexts.add(myGlobalInspectionContext);
-      return myGlobalInspectionContext;
+      else {
+        inspectionContext = myGlobalInspectionContext;
+      }
     }
-    final GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
+    else {
+      inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
+    }
     myRunningContexts.add(inspectionContext);
     return inspectionContext;
   }
 
   public void setProfile(final String name) {
     myCurrentProfileName = name;
-  }
-
-  public String getCurrentProfile() {
-    if (myCurrentProfileName == null) {
-      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
-      myCurrentProfileName = profileManager.getProjectProfile();
-      if (myCurrentProfileName == null) {
-        myCurrentProfileName = InspectionProfileManager.getInstance().getRootProfile().getName();
-      }
-    }
-    return myCurrentProfileName;
   }
 
   public void closeRunningContext(GlobalInspectionContextImpl globalInspectionContext){
@@ -205,7 +193,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return myRunningContexts;
   }
 
-  public static boolean inspectionResultSuppressed(@NotNull PsiElement place, LocalInspectionTool tool) {
+  public static boolean inspectionResultSuppressed(@NotNull PsiElement place, @NotNull LocalInspectionTool tool) {
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
     }
@@ -215,29 +203,10 @@ public class InspectionManagerEx extends InspectionManagerBase {
     String alternativeId;
     String id;
 
-    return isSuppressed(place, id = tool.getID()) ||
+    return SuppressionUtil.isSuppressed(place, id = tool.getID()) ||
            (alternativeId = tool.getAlternativeID()) != null &&
            !alternativeId.equals(id) &&
-           isSuppressed(place, alternativeId);
-  }
-
-  public static boolean canRunInspections(@NotNull Project project, final boolean online) {
-    for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
-      if (!factory.isProjectConfiguredToRunInspections(project, online)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public static boolean isSuppressed(@NotNull PsiElement psiElement, String id) {
-    if (id == null) return false;
-    for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
-      if (!factory.isToCheckMember(psiElement, id)) {
-        return true;
-      }
-    }
-    return false;
+           SuppressionUtil.isSuppressed(place, alternativeId);
   }
 
   @NotNull

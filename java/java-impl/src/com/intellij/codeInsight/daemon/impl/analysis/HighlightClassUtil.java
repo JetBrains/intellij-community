@@ -377,7 +377,7 @@ public class HighlightClassUtil {
       .parent(PsiMatchers.hasClass(PsiModifierList.class))
       .parent(PsiMatchers.hasClass(parentClass))
       .parent(PsiMatchers.hasClass(PsiClass.class))
-      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, false))
+      .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, false))
       .parent(PsiMatchers.hasClass(PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class))
       .getElement();
   }
@@ -387,9 +387,9 @@ public class HighlightClassUtil {
     // keyword points to 'class' or 'interface' or 'enum'
     if (new PsiMatcherImpl(keyword)
       .parent(PsiMatchers.hasClass(PsiClass.class))
-      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, true))
+      .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, true))
       .parent(PsiMatchers.hasClass(PsiClass.class))
-      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, false))
+      .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, false))
       .parent(PsiMatchers.hasClass(PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class))
       .getElement() == null) {
       return null;

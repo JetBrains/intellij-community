@@ -232,6 +232,11 @@
       <param name="javaScriptBuildnumberCallback" language="JavaScript" languageInjectionPrefix="function() {return a + " languageInjectionSuffix="}" />
     </pluginDescriptor>
 
+    <pluginDescriptor mavenId="org.codehaus.mojo:buildnumber-maven-plugin">
+      <property name="buildNumber"/>
+      <property name="timestamp"/>
+    </pluginDescriptor>
+
     <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
       <param name="sqlCommand" language="SQL"/>
     </pluginDescriptor>

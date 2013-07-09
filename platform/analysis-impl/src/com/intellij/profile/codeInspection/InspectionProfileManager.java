@@ -39,7 +39,8 @@ import java.util.List;
  * Date: 29-Nov-2005
  */
 public abstract class InspectionProfileManager extends ApplicationProfileManager implements NamedComponent {
-  @NonNls private static final String INSPECTION_DIR = "inspection";
+  @NonNls protected static final String INSPECTION_DIR = "inspection";
+  @NonNls protected static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION_DIR;
 
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
 

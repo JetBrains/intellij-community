@@ -18,7 +18,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     createProjectFiles();
 
-    GithubShareAction.shareProjectOnGithub(myProject);
+    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created project on GitHub", null);
     checkGitExists();
@@ -32,8 +32,8 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
     registerDefaultUntrackedFilesDialogHandler();
 
     createProjectFiles();
-    GithubShareAction.shareProjectOnGithub(myProject);
-    GithubShareAction.shareProjectOnGithub(myProject);
+    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Project is already on GitHub", null);
   }
@@ -49,7 +49,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
     git("add file.txt");
     git("commit -m init");
 
-    GithubShareAction.shareProjectOnGithub(myProject);
+    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created project on GitHub", null);
     checkGitExists();
@@ -67,7 +67,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
     Git git = ServiceManager.getService(Git.class);
     git.init(myProject, myProjectRoot);
 
-    GithubShareAction.shareProjectOnGithub(myProject);
+    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created project on GitHub", null);
     checkGitExists();
@@ -80,9 +80,9 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
     registerDefaultUntrackedFilesDialogHandler();
     registerDefaultShareDialogHandler();
 
-    GithubShareAction.shareProjectOnGithub(myProject);
+    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
-    checkNotification(NotificationType.WARNING, "Failed to commit file during post activities", "No files to commit");
+    checkNotification(NotificationType.WARNING, "Can't finish GitHub sharing process", null);
     checkGitExists();
     checkGithubExists();
     checkRemoteConfigured();

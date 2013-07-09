@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class SameParameterValueInspection extends GlobalJavaInspectionTool {
+public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + SameParameterValueInspection.class.getName());
 
   @Override

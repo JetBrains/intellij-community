@@ -63,9 +63,9 @@ public class GithubLoginPanel {
     mySignupTextField.setBackground(UIUtil.TRANSPARENT_COLOR);
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    if (passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
-      mySavePasswordCheckBox.setEnabled(false);
-      mySavePasswordCheckBox.setSelected(false);
+    if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
+      mySavePasswordCheckBox.setVisible(false);
+      mySavePasswordCheckBox.setSelected(true);
     }
   }
 

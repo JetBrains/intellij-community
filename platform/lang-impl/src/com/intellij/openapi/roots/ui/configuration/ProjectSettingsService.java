@@ -76,7 +76,7 @@ public class ProjectSettingsService {
     return false;
   }
 
-  public void openLibraryOrSdkSettings(final @NotNull OrderEntry orderEntry) {
+  public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
     Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(orderEntry);
     if (additionalSettingsConfigurable != null) {
       ShowSettingsUtil.getInstance().showSettingsDialog(orderEntry.getOwnerModule().getProject(),

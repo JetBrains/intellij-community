@@ -80,7 +80,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);
   void ignoreProblem(@NotNull CommonProblemDescriptor descriptor, @NotNull QuickFix fix);
-  @NotNull
+
   GlobalInspectionContextImpl getContext();
   void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx);
   @Nullable

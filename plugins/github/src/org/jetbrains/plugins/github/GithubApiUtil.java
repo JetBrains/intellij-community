@@ -44,7 +44,7 @@ public class GithubApiUtil {
   public static final String DEFAULT_GITHUB_HOST = "github.com";
 
   private static final int CONNECTION_TIMEOUT = 5000;
-  private static final Logger LOG = Logger.getInstance(GithubApiUtil.class);
+  private static final Logger LOG = GithubUtil.LOG;
 
   private enum HttpVerb {
     GET, POST, DELETE, HEAD
@@ -132,7 +132,7 @@ public class GithubApiUtil {
                                    @Nullable final String requestBody,
                                    @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(login, password);
-    String uri = getApiUrl(host) + path;
+    String uri = GithubUrlUtil.getApiUrl(host) + path;
     return GithubSslSupport.getInstance().executeSelfSignedCertificateAwareRequest(client, uri,
      new ThrowableConvertor<String, HttpMethod, IOException>() {
        @Override
@@ -155,92 +155,6 @@ public class GithubApiUtil {
          }
        }
      });
-  }
-
-  @NotNull
-  public static String removeProtocolPrefix(final String url) {
-    if (url.startsWith("https://")) {
-      return url.substring(8);
-    }
-    else if (url.startsWith("http://")) {
-        return url.substring(7);
-    }
-    else if (url.startsWith("git@")) {
-      return url.substring(4);
-    }
-    else if (url.startsWith("git://")) {
-      return url.substring(6);
-    }
-    else {
-      return url;
-    }
-  }
-
-  @NotNull
-  private static String getApiUrl(@NotNull String urlFromSettings) {
-    return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
-  }
-
-  /**
-   * E.g.: https://api.github.com
-   *       https://my.company.url/api/v3
-   */
-  @NotNull
-  public static String getApiUrl() {
-    return getApiUrl(GithubSettings.getInstance().getHost());
-  }
-
-  /**
-   * Returns the "host" part of Git URLs.
-   * E.g.: https://github.com
-   *       https://my.company.url
-   * Note: there is no trailing slash in the returned url.
-   */
-  @NotNull
-  public static String getGitHost() {
-    return "https://" + getGitHostWithoutProtocol();
-  }
-
-  /**
-   * E.g.: github.com
-   *       my.company.url
-   */
-  @NotNull
-  public static String getGitHostWithoutProtocol() {
-    return removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
-  }
-
-  /*
-   All API access is over HTTPS, and accessed from the api.github.com domain
-   (or through yourdomain.com/api/v3/ for enterprise).
-   http://developer.github.com/v3/
-  */
-  @NotNull
-  private static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
-    String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings));
-    final String API_PREFIX = "api.";
-    final String ENTERPRISE_API_SUFFIX = "/api/v3";
-
-    if (url.equals(DEFAULT_GITHUB_HOST)) {
-      return API_PREFIX + url;
-    }
-    else if (url.equals(API_PREFIX + DEFAULT_GITHUB_HOST)) {
-      return url;
-    }
-    else if (url.endsWith(ENTERPRISE_API_SUFFIX)) {
-      return url;
-    }
-    else {
-      return url + ENTERPRISE_API_SUFFIX;
-    }
-  }
-
-  @NotNull
-  public static String removeTrailingSlash(@NotNull String s) {
-    if (s.endsWith("/")) {
-      return s.substring(0, s.length() - 1);
-    }
-    return s;
   }
 
   @NotNull

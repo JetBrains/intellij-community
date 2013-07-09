@@ -214,7 +214,7 @@ public class InspectionApplication {
       ProgressManager.getInstance().runProcess(new Runnable() {
         @Override
         public void run() {
-          if (!InspectionManagerEx.canRunInspections(myProject, false)) {
+          if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
             if (myErrorCodeRequired) System.exit(1);
             return;
           }

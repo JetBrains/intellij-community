@@ -16,12 +16,13 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class JavaHighlightUtil {
   public static boolean isSerializable(@NotNull PsiClass aClass) {
@@ -123,5 +124,53 @@ public class JavaHighlightUtil {
     }
 
     return false;
+  }
+
+  /**
+   * return all constructors which are referred from this constructor by
+   *  this (...) at the beginning of the constructor body
+   * @return referring constructor
+   */
+  @Nullable public static List<PsiMethod> getChainedConstructors(PsiMethod constructor) {
+    final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
+    visitConstructorChain(constructor, info);
+    if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
+    return info.visitedConstructors;
+  }
+
+  static void visitConstructorChain(PsiMethod constructor, ConstructorVisitorInfo info) {
+    while (true) {
+      if (constructor == null) return;
+      final PsiCodeBlock body = constructor.getBody();
+      if (body == null) return;
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) return;
+      final PsiStatement statement = statements[0];
+      final PsiElement element = new PsiMatcherImpl(statement)
+          .dot(PsiMatchers.hasClass(PsiExpressionStatement.class))
+          .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
+          .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
+          .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
+          .dot(PsiMatchers.hasText(PsiKeyword.THIS))
+          .parent(null)
+          .parent(null)
+          .getElement();
+      if (element == null) return;
+      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+      PsiMethod method = methodCall.resolveMethod();
+      if (method == null) return;
+      if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {
+        info.recursivelyCalledConstructor = method;
+        return;
+      }
+      if (info.visitedConstructors == null) info.visitedConstructors = new ArrayList<PsiMethod>(5);
+      info.visitedConstructors.add(method);
+      constructor = method;
+    }
+  }
+
+  static class ConstructorVisitorInfo {
+    List<PsiMethod> visitedConstructors;
+    PsiMethod recursivelyCalledConstructor;
   }
 }

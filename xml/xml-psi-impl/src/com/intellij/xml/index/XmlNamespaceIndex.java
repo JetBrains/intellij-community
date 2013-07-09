@@ -46,7 +46,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Nullable
   public static String getNamespace(@NotNull VirtualFile file, final Project project, PsiFile context) {
-    if (DumbService.isDumb(project) || (context != null && XmlUtil.isStubBuilding(context))) {
+    if (DumbService.isDumb(project) || (context != null && XmlUtil.isStubBuilding())) {
       try {
         return XsdNamespaceBuilder.computeNamespace(file.getInputStream());
       }
@@ -170,7 +170,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
                                     @Nullable final String version,
                                     @NotNull PsiFile file) {
 
-    if (DumbService.isDumb(file.getProject()) || XmlUtil.isStubBuilding(file)) return null;
+    if (DumbService.isDumb(file.getProject()) || XmlUtil.isStubBuilding()) return null;
 
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
       guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
@@ -189,7 +189,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
     if (!dtdUri.endsWith(".dtd") ||
         DumbService.isDumb(baseFile.getProject()) ||
-        XmlUtil.isStubBuilding(baseFile)) return null;
+        XmlUtil.isStubBuilding()) return null;
 
     String dtdFileName = new File(dtdUri).getName();
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>>

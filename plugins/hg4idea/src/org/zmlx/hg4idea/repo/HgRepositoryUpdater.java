@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
@@ -40,7 +41,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final QueueProcessor<Object> myUpdateQueue;
-  @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
   @Nullable private final VirtualFile myBranchHeadsDir;
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
   @NotNull private final QueueProcessor<Object> myUpdateConfigQueue;
@@ -55,7 +55,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
     Project project = repository.getProject();
     myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
-    myUpdateConfigQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository){
+    myUpdateConfigQueue = new QueueProcessor<Object>(new Consumer<Object>() {
       @Override
       public void consume(Object dummy) {
         repository.updateConfig();
@@ -122,7 +122,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
 
     if (branchHeadsChanged || branchFileChanged || mergeFileChanged || bookmarksFileChanged || currentBookmarkFileChanged) {
-      myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
+      myUpdateQueue.add(Void.TYPE);
     }
     if (configHgrcChanged) {
       myUpdateConfigQueue.add(Void.TYPE);

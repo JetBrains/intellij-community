@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class UnusedReturnValue extends GlobalJavaInspectionTool{
+public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   private MakeVoidQuickFix myQuickFix;
 
   public boolean IGNORE_BUILDER_PATTERN = false;

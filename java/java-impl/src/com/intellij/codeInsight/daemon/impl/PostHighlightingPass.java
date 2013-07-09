@@ -27,8 +27,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
@@ -312,7 +311,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return processField((PsiField)parent, identifier, progress, helper);
     }
     if (parent instanceof PsiParameter && myUnusedSymbolInspection.PARAMETER) {
-      if (InspectionManagerEx.isSuppressed(identifier, UnusedParametersInspection.SHORT_NAME)) return null;
+      if (SuppressionUtil.isSuppressed(identifier, UnusedParametersInspection.SHORT_NAME)) return null;
       return processParameter((PsiParameter)parent, identifier, progress);
     }
     if (parent instanceof PsiMethod && myUnusedSymbolInspection.METHOD) {
@@ -499,10 +498,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         if (UnusedSymbolLocalInspection.isInjected(method)) return null;
         HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, progress);
         if (highlightInfo != null) {
-          final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
+          List<IntentionAction> options = new ArrayList<IntentionAction>();
           options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, myFile));
           if (myUnusedParametersInspection != null) {
-            Collections.addAll(options, myUnusedParametersInspection.getSuppressActions(parameter));
+            SuppressQuickFix[] batchSuppressActions = myUnusedParametersInspection.getBatchSuppressActions(parameter);
+            Collections.addAll(options, SuppressManagerImpl.convertBatchToSuppressIntentionActions(batchSuppressActions));
           }
           //need suppress from Unused Parameters but settings from Unused Symbol
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter),

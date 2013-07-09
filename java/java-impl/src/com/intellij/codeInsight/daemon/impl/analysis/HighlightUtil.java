@@ -1919,7 +1919,7 @@ public class HighlightUtil extends HighlightUtilBase {
           .parent(PsiMatchers.hasClass(PsiExpressionStatement.class))
           .parent(PsiMatchers.hasClass(PsiCodeBlock.class))
           .parent(PsiMatchers.hasClass(PsiMethod.class))
-          .dot(PsiMatchers.isConstructor(true))
+          .dot(JavaMatchers.isConstructor(true))
           .parent(PsiMatchers.hasClass(PsiClass.class))
           .getElement();
         if (parentClass == null) {

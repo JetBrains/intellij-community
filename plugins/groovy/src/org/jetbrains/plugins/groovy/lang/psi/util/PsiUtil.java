@@ -713,23 +713,28 @@ public class PsiUtil {
     final GrExpression expression = call.getInvokedExpression();
     return expression instanceof GrReferenceExpression && methodName.equals(expression.getText().trim());
   }
-
   public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass clazz, @Nullable PsiElement scope, boolean isSuperClassAccepted) {
+    return findEnclosingInstanceClassInScope(clazz, scope, isSuperClassAccepted) != null;
+  }
+
+  public static PsiClass findEnclosingInstanceClassInScope(@NotNull PsiClass clazz, @Nullable PsiElement scope, boolean isSuperClassAccepted) {
     PsiElement place = scope;
     while (place != null && place != clazz && !(place instanceof PsiFile && place.isPhysical())) {
       if (place instanceof PsiClass) {
         if (isSuperClassAccepted) {
-          if (InheritanceUtil.isInheritorOrSelf((PsiClass)place, clazz, true)) return true;
+          if (InheritanceUtil.isInheritorOrSelf((PsiClass)place, clazz, true)) return (PsiClass)place;
         }
         else {
-          if (clazz.getManager().areElementsEquivalent(place, clazz)) return true;
+          if (clazz.getManager().areElementsEquivalent(place, clazz)) return (PsiClass)place;
         }
       }
-      if (place instanceof PsiModifierListOwner && ((PsiModifierListOwner)place).hasModifierProperty(PsiModifier.STATIC)) return false;
+      if (place instanceof PsiModifierListOwner && ((PsiModifierListOwner)place).hasModifierProperty(PsiModifier.STATIC)) return null;
       place = place.getContext();
     }
-    if (clazz instanceof GroovyScriptClass) return place == clazz.getContainingFile();
-    return place == clazz;
+    if (clazz instanceof GroovyScriptClass && place == clazz.getContainingFile() || place == clazz) {
+      return clazz;
+    }
+    return null;
   }
 
 
@@ -814,19 +819,16 @@ public class PsiUtil {
     return false;
   }
 
-  public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place,
-                                                               GroovyResolveResult[] classCandidates,
+  @NotNull
+  public static GroovyResolveResult[] getConstructorCandidates(@NotNull PsiElement place,
+                                                               @NotNull GroovyResolveResult classCandidate,
                                                                @Nullable PsiType[] argTypes) {
-    for (GroovyResolveResult classResult : classCandidates) {
-      final PsiElement element = classResult.getElement();
-      if (element instanceof PsiClass) {
-        PsiClass clazz = (PsiClass)element;
-        PsiSubstitutor substitutor = classResult.getSubstitutor();
-        return ResolveUtil.getAllClassConstructors(clazz, place, substitutor, argTypes);
-      }
-    }
+    final PsiElement element = classCandidate.getElement();
+    if (!(element instanceof PsiClass)) return GroovyResolveResult.EMPTY_ARRAY;
 
-    return GroovyResolveResult.EMPTY_ARRAY;
+    PsiClass clazz = (PsiClass)element;
+    PsiSubstitutor substitutor = classCandidate.getSubstitutor();
+    return ResolveUtil.getAllClassConstructors(clazz, substitutor, argTypes, place);
   }
 
   public static boolean isAccessedForReading(GrExpression expr) {
@@ -884,7 +886,7 @@ public class PsiUtil {
     final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
                                          ? (GroovyResolveResult)resolveResult
                                          : new GroovyResolveResultImpl(psiClass, context, null, substitutor, true, true);
-    return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
+    return getConstructorCandidates(context, grResult, argTypes);
   }
 
   @Nullable

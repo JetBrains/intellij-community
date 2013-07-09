@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
@@ -336,10 +335,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected XmlFormattingPolicy createPolicyFor() {
     return myXmlFormattingPolicy;
-  }
-
-  private CodeStyleSettings getSettings() {
-    return myXmlFormattingPolicy.getSettings();
   }
 
   @Nullable
