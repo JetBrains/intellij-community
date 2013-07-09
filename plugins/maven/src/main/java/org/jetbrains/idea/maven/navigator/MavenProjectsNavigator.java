@@ -152,6 +152,17 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
   }
 
+  public boolean getShowVersions() {
+    return myState.showVersions;
+  }
+
+  public void setShowVersions(boolean value) {
+    if (myState.showVersions != value) {
+      myState.showVersions = value;
+      scheduleStructureUpdate();
+    }
+  }
+
   @Override
   public void initComponent() {
     if (!isNormalProject()) return;
@@ -254,6 +265,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     group.add(actionManager.getAction("Maven.ShowIgnored"));
     group.add(actionManager.getAction("Maven.ShowBasicPhasesOnly"));
     group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
+    group.add(actionManager.getAction("Maven.ShowVersions"));
 
     myToolWindow.setAdditionalGearActions(group);
 

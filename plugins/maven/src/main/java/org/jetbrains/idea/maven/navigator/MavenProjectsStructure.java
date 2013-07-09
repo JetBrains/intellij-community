@@ -817,6 +817,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return myMavenProject.getFile();
     }
 
+    @Override
+    protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attribs) {
+      super.setNameAndTooltip(name, tooltip, attribs);
+      if (myProjectsNavigator.getShowVersions()) {
+        addColoredFragment(":" + myMavenProject.getMavenId().getVersion(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+      }
+    }
+
     @Nullable
     @NonNls
     protected String getMenuId() {

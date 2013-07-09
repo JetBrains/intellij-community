@@ -443,6 +443,10 @@
             class="org.jetbrains.idea.maven.navigator.actions.AlwaysShowArtifactIdAction"
             text="Always Show ArtifactId"
             description="Always Show ArtifactId instead of project name"/>
+    <action id="Maven.ShowVersions"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowVersionsAction"
+            text="Show version"
+            description="Show version for Maven project"/>
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
