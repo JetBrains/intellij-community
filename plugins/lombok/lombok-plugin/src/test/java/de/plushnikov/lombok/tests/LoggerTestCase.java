@@ -25,6 +25,11 @@ public class LoggerTestCase extends LombokParsingTestCase {
   }
 
   @Test
+  public void testLoggerLog4j2() throws IOException {
+    doTest();
+  }
+
+  @Test
   public void testLoggerSlf4j() throws IOException {
     doTest();
   }
@@ -46,6 +51,11 @@ public class LoggerTestCase extends LombokParsingTestCase {
 
   @Test
   public void testLoggerSlf4jWithPackage() throws IOException {
+    doTest();
+  }
+
+  @Test
+  public void testLoggerXSlf4j() throws IOException {
     doTest();
   }
 }

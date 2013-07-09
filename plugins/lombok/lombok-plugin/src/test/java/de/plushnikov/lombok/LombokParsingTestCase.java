@@ -6,18 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomNamedTarget;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -45,6 +34,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   public void setUp() throws Exception {
     super.setUp();
     addLombokClassesToFixture();
+
     //myFixture.copyDirectoryToProject("", "")
   }
 
@@ -124,8 +114,14 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       myFixture.addClass("package lombok.extern.log4j;\n" + ANNOTATION_TYPE +
           "public @interface Log4j {\n" +
           "}");
+      myFixture.addClass("package lombok.extern.log4j;\n" + ANNOTATION_TYPE +
+          "public @interface Log4j2 {\n" +
+          "}");
       myFixture.addClass("package lombok.extern.slf4j;\n" + ANNOTATION_TYPE +
           "public @interface Slf4j {\n" +
+          "}");
+      myFixture.addClass("package lombok.extern.slf4j;\n" + ANNOTATION_TYPE +
+          "public @interface XSlf4j {\n" +
           "}");
     } catch (Exception ex) {
       System.err.println("Error occured ");
@@ -169,7 +165,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     PsiField[] intellijFields = intellij.getFields();
     PsiField[] theirsFields = theirs.getFields();
 
-    assertEquals("Fieldscounts are different for Class " + intellij.getName(), theirsFields.length, intellijFields.length);
+    assertEquals("Field counts are different for Class " + intellij.getName(), theirsFields.length, intellijFields.length);
 
     for (PsiField theirsField : theirsFields) {
       boolean compared = false;

@@ -10,5 +10,7 @@ de.plushnikov.intellij.lombok.processor.clazz.SingletonProcessor
 de.plushnikov.intellij.lombok.processor.clazz.ToStringProcessor
 de.plushnikov.intellij.lombok.processor.clazz.log.CommonsLogProcessor
 de.plushnikov.intellij.lombok.processor.clazz.log.Log4jProcessor
+de.plushnikov.intellij.lombok.processor.clazz.log.Log4j2Processor
 de.plushnikov.intellij.lombok.processor.clazz.log.LogProcessor
 de.plushnikov.intellij.lombok.processor.clazz.log.Slf4jProcessor
+de.plushnikov.intellij.lombok.processor.clazz.log.XSlf4jProcessor
