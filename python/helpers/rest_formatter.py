@@ -141,7 +141,7 @@ def parse_docstring(docstring, errors, **options):
 
 
 try:
-  src = "".join(sys.argv[1:])
+  src = sys.stdin.read()
 
   errors = []
 

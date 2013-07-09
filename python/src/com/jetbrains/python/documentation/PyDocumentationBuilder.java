@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.resolve.RootVisitorHost;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
 import com.jetbrains.python.toolbox.Substring;
@@ -379,11 +378,7 @@ class PyDocumentationBuilder {
     }
     else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
       DocStringUtil.isSphinxDocString(preparedDocstring)) {
-      String formatted = null;
-      Sdk pythonSdk = PythonSdkType.findPython2Sdk(module);
-      if (pythonSdk != null) {
-        formatted = ReSTRunner.formatDocstring(pythonSdk, docstring);
-      }
+      String formatted = ReSTRunner.formatDocstring(module, docstring);
       if (formatted == null) {
         formatted = new SphinxDocString(preparedDocstring).getDescription();
       }
