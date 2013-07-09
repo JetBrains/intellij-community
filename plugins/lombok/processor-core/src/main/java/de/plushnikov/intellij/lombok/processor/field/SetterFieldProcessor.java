@@ -11,6 +11,7 @@ import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,13 +80,11 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);
 
       for (String methodName : methodNames) {
-        for (PsiMethod classMethod : classMethods) {
-          if (classMethod.getName().equalsIgnoreCase(methodName) && (classMethod.isVarArgs() || classMethod.getParameterList().getParametersCount() == 1)) {
-            final String setterMethodName = getSetterName(psiField, isBoolean);
+        if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 1)) {
+          final String setterMethodName = getSetterName(psiField, isBoolean);
 
-            builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
-            result = false;
-          }
+          builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
+          result = false;
         }
       }
     }
@@ -135,7 +134,6 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     }
 
     return method;
-
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {

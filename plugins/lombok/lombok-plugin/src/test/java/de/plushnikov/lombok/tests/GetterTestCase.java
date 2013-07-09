@@ -23,7 +23,22 @@ public class GetterTestCase extends LombokParsingTestCase {
   }
 
   @Test
+  public void testGetterDeprecated() throws IOException {
+    doTest();
+  }
+
+  @Test
+  public void testGetterEnum() throws IOException {
+    doTest();
+  }
+
+  @Test
   public void testGetterLazy()throws IOException  {
+    doTest();
+  }
+
+  @Test
+  public void testGetterLazyBoolean()throws IOException  {
     doTest();
   }
 
@@ -43,7 +58,27 @@ public class GetterTestCase extends LombokParsingTestCase {
   }
 
   @Test
+  public void testGetterNone() throws IOException {
+    doTest();
+  }
+
+  @Test
   public void testGetterOnClass() throws IOException {
+    doTest();
+  }
+
+  @Test
+  public void testGetterOnMethod() throws IOException {
+    doTest();
+  }
+
+  @Test
+  public void testGetterOnMethodErrors() throws IOException {
+    doTest();
+  }
+
+  @Test
+  public void testGetterOnMethodErrors2() throws IOException {
     doTest();
   }
 

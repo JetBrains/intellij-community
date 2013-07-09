@@ -3,6 +3,7 @@ package de.plushnikov.intellij.lombok.processor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -55,4 +56,23 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
     return supportedAnnotation.equals(annotationName) && (type.isAssignableFrom(supportedClass));
   }
 
+  protected boolean hasSimilarMethod(@NotNull PsiMethod[] classMethods, String methodName, int methodArgCount) {
+    for (PsiMethod classMethod : classMethods) {
+      if (isSimilarMethod(classMethod, methodName, 0)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isSimilarMethod(@NotNull PsiMethod classMethod, String methodName, int methodArgCount) {
+    boolean equalNames = classMethod.getName().equalsIgnoreCase(methodName);
+
+    int parametersCount = classMethod.getParameterList().getParametersCount();
+    if (classMethod.isVarArgs()) {
+      parametersCount--;
+    }
+
+    return equalNames && methodArgCount == parametersCount;
+  }
 }

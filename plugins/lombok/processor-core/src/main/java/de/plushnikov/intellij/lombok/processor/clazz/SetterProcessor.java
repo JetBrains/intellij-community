@@ -1,13 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.field.SetterFieldProcessor;
@@ -46,10 +39,10 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return validateAnnotationOnRigthType(psiAnnotation, psiClass, builder) && validateVisibility(psiAnnotation);
+    return validateAnnotationOnRightType(psiAnnotation, psiClass, builder) && validateVisibility(psiAnnotation);
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError(String.format("'@%s' is only supported on a class or field type", psiAnnotation.getQualifiedName()));
@@ -88,7 +81,9 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
         createSetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists
         final Collection<String> methodNames = getFieldProcessor().getAllSetterNames(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
-        createSetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
+        for (String methodName : methodNames) {
+          createSetter &= !PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 1);
+        }
       }
       if (createSetter) {
         result.add(fieldProcessor.createSetterMethod(psiField, methodModifier));

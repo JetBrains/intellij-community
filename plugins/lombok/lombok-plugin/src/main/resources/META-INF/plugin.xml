@@ -35,7 +35,8 @@
 		<ul>
 		<li>0.7
 				<ol>
-				    <li>Issue #41 Added support for XSlfj and Log4j2 logger</li>
+				    <li>Issue #41 Added support for XSlf4j and Log4j2 logger</li>
+				    <li>Issue #44 Fixed Getter- and Setter- method generation, when method is already there with a parameter(s)</li>
 				<ol>
 			</li>
 		<li>0.6.2
@@ -48,6 +49,8 @@
 				    <li>Issue #23 Updated to run with IntelliJ 12</li>
 				    <li>Issue #42 IllegalArgumentException with Intellij 12</li>
 				    <li>Issue #48 IllegalArgumentException with Intellij 12</li>
+				    <li>Issue #38 Added ability to enable/disable lombok-intellij-plugin per project-configuration
+				    and reduced logging-level of plugin</li>
 				<ol>
 			</li>
 		 <li>0.5

@@ -1,17 +1,11 @@
 package de.plushnikov.intellij.lombok.util;
 
-import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
-
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethod;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author Plushnikov Michail
@@ -60,5 +54,25 @@ public class PsiMethodUtil {
       }
     }
     return hasMethod;
+  }
+
+  public static boolean hasSimilarMethod(@NotNull PsiMethod[] classMethods, @NotNull String methodName, int methodArgCount) {
+    for (PsiMethod classMethod : classMethods) {
+      if (isSimilarMethod(classMethod, methodName, methodArgCount)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isSimilarMethod(@NotNull PsiMethod classMethod, @NotNull String methodName, int methodArgCount) {
+    boolean equalNames = classMethod.getName().equalsIgnoreCase(methodName);
+
+    int parametersCount = classMethod.getParameterList().getParametersCount();
+    if (classMethod.isVarArgs()) {
+      parametersCount--;
+    }
+
+    return equalNames && methodArgCount == parametersCount;
   }
 }

@@ -1,14 +1,7 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -18,6 +11,7 @@ import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,13 +88,11 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
       for (String methodName : methodNames) {
-        for (PsiMethod classMethod : classMethods) {
-          if (classMethod.getName().equals(methodName) && classMethod.getParameterList().getParametersCount() == 0) {
-            final String setterMethodName = LombokUtils.toGetterName(psiField.getName(), isBoolean);
+        if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0)) {
+          final String setterMethodName = LombokUtils.toGetterName(psiField.getName(), isBoolean);
 
-            builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
-            result = false;
-          }
+          builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
+          result = false;
         }
       }
     }

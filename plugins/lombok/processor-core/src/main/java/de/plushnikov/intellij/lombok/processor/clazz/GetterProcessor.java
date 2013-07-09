@@ -1,13 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.field.GetterFieldProcessor;
@@ -84,9 +77,11 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
         createGetter &= !hasFieldProcessorAnnotation(modifierList);
         //Skip fields that start with $
         createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-        //Skip fields if a method with same name already exists
+        //Skip fields if a method with same name and arguments count already exists
         final Collection<String> methodNames = LombokUtils.toAllGetterNames(psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
-        createGetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
+        for (String methodName : methodNames) {
+          createGetter &= !PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0);
+        }
       }
       if (createGetter) {
         result.add(fieldProcessor.createGetterMethod(psiField, methodModifier));
