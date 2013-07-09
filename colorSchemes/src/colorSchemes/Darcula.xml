@@ -519,6 +519,7 @@
     </option>
     <option name="FOLDED_TEXT_ATTRIBUTES">
       <value>
+        <option name="FOREGROUND" value="8c8c8c" />
         <option name="BACKGROUND" value="3a3a3a" />
       </value>
     </option>
