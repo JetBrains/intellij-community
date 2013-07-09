@@ -17,29 +17,32 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class StandardInstructionVisitor extends InstructionVisitor {
+  private static final Object ANY_VALUE = new Object();
   private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
+  private final MultiMap<PushInstruction, Object> myPossibleVariableValues = new MultiMapBasedOnSet<PushInstruction, Object>();
   private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<MethodCallInstruction, Map<PsiExpression, Nullness>> myParametersNullability = new FactoryMap<MethodCallInstruction, Map<PsiExpression, Nullness>>() {
     @Nullable
     @Override
@@ -47,6 +50,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return calcParameterNullability(key.getCallExpression());
     }
   };
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<MethodCallInstruction, Nullness> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Nullness>() {
     @Override
     protected Nullness create(MethodCallInstruction key) {
@@ -157,6 +161,32 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return nextInstruction(instruction, runner, memState);
+  }
+
+  @Override
+  public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    if (instruction.isReferenceRead()) {
+      DfaValue dfaValue = instruction.getValue();
+      if (dfaValue instanceof DfaVariableValue) {
+        DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
+        myPossibleVariableValues.putValue(instruction, constValue != null ? constValue : ANY_VALUE);
+      }
+    }
+    return super.visitPush(instruction, runner, memState);
+  }
+
+  public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {
+    List<Pair<PsiReferenceExpression, DfaConstValue>> result = ContainerUtil.newArrayList();
+    for (PushInstruction instruction : myPossibleVariableValues.keySet()) {
+      Collection<Object> values = myPossibleVariableValues.get(instruction);
+      if (values.size() == 1) {
+        Object singleValue = values.iterator().next();
+        if (singleValue != ANY_VALUE) {
+          result.add(Pair.create((PsiReferenceExpression)instruction.getPlace(), (DfaConstValue)singleValue));
+        }
+      }
+    }
+    return result;
   }
 
   @Override

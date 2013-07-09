@@ -31,18 +31,26 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
   private final PsiExpression myPlace;
+  private final boolean myReferenceRead;
 
   public PushInstruction(@Nullable DfaValue value, PsiExpression place) {
+    this(value, place, false);
+  }
+
+  public PushInstruction(@Nullable DfaValue value, PsiExpression place, final boolean isReferenceRead) {
     myValue = value != null ? value : DfaUnknownValue.getInstance();
     myPlace = place;
+    myReferenceRead = isReferenceRead;
+  }
+
+  public boolean isReferenceRead() {
+    return myReferenceRead;
   }
 
   @NotNull

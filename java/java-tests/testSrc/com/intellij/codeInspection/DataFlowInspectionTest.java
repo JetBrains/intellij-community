@@ -40,6 +40,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   private void doTest() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
@@ -138,6 +139,15 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     inspection.DONT_REPORT_TRUE_ASSERT_STATEMENTS = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testReportConstantReferences() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testCheckFieldInitializers() {
