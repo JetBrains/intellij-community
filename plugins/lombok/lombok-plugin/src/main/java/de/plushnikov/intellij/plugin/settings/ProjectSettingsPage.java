@@ -9,6 +9,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -45,6 +46,11 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   @Override
   public String getDisplayName() {
     return "Lombok plugin";
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
   }
 
   @Override

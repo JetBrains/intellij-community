@@ -268,13 +268,12 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     return loadFileContent("/after/", fileName);
   }
 
-  @Override
-  protected String getTestDataPath() {
+  protected String getLombokTestDataDirectory() {
     return "./lombok-plugin/src/test/data";
   }
 
   private String loadFileContent(String subDir, String fileName) throws IOException {
-    final File fromFile = new File(getTestDataPath(), subDir);
+    final File fromFile = new File(getLombokTestDataDirectory(), subDir);
     String text = FileUtil.loadFile(new File(fromFile, fileName), CharsetToolkit.UTF8).trim();
     text = StringUtil.convertLineSeparators(text);
     return text;
