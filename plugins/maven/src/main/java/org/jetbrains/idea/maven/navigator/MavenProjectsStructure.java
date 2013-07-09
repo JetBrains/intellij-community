@@ -710,7 +710,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public String getName() {
-      return myMavenProject.getDisplayName();
+      if (myProjectsNavigator.getAlwaysShowArtifactId()) {
+        return myMavenProject.getMavenId().getArtifactId();
+      }
+      else {
+        return myMavenProject.getDisplayName();
+      }
     }
 
     @Override
