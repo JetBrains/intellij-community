@@ -10,6 +10,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionFromMethodQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,8 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (containingClass == null) return;
       final Collection<PsiElement> supers = PySuperMethodsSearch.search(node).findAll();
       if (!supers.isEmpty()) return;
+      final Collection<PyFunction> overrides = PyOverridingMethodsSearch.search(node, true).findAll();
+      if (!overrides.isEmpty()) return;
       final PyDecoratorList decoratorList = node.getDecoratorList();
       if (decoratorList != null) {
         for (PyDecorator decorator : decoratorList.getDecorators()) {

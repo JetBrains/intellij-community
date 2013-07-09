@@ -4,4 +4,4 @@ class A:
 
 class B(A):
   def f(self, a):
-    print "B"
+    print self.b

@@ -46,7 +46,12 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
   public void testNotImplemented() {
     doTest();
   }
+
   public void testOverwrittenMethod() {
+    doTest();
+  }
+
+  public void testSuperMethod() {
     doTest();
   }
 
