@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   private static class TestCase<T> {
     @NotNull final public List<Pair<String, T>> tests = new ArrayList<Pair<String, T>>();
 
-    public void add(String in, T out) {
+    public void add(@NotNull String in, @Nullable T out) {
       tests.add(Pair.create(in, out));
     }
 
@@ -173,6 +174,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
 
     runTestCase(tests, new Convertor<String, GithubUserAndRepository>() {
       @Override
+      @Nullable
       public GithubUserAndRepository convert(String in) {
         return getUserAndRepositoryFromRemoteUrl(in);
       }
@@ -204,6 +206,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
 
     runTestCase(tests, new Convertor<String, String>() {
       @Override
+      @Nullable
       public String convert(String in) {
         return makeGithubRepoUrlFromRemoteUrl(in, "https://github.com");
       }

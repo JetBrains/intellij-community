@@ -45,6 +45,8 @@ public class GithubSettingsPanel {
 
   private static final Logger LOG = GithubUtil.LOG;
 
+  private final GithubSettings mySettings;
+
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
@@ -54,7 +56,6 @@ public class GithubSettingsPanel {
   private JComboBox myAuthTypeComboBox;
 
   private boolean myPasswordModified;
-  private GithubSettings mySettings;
 
   public GithubSettingsPanel(@NotNull final GithubSettings settings) {
     mySettings = settings;
