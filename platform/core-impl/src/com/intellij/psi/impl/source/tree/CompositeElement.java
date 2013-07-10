@@ -52,8 +52,7 @@ public class CompositeElement extends TreeElement {
   private TreeElement lastChild = null;
 
   private volatile int myModificationsCount = 0;
-  private static final int NOT_CACHED = -239;
-  private volatile int myCachedLength = NOT_CACHED;
+  private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper = null;
   private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
@@ -106,7 +105,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public void clearCaches() {
     assertThreading();
-    myCachedLength = NOT_CACHED;
+    myCachedLength = -1;
 
     myModificationsCount++;
     myHC = -1;
@@ -537,21 +536,16 @@ public class CompositeElement extends TreeElement {
     int cachedLength = myCachedLength;
     if (cachedLength >= 0) return cachedLength;
 
-    synchronized (START_OFFSET_LOCK) {
-      cachedLength = myCachedLength;
-      if (cachedLength >= 0) return cachedLength;
-
-      ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
-      try {
-        walkCachingLength();
-      }
-      catch (AssertionError e) {
-        myCachedLength = NOT_CACHED;
-        String assertion = StringUtil.getThrowableText(e);
-        throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
-      }
-      return myCachedLength;
+    ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
+    try {
+      walkCachingLength();
     }
+    catch (AssertionError e) {
+      myCachedLength = -1;
+      String assertion = StringUtil.getThrowableText(e);
+      throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
+    }
+    return myCachedLength;
   }
 
   @Override
@@ -574,65 +568,40 @@ public class CompositeElement extends TreeElement {
     return myCachedLength;
   }
 
+  private static TreeElement drillDown(TreeElement start) {
+    TreeElement cur = start;
+    while (cur.getCachedLength() < 0) {
+      TreeElement child = cur.getFirstChildNode();
+      if (child == null) {
+        break;
+      }
+      cur = child;
+    }
+    return cur;
+  }
+
   private void walkCachingLength() {
-    if (myCachedLength != NOT_CACHED) {
-      throw new AssertionError("Before walking: cached="+myCachedLength);
-    }
+    TreeElement cur = drillDown(this);
+    while (true) {
+      if (cur.getCachedLength() < 0) {
+        int length = 0;
+        for (TreeElement child = cur.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+          length += child.getTextLength();
+        }
+        ((CompositeElement)cur).setCachedLength(length);
+      }
 
-    TreeElement cur = this;
-    while (cur != null) {
-      cur = next(cur);
-    }
+      if (cur == this) {
+        return;
+      }
 
-    if (myCachedLength < 0) {
-      throw new AssertionError("After walking: cached="+myCachedLength);
+      TreeElement next = cur.getTreeNext();
+      cur = next != null ? drillDown(next) : cur.getTreeParent();
     }
   }
 
   void setCachedLength(int cachedLength) {
     myCachedLength = cachedLength;
-  }
-
-  @Nullable
-  private TreeElement next(TreeElement cur) {
-    //for a collapsed chameleon, we're not going down, even if it's expanded by some other thread after this line
-    final int len = cur.getCachedLength();
-    final boolean down = len == NOT_CACHED;
-    if (down) {
-      CompositeElement composite = (CompositeElement)cur; // It's a composite or we won't be going down
-      TreeElement child = composite.getFirstChildNode(); // if we're LazyParseable, sync is a must for accessing the non-volatile field
-      if (child != null) {
-        LOG.assertTrue(child.getTreeParent() == composite, cur);
-        return child;
-      }
-
-      composite.myCachedLength = 0;
-    } else {
-      assert len >= 0 : this + "; len=" + len;
-    }
-
-    // up
-    while (cur != this) {
-      CompositeElement parent = cur.getTreeParent();
-      int curLength = cur.getCachedLength();
-      if (curLength < 0) {
-        throw new AssertionError(cur + "; " + curLength);
-      }
-      parent.myCachedLength -= curLength;
-
-      TreeElement next = cur.getTreeNext();
-      if (next != null) {
-        LOG.assertTrue(next.getTreePrev() == cur, cur);
-        return next;
-      }
-
-      LOG.assertTrue(parent.getLastChildNode() == cur, parent);
-      parent.myCachedLength = -parent.myCachedLength + NOT_CACHED;
-
-      cur = parent;
-    }
-
-    return null;
   }
 
   @Override
