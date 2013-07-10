@@ -75,6 +75,7 @@ public abstract class GithubTest extends UsefulTestCase {
   @NotNull protected String myHost;
   @NotNull protected String myLogin1;
   @NotNull protected String myLogin2;
+  @NotNull protected String myPassword1;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GithubTest() {
@@ -174,6 +175,7 @@ public abstract class GithubTest extends UsefulTestCase {
     myHost = host;
     myLogin1 = login1;
     myLogin2 = login2;
+    myPassword1 = password1;
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);

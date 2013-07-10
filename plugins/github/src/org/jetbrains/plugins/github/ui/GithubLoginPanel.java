@@ -107,7 +107,7 @@ public class GithubLoginPanel {
 
   @NotNull
   public GithubAuthData getAuthData() {
-    return new GithubAuthData(getHost(), getLogin(), getPassword());
+    return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
   }
 }
 

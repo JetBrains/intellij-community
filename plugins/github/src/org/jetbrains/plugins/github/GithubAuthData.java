@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Container for authentication data: host, login and password.
@@ -23,14 +24,26 @@ import org.jetbrains.annotations.NotNull;
  * @author Aleksey Pivovarov
  */
 public class GithubAuthData {
-  @NotNull private final String myHost;
-  @NotNull private final String myLogin;
-  @NotNull private final String myPassword;
+  private @NotNull final String myHost;
+  private @Nullable final BasicAuth myBasicAuth;
+  private @Nullable final TokenAuth myTokenAuth;
 
-  public GithubAuthData(@NotNull String host, @NotNull String login, @NotNull String password) {
+  private GithubAuthData(@NotNull String host, @Nullable BasicAuth basicAuth, @Nullable TokenAuth tokenAuth) {
     myHost = host;
-    myLogin = login;
-    myPassword = password;
+    myBasicAuth = basicAuth;
+    myTokenAuth = tokenAuth;
+  }
+
+  public static GithubAuthData createAnonymous(@NotNull String host) {
+    return new GithubAuthData(host, null, null);
+  }
+
+  public static GithubAuthData createBasicAuth(@NotNull String host, @NotNull String login, @NotNull String password) {
+    return new GithubAuthData(host, new BasicAuth(login, password), null);
+  }
+
+  public static GithubAuthData createTokenAuth(@NotNull String host, @NotNull String token) {
+    return new GithubAuthData(host, null, new TokenAuth(token));
   }
 
   @NotNull
@@ -38,14 +51,46 @@ public class GithubAuthData {
     return myHost;
   }
 
-  @NotNull
-  public String getLogin() {
-    return myLogin;
+  @Nullable
+  public BasicAuth getBasicAuth() {
+    return myBasicAuth;
   }
 
-  @NotNull
-  public String getPassword() {
-    return myPassword;
+  @Nullable
+  public TokenAuth getTokenAuth() {
+    return myTokenAuth;
   }
 
+  public static class BasicAuth {
+    private @NotNull final String myLogin;
+    private @NotNull final String myPassword;
+
+    private BasicAuth(@NotNull String login, @NotNull String password) {
+      myLogin = login;
+      myPassword = password;
+    }
+
+    @NotNull
+    String getLogin() {
+      return myLogin;
+    }
+
+    @NotNull
+    String getPassword() {
+      return myPassword;
+    }
+  }
+
+  public static class TokenAuth {
+    private @NotNull final String myToken;
+
+    private TokenAuth(@NotNull String token) {
+      myToken = token;
+    }
+
+    @NotNull
+    String getToken() {
+      return myToken;
+    }
+  }
 }

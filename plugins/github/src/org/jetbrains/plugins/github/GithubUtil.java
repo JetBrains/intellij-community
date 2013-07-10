@@ -148,9 +148,7 @@ public class GithubUtil {
   }
 
   public static boolean checkAuthData(GithubAuthData auth) throws IOException {
-    if (StringUtil.isEmptyOrSpaces(auth.getHost()) ||
-        StringUtil.isEmptyOrSpaces(auth.getLogin()) ||
-        StringUtil.isEmptyOrSpaces(auth.getPassword())) {
+    if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
       return false;
     }
 
@@ -249,8 +247,8 @@ public class GithubUtil {
     return parseSingleRepositoryInfo(jsonObject.getAsJsonObject());
   }
 
-  public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String repo) throws IOException {
-    String path = "/repos/" + auth.getLogin() + "/" + repo;
+  public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String username, @NotNull String repo) throws IOException {
+    String path = "/repos/" + username + "/" + repo;
     GithubApiUtil.deleteRequest(auth, path);
   }
 

@@ -65,7 +65,7 @@ public class GithubSettingsPanel {
       public void actionPerformed(ActionEvent e) {
         String password = isPasswordModified() ? getPassword() : settings.getPassword();
         try {
-          if (GithubUtil.checkAuthData(new GithubAuthData(getHost(), getLogin(), password))) {
+          if (GithubUtil.checkAuthData(GithubAuthData.createBasicAuth(getHost(), getLogin(), password))) {
             Messages.showInfoMessage(myPane, "Connection successful", "Success");
           } else {
             Messages.showErrorDialog(myPane, "Can't login to " + getHost() + " using given credentials", "Login Failure");
