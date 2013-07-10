@@ -1547,7 +1547,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(expression.resolve() instanceof PsiField ? new FieldReferenceInstruction(expression, null) : new PopInstruction());
     }
 
-    addInstruction(new PushInstruction(getExpressionDfaValue(expression), expression));
+    addInstruction(new PushInstruction(getExpressionDfaValue(expression), expression, PsiUtil.isAccessedForReading(expression)));
 
     finishElement(expression);
   }
@@ -1570,6 +1570,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return dfaValue;
   }
 
+  @NotNull
   private DfaValue createDfaValueForAnotherInstanceMemberAccess(PsiReferenceExpression expression, PsiField field) {
     DfaValue dfaValue = null;
     if (expression.getQualifierExpression() != null) {

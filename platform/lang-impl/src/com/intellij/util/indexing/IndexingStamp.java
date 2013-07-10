@@ -229,6 +229,6 @@ public class IndexingStamp {
   private static Object getStripedLock(VirtualFile file) {
     if (!(file instanceof NewVirtualFile)) return 0;
     int id = ((NewVirtualFile)file).getId();
-    return (id & 0xFF) % ourLocks.length;
+    return ourLocks[(id & 0xFF) % ourLocks.length];
   }
 }

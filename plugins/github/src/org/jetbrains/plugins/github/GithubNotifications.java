@@ -24,6 +24,8 @@ import com.intellij.openapi.ui.Messages;
 import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.URL;
+
 /**
  * @author Aleksey Pivovarov
  */
@@ -93,7 +95,7 @@ public class GithubNotifications {
       new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
                        NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
     Notificator.getInstance(project).notify(notification);
-    LOG.error(title + "; " + prefix + highlight + postfix + "; " + url);
+    LOG.warn(title + "; " + prefix + highlight + postfix + "; " + url);
   }
 
   public static void showInfoDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {

@@ -77,6 +77,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       element = null;
     }
     if (element == null) {
+      //noinspection unchecked
       element = (E)myElementInfo.restoreElement();
       if (element != null && (!element.getClass().equals(myElementClass) || !element.isValid())) {
         element = null;

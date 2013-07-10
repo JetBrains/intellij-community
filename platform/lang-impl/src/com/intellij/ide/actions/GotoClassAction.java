@@ -20,7 +20,6 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
@@ -46,6 +45,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -108,7 +108,10 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
             }
             if (psiElement != null && file != null && popup.getMemberPattern() != null) {
               NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-              findMember(popup.getMemberPattern(), psiElement, file);
+              Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
+              if (member != null) {
+                member.navigate(true);
+              }
             }
 
             NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
@@ -124,37 +127,41 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     }, "Classes matching pattern", true);
   }
 
-  private static void findMember(String pattern, PsiElement psiElement, VirtualFile file) {
+  @Nullable private static Navigatable findMember(String pattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
+    if (builder == null || editors.length == 0) {
+      return null;
+    }
 
-    if (builder != null && editors.length > 0) {
-      final StructureView view = builder.createStructureView(editors[0], psiElement.getProject());
-      final StructureViewModel model = view.getTreeModel();
-      final StructureViewTreeElement root = model.getRoot();
-      final StructureViewTreeElement element = findElement(root, psiElement, 4);
-      if (element != null) {
-        final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
-        int max = Integer.MIN_VALUE;
-        Object target = null;
-        for (TreeElement treeElement : element.getChildren()) {
-          if (treeElement instanceof StructureViewTreeElement) {
-            final ItemPresentation presentation = treeElement.getPresentation();
-            if (presentation != null) {
-              final int degree = matcher.matchingDegree(presentation.getPresentableText());
-              if (degree > max) {
-                max = degree;
-                target = ((StructureViewTreeElement)treeElement).getValue();
-              }
+    final StructureView view = builder.createStructureView(editors[0], psiElement.getProject());
+    try {
+      final StructureViewTreeElement element = findElement(view.getTreeModel().getRoot(), psiElement, 4);
+      if (element == null) {
+        return null;
+      }
+
+      final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      int max = Integer.MIN_VALUE;
+      Object target = null;
+      for (TreeElement treeElement : element.getChildren()) {
+        if (treeElement instanceof StructureViewTreeElement) {
+          final ItemPresentation presentation = treeElement.getPresentation();
+          String presentableText = presentation == null ? null : presentation.getPresentableText();
+          if (presentableText != null) {
+            final int degree = matcher.matchingDegree(presentableText);
+            if (degree > max) {
+              max = degree;
+              target = ((StructureViewTreeElement)treeElement).getValue();
             }
           }
         }
-
-        if (target instanceof Navigatable) {
-          ((Navigatable)target).navigate(true);
-        }
       }
+      return target instanceof Navigatable ? (Navigatable)target : null;
+    }
+    finally {
+      Disposer.dispose(view);
     }
   }
 

@@ -141,6 +141,28 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
   }
 
+  public boolean getAlwaysShowArtifactId() {
+    return myState.alwaysShowArtifactId;
+  }
+
+  public void setAlwaysShowArtifactId(boolean value) {
+    if (myState.alwaysShowArtifactId != value) {
+      myState.alwaysShowArtifactId = value;
+      scheduleStructureUpdate();
+    }
+  }
+
+  public boolean getShowVersions() {
+    return myState.showVersions;
+  }
+
+  public void setShowVersions(boolean value) {
+    if (myState.showVersions != value) {
+      myState.showVersions = value;
+      scheduleStructureUpdate();
+    }
+  }
+
   @Override
   public void initComponent() {
     if (!isNormalProject()) return;
@@ -242,6 +264,8 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     group.add(actionManager.getAction("Maven.GroupProjects"));
     group.add(actionManager.getAction("Maven.ShowIgnored"));
     group.add(actionManager.getAction("Maven.ShowBasicPhasesOnly"));
+    group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
+    group.add(actionManager.getAction("Maven.ShowVersions"));
 
     myToolWindow.setAdditionalGearActions(group);
 

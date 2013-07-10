@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -42,10 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -415,7 +413,19 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     return getSelectPath(file) != null;
   }
 
-  public void selectFile(VirtualFile file, boolean requestFocus) {
+  private void selectElementAtCaret(Editor editor, boolean requestFocus) {
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    selectFile(file, requestFocus);
+  }
+
+  public void selectFile(@Nullable PsiFile file, boolean requestFocus) {
+    if (file == null) return;
+    selectFile(file.getVirtualFile(), requestFocus);
+  }
+
+  public void selectFile(@Nullable VirtualFile file, boolean requestFocus) {
+    if (file == null) return;
+
     final List<Object> path = getSelectPath(file);
     if (path == null) return;
 
@@ -424,19 +434,24 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   }
 
   public void scrollFromSource() {
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    //final FileEditor[] editors = fileEditorManager.getSelectedEditors();
-    //for (FileEditor fileEditor : editors) {
-    //  if (fileEditor instanceof TextEditor) {
-    //    Editor editor = ((TextEditor)fileEditor).getEditor();
-    //    selectElement();
-    //    selectElementAtCaret(editor);
-    //    return;
-    //  }
-    //}
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
+    if (selectedTextEditor != null) {
+      selectElementAtCaret(selectedTextEditor, false);
+      return;
+    }
+    final FileEditor[] editors = fileEditorManager.getSelectedEditors();
+    for (FileEditor fileEditor : editors) {
+      if (fileEditor instanceof TextEditor) {
+        Editor editor = ((TextEditor)fileEditor).getEditor();
+        selectElementAtCaret(editor, false);
+        return;
+      }
+    }
     final VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
     if (selectedFiles.length > 0) {
-      selectFile(selectedFiles[0], false);
+      PsiFile file = PsiManager.getInstance(myProject).findFile(selectedFiles[0]);
+      selectFile(file, false);
     }
   }
 

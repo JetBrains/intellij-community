@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,4 +59,6 @@ public interface DfaMemoryState {
 
   boolean isNotNull(DfaVariableValue dfaVar);
 
+  @Nullable
+  DfaConstValue getConstantValue(DfaVariableValue value);
 }

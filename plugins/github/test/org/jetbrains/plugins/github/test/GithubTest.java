@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -29,15 +30,16 @@ import git4idea.DialogManager;
 import git4idea.Notificator;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
+import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestDialogManager;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import static org.junit.Assume.assumeNotNull;
@@ -63,6 +65,7 @@ public abstract class GithubTest extends UsefulTestCase {
   @NotNull protected VirtualFile myProjectRoot;
   @NotNull protected GitVcsSettings myGitSettings;
   @NotNull protected GithubSettings myGitHubSettings;
+  @NotNull private GitHttpAuthTestService myHttpAuthService;
 
   @NotNull protected TestDialogManager myDialogManager;
   @NotNull protected TestNotificator myNotificator;
@@ -127,6 +130,17 @@ public abstract class GithubTest extends UsefulTestCase {
     });
   }
 
+  // workaround: user on test server got "" as username, so git can't generate default identity
+  protected void setGitIdentity(VirtualFile root) {
+    try {
+      GitConfigUtil.setValue(myProject, root, "user.name", "Github Test");
+      GitConfigUtil.setValue(myProject, root, "user.email", "githubtest@jetbrains.com");
+    }
+    catch (VcsException e) {
+      e.printStackTrace();
+    }
+  }
+
   @Override
   protected void setUp() throws Exception {
     final String host = System.getenv("idea.test.github.host");
@@ -163,10 +177,15 @@ public abstract class GithubTest extends UsefulTestCase {
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
+    myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
 
   @Override
   protected void tearDown() throws Exception {
+    myHttpAuthService.cleanup();
+    myDialogManager.cleanup();
+    myNotificator.cleanup();
+
     myProjectFixture.tearDown();
     super.tearDown();
   }

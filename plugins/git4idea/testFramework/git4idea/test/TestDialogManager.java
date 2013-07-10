@@ -53,4 +53,8 @@ public class TestDialogManager extends DialogManager {
     myHandlers.put(dialogClass, handler);
   }
 
+  public void cleanup() {
+    myHandlers.clear();
+  }
+
 }

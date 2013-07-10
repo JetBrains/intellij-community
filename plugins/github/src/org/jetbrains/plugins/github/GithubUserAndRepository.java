@@ -45,20 +45,22 @@ public class GithubUserAndRepository {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (obj == null || !(obj instanceof GithubUserAndRepository)) {
-      return false;
-    }
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    GithubUserAndRepository that = (GithubUserAndRepository)obj;
-    return myUserName.equals(that.getUserName()) && myRepositoryName.equals(that.getRepositoryName());
+    GithubUserAndRepository that = (GithubUserAndRepository)o;
+
+    if (!myRepositoryName.equals(that.myRepositoryName)) return false;
+    if (!myUserName.equals(that.myUserName)) return false;
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return 31 * myUserName.hashCode() + myRepositoryName.hashCode();
+    int result = myUserName.hashCode();
+    result = 31 * result + myRepositoryName.hashCode();
+    return result;
   }
 }

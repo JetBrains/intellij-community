@@ -128,6 +128,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
       final StringBuildingVisitor visitor = new StringBuildingVisitor(variable, stringExpression);
       codeBlock.accept(visitor);
+      if (visitor.hadProblem()) {
+        return;
+      }
       final List<PsiMethodCallExpression> expressions = visitor.getExpressions();
       variable.delete();
       for (int i = 0, size = expressions.size() - 1; i < size; i++) {
@@ -183,7 +186,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         else {
           final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
           final PsiExpression[] arguments = argumentList.getExpressions();
-          if (arguments.length > 1) {
+          if (arguments.length == 0) {
+            return null;
+          }
+          else if (arguments.length > 1) {
             if (result.length() != 0) {
               result.append('+');
             }
@@ -237,9 +243,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
     private static class StringBuildingVisitor extends JavaRecursiveElementVisitor {
 
-      private PsiVariable myVariable;
-      private StringBuilder myBuilder;
-      private List<PsiMethodCallExpression> expressions = new ArrayList();
+      private final PsiVariable myVariable;
+      private final StringBuilder myBuilder;
+      private final List<PsiMethodCallExpression> expressions = new ArrayList();
+      private boolean myProblem = false;
 
       public StringBuildingVisitor(@NotNull PsiVariable variable, StringBuilder builder) {
         myVariable = variable;
@@ -248,6 +255,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (myProblem) {
+          return;
+        }
         super.visitReferenceExpression(expression);
         if (expression.getQualifierExpression() != null) {
           return;
@@ -264,12 +274,18 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           parent = methodCallExpression.getParent();
           grandParent = parent.getParent();
         }
-        buildStringExpression(methodCallExpression, myBuilder);
+        if (buildStringExpression(methodCallExpression, myBuilder) == null) {
+          myProblem = true;
+        }
         expressions.add(methodCallExpression);
       }
 
       public List<PsiMethodCallExpression> getExpressions() {
         return expressions;
+      }
+
+      public boolean hadProblem() {
+        return myProblem;
       }
     }
   }
@@ -396,14 +412,14 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
   private static class ReplaceableByStringVisitor extends JavaRecursiveElementVisitor {
 
-    private final PsiCodeBlock myCodeBlock;
+    private final PsiElement myParent;
     private PsiVariable myVariable;
     private boolean myReplaceable = true;
     private boolean myToStringFound = false;
 
     public ReplaceableByStringVisitor(@NotNull PsiVariable variable) {
       myVariable = variable;
-      myCodeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      myParent = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiIfStatement.class, PsiLoopStatement.class);
     }
 
     public boolean isReplaceable() {
@@ -460,8 +476,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         myReplaceable = false;
         return;
       }
-      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
-      if (!myCodeBlock.equals(codeBlock)) {
+      final PsiElement element = PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, PsiIfStatement.class, PsiLoopStatement.class);
+      if (!myParent.equals(element)) {
         myReplaceable = false;
         return;
       }

@@ -29,7 +29,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -84,7 +83,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       if (refMethod.isEntry()) return null;
 
       final PsiModifierListOwner element = refMethod.getElement();
-      if (element != null && EntryPointsManagerImpl.getInstance(manager.getProject()).isEntryPoint(element)) return null;
+      if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
       final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
       for (RefParameter refParameter : unusedParameters) {

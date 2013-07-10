@@ -90,7 +90,7 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return ExternalSystemBundle.message("gradle.name");
+    return ExternalSystemBundle.message(GradleConstants.SYSTEM_ID.getReadableName());
   }
 
   @Override

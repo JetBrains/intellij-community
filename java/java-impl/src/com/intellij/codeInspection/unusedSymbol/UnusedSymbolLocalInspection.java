@@ -23,7 +23,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManager;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
@@ -156,7 +156,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   }
 
   public static IntentionAction createQuickFix(@NonNls String qualifiedName, @Nls String element, Project project) {
-    final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
+    final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
       QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
@@ -164,6 +164,6 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   }
 
   public static boolean isInjected(final PsiModifierListOwner modifierListOwner) {
-    return EntryPointsManagerImpl.getInstance(modifierListOwner.getProject()).isEntryPoint(modifierListOwner);
+    return EntryPointsManagerBase.getInstance(modifierListOwner.getProject()).isEntryPoint(modifierListOwner);
   }
 }

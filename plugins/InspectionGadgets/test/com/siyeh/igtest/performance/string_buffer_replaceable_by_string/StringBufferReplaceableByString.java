@@ -68,4 +68,15 @@ public class StringBufferReplaceableByString {
     b.append()
     return b.toString();
   }
+
+  public static String formatOffset(long offsetMs) {
+    final long minutes = offsetMs / 1000 / 60;
+    final long hours = minutes / 60;
+    final long min = Math.abs(minutes - hours * 60);
+    StringBuilder data = new StringBuilder();
+    if (hours > 0) data.append('+');
+    if (hours < 0) data.append('-');
+    data.append(String.format("%02d:%02d", Math.abs(hours), min));
+    return data.toString();
+  }
 }

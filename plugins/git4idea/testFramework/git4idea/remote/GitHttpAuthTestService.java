@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GitHttpAuthTestService extends GitHttpAuthService {
 
-  @NotNull private GitHttpAuthenticator myAuthenticator = new GitHttpAuthenticator() {
+  public static final GitHttpAuthenticator STUB_AUTHENTICATOR = new GitHttpAuthenticator() {
     @NotNull
     @Override
     public String askPassword(@NotNull String url) {
@@ -52,6 +52,8 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
     }
   };
 
+  @NotNull private GitHttpAuthenticator myAuthenticator = STUB_AUTHENTICATOR;
+
   @NotNull
   @Override
   public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @Nullable ModalityState state, @NotNull GitCommand command,
@@ -61,6 +63,10 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
 
   public void register(@NotNull GitHttpAuthenticator authenticator) {
     myAuthenticator = authenticator;
+  }
+
+  public void cleanup() {
+    myAuthenticator = STUB_AUTHENTICATOR;
   }
 
 }

@@ -195,7 +195,7 @@ public class ExternalSystemApiUtil {
         return jar.getPath();
       }
     }
-    return file.getPath();
+    return toCanonicalPath(file.getPath());
   }
 
   @Nullable

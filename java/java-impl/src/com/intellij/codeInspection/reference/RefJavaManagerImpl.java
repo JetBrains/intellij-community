@@ -353,7 +353,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (myEntryPointsManager == null) {
       final Project project = myRefManager.getProject();
       myEntryPointsManager = new EntryPointsManagerImpl(project);
-      ((EntryPointsManagerImpl)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerImpl.getInstance(project));
+      ((EntryPointsManagerBase)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerBase.getInstance(project));
     }
     return myEntryPointsManager;
   }

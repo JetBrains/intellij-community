@@ -226,9 +226,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
-    if ((isInternal || isUnitTestMode) && !Comparing.equal("off", System.getProperty("idea.disposer.debug"))) {
-      Disposer.setDebugMode(true);
-    }
+
+    String debugDisposer = System.getProperty("idea.disposer.debug");
+    Disposer.setDebugMode((isInternal || isUnitTestMode || "on".equals(debugDisposer)) && !"off".equals(debugDisposer));
+
     myStartTime = System.currentTimeMillis();
     mySplash = splash;
     myName = appName;

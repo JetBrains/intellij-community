@@ -63,7 +63,6 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.stubs.SerializationManagerEx;
-import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -406,16 +405,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
-    if (extension instanceof StubUpdatingIndex) {
-      Map<FileType, Integer> versionMap = ((StubUpdatingIndex)extension).getVersionMap();
-      for (Map.Entry<FileType, Integer> entry : versionMap.entrySet()) {
-        ID stubId = IndexInfrastructure.getStubId(name, entry.getKey());
-        File file = IndexInfrastructure.getVersionFile(stubId);
-        Integer stubVersion = entry.getValue();
-        if (!file.exists() || IndexInfrastructure.versionDiffers(file, stubVersion)) {
-          LOG.info("Version has changed for index " + stubId + ". The index will be rebuilt.");
-          IndexInfrastructure.rewriteVersion(file, stubVersion);
-        }
+    Map<FileType, Integer> versionMap = extension.getVersionMap();
+    for (Map.Entry<FileType, Integer> entry : versionMap.entrySet()) {
+      ID stubId = IndexInfrastructure.getStubId(name, entry.getKey());
+      File file = IndexInfrastructure.getVersionFile(stubId);
+      Integer stubVersion = entry.getValue();
+      if (!file.exists() || IndexInfrastructure.versionDiffers(file, stubVersion)) {
+        LOG.info("Version has changed for index " + stubId + ". The index will be rebuilt.");
+        IndexInfrastructure.rewriteVersion(file, stubVersion);
       }
     }
     initIndexStorage(extension, version, versionFile);
