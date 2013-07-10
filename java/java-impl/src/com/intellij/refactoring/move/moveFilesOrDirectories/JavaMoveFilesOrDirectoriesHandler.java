@@ -27,9 +27,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -81,15 +82,16 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
                 PsiElement element = elements[i];
                 if (element instanceof PsiClass) {
                   final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-                  elements[i] = topLevelClass;
-                  final PsiFile containingFile = obtainContainingFile(topLevelClass, elements);
-                  if (containingFile != null && !adjustedElements.contains(containingFile)) {
-                    adjustedElements.add(containingFile);
-                  }
+                  if (topLevelClass != null) {
+                    elements[i] = topLevelClass;
+                    final PsiFile containingFile = obtainContainingFile(topLevelClass, elements);
+                    if (containingFile != null && !adjustedElements.contains(containingFile)) {
+                      adjustedElements.add(containingFile);
+                      continue;
+                    }
+                  } 
                 }
-                else {
-                  adjustedElements.add(element);
-                }
+                adjustedElements.add(element);
               }
               result.setResult(PsiUtilCore.toPsiElementArray(adjustedElements));
             }
@@ -99,11 +101,11 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
   }
 
   @Nullable
-  private static PsiFile obtainContainingFile(PsiElement element, PsiElement[] elements) {
+  private static PsiFile obtainContainingFile(@NotNull PsiElement element, PsiElement[] elements) {
     final PsiClass[] classes = ((PsiClassOwner)element.getParent()).getClasses();
     final Set<PsiClass> nonMovedClasses = new HashSet<PsiClass>();
     for (PsiClass aClass : classes) {
-      if (ArrayUtil.find(elements, aClass) < 0) {
+      if (ArrayUtilRt.find(elements, aClass) < 0) {
         nonMovedClasses.add(aClass);
       }
     }

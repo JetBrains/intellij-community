@@ -45,13 +45,8 @@ public class GrLiteralMethodSearcher extends QueryExecutorBase<PsiReference, Met
     final boolean strictSignatureSearch = p.isStrictSignatureSearch();
     final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(name, false);
 
-    SearchScope accessScope = methods[0].getUseScope();
-    for (int i = 1; i < methods.length; i++) {
-      PsiMethod method1 = methods[i];
-      accessScope = accessScope.union(method1.getUseScope());
-    }
-
-    final SearchScope restrictedByAccess = p.getScope().intersectWith(accessScope);
+    SearchScope accessScope = GroovyScopeUtil.getEffectiveScope(methods);
+    final SearchScope restrictedByAccess = GroovyScopeUtil.restrictScopeToGroovyFiles(p.getScope(), accessScope);
 
     final String textToSearch = findLongestWord(name);
 

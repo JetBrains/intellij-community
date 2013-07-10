@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.settings;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -37,11 +38,14 @@ public abstract class AbstractExternalSystemToolWindowCondition implements Condi
 
   @Override
   public boolean value(Project project) {
+    if (project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE) {
+      return true;
+    }
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
     if (manager == null) {
       return false;
     }
-    AbstractExternalSystemSettings<?,?> settings = manager.getSettingsProvider().fun(project);
+    AbstractExternalSystemSettings<?, ?,?> settings = manager.getSettingsProvider().fun(project);
     return settings != null && !settings.getLinkedProjectsSettings().isEmpty();
   }
 }

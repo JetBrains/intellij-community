@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,7 +29,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -190,10 +188,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         return o1.getLine() - o2.getLine();
       }
     };
-  }
-
-  public static Class getStateClass(final Class<? extends PersistentStateComponent> aClass) {
-    return ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], aClass));
   }
 
   @Nullable

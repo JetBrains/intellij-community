@@ -27,14 +27,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ProjectKeys {
 
-  @NotNull public static final Key<ProjectData>           PROJECT            = Key.create(ProjectData.class);
-  @NotNull public static final Key<ModuleData>            MODULE             = Key.create(ModuleData.class);
-  @NotNull public static final Key<LibraryData>           LIBRARY            = Key.create(LibraryData.class);
-  @NotNull public static final Key<ContentRootData>       CONTENT_ROOT       = Key.create(ContentRootData.class);
-  @NotNull public static final Key<ModuleDependencyData>  MODULE_DEPENDENCY  = Key.create(ModuleDependencyData.class);
-  @NotNull public static final Key<LibraryDependencyData> LIBRARY_DEPENDENCY = Key.create(LibraryDependencyData.class);
+  @NotNull public static final Key<ProjectData>           PROJECT            = Key.create(ProjectData.class, 50);
+  @NotNull public static final Key<ModuleData>            MODULE             = Key.create(ModuleData.class, 70);
+  @NotNull public static final Key<LibraryData>           LIBRARY            = Key.create(LibraryData.class, 90);
+  @NotNull public static final Key<ContentRootData>       CONTENT_ROOT       = Key.create(ContentRootData.class, 110);
+  @NotNull public static final Key<ModuleDependencyData>  MODULE_DEPENDENCY  = Key.create(ModuleDependencyData.class, 130);
+  @NotNull public static final Key<LibraryDependencyData> LIBRARY_DEPENDENCY = Key.create(LibraryDependencyData.class, 150);
 
-  @NotNull public static final Key<TaskData> TASK = Key.create(TaskData.class);
+  @NotNull public static final Key<TaskData> TASK = Key.create(TaskData.class, 250);
 
   private ProjectKeys() {
   }

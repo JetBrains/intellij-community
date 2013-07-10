@@ -165,6 +165,15 @@ public class TestPackage extends TestObject {
     }
 
     try {
+      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_junit", ".tmp");
+      myWorkingDirsFile.deleteOnExit();
+      myJavaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
+    try {
       myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
       myJavaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
     }

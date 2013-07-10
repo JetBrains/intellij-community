@@ -64,9 +64,11 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     return result == null ? UnknownFileType.INSTANCE : result;
   }
 
-  public void registerFileType(FileType fileType, String extension) {
+  public void registerFileType(@NotNull FileType fileType, @NotNull @NonNls String extension) {
     myAllFileTypes.add(fileType);
-    myExtensionsMap.put(extension, fileType);
+    for (final String ext : extension.split(";")) {
+      myExtensionsMap.put(ext, fileType);
+    }
   }
 
   @NotNull

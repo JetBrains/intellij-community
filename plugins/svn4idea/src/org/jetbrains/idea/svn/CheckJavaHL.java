@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
@@ -89,7 +88,7 @@ public class CheckJavaHL {
     if (! ourIsPresent) {
       Notifications.Bus.notify(new Notification(SvnVcs.getInstance(project).getDisplayName(), "Subversion: JavaHL problem",
                                                 ourProblemDescription + " Acceleration is not available.",
-                                                NotificationType.ERROR), NotificationDisplayType.STICKY_BALLOON, project);
+                                                NotificationType.ERROR), project);
     }
   }
 }

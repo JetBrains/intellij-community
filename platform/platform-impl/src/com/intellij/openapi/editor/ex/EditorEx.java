@@ -111,6 +111,7 @@ public interface EditorEx extends Editor {
 
   void setOneLineMode(boolean b);
 
+  @NotNull
   JScrollPane getScrollPane();
 
   boolean isRendererMode();

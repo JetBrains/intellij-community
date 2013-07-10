@@ -47,7 +47,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       else if (request instanceof FilterRequest) {
         description = getFilteredDescription(request, description);
       }
-      if (sendTree) TreeSender.sendTree(this, description);
+      TreeSender.sendTree(this, description, sendTree);
     }
     catch (Exception e) {
       //noinspection HardCodedStringLiteral
@@ -173,6 +173,10 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
   public OutputObjectRegistry getRegistry() {
     return myRegistry;
+  }
+
+  public String getTestClassName(Object child) {
+    return ((Description)child).getClassName();
   }
 
   public String getStartDescription(Object child) {

@@ -198,7 +198,7 @@ public class GrMapType extends GrLiteralClassType {
   }
 
   public boolean isAssignableFrom(@NotNull PsiType type) {
-    return type instanceof GrMapType || myFacade.getElementFactory().createTypeFromText(getJavaClassName(), null).isAssignableFrom(type);
+    return type instanceof GrMapType || super.isAssignableFrom(type);
   }
 
   public static GrMapType merge(GrMapType l, GrMapType r) {

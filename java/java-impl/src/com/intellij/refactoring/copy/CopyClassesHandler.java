@@ -37,6 +37,7 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,14 +184,16 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     String className = null;
     boolean openInEditor = true;
     if (copyOneClass(classes)) {
-      final String commonPath = ArrayUtil.find(elements, classes.values().iterator().next()) == -1 ? normalizeRelativeMap(relativePathsMap) : null;
+      final String commonPath =
+        ArrayUtilRt.find(elements, classes.values().iterator().next()) == -1 ? normalizeRelativeMap(relativePathsMap) : null;
       CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false){
         @Override
         protected String getQualifiedName() {
-          if (commonPath != null && !commonPath.isEmpty()) {
-            return StringUtil.getQualifiedName(super.getQualifiedName(), commonPath.replaceAll("/", "."));
+          final String qualifiedName = super.getQualifiedName();
+          if (commonPath != null && !commonPath.isEmpty() && !qualifiedName.endsWith(commonPath)) {
+            return StringUtil.getQualifiedName(qualifiedName, commonPath.replaceAll("/", "."));
           }
-          return super.getQualifiedName();
+          return qualifiedName;
         }
       };
       dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));

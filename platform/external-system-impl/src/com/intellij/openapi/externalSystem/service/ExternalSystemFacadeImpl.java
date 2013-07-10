@@ -11,6 +11,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -45,6 +48,7 @@ public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings>
 
   @NotNull private final RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
   @NotNull private final RemoteExternalSystemTaskManagerImpl<S>     myTaskManager;
+  private volatile boolean myStdOutputConfigured;
 
   public ExternalSystemFacadeImpl(@NotNull Class<ExternalSystemProjectResolver<S>> projectResolverClass,
                                   @NotNull Class<ExternalSystemTaskManager<S>> buildManagerClass)
@@ -131,7 +135,7 @@ public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings>
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
    * @throws RemoteException
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
   private <I extends RemoteExternalSystemService<S>, C extends I> I getRemote(@NotNull Class<I> interfaceClass,
                                                                               @NotNull final C impl)
     throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
@@ -140,6 +144,13 @@ public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings>
     if (cachedResult != null) {
       return (I)cachedResult;
     }
+
+    if (!myStdOutputConfigured) {
+      myStdOutputConfigured = true;
+      System.setOut(new LineAwarePrintStream(System.out));
+      System.setErr(new LineAwarePrintStream(System.err));
+    }
+    
     S settings = mySettings.get();
     if (settings != null) {
       impl.setNotificationListener(myNotificationListener.get());
@@ -306,6 +317,48 @@ public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings>
       catch (RemoteException e) {
         // Ignore
       }
+    }
+  }
+  
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static class LineAwarePrintStream extends PrintStream {
+    private LineAwarePrintStream(@NotNull final PrintStream delegate) {
+      super(new OutputStream() {
+
+        @NotNull private final StringBuilder myBuffer = new StringBuilder();
+        
+        @Override
+        public void write(int b) throws IOException {
+          char c = (char)b;
+          myBuffer.append(Character.toString(c));
+          if (c == '\n') {
+            doFlush();
+          }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+          int start = off;
+          int maxOffset = off + len;
+          for (int i = off; i < maxOffset; i++) {
+            if (b[i] == '\n') {
+              myBuffer.append(new String(b, start, i - start + 1));
+              doFlush();
+              start = i + 1;
+            }
+          }
+
+          if (start < maxOffset) {
+            myBuffer.append(new String(b, start, maxOffset - start));
+          }
+        }
+        
+        private void doFlush() {
+          delegate.print(myBuffer.toString());
+          delegate.flush();
+          myBuffer.setLength(0);
+        }
+      });
     }
   }
 }

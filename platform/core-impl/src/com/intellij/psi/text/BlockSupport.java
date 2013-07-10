@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
@@ -38,9 +39,7 @@ public abstract class BlockSupport {
 
   @NotNull
   public abstract DiffLog reparseRange(@NotNull PsiFile file,
-                                       int startOffset,
-                                       int endOffset,
-                                       int lengthShift,
+                                       TextRange changedPsiRange,
                                        @NotNull CharSequence newText,
                                        @NotNull ProgressIndicator progressIndicator) throws IncorrectOperationException;
 

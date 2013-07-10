@@ -141,6 +141,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiModifierList myModifierList = (PsiModifierList)startElement;
     final PsiVariable variable = myVariable == null ? null : myVariable.getElement();
     if (!FileModificationService.getInstance().preparePsiElementForWrite(myModifierList)) return;
+    if (variable != null && !FileModificationService.getInstance().preparePsiElementForWrite(variable)) return;
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
@@ -179,8 +180,6 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
           }
         }));
     }
-
-    if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
 
     if (!modifierLists.isEmpty()) {
       if (Messages.showYesNoDialog(project,

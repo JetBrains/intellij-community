@@ -16,9 +16,14 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.GithubAuthData;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -36,6 +41,7 @@ public class GithubLoginPanel {
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
+  private JCheckBox mySavePasswordCheckBox;
 
   public GithubLoginPanel(final GithubLoginDialog dialog) {
     DocumentListener listener = new DocumentAdapter() {
@@ -56,6 +62,11 @@ public class GithubLoginPanel {
     });
     mySignupTextField.setBackground(UIUtil.TRANSPARENT_COLOR);
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
+      mySavePasswordCheckBox.setVisible(false);
+      mySavePasswordCheckBox.setSelected(true);
+    }
   }
 
   public JComponent getPanel() {
@@ -86,8 +97,17 @@ public class GithubLoginPanel {
     return String.valueOf(myPasswordField.getPassword());
   }
 
+  public boolean shouldSavePassword() {
+    return mySavePasswordCheckBox.isSelected();
+  }
+
   public JComponent getPreferrableFocusComponent() {
     return myLoginTextField;
+  }
+
+  @NotNull
+  public GithubAuthData getAuthData() {
+    return new GithubAuthData(getHost(), getLogin(), getPassword());
   }
 }
 

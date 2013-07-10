@@ -101,11 +101,13 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     super.deleteChildInternal(child);
   }
 
-  public <T extends GrStatement> T replaceThenBranch(T newBranch) throws IncorrectOperationException {
+  @NotNull
+  public <T extends GrStatement> T replaceThenBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getThenBranch(), getNode(), getProject());
   }
 
-  public <T extends GrStatement> T replaceElseBranch(T newBranch) throws IncorrectOperationException {
+  @NotNull
+  public <T extends GrStatement> T replaceElseBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getElseBranch(), getNode(), getProject());
   }
 

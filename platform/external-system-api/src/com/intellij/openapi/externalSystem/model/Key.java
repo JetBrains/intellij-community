@@ -31,19 +31,45 @@ import java.io.Serializable;
  * @since 4/12/13 11:49 AM
  * @param <T>  data class
  */
-public class Key<T> implements Serializable {
+@SuppressWarnings("UnusedDeclaration")
+public class Key<T> implements Serializable, Comparable<Key<?>> {
 
   private static final long serialVersionUID = 1L;
   
   @NotNull private final String myDataClass;
+  
+  private final int myProcessingWeight;
 
-  public Key(@NotNull String dataClass) {
+  /**
+   * Creates new <code>Key</code> object.
+   * 
+   * @param dataClass         class of the payload data which will be associated with the current key
+   * @param processingWeight  there is a possible case that when a {@link DataNode} object has children of more than on type (children
+   *                          with more than one different {@link Key} we might want to process one type of children before another.
+   *                          That's why we need a way to define that processing order. This parameter serves exactly for that -
+   *                          lower value means that key's payload should be processed <b>before</b> payload of the key with a greater
+   *                          value
+   */
+  public Key(@NotNull String dataClass, int processingWeight) {
     myDataClass = dataClass;
+    myProcessingWeight = processingWeight;
   }
 
   @NotNull
-  public static <T> Key<T> create(@NotNull Class<T> dataClass) {
-    return new Key<T>(dataClass.getName());
+  public static <T> Key<T> create(@NotNull Class<T> dataClass, int processingWeight) {
+    return new Key<T>(dataClass.getName(), processingWeight);
+  }
+
+  /**
+   * There is a possible case that when a {@link DataNode} object has children of more than on type (children with more than
+   * one different {@link Key} we might want to process one type of children before another. That's why we need a way to define
+   * that processing order. This property serves exactly for that - lower value means that key's payload should be processed
+   * <b>before</b> payload of the key with a greater value.
+   * 
+   * @return    processing weight for data associated with the current key
+   */
+  public int getProcessingWeight() {
+    return myProcessingWeight;
   }
 
   @Override
@@ -61,6 +87,11 @@ public class Key<T> implements Serializable {
     if (!myDataClass.equals(key.myDataClass)) return false;
 
     return true;
+  }
+
+  @Override
+  public int compareTo(@NotNull Key<?> that) {
+    return myProcessingWeight - that.myProcessingWeight;
   }
 
   @Override

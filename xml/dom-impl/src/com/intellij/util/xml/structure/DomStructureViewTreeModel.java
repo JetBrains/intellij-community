@@ -21,11 +21,13 @@ import com.intellij.ide.structureView.impl.xml.XmlFileTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
@@ -35,17 +37,21 @@ public class DomStructureViewTreeModel extends XmlStructureViewTreeModel impleme
   private final DomElementNavigationProvider myNavigationProvider;
   private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
 
-  public DomStructureViewTreeModel(final XmlFile file, final Function<DomElement, DomService.StructureViewMode> descriptor) {
-    this(file, DomElementsNavigationManager.getManager(file.getProject()).getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME), descriptor);
+  public DomStructureViewTreeModel(final XmlFile file, final Function<DomElement, DomService.StructureViewMode> descriptor, @Nullable Editor editor) {
+    this(file, DomElementsNavigationManager.getManager(file.getProject()).getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME), descriptor, editor);
   }
 
-  public DomStructureViewTreeModel(final XmlFile file, final DomElementNavigationProvider navigationProvider, final Function<DomElement, DomService.StructureViewMode> descriptor) {
-    super(file);
+  public DomStructureViewTreeModel(final XmlFile file,
+                                   final DomElementNavigationProvider navigationProvider,
+                                   final Function<DomElement, DomService.StructureViewMode> descriptor,
+                                   @Nullable Editor editor) {
+    super(file, editor);
     myFile = file;
     myNavigationProvider = navigationProvider;
     myDescriptor = descriptor;
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
     final DomFileElement<DomElement> fileElement = DomManager.getDomManager(myFile.getProject()).getFileElement(myFile, DomElement.class);
@@ -58,11 +64,13 @@ public class DomStructureViewTreeModel extends XmlStructureViewTreeModel impleme
     return myNavigationProvider;
   }
 
+  @Override
   @NotNull
   public Sorter[] getSorters() {
     return new Sorter[]{Sorter.ALPHA_SORTER};
   }
 
+  @Override
   protected PsiFile getPsiFile() {
     return myFile;
   }

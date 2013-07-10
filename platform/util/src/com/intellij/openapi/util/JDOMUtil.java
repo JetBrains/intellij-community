@@ -68,12 +68,9 @@ public class JDOMUtil {
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
     if (parent != null) {
-      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) final List<Element> children = parent.getChildren(name);
-      return children;
+      return parent.getChildren(name);
     }
-    else {
-      return Collections.emptyList();
-    }
+    return Collections.emptyList();
   }
 
   @SuppressWarnings("UtilityClassWithoutPrivateConstructor")

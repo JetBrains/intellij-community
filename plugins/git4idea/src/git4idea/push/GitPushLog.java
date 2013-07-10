@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
@@ -34,7 +36,6 @@ import git4idea.GitBranch;
 import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -95,7 +96,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof GitCommit) {
           GitCommit commit = (GitCommit)userObject;
-          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthorName() + "\n\n" + commit.getFullMessage();
+          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthorName() + "\n\n" +
+                 IssueLinkHtmlRenderer.formatTextWithLinks(myProject, commit.getFullMessage());
         }
         return "";
       }
@@ -362,7 +364,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         renderer.setToolTipText(getHashString(commit) + " " + getDateString(commit));
       }
       else if (userObject instanceof GitRepository) {
-        String repositoryPath = GitUIUtil.getShortRepositoryName((GitRepository)userObject);
+        String repositoryPath = DvcsUtil.getShortRepositoryName((GitRepository)userObject);
         renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       else if (userObject instanceof GitPushBranchInfo) {

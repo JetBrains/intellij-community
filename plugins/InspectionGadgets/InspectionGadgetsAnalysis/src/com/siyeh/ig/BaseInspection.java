@@ -41,6 +41,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
   @NonNls private static final String INSPECTION = "Inspection";
+  @NonNls private static final String INSPECTION_BASE = "InspectionBase";
 
   private String m_shortName = null;
   private long timestamp = -1L;
@@ -51,11 +52,15 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     if (m_shortName == null) {
       final Class<? extends BaseInspection> aClass = getClass();
       final String name = aClass.getName();
-      assert name.endsWith(INSPECTION) :
-        "class name must end with 'Inspection' to correctly" +
-        " calculate the short name: " + name;
-      m_shortName = name.substring(name.lastIndexOf((int)'.') + 1,
-                                   name.length() - INSPECTION.length());
+      if (name.endsWith(INSPECTION)) {
+        m_shortName = name.substring(name.lastIndexOf((int)'.') + 1, name.length() - INSPECTION.length());
+      }
+      else if (name.endsWith(INSPECTION_BASE)) {
+        m_shortName = name.substring(name.lastIndexOf((int)'.') + 1, name.length() - INSPECTION_BASE.length());
+      }
+      else {
+        throw new AssertionError("class name must end with 'Inspection' to correctly calculate the short name: " + name);
+      }
     }
     return m_shortName;
   }

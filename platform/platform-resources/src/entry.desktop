@@ -7,5 +7,4 @@ Exec="$SCRIPT$" %f
 Comment=Develop with pleasure!
 Categories=Development;IDE;
 Terminal=false
-StartupNotify=true
 StartupWMClass=$WM_CLASS$

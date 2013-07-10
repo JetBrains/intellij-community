@@ -16,13 +16,13 @@
 
 package com.intellij.util.xml.ui;
 
-import com.intellij.ui.UserActivityListener;
-import com.intellij.util.Alarm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.UserActivityListener;
+import com.intellij.util.Alarm;
 
 /**
  * User: Sergey.Vasiliev
@@ -82,7 +82,7 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
   }
 
   public final boolean isWaiting() {
-    return myAlarm.getActiveRequestCount() > 0;
+    return !myAlarm.isEmpty();
   }
 
   public final void cancelAllRequests() {

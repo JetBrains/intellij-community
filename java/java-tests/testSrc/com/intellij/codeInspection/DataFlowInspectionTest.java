@@ -40,6 +40,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   private void doTest() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
@@ -99,6 +100,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
 
   public void testCatchRuntimeException() throws Throwable { doTest(); }
+  public void testCatchThrowable() throws Throwable { doTest(); }
   public void testNotNullCatchParameter() { doTest(); }
 
   public void testAssertFailInCatch() throws Throwable {
@@ -139,6 +141,15 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  public void testReportConstantReferences() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   public void testCheckFieldInitializers() {
     doTest();
   }
@@ -169,6 +180,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testOmnipresentExceptions() { doTest(); }
 
   public void testEqualsHasNoSideEffects() { doTest(); }
+
+  public void testHonorGetterAnnotation() { doTest(); }
 
   public void testIsNullCheck() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getIsNullCheckMethods().add(
@@ -227,5 +240,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     }
     assert psiMethod != null;
     return new ConditionChecker.FromPsiBuilder(psiMethod, psiMethod.getParameterList().getParameters()[0], type).build();
+  }
+
+  public void testIgnoreAssertions() {
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 }

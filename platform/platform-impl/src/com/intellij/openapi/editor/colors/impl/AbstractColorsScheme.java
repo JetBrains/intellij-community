@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
@@ -41,7 +42,7 @@ import java.util.*;
 import java.util.List;
 
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
-
+  private static final String OS_VALUE_PREFIX = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "linux";
   private static final int CURR_VERSION = 124;
 
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
@@ -373,7 +374,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private static Color readColorValue(final Element colorElement) {
-    String value = colorElement.getAttributeValue(VALUE_ELEMENT);
+    String value = getValue(colorElement);
     Color valueColor = null;
     if (value != null && value.trim().length() > 0) {
       try {
@@ -387,7 +388,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   private void readSettings(Element childNode) {
     String name = childNode.getAttributeValue(NAME_ATTR);
-    String value = childNode.getAttributeValue(VALUE_ELEMENT);
+    String value = getValue(childNode);
     if (LINE_SPACING.equals(name)) {
       myLineSpacing = Float.parseFloat(value);
     }
@@ -418,11 +419,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     for (Object child : children) {
       Element e = (Element)child;
       if (EDITOR_FONT_NAME.equals(e.getAttributeValue(NAME_ATTR))) {
-        fontFamily = e.getAttributeValue(VALUE_ELEMENT);
+        fontFamily = getValue(e);
       }
       else if (EDITOR_FONT_SIZE.equals(e.getAttributeValue(NAME_ATTR))) {
         try {
-          size = Integer.parseInt(e.getAttributeValue(VALUE_ELEMENT));
+          size = Integer.parseInt(getValue(e));
         }
         catch (NumberFormatException ex) {
           // ignore
@@ -435,6 +436,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     else if (fontFamily != null) {
       preferences.addFontFamily(fontFamily);
     }
+  }
+
+  private static String getValue(Element e) {
+    final String value = e.getAttributeValue(OS_VALUE_PREFIX);
+    return value == null ? e.getAttributeValue(VALUE_ELEMENT) : value;
   }
 
   @Override

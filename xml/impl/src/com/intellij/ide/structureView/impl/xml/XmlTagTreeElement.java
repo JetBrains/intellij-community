@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.xml;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -32,33 +33,38 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
     super(tag);
   }
 
+ @Override
  @NotNull
  public Collection<StructureViewTreeElement> getChildrenBase() {
     return getStructureViewTreeElements(getElement().getSubTags());
   }
 
+  @Override
   public String getPresentableText() {
     final XmlTag element = getElement();
-    if (element == null) return "*invalid*";
+    if (element == null) {
+      return IdeBundle.message("node.structureview.invalid");
+    }
     String id = element.getAttributeValue(ID_ATTR_NAME);
-    if (id == null) id = element.getAttributeValue(NAME_ATTR_NAME);
-    id = toCanonicalForm(id);
-
-    if (id != null) return id + ":" + element.getLocalName();
-    return element.getName();
-  }
-
-  public String getLocationString() {
-    final StringBuffer buffer = new StringBuffer();
-    final XmlTag element = getElement();
-    final XmlAttribute[] attributes = element.getAttributes();
-
-    String id = element.getAttributeValue(ID_ATTR_NAME);
-    String usedAttrName = null;
-
     if (id == null) {
       id = element.getAttributeValue(NAME_ATTR_NAME);
-      if (id != null) usedAttrName = NAME_ATTR_NAME;
+    }
+    id = toCanonicalForm(id);
+    return id != null ? id + ':' + element.getLocalName() : element.getName();
+  }
+
+  @Override
+  public String getLocationString() {
+    final StringBuilder buffer = new StringBuilder();
+    final XmlTag element = getElement();
+    assert element != null;
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    String usedAttrName = null;
+    if (id == null) {
+      id = element.getAttributeValue(NAME_ATTR_NAME);
+      if (id != null) {
+        usedAttrName = NAME_ATTR_NAME;
+      }
     }
     else {
       usedAttrName = ID_ATTR_NAME;
@@ -66,24 +72,18 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
 
     id = toCanonicalForm(id);
 
-    for (XmlAttribute attribute : attributes) {
+    for (XmlAttribute attribute : element.getAttributes()) {
       if (buffer.length() != 0) {
-        buffer.append(" ");
+        buffer.append(' ');
       }
 
       final String name = attribute.getName();
-      if (usedAttrName != null &&
-          id != null &&
-          usedAttrName.equals(name)
-        ) {
+      if (usedAttrName != null && id != null && usedAttrName.equals(name)) {
         continue; // we output this name in name
       }
 
       buffer.append(name);
-      buffer.append("=");
-      buffer.append("\"");
-      buffer.append(attribute.getValue());
-      buffer.append("\"");
+      buffer.append('=').append('"').append(attribute.getValue()).append('"');
     }
     return buffer.toString();
   }
@@ -92,7 +92,9 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
   public static String toCanonicalForm(@Nullable String id) {
     if (id != null) {
       id = id.trim();
-      if (id.length() == 0) id = null;
+      if (id.isEmpty()) {
+        return null;
+      }
     }
     return id;
   }

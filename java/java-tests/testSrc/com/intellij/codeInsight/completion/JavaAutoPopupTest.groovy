@@ -21,6 +21,7 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
@@ -740,7 +741,7 @@ class Foo {
     myFixture.checkResult(" class Foo { { int iteraaa; iteraaa<caret> } } ")
     assert !lookup
   }
-  
+
   public void testChoosingItemDuringCopyCommit() {
     registerContributor(LongReplacementOffsetContributor)
 
@@ -1023,8 +1024,7 @@ public class UTest {
     myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
     myFixture.configureByText "a.java", "import xxxxx.*; class Foo { S<caret> }"
     type 'Ystem'
-    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
-    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
+    myFixture.assertPreferredCompletionItems 1, 'System', 'SYSTEM_EXCEPTION'
   }
 
   public void testSamePrefixIgnoreCase2() {
@@ -1032,9 +1032,7 @@ public class UTest {
     myFixture.addClass("package xxxxx; public class SYstem {}")
     myFixture.configureByText "a.java", "import xxxxx.*; class Foo { S<caret> }"
     type 'Ystem'
-    assert 'xxxxx.SYstem' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
-    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
-    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[2]).qualifiedName
+    myFixture.assertPreferredCompletionItems 0, 'SYstem', 'System', 'SYSTEM_EXCEPTION'
   }
 
   private FileEditor openEditorForUndo() {
@@ -1331,7 +1329,10 @@ class Foo {
   }
 }
 '''
-    type 'int['
+    type 'int'
+    myFixture.assertPreferredCompletionItems 0, 'int', 'Integer'
+    assert ((PsiTypeLookupItem) myFixture.lookupElements[0]).bracketsCount == 1
+    type '['
     myFixture.checkResult '''
 class Foo {
   void foo() {
@@ -1354,23 +1355,6 @@ class FooBar {
     assert !lookup.focused
     type '\n'
     assert !myFixture.editor.document.text.contains('fooBar')
-  }
-
-  public void "test choose variable name by enter when selection by chars is disabled"() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
-    myFixture.configureByText 'a.java', '''
-class FooBar {
-  void foo() {
-    FooBar <caret>
-  }
-}
-'''
-    type 'f'
-    assert lookup
-    assert !lookup.focused
-    assert myFixture.lookupElementStrings == ['fooBar']
-    type '\n'
-    assert myFixture.editor.document.text.contains('fooBar')
   }
 
   public void "test middle matching and overwrite"() {

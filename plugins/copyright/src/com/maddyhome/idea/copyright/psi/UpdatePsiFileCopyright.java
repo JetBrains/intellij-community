@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   private final CopyrightProfile myOptions;
@@ -245,6 +246,8 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
         }
         addAction(new CommentAction(pos, prefix, suffix));
       }
+    }
+    catch (PatternSyntaxException ignore) {
     }
     catch (Exception e) {
       logger.error(e);

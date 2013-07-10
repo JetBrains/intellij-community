@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -29,7 +30,6 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -74,8 +74,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     final boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
     final boolean incompleteCode = (flags & UNCOMPLETE_CODE) != 0;
-    final TreeElement reference = new ReferenceAdjuster(myProject).process((TreeElement)element.getNode(), addImports, incompleteCode);
-    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster != null) {
+      final ASTNode reference = adjuster.process(element.getNode(), addImports, incompleteCode, myProject);
+      return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    }
+    else {
+      return element;
+    }
   }
 
   @Override
@@ -83,14 +90,21 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if (SourceTreeToPsiMap.hasTreeElement(element)) {
-      new ReferenceAdjuster(myProject).processRange((TreeElement)element.getNode(), startOffset, endOffset);
+      final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+      if (adjuster != null) {
+        adjuster.processRange(element.getNode(), startOffset, endOffset, myProject);
+      }
     }
   }
 
   @Override
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
-    final TreeElement reference = new ReferenceAdjuster(true, true).process((TreeElement)element.getNode(), false, false);
-    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster != null) {
+      final ASTNode reference = adjuster.process(element.getNode(), false, false, true, true);
+      return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    }
+    return element;
   }
 
   @Override

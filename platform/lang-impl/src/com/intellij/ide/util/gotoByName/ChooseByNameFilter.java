@@ -135,11 +135,7 @@ public abstract class ChooseByNameFilter<T> {
     invert.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final int count = myChooser.getElementCount();
-        for (int i = 0; i < count; i++) {
-          T type = myChooser.getElementAt(i);
-          myChooser.setElementMarked(type, !myChooser.isElementMarked(type));
-        }
+        myChooser.invertSelection();
       }
     });
     buttons.add(invert);

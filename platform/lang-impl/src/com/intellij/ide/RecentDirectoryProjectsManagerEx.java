@@ -19,12 +19,9 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.platform.ModuleAttachProcessor;
-import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,27 +43,8 @@ public class RecentDirectoryProjectsManagerEx extends RecentDirectoryProjectsMan
 
   @NotNull
   @Override
-  protected String getProjectDisplayName(Project project) {
-    if (ProjectAttachProcessor.canAttachToProject()) {
-      final Module[] modules = ModuleManager.getInstance(project).getModules();
-      if (modules.length > 1) {
-        Module primaryModule = ModuleAttachProcessor.getPrimaryModule(project);
-        if (primaryModule == null) {
-          primaryModule = modules [0];
-        }
-        StringBuilder result = new StringBuilder(primaryModule.getName());
-        result.append(", ");
-        for (Module module : modules) {
-          if (module == primaryModule) continue;
-          result.append(module.getName());
-          break;
-        }
-        if (modules.length > 2) {
-          result.append("...");          
-        }
-        return result.toString();
-      }
-    }
-    return super.getProjectDisplayName(project);
+  protected String getProjectDisplayName(@NotNull Project project) {
+    final String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
+    return name != null ? name : super.getProjectDisplayName(project);
   }
 }

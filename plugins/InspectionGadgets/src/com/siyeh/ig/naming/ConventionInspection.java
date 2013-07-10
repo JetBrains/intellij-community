@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,6 @@ import java.util.regex.Pattern;
 public abstract class ConventionInspection extends BaseInspection {
 
   /**
-   * public fields for the DefaultJDomExternalizer
-   *
    * @noinspection PublicField
    */
   public String m_regex = getDefaultRegex();
@@ -83,7 +81,7 @@ public abstract class ConventionInspection extends BaseInspection {
     if (length < m_minLength) {
       return false;
     }
-    if (length > m_maxLength) {
+    if (m_maxLength > 0 && length > m_maxLength) {
       return false;
     }
     if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(name)) {
@@ -99,8 +97,6 @@ public abstract class ConventionInspection extends BaseInspection {
     m_regexPattern = Pattern.compile(m_regex);
   }
 
-  private static final int REGEX_COLUMN_COUNT = 25;
-
   public Collection<? extends JComponent> createExtraOptions() {
     return Collections.emptyList();
   }
@@ -110,42 +106,37 @@ public abstract class ConventionInspection extends BaseInspection {
     final GridBagLayout layout = new GridBagLayout();
     final JPanel panel = new JPanel(layout);
 
-    final JLabel patternLabel = new JLabel(
-      InspectionGadgetsBundle.message("convention.pattern.option"));
-    final JLabel minLengthLabel = new JLabel(
-      InspectionGadgetsBundle.message("convention.min.length.option"));
-    final JLabel maxLengthLabel = new JLabel(
-      InspectionGadgetsBundle.message("convention.max.length.option"));
+    final JLabel patternLabel = new JLabel(InspectionGadgetsBundle.message("convention.pattern.option"));
+    final JLabel minLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.min.length.option"));
+    final JLabel maxLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.max.length.option"));
 
     final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
     numberFormat.setParseIntegerOnly(true);
     numberFormat.setMinimumIntegerDigits(1);
-    numberFormat.setMaximumIntegerDigits(2);
-    final InternationalFormatter formatter =
-      new InternationalFormatter(numberFormat);
+    numberFormat.setMaximumIntegerDigits(3);
+    final InternationalFormatter formatter = new InternationalFormatter(numberFormat);
     formatter.setAllowsInvalid(true);
-    formatter.setCommitsOnValidEdit(true);
+    formatter.setCommitsOnValidEdit(false);
+    formatter.setMinimum(Integer.valueOf(0));
+    formatter.setMaximum(Integer.valueOf(999));
 
-    final JFormattedTextField minLengthField =
-      new JFormattedTextField(formatter);
+    final JFormattedTextField minLengthField = new JFormattedTextField(formatter);
     final Font panelFont = panel.getFont();
     minLengthField.setFont(panelFont);
     minLengthField.setValue(Integer.valueOf(m_minLength));
     minLengthField.setColumns(2);
     UIUtil.fixFormattedField(minLengthField);
 
-    final JFormattedTextField maxLengthField =
-      new JFormattedTextField(formatter);
+    final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
     maxLengthField.setFont(panelFont);
     maxLengthField.setValue(Integer.valueOf(m_maxLength));
     maxLengthField.setColumns(2);
     UIUtil.fixFormattedField(minLengthField);
 
-    final JFormattedTextField regexField =
-      new JFormattedTextField(new RegExFormatter());
+    final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
     regexField.setFont(panelFont);
     regexField.setValue(m_regexPattern);
-    regexField.setColumns(REGEX_COLUMN_COUNT);
+    regexField.setColumns(25);
     regexField.setInputVerifier(new RegExInputVerifier());
     regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
     UIUtil.fixFormattedField(minLengthField);
@@ -212,8 +203,7 @@ public abstract class ConventionInspection extends BaseInspection {
     constraints.insets.right = 0;
     panel.add(maxLengthField, constraints);
 
-    final Collection<? extends JComponent> extraOptions =
-      createExtraOptions();
+    final Collection<? extends JComponent> extraOptions = createExtraOptions();
     constraints.gridx = 0;
     constraints.gridwidth = 2;
     for (JComponent extraOption : extraOptions) {

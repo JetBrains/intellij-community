@@ -7,20 +7,23 @@
 
 import os, mimetypes, re, cgi, copy
 import webutil
-from mercurial import error, archival, templater, templatefilters
-from mercurial.node import short, hex
+from mercurial import error, encoding, archival, templater, templatefilters
+from mercurial.node import short, hex, nullid
 from mercurial.util import binary
 from common import paritygen, staticfile, get_contact, ErrorResponse
 from common import HTTP_OK, HTTP_FORBIDDEN, HTTP_NOT_FOUND
-from mercurial import graphmod
+from mercurial import graphmod, patch
+from mercurial import help as helpmod
+from mercurial import scmutil
+from mercurial.i18n import _
 
 # __all__ is populated with the allowed commands. Be sure to add to it if
 # you're adding a new command, or the new command won't work.
 
 __all__ = [
    'log', 'rawfile', 'file', 'changelog', 'shortlog', 'changeset', 'rev',
-   'manifest', 'tags', 'branches', 'summary', 'filediff', 'diff', 'annotate',
-   'filelog', 'archive', 'static', 'graph',
+   'manifest', 'tags', 'bookmarks', 'branches', 'summary', 'filediff', 'diff',
+   'comparison', 'annotate', 'filelog', 'archive', 'static', 'graph', 'help',
 ]
 
 def log(web, req, tmpl):
@@ -30,6 +33,8 @@ def log(web, req, tmpl):
         return changelog(web, req, tmpl)
 
 def rawfile(web, req, tmpl):
+    guessmime = web.configbool('web', 'guessmime', False)
+
     path = webutil.cleanpath(web.repo, req.form.get('file', [''])[0])
     if not path:
         content = manifest(web, req, tmpl)
@@ -48,12 +53,16 @@ def rawfile(web, req, tmpl):
 
     path = fctx.path()
     text = fctx.data()
-    mt = mimetypes.guess_type(path)[0]
-    if mt is None:
-        mt = binary(text) and 'application/octet-stream' or 'text/plain'
+    mt = 'application/binary'
+    if guessmime:
+        mt = mimetypes.guess_type(path)[0]
+        if mt is None:
+            mt = binary(text) and 'application/binary' or 'text/plain'
+    if mt.startswith('text/'):
+        mt += '; charset="%s"' % encoding.encoding
 
-    req.respond(HTTP_OK, mt, path, len(text))
-    return [text]
+    req.respond(HTTP_OK, mt, path, body=text)
+    return []
 
 def _filerevision(web, tmpl, fctx):
     f = fctx.path()
@@ -76,10 +85,11 @@ def _filerevision(web, tmpl, fctx):
                 path=webutil.up(f),
                 text=lines(),
                 rev=fctx.rev(),
-                node=hex(fctx.node()),
+                node=fctx.hex(),
                 author=fctx.user(),
                 date=fctx.date(),
                 desc=fctx.description(),
+                extra=fctx.extra(),
                 branch=webutil.nodebranchnodefault(fctx),
                 parent=webutil.parents(fctx),
                 child=webutil.children(fctx),
@@ -104,24 +114,26 @@ def _search(web, req, tmpl):
     revcount = web.maxchanges
     if 'revcount' in req.form:
         revcount = int(req.form.get('revcount', [revcount])[0])
+        revcount = max(revcount, 1)
         tmpl.defaults['sessionvars']['revcount'] = revcount
 
     lessvars = copy.copy(tmpl.defaults['sessionvars'])
-    lessvars['revcount'] = revcount / 2
+    lessvars['revcount'] = max(revcount / 2, 1)
     lessvars['rev'] = query
     morevars = copy.copy(tmpl.defaults['sessionvars'])
     morevars['revcount'] = revcount * 2
     morevars['rev'] = query
 
     def changelist(**map):
-        cl = web.repo.changelog
         count = 0
-        qw = query.lower().split()
+        lower = encoding.lower
+        qw = lower(query).split()
 
         def revgen():
-            for i in xrange(len(cl) - 1, 0, -100):
+            cl = web.repo.changelog
+            for i in xrange(len(web.repo) - 1, 0, -100):
                 l = []
-                for j in xrange(max(0, i - 100), i + 1):
+                for j in cl.revs(max(0, i - 100), i + 1):
                     ctx = web.repo[j]
                     l.append(ctx)
                 l.reverse()
@@ -131,9 +143,9 @@ def _search(web, req, tmpl):
         for ctx in revgen():
             miss = 0
             for q in qw:
-                if not (q in ctx.user().lower() or
-                        q in ctx.description().lower() or
-                        q in " ".join(ctx.files()).lower()):
+                if not (q in lower(ctx.user()) or
+                        q in lower(ctx.description()) or
+                        q in lower(" ".join(ctx.files()))):
                     miss = 1
                     break
             if miss:
@@ -151,21 +163,23 @@ def _search(web, req, tmpl):
                        child=webutil.children(ctx),
                        changelogtag=showtags,
                        desc=ctx.description(),
+                       extra=ctx.extra(),
                        date=ctx.date(),
                        files=files,
                        rev=ctx.rev(),
                        node=hex(n),
                        tags=webutil.nodetagsdict(web.repo, n),
+                       bookmarks=webutil.nodebookmarksdict(web.repo, n),
                        inbranch=webutil.nodeinbranch(web.repo, ctx),
                        branches=webutil.nodebranchdict(web.repo, ctx))
 
             if count >= revcount:
                 break
 
-    cl = web.repo.changelog
+    tip = web.repo['tip']
     parity = paritygen(web.stripecount)
 
-    return tmpl('search', query=query, node=hex(cl.tip()),
+    return tmpl('search', query=query, node=tip.hex(),
                 entries=changelist, archives=web.archivelist("tip"),
                 morevars=morevars, lessvars=lessvars)
 
@@ -177,65 +191,70 @@ def changelog(web, req, tmpl, shortlog=False):
         if 'rev' in req.form:
             hi = req.form['rev'][0]
         else:
-            hi = len(web.repo) - 1
+            hi = 'tip'
         try:
             ctx = web.repo[hi]
         except error.RepoError:
             return _search(web, req, tmpl) # XXX redirect to 404 page?
 
-    def changelist(limit=0, **map):
+    def changelist(latestonly, **map):
         l = [] # build a list in forward order for efficiency
-        for i in xrange(start, end):
+        revs = []
+        if start < end:
+            revs = web.repo.changelog.revs(start, end - 1)
+        if latestonly:
+            for r in revs:
+                pass
+            revs = (r,)
+        for i in revs:
             ctx = web.repo[i]
             n = ctx.node()
             showtags = webutil.showtag(web.repo, tmpl, 'changelogtag', n)
             files = webutil.listfilediffs(tmpl, ctx.files(), n, web.maxfiles)
 
-            l.insert(0, {"parity": parity.next(),
-                         "author": ctx.user(),
-                         "parent": webutil.parents(ctx, i - 1),
-                         "child": webutil.children(ctx, i + 1),
-                         "changelogtag": showtags,
-                         "desc": ctx.description(),
-                         "date": ctx.date(),
-                         "files": files,
-                         "rev": i,
-                         "node": hex(n),
-                         "tags": webutil.nodetagsdict(web.repo, n),
-                         "inbranch": webutil.nodeinbranch(web.repo, ctx),
-                         "branches": webutil.nodebranchdict(web.repo, ctx)
-                        })
-
-        if limit > 0:
-            l = l[:limit]
-
-        for e in l:
+            l.append({"parity": parity.next(),
+                      "author": ctx.user(),
+                      "parent": webutil.parents(ctx, i - 1),
+                      "child": webutil.children(ctx, i + 1),
+                      "changelogtag": showtags,
+                      "desc": ctx.description(),
+                      "extra": ctx.extra(),
+                      "date": ctx.date(),
+                      "files": files,
+                      "rev": i,
+                      "node": hex(n),
+                      "tags": webutil.nodetagsdict(web.repo, n),
+                      "bookmarks": webutil.nodebookmarksdict(web.repo, n),
+                      "inbranch": webutil.nodeinbranch(web.repo, ctx),
+                      "branches": webutil.nodebranchdict(web.repo, ctx)
+                     })
+        for e in reversed(l):
             yield e
 
     revcount = shortlog and web.maxshortchanges or web.maxchanges
     if 'revcount' in req.form:
         revcount = int(req.form.get('revcount', [revcount])[0])
+        revcount = max(revcount, 1)
         tmpl.defaults['sessionvars']['revcount'] = revcount
 
     lessvars = copy.copy(tmpl.defaults['sessionvars'])
-    lessvars['revcount'] = revcount / 2
+    lessvars['revcount'] = max(revcount / 2, 1)
     morevars = copy.copy(tmpl.defaults['sessionvars'])
     morevars['revcount'] = revcount * 2
 
-    cl = web.repo.changelog
-    count = len(cl)
+    count = len(web.repo)
     pos = ctx.rev()
     start = max(0, pos - revcount + 1)
     end = min(count, start + revcount)
     pos = end - 1
     parity = paritygen(web.stripecount, offset=start - end)
 
-    changenav = webutil.revnavgen(pos, revcount, count, web.repo.changectx)
+    changenav = webutil.revnav(web.repo).gen(pos, revcount, count)
 
     return tmpl(shortlog and 'shortlog' or 'changelog', changenav=changenav,
-                node=hex(ctx.node()), rev=pos, changesets=count,
-                entries=lambda **x: changelist(limit=0,**x),
-                latestentry=lambda **x: changelist(limit=1,**x),
+                node=ctx.hex(), rev=pos, changesets=count,
+                entries=lambda **x: changelist(latestonly=False, **x),
+                latestentry=lambda **x: changelist(latestonly=True, **x),
                 archives=web.archivelist("tip"), revcount=revcount,
                 morevars=morevars, lessvars=lessvars)
 
@@ -244,42 +263,66 @@ def shortlog(web, req, tmpl):
 
 def changeset(web, req, tmpl):
     ctx = webutil.changectx(web.repo, req)
+    basectx = webutil.basechangectx(web.repo, req)
+    if basectx is None:
+        basectx = ctx.p1()
     showtags = webutil.showtag(web.repo, tmpl, 'changesettag', ctx.node())
+    showbookmarks = webutil.showbookmark(web.repo, tmpl, 'changesetbookmark',
+                                         ctx.node())
     showbranch = webutil.nodebranchnodefault(ctx)
 
     files = []
     parity = paritygen(web.stripecount)
-    for f in ctx.files():
+    for blockno, f in enumerate(ctx.files()):
         template = f in ctx and 'filenodelink' or 'filenolink'
         files.append(tmpl(template,
-                          node=ctx.hex(), file=f,
+                          node=ctx.hex(), file=f, blockno=blockno + 1,
                           parity=parity.next()))
 
-    parity = paritygen(web.stripecount)
     style = web.config('web', 'style', 'paper')
     if 'style' in req.form:
         style = req.form['style'][0]
 
-    diffs = webutil.diffs(web.repo, tmpl, ctx, None, parity, style)
+    parity = paritygen(web.stripecount)
+    diffs = webutil.diffs(web.repo, tmpl, ctx, basectx, None, parity, style)
+
+    parity = paritygen(web.stripecount)
+    diffstatgen = webutil.diffstatgen(ctx, basectx)
+    diffstat = webutil.diffstat(tmpl, ctx, diffstatgen, parity)
+
     return tmpl('changeset',
                 diff=diffs,
                 rev=ctx.rev(),
                 node=ctx.hex(),
                 parent=webutil.parents(ctx),
                 child=webutil.children(ctx),
+                basenode=basectx.hex(),
                 changesettag=showtags,
+                changesetbookmark=showbookmarks,
                 changesetbranch=showbranch,
                 author=ctx.user(),
                 desc=ctx.description(),
+                extra=ctx.extra(),
                 date=ctx.date(),
                 files=files,
+                diffsummary=lambda **x: webutil.diffsummary(diffstatgen),
+                diffstat=diffstat,
                 archives=web.archivelist(ctx.hex()),
                 tags=webutil.nodetagsdict(web.repo, ctx.node()),
+                bookmarks=webutil.nodebookmarksdict(web.repo, ctx.node()),
                 branch=webutil.nodebranchnodefault(ctx),
                 inbranch=webutil.nodeinbranch(web.repo, ctx),
                 branches=webutil.nodebranchdict(web.repo, ctx))
 
 rev = changeset
+
+def decodepath(path):
+    """Hook for mapping a path in the repository to a path in the
+    working copy.
+
+    Extensions (e.g., largefiles) can override this to remap files in
+    the virtual file system presented by the manifest command below."""
+    return path
 
 def manifest(web, req, tmpl):
     ctx = webutil.changectx(web.repo, req)
@@ -296,13 +339,17 @@ def manifest(web, req, tmpl):
     l = len(path)
     abspath = "/" + path
 
-    for f, n in mf.iteritems():
+    for full, n in mf.iteritems():
+        # the virtual path (working copy path) used for the full
+        # (repository) path
+        f = decodepath(full)
+
         if f[:l] != path:
             continue
         remain = f[l:]
         elements = remain.split('/')
         if len(elements) == 1:
-            files[remain] = f
+            files[remain] = full
         else:
             h = dirs # need to retain ref to dirs (root)
             for elem in elements[0:-1]:
@@ -355,22 +402,21 @@ def manifest(web, req, tmpl):
                 dentries=dirlist,
                 archives=web.archivelist(hex(node)),
                 tags=webutil.nodetagsdict(web.repo, node),
+                bookmarks=webutil.nodebookmarksdict(web.repo, node),
                 inbranch=webutil.nodeinbranch(web.repo, ctx),
                 branches=webutil.nodebranchdict(web.repo, ctx))
 
 def tags(web, req, tmpl):
-    i = web.repo.tagslist()
-    i.reverse()
+    i = list(reversed(web.repo.tagslist()))
     parity = paritygen(web.stripecount)
 
-    def entries(notip=False, limit=0, **map):
-        count = 0
-        for k, n in i:
-            if notip and k == "tip":
-                continue
-            if limit > 0 and count >= limit:
-                continue
-            count = count + 1
+    def entries(notip, latestonly, **map):
+        t = i
+        if notip:
+            t = [(k, n) for k, n in i if k != "tip"]
+        if latestonly:
+            t = t[:1]
+        for k, n in t:
             yield {"parity": parity.next(),
                    "tag": k,
                    "date": web.repo[n].date(),
@@ -378,27 +424,49 @@ def tags(web, req, tmpl):
 
     return tmpl("tags",
                 node=hex(web.repo.changelog.tip()),
-                entries=lambda **x: entries(False, 0, **x),
-                entriesnotip=lambda **x: entries(True, 0, **x),
-                latestentry=lambda **x: entries(True, 1, **x))
+                entries=lambda **x: entries(False, False, **x),
+                entriesnotip=lambda **x: entries(True, False, **x),
+                latestentry=lambda **x: entries(True, True, **x))
+
+def bookmarks(web, req, tmpl):
+    i = [b for b in web.repo._bookmarks.items() if b[1] in web.repo]
+    parity = paritygen(web.stripecount)
+
+    def entries(latestonly, **map):
+        if latestonly:
+            t = [min(i)]
+        else:
+            t = sorted(i)
+        for k, n in t:
+            yield {"parity": parity.next(),
+                   "bookmark": k,
+                   "date": web.repo[n].date(),
+                   "node": hex(n)}
+
+    return tmpl("bookmarks",
+                node=hex(web.repo.changelog.tip()),
+                entries=lambda **x: entries(latestonly=False, **x),
+                latestentry=lambda **x: entries(latestonly=True, **x))
 
 def branches(web, req, tmpl):
-    b = web.repo.branchtags()
-    tips = (web.repo[n] for t, n in web.repo.branchtags().iteritems())
+    tips = []
     heads = web.repo.heads()
     parity = paritygen(web.stripecount)
-    sortkey = lambda ctx: ('close' not in ctx.extra(), ctx.rev())
+    sortkey = lambda ctx: (not ctx.closesbranch(), ctx.rev())
 
     def entries(limit, **map):
         count = 0
+        if not tips:
+            for t, n in web.repo.branchtags().iteritems():
+                tips.append(web.repo[n])
         for ctx in sorted(tips, key=sortkey, reverse=True):
             if limit > 0 and count >= limit:
                 return
             count += 1
-            if ctx.node() not in heads:
-                status = 'inactive'
-            elif not web.repo.branchheads(ctx.branch()):
+            if not web.repo.branchheads(ctx.branch()):
                 status = 'closed'
+            elif ctx.node() not in heads:
+                status = 'inactive'
             else:
                 status = 'open'
             yield {'parity': parity.next(),
@@ -412,8 +480,7 @@ def branches(web, req, tmpl):
                 latestentry=lambda **x: entries(1, **x))
 
 def summary(web, req, tmpl):
-    i = web.repo.tagslist()
-    i.reverse()
+    i = reversed(web.repo.tagslist())
 
     def tagentries(**map):
         parity = paritygen(web.stripecount)
@@ -432,6 +499,15 @@ def summary(web, req, tmpl):
                        node=hex(n),
                        date=web.repo[n].date())
 
+    def bookmarks(**map):
+        parity = paritygen(web.stripecount)
+        marks = [b for b in web.repo._bookmarks.items() if b[1] in web.repo]
+        for k, n in sorted(marks)[:10]:  # limit to 10 bookmarks
+            yield {'parity': parity.next(),
+                   'bookmark': k,
+                   'date': web.repo[n].date(),
+                   'node': hex(n)}
+
     def branches(**map):
         parity = paritygen(web.stripecount)
 
@@ -446,38 +522,45 @@ def summary(web, req, tmpl):
     def changelist(**map):
         parity = paritygen(web.stripecount, offset=start - end)
         l = [] # build a list in forward order for efficiency
-        for i in xrange(start, end):
+        revs = []
+        if start < end:
+            revs = web.repo.changelog.revs(start, end - 1)
+        for i in revs:
             ctx = web.repo[i]
             n = ctx.node()
             hn = hex(n)
 
-            l.insert(0, tmpl(
+            l.append(tmpl(
                'shortlogentry',
                 parity=parity.next(),
                 author=ctx.user(),
                 desc=ctx.description(),
+                extra=ctx.extra(),
                 date=ctx.date(),
                 rev=i,
                 node=hn,
                 tags=webutil.nodetagsdict(web.repo, n),
+                bookmarks=webutil.nodebookmarksdict(web.repo, n),
                 inbranch=webutil.nodeinbranch(web.repo, ctx),
                 branches=webutil.nodebranchdict(web.repo, ctx)))
 
+        l.reverse()
         yield l
 
-    cl = web.repo.changelog
-    count = len(cl)
+    tip = web.repo['tip']
+    count = len(web.repo)
     start = max(0, count - web.maxchanges)
     end = min(count, start + web.maxchanges)
 
     return tmpl("summary",
                 desc=web.config("web", "description", "unknown"),
                 owner=get_contact(web.config) or "unknown",
-                lastchange=cl.read(cl.tip())[2],
+                lastchange=tip.date(),
                 tags=tagentries,
+                bookmarks=bookmarks,
                 branches=branches,
                 shortlog=changelist,
-                node=hex(cl.tip()),
+                node=tip.hex(),
                 archives=web.archivelist("tip"))
 
 def filediff(web, req, tmpl):
@@ -493,6 +576,7 @@ def filediff(web, req, tmpl):
     if fctx is not None:
         n = fctx.node()
         path = fctx.path()
+        ctx = fctx.changectx()
     else:
         n = ctx.node()
         # path already defined in except clause
@@ -502,7 +586,7 @@ def filediff(web, req, tmpl):
     if 'style' in req.form:
         style = req.form['style'][0]
 
-    diffs = webutil.diffs(web.repo, tmpl, fctx or ctx, [path], parity, style)
+    diffs = webutil.diffs(web.repo, tmpl, ctx, None, [path], parity, style)
     rename = fctx and webutil.renamelink(fctx) or []
     ctx = fctx and fctx or ctx
     return tmpl("filediff",
@@ -511,6 +595,7 @@ def filediff(web, req, tmpl):
                 rev=ctx.rev(),
                 date=ctx.date(),
                 desc=ctx.description(),
+                extra=ctx.extra(),
                 author=ctx.user(),
                 rename=rename,
                 branch=webutil.nodebranchnodefault(ctx),
@@ -520,10 +605,75 @@ def filediff(web, req, tmpl):
 
 diff = filediff
 
+def comparison(web, req, tmpl):
+    ctx = webutil.changectx(web.repo, req)
+    if 'file' not in req.form:
+        raise ErrorResponse(HTTP_NOT_FOUND, 'file not given')
+    path = webutil.cleanpath(web.repo, req.form['file'][0])
+    rename = path in ctx and webutil.renamelink(ctx[path]) or []
+
+    parsecontext = lambda v: v == 'full' and -1 or int(v)
+    if 'context' in req.form:
+        context = parsecontext(req.form['context'][0])
+    else:
+        context = parsecontext(web.config('web', 'comparisoncontext', '5'))
+
+    def filelines(f):
+        if binary(f.data()):
+            mt = mimetypes.guess_type(f.path())[0]
+            if not mt:
+                mt = 'application/octet-stream'
+            return [_('(binary file %s, hash: %s)') % (mt, hex(f.filenode()))]
+        return f.data().splitlines()
+
+    if path in ctx:
+        fctx = ctx[path]
+        rightrev = fctx.filerev()
+        rightnode = fctx.filenode()
+        rightlines = filelines(fctx)
+        parents = fctx.parents()
+        if not parents:
+            leftrev = -1
+            leftnode = nullid
+            leftlines = ()
+        else:
+            pfctx = parents[0]
+            leftrev = pfctx.filerev()
+            leftnode = pfctx.filenode()
+            leftlines = filelines(pfctx)
+    else:
+        rightrev = -1
+        rightnode = nullid
+        rightlines = ()
+        fctx = ctx.parents()[0][path]
+        leftrev = fctx.filerev()
+        leftnode = fctx.filenode()
+        leftlines = filelines(fctx)
+
+    comparison = webutil.compare(tmpl, context, leftlines, rightlines)
+    return tmpl('filecomparison',
+                file=path,
+                node=hex(ctx.node()),
+                rev=ctx.rev(),
+                date=ctx.date(),
+                desc=ctx.description(),
+                extra=ctx.extra(),
+                author=ctx.user(),
+                rename=rename,
+                branch=webutil.nodebranchnodefault(ctx),
+                parent=webutil.parents(fctx),
+                child=webutil.children(fctx),
+                leftrev=leftrev,
+                leftnode=hex(leftnode),
+                rightrev=rightrev,
+                rightnode=hex(rightnode),
+                comparison=comparison)
+
 def annotate(web, req, tmpl):
     fctx = webutil.filectx(web.repo, req)
     f = fctx.path()
     parity = paritygen(web.stripecount)
+    diffopts = patch.diffopts(web.repo.ui, untrusted=True, section='annotate')
 
     def annotate(**map):
         last = None
@@ -533,7 +683,8 @@ def annotate(web, req, tmpl):
             lines = enumerate([((fctx.filectx(fctx.filerev()), 1),
                                 '(binary:%s)' % mt)])
         else:
-            lines = enumerate(fctx.annotate(follow=True, linenumber=True))
+            lines = enumerate(fctx.annotate(follow=True, linenumber=True,
+                                            diffopts=diffopts))
         for lineno, ((f, targetline), l) in lines:
             fnode = f.filenode()
 
@@ -541,25 +692,28 @@ def annotate(web, req, tmpl):
                 last = fnode
 
             yield {"parity": parity.next(),
-                   "node": hex(f.node()),
+                   "node": f.hex(),
                    "rev": f.rev(),
                    "author": f.user(),
                    "desc": f.description(),
+                   "extra": f.extra(),
                    "file": f.path(),
                    "targetline": targetline,
                    "line": l,
                    "lineid": "l%d" % (lineno + 1),
-                   "linenumber": "% 6d" % (lineno + 1)}
+                   "linenumber": "% 6d" % (lineno + 1),
+                   "revdate": f.date()}
 
     return tmpl("fileannotate",
                 file=f,
                 annotate=annotate,
                 path=webutil.up(f),
                 rev=fctx.rev(),
-                node=hex(fctx.node()),
+                node=fctx.hex(),
                 author=fctx.user(),
                 date=fctx.date(),
                 desc=fctx.description(),
+                extra=fctx.extra(),
                 rename=webutil.renamelink(fctx),
                 branch=webutil.nodebranchnodefault(fctx),
                 parent=webutil.parents(fctx),
@@ -590,10 +744,11 @@ def filelog(web, req, tmpl):
     revcount = web.maxshortchanges
     if 'revcount' in req.form:
         revcount = int(req.form.get('revcount', [revcount])[0])
+        revcount = max(revcount, 1)
         tmpl.defaults['sessionvars']['revcount'] = revcount
 
     lessvars = copy.copy(tmpl.defaults['sessionvars'])
-    lessvars['revcount'] = revcount / 2
+    lessvars['revcount'] = max(revcount / 2, 1)
     morevars = copy.copy(tmpl.defaults['sessionvars'])
     morevars['revcount'] = revcount * 2
 
@@ -602,39 +757,43 @@ def filelog(web, req, tmpl):
     end = min(count, start + revcount) # last rev on this page
     parity = paritygen(web.stripecount, offset=start - end)
 
-    def entries(limit=0, **map):
+    def entries(latestonly, **map):
         l = []
 
         repo = web.repo
-        for i in xrange(start, end):
+        revs = repo.changelog.revs(start, end - 1)
+        if latestonly:
+            for r in revs:
+                pass
+            revs = (r,)
+        for i in revs:
             iterfctx = fctx.filectx(i)
 
-            l.insert(0, {"parity": parity.next(),
-                         "filerev": i,
-                         "file": f,
-                         "node": hex(iterfctx.node()),
-                         "author": iterfctx.user(),
-                         "date": iterfctx.date(),
-                         "rename": webutil.renamelink(iterfctx),
-                         "parent": webutil.parents(iterfctx),
-                         "child": webutil.children(iterfctx),
-                         "desc": iterfctx.description(),
-                         "tags": webutil.nodetagsdict(repo, iterfctx.node()),
-                         "branch": webutil.nodebranchnodefault(iterfctx),
-                         "inbranch": webutil.nodeinbranch(repo, iterfctx),
-                         "branches": webutil.nodebranchdict(repo, iterfctx)})
-
-        if limit > 0:
-            l = l[:limit]
-
-        for e in l:
+            l.append({"parity": parity.next(),
+                      "filerev": i,
+                      "file": f,
+                      "node": iterfctx.hex(),
+                      "author": iterfctx.user(),
+                      "date": iterfctx.date(),
+                      "rename": webutil.renamelink(iterfctx),
+                      "parent": webutil.parents(iterfctx),
+                      "child": webutil.children(iterfctx),
+                      "desc": iterfctx.description(),
+                      "extra": iterfctx.extra(),
+                      "tags": webutil.nodetagsdict(repo, iterfctx.node()),
+                      "bookmarks": webutil.nodebookmarksdict(
+                          repo, iterfctx.node()),
+                      "branch": webutil.nodebranchnodefault(iterfctx),
+                      "inbranch": webutil.nodeinbranch(repo, iterfctx),
+                      "branches": webutil.nodebranchdict(repo, iterfctx)})
+        for e in reversed(l):
             yield e
 
-    nodefunc = lambda x: fctx.filectx(fileid=x)
-    nav = webutil.revnavgen(end - 1, revcount, count, nodefunc)
-    return tmpl("filelog", file=f, node=hex(fctx.node()), nav=nav,
-                entries=lambda **x: entries(limit=0, **x),
-                latestentry=lambda **x: entries(limit=1, **x),
+    revnav = webutil.filerevnav(web.repo, fctx.path())
+    nav = revnav.gen(end - 1, revcount, count)
+    return tmpl("filelog", file=f, node=fctx.hex(), nav=nav,
+                entries=lambda **x: entries(latestonly=False, **x),
+                latestentry=lambda **x: entries(latestonly=True, **x),
                 revcount=revcount, morevars=morevars, lessvars=lessvars)
 
 def archive(web, req, tmpl):
@@ -657,16 +816,32 @@ def archive(web, req, tmpl):
     if cnode == key or key == 'tip':
         arch_version = short(cnode)
     name = "%s-%s" % (reponame, arch_version)
+
+    ctx = webutil.changectx(web.repo, req)
+    pats = []
+    matchfn = None
+    file = req.form.get('file', None)
+    if file:
+        pats = ['path:' + file[0]]
+        matchfn = scmutil.match(ctx, pats, default='path')
+        if pats:
+            files = [f for f in ctx.manifest().keys() if matchfn(f)]
+            if not files:
+                raise ErrorResponse(HTTP_NOT_FOUND,
+                    'file(s) not found: %s' % file[0])
+
     mimetype, artype, extension, encoding = web.archive_specs[type_]
     headers = [
-        ('Content-Type', mimetype),
         ('Content-Disposition', 'attachment; filename=%s%s' % (name, extension))
-    ]
+        ]
     if encoding:
         headers.append(('Content-Encoding', encoding))
-    req.header(headers)
-    req.respond(HTTP_OK)
-    archival.archive(web.repo, req, cnode, artype, prefix=name)
+    req.headers.extend(headers)
+    req.respond(HTTP_OK, mimetype)
+
+    archival.archive(web.repo, req, cnode, artype, prefix=name,
+                     matchfn=matchfn,
+                     subrepos=web.configbool("web", "archivesubrepos"))
     return []
 
 
@@ -680,48 +855,160 @@ def static(web, req, tmpl):
         if isinstance(tp, str):
             tp = [tp]
         static = [os.path.join(p, 'static') for p in tp]
-    return [staticfile(static, fname, req)]
+    staticfile(static, fname, req)
+    return []
 
 def graph(web, req, tmpl):
 
-    rev = webutil.changectx(web.repo, req).rev()
+    ctx = webutil.changectx(web.repo, req)
+    rev = ctx.rev()
+
     bg_height = 39
     revcount = web.maxshortchanges
     if 'revcount' in req.form:
         revcount = int(req.form.get('revcount', [revcount])[0])
+        revcount = max(revcount, 1)
         tmpl.defaults['sessionvars']['revcount'] = revcount
 
     lessvars = copy.copy(tmpl.defaults['sessionvars'])
-    lessvars['revcount'] = revcount / 2
+    lessvars['revcount'] = max(revcount / 2, 1)
     morevars = copy.copy(tmpl.defaults['sessionvars'])
     morevars['revcount'] = revcount * 2
 
-    max_rev = len(web.repo) - 1
-    revcount = min(max_rev, revcount)
-    revnode = web.repo.changelog.node(rev)
-    revnode_hex = hex(revnode)
-    uprev = min(max_rev, rev + revcount)
-    downrev = max(0, rev - revcount)
     count = len(web.repo)
-    changenav = webutil.revnavgen(rev, revcount, count, web.repo.changectx)
+    pos = rev
+    start = max(0, pos - revcount + 1)
+    end = min(count, start + revcount)
+    pos = end - 1
 
-    dag = graphmod.revisions(web.repo, rev, downrev)
-    tree = list(graphmod.colored(dag))
-    canvasheight = (len(tree) + 1) * bg_height - 27
-    data = []
-    for (id, type, ctx, vtx, edges) in tree:
-        if type != graphmod.CHANGESET:
-            continue
-        node = short(ctx.node())
-        age = templatefilters.age(ctx.date())
-        desc = templatefilters.firstline(ctx.description())
-        desc = cgi.escape(templatefilters.nonempty(desc))
-        user = cgi.escape(templatefilters.person(ctx.user()))
-        branch = ctx.branch()
-        branch = branch, web.repo.branchtags().get(branch) == ctx.node()
-        data.append((node, vtx, edges, desc, user, age, branch, ctx.tags()))
+    uprev = min(max(0, count - 1), rev + revcount)
+    downrev = max(0, rev - revcount)
+    changenav = webutil.revnav(web.repo).gen(pos, revcount, count)
+
+    tree = []
+    if start < end:
+        revs = list(web.repo.changelog.revs(end - 1, start))
+        dag = graphmod.dagwalker(web.repo, revs)
+        tree = list(graphmod.colored(dag, web.repo))
+
+    def getcolumns(tree):
+        cols = 0
+        for (id, type, ctx, vtx, edges) in tree:
+            if type != graphmod.CHANGESET:
+                continue
+            cols = max(cols, max([edge[0] for edge in edges] or [0]),
+                             max([edge[1] for edge in edges] or [0]))
+        return cols
+
+    def graphdata(usetuples, **map):
+        data = []
+
+        row = 0
+        for (id, type, ctx, vtx, edges) in tree:
+            if type != graphmod.CHANGESET:
+                continue
+            node = str(ctx)
+            age = templatefilters.age(ctx.date())
+            desc = templatefilters.firstline(ctx.description())
+            desc = cgi.escape(templatefilters.nonempty(desc))
+            user = cgi.escape(templatefilters.person(ctx.user()))
+            branch = ctx.branch()
+            try:
+                branchnode = web.repo.branchtip(branch)
+            except error.RepoLookupError:
+                branchnode = None
+            branch = branch, branchnode == ctx.node()
+
+            if usetuples:
+                data.append((node, vtx, edges, desc, user, age, branch,
+                             ctx.tags(), ctx.bookmarks()))
+            else:
+                edgedata = [dict(col=edge[0], nextcol=edge[1],
+                                 color=(edge[2] - 1) % 6 + 1,
+                                 width=edge[3], bcolor=edge[4])
+                            for edge in edges]
+
+                data.append(
+                    dict(node=node,
+                         col=vtx[0],
+                         color=(vtx[1] - 1) % 6 + 1,
+                         edges=edgedata,
+                         row=row,
+                         nextrow=row + 1,
+                         desc=desc,
+                         user=user,
+                         age=age,
+                         bookmarks=webutil.nodebookmarksdict(
+                            web.repo, ctx.node()),
+                         branches=webutil.nodebranchdict(web.repo, ctx),
+                         inbranch=webutil.nodeinbranch(web.repo, ctx),
+                         tags=webutil.nodetagsdict(web.repo, ctx.node())))
+
+            row += 1
+
+        return data
+
+    cols = getcolumns(tree)
+    rows = len(tree)
+    canvasheight = (rows + 1) * bg_height - 27
 
     return tmpl('graph', rev=rev, revcount=revcount, uprev=uprev,
                 lessvars=lessvars, morevars=morevars, downrev=downrev,
-                canvasheight=canvasheight, jsdata=data, bg_height=bg_height,
-                node=revnode_hex, changenav=changenav)
+                cols=cols, rows=rows,
+                canvaswidth=(cols + 1) * bg_height,
+                truecanvasheight=rows * bg_height,
+                canvasheight=canvasheight, bg_height=bg_height,
+                jsdata=lambda **x: graphdata(True, **x),
+                nodes=lambda **x: graphdata(False, **x),
+                node=ctx.hex(), changenav=changenav)
+
+def _getdoc(e):
+    doc = e[0].__doc__
+    if doc:
+        doc = _(doc).split('\n')[0]
+    else:
+        doc = _('(no help text available)')
+    return doc
+
+def help(web, req, tmpl):
+    from mercurial import commands # avoid cycle
+
+    topicname = req.form.get('node', [None])[0]
+    if not topicname:
+        def topics(**map):
+            for entries, summary, _ in helpmod.helptable:
+                yield {'topic': entries[0], 'summary': summary}
+
+        early, other = [], []
+        primary = lambda s: s.split('|')[0]
+        for c, e in commands.table.iteritems():
+            doc = _getdoc(e)
+            if 'DEPRECATED' in doc or c.startswith('debug'):
+                continue
+            cmd = primary(c)
+            if cmd.startswith('^'):
+                early.append((cmd[1:], doc))
+            else:
+                other.append((cmd, doc))
+
+        early.sort()
+        other.sort()
+
+        def earlycommands(**map):
+            for c, doc in early:
+                yield {'topic': c, 'summary': doc}
+
+        def othercommands(**map):
+            for c, doc in other:
+                yield {'topic': c, 'summary': doc}
+
+        return tmpl('helptopics', topics=topics, earlycommands=earlycommands,
+                    othercommands=othercommands, title='Index')
+
+    u = webutil.wsgiui()
+    u.verbose = True
+    try:
+        doc = helpmod.help_(u, topicname)
+    except error.UnknownCommand:
+        raise ErrorResponse(HTTP_NOT_FOUND)
+    return tmpl('help', topic=topicname, doc=doc)

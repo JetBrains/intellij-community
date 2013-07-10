@@ -52,6 +52,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -109,8 +110,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
   }
 
-  private XmlExtension getXmlExtension() {
-    return XmlExtension.getExtension(getFile());
+  private XmlNamespaceHelper getXmlExtension() {
+    return XmlNamespaceHelper.getHelper(getFile());
   }
 
   @Override
@@ -161,8 +162,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace) throws IncorrectOperationException {
           String prefix = myNamespacePrefix;
           if (StringUtil.isEmpty(prefix)) {
-            final XmlExtension extension = getXmlExtension();
-            final XmlFile xmlFile = extension.getContainingFile(element);
+            final XmlFile xmlFile = XmlExtension.getExtension(file).getContainingFile(element);
             prefix = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
             if (StringUtil.isNotEmpty(prefix)) {
               // namespace already declared
@@ -179,15 +179,16 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           }
           final int offset = editor.getCaretModel().getOffset();
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
-          final XmlExtension extension = XmlExtension.getExtension(file);
-          extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), prefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
-            @Override
-            public void run(final String param) throws IncorrectOperationException {
-              if (!namespace.isEmpty()) {
-                editor.getCaretModel().moveToOffset(marker.getStartOffset());
-              }
-            }
-          });
+          final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
+          helper.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), prefix,
+                                               new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+                                                 @Override
+                                                 public void run(final String param) throws IncorrectOperationException {
+                                                   if (!namespace.isEmpty()) {
+                                                     editor.getCaretModel().moveToOffset(marker.getStartOffset());
+                                                   }
+                                                 }
+                                               });
         }
       }, getTitle(),
       this,

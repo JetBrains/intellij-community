@@ -35,6 +35,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   @NotNull private HgRepositoryReader myRepositoryReader;
   @NotNull private File myHgDir;
   @NotNull private Collection<String> myBranches;
+  @NotNull private Collection<String> myBookmarks;
 
   @Override
   public void setUp() throws Exception {
@@ -48,11 +49,16 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
 
     File cacheDir = new File(testHgDir, "cache");
     File testBranchFile = new File(testHgDir, "branch");
+    File testBookmarkFile = new File(testHgDir, "bookmarks");
+    File testCurrentBookmarkFile = new File(testHgDir, "bookmarks.current");
     FileUtil.copyDir(cacheDir, new File(myHgDir, "cache"));
     FileUtil.copy(testBranchFile, new File(myHgDir, "branch"));
+    FileUtil.copy(testBookmarkFile, new File(myHgDir, "bookmarks"));
+    FileUtil.copy(testCurrentBookmarkFile, new File(myHgDir, "bookmarks.current"));
 
     myRepositoryReader = new HgRepositoryReader(myHgDir);
     myBranches = readBranches();
+    myBookmarks = readBookmarks();
   }
 
   public void testHEAD() {
@@ -69,6 +75,11 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     TestRepositoryUtil.assertEqualCollections(branches, myBranches);
   }
 
+  public void testBookmarks() {
+    Collection<String> bookmarks = myRepositoryReader.readBookmarks();
+    TestRepositoryUtil.assertEqualCollections(bookmarks, myBookmarks);
+  }
+
   @NotNull
   private Collection<String> readBranches() throws IOException {
     Collection<String> branches = new HashSet<String>();
@@ -80,5 +91,23 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
       branches.add(refAndName[1]);
     }
     return branches;
+  }
+
+
+  public void testCurrentBookmark() {
+    assertEquals(myRepositoryReader.readCurrentBookmark(), "B_BookMark");
+  }
+
+  @NotNull
+  private Collection<String> readBookmarks() throws IOException {
+    Collection<String> bookmarks = new HashSet<String>();
+    File bookmarksFile = new File(myHgDir, "bookmarks");
+    String[] bookmarksWithHashes = FileUtil.loadFile(bookmarksFile).split("\n");
+    for (String str : bookmarksWithHashes) {
+      String[] refAndName = str.trim().split(" ");
+      assertEquals(2, refAndName.length);
+      bookmarks.add(refAndName[1]);
+    }
+    return bookmarks;
   }
 }

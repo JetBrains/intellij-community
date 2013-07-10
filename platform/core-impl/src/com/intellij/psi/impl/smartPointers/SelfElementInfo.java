@@ -161,11 +161,6 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     myRangeMarker = null;  // clear hard ref to avoid leak, hold soft ref for not recreating marker later
   }
 
-  // commit
-  @Override
-  public void documentAndPsiInSync() {
-  }
-
   @Override
   public PsiElement restoreElement() {
     if (!mySyncMarkerIsValid) return null;

@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -72,7 +71,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       myAlarm.addRequest(new ImportModulesTask(project, toImport, synchronous), PROJECT_INITIALISATION_DELAY_MS);
       return;
     }
-    Runnable task = new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
@@ -84,15 +83,9 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
           if (module != null) {
             syncPaths(module, node.getData());
           }
-        }
+        } 
       }
-    };
-    if (synchronous) {
-      UIUtil.invokeAndWaitIfNeeded(task);
-    }
-    else {
-      UIUtil.invokeLaterIfNeeded(task);
-    }
+    });
   }
 
   private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate, @NotNull final Project project) {
@@ -187,27 +180,28 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
   }
 
   private static void syncPaths(@NotNull Module module, @NotNull ModuleData data) {
-    CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+    ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
+      modifiableModel.dispose();
       LOG.warn(String.format("Can't sync paths for module '%s'. Reason: no compiler extension is found for it", module.getName()));
       return;
     }
-    CompilerModuleExtension model = (CompilerModuleExtension)extension.getModifiableModel(true);
     try {
       String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
       if (compileOutputPath != null) {
-        model.setCompilerOutputPath(compileOutputPath);
+        extension.setCompilerOutputPath(compileOutputPath);
       }
 
       String testCompileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.TEST);
       if (testCompileOutputPath != null) {
-        model.setCompilerOutputPathForTests(testCompileOutputPath);
+        extension.setCompilerOutputPathForTests(testCompileOutputPath);
       }
 
-      model.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
+      extension.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
     }
     finally {
-      model.commit();
+      modifiableModel.commit();
     }
   }
   

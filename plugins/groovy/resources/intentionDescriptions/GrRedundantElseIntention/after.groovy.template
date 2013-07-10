@@ -1,0 +1,6 @@
+if (cond) {
+  doSomething()
+  return
+}
+<spot>doSomethingElse()</spot>
+next()

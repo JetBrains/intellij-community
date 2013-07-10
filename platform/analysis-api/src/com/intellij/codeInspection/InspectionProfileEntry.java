@@ -56,6 +56,10 @@ public abstract class InspectionProfileEntry {
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer = null;
 
+  public void cleanup() {
+
+  }
+
   interface DefaultNameProvider {
     @Nullable String getDefaultShortName();
     @Nullable String getDefaultDisplayName();
@@ -239,6 +243,7 @@ public abstract class InspectionProfileEntry {
     }
   }
 
+  @NotNull
   public static Collection<String> getBlackList() {
     synchronized (BLACK_LIST_LOCK) {
       if (ourBlackList == null) {
@@ -266,7 +271,7 @@ public abstract class InspectionProfileEntry {
    * @param project to be associated with this entry
    * @deprecated this won't work for inspections configured via {@link com.intellij.codeInspection.InspectionEP}
    */
-  public void projectOpened(Project project) {
+  public void projectOpened(@NotNull Project project) {
   }
 
   /**
@@ -275,7 +280,7 @@ public abstract class InspectionProfileEntry {
    * @param project to be disassociated from this entry
    * @deprecated this won't work for inspections configured via {@link com.intellij.codeInspection.InspectionEP}
    */
-  public void projectClosed(Project project) {
+  public void projectClosed(@NotNull Project project) {
   }
 
   /**
@@ -300,6 +305,7 @@ public abstract class InspectionProfileEntry {
     return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
   }
 
+  @NotNull
   protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }

@@ -107,6 +107,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     return super.getRequiredMemberName(reference);
   }
 
+  @NotNull
   @Override
   protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement typeElement = ref.getParent();

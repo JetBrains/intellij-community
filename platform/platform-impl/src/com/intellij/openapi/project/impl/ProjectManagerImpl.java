@@ -450,7 +450,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
       // should be invoked last
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      startupManager.runWhenProjectIsInitialized(new Runnable() {
         @Override
         public void run() {
           final TrackingPathMacroSubstitutor macroSubstitutor =

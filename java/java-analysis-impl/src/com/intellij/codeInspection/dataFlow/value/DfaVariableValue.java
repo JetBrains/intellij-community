@@ -49,15 +49,15 @@ public class DfaVariableValue extends DfaValue {
     }
 
     public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated) {
-      return createVariableValue(myVariable, myVariable.getType(), isNegated, null, false);
+      return createVariableValue(myVariable, myVariable.getType(), isNegated, null, null);
     }
     @NotNull
     public DfaVariableValue createVariableValue(PsiVariable myVariable,
-                                                @Nullable PsiType varType, boolean isNegated, @Nullable DfaVariableValue qualifier, boolean viaMethods) {
+                                                @Nullable PsiType varType, boolean isNegated, @Nullable DfaVariableValue qualifier, @Nullable PsiMethod accessMethod) {
       mySharedInstance.myVariable = myVariable;
       mySharedInstance.myIsNegated = isNegated;
       mySharedInstance.myQualifier = qualifier;
-      mySharedInstance.myViaMethods = viaMethods;
+      mySharedInstance.myAccessMethod = accessMethod;
 
       String id = mySharedInstance.toString();
       ArrayList<DfaVariableValue> conditions = myStringToObject.get(id);
@@ -71,7 +71,7 @@ public class DfaVariableValue extends DfaValue {
         }
       }
 
-      DfaVariableValue result = new DfaVariableValue(myVariable, varType, isNegated, myFactory, qualifier, viaMethods);
+      DfaVariableValue result = new DfaVariableValue(myVariable, varType, isNegated, myFactory, qualifier, accessMethod);
       if (qualifier != null) {
         myQualifiersToChainedVariables.putValue(qualifier, result);
       }
@@ -92,18 +92,18 @@ public class DfaVariableValue extends DfaValue {
 
   private PsiVariable myVariable;
   private PsiType myVarType;
+  private PsiMethod myAccessMethod;
   @Nullable private DfaVariableValue myQualifier;
   private boolean myIsNegated;
-  private boolean myViaMethods;
   private Nullness myInherentNullability;
 
-  private DfaVariableValue(PsiVariable variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier, boolean viaMethods) {
+  private DfaVariableValue(PsiVariable variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier, PsiMethod accessMethod) {
     super(factory);
     myVariable = variable;
     myIsNegated = isNegated;
     myQualifier = qualifier;
-    myViaMethods = viaMethods;
     myVarType = varType;
+    myAccessMethod = accessMethod;
   }
 
   private DfaVariableValue(DfaValueFactory factory) {
@@ -128,7 +128,7 @@ public class DfaVariableValue extends DfaValue {
 
   @Override
   public DfaVariableValue createNegated() {
-    return myFactory.getVarFactory().createVariableValue(myVariable, myVarType, !myIsNegated, myQualifier, myViaMethods);
+    return myFactory.getVarFactory().createVariableValue(myVariable, myVarType, !myIsNegated, myQualifier, myAccessMethod);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -140,7 +140,7 @@ public class DfaVariableValue extends DfaValue {
   private boolean hardEquals(DfaVariableValue aVar) {
     return aVar.myVariable == myVariable &&
            aVar.myIsNegated == myIsNegated &&
-           aVar.myViaMethods == myViaMethods &&
+           aVar.myAccessMethod == myAccessMethod &&
            (myQualifier == null ? aVar.myQualifier == null : myQualifier.hardEquals(aVar.myQualifier));
   }
 
@@ -150,7 +150,7 @@ public class DfaVariableValue extends DfaValue {
   }
 
   public boolean isViaMethods() {
-    return myViaMethods;
+    return myAccessMethod != null || myQualifier != null && myQualifier.isViaMethods();
   }
 
   public Nullness getInherentNullability() {
@@ -158,19 +158,32 @@ public class DfaVariableValue extends DfaValue {
       return myInherentNullability;
     }
 
+    return myInherentNullability = calcInherentNullability();
+  }
+
+  private Nullness calcInherentNullability() {
+    PsiMethod accessMethod = myAccessMethod;
+    Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), accessMethod);
+    if (nullability != Nullness.UNKNOWN) {
+      return nullability;
+    }
+
     PsiVariable var = getPsiVariable();
-    Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
-    if (nullability == Nullness.UNKNOWN && var != null) {
+    nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
+    if (nullability != Nullness.UNKNOWN) {
+      return nullability;
+    }
+
+    if (var != null) {
       if (DfaPsiUtil.isNullableInitialized(var, true)) {
-        nullability = Nullness.NULLABLE;
-      } else if (DfaPsiUtil.isNullableInitialized(var, false)) {
-        nullability = Nullness.NOT_NULL;
+        return Nullness.NULLABLE;
+      }
+      if (DfaPsiUtil.isNullableInitialized(var, false)) {
+        return Nullness.NOT_NULL;
       }
     }
 
-    myInherentNullability = nullability;
-
-    return nullability;
+    return Nullness.UNKNOWN;
   }
 
   public boolean isLocalVariable() {

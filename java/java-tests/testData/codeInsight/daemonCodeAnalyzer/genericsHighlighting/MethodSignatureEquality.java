@@ -70,7 +70,7 @@ class Test {
   abstract class F<T extends Throwable> {
     <error descr="'foo(F<?>)' is already defined in 'Test.F'">abstract void foo(F<?> y)</error>;
 
-    abstract void foo(F<? extends Throwable> y);
+    <error descr="'foo(F<? extends Throwable>)' is already defined in 'Test.F'">abstract void foo(F<? extends Throwable> y)</error>;
   }
 }
 

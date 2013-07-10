@@ -15,16 +15,12 @@ import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -234,5 +230,65 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     String text = FileUtil.loadFile(new File(fullName)).trim();
     text = StringUtil.convertLineSeparators(text);
     return text;
+  }
+
+  public void testDocumentChange() throws Exception {
+    final String xml = "" +
+                       "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                       "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                       "    android:layout_height=\"fill_parent\">\n" +
+                       "    <include layout=\"@layout/colorstrip\" />\n" +
+                       "\n" +
+                       "\n" +
+                       "    <LinearLayout\n" +
+                       "        android:id=\"@+id/noteArea\"\n" +
+                       "        android:layout_width=\"fill_parent\"\n" +
+                       "        android:layout_height=\"wrap_content\"\n" +
+                       "        android:layout_weight=\"1\"\n" +
+                       "        android:layout_margin=\"5dip\">\n" +
+                       "    </LinearLayout>\n" +
+                       "\n" +
+                       "</LinearLayout>\n";
+    PsiFile file = createFile("file.xml", xml);
+    assertTrue(file instanceof XmlFile);
+    XmlDocument xmlDocument = ((XmlFile)file).getDocument();
+    assertNotNull(xmlDocument);
+    final XmlTag tagFromText = xmlDocument.getRootTag();
+    assertNotNull(tagFromText);
+    final PsiFileImpl containingFile = (PsiFileImpl)tagFromText.getContainingFile();
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    final Document document = documentManager.getDocument(containingFile);
+    assertNotNull(document);
+
+    final TestListener listener = new TestListener();
+    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
+
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            int positionToInsert = xml.indexOf(" <LinearLayout\n" +
+                                               "        android:id=\"@+id/noteArea\"\n");
+            assertFalse(positionToInsert == -1);
+            String stringToInsert = "<Button android:id=\"@+id/newid\" />\n";
+            document.insertString(positionToInsert, stringToInsert);
+            documentManager.commitDocument(document);
+          }
+        });
+      }
+    }, "", null);
+
+    PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
+  }
+
+  private static class TestListener extends PsiTreeChangeAdapter {
+    @Override
+    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
+      if (event.getNewChild() != null) {
+        assertNotSame("Received identical before and after children in childReplaced;", event.getOldChild(), event.getNewChild());
+      }
+    }
   }
 }

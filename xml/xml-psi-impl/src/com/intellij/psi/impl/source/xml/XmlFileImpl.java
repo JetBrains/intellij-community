@@ -42,6 +42,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     super(elementType, elementType, viewProvider);
   }
 
+  @Override
   public XmlDocument getDocument() {
     PsiElement child = getFirstChild();
     while (child != null) {
@@ -58,11 +59,13 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     return document == null ? null : document.getRootTag();
   }
 
+  @Override
   public boolean processElements(PsiElementProcessor processor, PsiElement place){
     final XmlDocument document = getDocument();
     return document == null || document.processElements(processor, place);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlFile(this);
@@ -77,6 +80,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   }
 
   private FileType myType = null;
+  @Override
   @NotNull
   public FileType getFileType() {
     if (myType == null) {
@@ -102,12 +106,14 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     return getLanguage() == XHTMLLanguage.INSTANCE || getLanguage() == HTMLLanguage.INSTANCE;
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     return super.processDeclarations(processor, state, lastParent, place) &&
            (!isWebFileType() || ScriptSupportUtil.processDeclarations(this, processor, state, lastParent, place));
 
   }
 
+  @Override
   public GlobalSearchScope getFileResolveScope() {
     return ProjectScope.getAllScope(getProject());
   }

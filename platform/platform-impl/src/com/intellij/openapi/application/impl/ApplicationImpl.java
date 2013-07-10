@@ -22,6 +22,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -37,7 +38,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -89,8 +89,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
   private final ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
 
-  // about writer preference: the way the java.util.concurrent.locks.ReentrantReadWriteLock.NonfairSync is implemented, the
-  // writer thread will be always at the queue head and therefore, java.util.concurrent.locks.ReentrantReadWriteLock.NonfairSync.readerShouldBlock()
+  // about writer preference: the way the j.u.c.l.ReentrantReadWriteLock.NonfairSync is implemented, the
+  // writer thread will be always at the queue head and therefore, j.u.c.l.ReentrantReadWriteLock.NonfairSync.readerShouldBlock()
   // will return true if the write action is pending, exactly as we need
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(false);
 
@@ -226,9 +226,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
-    if ((isInternal || isUnitTestMode) && !Comparing.equal("off", System.getProperty("idea.disposer.debug"))) {
-      Disposer.setDebugMode(true);
-    }
+
+    String debugDisposer = System.getProperty("idea.disposer.debug");
+    Disposer.setDebugMode((isInternal || isUnitTestMode || "on".equals(debugDisposer)) && !"off".equals(debugDisposer));
+
     myStartTime = System.currentTimeMillis();
     mySplash = splash;
     myName = appName;
@@ -361,55 +362,25 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName, ComponentConfig config) {
-    if (myHandlingInitComponentError) {
-      return;
-    }
-    myHandlingInitComponentError = true;
-    try {
-      PluginId pluginId = config == null ? PluginManager.getPluginByClassName(componentClassName) : config.getPluginId();
-      if (pluginId != null) {
-        LOG.warn(ex);
-        @NonNls final String errorMessage =
-          "Plugin " + pluginId.getIdString() + " failed to initialize and will be disabled:\n" + ex.getMessage() +
-          "\nPlease restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
-        PluginManager.disablePlugin(pluginId.getIdString());
-        if (!myHeadlessMode) {
-          JOptionPane.showMessageDialog(null, errorMessage);
-        }
-        else if (!isUnitTestMode()) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println(errorMessage);
-          System.exit(1);
-        }
-        return;  // do not call super
+  protected void handleInitComponentError(Throwable t, String componentClassName, ComponentConfig config) {
+    if (!myHandlingInitComponentError) {
+      myHandlingInitComponentError = true;
+      try {
+        PluginManager.handleComponentError(t, componentClassName, config);
       }
-      if (fatal) {
-        LOG.error(ex);
-        @NonNls final String errorMessage = "Fatal error initializing class " + componentClassName + ":\n" +
-                                            StringUtil.trimLog(ex.toString(), 239) +
-                                            "\nComplete error stacktrace was written to " + PathManager.getLogPath() + "/idea.log";
-        if (!myHeadlessMode) {
-          JOptionPane.showMessageDialog(null, errorMessage);
-        }
-        else {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println(errorMessage);
-        }
+      finally {
+        myHandlingInitComponentError = false;
       }
-      super.handleInitComponentError(ex, fatal, componentClassName, config);
-    }
-    finally {
-      myHandlingInitComponentError = false;
     }
   }
 
   private void loadApplicationComponents() {
-    PluginManager.initPlugins(mySplash);
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    PluginManagerCore.initPlugins(mySplash);
+    IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
-      loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
+      if (!PluginManagerCore.shouldSkipPlugin(plugin)) {
+        loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
+      }
     }
   }
 
@@ -417,7 +388,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   protected synchronized Object createComponent(Class componentInterface) {
     Object component = super.createComponent(componentInterface);
     if (mySplash != null) {
-      mySplash.showProgress("", (float)(0.65f + getPercentageOfComponentsLoaded() * 0.35f));
+      mySplash.showProgress("", 0.65f + getPercentageOfComponentsLoaded() * 0.35f);
     }
     return component;
   }
@@ -451,6 +422,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myCommandLineMode;
   }
 
+  @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
     return ourThreadExecutorsService.submit(new Runnable() {
@@ -473,6 +445,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     });
   }
 
+  @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull final Callable<T> action) {
     return ourThreadExecutorsService.submit(new Callable<T>() {
@@ -598,18 +571,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void fireBeforeApplicationLoaded() {
-    ExtensionPoint<ApplicationLoadListener> point = Extensions.getRootArea().getExtensionPoint("com.intellij.ApplicationLoadListener");
-    final ApplicationLoadListener[] objects = point.getExtensions();
-    for (ApplicationLoadListener object : objects) {
+    ExtensionPoint<ApplicationLoadListener> point = Extensions.getRootArea().getExtensionPoint(ApplicationLoadListener.EP_NAME);
+    for (ApplicationLoadListener listener : point.getExtensions()) {
       try {
-        object.beforeApplicationLoaded(this);
+        listener.beforeApplicationLoaded(this);
       }
-      catch(Exception e) {
+      catch (Exception e) {
         LOG.error(e);
       }
     }
   }
-
 
   @Override
   public void dispose() {
@@ -831,7 +802,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (!force && !showConfirmation()) {
+        if (!confirmExitIfNeeded(force)) {
           saveAll();
           return;
         }
@@ -877,8 +848,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
-  private static boolean showConfirmation() {
+  private static boolean confirmExitIfNeeded(boolean force) {
     final boolean hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
+    if (force && !hasUnsafeBgTasks) {
+      return true;
+    }
 
     DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
       @Override
@@ -1239,6 +1213,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myActive;
   }
 
+  @NotNull
   @Override
   public AccessToken acquireReadActionLock() {
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
@@ -1247,6 +1222,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return new ReadAccessToken();
   }
 
+  @NotNull
   @Override
   public AccessToken acquireWriteActionLock(Class clazz) {
     return new WriteAccessToken(clazz);
@@ -1440,7 +1416,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             public void run() {
               if (ex instanceof PluginException) {
                 final PluginException pluginException = (PluginException)ex;
-                PluginManager.disablePlugin(pluginException.getPluginId().getIdString());
+                PluginManagerCore.disablePlugin(pluginException.getPluginId().getIdString());
                 Messages.showMessageDialog("The plugin " +
                                            pluginException.getPluginId() +
                                            " failed to save settings and has been disabled. Please restart " +
@@ -1498,8 +1474,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myDoNotSave;
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 

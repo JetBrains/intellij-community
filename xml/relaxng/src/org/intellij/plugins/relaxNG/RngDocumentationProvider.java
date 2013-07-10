@@ -17,15 +17,18 @@
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.THashSet;
 import org.intellij.plugins.relaxNG.model.descriptors.CompositeDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngXmlAttributeDescriptor;
@@ -42,12 +45,18 @@ import java.util.List;
 * Date: 19.11.2007
 */
 public class RngDocumentationProvider implements DocumentationProvider {
+  private static final Logger LOG = Logger.getInstance(RngDocumentationProvider.class);
+
   @NonNls
   private static final String COMPATIBILITY_ANNOTATIONS_1_0 = "http://relaxng.org/ns/compatibility/annotations/1.0";
 
   @Nullable
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final XmlElement c = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, XmlAttribute.class);
+    if (c != null && c.getManager() == null) {
+      LOG.warn("Invalid context element passed to generateDoc()", new Throwable("<stack trace>"));
+      return null;
+    }
     if (c instanceof XmlTag) {
       final XmlTag xmlElement = (XmlTag)c;
       final XmlElementDescriptor descriptor = xmlElement.getDescriptor();
@@ -55,9 +64,10 @@ public class RngDocumentationProvider implements DocumentationProvider {
         final StringBuilder sb = new StringBuilder();
         final CompositeDescriptor d = (CompositeDescriptor)descriptor;
         final DElementPattern[] patterns = d.getElementPatterns();
+        final THashSet<PsiElement> elements = ContainerUtil.newIdentityTroveSet();
         for (DElementPattern pattern : patterns) {
           final PsiElement psiElement = d.getDeclaration(pattern.getLocation());
-          if (psiElement instanceof XmlTag) {
+          if (psiElement instanceof XmlTag && elements.add(psiElement)) {
             if (sb.length() > 0) {
               sb.append("<hr>");
             }
@@ -78,13 +88,13 @@ public class RngDocumentationProvider implements DocumentationProvider {
       if (descriptor instanceof RngXmlAttributeDescriptor) {
         final RngXmlAttributeDescriptor d = (RngXmlAttributeDescriptor)descriptor;
         final StringBuilder sb = new StringBuilder();
-        final Collection<PsiElement> declaration = d.getDeclarations();
+        final Collection<PsiElement> declaration = ContainerUtil.newIdentityTroveSet(d.getDeclarations());
         for (PsiElement psiElement : declaration) {
           if (psiElement instanceof XmlTag) {
             if (sb.length() > 0) {
               sb.append("<hr>");
             }
-            sb.append(getDocumentationFromTag((XmlTag)element, d.getName(), "Attribute"));
+            sb.append(getDocumentationFromTag((XmlTag)psiElement, d.getName(), "Attribute"));
           }
         }
       }

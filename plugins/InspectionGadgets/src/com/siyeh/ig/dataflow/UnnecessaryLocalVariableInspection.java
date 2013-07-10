@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineVariableFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,7 +115,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
     }
 
     private boolean isCopyVariable(PsiVariable variable) {
-      final PsiExpression initializer = variable.getInitializer();
+      final PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
       if (!(initializer instanceof PsiReferenceExpression)) {
         return false;
       }
@@ -124,6 +125,9 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       if (!(referent instanceof PsiLocalVariable || referent instanceof PsiParameter)) {
+        return false;
+      }
+      if (!(referent instanceof PsiResourceVariable) && variable instanceof PsiResourceVariable) {
         return false;
       }
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
@@ -169,7 +173,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiReturnStatement returnStatement = (PsiReturnStatement)nextStatement;
-      final PsiExpression returnValue = returnStatement.getReturnValue();
+      final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return false;
       }
@@ -178,10 +182,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (referent == null || !referent.equals(variable)) {
         return false;
       }
-      if (isVariableUsedInFollowingDeclarations(variable, declarationStatement)) {
-        return false;
-      }
-      return true;
+      return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
     private boolean isImmediatelyThrown(PsiVariable variable) {
@@ -206,7 +207,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiThrowStatement throwStatement = (PsiThrowStatement)nextStatement;
-      final PsiExpression returnValue = throwStatement.getException();
+      final PsiExpression returnValue = ParenthesesUtils.stripParentheses(throwStatement.getException());
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return false;
       }
@@ -214,10 +215,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (referent == null || !referent.equals(variable)) {
         return false;
       }
-      if (isVariableUsedInFollowingDeclarations(variable, declarationStatement)) {
-        return false;
-      }
-      return true;
+      return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
     private boolean isImmediatelyAssigned(PsiVariable variable) {
@@ -253,7 +251,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (tokenType != JavaTokenType.EQ) {
         return false;
       }
-      final PsiExpression rhs = assignmentExpression.getRExpression();
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(assignmentExpression.getRExpression());
       if (!(rhs instanceof PsiReferenceExpression)) {
         return false;
       }
@@ -305,7 +303,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
             continue;
           }
           final PsiVariable nextVariable = (PsiVariable)declaration;
-          final PsiExpression initializer = nextVariable.getInitializer();
+          final PsiExpression initializer = ParenthesesUtils.stripParentheses(nextVariable.getInitializer());
           if (!referenceFound && initializer instanceof PsiReferenceExpression) {
             final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer;
             final PsiElement referent = referenceExpression.resolve();

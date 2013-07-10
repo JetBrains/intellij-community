@@ -368,6 +368,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       myType.writeExternal(element);
     }
 
+    @NotNull
     public HighlightSeverity getSeverity() {
       return myType.getSeverity(null);
     }

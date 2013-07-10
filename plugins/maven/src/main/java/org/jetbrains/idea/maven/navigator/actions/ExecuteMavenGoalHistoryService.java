@@ -40,8 +40,19 @@ public class ExecuteMavenGoalHistoryService implements PersistentStateComponent<
 
   private String myWorkDirectory = "";
 
+  private String myCanceledCommand;
+
   public static ExecuteMavenGoalHistoryService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ExecuteMavenGoalHistoryService.class);
+  }
+
+  @Nullable
+  public String getCanceledCommand() {
+    return myCanceledCommand;
+  }
+
+  public void setCanceledCommand(@Nullable String canceledCommand) {
+    myCanceledCommand = canceledCommand;
   }
 
   public void addCommand(@NotNull String command, @NotNull String projectPath) {

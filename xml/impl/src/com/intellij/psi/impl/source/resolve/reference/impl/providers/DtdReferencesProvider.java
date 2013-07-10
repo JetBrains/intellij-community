@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
@@ -25,9 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +32,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -79,7 +75,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
-      XmlElementDescriptor descriptor = resolveElementReference(getCanonicalText(), myElement);
+      XmlElementDescriptor descriptor = DtdResolveUtil.resolveElementReference(getCanonicalText(), myElement);
       return descriptor == null ? null : descriptor.getDeclaration();
     }
 
@@ -110,7 +106,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     @NotNull
     public Object[] getVariants() {
-      final XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor(myElement);
+      final XmlNSDescriptor rootTagNSDescriptor = DtdResolveUtil.getNsDescriptor(myElement);
       return rootTagNSDescriptor != null ?
              rootTagNSDescriptor.getRootElementsDescriptors(((XmlFile)getRealFile()).getDocument()):
              ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -144,41 +140,6 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
   }
 
-
-  @Nullable
-  private static XmlNSDescriptor getNsDescriptor(XmlElement element) {
-    final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(
-      CompletionUtil.getOriginalElement(element),
-      XmlDocument.class,
-      XmlMarkupDecl.class
-    );
-
-    if (parentThatProvidesMetaData instanceof XmlDocument) {
-      final XmlDocument document = (XmlDocument)parentThatProvidesMetaData;
-      XmlNSDescriptor rootTagNSDescriptor = document.getRootTagNSDescriptor();
-      if (rootTagNSDescriptor == null) rootTagNSDescriptor = (XmlNSDescriptor)document.getMetaData();
-      return rootTagNSDescriptor;
-    } else if (parentThatProvidesMetaData instanceof XmlMarkupDecl) {
-      final XmlMarkupDecl markupDecl = (XmlMarkupDecl)parentThatProvidesMetaData;
-      final PsiMetaData psiMetaData = markupDecl.getMetaData();
-
-      if (psiMetaData instanceof XmlNSDescriptor) {
-        return (XmlNSDescriptor)psiMetaData;
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public static XmlElementDescriptor resolveElementReference(String name, XmlElement context) {
-    XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor(context);
-
-    if (rootTagNSDescriptor instanceof XmlNSDescriptorImpl) {
-      return ((XmlNSDescriptorImpl)rootTagNSDescriptor).getElementDescriptor(name);
-    }
-    return null;
-  }
 
   static class EntityReference implements PsiReference,LocalQuickFixProvider, EmptyResolveMessageProvider {
     private final PsiElement myElement;

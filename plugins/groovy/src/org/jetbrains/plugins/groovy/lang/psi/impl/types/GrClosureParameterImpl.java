@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -30,17 +28,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
  */
 public class GrClosureParameterImpl implements GrClosureParameter {
   @Nullable final PsiType myType;
+  @Nullable private final String myName;
   final boolean myOptional;
   @Nullable final GrExpression myDefaultInitializer;
 
-  public GrClosureParameterImpl(PsiType type, boolean optional, GrExpression defaultInitializer) {
+  public GrClosureParameterImpl(@Nullable PsiType type, @Nullable String name, boolean optional, GrExpression defaultInitializer) {
     myType = type;
+    myName = name;
     myOptional = optional;
     myDefaultInitializer = optional ? defaultInitializer : null;
   }
 
-  public GrClosureParameterImpl(PsiParameter parameter, PsiSubstitutor substitutor) {
-    this(substitutor.substitute(parameter.getType()), isParameterOptional(parameter), getDefaultInitializer(parameter));
+  public GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
+    this(substitutor.substitute(getParameterType(parameter)), getParameterName(parameter), isParameterOptional(parameter), getDefaultInitializer(parameter));
+  }
+
+  @Nullable
+  private static PsiType getParameterType(@NotNull PsiParameter parameter) {
+    return parameter instanceof GrParameter ? ((GrParameter)parameter).getDeclaredType() : parameter.getType();
   }
 
   @Nullable
@@ -54,6 +59,16 @@ public class GrClosureParameterImpl implements GrClosureParameter {
 
   public static boolean isVararg(GrClosureParameter[] closureParams) {
     return closureParams.length > 0 && closureParams[closureParams.length - 1].getType() instanceof PsiArrayType;
+  }
+
+  @Nullable
+  public static String getParameterName(@NotNull PsiParameter param) {
+    if (param instanceof PsiCompiledElement) { // don't try to find out a compiled parameter name
+      return null;
+    }
+    else {
+      return param.getName();
+    }
   }
 
 
@@ -73,6 +88,12 @@ public class GrClosureParameterImpl implements GrClosureParameter {
 
   public boolean isValid() {
     return (myType == null || myType.isValid()) && (myDefaultInitializer == null || myDefaultInitializer.isValid());
+  }
+
+  @Nullable
+  @Override
+  public String getName() {
+    return myName;
   }
 
   @Override

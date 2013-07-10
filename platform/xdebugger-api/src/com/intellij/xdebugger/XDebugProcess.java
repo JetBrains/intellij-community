@@ -26,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.ui.XDebugLayoutCustomizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ import javax.swing.event.HyperlinkListener;
 public abstract class XDebugProcess {
   private final XDebugSession mySession;
   private ProcessHandler myProcessHandler;
+  private XDebugLayoutCustomizer myLayoutCustomizer;
 
   /**
    * @param session pass <code>session</code> parameter of {@link XDebugProcessStarter#start} method to this constructor
@@ -195,5 +197,14 @@ public abstract class XDebugProcess {
   @Nullable
   public HyperlinkListener getCurrentStateHyperlinkListener() {
     return null;
+  }
+
+  @Nullable
+  public XDebugLayoutCustomizer getLayoutCustomizer() {
+    return myLayoutCustomizer;
+  }
+
+  public void setLayoutCustomizer(@Nullable XDebugLayoutCustomizer layoutCustomizer) {
+    myLayoutCustomizer = layoutCustomizer;
   }
 }

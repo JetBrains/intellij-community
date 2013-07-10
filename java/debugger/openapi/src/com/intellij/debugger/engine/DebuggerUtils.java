@@ -130,7 +130,7 @@ public abstract class DebuggerUtils {
     }
   }
 
-  public static final int MAX_DISPLAY_LABEL_LENGTH = 1024/*kb*/ *1024 /*bytes*/ / 2; // 1 Mb string
+  public static final int MAX_DISPLAY_LABEL_LENGTH = 1024 * 5;
 
   public static String convertToPresentationString(String str) {
     if (str.length() > MAX_DISPLAY_LABEL_LENGTH) {

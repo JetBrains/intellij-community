@@ -249,7 +249,9 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
-  IElementType GSTRING_INJECTION =new GroovyElementType("Gstring injection");
+  GroovyElementType GSTRING_INJECTION =new GroovyElementType("Gstring injection");
+  GroovyElementType GSTRING_CONTENT = new GroovyElementType("GString content element");
+
 
   GroovyElementType REGEX = new GroovyElementType("Regular expression");
   //types

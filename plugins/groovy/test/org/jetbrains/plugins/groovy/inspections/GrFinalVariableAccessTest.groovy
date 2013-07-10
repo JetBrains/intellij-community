@@ -485,4 +485,27 @@ class A {
 }''')
   }
 
+  void 'test Field And Parameter With The Same Name'() {
+    testHighlighting('''\
+class Aaa {
+    final int foo
+    final int bar
+
+    Aaa(int foo, int p) {
+        this.foo = foo      // this assignment is erroneously reported as invalid
+        this.bar = p        // this one is not reported
+    }
+}
+''')
+  }
+
+  void testEnumConstants() {
+    testHighlighting('''\
+enum E {
+  abc, cde
+
+  final int <warning descr="Variable 'x' might not have been initialized">x</warning>
+}
+''')
+  }
 }

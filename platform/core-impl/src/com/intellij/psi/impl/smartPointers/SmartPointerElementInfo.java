@@ -29,7 +29,6 @@ interface SmartPointerElementInfo {
   @Nullable
   Document getDocumentToSynchronize();
 
-  void documentAndPsiInSync();
   void fastenBelt(int offset, RangeMarker[] cachedRangeMarkers);
 
   void unfastenBelt(int offset);

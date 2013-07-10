@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator;
 
 import java.io.IOException;
@@ -179,6 +180,9 @@ public class GroovyOverrideImplementUtil {
       }
       final String paramName = parameter.getName();
       if (paramName != null) {
+        if (GroovyNamesUtil.isKeyword(paramName)) {
+          buffer.append('_');
+        }
         buffer.append(paramName);
       }
       else if (parameter instanceof PsiCompiledElement) {

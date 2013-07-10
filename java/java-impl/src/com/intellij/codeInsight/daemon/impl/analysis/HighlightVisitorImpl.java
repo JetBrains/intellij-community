@@ -39,11 +39,9 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -82,9 +80,25 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
   };
+  private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>>();
 
   public HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
+  }
+
+  @NotNull
+  private MostlySingularMultiMap<MethodSignature, PsiMethod> getDuplicateMethods(PsiClass aClass) {
+    MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = myDuplicateMethods.get(aClass);
+    if (signatures == null) {
+      signatures = new MostlySingularMultiMap<MethodSignature, PsiMethod>();
+      for (PsiMethod method : aClass.getMethods()) {
+        MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+        signatures.add(signature, method);
+      }
+
+      myDuplicateMethods.put(aClass, signatures);
+    }
+    return signatures;
   }
 
   @Override
@@ -130,12 +144,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         Project project = file.getProject();
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
         FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
-        RefCountHolder refCountHolder = RefCountHolder.startUsing(file);
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator == null) throw new IllegalStateException("Must be run under progress");
+        RefCountHolder refCountHolder = RefCountHolder.startUsing(file, indicator);
         myRefCountHolder = refCountHolder;
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        success = indicator != null && refCountHolder.analyze(file, dirtyScope, action, indicator);
+        success = refCountHolder.analyze(file, dirtyScope, action, indicator);
       }
       else {
         myRefCountHolder = null;
@@ -152,6 +167,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myRefCountHolder = null;
       myFile = null;
       myHolder = null;
+      myDuplicateMethods.clear();
     }
 
     return success;
@@ -775,7 +791,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       PsiClass aClass = method.getContainingClass();
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkDuplicateMethod(aClass, method));
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkDuplicateMethod(aClass, method, getDuplicateMethods(aClass)));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorCallsBaseClassConstructor(method, myRefCountHolder, myResolveHelper));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkStaticMethodOverride(method));
     }
@@ -932,7 +948,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkCannotPassInner(ref));
 
     if (resolved != null && parent instanceof PsiReferenceList) {
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkElementInReferenceList(ref, (PsiReferenceList)parent, result));
+      if (!myHolder.hasErrorResults()) {
+        PsiReferenceList referenceList = (PsiReferenceList)parent;
+        myHolder.add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result));
+      }
     }
 
     if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference())) {

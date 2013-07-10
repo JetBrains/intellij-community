@@ -54,7 +54,7 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
     @NotNull ProjectSystemId externalSystemId) throws IllegalArgumentException
   {
     Holder holder = myHolder.getValue();
-    Function<Project, ? extends AbstractExternalSystemSettings<?, ?>> provider = holder.settingsProviders.get(externalSystemId);
+    Function<Project, ? extends AbstractExternalSystemSettings<?, ?, ?>> provider = holder.settingsProviders.get(externalSystemId);
     if (provider == null) {
       throw new IllegalArgumentException(String.format(
         "Can't retrieve settings for external system with id '%s'. Reason: no such system is registered. Known systems: %s",
@@ -105,7 +105,7 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
   
   private static class Holder {
     @NotNull
-    public final ConcurrentMap<ProjectSystemId, Function<Project, ? extends AbstractExternalSystemSettings<?, ?>>> settingsProviders
+    public final ConcurrentMap<ProjectSystemId, Function<Project, ? extends AbstractExternalSystemSettings<?, ?, ?>>> settingsProviders
       = ContainerUtil.newConcurrentMap();
 
     @NotNull

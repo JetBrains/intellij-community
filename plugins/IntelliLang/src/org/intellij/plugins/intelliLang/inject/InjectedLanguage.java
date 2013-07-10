@@ -16,7 +16,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +108,7 @@ public final class InjectedLanguage {
     do {
       registeredLanguages = new ArrayList<Language>(Language.getRegisteredLanguages());
       for (Language language : registeredLanguages) {
-        if (InjectedLanguageUtil.isInjectableLanguage(language)) {
+        if (LanguageUtil.isInjectableLanguage(language)) {
           ourLanguageCache.put(language.getID(), language);
         }
       }

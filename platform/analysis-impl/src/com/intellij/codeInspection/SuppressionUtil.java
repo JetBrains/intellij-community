@@ -16,10 +16,12 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
@@ -181,5 +183,15 @@ public class SuppressionUtil {
     final String text = SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
     PsiComment comment = createComment(project, text, commentLanguage);
     container.getParent().addBefore(comment, container);
+  }
+
+  public static boolean isSuppressed(@NotNull PsiElement psiElement, String id) {
+    if (id == null) return false;
+    for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
+      if (!factory.isToCheckMember(psiElement, id)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

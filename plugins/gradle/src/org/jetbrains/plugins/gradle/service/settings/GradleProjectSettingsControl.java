@@ -59,9 +59,10 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   @NotNull private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   @NotNull private LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
-  
+
   @NotNull private final GradleInstallationManager myInstallationManager;
-  
+
+  @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
   private JLabel                    myGradleHomeLabel;
   private TextFieldWithBrowseButton myGradleHomePathField;
   private JBRadioButton             myUseWrapperButton;
@@ -80,7 +81,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     content.setPaintCallback(new Consumer<Graphics>() {
       @Override
       public void consume(Graphics graphics) {
-        showBalloonIfNecessary(); 
+        showBalloonIfNecessary();
       }
     });
 
@@ -100,7 +101,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
         }
       }
     });
-    
+
     myGradleHomeLabel = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
     initGradleHome();
 
@@ -114,7 +115,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   private void initWrapperControls() {
     ActionListener listener = new ActionListener() {
-            @Override
+      @Override
       public void actionPerformed(ActionEvent e) {
         boolean enabled = e.getSource() == myUseLocalDistributionButton;
         myGradleHomePathField.setEnabled(enabled);
@@ -177,6 +178,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       }
       else {
         settings.setGradleHome(gradleHomePath);
+        GradleUtil.storeLastUsedGradleHome(gradleHomePath);
       }
     }
     else {
@@ -190,7 +192,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       else if (!myInstallationManager.isGradleSdkHome(new File(gradleHomePath))) {
         myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
-        return GradleBundle.message("gradle.home.setting.type.explicit.incorrect");
+        return GradleBundle.message("gradle.home.setting.type.explicit.incorrect", gradleHomePath);
       }
     }
     settings.setPreferLocalInstallationToWrapper(myUseLocalDistributionButton.isSelected());
@@ -220,12 +222,17 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
     
     updateWrapperControls(getInitialSettings().getExternalProjectPath());
+    if (myUseWrapperButton.isSelected()) {
+      myGradleHomePathField.setEnabled(false);
+      return;
+    }
 
     if (StringUtil.isEmpty(gradleHome)) {
       myGradleHomeSettingType = LocationSettingType.UNKNOWN;
       deduceGradleHomeIfPossible();
     }
     else {
+      assert gradleHome != null;
       myGradleHomeSettingType = myInstallationManager.isGradleSdkHome(new File(gradleHome)) ?
                                 LocationSettingType.EXPLICIT_CORRECT :
                                 LocationSettingType.EXPLICIT_INCORRECT;
@@ -310,7 +317,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
         myAlarm.addRequest(this, diff);
         return;
       }
-      if (!myGradleHomePathField.isShowing()) {
+      if (myGradleHomePathField == null || !myGradleHomePathField.isShowing()) {
         // Don't schedule the balloon if the configurable is hidden.
         return;
       }

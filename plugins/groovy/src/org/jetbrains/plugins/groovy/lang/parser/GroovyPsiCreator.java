@@ -45,10 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTradition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrBitwiseExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringInjectionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
@@ -225,6 +222,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == GSTRING) return new GrStringImpl(node);
     if (elem == REGEX) return new GrRegexImpl(node);
     if (elem == GSTRING_INJECTION) return new GrStringInjectionImpl(node);
+    if (elem == GSTRING_CONTENT) return new GrStringContentImpl(node);
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
     if (elem == PARENTHESIZED_EXPRESSION) return new GrParenthesizedExpressionImpl(node);
     if (elem == NEW_EXPRESSION) return new GrNewExpressionImpl(node);

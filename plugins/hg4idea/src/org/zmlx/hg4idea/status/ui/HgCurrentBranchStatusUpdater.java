@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgUpdater;
@@ -40,7 +41,6 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
   private final HgCurrentBranchStatus currentBranchStatus;
 
   private MessageBusConnection busConnection;
-
 
   public HgCurrentBranchStatusUpdater(HgVcs vcs, HgCurrentBranchStatus currentBranchStatus) {
     this.vcs = vcs;
@@ -96,21 +96,17 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
     }
   }
 
-
-  private void handleUpdate(Project project, @Nullable String branch, List<HgRevisionNumber> parents) {
-
+  private void handleUpdate(@NotNull Project project, @Nullable String branch, @NotNull List<HgRevisionNumber> parents) {
     currentBranchStatus.updateFor(branch, parents);
-
-    project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
+    if (!project.isDisposed()) {
+      project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
+    }
   }
 
-
   public void activate() {
-
     busConnection = vcs.getProject().getMessageBus().connect();
     busConnection.subscribe(HgVcs.BRANCH_TOPIC, this);
   }
-
 
   public void deactivate() {
     busConnection.disconnect();

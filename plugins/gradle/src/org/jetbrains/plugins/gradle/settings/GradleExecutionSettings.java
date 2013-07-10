@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable private String myJavaHome;
 
   public GradleExecutionSettings(@Nullable String gradleHome, @Nullable String serviceDirectory, boolean wrapper) {
-    this(gradleHome, serviceDirectory, wrapper, SystemProperties.getIntProperty("gradle.daemon.xmx.mb", 512));
+    this(gradleHome, serviceDirectory, wrapper, SystemProperties.getIntProperty("gradle.daemon.xmx.mb", SystemInfo.is32Bit ? 512 : 1024));
   }
   
   public GradleExecutionSettings(@Nullable String gradleHome, @Nullable String serviceDirectory, boolean wrapper, int daemonXmx) {

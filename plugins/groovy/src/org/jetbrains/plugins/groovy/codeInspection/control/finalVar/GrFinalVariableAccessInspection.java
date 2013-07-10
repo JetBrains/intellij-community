@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -277,6 +278,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   private static boolean isFieldInitialized(@NotNull GrField field) {
+    if (field instanceof GrEnumConstant) return true;
     if (field.getInitializerGroovy() != null) return true;
 
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);

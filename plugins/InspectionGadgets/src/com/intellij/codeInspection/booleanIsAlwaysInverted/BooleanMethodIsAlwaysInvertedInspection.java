@@ -23,7 +23,7 @@ import java.util.Collection;
  * User: anna
  * Date: 06-Jan-2006
  */
-public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectionTool {
+public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInspectionTool {
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
 
   @Override
@@ -87,7 +87,8 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext context,
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
+                                                @NotNull final GlobalJavaInspectionContext context,
                                                 @NotNull final ProblemDescriptionsProcessor descriptionsProcessor) {
     manager.iterate(new RefJavaVisitor() {
       @Override

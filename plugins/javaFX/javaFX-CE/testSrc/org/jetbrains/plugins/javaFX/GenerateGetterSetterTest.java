@@ -30,6 +30,10 @@ public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testStringNumber() throws Exception {
+    doTest();
+  }
+
   @Override
   protected void setUpModule() {
     super.setUpModule();

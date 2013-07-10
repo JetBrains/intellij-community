@@ -32,6 +32,7 @@
     
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
+    <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
     
   </extensions>
 

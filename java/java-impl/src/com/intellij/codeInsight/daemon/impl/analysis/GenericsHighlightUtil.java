@@ -40,6 +40,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -384,8 +385,10 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkElementInTypeParameterExtendsList(PsiReferenceList referenceList, JavaResolveResult resolveResult, PsiElement element) {
-    PsiClass aClass = (PsiClass)referenceList.getParent();
+  public static HighlightInfo checkElementInTypeParameterExtendsList(@NotNull PsiReferenceList referenceList,
+                                                                     @NotNull PsiClass aClass,
+                                                                     @NotNull JavaResolveResult resolveResult,
+                                                                     @NotNull PsiElement element) {
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
     PsiClass extendFrom = (PsiClass)resolveResult.getElement();
     if (extendFrom == null) return null;
@@ -462,7 +465,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkOverrideEquivalentMethods(final PsiClass aClass) {
+  public static HighlightInfo checkOverrideEquivalentMethods(@NotNull PsiClass aClass) {
     final Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
     PsiManager manager = aClass.getManager();
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
@@ -520,10 +523,10 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkSameErasureNotSubSignatureInner(final HierarchicalMethodSignature signature,
-                                                                    final PsiManager manager,
-                                                                    final PsiClass aClass,
-                                                                    final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
+  private static HighlightInfo checkSameErasureNotSubSignatureInner(@NotNull HierarchicalMethodSignature signature,
+                                                                    @NotNull PsiManager manager,
+                                                                    @NotNull PsiClass aClass,
+                                                                    @NotNull Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
     PsiMethod method = signature.getMethod();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (!facade.getResolveHelper().isAccessible(method, aClass, null)) return null;
@@ -549,10 +552,11 @@ public class GenericsHighlightUtil {
 
       if (superSignature.isRaw() && !signature.isRaw()) {
         final PsiType[] parameterTypes = signature.getParameterTypes();
-        PsiType[] types = superSignature.getParameterTypes();
-        for (int i = 0; i < types.length; i++) {
-          if (!Comparing.equal(parameterTypes[i], TypeConversionUtil.erasure(types[i]))) {
-            return getSameErasureMessage(false, method, superSignature.getMethod(), HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+        PsiType[] erasedTypes = superSignature.getErasedParameterTypes();
+        for (int i = 0; i < erasedTypes.length; i++) {
+          if (!Comparing.equal(parameterTypes[i], erasedTypes[i])) {
+            return getSameErasureMessage(false, method, superSignature.getMethod(),
+                                         HighlightNamesUtil.getClassDeclarationTextRange(aClass));
           }
         }
       }
@@ -601,10 +605,10 @@ public class GenericsHighlightUtil {
         !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes())) &&
         !atLeast17) {
       int idx = 0;
-      final PsiType[] parameterTypes = signatureToCheck.getParameterTypes();
-      boolean erasure = parameterTypes.length > 0;
+      final PsiType[] erasedTypes = signatureToCheck.getErasedParameterTypes();
+      boolean erasure = erasedTypes.length > 0;
       for (PsiType type : superSignature.getParameterTypes()) {
-        erasure &= Comparing.equal(type, TypeConversionUtil.erasure(parameterTypes[idx]));
+        erasure &= Comparing.equal(type, erasedTypes[idx]);
         idx++;
       }
 
@@ -624,9 +628,9 @@ public class GenericsHighlightUtil {
     }
   }
 
-  private static HighlightInfo getSameErasureMessage(final boolean sameClass, final PsiMethod method, final PsiMethod superMethod,
+  private static HighlightInfo getSameErasureMessage(final boolean sameClass, @NotNull PsiMethod method, @NotNull PsiMethod superMethod,
                                                      TextRange textRange) {
-    @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" :
+     @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" :
                                method.hasModifierProperty(PsiModifier.STATIC) ?
                                "generics.methods.have.same.erasure.hide" :
                                "generics.methods.have.same.erasure.override";
@@ -1275,7 +1279,7 @@ public class GenericsHighlightUtil {
             if (resolve instanceof PsiClass) {
               final PsiClass containingClass = ((PsiClass)resolve).getContainingClass();
               if (containingClass != null) {
-                if (psiClass.isInheritor(containingClass, true) || 
+                if (psiClass.isInheritor(containingClass, true) ||
                     unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getExtendsList()) ||
                     unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getImplementsList())) {
                   return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(((PsiClass)resolve).getName() + " is not accessible in current context").range(ref).create();

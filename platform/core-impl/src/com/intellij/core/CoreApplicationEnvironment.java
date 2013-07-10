@@ -45,7 +45,10 @@ import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.meta.MetaDataContributor;
+import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
@@ -103,19 +106,26 @@ public class CoreApplicationEnvironment {
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, new MessageBusImpl(myApplication, null));
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
-    myApplication.registerService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
+    registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
     myApplication.registerService(StubTreeLoader.class, new CoreStubTreeLoader());
     myApplication.registerService(PsiReferenceService.class, new PsiReferenceServiceImpl());
+    myApplication.registerService(MetaDataRegistrar.class, new MetaRegistry());
 
     registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
+    registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
+
     ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
     myApplication.registerService(JobLauncher.class, createJobLauncher());
+  }
+
+  public <T> void registerApplicationService(Class<T> serviceInterface, T serviceImplementation) {
+    myApplication.registerService(serviceInterface, serviceImplementation);
   }
 
   protected VirtualFilePointerManager createVirtualFilePointerManager() {

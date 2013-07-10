@@ -4,6 +4,6 @@
  * @return
  */
 
-def foo(def newName, def b) {
+def foo(newName, b) {
   print newName + b
 }

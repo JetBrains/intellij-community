@@ -54,6 +54,11 @@ public class StdArrangementMatchRule extends ArrangementMatchRule implements Clo
   public int compareTo(@NotNull StdArrangementMatchRule o) {
     final Set<ArrangementSettingsToken> tokens = ArrangementUtil.extractTokens(getMatcher().getCondition()).keySet();
     final Set<ArrangementSettingsToken> tokens1 = ArrangementUtil.extractTokens(o.getMatcher().getCondition()).keySet();
-    return tokens1.containsAll(tokens) ? 1 : tokens.containsAll(tokens1) ? -1 : 0;
+    if (tokens1.containsAll(tokens)) {
+      return tokens.containsAll(tokens1) ? 0 : 1;
+    }
+    else {
+      return tokens.containsAll(tokens1) ? -1 : 0;
+    }
   }
 }

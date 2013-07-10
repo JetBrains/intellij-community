@@ -13,4 +13,18 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Division by zero</problem_class>
     <description>Division by zero #loc</description>
   </problem>
+
+  <problem>
+    <file>DivideByZero.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Division by zero</problem_class>
+    <description>Division by zero #loc</description>
+  </problem>
+
+  <problem>
+    <file>DivideByZero.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Division by zero</problem_class>
+    <description>Division by zero #loc</description>
+  </problem>
 </problems>

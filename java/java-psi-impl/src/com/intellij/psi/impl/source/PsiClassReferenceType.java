@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +31,7 @@ import java.util.List;
  * @author max
  */
 public class PsiClassReferenceType extends PsiClassType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassReferenceType");
-
+  @NotNull
   private final PsiJavaCodeReferenceElement myReference;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel langLevel) {
@@ -137,7 +136,7 @@ public class PsiClassReferenceType extends PsiClassType {
   @Override
   @NotNull
   public ClassResolveResult resolveGenerics() {
-    LOG.assertTrue(isValid());
+    PsiUtilCore.ensureValid(myReference);
     final JavaResolveResult result = myReference.advancedResolve(false);
     return new DelegatingClassResolveResult(result);
   }
@@ -172,10 +171,11 @@ public class PsiClassReferenceType extends PsiClassType {
     return myReference.getTypeParameters();
   }
 
+  @NotNull
   public PsiClassType createImmediateCopy() {
     ClassResolveResult resolveResult = resolveGenerics();
     PsiClass element = resolveResult.getElement();
-    return element != null ? new PsiImmediateClassType(element, resolveResult.getSubstitutor()) : this;
+    return element == null ? this : new PsiImmediateClassType(element, resolveResult.getSubstitutor());
   }
 
   @Override

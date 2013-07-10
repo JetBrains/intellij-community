@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   }
 
   private RandomAccessFile createFile() throws FileNotFoundException {
-    return FileUtilRt.doIOOperation(new FileUtilRt.RetriableIOOperation<RandomAccessFile, FileNotFoundException>() {
+    return FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<RandomAccessFile, FileNotFoundException>() {
       @Nullable
       @Override
       public RandomAccessFile execute(boolean finalAttempt) throws FileNotFoundException {

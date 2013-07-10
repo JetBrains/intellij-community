@@ -19,56 +19,55 @@
  * User: max
  * Date: Jan 21, 2002
  * Time: 1:16:43 AM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.export;
 
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.List;
 
 public class HTMLExportFrameMaker {
   private final String myRootFolder;
   private final Project myProject;
-  private final ArrayList myInspectionTools;
+  private final List<InspectionToolWrapper> myInspectionToolWrappers = new ArrayList<InspectionToolWrapper>();
 
   public HTMLExportFrameMaker(String rootFolder, Project project) {
     myRootFolder = rootFolder;
     myProject = project;
-    myInspectionTools = new ArrayList();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void start() {
     StringBuffer buf = new StringBuffer();
     buf.append("<HTML><BODY></BODY></HTML>");
-    HTMLExporter.writeFile(myRootFolder, "empty.html", buf, myProject);
+    HTMLExportUtil.writeFile(myRootFolder, "empty.html", buf, myProject);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void done() {
     StringBuffer buf = new StringBuffer();
 
-    for (int i = 0; i < myInspectionTools.size(); i++) {
-      InspectionTool tool = (InspectionTool) myInspectionTools.get(i);
+    for (InspectionToolWrapper toolWrapper : myInspectionToolWrappers) {
       buf.append("<A HREF=\"");
-      buf.append(tool.getFolderName());
+      buf.append(toolWrapper.getFolderName());
       buf.append("-index.html\">");
-      buf.append(tool.getDisplayName());
+      buf.append(toolWrapper.getDisplayName());
       buf.append("</A><BR>");
     }
 
-    HTMLExporter.writeFile(myRootFolder, "index.html", buf, myProject);
+    HTMLExportUtil.writeFile(myRootFolder, "index.html", buf, myProject);
   }
 
-  public void startInspection(InspectionTool tool) {
-    myInspectionTools.add(tool);
+  public void startInspection(@NotNull InspectionToolWrapper toolWrapper) {
+    myInspectionToolWrappers.add(toolWrapper);
     @NonNls StringBuffer buf = new StringBuffer();
     buf.append("<HTML><HEAD><TITLE>");
     buf.append(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -76,14 +75,14 @@ public class HTMLExportFrameMaker {
     buf.append("</TITLE></HEAD>");
     buf.append("<FRAMESET cols=\"30%,70%\"><FRAMESET rows=\"30%,70%\">");
     buf.append("<FRAME src=\"");
-    buf.append(tool.getFolderName());
+    buf.append(toolWrapper.getFolderName());
     buf.append("/index.html\" name=\"inspectionFrame\">");
     buf.append("<FRAME src=\"empty.html\" name=\"packageFrame\">");
     buf.append("</FRAMESET>");
     buf.append("<FRAME src=\"empty.html\" name=\"elementFrame\">");
     buf.append("</FRAMESET></BODY></HTML");
 
-    HTMLExporter.writeFile(myRootFolder, tool.getFolderName() + "-index.html", buf, myProject);
+    HTMLExportUtil.writeFile(myRootFolder, toolWrapper.getFolderName() + "-index.html", buf, myProject);
   }
 
   public String getRootFolder() {

@@ -204,7 +204,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       if (password != null) {
         return new AuthData(userName, password);
       }
-      return null;
+      return trySavedAuthDataFromProviders(url);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get the password for key [" + key + "]", e);

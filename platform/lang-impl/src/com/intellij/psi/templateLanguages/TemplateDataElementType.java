@@ -77,7 +77,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
     final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)originalFile.getViewProvider();
 
-    final Language language = viewProvider.getTemplateDataLanguage();
+    final Language language = getTemplateFileLanguage(viewProvider);
     final CharSequence chars = chameleon.getChars();
 
     final PsiFile templateFile = createTemplateFile(file, language, chars, viewProvider);
@@ -108,6 +108,10 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     DebugUtil.checkTreeStructure(originalFile.getNode());
 
     return childNode;
+  }
+
+  protected Language getTemplateFileLanguage(TemplateLanguageFileViewProvider viewProvider) {
+    return viewProvider.getTemplateDataLanguage();
   }
 
   protected PsiFile createTemplateFile(final PsiFile file,

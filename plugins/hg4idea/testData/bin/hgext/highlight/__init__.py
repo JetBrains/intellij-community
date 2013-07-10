@@ -24,6 +24,7 @@ The default is 'colorful'.
 import highlight
 from mercurial.hgweb import webcommands, webutil, common
 from mercurial import extensions, encoding
+testedwith = 'internal'
 
 def filerevision_highlight(orig, web, tmpl, fctx):
     mt = ''.join(tmpl('mimetype', encoding=encoding.encoding))
@@ -51,11 +52,13 @@ def generate_css(web, req, tmpl):
     pg_style = web.config('web', 'pygments_style', 'colorful')
     fmter = highlight.HtmlFormatter(style = pg_style)
     req.respond(common.HTTP_OK, 'text/css')
-    return ['/* pygments_style = %s */\n\n' % pg_style, fmter.get_style_defs('')]
+    return ['/* pygments_style = %s */\n\n' % pg_style,
+            fmter.get_style_defs('')]
 
 def extsetup():
     # monkeypatch in the new version
-    extensions.wrapfunction(webcommands, '_filerevision', filerevision_highlight)
+    extensions.wrapfunction(webcommands, '_filerevision',
+                            filerevision_highlight)
     extensions.wrapfunction(webcommands, 'annotate', annotate_highlight)
     webcommands.highlightcss = generate_css
     webcommands.__all__.append('highlightcss')

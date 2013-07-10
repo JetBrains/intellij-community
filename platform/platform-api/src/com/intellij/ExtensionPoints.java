@@ -77,16 +77,6 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    */
   @NonNls String APPLICATION_STARTER = "com.intellij.appStarter";
 
-  @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
-
-  @NonNls String DEAD_CODE_TOOL = "com.intellij.deadCode";
-
-  @NonNls String JAVADOC_LOCAL = "com.intellij.javaDocNotNecessary";
-
-  @NonNls String VISIBLITY_TOOL = "com.intellij.visibility";
-
-  @NonNls String EMPTY_METHOD_TOOL = "com.intellij.canBeEmpty";
-
   @NonNls String ANT_BUILD_GEN = "com.intellij.antBuildGen";
 
   /**

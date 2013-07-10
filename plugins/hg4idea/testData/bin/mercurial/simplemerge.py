@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (C) 2004, 2005 Canonical Ltd
 #
 # This program is free software; you can redistribute it and/or modify
@@ -12,14 +11,13 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 # mbp: "you know that thing where cvs gives you conflict markers?"
 # s: "i hate that."
 
 from i18n import _
-import util, mdiff
+import scmutil, util, mdiff
 import sys, os
 
 class CantReprocessAndShowBase(Exception):
@@ -96,7 +94,7 @@ class Merge3Text(object):
             elif self.a[0].endswith('\r'):
                 newline = '\r'
         if base_marker and reprocess:
-            raise CantReprocessAndShowBase()
+            raise CantReprocessAndShowBase
         if name_a:
             start_marker = start_marker + ' ' + name_a
         if name_b:
@@ -212,7 +210,7 @@ class Merge3Text(object):
         Method is as follows:
 
         The two sequences align only on regions which match the base
-        and both descendents.  These are found by doing a two-way diff
+        and both descendants.  These are found by doing a two-way diff
         of each one against the base, and then finding the
         intersections between those regions.  These "sync regions"
         are by definition unchanged in both and easily dealt with.
@@ -224,7 +222,8 @@ class Merge3Text(object):
         # section a[0:ia] has been disposed of, etc
         iz = ia = ib = 0
 
-        for zmatch, zend, amatch, aend, bmatch, bend in self.find_sync_regions():
+        for region in self.find_sync_regions():
+            zmatch, zend, amatch, aend, bmatch, bend = region
             #print 'match base [%d:%d]' % (zmatch, zend)
 
             matchlen = zend - zmatch
@@ -316,7 +315,7 @@ class Merge3Text(object):
     mismatch_region = staticmethod(mismatch_region)
 
     def find_sync_regions(self):
-        """Return a list of sync regions, where both descendents match the base.
+        """Return a list of sync regions, where both descendants match the base.
 
         Generates a list of (base1, base2, a1, a2, b1, b2).  There is
         always a zero-length sync region at the end of all the files.
@@ -408,10 +407,10 @@ def simplemerge(ui, local, base, other, **opts):
         f.close()
         if util.binary(text):
             msg = _("%s looks like a binary file.") % filename
+            if not opts.get('quiet'):
+                ui.warn(_('warning: %s\n') % msg)
             if not opts.get('text'):
                 raise util.Abort(msg)
-            elif not opts.get('quiet'):
-                ui.warn(_('warning: %s\n') % msg)
         return text
 
     name_a = local
@@ -424,13 +423,16 @@ def simplemerge(ui, local, base, other, **opts):
     if labels:
         raise util.Abort(_("can only specify two labels."))
 
-    localtext = readfile(local)
-    basetext = readfile(base)
-    othertext = readfile(other)
+    try:
+        localtext = readfile(local)
+        basetext = readfile(base)
+        othertext = readfile(other)
+    except util.Abort:
+        return 1
 
     local = os.path.realpath(local)
     if not opts.get('print'):
-        opener = util.opener(os.path.dirname(local))
+        opener = scmutil.opener(os.path.dirname(local))
         out = opener(os.path.basename(local), "w", atomictemp=True)
     else:
         out = sys.stdout
@@ -443,7 +445,7 @@ def simplemerge(ui, local, base, other, **opts):
         out.write(line)
 
     if not opts.get('print'):
-        out.rename()
+        out.close()
 
     if m3.conflicts:
         if not opts.get('quiet'):

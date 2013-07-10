@@ -93,10 +93,5 @@ public abstract class XExecutionStack {
      * @param last <code>true</code> if all frames are added
      */
     void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, final boolean last);
-
-    /**
-     * @deprecated use {@link #errorOccurred(String)} instead
-     */
-    void errorOccured(String errorMessage);
   }
 }

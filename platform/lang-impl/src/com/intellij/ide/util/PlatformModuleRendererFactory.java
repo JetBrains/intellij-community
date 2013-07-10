@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
         final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
         if (presentation != null) {
           String containerText = presentation.getLocationString();
-          if (containerText != null && containerText.length() > 0) {
+          if (!StringUtil.isEmpty(containerText)) {
             text = " " + containerText;
           }
         }

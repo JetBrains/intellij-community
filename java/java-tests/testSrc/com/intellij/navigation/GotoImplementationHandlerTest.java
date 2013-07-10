@@ -121,4 +121,32 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertNotNull(aClass);
     assertEquals(aClass.getName(), "X");
   }
+
+  public void testImplicitInheritance() throws Throwable {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "interface PackContainer {\n" +
+                                                          "    void foo();\n" +
+                                                          "}\n" +
+                                                          "interface PsiPackage extends PackContainer {}\n" +
+                                                          "class PsiPackageBase implements PackContainer {\n" +
+                                                          "    public void foo() {}\n" +
+                                                          "}\n" +
+                                                          "class PsiPackageImpl extends PsiPackageBase implements PsiPackage {}\n" +
+                                                          "\n" +
+                                                          "class Foo {\n" +
+                                                          "    class Bar {\n" +
+                                                          "        void bar(PsiPackage i) {\n" +
+                                                          "            i.fo<caret>o();\n" +
+                                                          "        }\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    assertEquals(1, impls.length);
+    final PsiElement meth = impls[0];
+    assertTrue(meth instanceof PsiMethod);
+    final PsiClass aClass = ((PsiMethod)meth).getContainingClass();
+    assertNotNull(aClass);
+    assertEquals(aClass.getName(), "PsiPackageBase");
+  }
 }

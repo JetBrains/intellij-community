@@ -17,10 +17,10 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class XJumpToSourceAction extends XDebuggerTreeActionBase {
     value.computeSourcePosition(new XNavigatable() {
       public void setSourcePosition(@Nullable final XSourcePosition sourcePosition) {
         if (sourcePosition != null) {
-          DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+          AppUIUtil.invokeOnEdt(new Runnable() {
             public void run() {
               Project project = node.getTree().getProject();
               if (project.isDisposed()) return;

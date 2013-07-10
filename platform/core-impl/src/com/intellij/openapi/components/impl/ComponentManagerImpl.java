@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     initComponents();
   }
 
+  @NotNull
   @Override
   public MessageBus getMessageBus() {
     assert !myDisposeCompleted && !myDisposed : "Already disposed";
@@ -105,21 +106,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     try {
       myComponentsRegistry.loadClasses();
 
-      final Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
+      Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
         ProgressIndicatorProvider.checkCanceled();
-        try {
-          createComponent(componentInterface);
-        }
-        catch (StateStorageException e) {
-          throw e;
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch(Exception e) {
-          LOG.error(e);
-        }
+        createComponent(componentInterface);
       }
     }
     finally {
@@ -196,40 +186,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     assert !myDisposeCompleted : "Already disposed: "+this;
     return getComponent(interfaceClass, null);
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
     final T fromContainer = getComponentFromContainer(interfaceClass);
     if (fromContainer != null) return fromContainer;
     if (defaultImplementation != null) return defaultImplementation;
     return null;
-  }
-
-  private void initComponent(Object component) {
-    final ProgressIndicator indicator = getProgressIndicator();
-    if (indicator != null) {
-      indicator.checkCanceled();
-    }
-
-    try {
-      initializeComponent(component, false);
-      if (component instanceof BaseComponent) {
-        ((BaseComponent)component).initComponent();
-      }
-    }
-    catch (StateStorageException e) {
-      throw e;
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable ex) {
-      handleInitComponentError(ex, false, component.getClass().getName(), null);
-    }
   }
 
   @Nullable
@@ -237,7 +204,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return ProgressIndicatorProvider.getGlobalProgressIndicator();
   }
 
-  protected double getPercentageOfComponentsLoaded() {
+  protected float getPercentageOfComponentsLoaded() {
     return myComponentsRegistry.getPercentageOfComponentsLoaded();
   }
 
@@ -245,8 +212,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public void initializeComponent(Object component, boolean service) {
   }
 
-
-  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName, ComponentConfig config) {
+  protected void handleInitComponentError(Throwable ex, String componentClassName, ComponentConfig config) {
     LOG.error(ex);
   }
 
@@ -290,7 +256,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   @SuppressWarnings({"unchecked"})
   @NotNull
-  public synchronized <T> T[] getComponents(Class<T> baseClass) {
+  public synchronized <T> T[] getComponents(@NotNull Class<T> baseClass) {
     return myComponentsRegistry.getComponentsByType(baseClass);
   }
 
@@ -315,7 +281,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public synchronized BaseComponent getComponent(String name) {
+  public synchronized BaseComponent getComponent(@NotNull String name) {
     return myComponentsRegistry.getComponentByName(name);
   }
 
@@ -358,7 +324,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     getComponents();
   }
 
-  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final PluginDescriptor descriptor, final boolean defaultProject) {
+  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable PluginDescriptor descriptor, boolean defaultProject) {
     myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 
@@ -426,7 +392,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected class ComponentsRegistry {
     private final Map<Class, Object> myInterfaceToLockMap = new THashMap<Class, Object>();
     private final Map<Class, Class> myInterfaceToClassMap = new THashMap<Class, Class>();
-    private final ArrayList<Class> myComponentInterfaces = new ArrayList<Class>(); // keeps order of component's registration
+    private final List<Class> myComponentInterfaces = new ArrayList<Class>(); // keeps order of component's registration
     private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
     private final List<ComponentConfig> myComponentConfigs = new ArrayList<ComponentConfig>();
     private final List<Object> myImplementations = new ArrayList<Object>();
@@ -452,7 +418,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                                              interfaceClass : Class.forName(config.getImplementationClass(), true, loader);
 
         if (myInterfaceToClassMap.get(interfaceClass) != null) {
-          throw new ComponentAlreadyRegisteredException(interfaceClass);
+          throw new RuntimeException("Component already registered: " + interfaceClass.getName());
         }
 
         getPicoContainer().registerComponent(new ComponentConfigComponentAdapter(config, implementationClass));
@@ -460,17 +426,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         myComponentClassToConfig.put(implementationClass, config);
         myComponentInterfaces.add(interfaceClass);
       }
-      catch (ComponentAlreadyRegisteredException ex) {
-        throw new Error(ex);
-      }
-      catch (Throwable e) {
-        handleInitComponentError(e, false, null, config);
-      }
-    }
-
-    private class ComponentAlreadyRegisteredException extends Exception {
-      private ComponentAlreadyRegisteredException(Class interfaceClass) {
-        super(interfaceClass.getName() + " component already registered");
+      catch (Throwable t) {
+        handleInitComponentError(t, null, config);
       }
     }
 
@@ -492,8 +449,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       return myInterfaceToClassMap.containsKey(interfaceClass);
     }
 
-    public double getPercentageOfComponentsLoaded() {
-      return ((double)myImplementations.size()) / myComponentConfigs.size();
+    public float getPercentageOfComponentsLoaded() {
+      return ((float)myImplementations.size()) / myComponentConfigs.size();
     }
 
     private void registerComponentInstance(final Object component) {
@@ -565,57 +522,66 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     public ComponentConfigComponentAdapter(final ComponentConfig config, Class<?> implementationClass) {
       myConfig = config;
+
       final String componentKey = config.getInterfaceClass();
       myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true)) {
-          @Override
-          public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
-            Object componentInstance = null;
-            try {
-              long startTime = myInitialized ? 0 : System.nanoTime();
-              componentInstance = super.getComponentInstance(picoContainer);
-
-              if (!myInitialized) {
-                if (myInitializing) {
-                  if (myConfig.pluginDescriptor != null) {
-                    LOG.error(new PluginException("Cyclic component initialization: " + componentKey, myConfig.pluginDescriptor.getPluginId()));
-                  }
-                  else {
-                    LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
-                  }
-                }
-
-                try {
-                  myInitializing = true;
-                  myComponentsRegistry.registerComponentInstance(componentInstance);
-                  initComponent(componentInstance);
-                  long endTime = System.nanoTime();
-                  long ms = (endTime - startTime) / 1000000;
-                  if (ms > 10) {
-                    if (logSlowComponents()) {
-                      LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
-                    }
-                  }
-                }
-                finally {
-                  myInitializing = false;
-                }
-
-                myInitialized = true;
-              }
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (StateStorageException e) {
-              throw e;
-            }
-            catch (Throwable t) {
-              handleInitComponentError(t, componentInstance == null, componentKey, config);
-            }
-            return componentInstance;
+        @Override
+        public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
+          ProgressIndicator indicator = getProgressIndicator();
+          if (indicator != null) {
+            indicator.checkCanceled();
           }
-        };
 
+          Object componentInstance = null;
+          try {
+            long startTime = myInitialized ? 0 : System.nanoTime();
+
+            componentInstance = super.getComponentInstance(picoContainer);
+
+            if (!myInitialized) {
+              if (myInitializing) {
+                if (myConfig.pluginDescriptor != null) {
+                  LOG.error(new PluginException("Cyclic component initialization: " + componentKey, myConfig.pluginDescriptor.getPluginId()));
+                }
+                else {
+                  LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
+                }
+              }
+
+              try {
+                myInitializing = true;
+                myComponentsRegistry.registerComponentInstance(componentInstance);
+
+                initializeComponent(componentInstance, false);
+                if (componentInstance instanceof BaseComponent) {
+                  ((BaseComponent)componentInstance).initComponent();
+                }
+
+                long ms = (System.nanoTime() - startTime) / 1000000;
+                if (ms > 10 && logSlowComponents()) {
+                  LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+                }
+              }
+              finally {
+                myInitializing = false;
+              }
+
+              myInitialized = true;
+            }
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (StateStorageException e) {
+            throw e;
+          }
+          catch (Throwable t) {
+            handleInitComponentError(t, componentKey, config);
+          }
+
+          return componentInstance;
+        }
+      };
     }
 
     @Override
@@ -625,27 +591,23 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     @Override
     public Class getComponentImplementation() {
-      return getDelegate().getComponentImplementation();
+      return myDelegate.getComponentImplementation();
     }
 
     @Override
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-      return getDelegate().getComponentInstance(container);
+      return myDelegate.getComponentInstance(container);
     }
 
     @Override
     public void verify(final PicoContainer container) throws PicoIntrospectionException {
-      getDelegate().verify(container);
+      myDelegate.verify(container);
     }
 
     @Override
     public void accept(final PicoVisitor visitor) {
       visitor.visitComponentAdapter(this);
-      getDelegate().accept(visitor);
-    }
-
-    private ComponentAdapter getDelegate() {
-      return myDelegate;
+      myDelegate.accept(visitor);
     }
   }
 }

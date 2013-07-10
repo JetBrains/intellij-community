@@ -438,15 +438,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
   public String getDefaultName() {
     if (isDefault()) return TEMPLATE_PROJECT_NAME;
 
-    return getStateStore().getProjectName();    
+    return getStateStore().getProjectName();
   }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {

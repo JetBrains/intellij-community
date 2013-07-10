@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -133,10 +132,11 @@ public class ResolveCache {
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
-  public <T extends PsiPolyVariantReference> boolean isCached(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
+  @Nullable
+  public <T extends PsiPolyVariantReference> ResolveResult[] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
     Map<T, Getter<ResolveResult[]>> map = getMap(physical, incompleteCode, isPoly);
     Getter<ResolveResult[]> reference = map.get(ref);
-    return reference != null && reference.get() != null;
+    return reference == null ? null : reference.get();
   }
 
   public PsiElement resolveWithCaching(@NotNull PsiReference ref,
@@ -188,6 +188,6 @@ public class ResolveCache {
     else {
       cached = new SoftGetter<TResult>(result);
     }
-    ConcurrencyUtil.cacheOrGet(map, ref, cached);
+    map.put(ref, cached);
   }
 }

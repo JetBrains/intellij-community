@@ -9,5 +9,9 @@
   <extensions defaultExtensionNs="org.intellij.groovy">
     <membersContributor implementation="org.intellij.plugins.intelliLang.inject.groovy.PatternEditorContextMembersProvider"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.groovy.GrConcatenation2InjectorAdapter" order="last"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.groovy.GrConcatenationInjector"/>
+  </extensions>
 
 </idea-plugin>

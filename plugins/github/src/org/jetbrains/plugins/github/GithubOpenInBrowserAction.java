@@ -18,8 +18,8 @@ package org.jetbrains.plugins.github;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
@@ -28,15 +28,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
-import git4idea.Notificator;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
-import static org.jetbrains.plugins.github.GithubUtil.*;
+import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,7 +44,6 @@ import static org.jetbrains.plugins.github.GithubUtil.*;
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
-  private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
 
   protected GithubOpenInBrowserAction() {
     super("Open in browser", "Open corresponding GitHub link in browser", GithubIcons.Github_icon);
@@ -68,8 +65,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    // Check that given repository is properly configured git repository
-    if (!isRepositoryOnGitHub(gitRepository)) {
+    if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
       setVisibleEnabled(e, false, false);
       return;
     }
@@ -89,7 +85,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     setVisibleEnabled(e, true, true);
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -98,23 +93,28 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    while (!checkCredentials(project)) {
-      final GithubLoginDialog dialog = new GithubLoginDialog(project);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
-    }
-
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository repository = manager.getRepositoryForFile(virtualFile);
+    if (repository == null) {
+      StringBuilder details = new StringBuilder("file: " + virtualFile.getPresentableUrl() + "; Git repositories: ");
+      for (GitRepository repo : manager.getRepositories()) {
+        details.append(repo.getPresentableUrl()).append("; ");
+      }
+      GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't find git repository", details.toString());
+      return;
+    }
 
-    final String githubRemoteUrl = findGithubRemoteUrl(repository);
+    final String githubRemoteUrl = GithubUtil.findGithubRemoteUrl(repository);
+    if (githubRemoteUrl == null) {
+      GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't find github remote");
+      return;
+    }
 
     final String rootPath = repository.getRoot().getPath();
     final String path = virtualFile.getPath();
     if (!path.startsWith(rootPath)) {
-      notifyError(project, "File is not under repository root", "Root: " + rootPath + ", file: " + path);
+      GithubNotifications
+        .showError(project, CANNOT_OPEN_IN_BROWSER, "File is not under repository root", "Root: " + rootPath + ", file: " + path);
       return;
     }
 
@@ -125,23 +125,36 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
     String relativePath = path.substring(rootPath.length());
     String urlToOpen = makeUrlToOpen(e, relativePath, branch, githubRemoteUrl);
+    if (urlToOpen == null) {
+      GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't create properly url", githubRemoteUrl);
+      return;
+    }
     BrowserUtil.launchBrowser(urlToOpen);
   }
 
-  private static void notifyError(@NotNull Project project, @NotNull String message, @Nullable String logDetails) {
-    Notificator.getInstance(project).notifyError(CANNOT_OPEN_IN_BROWSER, message);
-    LOG.info(message + (logDetails == null ? "" : logDetails));
-  }
-
+  @Nullable
   private static String makeUrlToOpen(@NotNull AnActionEvent e, @NotNull String relativePath, @NotNull String branch,
                                       @NotNull String githubRemoteUrl) {
     final StringBuilder builder = new StringBuilder();
-    builder.append(makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl)).append("/blob/").append(branch).append(relativePath);
+    final String githubRepoUrl = GithubUrlUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl);
+    if (githubRepoUrl == null) {
+      return null;
+    }
+    builder.append(githubRepoUrl).append("/blob/").append(branch).append(relativePath);
+
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null && editor.getDocument().getLineCount() >= 1) {
-      final int line = editor.getCaretModel().getLogicalPosition().line + 1; // lines are counted internally from 0, but from 1 on github
-      builder.append("#L").append(line);
+      // lines are counted internally from 0, but from 1 on github
+      SelectionModel selectionModel = editor.getSelectionModel();
+      final int begin = editor.getDocument().getLineNumber(selectionModel.getSelectionStart()) + 1;
+      final int selectionEnd = selectionModel.getSelectionEnd();
+      int end = editor.getDocument().getLineNumber(selectionEnd) + 1;
+      if (editor.getDocument().getLineStartOffset(end - 1) == selectionEnd) {
+        end -= 1;
+      }
+      builder.append("#L").append(begin).append('-').append(end);
     }
+
     return builder.toString();
   }
 
@@ -149,14 +162,16 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static String getBranchNameOnRemote(@NotNull Project project, @NotNull GitRepository repository) {
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
-      notifyError(project, "Can't open the file on GitHub when repository is on detached HEAD. Please checkout a branch.", null);
+      GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER,
+                                    "Can't open the file on GitHub when repository is on detached HEAD. Please checkout a branch.");
       return null;
     }
 
     GitRemoteBranch tracked = currentBranch.findTrackedBranch(repository);
     if (tracked == null) {
-      notifyError(project, "Can't open the file on GitHub when current branch doesn't have a tracked branch.",
-                  "Current branch: " + currentBranch + ", tracked info: " + repository.getBranchTrackInfos());
+      GithubNotifications
+        .showError(project, CANNOT_OPEN_IN_BROWSER, "Can't open the file on GitHub when current branch doesn't have a tracked branch.",
+                   "Current branch: " + currentBranch + ", tracked info: " + repository.getBranchTrackInfos());
       return null;
     }
 

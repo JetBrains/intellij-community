@@ -89,11 +89,11 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     return null;
   }
 
-  public IElementType getOperationToken() {
-    return getOpToken().getNode().getElementType();
+  public IElementType getOperationTokenType() {
+    return getOperationToken().getNode().getElementType();
   }
 
-  public PsiElement getOpToken() {
+  public PsiElement getOperationToken() {
     return findNotNullChildByType(TokenSets.ASSIGN_OP_SET);
   }
 
@@ -118,7 +118,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
 
   @Override
   public TextRange getRangeInElement() {
-    final PsiElement token = getOpToken();
+    final PsiElement token = getOperationToken();
     assert token != null;
     final int offset = token.getStartOffsetInParent();
     return new TextRange(offset, offset + token.getTextLength());
@@ -163,7 +163,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
 
   @Override
   public PsiReference getReference() {
-    final IElementType operationToken = getOperationToken();
+    final IElementType operationToken = getOperationTokenType();
     if (operationToken == GroovyTokenTypes.mASSIGN) return null;
 
     return this;
@@ -174,7 +174,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
       @NotNull
       @Override
       public GroovyResolveResult[] resolve(@NotNull GrAssignmentExpressionImpl assignmentExpression, boolean incompleteCode) {
-        final IElementType opType = assignmentExpression.getOperationToken();
+        final IElementType opType = assignmentExpression.getOperationTokenType();
         if (opType == null || opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
 
         final GrExpression lValue = assignmentExpression.getLValue();

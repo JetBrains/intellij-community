@@ -86,7 +86,7 @@ public class FlexAdapter extends LexerBase {
     return myEnd;
   }
 
-  private void locateToken() {
+  protected void locateToken() {
     if (myTokenType != null) return;
     try {
       myState = myFlex.yystate();

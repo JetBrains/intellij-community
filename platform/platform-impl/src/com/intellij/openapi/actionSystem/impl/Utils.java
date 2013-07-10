@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,19 @@ public class Utils{
                                        @NotNull DataContext context,
                                        String place,
                                        ActionManager actionManager){
-    expandActionGroup(group, list, presentationFactory, context, place, actionManager, false);
+    expandActionGroup(group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
   }
+
+  public static void expandActionGroup(@NotNull ActionGroup group,
+                                       List<AnAction> list,
+                                       PresentationFactory presentationFactory,
+                                       DataContext context,
+                                       @NotNull String place,
+                                       ActionManager actionManager,
+                                       boolean transparentOnly) {
+    expandActionGroup(group, list, presentationFactory, context, place, actionManager, transparentOnly, false);
+  }
+
   /**
    * @param list this list contains expanded actions.
    * @param actionManager manager
@@ -94,7 +105,8 @@ public class Utils{
                                        DataContext context,
                                        @NotNull String place,
                                        ActionManager actionManager,
-                                       boolean transparentOnly) {
+                                       boolean transparentOnly,
+                                       boolean hideDisabled) {
     Presentation presentation = presentationFactory.getPresentation(group);
     AnActionEvent e = new AnActionEvent(
       null,
@@ -126,11 +138,15 @@ public class Utils{
         if (!doUpdate(child, e1, presentation)) continue;
       }
 
-      if (!presentation.isVisible()) { // don't create invisible items in the menu
+      if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
         continue;
       }
       if (child instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)child;
+        boolean skip = hideDisabled && !hasEnabledChildren(actionGroup, presentationFactory, context, place);
+        if (skip) {
+          continue;
+        }
         if (actionGroup.isPopup()) { // popup menu has its own presentation
           if (actionGroup.disableIfNoVisibleChildren()) {
             final boolean visibleChildren = hasVisibleChildren(actionGroup, presentationFactory, context, place);
@@ -140,10 +156,11 @@ public class Utils{
             presentation.setEnabled(actionGroup.canBePerformed(context) || visibleChildren);
           }
 
+
           list.add(child);
         }
         else {
-          expandActionGroup((ActionGroup)child, list, presentationFactory, context, place, actionManager);
+          expandActionGroup((ActionGroup)child, list, presentationFactory, context, place, actionManager, false, hideDisabled);
         }
       }
       else if (child instanceof Separator) {
@@ -152,6 +169,9 @@ public class Utils{
         }
       }
       else {
+        if (hideDisabled && !hasEnabledChildren(new DefaultActionGroup(child), presentationFactory, context, place)) {
+          continue;
+        }
         list.add(child);
       }
     }
@@ -181,6 +201,19 @@ public class Utils{
   }
 
   private static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
+    return hasChildrenWithState(group, factory, context, place, true, false);
+  }
+
+  private static boolean hasEnabledChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
+    return hasChildrenWithState(group, factory, context, place, false, true);
+  }
+
+  private static boolean hasChildrenWithState(ActionGroup group,
+                                              PresentationFactory factory,
+                                              DataContext context,
+                                              String place,
+                                              boolean checkVisible,
+                                              boolean checkEnabled) {
     AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
     event.setInjectedContext(group.isInInjectedContext());
     for (AnAction anAction : group.getChildren(event)) {
@@ -203,16 +236,16 @@ public class Utils{
 
         // popup menu must be visible itself
         if (childGroup.isPopup()) {
-          if (!presentation.isVisible()) {
+          if ((checkVisible && !presentation.isVisible()) || (checkEnabled && !presentation.isEnabled())) {
             continue;
           }
         }
 
-        if (hasVisibleChildren(childGroup, factory, context, place)) {
+        if (hasChildrenWithState(childGroup, factory, context, place, checkVisible, checkEnabled)) {
           return true;
         }
       }
-      else if (presentation.isVisible()) {
+      else if ((checkVisible && presentation.isVisible()) || (checkEnabled && presentation.isEnabled())) {
         return true;
       }
     }

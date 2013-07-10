@@ -17,12 +17,14 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.DelegatingGradleSettingsListenerAdapter;
 
 import java.util.Set;
 
@@ -38,7 +40,7 @@ import java.util.Set;
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings extends AbstractExternalSystemSettings<GradleProjectSettings, GradleSettingsListener>
+public class GradleSettings extends AbstractExternalSystemSettings<GradleSettings, GradleProjectSettings, GradleSettingsListener>
   implements PersistentStateComponent<GradleSettings.MyState>
 {
 
@@ -51,6 +53,18 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleProject
   @NotNull
   public static GradleSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GradleSettings.class);
+  }
+
+  @Override
+  public void subscribe(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> listener) {
+    getProject().getMessageBus().connect(getProject()).subscribe(GradleSettingsListener.TOPIC,
+                                                                 new DelegatingGradleSettingsListenerAdapter(listener));
+    
+  }
+
+  @Override
+  protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
+    myServiceDirectoryPath = settings.getServiceDirectoryPath();
   }
 
   @SuppressWarnings("unchecked")
@@ -80,10 +94,11 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleProject
     return myServiceDirectoryPath;
   }
 
-  public void setServiceDirectoryPath(@Nullable String path) {
-    if (!Comparing.equal(myServiceDirectoryPath, path)) {
-      final String oldPath = myServiceDirectoryPath;
-      getPublisher().onServiceDirectoryPathChange(oldPath, path);
+  public void setServiceDirectoryPath(@Nullable String newPath) {
+    if (!Comparing.equal(myServiceDirectoryPath, newPath)) {
+      String oldPath = myServiceDirectoryPath;
+      myServiceDirectoryPath = newPath;
+      getPublisher().onServiceDirectoryPathChange(oldPath, newPath);
     } 
   }
 

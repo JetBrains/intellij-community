@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AssignmentUsedAsCondition.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Assignment used as condition</problem_class>
+    <description>&lt;code&gt;b = fossa()&lt;/code&gt; used as condition #loc</description>
+  </problem>
+
+  <problem>
+    <file>AssignmentUsedAsCondition.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Assignment used as condition</problem_class>
+    <description>&lt;code&gt;i = 8&lt;/code&gt; used as condition #loc</description>
+  </problem>
+</problems>

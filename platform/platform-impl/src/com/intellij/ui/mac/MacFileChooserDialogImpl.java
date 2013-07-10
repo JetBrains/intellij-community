@@ -135,6 +135,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       }
       finally {
         Foundation.cfRelease(self);
+        Foundation.cfRelease(contextInfo);
       }
     }
   };
@@ -184,6 +185,8 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     public void callback(ID self, String selector, ID toSelect) {
       final ID nsOpenPanel = Foundation.getObjcClass("NSOpenPanel");
       final ID chooser = invoke(nsOpenPanel, "openPanel");
+      // Release in OPEN_PANEL_DID_END panel
+      Foundation.cfRetain(chooser);
 
       final FileChooserDescriptor chooserDescriptor = ourImplMap.get(self).myChooserDescriptor;
 
@@ -241,7 +244,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         final ID focusedWindow = MacUtil.findWindowForTitle(activeWindowTitle);
         if (focusedWindow != null) {
           invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
-                 directory, file, types, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
+                 directory, file, types, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), chooser);
         }
       }
     }
@@ -313,23 +316,13 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       bar.disableUpdates();
     }
 
-    final ID autoReleasePool = createAutoReleasePool();
-    try {
-      final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
-      Foundation.cfRetain(delegate);
-      ourImplMap.put(delegate, impl);
+    final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
+    // Release in OPEN_PANEL_DID_END panel
+    Foundation.cfRetain(delegate);
+    ourImplMap.put(delegate, impl);
 
-      final ID select = toSelect == null ? null : Foundation.nsString(toSelect);
-
-      invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showOpenPanel:"), select, false);
-    }
-    finally {
-      invoke(autoReleasePool, "release");
-    }
-  }
-
-  private static ID createAutoReleasePool() {
-    return invoke("NSAutoreleasePool", "new");
+    final ID select = toSelect == null ? null : Foundation.nsString(toSelect);
+    invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showOpenPanel:"), select, false);
   }
 
   private static ID invoke(@NotNull final String className, @NotNull final String selector, Object... args) {

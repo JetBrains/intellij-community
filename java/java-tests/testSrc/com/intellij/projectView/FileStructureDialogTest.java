@@ -43,7 +43,7 @@ public class FileStructureDialogTest extends BaseProjectViewTestCase {
     final StructureViewBuilder structureViewBuilder =
       StructureViewBuilder.PROVIDER.getStructureViewBuilder(virtualFile.getFileType(), virtualFile, myProject);
     assertNotNull(structureViewBuilder);
-    final StructureViewModel structureViewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel();
+    final StructureViewModel structureViewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel(null);
 
     final EditorFactory factory = EditorFactory.getInstance();
     assertNotNull(factory);

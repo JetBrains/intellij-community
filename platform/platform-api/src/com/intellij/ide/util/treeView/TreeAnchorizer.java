@@ -16,8 +16,13 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.Nullable;
 
 /**
+ * Used by UI trees to get a more memory-efficient representation of their user objects.
+ * For example, instead of holding PsiElement's they can hold PsiAnchor's which don't hold AST, document text, etc.
+ * This service is used to perform object<->anchor conversion automatically so that all 100500 tree nodes don't have to do this themselves.
+ * 
  * @author peter
  */
 public class TreeAnchorizer {
@@ -35,6 +40,7 @@ public class TreeAnchorizer {
     return element;
   }
 
+  @Nullable
   public Object retrieveElement(Object anchor) {
     return anchor;
   }

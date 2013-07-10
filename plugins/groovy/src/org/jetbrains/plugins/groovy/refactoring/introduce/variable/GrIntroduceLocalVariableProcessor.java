@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -27,7 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -209,7 +209,7 @@ public class GrIntroduceLocalVariableProcessor {
     final GrVariable variable = declaration.getVariables()[0];
     variable.setType(mySettings.getSelectedType());
 
-    GrReferenceAdjuster.shortenReferences(declaration);
+    JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
     return variable;
   }
 

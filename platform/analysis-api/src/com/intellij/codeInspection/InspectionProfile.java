@@ -18,6 +18,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.Profile;
@@ -25,6 +27,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -37,10 +41,10 @@ public interface InspectionProfile extends Profile {
   /**
    * If you need to modify tool's settings, please use {@link #modifyToolSettings}
    */
-  InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
+  InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
 
   @Nullable
-  InspectionProfileEntry getInspectionTool(@NotNull String shortName);
+  InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project);
 
   /** Returns (unwrapped) inspection */
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
@@ -61,16 +65,16 @@ public interface InspectionProfile extends Profile {
    * @since 12.1
    */
   <T extends InspectionProfileEntry>
-  void modifyToolSettings(Key<T> shortNameKey, @NotNull PsiElement psiElement, Consumer<T> toolConsumer);
+  void modifyToolSettings(@NotNull Key<T> shortNameKey, @NotNull PsiElement psiElement, @NotNull Consumer<T> toolConsumer);
 
   /**
    * @param element context element
    * @return all (both enabled and disabled) tools
    */
   @NotNull
-  InspectionProfileEntry[] getInspectionTools(@Nullable PsiElement element);
+  InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element);
 
-  void cleanup(Project project);
+  void cleanup(@NotNull Project project);
 
   /**
    * @see #modifyProfile(com.intellij.util.Consumer)
@@ -82,7 +86,7 @@ public interface InspectionProfile extends Profile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  boolean isExecutable();
+  boolean isExecutable(Project project);
 
   boolean isEditable();
 
@@ -90,4 +94,7 @@ public interface InspectionProfile extends Profile {
   String getDisplayName();
 
   void scopesChanged();
+
+  @NotNull
+  List<Tools> getAllEnabledInspectionTools(Project project);
 }

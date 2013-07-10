@@ -7,9 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
-import com.jediterm.emulator.TtyConnector;
 import com.jediterm.pty.PtyProcess;
 import com.jediterm.pty.PtyProcessTtyConnector;
+import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
@@ -24,19 +24,19 @@ import java.util.concurrent.Future;
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
 
   private final Charset myDefaultCharset;
-  private final String myCommand;
+  private final String[] myCommand;
 
-  public LocalTerminalDirectRunner(Project project, Charset charset, String command) {
+  public LocalTerminalDirectRunner(Project project, String[] command) {
     super(project);
-    myDefaultCharset = charset;
+    myDefaultCharset = Charset.forName("UTF-8");
     myCommand = command;
   }
 
   @Override
   protected PtyProcess createProcess() throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
-    envs.put("TERM", "vt100");
-    return new PtyProcess(myCommand, new String[]{myCommand}, envs);
+    envs.put("TERM", "xterm");
+    return new PtyProcess(myCommand[0], myCommand, envs);
   }
 
   @Override

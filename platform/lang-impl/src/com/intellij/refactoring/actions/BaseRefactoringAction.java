@@ -83,7 +83,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     try {
       handler = getHandler(dataContext);
     }
-    catch (ProcessCanceledException e1) {
+    catch (ProcessCanceledException ignored) {
       return;
     }
     if (handler == null) {

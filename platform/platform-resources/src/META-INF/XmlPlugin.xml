@@ -13,11 +13,13 @@
   <extensionPoints>
 
     <extensionPoint name="xml.startTagEndToken"
-                    interface="com.intellij.psi.xml.XmlChildRole$StartTagEndTokenProvider"/>
+                    interface="com.intellij.psi.xml.StartTagEndTokenProvider"/>
     <extensionPoint name="xml.schemaProvider"
                     interface="com.intellij.xml.XmlSchemaProvider"/>
     <extensionPoint name="xml.xmlExtension"
                     interface="com.intellij.xml.XmlExtension"/>
+    <extensionPoint name="xml.namespaceHelper"
+                    interface="com.intellij.xml.XmlNamespaceHelper"/>
     <extensionPoint name="xml.tagNameProvider"
                     interface="com.intellij.xml.XmlTagNameProvider"/>
     <extensionPoint name="xml.fileNSInfoProvider"
@@ -64,6 +66,7 @@
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
     <extensionPoint name="html.embeddedTokenTypesProvider" interface="com.intellij.lexer.HtmlEmbeddedTokenTypesProvider"/>
     <extensionPoint name="xml.html5SchemaProvider" interface="com.intellij.xml.Html5SchemaProvider"/>
+    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
 
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener"/>
 
@@ -81,6 +84,8 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.xml.XmlPsiPolicy"/>
     </extensionPoint>
+
+    <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
   </extensionPoints>
 
   <project-components>
@@ -106,8 +111,9 @@
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
                             order="first"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlNonFirstCompletionContributor" id="xmlNonFirst" order="after xml"/>
 
-    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="after xml"/>
+    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
 
     <completion.confidence language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="xml"/>
     <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="html"/>
@@ -484,6 +490,16 @@
 
     <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
     <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
+
+    <xml.tagNameProvider implementation="com.intellij.psi.impl.source.xml.DefaultXmlTagNameProvider"/>
+    <xml.fileNSInfoProvider implementation="com.intellij.xml.util.HtmlFileNSInfoProvider"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferenceQuickFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReferenceQuickFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReferenceQuickFixProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

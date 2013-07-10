@@ -25,19 +25,16 @@ public class HgCurrentBranchStatus {
   private String text;
   private String toolTip;
 
-
   public HgCurrentBranchStatus() {
   }
 
   public void updateFor(@Nullable String branch, @NotNull List<HgRevisionNumber> parents) {
     StringBuilder parentsBuffer = new StringBuilder();
+    String delimiter = "";
     for (HgRevisionNumber parent : parents) {
       String rev = parent.getRevision();
-      parentsBuffer.append(rev).append(", ");
-    }
-    int length = parentsBuffer.length();
-    if (length > 2) {
-      parentsBuffer.delete(length - 2, length);
+      parentsBuffer.append(delimiter).append(rev);
+      delimiter = ", ";
     }
     String parent = parentsBuffer.toString();
     String statusText =
@@ -50,11 +47,9 @@ public class HgCurrentBranchStatus {
     toolTip = toolTipText;
   }
 
-
   public String getStatusText() {
     return text;
   }
-
 
   public String getToolTipText() {
     return toolTip;

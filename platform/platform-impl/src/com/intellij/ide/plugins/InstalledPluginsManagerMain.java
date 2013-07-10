@@ -34,8 +34,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -98,7 +100,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
                     Messages.showErrorDialog("Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
                     return;
                   }
-                  if (PluginManager.isIncompatible(pluginDescriptor)) {
+                  if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
                     Messages.showErrorDialog("Plugin " + pluginDescriptor.getName() + " is incompatible with current installation", CommonBundle.getErrorTitle());
                     return;
                   }
@@ -130,6 +132,11 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     });
     myActionsPanel.add(installPluginFromFileSystem);
+    final StatusText emptyText = pluginTable.getEmptyText();
+    emptyText.setText("Nothing to show.");
+    emptyText.appendText(" Click ");
+    emptyText.appendText("Browse", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
+    emptyText.appendText(" to search for non-bundled plugins.");
   }
 
   private void checkInstalledPluginDependencies(IdeaPluginDescriptorImpl pluginDescriptor) {
@@ -138,10 +145,10 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
     final PluginId[] optionalDependentPluginIds = pluginDescriptor.getOptionalDependentPluginIds();
     for (PluginId id : dependentPluginIds) {
-      if (ArrayUtil.find(optionalDependentPluginIds, id) > -1) continue;
+      if (ArrayUtilRt.find(optionalDependentPluginIds, id) > -1) continue;
       final boolean disabled = ((InstalledPluginsTableModel)pluginsModel).isDisabled(id);
       final boolean enabled = ((InstalledPluginsTableModel)pluginsModel).isEnabled(id);
-      if (!enabled && !disabled && !PluginManager.isModuleDependency(id)) {
+      if (!enabled && !disabled && !PluginManagerCore.isModuleDependency(id)) {
         notInstalled.add(id);
       } else if (disabled) {
         disabledIds.add(id);
@@ -263,7 +270,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         return true;
       }
     }
-    final List<String> disabledPlugins = PluginManager.getDisabledPlugins();
+    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
     for (Map.Entry<PluginId, Boolean> entry : ((InstalledPluginsTableModel)pluginsModel).getEnabledMap().entrySet()) {
       final Boolean enabled = entry.getValue();
       if (enabled != null && !enabled.booleanValue() && !disabledPlugins.contains(entry.getKey().toString())) {
@@ -295,7 +302,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           ids.add(entry.getKey().getIdString());
         }
       }
-      PluginManager.saveDisabledPlugins(ids, false);
+      PluginManagerCore.saveDisabledPlugins(ids, false);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -312,7 +319,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       final PluginId id = iterator.next();
       boolean hasNonModuleDeps = false;
       for (PluginId pluginId : dependentToRequiredListMap.get(id)) {
-        if (!PluginManager.isModuleDependency(pluginId)) {
+        if (!PluginManagerCore.isModuleDependency(pluginId)) {
           hasNonModuleDeps = true;
           break;
         }
@@ -322,16 +329,15 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
     if (!dependentToRequiredListMap.isEmpty()) {
-      final StringBuffer sb = new StringBuffer("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin")
-        .append(dependentToRequiredListMap.size() == 1 ? " " : "s ");
-      sb.append(StringUtil.join(dependentToRequiredListMap.keySet(), new Function<PluginId, String>() {
-        public String fun(final PluginId pluginId) {
-          final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
-          return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";
-        }
-      }, ", "));
-      sb.append(" won't be able to load.</body></html>");
-      return sb.toString();
+      return "<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
+             (dependentToRequiredListMap.size() == 1 ? " " : "s ") +
+             StringUtil.join(dependentToRequiredListMap.keySet(), new Function<PluginId, String>() {
+               public String fun(final PluginId pluginId) {
+                 final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
+                 return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";
+               }
+             }, ", ") +
+             " won't be able to load.</body></html>";
     }
     return super.canApply();
   }
@@ -397,6 +403,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           {
             setOKButtonText(CommonBundle.message("close.action.name"));
             setOKButtonMnemonic('C');
+            final String filter = myFilter.getFilter();
+            if (!StringUtil.isEmptyOrSpaces(filter)) {
+              final Runnable searchRunnable = configurable.enableSearch(filter);
+              LOG.assertTrue(searchRunnable != null);
+              searchRunnable.run();
+            }
           }
 
           @NotNull

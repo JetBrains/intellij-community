@@ -518,7 +518,7 @@ public class JavaFxPsiUtil {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
     final PsiClass fieldClass = resolveResult.getElement();
     if (fieldClass == null) return fieldType;
-    return CachedValuesManager.getManager(project).getCachedValue(fieldClass, new CachedValueProvider<PsiType>() {
+    return CachedValuesManager.getManager(project).getCachedValue(field, new CachedValueProvider<PsiType>() {
       @Nullable
       @Override
       public Result<PsiType> compute() {

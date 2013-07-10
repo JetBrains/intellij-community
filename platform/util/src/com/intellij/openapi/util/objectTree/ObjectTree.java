@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
@@ -193,35 +192,19 @@ public final class ObjectTree<T> {
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   public void assertIsEmpty(boolean throwError) {
-    boolean firstObject = true;
-
     for (T object : myRootObjects) {
       if (object == null) continue;
       final ObjectNode<T> objectNode = getNode(object);
       if (objectNode == null) continue;
 
-      if (firstObject) {
-        firstObject = false;
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                        M E M O R Y    L E A K S   D E T E C T E D                       ***");
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                                                                                         ***");
-        System.err.println("***   The following objects were not disposed: ");
-      }
-
-      System.err.println("***   " + object + " of class " + object.getClass());
       final Throwable trace = objectNode.getTrace();
-      if (trace != null) {
-        System.err.println("***         First seen at: ");
-        trace.printStackTrace();
-        if (throwError) throw new RuntimeException("Memory leak detected: " + object + " of class " + object.getClass()
-                                                   +"\nSee the cause for the corresponding Disposer.register() stacktrace:\n",trace);
+      RuntimeException exception = new RuntimeException("Memory leak detected: " + object + " of class " + object.getClass()
+                                                        + "\nSee the cause for the corresponding Disposer.register() stacktrace:\n",
+                                                        trace);
+      if (throwError) {
+        throw exception;
       }
-    }
-
-    if (!firstObject) {
-      System.err.println("***                                                                                         ***");
-      System.err.println("***********************************************************************************************");
+      LOG.error(exception);
     }
   }
   

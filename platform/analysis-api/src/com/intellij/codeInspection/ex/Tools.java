@@ -20,7 +20,6 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +27,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface Tools {
-  InspectionProfileEntry getInspectionTool(PsiElement element);
+  @NotNull
+  InspectionToolWrapper getInspectionTool(PsiElement element);
 
   @NotNull
   String getShortName();
 
   @NotNull
-  InspectionProfileEntry getTool();
+  InspectionToolWrapper getTool();
 
   @NotNull
   List<ScopeToolState> getTools();
@@ -47,5 +47,5 @@ public interface Tools {
   boolean isEnabled(@Nullable PsiElement element);
 
   @Nullable
-  InspectionProfileEntry getEnabledTool(@Nullable PsiElement element);
+  InspectionToolWrapper getEnabledTool(@Nullable PsiElement element);
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
@@ -40,7 +41,7 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none",
+    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source",
     /*eclipse options*/"-noExit"
   ));
 
@@ -50,7 +51,7 @@ public class JavacMain {
                                 Collection<File> platformClasspath,
                                 Collection<File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
-                                final DiagnosticOutputConsumer outConsumer,
+                                final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
                                 CanceledStatus canceledStatus, boolean useEclipseCompiler) {
     JavaCompiler compiler = null;
@@ -60,7 +61,7 @@ public class JavacMain {
         break;
       }
       if (compiler == null) {
-        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
+        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
         return false;
       }
     }
@@ -69,7 +70,7 @@ public class JavacMain {
     if (compiler == null) {
       compiler = ToolProvider.getSystemJavaCompiler();
       if (compiler == null) {
-        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
+        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
         return false;
       }
       nowUsingJavac = true;
@@ -84,7 +85,7 @@ public class JavacMain {
     
     final List<JavaSourceTransformer> transformers = getSourceTransformers();
 
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
+    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
@@ -136,7 +137,7 @@ public class JavacMain {
     final LineOutputWriter out = new LineOutputWriter() {
       protected void lineAvailable(String line) {
         if (nowUsingJavac) {
-          outConsumer.outputLineAvailable(line);
+          diagnosticConsumer.outputLineAvailable(line);
         }
         else {
           // todo: filter too verbose eclipse output?
@@ -154,7 +155,7 @@ public class JavacMain {
       }
 
       final JavaCompiler.CompilationTask task = compiler.getTask(
-        out, fileManager, outConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
+        out, fileManager, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
 
       //if (!IS_VM_6_VERSION) { //todo!
@@ -166,10 +167,10 @@ public class JavacMain {
       return task.call();
     }
     catch(IllegalArgumentException e) {
-      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
     catch (CompilationCanceledException ignored) {
-      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
+      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
     }
     finally {
       fileManager.close();
@@ -183,7 +184,7 @@ public class JavacMain {
   private static List<JavaSourceTransformer> getSourceTransformers() {
     final Class<JavaSourceTransformer> transformerClass = JavaSourceTransformer.class;
     final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());
-    final List<JavaSourceTransformer> transformers = new ArrayList<JavaSourceTransformer>();
+    final List<JavaSourceTransformer> transformers = new SmartList<JavaSourceTransformer>();
     for (JavaSourceTransformer t : loader) {
       transformers.add(t);
     }

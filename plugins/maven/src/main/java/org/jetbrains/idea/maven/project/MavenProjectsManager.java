@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +29,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,15 +39,11 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jdom.Document;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -57,12 +51,9 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
-import org.jetbrains.jps.maven.model.impl.MavenIdBean;
-import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
-import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
-import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -177,7 +168,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             try {
               if (!CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild()) return true;
 
-              generateBuildConfiguration(context.isRebuild());
+              new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild());
             }
             finally {
               token.finish();
@@ -1039,160 +1030,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     if (projectImporter == null) return Collections.emptyList();
 
     return projectImporter.getCreatedModules();
-  }
-
-  public void generateBuildConfiguration(boolean force) {
-    if (!isMavenizedProject()) {
-      return;
-    }
-    final BuildManager buildManager = BuildManager.getInstance();
-    final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
-    if (projectSystemDir == null) {
-      return;
-    }
-
-    final File mavenConfigFile = new File(projectSystemDir, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
-
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-
-    final int crc = myProjectsTree.getFilterConfigCrc(fileIndex);
-
-    final File crcFile = new File(mavenConfigFile.getParent(), "configuration.crc");
-
-    if (!force) {
-      try {
-        DataInputStream crcInput = new DataInputStream(new FileInputStream(crcFile));
-        try {
-          if (crcInput.readInt() == crc) return; // Project had not change since last config generation.
-        }
-        finally {
-          crcInput.close();
-        }
-      }
-      catch (IOException ignored) {
-        // // Config file is not generated.
-      }
-    }
-
-    MavenProjectConfiguration projectConfig = new MavenProjectConfiguration();
-
-    for (MavenProject mavenProject : getProjects()) {
-      VirtualFile pomXml = mavenProject.getFile();
-
-      Module module = fileIndex.getModuleForFile(pomXml);
-      if (module == null) continue;
-
-      if (mavenProject.getDirectoryFile() != fileIndex.getContentRootForFile(pomXml)) continue;
-
-      MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
-
-      MavenId projectId = mavenProject.getMavenId();
-      resourceConfig.id = new MavenIdBean(projectId.getGroupId(), projectId.getArtifactId(), projectId.getVersion());
-
-      MavenId parentId = mavenProject.getParentId();
-      if (parentId != null) {
-        resourceConfig.parentId = new MavenIdBean(parentId.getGroupId(), parentId.getArtifactId(), parentId.getVersion());
-      }
-      resourceConfig.directory = FileUtil.toSystemIndependentName(mavenProject.getDirectory());
-      resourceConfig.delimitersPattern = MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern();
-      for (Map.Entry<String, String> entry : mavenProject.getModelMap().entrySet()) {
-        String key = entry.getKey();
-        String value = entry.getValue();
-        if (value != null) {
-          resourceConfig.modelMap.put(key, value);
-        }
-      }
-      addResources(resourceConfig.resources, mavenProject.getResources());
-      addResources(resourceConfig.testResources, mavenProject.getTestResources());
-      resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
-      final Properties properties = getFilteringProperties(mavenProject);
-      for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
-        resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
-      }
-
-      Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-      resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", "\\");
-      String escapeWindowsPaths = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths");
-      if (escapeWindowsPaths != null) {
-        resourceConfig.escapeWindowsPaths = Boolean.parseBoolean(escapeWindowsPaths);
-      }
-
-      projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
-    }
-
-    final Document document = new Document(new Element("maven-project-configuration"));
-    XmlSerializer.serializeInto(projectConfig, document.getRootElement());
-    buildManager.runCommand(new Runnable() {
-      @Override
-      public void run() {
-        buildManager.clearState(myProject);
-        FileUtil.createIfDoesntExist(mavenConfigFile);
-        try {
-          JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
-
-          DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
-          try {
-            crcOutput.writeInt(crc);
-          }
-          finally {
-            crcOutput.close();
-          }
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-  }
-
-  private static void addResources(final List<ResourceRootConfiguration> container, Collection<MavenResource> resources) {
-    for (MavenResource resource : resources) {
-      final String dir = resource.getDirectory();
-      if (dir == null) {
-        continue;
-      }
-
-      final ResourceRootConfiguration props = new ResourceRootConfiguration();
-      props.directory = FileUtil.toSystemIndependentName(dir);
-
-      final String target = resource.getTargetPath();
-      props.targetPath = target != null ? FileUtil.toSystemIndependentName(target) : null;
-
-      props.isFiltered = resource.isFiltered();
-      props.includes.clear();
-      for (String include : resource.getIncludes()) {
-        props.includes.add(include.trim());
-      }
-      props.excludes.clear();
-      for (String exclude : resource.getExcludes()) {
-        props.excludes.add(exclude.trim());
-      }
-      container.add(props);
-    }
-  }
-
-  private static Properties getFilteringProperties(MavenProject mavenProject) {
-    final Properties properties = new Properties();
-
-    for (String each : mavenProject.getFilters()) {
-      try {
-        FileInputStream in = new FileInputStream(each);
-        try {
-          properties.load(in);
-        }
-        finally {
-          in.close();
-        }
-      }
-      catch (IOException ignored) {
-      }
-    }
-
-    properties.putAll(mavenProject.getProperties());
-
-    properties.put("settings.localRepository", mavenProject.getLocalRepository().getAbsolutePath());
-
-    return properties;
   }
 
   private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {

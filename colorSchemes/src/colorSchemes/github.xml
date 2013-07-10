@@ -116,6 +116,11 @@
         <option name="FOREGROUND" value="108888" />
       </value>
     </option>
+    <option name="COFFEESCRIPT.PARAMETER">
+      <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
     <option name="COFFEESCRIPT.HEREDOC_CONTENT">
       <value>
         <option name="FOREGROUND" value="DD1144" />

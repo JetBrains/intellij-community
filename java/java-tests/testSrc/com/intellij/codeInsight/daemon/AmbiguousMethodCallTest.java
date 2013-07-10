@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
@@ -31,14 +30,8 @@ import org.jetbrains.annotations.NotNull;
 public class AmbiguousMethodCallTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/ambiguousCalls";
 
-  private void doTest(boolean checkWarnings, boolean checkInfos, InspectionProfileEntry... tools) throws Exception {
-    for (InspectionProfileEntry tool : tools) { enableInspectionTool(tool); }
+  private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
-  }
-
-  private void doTest(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, InspectionProfileEntry... tools) throws Exception {
-    for (InspectionProfileEntry tool : tools) { enableInspectionTool(tool); }
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkWeakWarnings, checkInfos);
   }
 
   @NotNull

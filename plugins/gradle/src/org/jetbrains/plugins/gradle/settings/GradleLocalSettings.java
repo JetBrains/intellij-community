@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Denis Zhdanov
@@ -14,6 +15,10 @@ import org.jetbrains.annotations.Nullable;
 public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
   implements PersistentStateComponent<AbstractExternalSystemLocalSettings.State>
 {
+
+  public GradleLocalSettings(@NotNull Project project) {
+    super(GradleConstants.SYSTEM_ID, project);
+  }
 
   @NotNull
   public static GradleLocalSettings getInstance(@NotNull Project project) {

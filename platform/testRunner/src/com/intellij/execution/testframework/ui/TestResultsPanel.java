@@ -139,6 +139,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
 
   private static JComponent createOutputTab(JComponent console, AnAction[] consoleActions) {
     JPanel outputTab = new JPanel(new BorderLayout());
+    console.setFocusable(true);
     outputTab.add(console, BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);

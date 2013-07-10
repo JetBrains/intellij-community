@@ -47,6 +47,25 @@ import java.util.Set;
 public class FSOperations {
   public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
 
+  /**
+   * @param context
+   * @param file
+   * @return true if file is marked as "dirty" in the <b>current</b> compilation round 
+   * @throws IOException
+   */
+  public static boolean isMarkedDirty(CompileContext context, final File file) throws IOException {
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+    if (rd != null) {
+      final ProjectDescriptor pd = context.getProjectDescriptor();
+      return pd.fsState.isMarkedForRecompilation(context, rd, file);
+    }
+    return false;
+  }
+  
+  /**
+   * Note: marked file will well be visible as "dirty" only on the <b>next</b> compilation round!
+   * @throws IOException
+   */
   public static void markDirty(CompileContext context, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {

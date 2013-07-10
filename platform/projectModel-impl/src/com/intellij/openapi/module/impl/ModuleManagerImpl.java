@@ -136,9 +136,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     });
 
-    private void setModuleGroupPath(ModifiableModuleModel model, Module module, String[] group) {
-      String[] cached = paths.get(group);
-      if (cached == null) {
+    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, Module module, @Nullable String[] group) {
+      String[] cached = group == null ? null : paths.get(group);
+      if (cached == null && group != null) {
         cached = new String[group.length];
         for (int i = 0; i < group.length; i++) {
           String g = group[i];
@@ -169,7 +169,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           myModulePaths.remove(correspondingPath);
 
           String groupStr = correspondingPath.getModuleGroup();
-          String[] group = groupStr != null ? groupStr.split(MODULE_GROUP_SEPARATOR) : null;
+          String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
           if (!Arrays.equals(group, model.getModuleGroupPath(existingModule))) {
             groupInterner.setModuleGroupPath(model, existingModule, group);
           }
@@ -914,7 +914,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Override
-    public void setModuleGroupPath(Module module, String[] groupPath) {
+    public void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath) {
       if (myModuleGroupPath == null) {
         myModuleGroupPath = new THashMap<Module, String[]>();
       }
@@ -927,7 +927,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Override
-    public void setModuleFilePath(Module module, String oldPath, String newFilePath) {
+    public void setModuleFilePath(@NotNull Module module, String oldPath, String newFilePath) {
       myPathToModule.remove(oldPath);
       myPathToModule.put(newFilePath, module);
     }

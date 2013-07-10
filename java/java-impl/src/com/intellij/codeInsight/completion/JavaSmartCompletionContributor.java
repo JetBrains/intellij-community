@@ -378,11 +378,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       final PsiClassType classType = factory
           .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
       final List<ExpectedTypeInfo> result = new SmartList<ExpectedTypeInfo>();
-      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, classType, TailType.SEMICOLON));
+      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, classType, TailType.SEMICOLON));
       final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
       if (method != null) {
         for (final PsiClassType type : method.getThrowsList().getReferencedTypes()) {
-          result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, type, TailType.SEMICOLON));
+          result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.SEMICOLON));
         }
       }
       return result.toArray(new ExpectedTypeInfo[result.size()]);

@@ -32,7 +32,6 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -96,10 +95,8 @@ public class JavaResolveCache {
       }
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
       Reference<PsiType> ref = new SoftReference<PsiType>(type);
-      Reference<PsiType> storedRef = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, ref);
+      myCalculatedTypes.put(expr, ref);
 
-      PsiType stored = ref == storedRef ? type : storedRef.get();
-      type = stored == null ? type : stored;
       if (type instanceof PsiClassReferenceType) {
         // convert reference-based class type to the PsiImmediateClassType, since the reference may become invalid
         PsiClassType.ClassResolveResult result = ((PsiClassReferenceType)type).resolveGenerics();

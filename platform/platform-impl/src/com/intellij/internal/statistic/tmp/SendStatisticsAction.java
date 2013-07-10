@@ -16,10 +16,7 @@
 package com.intellij.internal.statistic.tmp;
 
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
-import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
-import com.intellij.internal.statistic.connect.StatisticsConnectionService;
-import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
-import com.intellij.internal.statistic.connect.StatisticsResult;
+import com.intellij.internal.statistic.connect.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -31,13 +28,11 @@ public class SendStatisticsAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
-      final RemotelyConfigurableStatisticsService service = new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(), new StatisticsHttpClientSender(), new StatisticsUploadAssistant());
-
-        final StatisticsResult result = service.send();
-
-        Messages.showMessageDialog(result.getDescription(), "Result", PlatformIcons.CUSTOM_FILE_ICON);
+      StatisticsService service = StatisticsUploadAssistant.getStatisticsService();
+      StatisticsResult result = service.send();
+      Messages.showMessageDialog(result.getDescription(), "Result", PlatformIcons.CUSTOM_FILE_ICON);
     }
   }
 }

@@ -92,7 +92,7 @@ public class EditorAdapter {
       myLines.add(new Line(string, attrs));
     }
 
-    if (myFlushAlarm.getActiveRequestCount() == 0) {
+    if (myFlushAlarm.isEmpty()) {
       myFlushAlarm.addRequest(myFlushDeferredRunnable, 200, ModalityState.NON_MODAL);
     }
   }

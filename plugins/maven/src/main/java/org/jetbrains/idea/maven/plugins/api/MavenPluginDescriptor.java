@@ -73,6 +73,12 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     public Boolean soft;
 
     /**
+     * Disallow to add standard maven references to parameter like <delimiter>$$</delimiter>, see MavenPropertyPsiReferenceProvider
+     */
+    @Attribute("disableReferences")
+    public Boolean disableReferences;
+
+    /**
      * Language to inject.
      */
     @Attribute("language")

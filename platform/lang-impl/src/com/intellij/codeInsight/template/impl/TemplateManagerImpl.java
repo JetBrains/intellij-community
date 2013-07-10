@@ -281,6 +281,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
         if (isApplicable(customLiveTemplate, editor, file)) {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
           final String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {

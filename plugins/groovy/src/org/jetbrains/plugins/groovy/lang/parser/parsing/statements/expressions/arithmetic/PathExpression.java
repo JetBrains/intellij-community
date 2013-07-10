@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.DollarSlashRegexConstructorExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.CompoundStringExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.RegexConstructorExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.StringConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -206,14 +204,22 @@ public class PathExpression implements GroovyElementTypes {
 
     final IElementType tokenType = builder.getTokenType();
     if (mGSTRING_BEGIN.equals(tokenType)) {
-      StringConstructorExpression.parse(builder, parser);
-      return PATH_PROPERTY_REFERENCE;
+      final boolean result = CompoundStringExpression.parse(builder, parser, true, mGSTRING_BEGIN, mGSTRING_CONTENT, mGSTRING_END, null,
+                                                            GSTRING, GroovyBundle.message("string.end.expected"));
+      return result ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
     }
     if (mREGEX_BEGIN.equals(tokenType)) {
-      return RegexConstructorExpression.parse(builder, parser, true) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
+      final boolean result = CompoundStringExpression.parse(builder, parser, true,
+                                                            mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mREGEX_LITERAL,
+                                                            REGEX, GroovyBundle.message("regex.end.expected"));
+      return result ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
     }
     if (mDOLLAR_SLASH_REGEX_BEGIN.equals(tokenType)) {
-      return DollarSlashRegexConstructorExpression.parse(builder, parser, true) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
+      final boolean result = CompoundStringExpression.parse(builder, parser, true,
+                                                            mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END,
+                                                            mDOLLAR_SLASH_REGEX_LITERAL,
+                                                            REGEX, GroovyBundle.message("dollar.slash.end.expected"));
+      return result ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
     }
     if (mLCURLY.equals(tokenType)) {
       OpenOrClosableBlock.parseOpenBlock(builder, parser);

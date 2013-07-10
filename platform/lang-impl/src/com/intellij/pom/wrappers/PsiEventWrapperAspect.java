@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 
 import java.util.Collections;
 
@@ -104,10 +105,10 @@ public class PsiEventWrapperAspect implements PomModelAspect{
             break;
           case ChangeInfo.CONTENTS_CHANGED:
             psiEvent.setOffset(treeElement.getStartOffset());
-            psiEvent.setOldChild(psiChild);
-            psiEvent.setNewChild(psiChild);
+            psiEvent.setParent(psiChild);
             psiEvent.setOldLength(changeByChild.getOldLength());
-            manager.childReplaced(psiEvent);
+            psiEvent.setGeneric(treeElement instanceof CompositeElement);
+            manager.childrenChanged(psiEvent);
             break;
           case ChangeInfo.REMOVED:
             psiEvent.setOffset(changesByElement.getChildOffsetInNewTree(treeElement));

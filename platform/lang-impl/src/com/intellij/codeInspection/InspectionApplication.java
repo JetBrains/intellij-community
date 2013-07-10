@@ -17,10 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.XSLTReportConverter;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
@@ -217,11 +214,11 @@ public class InspectionApplication {
       ProgressManager.getInstance().runProcess(new Runnable() {
         @Override
         public void run() {
-          if (!InspectionManagerEx.canRunInspections(myProject, false)) {
+          if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
             if (myErrorCodeRequired) System.exit(1);
             return;
           }
-          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, im, inspectionsResults);
+          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");
@@ -438,16 +435,16 @@ public class InspectionApplication {
   }
 
   private static void describeInspections(@NonNls String myOutputPath, final String name) throws IOException {
-    final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.getDefaultProfile().getInspectionTools(null);
-    final Map<String, Set<InspectionProfileEntry>> map = new HashMap<String, Set<InspectionProfileEntry>>();
-    for (InspectionProfileEntry entry : profileEntries) {
-      final String groupName = entry.getGroupDisplayName();
-      Set<InspectionProfileEntry> groupInspections = map.get(groupName);
+    final InspectionToolWrapper[] toolWrappers = InspectionProfileImpl.getDefaultProfile().getInspectionTools(null);
+    final Map<String, Set<InspectionToolWrapper>> map = new HashMap<String, Set<InspectionToolWrapper>>();
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      final String groupName = toolWrapper.getGroupDisplayName();
+      Set<InspectionToolWrapper> groupInspections = map.get(groupName);
       if (groupInspections == null) {
-        groupInspections = new HashSet<InspectionProfileEntry>();
+        groupInspections = new HashSet<InspectionToolWrapper>();
         map.put(groupName, groupInspections);
       }
-      groupInspections.add(entry);
+      groupInspections.add(toolWrapper);
     }
 
     FileWriter fw = new FileWriter(myOutputPath);
@@ -460,17 +457,17 @@ public class InspectionApplication {
       for (String groupName : map.keySet()) {
         xmlWriter.startNode("group");
         xmlWriter.addAttribute("name", groupName);
-        final Set<InspectionProfileEntry> entries = map.get(groupName);
-        for (InspectionProfileEntry entry : entries) {
+        final Set<InspectionToolWrapper> entries = map.get(groupName);
+        for (InspectionToolWrapper toolWrapper : entries) {
           xmlWriter.startNode("inspection");
-          xmlWriter.addAttribute("shortName", entry.getShortName());
-          xmlWriter.addAttribute("displayName", entry.getDisplayName());
-          final String description = entry.loadDescription();
+          xmlWriter.addAttribute("shortName", toolWrapper.getShortName());
+          xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
+          final String description = toolWrapper.loadDescription();
           if (description != null) {
             xmlWriter.setValue(description);
           }
           else {
-            LOG.error(entry.getShortName() + " descriptionUrl==" + entry.getDescriptionUrl());
+            LOG.error(toolWrapper.getShortName() + " descriptionUrl==" + toolWrapper);
           }
           xmlWriter.endNode();
         }

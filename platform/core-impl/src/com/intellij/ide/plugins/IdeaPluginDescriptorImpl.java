@@ -115,7 +115,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @NotNull
   public static String intern(@NotNull String s) {
-    return ourInterner.intern(s);
+    synchronized (ourInterner) {
+      return ourInterner.intern(s);
+    }
   }
 
   public static void internJDOMElement(@NotNull Element rootElement) {

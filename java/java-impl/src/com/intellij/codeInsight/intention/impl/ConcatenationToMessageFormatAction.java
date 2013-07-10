@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -60,7 +59,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     if (concatenation == null) return;
     StringBuilder formatString = new StringBuilder();
     List<PsiExpression> args = new ArrayList<PsiExpression>();
-    buildMessageFormatString(concatenation, formatString, args);
+    PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = (PsiMethodCallExpression)
@@ -85,47 +84,6 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     call = (PsiMethodCallExpression) JavaCodeStyleManager.getInstance(project).shortenClassReferences(call);
     call = (PsiMethodCallExpression) CodeStyleManager.getInstance(element.getManager().getProject()).reformat(call);
     concatenation.replace(call);
-  }
-
-  public static void buildMessageFormatString(PsiExpression expression,
-                                              StringBuilder formatString,
-                                              List<PsiExpression> args)
-    throws IncorrectOperationException {
-    PsiConcatenationUtil.buildFormatString(expression, formatString, args, false);
-
-  }
-
-  private static void appendArgument(List<PsiExpression> args, PsiExpression argument, StringBuilder formatString) throws IncorrectOperationException {
-    formatString.append("{").append(args.size()).append("}");
-    args.add(getBoxedArgument(argument));
-  }
-
-  private static PsiExpression getBoxedArgument(PsiExpression arg) throws IncorrectOperationException {
-    arg = PsiUtil.deparenthesizeExpression(arg);
-    assert arg != null;
-    if (PsiUtil.isLanguageLevel5OrHigher(arg)) {
-      return arg;
-    }
-    final PsiType type = arg.getType();
-    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiType.NULL)) {
-      return arg;
-    }
-    final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
-    final String boxedQName = primitiveType.getBoxedTypeName();
-    if (boxedQName == null) {
-      return arg;
-    }
-    final GlobalSearchScope resolveScope = arg.getResolveScope();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(arg.getProject());
-    final PsiJavaCodeReferenceElement ref = factory.createReferenceElementByFQClassName(boxedQName, resolveScope);
-    final PsiNewExpression newExpr = (PsiNewExpression)factory.createExpressionFromText("new A(b)", null);
-    final PsiElement classRef = newExpr.getClassReference();
-    assert classRef != null;
-    classRef.replace(ref);
-    final PsiExpressionList argumentList = newExpr.getArgumentList();
-    assert argumentList != null;
-    argumentList.getExpressions()[0].replace(arg);
-    return newExpr;
   }
 
   @Override

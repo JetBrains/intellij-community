@@ -19,6 +19,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
@@ -27,13 +28,6 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   private final PsiType type;
   private final PsiType defaultType;
-  private boolean myInsertExplicitTypeParams;
-
-  int getDimCount() {
-    return dimCount;
-  }
-
-  private final int dimCount;
 
   @Override
   public int getKind() {
@@ -58,33 +52,15 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   private PsiMethod myCalledMethod;
 
 
-  public ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
+  public ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
     this.type = type;
     this.kind = kind;
 
     this.myTailType = myTailType;
-    this.dimCount = dimCount;
-
-    if (type == defaultType && type instanceof PsiClassType) {
-      final PsiClassType psiClassType = (PsiClassType)type;
-      final PsiClass psiClass = psiClassType.resolve();
-      if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-        final PsiType[] parameters = psiClassType.getParameters();
-        PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-        if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType && typeParameters.length == 1) {
-          final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
-          if (bound instanceof PsiClassType) {
-            defaultType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
-              .createType(psiClass, PsiSubstitutor.EMPTY.put(typeParameters[0], bound));
-          }
-        }
-      }
-    }
-
     this.defaultType = defaultType;
 
-    assert type.isValid();
-    assert defaultType.isValid();
+    PsiUtil.ensureValidType(type);
+    PsiUtil.ensureValidType(defaultType);
   }
 
   @Override
@@ -99,30 +75,13 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   @Override
   @NotNull
   public PsiType getType () {
-    PsiType t = type;
-    int dims = dimCount;
-
-    while (dims-- > 0) t = t.createArrayType();
-    return t;
+    return type;
   }
 
   @Override
   @NotNull
   public PsiType getDefaultType () {
-    PsiType t = defaultType;
-    int dims = dimCount;
-
-    while (dims-- > 0) t = t.createArrayType();
-    return t;
-  }
-
-  @Override
-  public boolean isInsertExplicitTypeParams() {
-    return myInsertExplicitTypeParams;
-  }
-
-  public void setInsertExplicitTypeParams(final boolean insertExplicitTypeParams) {
-    this.myInsertExplicitTypeParams = insertExplicitTypeParams;
+    return defaultType;
   }
 
   public boolean equals(final Object o) {
@@ -131,20 +90,18 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     final ExpectedTypeInfoImpl that = (ExpectedTypeInfoImpl)o;
 
-    if (dimCount != that.dimCount) return false;
     if (kind != that.kind) return false;
-    if (defaultType != null ? !defaultType.equals(that.defaultType) : that.defaultType != null) return false;
+    if (!defaultType.equals(that.defaultType)) return false;
     if (myTailType != null ? !myTailType.equals(that.myTailType) : that.myTailType != null) return false;
-    if (type != null ? !type.equals(that.type) : that.type != null) return false;
+    if (!type.equals(that.type)) return false;
 
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = (type != null ? type.hashCode() : 0);
-    result = 31 * result + (defaultType != null ? defaultType.hashCode() : 0);
-    result = 31 * result + dimCount;
+    result = (type.hashCode());
+    result = 31 * result + (defaultType.hashCode());
     result = 31 * result + kind;
     result = 31 * result + (myTailType != null ? myTailType.hashCode() : 0);
     return result;
@@ -157,17 +114,15 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "' dims='" + dimCount+ "']";
+    return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "']";
   }
 
   @Override
   public ExpectedTypeInfo[] intersect(ExpectedTypeInfo info) {
     ExpectedTypeInfoImpl info1 = (ExpectedTypeInfoImpl)info;
-    LOG.assertTrue(!(type instanceof PsiArrayType) && !(info1.type instanceof PsiArrayType));
 
     if (kind == TYPE_STRICTLY) {
       if (info1.kind == TYPE_STRICTLY) {
-        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY_ARRAY;
         if (info1.type.equals(type)) return new ExpectedTypeInfoImpl[] {this};
       }
       else {
@@ -176,12 +131,10 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     }
     else if (kind == TYPE_OR_SUBTYPE) {
       if (info1.kind == TYPE_STRICTLY) {
-        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY_ARRAY;
         if (type.isAssignableFrom(info1.type)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else if (info1.kind == TYPE_OR_SUBTYPE) {
-        PsiType type = dimCount == info1.dimCount ? this.type : getType();
-        PsiType otherType = dimCount == info1.dimCount ? info1.type : info1.getType();
+        PsiType otherType = info1.type;
         if (type.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {info1};
         else if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
       }
@@ -191,17 +144,14 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     }
     else if (kind == TYPE_OR_SUPERTYPE) {
       if (info1.kind == TYPE_STRICTLY) {
-        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY_ARRAY;
         if (info1.type.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else if (info1.kind == TYPE_OR_SUBTYPE) {
-        PsiType type = dimCount == info1.dimCount ? this.type : getType();
-        PsiType otherType = dimCount == info1.dimCount ? info1.type : info1.getType();
+        PsiType otherType = info1.type;
         if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
       }
       else if (info1.kind == TYPE_OR_SUPERTYPE) {
-        PsiType type = dimCount == info1.dimCount ? this.type : getType();
-        PsiType otherType = dimCount == info1.dimCount ? info1.type : info1.getType();
+        PsiType otherType = info1.type;
         if (type.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {this};
         else if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
       }
@@ -215,10 +165,4 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     return ExpectedTypeInfo.EMPTY_ARRAY;
   }
-
-  @Override
-  public boolean isArrayTypeInfo () {
-    return dimCount > 0;
-  }
-
 }

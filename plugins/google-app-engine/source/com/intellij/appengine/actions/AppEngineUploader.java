@@ -16,6 +16,7 @@
 package com.intellij.appengine.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.appengine.descriptor.dom.AppEngineWebApp;
 import com.intellij.appengine.facet.AppEngineAccountDialog;
 import com.intellij.appengine.facet.AppEngineFacet;
@@ -105,7 +106,9 @@ public class AppEngineUploader {
   }
 
   @Nullable
-  public static AppEngineUploader createUploader(@NotNull Project project, @NotNull Artifact artifact) {
+  public static AppEngineUploader createUploader(@NotNull Project project,
+                                                 @NotNull Artifact artifact,
+                                                 @Nullable AppEngineServerConfiguration configuration) {
     final String explodedPath = artifact.getOutputPath();
     if (explodedPath == null) {
       Messages.showErrorDialog(project, "Output path isn't specified for '" + artifact.getName() + "' artifact", CommonBundle.getErrorTitle());
@@ -150,7 +153,7 @@ public class AppEngineUploader {
     String password = null;
     String email = null;
     try {
-      email = AppEngineAccountDialog.getStoredEmail(project);
+      email = AppEngineAccountDialog.getStoredEmail(configuration, project);
       password = AppEngineAccountDialog.getStoredPassword(project, email);
     }
     catch (PasswordSafeException e) {
@@ -158,7 +161,7 @@ public class AppEngineUploader {
       LOG.info(e);
     }
     if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
-      final AppEngineAccountDialog dialog = new AppEngineAccountDialog(project);
+      final AppEngineAccountDialog dialog = new AppEngineAccountDialog(project, configuration);
       dialog.show();
       if (!dialog.isOK()) return null;
 

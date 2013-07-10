@@ -118,7 +118,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
           final PsiClass containingClass = field.getContainingClass();
           final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propName, isStatic, false);
-          if (setter != null) {
+          if (setter != null && setter.isPhysical()) {
             final PsiParameter[] parameters = setter.getParameterList().getParameters();
             assert parameters.length == 1 : setter.getText();
             final PsiParameter parameter = parameters[0];

@@ -7,6 +7,18 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+import os
+import sys
+
+libdir = '@LIBDIR@'
+
+if libdir != '@' 'LIBDIR' '@':
+    if not os.path.isabs(libdir):
+        libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                              libdir)
+        libdir = os.path.abspath(libdir)
+    sys.path.insert(0, libdir)
+
 # enable importing on demand to reduce startup time
 try:
     from mercurial import demandimport; demandimport.enable()
@@ -17,11 +29,10 @@ except ImportError:
     sys.stderr.write("(check your install and PYTHONPATH)\n")
     sys.exit(-1)
 
-import sys
 import mercurial.util
 import mercurial.dispatch
 
 for fp in (sys.stdin, sys.stdout, sys.stderr):
-    mercurial.util.set_binary(fp)
+    mercurial.util.setbinary(fp)
 
 mercurial.dispatch.run()

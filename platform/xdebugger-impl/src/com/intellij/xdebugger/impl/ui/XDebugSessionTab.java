@@ -24,7 +24,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.LayoutAwareExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
@@ -47,6 +46,7 @@ import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction;
+import com.intellij.xdebugger.ui.XDebugLayoutCustomizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,10 +136,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
+    XDebugLayoutCustomizer layoutCustomizer = debugProcess.getLayoutCustomizer();
     final Content consoleContent;
-    if (myConsole instanceof LayoutAwareExecutionConsole) {
-      LayoutAwareExecutionConsole layoutConsole = (LayoutAwareExecutionConsole) myConsole;
-      consoleContent = layoutConsole.buildContent(myUi);
+    if (layoutCustomizer != null) {
+      consoleContent = layoutCustomizer.registerConsoleContent(myConsole, myUi);
     }
     else {
       consoleContent = createConsoleContent();
@@ -148,6 +148,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     attachNotificationTo(consoleContent);
 
     debugProcess.registerAdditionalContent(myUi);
+    if (layoutCustomizer != null) {
+      layoutCustomizer.registerAdditionalContent(myUi);
+    }
     RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -157,8 +160,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     if (runner != null && env != null) {
-      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(),
-                                                      myRunContentDescriptor, env);
+      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, env);
       leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());
     }
@@ -219,6 +221,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
 
+  @Override
   @Nullable
   public RunContentDescriptor getRunContentDescriptor() {
     return myRunContentDescriptor;

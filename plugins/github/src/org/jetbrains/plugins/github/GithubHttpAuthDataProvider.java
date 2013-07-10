@@ -15,12 +15,9 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import git4idea.jgit.GitHttpAuthDataProvider;
-import git4idea.jgit.GitHttpCredentialsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,23 +29,17 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
   @Nullable
   @Override
   public AuthData getAuthData(@NotNull String url) {
-    if (!GithubUtil.isGithubUrl(url)) {
+    if (!GithubUrlUtil.isGithubUrl(url)) {
       return null;
     }
 
-    String login = GithubSettings.getInstance().getLogin();
+    GithubSettings settings = GithubSettings.getInstance();
+    String login = settings.getLogin();
     if (StringUtil.isEmptyOrSpaces(login)) {
       return null;
     }
 
-    String key = GithubSettings.GITHUB_SETTINGS_PASSWORD_KEY;
-    try {
-      return new AuthData(login, PasswordSafe.getInstance().getPassword(null, GithubSettings.class, key));
-    }
-    catch (PasswordSafeException e) {
-      GithubUtil.LOG.info("Couldn't get the password for key [" + key + "]", e);
-      return null;
-    }
+    return new AuthData(login, settings.getPassword());
   }
 
 }

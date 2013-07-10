@@ -567,9 +567,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       else if (psiElement instanceof PsiDirectory) {
         final PsiElement[] children = psiElement.getChildren();
         if (children.length > 0) {
-          for (PsiElement child : children) {
-            processNodeCreation(child);
-          }
+          queueRefreshScope(getCurrentScope(), (PsiDirectory)psiElement);
         } else {
           final PackageDependenciesNode node = myBuilder.addDirNode((PsiDirectory)psiElement);
           if (node != null) {
@@ -685,7 +683,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
           }, false);
         }
         else if (propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
-          queueRefreshScope(scope, (PsiDirectory)element);
+          final PackageSet value = getCurrentScope().getValue();
+          if (!(value instanceof PackageSetBase) || ((PackageSetBase)value).contains(((PsiDirectory)element).getVirtualFile(), myProject, myDependencyValidationManager)) {
+            queueRefreshScope(scope, (PsiDirectory)element);
+          }
         }
       }
     }

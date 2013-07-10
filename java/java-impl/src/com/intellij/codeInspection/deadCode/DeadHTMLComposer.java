@@ -26,9 +26,10 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import org.jetbrains.annotations.NonNls;
@@ -40,12 +41,11 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class DeadHTMLComposer extends HTMLComposerImpl {
-  private final InspectionTool myTool;
+  private final InspectionToolPresentation myToolPresentation;
   private final HTMLJavaHTMLComposer myComposer;
 
-  public DeadHTMLComposer(InspectionTool tool) {
-    super();
-    myTool = tool;
+  public DeadHTMLComposer(@NotNull InspectionToolPresentation presentation) {
+    myToolPresentation = presentation;
     myComposer = getExtension(HTMLJavaHTMLComposer.COMPOSER);
   }
 
@@ -64,7 +64,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
         //noinspection HardCodedStringLiteral
         buf.append("<br><br>");
-        appendResolution(buf, myTool, refElement);
+        appendResolution(buf, refElement, DescriptorComposer.quickFixTexts(refElement, myToolPresentation));
         refElement.accept(new RefJavaVisitor() {
           @Override public void visitClass(@NotNull RefClass aClass) {
             appendClassInstantiations(buf, aClass);
@@ -339,8 +339,8 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   private void appendCallesList(RefElement element, StringBuffer buf, Set<RefElement> mentionedElements, boolean appendCallees){
-    final Set<RefElement> possibleChildren = getPossibleChildren(new RefElementNode(element, myTool), element);
-    if (possibleChildren.size() > 0) {
+    final Set<RefElement> possibleChildren = getPossibleChildren(new RefElementNode(element, myToolPresentation), element);
+    if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
       }

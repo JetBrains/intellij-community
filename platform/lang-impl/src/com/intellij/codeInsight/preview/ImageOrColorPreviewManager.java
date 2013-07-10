@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,181 +16,160 @@
 
 package com.intellij.codeInsight.preview;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.LightweightHint;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.lang.ref.WeakReference;
 
-import static com.intellij.codeInsight.hint.HintManagerImpl.getHintPosition;
+public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener {
+  private static final Logger LOG = Logger.getInstance(ImageOrColorPreviewManager.class);
 
-/**
- * @author spleaner
- */
-public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener, KeyListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.html.preview.ImageOrColorPreviewManager");
-  private static final String QUEUE_NAME = "ImageOrColorPreview";
-  private static final int HINT_HIDE_FLAGS = HintManager.HIDE_BY_ANY_KEY |
-                                             HintManager.HIDE_BY_OTHER_HINT |
-                                             HintManager.HIDE_BY_SCROLLING |
-                                             HintManager.HIDE_BY_TEXT_CHANGE |
-                                             HintManager.HIDE_IF_OUT_OF_EDITOR;
-  @Nullable private MergingUpdateQueue myQueue;
-  @Nullable private Editor myEditor;
-  @Nullable private PsiFile myFile;
-  @Nullable private LightweightHint myHint;
-  @Nullable private PsiElement myElement;
+  private static final Key<KeyListener> EDITOR_LISTENER_ADDED = Key.create("previewManagerListenerAdded");
 
-  public ImageOrColorPreviewManager(@NotNull final TextEditor editor, @NotNull Project project) {
-    myEditor = editor.getEditor();
+  private final Alarm alarm = new Alarm();
 
-    myEditor.addEditorMouseMotionListener(this);
-    myEditor.getContentComponent().addKeyListener(this);
+  @Nullable
+  private WeakReference<PsiElement> elementRef;
 
-    Document document = myEditor.getDocument();
-    myFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+  public ImageOrColorPreviewManager(EditorFactory editorFactory) {
+    // we don't use multicaster because we don't want to serve all editors - only supported
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
+      @Override
+      public void editorCreated(@NotNull EditorFactoryEvent event) {
+        registerListeners(event.getEditor());
+      }
 
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        Editor editor = event.getEditor();
+        if (editor.isOneLineMode()) {
+          return;
+        }
 
-    final JComponent component = editor.getEditor().getComponent();
-    myQueue = new MergingUpdateQueue(QUEUE_NAME, 100, component.isShowing(), component);
-    Disposer.register(this, new UiNotifyConnector(editor.getComponent(), myQueue));
+        KeyListener keyListener = editor.getUserData(EDITOR_LISTENER_ADDED);
+        if (keyListener != null) {
+          editor.getContentComponent().removeKeyListener(keyListener);
+          editor.removeEditorMouseMotionListener(ImageOrColorPreviewManager.this);
+        }
+      }
+    }, this);
   }
 
-  @Override
-  public void keyTyped(final KeyEvent e) {
-  }
+  private void registerListeners(final Editor editor) {
+    if (editor.isOneLineMode()) {
+      return;
+    }
 
-  @Override
-  public void keyPressed(@NotNull final KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
-      if (myEditor != null) {
-        final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-        if (pointerInfo != null) {
-          final Point location = pointerInfo.getLocation();
-          SwingUtilities.convertPointFromScreen(location, myEditor.getContentComponent());
+    Project project = editor.getProject();
+    if (project == null || project.isDisposed()) {
+      return;
+    }
 
-          if (myQueue != null) {
-            myQueue.cancelAllUpdates();
-            myQueue.queue(new PreviewUpdate(this, location));
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (psiFile == null || psiFile instanceof PsiCompiledElement || !isSupportedFile(psiFile)) {
+      return;
+    }
+
+    editor.addEditorMouseMotionListener(this);
+
+    KeyListener keyListener = new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_SHIFT && !editor.isOneLineMode()) {
+          PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+          if (pointerInfo != null) {
+            Point location = pointerInfo.getLocation();
+            SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
+            alarm.cancelAllRequests();
+            alarm.addRequest(new PreviewRequest(location, editor), 100);
           }
         }
       }
-    }
+    };
+    editor.getContentComponent().addKeyListener(keyListener);
+
+    editor.putUserData(EDITOR_LISTENER_ADDED, keyListener);
   }
 
-  @Override
-  public void keyReleased(final KeyEvent e) {
+  private static boolean isSupportedFile(PsiFile psiFile) {
+    for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+      if (provider.isSupportedFile(psiFile)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
-  public Editor getEditor() {
-    return myEditor;
-  }
-
-  @Nullable
-  private PsiElement getPsiElementAt(@NotNull final Point point) {
-    final LogicalPosition position = getLogicalPosition(point);
-    if (myEditor != null && myFile != null && !(myFile instanceof PsiCompiledElement)) {
-      return myFile.getViewProvider().findElementAt(myEditor.logicalPositionToOffset(position));
+  private static PsiElement getPsiElementAt(Point point, Editor editor) {
+    if (editor.isDisposed()) {
+      return null;
     }
 
-    return null;
-  }
-
-  @NotNull
-  private LogicalPosition getLogicalPosition(@NotNull final Point point) {
-    return myEditor != null ? myEditor.xyToLogicalPosition(point) : new LogicalPosition(0, 0);
-  }
-
-  private void setCurrentHint(@Nullable final LightweightHint hint, final PsiElement element) {
-    if (hint != null) {
-      myHint = hint;
-      myElement = element;
+    Project project = editor.getProject();
+    if (project == null || project.isDisposed()) {
+      return null;
     }
-  }
 
-  private void showHint(@NotNull final LightweightHint hint,
-                        @NotNull final PsiElement element,
-                        @NotNull Editor editor,
-                        @NotNull Point point) {
-    if (element != myElement && element.isValid()) {
-      hideCurrentHintIfAny();
-      setCurrentHint(hint, element);
-
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor,
-                                                       getHintPosition(hint, editor, getLogicalPosition(point), HintManager.RIGHT_UNDER),
-                                                       HINT_HIDE_FLAGS, 0, false);
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (psiFile == null || psiFile instanceof PsiCompiledElement) {
+      return null;
     }
-  }
-
-  private void hideCurrentHindIfOutOfElement(final PsiElement e) {
-    if (myHint != null && e != myElement) {
-      hideCurrentHintIfAny();
-    }
-  }
-
-  private void hideCurrentHintIfAny() {
-    if (myHint != null) {
-      myHint.hide();
-      myHint = null;
-      myElement = null;
-    }
+    return InjectedLanguageUtil.findElementAtNoCommit(psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
   }
 
   @Override
   public void dispose() {
-    if (myEditor != null) {
-      myEditor.removeEditorMouseMotionListener(this);
-      myEditor.getContentComponent().removeKeyListener(this);
-    }
-
-    if (myQueue != null) {
-      myQueue.cancelAllUpdates();
-      myQueue.hideNotify();
-    }
-
-    myQueue = null;
-    myEditor = null;
-    myFile = null;
-    myHint = null;
+    alarm.cancelAllRequests();
+    elementRef = null;
   }
 
   @Override
-  public void mouseMoved(@NotNull EditorMouseEvent e) {
-    if (myQueue != null) {
-      myQueue.cancelAllUpdates();
+  public void mouseMoved(@NotNull EditorMouseEvent event) {
+    Editor editor = event.getEditor();
+    if (editor.isOneLineMode()) {
+      return;
     }
-    if (myHint == null && e.getMouseEvent().getModifiers() == InputEvent.SHIFT_MASK) {
-      myQueue.queue(new PreviewUpdate(this, e.getMouseEvent().getPoint()));
+
+    alarm.cancelAllRequests();
+    Point point = event.getMouseEvent().getPoint();
+    if (elementRef == null && event.getMouseEvent().isShiftDown()) {
+      alarm.addRequest(new PreviewRequest(point, editor), 100);
     }
-    else {
-      hideCurrentHindIfOutOfElement(getPsiElementAt(e.getMouseEvent().getPoint()));
+    else if (elementRef != null && elementRef.get() != getPsiElementAt(point, editor)) {
+      PsiElement element = elementRef.get();
+      elementRef = null;
+      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+        try {
+          provider.hide(element, editor);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 
@@ -199,62 +178,34 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     // nothing
   }
 
-  @Nullable
-  private static LightweightHint getHint(@NotNull PsiElement element) {
-    for (PreviewHintProvider hintProvider : Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
-      JComponent preview;
-      try {
-        preview = hintProvider.getPreviewComponent(element);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        continue;
-      }
-      if (preview != null) {
-        return new LightweightHint(preview);
-      }
-    }
+  private final class PreviewRequest implements Runnable {
+    private final Point point;
+    private final Editor editor;
 
-    return null;
-  }
-
-  private static final class PreviewUpdate extends Update {
-    private final ImageOrColorPreviewManager myManager;
-    @NotNull private final Point myPoint;
-
-    public PreviewUpdate(@NonNls final ImageOrColorPreviewManager manager, @NotNull final Point point) {
-      super(manager);
-
-      myManager = manager;
-      myPoint = point;
+    public PreviewRequest(Point point, Editor editor) {
+      this.point = point;
+      this.editor = editor;
     }
 
     @Override
     public void run() {
-      final PsiElement element = myManager.getPsiElementAt(myPoint);
-      final Editor editor = myManager.getEditor();
-      if (editor != null && element != null && element.isValid()) {
-        if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument())) {
-          return;
-        }
+      PsiElement element = getPsiElementAt(point, editor);
+      if (element == null || !element.isValid() || (elementRef != null && elementRef.get() == element)) {
+        return;
+      }
+      if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument()) || DumbService.getInstance(element.getProject()).isDumb()) {
+        return;
+      }
 
-        if (DumbService.getInstance(element.getProject()).isDumb()) {
-          return;
+      elementRef = new WeakReference<PsiElement>(element);
+      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+        try {
+          provider.show(element, editor, point);
         }
-
-        final LightweightHint hint = getHint(element);
-        if (hint != null) {
-          myManager.showHint(hint, element, editor, myPoint);
-        }
-        else {
-          myManager.hideCurrentHintIfAny();
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
-    }
-
-    @Override
-    public boolean canEat(final Update update) {
-      return true;
     }
   }
 }

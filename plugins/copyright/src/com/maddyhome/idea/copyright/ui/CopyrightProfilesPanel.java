@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
@@ -167,7 +166,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
         addProfileNode(copyrightProfile);
       }
     });
-    result.add(new MyDeleteAction(forAll(Conditions.alwaysTrue())));
+    result.add(new MyDeleteAction());
     result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);

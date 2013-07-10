@@ -149,6 +149,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testLastResourceVariableWithFinallyBlock() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    doSingleFileTest();
+  }
+
   public void testLastTypeParam() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doSingleFileTest();

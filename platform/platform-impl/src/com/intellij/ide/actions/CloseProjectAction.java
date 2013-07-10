@@ -42,7 +42,7 @@ public class CloseProjectAction extends AnAction implements DumbAware {
     Project project = event.getData(PlatformDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     if (ProjectAttachProcessor.canAttachToProject() && project != null && ModuleManager.getInstance(project).getModules().length > 1) {
-      presentation.setText("Close Proj_ects in Current Window");
+      presentation.setText("Close Pro_jects in Current Window");
     }
     else {
       presentation.setText("Close Pro_ject");

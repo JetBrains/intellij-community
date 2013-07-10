@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
@@ -34,11 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RefCountHolder {
@@ -55,34 +50,35 @@ public class RefCountHolder {
   private volatile ProgressIndicator analyzedUnder;
 
   private static class HolderReference extends SoftReference<RefCountHolder> {
-    @SuppressWarnings("UnusedDeclaration")
-    private volatile RefCountHolder myHardRef; // to prevent gc
-    // number of live references to RefCountHolder. Once it reaches zero, hard ref is cleared
-    // the counter is used instead of a flag because multiple passes can be running simultaneously (one actual and several canceled winding down)
-    // and there is a chance they overlap the usage of RCH
-    private final AtomicInteger myRefCount = new AtomicInteger();
+    // Map holding hard references to RefCountHolder for each highlighting pass (identified by its progress indicator)
+    // there can be multiple passes running simultaneously (one actual and several passes just canceled and winding down but still alive)
+    // so there is a chance they overlap the usage of RCH
+    // As soon as everybody finished using RCH, map become empty and the RefCountHolder is eligible for gc
+    private final Map<ProgressIndicator, RefCountHolder> map = new ConcurrentHashMap<ProgressIndicator, RefCountHolder>();
 
     public HolderReference(@NotNull RefCountHolder holder) {
       super(holder);
-      myHardRef = holder;
     }
 
-    private void changeLivenessBy(int delta) {
-      if (myRefCount.addAndGet(delta) == 0) {
-        myHardRef = null;
-      }
-      else if (myHardRef == null) {
-        myHardRef = get();
-      }
+    private void acquire(@NotNull ProgressIndicator indicator) {
+      RefCountHolder holder = get();
+      assert holder != null: "no way";
+      map.put(indicator, holder);
+      holder = get();
+      assert holder != null: "can't be!";
+    }
+
+    private RefCountHolder release(@NotNull ProgressIndicator indicator) {
+      return map.remove(indicator);
     }
   }
 
   private static final Key<HolderReference> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
-  @NotNull
-  private static Pair<RefCountHolder, HolderReference> getInstance(@NotNull PsiFile file, boolean create) {
+
+  private static RefCountHolder getInstance(@NotNull PsiFile file, @NotNull ProgressIndicator indicator, boolean acquire) {
     HolderReference ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     RefCountHolder holder = ref == null ? null : ref.get();
-    if (holder == null && create) {
+    if (holder == null && acquire) {
       holder = new RefCountHolder(file);
       HolderReference newRef = new HolderReference(holder);
       while (true) {
@@ -99,31 +95,30 @@ public class RefCountHolder {
         }
       }
     }
-    return Pair.create(holder, ref);
+    if (ref != null) {
+      if (acquire) {
+        ref.acquire(indicator);
+      }
+      else {
+        ref.release(indicator);
+      }
+    }
+    return holder;
   }
 
   @NotNull
-  public static RefCountHolder startUsing(@NotNull PsiFile file) {
-    Pair<RefCountHolder, HolderReference> pair = getInstance(file, true);
-    HolderReference reference = pair.second;
-    reference.changeLivenessBy(1); // make sure RefCountHolder won't be gced during highlighting
-    log("startUsing: " + pair.first.myState+" for "+file);
-    return pair.first;
+  public static RefCountHolder startUsing(@NotNull PsiFile file, @NotNull ProgressIndicator indicator) {
+    return getInstance(file, indicator, true);
   }
 
   @Nullable("might be gced")
-  public static RefCountHolder endUsing(@NotNull PsiFile file) {
-    Pair<RefCountHolder, HolderReference> pair = getInstance(file, false);
-    HolderReference reference = pair.second;
-    reference.changeLivenessBy(-1); // no longer needed, can be cleared
-    RefCountHolder holder = pair.first;
-    log("endUsing: " + (holder == null ? null : holder.myState)+" for "+file);
-    return holder;
+  public static RefCountHolder endUsing(@NotNull PsiFile file, @NotNull ProgressIndicator indicator) {
+    return getInstance(file, indicator, false);
   }
 
   private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
-    log("c: created: " + myState.get()+" for "+file);
+    log("c: created: ", myState.get(), " for ", file);
   }
 
   private void clear() {
@@ -284,10 +279,10 @@ public class RefCountHolder {
     ProgressIndicator old = myState.get();
     if (old != VIRGIN && old != READY) return false;
     if (!myState.compareAndSet(old, indicator)) {
-      log("a: failed to change " + old + "->" + indicator);
+      log("a: failed to change ", old, "->", indicator);
       return false;
     }
-    log("a: changed " + old + "->" + indicator);
+    log("a: changed ", old, "->", indicator);
     analyzedUnder = null;
     boolean completed = false;
     try {
@@ -308,22 +303,22 @@ public class RefCountHolder {
       ProgressIndicator resultState = completed ? READY : VIRGIN;
       boolean set = myState.compareAndSet(indicator, resultState);
       assert set : myState.get();
-      log("a: changed after analyze" + indicator + "->" + resultState);
+      log("a: changed after analyze", indicator, "->", resultState);
     }
     return true;
   }
 
-  private static void log(@NonNls String s) {
-    //System.err.println("RFC: "+s);
+  private static void log(@NonNls Object... s) {
+    //System.err.println("RFC: "+ Arrays.asList(s));
   }
 
   public boolean retrieveUnusedReferencesInfo(@NotNull ProgressIndicator indicator, @NotNull Runnable analyze) {
     ProgressIndicator old = myState.get();
     if (!myState.compareAndSet(READY, indicator)) {
-      log("r: failed to change " + old + "->" + indicator);
+      log("r: failed to change ", old, "->", indicator);
       return false;
     }
-    log("r: changed " + old + "->" + indicator);
+    log("r: changed ", old, "->", indicator);
     try {
       if (analyzedUnder != indicator) {
         return false;
@@ -333,7 +328,7 @@ public class RefCountHolder {
     finally {
       boolean set = myState.compareAndSet(indicator, READY);
       assert set : myState.get();
-      log("r: changed back " + indicator + "->" + READY);
+      log("r: changed back ", indicator, "->", READY);
     }
     return  true;
   }

@@ -17,29 +17,36 @@ package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
+import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -223,8 +230,66 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), (PsiFileImpl)containingFileByTree, oldLength, true);
       }
     }
+    if (containingFileByTree != null) {
+      boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
+                             ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class);
+      if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) { 
+        reparseParallelTrees(containingFileByTree);
+      }
+    }
 
     if (progressIndicator != null) progressIndicator.finishNonCancelableSection();
+  }
+  
+  private void reparseParallelTrees(PsiFile changedFile) {
+    List<PsiFile> allFiles = changedFile.getViewProvider().getAllFiles();
+    if (allFiles.size() <= 1) {
+      return;
+    }
+    
+    String newText = changedFile.getNode().getText();
+    for (final PsiFile file : allFiles) {
+      if (file != changedFile) {
+        FileElement fileElement = ((PsiFileImpl)file).getTreeElement();
+        if (fileElement != null) {
+          String oldText = fileElement.getText();
+          try {
+            reparseFile(file, newText, oldText);
+          }
+          finally {
+            TextBlock.get(file).clear();
+          }
+        }
+      }
+    }
+  }
+
+  private void reparseFile(final PsiFile file, String newText, String oldText) {
+    if (oldText.equals(newText)) return;
+    
+    PsiToDocumentSynchronizer synchronizer =((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getSynchronizer();
+    int changeStart = StringUtil.commonPrefixLength(oldText, newText);
+    int changeEnd = oldText.length() - StringUtil.commonSuffixLength(oldText, newText);
+    TextRange changedPsiRange = DocumentCommitProcessor.getChangedPsiRange(file, changeStart, changeEnd, newText.length());
+    final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, changedPsiRange, newText, new EmptyProgressIndicator());
+    synchronizer.setIgnorePsiEvents(true);
+    try {
+      CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
+        @Override
+        public void run() {
+          runTransaction(new PomTransactionBase(file, getModelAspect(TreeAspect.class)) {
+            @Nullable
+            @Override
+            public PomModelEvent runInner() throws IncorrectOperationException {
+              return new TreeAspectEvent(PomModelImpl.this, log.performActualPsiChange(file));
+            }
+          });
+        }
+      });
+    }
+    finally {
+      synchronizer.setIgnorePsiEvents(false);
+    }
   }
 
   private void startTransaction(final PomTransaction transaction) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -81,15 +80,13 @@ public class QuickFixWrapper implements IntentionAction {
     //if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     // consider all local quick fixes do it themselves
 
+    final PsiElement element = myDescriptor.getPsiElement();
+    final PsiFile fileForUndo = element == null ? null : element.getContainingFile();
     LocalQuickFix fix = getFix();
     fix.applyFix(project, myDescriptor);
     DaemonCodeAnalyzer.getInstance(project).restart();
-    final PsiElement element = myDescriptor.getPsiElement();
-    if (element != null) {
-      final PsiFile fileForUndo = element.getContainingFile();
-      if (!Comparing.equal(fileForUndo, file)) {
-        UndoUtil.markPsiFileForUndo(fileForUndo);
-      }
+    if (fileForUndo != null && !fileForUndo.equals(file)) {
+      UndoUtil.markPsiFileForUndo(fileForUndo);
     }
   }
 

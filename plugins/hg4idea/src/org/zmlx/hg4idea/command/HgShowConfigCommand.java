@@ -15,6 +15,8 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -25,26 +27,14 @@ import java.util.Map;
 
 public class HgShowConfigCommand {
 
-  private final Project project;
+  @NotNull private final Project project;
 
-  public HgShowConfigCommand(Project project) {
+  public HgShowConfigCommand(@NotNull Project project) {
     this.project = project;
   }
 
-  public String getDefaultPath(VirtualFile repo) {
-    return execute(repo).get("paths.default");
-  }
-
-  public String getDefaultPushPath(VirtualFile repo) {
-    final Map<String, String> map = execute(repo);
-    String path = map.get("paths.default-push");
-    if (path == null) {
-      path = map.get("paths.default");
-    }
-    return path;
-  }
-
-  public Map<String, String> execute(VirtualFile repo) {
+  @NotNull
+  public Map<String, Map<String, String>> execute(@Nullable VirtualFile repo) {
     if (repo == null) {
       return Collections.emptyMap();
     }
@@ -57,14 +47,28 @@ public class HgShowConfigCommand {
       return Collections.emptyMap();
     }
 
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, Map<String, String>> configMap = new HashMap<String, Map<String, String>>();
     for (String line : result.getOutputLines()) {
       List<String> option = StringUtil.split(line, "=", true, false);
       if (option.size() == 2) {
-        options.put(option.get(0).trim(), option.get(1).trim());
+        String sectionAndName = option.get(0).trim();
+        String value = option.get(1).trim();
+        int dotIndex = sectionAndName.indexOf('.');
+
+        if (dotIndex > 0) {
+          String sectionName = sectionAndName.substring(0, dotIndex);
+          String optionName = sectionAndName.substring(dotIndex + 1, sectionAndName.length());
+          if (configMap.containsKey(sectionName)) {
+            configMap.get(sectionName).put(optionName, value);
+          }
+          else {
+            HashMap<String, String> sectionMap = new HashMap<String, String>();
+            sectionMap.put(optionName, value);
+            configMap.put(sectionName, sectionMap);
+          }
+        }
       }
     }
-    return options;
+    return configMap;
   }
-
 }

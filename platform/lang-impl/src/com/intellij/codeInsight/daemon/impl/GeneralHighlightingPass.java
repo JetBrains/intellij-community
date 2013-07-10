@@ -788,8 +788,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return visitorArray;
   }
 
-  static void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project, TextEditorHighlightingPass pass) throws ProcessCanceledException {
-    PassExecutorService.log(progress, pass, "Cancel and restart");
+  static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
+                                          @NotNull final Project project,
+                                          @NotNull TextEditorHighlightingPass passCalledFrom) throws ProcessCanceledException {
+    PassExecutorService.log(progress, passCalledFrom, "Cancel and restart");
     progress.cancel();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override

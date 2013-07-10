@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNamespaceHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,13 +70,13 @@ public class ImportNSAction implements QuestionAction {
             new WriteCommandAction.Simple(project, myFile) {
 
               protected void run() throws Throwable {
-                final XmlExtension extension = XmlExtension.getExtension(myFile);
+                final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
                 final String prefix = extension.getNamespacePrefix(myElement);
                 extension.insertNamespaceDeclaration(myFile,
                                                      myEditor,
                                                      Collections.singleton(namespace),
                                                      prefix,
-                                                     new XmlExtension.Runner<String, IncorrectOperationException>() {
+                                                     new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
                     public void run(final String s) throws IncorrectOperationException {
                       PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
                       PsiElement element = myFile.findElementAt(marker.getStartOffset());

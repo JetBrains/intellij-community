@@ -17,7 +17,10 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,31 +45,32 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
+                                    @NotNull CompletionResultSet result) {
         final PsiFile file = parameters.getPosition().getContainingFile();
         final int offset = parameters.getOffset();
         final List<TemplateImpl> templates = listApplicableTemplates(file, offset);
         if (showAllTemplates()) {
           final Ref<Boolean> templatesShown = Ref.create(false);
-          
+
+          final CompletionResultSet finalResult = result;
           result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
             @Override
             public void consume(CompletionResult completionResult) {
-              result.passResult(completionResult);
-              ensureTemplatesShown(templatesShown, templates, result);
+              finalResult.passResult(completionResult);
+              ensureTemplatesShown(templatesShown, templates, finalResult);
             }
           });
 
           ensureTemplatesShown(templatesShown, templates, result);
-          
           return;
         }
 
         if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
 
-        final String prefix = result.getPrefixMatcher().getPrefix();
-        final TemplateImpl template = findApplicableTemplate(file, offset, prefix);
+        String templatePrefix = findLiveTemplatePrefix(file, parameters.getLookup().getEditor(), result.getPrefixMatcher().getPrefix());
+        final TemplateImpl template = findApplicableTemplate(file, offset, templatePrefix);
         if (template != null) {
+          result = result.withPrefixMatcher(template.getKey());
           result.addElement(new LiveTemplateLookupElement(template, true));
         }
         for (final TemplateImpl possible : templates) {
@@ -104,13 +108,25 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   }
 
   @Nullable
-  public static TemplateImpl findApplicableTemplate(PsiFile file, int offset, final String key) {
+  public static TemplateImpl findApplicableTemplate(final PsiFile file, int offset, @NotNull final String possiblePrefix) {
     return ContainerUtil.find(listApplicableTemplates(file, offset), new Condition<TemplateImpl>() {
       @Override
       public boolean value(TemplateImpl template) {
-        return key.equals(template.getKey());
+        return possiblePrefix.equals(template.getKey());
       }
     });
+  }
+
+  @NotNull
+  public static String findLiveTemplatePrefix(@NotNull PsiFile file, @NotNull Editor editor, @NotNull String defaultValue) {
+    final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
+    for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+      final String customKey = customLiveTemplate.computeTemplateKey(callback);
+      if (customKey != null) {
+        return customKey;
+      }
+    }
+    return defaultValue;
   }
 
   public static class Skipper extends CompletionPreselectSkipper {

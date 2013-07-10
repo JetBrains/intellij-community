@@ -72,8 +72,10 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract int getFileAttributes(int id);
 
   public static boolean isDirectory(@Attributes int attributes) { return isSet(attributes, IS_DIRECTORY_FLAG); }
+  public static boolean isWritable(@Attributes int attributes) { return !isSet(attributes, IS_READ_ONLY); }
   public static boolean isSymLink(@Attributes int attributes) { return isSet(attributes, IS_SYMLINK); }
   public static boolean isSpecialFile(@Attributes int attributes) { return isSet(attributes, IS_SPECIAL); }
+  public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, IS_HIDDEN); }
 
   @Nullable
   public abstract NewVirtualFile findFileByIdIfCached(int id);

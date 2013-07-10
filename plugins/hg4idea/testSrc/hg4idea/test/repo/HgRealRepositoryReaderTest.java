@@ -44,7 +44,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testMergeState() {
-    hg("merge --tool internal:merge branchB");
+    hg("merge branchB");
     assertEquals(myRepositoryReader.readState(), Repository.State.MERGING);
   }
 
@@ -60,13 +60,23 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     TestRepositoryUtil.assertEqualCollections(myRepositoryReader.readBranches(), Arrays.asList("default", "branchA", "branchB"));
   }
 
+  public void testCurrentBookmark() {
+    hg("update B_BookMark");
+    assertEquals(myRepositoryReader.readCurrentBookmark(), "B_BookMark");
+  }
+
+  public void testBookmarks() {
+    TestRepositoryUtil.assertEqualCollections(myRepositoryReader.readBookmarks(), Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
+  }
 
   private void createBranches() {
     cd(myRepository);
+    hg("bookmark A_BookMark");
     String aFile = "A.txt";
     touch(aFile, "base");
     hg("add " + aFile);
     hg("commit -m 'create file'");
+    hg("bookmark B_BookMark");
     hg("branch branchA");
     echo(aFile, " modify with a");
     hg("commit -m 'create branchA'");
@@ -74,6 +84,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     hg("branch branchB");
     echo(aFile, " modify with b");
     hg("commit -m 'modify file in branchB'");
+    hg("bookmark C_BookMark");
     hg("up branchA");
   }
 }

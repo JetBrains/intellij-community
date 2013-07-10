@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -90,8 +91,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         annoClasses.add(StringUtil.getShortName(annotationClass));
         for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
           final String annoClass = annoClasses.get(cursor);
-          for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance()
-            .get(annoClass, myProject, GlobalSearchScope.allScope(myProject))) {
+          for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance().get(annoClass, myProject, GlobalSearchScope.allScope(myProject))) {
             final PsiElement modList = annotation.getParent();
             if (!(modList instanceof PsiModifierList)) continue;
             final PsiElement element = modList.getParent();
@@ -402,13 +402,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         else {
           if (!(curHost instanceof PsiLiteralExpression)) {
+            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
+            ProperTextRange.assertProperRange(textRange, injection);
             result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
-                                      ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
+                                      textRange));
           }
           else {
             final List<TextRange> injectedArea = injection.getInjectedArea(curHost);
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
-              final TextRange textRange = injectedArea.get(j);
+              TextRange textRange = injectedArea.get(j);
+              ProperTextRange.assertProperRange(textRange, injection);
               result.add(Trinity.create(
                 curHost, InjectedLanguage.create(injection.getInjectedLanguageId(),
                                                  (separateFiles || j == 0 ? curPrefix : ""),

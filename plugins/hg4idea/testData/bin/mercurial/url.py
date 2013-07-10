@@ -7,106 +7,10 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import urllib, urllib2, urlparse, httplib, os, re, socket, cStringIO
+import urllib, urllib2, httplib, os, socket, cStringIO
 from i18n import _
-import keepalive, util
-
-def _urlunparse(scheme, netloc, path, params, query, fragment, url):
-    '''Handle cases where urlunparse(urlparse(x://)) doesn't preserve the "//"'''
-    result = urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
-    if (scheme and
-        result.startswith(scheme + ':') and
-        not result.startswith(scheme + '://') and
-        url.startswith(scheme + '://')
-       ):
-        result = scheme + '://' + result[len(scheme + ':'):]
-    return result
-
-def hidepassword(url):
-    '''hide user credential in a url string'''
-    scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
-    netloc = re.sub('([^:]*):([^@]*)@(.*)', r'\1:***@\3', netloc)
-    return _urlunparse(scheme, netloc, path, params, query, fragment, url)
-
-def removeauth(url):
-    '''remove all authentication information from a url string'''
-    scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
-    netloc = netloc[netloc.find('@')+1:]
-    return _urlunparse(scheme, netloc, path, params, query, fragment, url)
-
-def netlocsplit(netloc):
-    '''split [user[:passwd]@]host[:port] into 4-tuple.'''
-
-    a = netloc.find('@')
-    if a == -1:
-        user, passwd = None, None
-    else:
-        userpass, netloc = netloc[:a], netloc[a + 1:]
-        c = userpass.find(':')
-        if c == -1:
-            user, passwd = urllib.unquote(userpass), None
-        else:
-            user = urllib.unquote(userpass[:c])
-            passwd = urllib.unquote(userpass[c + 1:])
-    c = netloc.find(':')
-    if c == -1:
-        host, port = netloc, None
-    else:
-        host, port = netloc[:c], netloc[c + 1:]
-    return host, port, user, passwd
-
-def netlocunsplit(host, port, user=None, passwd=None):
-    '''turn host, port, user, passwd into [user[:passwd]@]host[:port].'''
-    if port:
-        hostport = host + ':' + port
-    else:
-        hostport = host
-    if user:
-        quote = lambda s: urllib.quote(s, safe='')
-        if passwd:
-            userpass = quote(user) + ':' + quote(passwd)
-        else:
-            userpass = quote(user)
-        return userpass + '@' + hostport
-    return hostport
-
-_safe = ('abcdefghijklmnopqrstuvwxyz'
-         'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-         '0123456789' '_.-/')
-_safeset = None
-_hex = None
-def quotepath(path):
-    '''quote the path part of a URL
-
-    This is similar to urllib.quote, but it also tries to avoid
-    quoting things twice (inspired by wget):
-
-    >>> quotepath('abc def')
-    'abc%20def'
-    >>> quotepath('abc%20def')
-    'abc%20def'
-    >>> quotepath('abc%20 def')
-    'abc%20%20def'
-    >>> quotepath('abc def%20')
-    'abc%20def%20'
-    >>> quotepath('abc def%2')
-    'abc%20def%252'
-    >>> quotepath('abc def%')
-    'abc%20def%25'
-    '''
-    global _safeset, _hex
-    if _safeset is None:
-        _safeset = set(_safe)
-        _hex = set('abcdefABCDEF0123456789')
-    l = list(path)
-    for i in xrange(len(l)):
-        c = l[i]
-        if (c == '%' and i + 2 < len(l) and
-            l[i + 1] in _hex and l[i + 2] in _hex):
-            pass
-        elif c not in _safeset:
-            l[i] = '%%%02X' % ord(c)
-    return ''.join(l)
+import keepalive, util, sslutil
+import httpconnection as httpconnectionmod
 
 class passwordmgr(urllib2.HTTPPasswordMgrWithDefaultRealm):
     def __init__(self, ui):
@@ -121,18 +25,20 @@ class passwordmgr(urllib2.HTTPPasswordMgrWithDefaultRealm):
             self._writedebug(user, passwd)
             return (user, passwd)
 
-        if not user:
-            auth = self.readauthtoken(authuri)
-            if auth:
+        if not user or not passwd:
+            res = httpconnectionmod.readauthforuri(self.ui, authuri, user)
+            if res:
+                group, auth = res
                 user, passwd = auth.get('username'), auth.get('password')
+                self.ui.debug("using auth.%s.* for authentication\n" % group)
         if not user or not passwd:
             if not self.ui.interactive():
                 raise util.Abort(_('http authorization required'))
 
             self.ui.write(_("http authorization required\n"))
-            self.ui.status(_("realm: %s\n") % realm)
+            self.ui.write(_("realm: %s\n") % realm)
             if user:
-                self.ui.status(_("user: %s\n") % user)
+                self.ui.write(_("user: %s\n") % user)
             else:
                 user = self.ui.prompt(_("user:"), default=None)
 
@@ -147,37 +53,9 @@ class passwordmgr(urllib2.HTTPPasswordMgrWithDefaultRealm):
         msg = _('http auth: user %s, password %s\n')
         self.ui.debug(msg % (user, passwd and '*' * len(passwd) or 'not set'))
 
-    def readauthtoken(self, uri):
-        # Read configuration
-        config = dict()
-        for key, val in self.ui.configitems('auth'):
-            if '.' not in key:
-                self.ui.warn(_("ignoring invalid [auth] key '%s'\n") % key)
-                continue
-            group, setting = key.split('.', 1)
-            gdict = config.setdefault(group, dict())
-            if setting in ('cert', 'key'):
-                val = util.expandpath(val)
-            gdict[setting] = val
-
-        # Find the best match
-        scheme, hostpath = uri.split('://', 1)
-        bestlen = 0
-        bestauth = None
-        for auth in config.itervalues():
-            prefix = auth.get('prefix')
-            if not prefix:
-                continue
-            p = prefix.split('://', 1)
-            if len(p) > 1:
-                schemes, prefix = [p[0]], p[1]
-            else:
-                schemes = (auth.get('schemes') or 'https').split()
-            if (prefix == '*' or hostpath.startswith(prefix)) and \
-                len(prefix) > bestlen and scheme in schemes:
-                bestlen = len(prefix)
-                bestauth = auth
-        return bestauth
+    def find_stored_password(self, authuri):
+        return urllib2.HTTPPasswordMgrWithDefaultRealm.find_user_password(
+            self, None, authuri)
 
 class proxyhandler(urllib2.ProxyHandler):
     def __init__(self, ui):
@@ -189,14 +67,10 @@ class proxyhandler(urllib2.ProxyHandler):
             if not (proxyurl.startswith('http:') or
                     proxyurl.startswith('https:')):
                 proxyurl = 'http://' + proxyurl + '/'
-            snpqf = urlparse.urlsplit(proxyurl)
-            proxyscheme, proxynetloc, proxypath, proxyquery, proxyfrag = snpqf
-            hpup = netlocsplit(proxynetloc)
-
-            proxyhost, proxyport, proxyuser, proxypasswd = hpup
-            if not proxyuser:
-                proxyuser = ui.config("http_proxy", "user")
-                proxypasswd = ui.config("http_proxy", "passwd")
+            proxy = util.url(proxyurl)
+            if not proxy.user:
+                proxy.user = ui.config("http_proxy", "user")
+                proxy.passwd = ui.config("http_proxy", "passwd")
 
             # see if we should use a proxy for this url
             no_list = ["localhost", "127.0.0.1"]
@@ -211,24 +85,23 @@ class proxyhandler(urllib2.ProxyHandler):
             else:
                 self.no_list = no_list
 
-            proxyurl = urlparse.urlunsplit((
-                proxyscheme, netlocunsplit(proxyhost, proxyport,
-                                                proxyuser, proxypasswd or ''),
-                proxypath, proxyquery, proxyfrag))
+            proxyurl = str(proxy)
             proxies = {'http': proxyurl, 'https': proxyurl}
             ui.debug('proxying through http://%s:%s\n' %
-                      (proxyhost, proxyport))
+                      (proxy.host, proxy.port))
         else:
             proxies = {}
 
         # urllib2 takes proxy values from the environment and those
-        # will take precedence if found, so drop them
-        for env in ["HTTP_PROXY", "http_proxy", "no_proxy"]:
-            try:
-                if env in os.environ:
-                    del os.environ[env]
-            except OSError:
-                pass
+        # will take precedence if found. So, if there's a config entry
+        # defining a proxy, drop the environment ones
+        if ui.config("http_proxy", "host"):
+            for env in ["HTTP_PROXY", "http_proxy", "no_proxy"]:
+                try:
+                    if env in os.environ:
+                        del os.environ[env]
+                except OSError:
+                    pass
 
         urllib2.ProxyHandler.__init__(self, proxies)
         self.ui = ui
@@ -250,41 +123,20 @@ class proxyhandler(urllib2.ProxyHandler):
 
         return urllib2.ProxyHandler.proxy_open(self, req, proxy, type_)
 
-class httpsendfile(file):
-    def __len__(self):
-        return os.fstat(self.fileno()).st_size
-
-def _gen_sendfile(connection):
+def _gen_sendfile(orgsend):
     def _sendfile(self, data):
         # send a file
-        if isinstance(data, httpsendfile):
+        if isinstance(data, httpconnectionmod.httpsendfile):
             # if auth required, some data sent twice, so rewind here
             data.seek(0)
             for chunk in util.filechunkiter(data):
-                connection.send(self, chunk)
+                orgsend(self, chunk)
         else:
-            connection.send(self, data)
+            orgsend(self, data)
     return _sendfile
 
-has_https = hasattr(urllib2, 'HTTPSHandler')
+has_https = util.safehasattr(urllib2, 'HTTPSHandler')
 if has_https:
-    try:
-        # avoid using deprecated/broken FakeSocket in python 2.6
-        import ssl
-        _ssl_wrap_socket = ssl.wrap_socket
-        CERT_REQUIRED = ssl.CERT_REQUIRED
-    except ImportError:
-        CERT_REQUIRED = 2
-
-        def _ssl_wrap_socket(sock, key_file, cert_file,
-                             cert_reqs=CERT_REQUIRED, ca_certs=None):
-            if ca_certs:
-                raise util.Abort(_(
-                    'certificate checking requires Python 2.6'))
-
-            ssl = socket.ssl(sock, key_file, cert_file)
-            return httplib.FakeSocket(sock, ssl)
-
     try:
         _create_connection = socket.create_connection
     except AttributeError:
@@ -312,19 +164,19 @@ if has_https:
                     if sock is not None:
                         sock.close()
 
-            raise socket.error, msg
+            raise socket.error(msg)
 
 class httpconnection(keepalive.HTTPConnection):
     # must be able to send big bundle as stream.
-    send = _gen_sendfile(keepalive.HTTPConnection)
+    send = _gen_sendfile(keepalive.HTTPConnection.send)
 
     def connect(self):
         if has_https and self.realhostport: # use CONNECT proxy
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((self.host, self.port))
             if _generic_proxytunnel(self):
-                # we do not support client x509 certificates
-                self.sock = _ssl_wrap_socket(self.sock, None, None)
+                # we do not support client X.509 certificates
+                self.sock = sslutil.ssl_wrap_socket(self.sock, None, None)
         else:
             keepalive.HTTPConnection.connect(self)
 
@@ -340,8 +192,8 @@ class httpconnection(keepalive.HTTPConnection):
 # general transaction handler to support different ways to handle
 # HTTPS proxying before and after Python 2.6.3.
 def _generic_start_transaction(handler, h, req):
-    if hasattr(req, '_tunnel_host') and req._tunnel_host:
-        tunnel_host = req._tunnel_host
+    tunnel_host = getattr(req, '_tunnel_host', None)
+    if tunnel_host:
         if tunnel_host[:7] not in ['http://', 'https:/']:
             tunnel_host = 'https://' + tunnel_host
         new_tunnel = True
@@ -350,13 +202,9 @@ def _generic_start_transaction(handler, h, req):
         new_tunnel = False
 
     if new_tunnel or tunnel_host == req.get_full_url(): # has proxy
-        urlparts = urlparse.urlparse(tunnel_host)
-        if new_tunnel or urlparts[0] == 'https': # only use CONNECT for HTTPS
-            realhostport = urlparts[1]
-            if realhostport[-1] == ']' or ':' not in realhostport:
-                realhostport += ':443'
-
-            h.realhostport = realhostport
+        u = util.url(tunnel_host)
+        if new_tunnel or u.scheme == 'https': # only use CONNECT for HTTPS
+            h.realhostport = ':'.join([u.host, (u.port or '443')])
             h.headers = req.headers.copy()
             h.headers.update(handler.parent.addheaders)
             return
@@ -430,7 +278,8 @@ def _generic_proxytunnel(self):
     res.will_close = res._check_close()
 
     # do we have a Content-Length?
-    # NOTE: RFC 2616, S4.4, #3 says we ignore this if tr_enc is "chunked"
+    # NOTE: RFC 2616, section 4.4, #3 says we ignore this if
+    # transfer-encoding is "chunked"
     length = res.msg.getheader('content-length')
     if length and not res.chunked:
         try:
@@ -469,43 +318,24 @@ class httphandler(keepalive.HTTPHandler):
         _generic_start_transaction(self, h, req)
         return keepalive.HTTPHandler._start_transaction(self, h, req)
 
-    def __del__(self):
-        self.close_all()
-
 if has_https:
-    class BetterHTTPS(httplib.HTTPSConnection):
-        send = keepalive.safesend
-
-        def connect(self):
-            if hasattr(self, 'ui'):
-                cacerts = self.ui.config('web', 'cacerts')
-            else:
-                cacerts = None
-
-            if cacerts:
-                sock = _create_connection((self.host, self.port))
-                self.sock = _ssl_wrap_socket(sock, self.key_file,
-                        self.cert_file, cert_reqs=CERT_REQUIRED,
-                        ca_certs=cacerts)
-                self.ui.debug(_('server identity verification succeeded\n'))
-            else:
-                httplib.HTTPSConnection.connect(self)
-
-    class httpsconnection(BetterHTTPS):
+    class httpsconnection(httplib.HTTPSConnection):
         response_class = keepalive.HTTPResponse
         # must be able to send big bundle as stream.
-        send = _gen_sendfile(BetterHTTPS)
+        send = _gen_sendfile(keepalive.safesend)
         getresponse = keepalive.wrapgetresponse(httplib.HTTPSConnection)
 
         def connect(self):
+            self.sock = _create_connection((self.host, self.port))
+
+            host = self.host
             if self.realhostport: # use CONNECT proxy
-                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.sock.connect((self.host, self.port))
-                if _generic_proxytunnel(self):
-                    self.sock = _ssl_wrap_socket(self.sock, self.cert_file,
-                                                 self.key_file)
-            else:
-                BetterHTTPS.connect(self)
+                _generic_proxytunnel(self)
+                host = self.realhostport.rsplit(':', 1)[0]
+            self.sock = sslutil.ssl_wrap_socket(
+                self.sock, self.key_file, self.cert_file,
+                **sslutil.sslkwargs(self.ui, host))
+            sslutil.validator(self.ui, host)(self.sock)
 
     class httpshandler(keepalive.KeepAliveHandler, urllib2.HTTPSHandler):
         def __init__(self, ui):
@@ -519,7 +349,17 @@ if has_https:
             return keepalive.KeepAliveHandler._start_transaction(self, h, req)
 
         def https_open(self, req):
-            self.auth = self.pwmgr.readauthtoken(req.get_full_url())
+            # req.get_full_url() does not contain credentials and we may
+            # need them to match the certificates.
+            url = req.get_full_url()
+            user, password = self.pwmgr.find_stored_password(url)
+            res = httpconnectionmod.readauthforuri(self.ui, url, user)
+            if res:
+                group, auth = res
+                self.auth = auth
+                self.ui.debug("using auth.%s.* for authentication\n" % group)
+            else:
+                self.auth = None
             return self.do_open(self._makeconnection, req)
 
         def _makeconnection(self, host, port=None, *args, **kwargs):
@@ -538,15 +378,30 @@ if has_https:
                 keyfile = self.auth['key']
                 certfile = self.auth['cert']
 
-            conn = httpsconnection(host, port, keyfile, certfile, *args, **kwargs)
+            conn = httpsconnection(host, port, keyfile, certfile, *args,
+                                   **kwargs)
             conn.ui = self.ui
             return conn
 
-# In python < 2.5 AbstractDigestAuthHandler raises a ValueError if
-# it doesn't know about the auth type requested.  This can happen if
-# somebody is using BasicAuth and types a bad password.
 class httpdigestauthhandler(urllib2.HTTPDigestAuthHandler):
+    def __init__(self, *args, **kwargs):
+        urllib2.HTTPDigestAuthHandler.__init__(self, *args, **kwargs)
+        self.retried_req = None
+
+    def reset_retry_count(self):
+        # Python 2.6.5 will call this on 401 or 407 errors and thus loop
+        # forever. We disable reset_retry_count completely and reset in
+        # http_error_auth_reqed instead.
+        pass
+
     def http_error_auth_reqed(self, auth_header, host, req, headers):
+        # Reset the retry counter once for each request.
+        if req is not self.retried_req:
+            self.retried_req = req
+            self.retried = 0
+        # In python < 2.5 AbstractDigestAuthHandler raises a ValueError if
+        # it doesn't know about the auth type requested. This can happen if
+        # somebody is using BasicAuth and types a bad password.
         try:
             return urllib2.HTTPDigestAuthHandler.http_error_auth_reqed(
                         self, auth_header, host, req, headers)
@@ -556,30 +411,24 @@ class httpdigestauthhandler(urllib2.HTTPDigestAuthHandler):
                 return
             raise
 
-def getauthinfo(path):
-    scheme, netloc, urlpath, query, frag = urlparse.urlsplit(path)
-    if not urlpath:
-        urlpath = '/'
-    if scheme != 'file':
-        # XXX: why are we quoting the path again with some smart
-        # heuristic here? Anyway, it cannot be done with file://
-        # urls since path encoding is os/fs dependent (see
-        # urllib.pathname2url() for details).
-        urlpath = quotepath(urlpath)
-    host, port, user, passwd = netlocsplit(netloc)
+class httpbasicauthhandler(urllib2.HTTPBasicAuthHandler):
+    def __init__(self, *args, **kwargs):
+        urllib2.HTTPBasicAuthHandler.__init__(self, *args, **kwargs)
+        self.retried_req = None
 
-    # urllib cannot handle URLs with embedded user or passwd
-    url = urlparse.urlunsplit((scheme, netlocunsplit(host, port),
-                              urlpath, query, frag))
-    if user:
-        netloc = host
-        if port:
-            netloc += ':' + port
-        # Python < 2.4.3 uses only the netloc to search for a password
-        authinfo = (None, (url, netloc), user, passwd or '')
-    else:
-        authinfo = None
-    return url, authinfo
+    def reset_retry_count(self):
+        # Python 2.6.5 will call this on 401 or 407 errors and thus loop
+        # forever. We disable reset_retry_count completely and reset in
+        # http_error_auth_reqed instead.
+        pass
+
+    def http_error_auth_reqed(self, auth_header, host, req, headers):
+        # Reset the retry counter once for each request.
+        if req is not self.retried_req:
+            self.retried_req = req
+            self.retried = 0
+        return urllib2.HTTPBasicAuthHandler.http_error_auth_reqed(
+                        self, auth_header, host, req, headers)
 
 handlerfuncs = []
 
@@ -588,9 +437,12 @@ def opener(ui, authinfo=None):
     construct an opener suitable for urllib2
     authinfo will be added to the password manager
     '''
-    handlers = [httphandler()]
-    if has_https:
-        handlers.append(httpshandler(ui))
+    if ui.configbool('ui', 'usehttp2', False):
+        handlers = [httpconnectionmod.http2handler(ui, passwordmgr(ui))]
+    else:
+        handlers = [httphandler()]
+        if has_https:
+            handlers.append(httpshandler(ui))
 
     handlers.append(proxyhandler(ui))
 
@@ -601,7 +453,7 @@ def opener(ui, authinfo=None):
         ui.debug('http auth: user %s, password %s\n' %
                  (user, passwd and '*' * len(passwd) or 'not set'))
 
-    handlers.extend((urllib2.HTTPBasicAuthHandler(passmgr),
+    handlers.extend((httpbasicauthhandler(passmgr),
                      httpdigestauthhandler(passmgr)))
     handlers.extend([h(ui, passmgr) for h in handlerfuncs])
     opener = urllib2.build_opener(*handlers)
@@ -611,17 +463,13 @@ def opener(ui, authinfo=None):
     opener.addheaders.append(('Accept', 'application/mercurial-0.1'))
     return opener
 
-scheme_re = re.compile(r'^([a-zA-Z0-9+-.]+)://')
-
-def open(ui, url, data=None):
-    scheme = None
-    m = scheme_re.search(url)
-    if m:
-        scheme = m.group(1).lower()
-    if not scheme:
-        path = util.normpath(os.path.abspath(url))
-        url = 'file://' + urllib.pathname2url(path)
-        authinfo = None
+def open(ui, url_, data=None):
+    u = util.url(url_)
+    if u.scheme:
+        u.scheme = u.scheme.lower()
+        url_, authinfo = u.authinfo()
     else:
-        url, authinfo = getauthinfo(url)
-    return opener(ui, authinfo).open(url, data)
+        path = util.normpath(os.path.abspath(url_))
+        url_ = 'file://' + urllib.pathname2url(path)
+        authinfo = None
+    return opener(ui, authinfo).open(url_, data)

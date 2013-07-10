@@ -1,4 +1,3 @@
-
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.CommonBundle;
@@ -9,7 +8,7 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -19,13 +18,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -39,7 +38,6 @@ import java.util.Set;
  * Date: 11-Jan-2006
  */
 public class InspectionsOptionsToolbarAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ui.actions.SuppressInspectionToolbarAction");
   private final InspectionResultsView myView;
 
   public InspectionsOptionsToolbarAction(final InspectionResultsView view) {
@@ -56,14 +54,14 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     }
     final DataContext dataContext = e.getDataContext();
     final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(getSelectedTool().getDisplayName(), options, dataContext,
+      .createActionGroupPopup(getSelectedToolWrapper().getDisplayName(), options, dataContext,
                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
     InspectionResultsView.showPopup(e, popup);
   }
 
   @Nullable
-  private InspectionTool getSelectedTool() {
-    return myView.getTree().getSelectedTool();
+  private InspectionToolWrapper getSelectedToolWrapper() {
+    return myView.getTree().getSelectedToolWrapper();
   }
 
   @Override
@@ -72,28 +70,29 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    final InspectionTool selectedTool = getSelectedTool();
-    assert selectedTool != null;
-    final HighlightDisplayKey key = HighlightDisplayKey.find(selectedTool.getShortName());
+    InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
+    assert toolWrapper != null;
+    final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
     if (key == null) {
       e.getPresentation().setEnabled(false);
     }
     e.getPresentation().setEnabled(true);
-    final String text = getToolOptions(selectedTool);
+    final String text = getToolOptions(toolWrapper);
     e.getPresentation().setText(text);
     e.getPresentation().setDescription(text);
   }
 
-  private static String getToolOptions(@Nullable final InspectionTool selectedTool) {
-    return InspectionsBundle.message("inspections.view.options.title", selectedTool != null ? selectedTool.getDisplayName() : "");
+  @NotNull
+  private static String getToolOptions(@Nullable final InspectionToolWrapper toolWrapper) {
+    return InspectionsBundle.message("inspections.view.options.title", toolWrapper != null ? toolWrapper.getDisplayName() : "");
   }
 
   public List<AnAction> createActions() {
     final List<AnAction> result = new ArrayList<AnAction>();
     final InspectionTree tree = myView.getTree();
-    final InspectionTool tool = tree.getSelectedTool();
-    if (tool == null) return result;
-    final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
+    if (toolWrapper == null) return result;
+    final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
     if (key == null) return result;
 
     result.add(new DisableInspectionAction(key));
@@ -103,7 +102,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       public void actionPerformed(final AnActionEvent e) {
         final PsiElement psiElement = getPsiElement(tree);
         assert psiElement != null;
-        new RunInspectionIntention(tool).invoke(myView.getProject(), null, psiElement.getContainingFile());
+        new RunInspectionIntention(toolWrapper).invoke(myView.getProject(), null, psiElement.getContainingFile());
       }
 
       @Override
@@ -126,7 +125,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       }
     });
 
-    result.add(new SuppressActionWrapper(myView.getProject(), tool, tree.getSelectionPaths()));
+    result.add(new SuppressActionWrapper(myView.getProject(), toolWrapper, tree.getSelectionPaths()));
 
 
     return result;
@@ -145,7 +144,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       try {
         if (myView.isProfileDefined()) {
           final ModifiableModel model = myView.getCurrentProfile().getModifiableModel();
-          model.disableTool(myKey.toString());
+          model.disableTool(myKey.toString(), myView.getProject());
           model.commit();
           myView.updateCurrentProfile();
         } else {

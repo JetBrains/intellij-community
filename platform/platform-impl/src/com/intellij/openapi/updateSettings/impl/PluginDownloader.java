@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,7 +133,7 @@ public class PluginDownloader {
         return false; //was not updated
       }
 
-      if (PluginManager.isIncompatible(actualDescriptor)) {
+      if (PluginManagerCore.isIncompatible(actualDescriptor)) {
         return false; //shouldn't happen
       }
 
@@ -143,7 +144,7 @@ public class PluginDownloader {
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptionFromJar(final File file) throws IOException {
-    IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(file);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromJar(file);
     if (descriptor == null) {
       if (file.getName().endsWith(".zip")) {
         final File outputDir = FileUtil.createTempDirectory("plugin", "");
@@ -155,7 +156,7 @@ public class PluginDownloader {
           });
           final File[] files = outputDir.listFiles();
           if (files != null && files.length == 1) {
-            descriptor = PluginManager.loadDescriptor(files[0], PluginManager.PLUGIN_XML);
+            descriptor = PluginManagerCore.loadDescriptor(files[0], PluginManagerCore.PLUGIN_XML);
           }
         }
         finally {
@@ -360,8 +361,9 @@ public class PluginDownloader {
     }
     if (url == null) {
       String uuid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
+      String buildNumber = ApplicationInfo.getInstance().getBuild().asString();
       url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
-            "&build=" + RepositoryHelper.getDownloadBuildNumber() + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
+            "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
     }
 
     PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), url, null, null, descriptor.getName());

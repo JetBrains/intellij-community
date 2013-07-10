@@ -21,13 +21,19 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.PatchedUsage;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
+import com.intellij.internal.statistic.connect.StatisticsConnectionService;
+import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
+import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.Time;
@@ -242,6 +248,26 @@ public class StatisticsUploadAssistant {
         }
 
         return usageDescriptors;
+    }
+
+    private static final KeyedExtensionCollector<StatisticsService, String> COLLECTOR;
+
+    static {
+        COLLECTOR = new KeyedExtensionCollector<StatisticsService, String>("com.intellij.statisticsService");
+    }
+
+    public static StatisticsService getStatisticsService() {
+        String key = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getStatisticsServiceKey();
+
+        StatisticsService service = key == null ? null : COLLECTOR.findSingle(key);
+
+        if (service != null) {
+            return service;
+        }
+
+        return new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(),
+                                                         new StatisticsHttpClientSender(),
+                                                         new StatisticsUploadAssistant());
     }
 
 }

@@ -34,7 +34,7 @@ public class IOExceptionDialog extends JDialog {
   private JButton cancelButton;
   private JButton tryAgainButton;
   private JButton setupButton;
-  private JLabel errorLabel;
+  private JTextArea errorLabel;
   private boolean cancelPressed = false;
 
   public IOExceptionDialog(String title, String errorText)  {

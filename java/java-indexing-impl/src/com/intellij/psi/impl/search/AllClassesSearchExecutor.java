@@ -22,10 +22,11 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -33,14 +34,17 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
+  private static final Key<TimedReference<SoftReference<Pair<String[], Long>>>> ALL_CLASS_NAMES_CACHE = Key.create("ALL_CLASS_NAMES_CACHE");
   @Override
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
@@ -55,17 +59,30 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     }
     return true;
   }
-
-  private static boolean processAllClassesInGlobalScope(final GlobalSearchScope scope, final Processor<PsiClass> processor, AllClassesSearch.SearchParameters parameters) {
-    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
-
-    final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+  
+  private static String[] getAllClassNames(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
       @Override
       public String[] compute() {
-        return cache.getAllClassNames();
+        final long modCount = PsiManager.getInstance(project).getModificationTracker().getJavaStructureModificationCount();
+        TimedReference<SoftReference<Pair<String[], Long>>> ref1 = project.getUserData(ALL_CLASS_NAMES_CACHE);
+        SoftReference<Pair<String[], Long>> ref2 = ref1 == null ? null : ref1.get();
+        Pair<String[], Long> pair = ref2 == null ? null : ref2.get();
+        if (pair != null && pair.second.equals(modCount)) {
+          return pair.first;
+        }
+
+        String[] names = PsiShortNamesCache.getInstance(project).getAllClassNames();
+        ref1 = new TimedReference<SoftReference<Pair<String[], Long>>>(null);
+        ref1.set(new SoftReference<Pair<String[], Long>>(Pair.create(names, modCount)));
+        project.putUserData(ALL_CLASS_NAMES_CACHE, ref1);
+        return names;
       }
     });
+  }
 
+  private static boolean processAllClassesInGlobalScope(final GlobalSearchScope scope, final Processor<PsiClass> processor, final AllClassesSearch.SearchParameters parameters) {
+    String[] names = getAllClassNames(parameters.getProject());
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
@@ -93,6 +110,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
     });
 
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
     for (final String name : sorted) {
       ProgressIndicatorProvider.checkCanceled();
       final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
@@ -111,11 +129,10 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  private static boolean processScopeRootForAllClasses(PsiElement scopeRoot, final Processor<PsiClass> processor) {
-    if (scopeRoot == null) return true;
-    final boolean[] stopped = new boolean[]{false};
+  private static boolean processScopeRootForAllClasses(@NotNull PsiElement scopeRoot, final Processor<PsiClass> processor) {
+    final boolean[] stopped = {false};
 
-    scopeRoot.accept(new JavaRecursiveElementWalkingVisitor() {
+    JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (!stopped[0]) {
@@ -123,11 +140,26 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         }
       }
 
-      @Override public void visitClass(PsiClass aClass) {
+      @Override
+      public void visitClass(PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }
-    });
+    } : new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (!stopped[0]) {
+          super.visitElement(element);
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {
+        stopped[0] = !processor.process(aClass);
+        super.visitClass(aClass);
+      }
+    };
+    scopeRoot.accept(visitor);
 
     return !stopped[0];
   }

@@ -119,7 +119,10 @@ public abstract class GroovyScriptRunner {
 
   protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params, boolean allowDuplication) throws CantRunException {
     PathsList nonCore = getClassPathFromRootModel(module, isTests, params, allowDuplication);
-    if (nonCore == null) return;
+    if (nonCore == null) {
+      nonCore = new PathsList();
+    }
+    nonCore.add(".");
 
     final String cp = nonCore.getPathsString();
     if (!StringUtil.isEmptyOrSpaces(cp)) {

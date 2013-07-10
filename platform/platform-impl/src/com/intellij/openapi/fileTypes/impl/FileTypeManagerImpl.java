@@ -37,6 +37,7 @@ import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
@@ -149,12 +150,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     };
 
-    for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
+    for (FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
       try {
         factory.createFileTypes(consumer);
       }
-      catch (final Error ex) {
-        PluginManager.disableIncompatiblePlugin(factory, ex);
+      catch (Throwable t) {
+        PluginManager.handleComponentError(t, factory.getClass().getName(), null);
       }
     }
   }
@@ -191,7 +192,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
 
         return null;
-
       }
 
       @Override
@@ -218,7 +218,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
 
         return new Document(root);
-
       }
 
       @Override
@@ -342,7 +341,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   @Override
   public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    if (file.isDirectory() || !file.isValid() || file.isSpecialFile()) {
+    if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL)) {
       return UnknownFileType.INSTANCE;
     }
     FileType fileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);

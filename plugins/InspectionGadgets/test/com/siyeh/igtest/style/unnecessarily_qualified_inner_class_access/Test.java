@@ -37,3 +37,26 @@ class Foo extends PresenterWidget<Foo.Bar> { //no warning as Bar here is not acc
 
 interface View {}
 class PresenterWidget<T>{}
+
+class MultipleInheritance {
+  interface I1 {
+    interface V {
+    }
+
+    String FOO = "";
+  }
+
+  interface I2 {
+    interface V {
+    }
+
+    String FOO = "";
+  }
+
+  static class C implements I1, I2 {
+    public I1.V foo() {
+      System.out.println(I1.FOO);
+      return null;
+    }
+  }
+}

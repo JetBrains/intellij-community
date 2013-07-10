@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class PsiCapturedWildcardType extends PsiType {
-  private final PsiWildcardType myExistential;
-  private final PsiElement myContext;
+  @NotNull private final PsiWildcardType myExistential;
+  @NotNull private final PsiElement myContext;
 
   public boolean equals(final Object o) {
     if (!(o instanceof PsiCapturedWildcardType)) return false;
@@ -36,13 +36,14 @@ public class PsiCapturedWildcardType extends PsiType {
     return myExistential.hashCode() + 31 * myContext.hashCode();
   }
 
-  private PsiCapturedWildcardType(PsiWildcardType existential, final PsiElement context) {
+  private PsiCapturedWildcardType(@NotNull PsiWildcardType existential, @NotNull PsiElement context) {
     super(PsiAnnotation.EMPTY_ARRAY);//todo
     myExistential = existential;
     myContext = context;
   }
 
-  public static PsiCapturedWildcardType create(PsiWildcardType existential, final PsiElement context) {
+  @NotNull
+  public static PsiCapturedWildcardType create(@NotNull PsiWildcardType existential, @NotNull PsiElement context) {
     return new PsiCapturedWildcardType(existential, context);
   }
 
@@ -104,10 +105,12 @@ public class PsiCapturedWildcardType extends PsiType {
     }
   }
 
+  @NotNull
   public PsiWildcardType getWildcard() {
     return myExistential;
   }
 
+  @NotNull
   public PsiElement getContext() {
     return myContext;
   }

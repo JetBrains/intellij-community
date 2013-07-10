@@ -17,9 +17,9 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 
 /**
  * @author nik
@@ -41,36 +41,43 @@ public abstract class XDebugViewBase implements Disposable {
   }
 
   private void onSessionEvent(final SessionEvent event) {
-    DebuggerUIUtil.invokeOnEventDispatchIfProjectNotDisposed(new Runnable() {
+    AppUIUtil.invokeLaterIfProjectAlive(mySession.getProject(), new Runnable() {
+      @Override
       public void run() {
         rebuildView(event);
       }
-    }, mySession.getProject());
+    });
   }
 
   protected abstract void rebuildView(final SessionEvent event);
 
+  @Override
   public void dispose() {
     mySession.removeSessionListener(mySessionListener);
   }
 
   private class MyDebugSessionListener extends XDebugSessionAdapter {
+    @Override
     public void sessionPaused() {
       onSessionEvent(SessionEvent.PAUSED);
     }
 
+    @Override
     public void sessionResumed() {
       onSessionEvent(SessionEvent.RESUMED);
     }
 
+    @Override
     public void sessionStopped() {
       onSessionEvent(SessionEvent.STOPPED);
     }
 
+    @Override
     public void stackFrameChanged() {
       onSessionEvent(SessionEvent.FRAME_CHANGED);
     }
 
+    @Override
     public void beforeSessionResume() {
       onSessionEvent(SessionEvent.BEFORE_RESUME);
     }

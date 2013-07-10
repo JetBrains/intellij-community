@@ -296,7 +296,7 @@ public abstract class AbstractVcsTestCase {
     }.execute().throwException();
   }
 
-  protected void deleteFileInCommand(final VirtualFile file) {
+  public void deleteFileInCommand(final VirtualFile file) {
     deleteFileInCommand(myProject, file);
   }
 
@@ -314,7 +314,7 @@ public abstract class AbstractVcsTestCase {
     }.execute();
   }
 
-  protected void editFileInCommand(final VirtualFile file, final String newContent) {
+  public void editFileInCommand(final VirtualFile file, final String newContent) {
     editFileInCommand(myProject, file, newContent);
   }
 

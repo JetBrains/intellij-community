@@ -112,6 +112,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           window = focusedWindow;
         }
       }
+      if (window == null) {
+        IdeFrame[] frames = myWindowManager.getAllProjectFrames();
+        for (IdeFrame frame : frames) {
+          if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
+            window = (IdeFrameImpl)frame;
+            break;
+          }
+        }
+      }
     }
 
     Window owner;
@@ -648,32 +657,34 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myFocusTrackback = new FocusTrackback(getDialogWrapper(), getParent(), true);
 
       final DialogWrapper dialogWrapper = getDialogWrapper();
-
-      pack();
-
-      Dimension packedSize = getSize();
-      Dimension minSize = getMinimumSize();
-      setSize(Math.max(packedSize.width, minSize.width), Math.max(packedSize.height, minSize.height));
-
-      setSize((int)(getWidth() * dialogWrapper.getHorizontalStretch()), (int)(getHeight() * dialogWrapper.getVerticalStretch()));
-
-      // Restore dialog's size and location
-
-      myDimensionServiceKey = dialogWrapper.getDimensionKey();
+      boolean isAutoAdjustable = dialogWrapper.isAutoAdjustable();
       Point location = null;
+      if (isAutoAdjustable) {
+        pack();
 
-      if (myDimensionServiceKey != null) {
-        final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-        location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
-        Dimension size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
-        if (size != null) {
-          myInitialSize = new Dimension(size);
-          _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
+        Dimension packedSize = getSize();
+        Dimension minSize = getMinimumSize();
+        setSize(Math.max(packedSize.width, minSize.width), Math.max(packedSize.height, minSize.height));
+
+        setSize((int)(getWidth() * dialogWrapper.getHorizontalStretch()), (int)(getHeight() * dialogWrapper.getVerticalStretch()));
+
+        // Restore dialog's size and location
+
+        myDimensionServiceKey = dialogWrapper.getDimensionKey();
+
+        if (myDimensionServiceKey != null) {
+          final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+          location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
+          Dimension size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
+          if (size != null) {
+            myInitialSize = new Dimension(size);
+            _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
+          }
         }
-      }
 
-      if (myInitialSize == null) {
-        myInitialSize = getSize();
+        if (myInitialSize == null) {
+          myInitialSize = getSize();
+        }
       }
 
       if (location == null) {
@@ -687,10 +698,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         setLocationRelativeTo(getOwner());
       }
 
-      final Rectangle bounds = getBounds();
-      ScreenUtil.fitToScreen(bounds);
-      setBounds(bounds);
-
+      if (isAutoAdjustable) {
+        final Rectangle bounds = getBounds();
+        ScreenUtil.fitToScreen(bounds);
+        setBounds(bounds);
+      }
       addWindowListener(new WindowAdapter() {
         @Override
         public void windowActivated(WindowEvent e) {
@@ -1052,7 +1064,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       @Override
       @SuppressWarnings({"RefusedBequest"})
       public void componentResized(ComponentEvent e) {
-        UIUtil.adjustWindowToMinimumSize(getWindow());
+        if (getDialogWrapper().isAutoAdjustable()) {
+          UIUtil.adjustWindowToMinimumSize(getWindow());
+        }
       }
     }
 

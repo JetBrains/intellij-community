@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -47,6 +48,9 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,7 +150,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Override
   @NotNull
   public List<PsiFile> getAllFiles() {
-    return Collections.singletonList(getPsi(getBaseLanguage()));
+    return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
   @Nullable
@@ -181,10 +185,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     setContent(cachedDocument == null ? new VirtualFileContent() : new DocumentContent());
   }
 
-  public void beforeDocumentChanged() {
-    final PsiFile psiFile = getCachedPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded() && getContent() instanceof DocumentContent) {
-      setContent(new PsiFileContent((PsiFileImpl)psiFile, getModificationStamp()));
+  public void beforeDocumentChanged(@Nullable PsiFile psiCause) {
+    PsiFile psiFile = psiCause != null ? psiCause : getPsi(getBaseLanguage());
+    if (psiFile instanceof PsiFileImpl) {
+      setContent(new PsiFileContent((PsiFileImpl)psiFile, psiCause == null ? getModificationStamp() : LocalTimeCounter.currentTime()));
     }
   }
 
@@ -267,7 +271,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
-    if (fileType.isBinary() || file.isSpecialFile()) {
+    if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
     if (!isTooLargeForIntelligence(file)) {
@@ -470,9 +474,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myContent = content;
   }
 
+  @NonNls
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + '}';
+    return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
   }
 
   private interface Content {
@@ -504,9 +509,22 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public long getModificationStamp() {
       return getVirtualFile().getModificationStamp();
     }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "VirtualFileContent{size=" + getVirtualFile().getLength() + "}";
+    }
   }
 
   private class DocumentContent implements Content {
+    @NonNls
+    @Override
+    public String toString() {
+      final Document document = getDocument();
+      return "DocumentContent{size=" + (document == null ? null : document.getTextLength()) + "}";
+    }
+
     @NotNull
     @Override
     public CharSequence getText() {
@@ -525,36 +543,38 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private class PsiFileContent implements Content {
     private final PsiFileImpl myFile;
-    private CharSequence myContent = null;
+    private volatile String myContent = null;
     private final long myModificationStamp;
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private final List<FileElement> myFileElementHardRefs = new SmartList<FileElement>();
 
     private PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
       myFile = file;
       myModificationStamp = modificationStamp;
+      for (PsiFile aFile : getAllFiles()) {
+        if (aFile instanceof PsiFileImpl) {
+          myFileElementHardRefs.add(((PsiFileImpl)aFile).calcTreeElement());
+        }
+      }
     }
 
     @Override
     public CharSequence getText() {
-      if (!myFile.isContentsLoaded()) {
-        unsetPsiContent();
-        return getContents();
+      String content = myContent;
+      if (content == null) {
+        myContent = content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            return myFile.calcTreeElement().getText();
+          }
+        });
       }
-      if (myContent != null) return myContent;
-      return myContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
-        @Override
-        @NotNull
-        public CharSequence compute() {
-          return myFile.calcTreeElement().getText();
-        }
-      });
+      return content;
     }
 
     @Override
     public long getModificationStamp() {
-      if (!myFile.isContentsLoaded()) {
-        unsetPsiContent();
-        return SingleRootFileViewProvider.this.getModificationStamp();
-      }
       return myModificationStamp;
     }
   }

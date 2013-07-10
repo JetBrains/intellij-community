@@ -45,6 +45,7 @@ public interface Balloon extends Disposable, PositionTracker.Client<Balloon>, Li
   void addListener(JBPopupListener listener);
 
   void hide();
+  void hide(boolean ok);
 
   void setAnimationEnabled(boolean enabled);
 

@@ -65,7 +65,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
+  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final int totalFiles = scope.getFileCount();
 

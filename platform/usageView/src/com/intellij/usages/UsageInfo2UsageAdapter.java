@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.rules.*;
@@ -132,7 +133,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (document == null) {
       // element over light virtual file
       PsiElement element = getElement();
-      chunks = new TextChunk[] {new TextChunk(new TextAttributes(), element.getText())};
+      if (element == null) {
+        chunks = new TextChunk[]{new TextChunk(SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes(), UsageViewBundle.message("node.invalid"))};
+      }
+      else {
+        chunks = new TextChunk[] {new TextChunk(new TextAttributes(), element.getText())};
+      }
     }
     else {
       chunks = ChunkExtractor.extractChunks(psiFile, this);

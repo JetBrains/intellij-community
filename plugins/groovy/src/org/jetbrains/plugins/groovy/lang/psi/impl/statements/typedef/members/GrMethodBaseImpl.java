@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -279,7 +278,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       @Override
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
-        GrReferenceAdjuster.shortenReference(refElement);
+        org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference(refElement);
       }
     });
     return newTypeElement;

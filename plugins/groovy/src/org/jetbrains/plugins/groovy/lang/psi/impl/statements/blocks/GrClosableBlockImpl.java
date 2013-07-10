@@ -82,12 +82,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                             final @NotNull ResolveState state,
                                             final @Nullable PsiElement lastParent,
                                             final @NotNull PsiElement place) {
-    if (lastParent == null) return true;
-
-    if (!super.processDeclarations(plainProcessor, state, lastParent, place)) return false;
-    if (!processParameters(plainProcessor, state, place)) return false;
-    if (!ResolveUtil.processElement(plainProcessor, getOwner(), state)) return false;
-    if (!processClosureClassMembers(plainProcessor, state, lastParent, place)) return false;
+    if (!processDeclarations(plainProcessor, state, lastParent, place)) return false;
     if (!processOwnerAndDelegate(plainProcessor, nonCodeProcessor, state, place)) return false;
 
     return true;

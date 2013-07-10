@@ -56,7 +56,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
     //final SmartPsiElementPointer<?> pointer = info.getSmartPointer();
     final GenericElementSignatureProvider provider = new GenericElementSignatureProvider();
     final String signature = provider.getSignature(info.getElement());
-    append(os, info.getElement().getContainingFile().getVirtualFile().getPath());
+    append(os, info.getFile().getVirtualFile().getPath());
     os.append(separator);
     append(os, signature);
     os.append(separator);

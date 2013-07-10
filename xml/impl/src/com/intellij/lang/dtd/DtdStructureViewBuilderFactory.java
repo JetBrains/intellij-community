@@ -24,17 +24,21 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DtdStructureViewBuilderFactory implements PsiStructureViewFactory {
+  @Override
   @NotNull
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     return new TreeBasedStructureViewBuilder() {
+      @Override
       @NotNull
-      public StructureViewModel createStructureViewModel() {
-        return new XmlStructureViewTreeModel((XmlFile)psiFile);
+      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+        return new XmlStructureViewTreeModel((XmlFile)psiFile, editor);
       }
     };
   }

@@ -38,7 +38,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
   }
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
-    RefactoringUtil.sortDepthFirstRightLeftOrder(usageInfos);
+    CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usageInfos);
     for (UsageInfo usageInfo : usageInfos) {
       if (usageInfo instanceof FixableUsageInfo) {
         try {

@@ -36,4 +36,14 @@ public class EmptyStatementBody
     {
         return true;
     }
+
+    void comments(boolean b) {
+      if (b); // comment
+      while (b) {
+        // comment
+      }
+      do {
+        ; // comment
+      } while (b);
+    }
 }

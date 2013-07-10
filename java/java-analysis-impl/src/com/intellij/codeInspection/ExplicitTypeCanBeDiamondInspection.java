@@ -19,8 +19,10 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,8 +69,11 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaBatchLocalInspec
           LOG.assertTrue(classReference != null);
           final PsiReferenceParameterList parameterList = classReference.getParameterList();
           LOG.assertTrue(parameterList != null);
-          holder.registerProblem(parameterList,  "Explicit type argument #ref #loc can be replaced with <>",
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithDiamondFix());
+          final PsiElement firstChild = parameterList.getFirstChild();
+          final PsiElement lastChild = parameterList.getLastChild();
+          final TextRange range = new TextRange(firstChild != null && firstChild.getNode().getElementType() == JavaTokenType.LT ? 1 : 0,
+                                                parameterList.getTextLength() - (lastChild != null && lastChild.getNode().getElementType() == JavaTokenType.GT ? 1 : 0));
+          holder.registerProblem(parameterList, "Explicit type argument #ref #loc can be replaced with <>", ProblemHighlightType.LIKE_UNUSED_SYMBOL, range, new ReplaceWithDiamondFix());
         }
       }
     };

@@ -1,82 +1,117 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.usagesStatistics;
 
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
-import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
+import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.internal.statistic.connect.StatisticsResult;
-import junit.framework.Assert;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.Set;
 
-public class RemotelyConfigurableStatServiceTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-  @NonNls
-  private static final String STAT_URL = "http://localhost:8080/stat.jsp";
+public class RemotelyConfigurableStatServiceTest {
+  private static String STAT_URL;
+  private static String STAT_CONFIG_URL;
 
-  @NonNls
-  private static final String STAT_CONFIG_URL = "http://localhost:8080/config.jsp";
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public RemotelyConfigurableStatServiceTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
+  @BeforeClass
+  public static void init() throws Exception {
+    int port = NetUtils.findAvailableSocketPort();
+    STAT_URL = "http://localhost:" + port + "/stat.jsp";
+    STAT_CONFIG_URL = "http://localhost:" + port + "/config.jsp";
+  }
+
+  @Test
   public void testStatisticsConnectionServiceDefaultSettings() {
-    final StatisticsConnectionService connectionService = new StatisticsConnectionService(STAT_CONFIG_URL, STAT_URL);
+    StatisticsConnectionService connectionService = new StatisticsConnectionService(STAT_CONFIG_URL, STAT_URL);
+    assertEquals(STAT_URL, connectionService.getServiceUrl());
 
-    Assert.assertEquals(STAT_URL, connectionService.getServiceUrl());
-    Assert.assertTrue(connectionService.isTransmissionPermitted());
-    final String[] attributeNames = connectionService.getAttributeNames();
+    assertTrue(connectionService.isTransmissionPermitted());
+    String[] attributeNames = connectionService.getAttributeNames();
 
-    Assert.assertEquals(attributeNames.length, 2);
-    Assert.assertEquals(attributeNames[0], "url");
-    Assert.assertEquals(attributeNames[1], "permitted");
+    assertEquals(attributeNames.length, 2);
+    assertEquals(attributeNames[0], "url");
+    assertEquals(attributeNames[1], "permitted");
   }
 
+  @Test
   public void testEmptyDataSending() {
-    RemotelyConfigurableStatisticsService service = new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(),
-                                                                                              new StatisticsHttpClientSender(),
-                                                                                              new StatisticsUploadAssistant() {
-                                                                                                @Override
-                                                                                                public String getData(@NotNull Set<String> disabledGroups) {
-                                                                                                  return "";
-                                                                                                }
-                                                                                              });
-    final StatisticsResult result = service.send();
-    Assert.assertEquals(StatisticsResult.ResultCode.NOTHING_TO_SEND, result.getCode());
+    RemotelyConfigurableStatisticsService service =
+      new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(),
+                                                new StatisticsHttpClientSender(),
+                                                new StatisticsUploadAssistant() {
+                                                  @Override
+                                                  public String getData(@NotNull Set<String> disabledGroups) {
+                                                    return "";
+                                                  }
+                                                });
+    StatisticsResult result = service.send();
+    assertEquals(StatisticsResult.ResultCode.NOTHING_TO_SEND, result.getCode());
   }
 
+  @Test
   public void testIncorrectUrlSending() {
-    RemotelyConfigurableStatisticsService service = new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(STAT_CONFIG_URL, STAT_URL),
-                                                                                              new StatisticsHttpClientSender(),
-                                                                                              new StatisticsUploadAssistant() {
-                                                                                                @Override
-                                                                                                public String getData(@NotNull Set<String> disabledGroups) {
-                                                                                                  return "group:key1=11";
-                                                                                                }
-                                                                                              });
-    final StatisticsResult result = service.send();
-    Assert.assertEquals(StatisticsResult.ResultCode.SENT_WITH_ERRORS, result.getCode());
+    RemotelyConfigurableStatisticsService service =
+      new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(STAT_CONFIG_URL, STAT_URL),
+                                                new StatisticsHttpClientSender(),
+                                                new StatisticsUploadAssistant() {
+                                                  @Override
+                                                  public String getData(@NotNull Set<String> disabledGroups) {
+                                                    return "group:key1=11";
+                                                  }
+                                                });
+    StatisticsResult result = service.send();
+    assertEquals(StatisticsResult.ResultCode.SENT_WITH_ERRORS, result.getCode());
   }
 
+  @Test
   public void testRemotelyDisabledTransmission() {
-    RemotelyConfigurableStatisticsService service = new RemotelyConfigurableStatisticsService(new StatisticsConnectionService() {
-      @Override
-      public Boolean isTransmissionPermitted() {
-        return false;
-      }
-    }, new StatisticsHttpClientSender(),
-    new StatisticsUploadAssistant());
-
-    final StatisticsResult result = service.send();
-    Assert.assertEquals(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, result.getCode());
+    RemotelyConfigurableStatisticsService service =
+      new RemotelyConfigurableStatisticsService(new StatisticsConnectionService() {
+                                                  @Override
+                                                  public Boolean isTransmissionPermitted() {
+                                                    return false;
+                                                  }
+                                                },
+                                                new StatisticsHttpClientSender(),
+                                                new StatisticsUploadAssistant());
+    StatisticsResult result = service.send();
+    assertEquals(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, result.getCode());
   }
 
+  @Test
   public void testErrorInRemoteConfiguration() {
     RemotelyConfigurableStatisticsService service =
       new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(STAT_CONFIG_URL, null),
                                                 new StatisticsHttpClientSender(),
                                                 new StatisticsUploadAssistant());
-    final StatisticsResult result = service.send();
-    Assert.assertEquals(StatisticsResult.ResultCode.ERROR_IN_CONFIG, result.getCode());
+    StatisticsResult result = service.send();
+    assertEquals(StatisticsResult.ResultCode.ERROR_IN_CONFIG, result.getCode());
   }
 }

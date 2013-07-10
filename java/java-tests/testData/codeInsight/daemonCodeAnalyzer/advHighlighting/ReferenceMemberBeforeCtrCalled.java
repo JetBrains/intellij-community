@@ -1,5 +1,7 @@
 // reference before ctr called
 import java.io.*;
+import java.lang.Override;
+import java.lang.String;
 import java.net.*;
 
 class A {
@@ -171,4 +173,32 @@ class WithAnonymous {
       }
   
   }
+}
+
+class InnerClassRefInsideAnonymous {
+    static class Foo {}
+    static class SuperClass {
+      SuperClass(Foo foo) {
+      }
+      
+      SuperClass(String s, Foo foo) {
+      }
+    }
+    
+    static class Child extends SuperClass {
+      Child(Foo foo) {
+        super(new Foo() {
+          public String toString() {
+            AFoo afoo = new <error descr="Cannot reference 'AFoo' before supertype constructor has been called">AFoo</error>();
+            return super.toString();
+          }
+        });
+      }
+
+      Child(String s, Foo foo) {
+        super(s, new <error descr="Cannot reference 'AFoo' before supertype constructor has been called">AFoo</error>());
+      }
+
+      class AFoo extends Foo {} 
+    }
 }

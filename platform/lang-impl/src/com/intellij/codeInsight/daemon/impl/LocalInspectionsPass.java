@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -159,9 +160,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-        toolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), myIgnoreSuppressed);
+        addDescriptors(toolWrapper, descriptor);
       }
     }
+  }
+
+  private void addDescriptors(@NotNull LocalInspectionToolWrapper toolWrapper, @NotNull ProblemDescriptor descriptor) {
+    GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)toolWrapper.getContext();
+    InspectionToolPresentation toolPresentation = context.getPresentation(toolWrapper);
+    LocalDescriptorsUtil.addProblemDescriptors(Collections.singletonList(descriptor), toolPresentation, myIgnoreSuppressed,
+                                               context,
+                                               toolWrapper.getTool());
   }
 
   private void addDescriptorsFromInjectedResults(@NotNull InspectionManagerEx iManager) {
@@ -174,12 +183,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument(file);
       List<InspectionResult> resultList = entry.getValue();
       for (InspectionResult inspectionResult : resultList) {
-        LocalInspectionToolWrapper tool = inspectionResult.tool;
+        LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
 
           PsiElement psiElement = descriptor.getPsiElement();
           if (psiElement == null) continue;
-          if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool.getTool())) continue;
+          if (InspectionManagerEx.inspectionResultSuppressed(psiElement, toolWrapper.getTool())) continue;
           List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, ((ProblemDescriptorBase)descriptor).getTextRange());
           for (TextRange editable : editables) {
             TextRange hostRange = documentRange.injectedToHost(editable);
@@ -194,7 +203,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
             ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
                                                                                    descriptor.getHighlightType(), true, localFixes);
-            tool.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
+            addDescriptors(toolWrapper, patchedDescriptor);
           }
         }
       }
@@ -711,16 +720,30 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return new ArrayList<PsiElement>(result);
   }
 
+
+  @NotNull
+  private List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(@NotNull InspectionProfileWrapper profile, PsiElement element) {
+    List<LocalInspectionToolWrapper> enabled = new ArrayList<LocalInspectionToolWrapper>();
+    final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(element);
+    InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      if (!profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), element)) continue;
+      LocalInspectionToolWrapper wrapper = null;
+      if (toolWrapper instanceof LocalInspectionToolWrapper) {
+        wrapper = (LocalInspectionToolWrapper)toolWrapper;
+      }
+      if (wrapper == null) continue;
+      if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(myFile, wrapper.getTool())) {
+        continue;
+      }
+      enabled.add(wrapper);
+    }
+    return enabled;
+  }
+
   @NotNull
   List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
-    final List<LocalInspectionToolWrapper> tools = profile.getHighlightingLocalInspectionTools(myFile);
-    for (Iterator<LocalInspectionToolWrapper> iterator = tools.iterator(); iterator.hasNext(); ) {
-      LocalInspectionToolWrapper tool = iterator.next();
-      if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(myFile, tool.getTool())) {
-        iterator.remove();
-      }
-    }
-    return tools;
+    return getHighlightingLocalInspectionTools(profile, myFile);
   }
 
   private void doInspectInjectedPsi(@NotNull PsiFile injectedPsi,

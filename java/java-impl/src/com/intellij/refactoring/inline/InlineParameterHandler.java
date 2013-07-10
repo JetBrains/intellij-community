@@ -125,7 +125,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
           if (rExpr != null) {
             final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, refExpr);
 
-            if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs) == null) {
+            if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs, def) == null) {
               new WriteCommandAction(project) {
                 @Override
                 protected void run(Result result) throws Throwable {

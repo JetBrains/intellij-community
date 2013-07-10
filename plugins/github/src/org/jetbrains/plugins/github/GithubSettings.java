@@ -15,17 +15,17 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
+import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
   private static final String HOST = "Host";
-  private static final String ANONIMOUS_GIST = "Anonymous";
+  private static final String ANONYMOUS_GIST = "Anonymous";
   private static final String OPEN_IN_BROWSER_GIST = "OpenInBrowser";
   private static final String PRIVATE_GIST = "Private";
   public static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
@@ -60,40 +60,19 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private boolean myAnonymousGist;
   private boolean myOpenInBrowserGist = true;
   private boolean myPrivateGist;
-  private Collection<String> myTrustedHosts = new ArrayList<String>();
+  private final Collection<String> myTrustedHosts = new ArrayList<String>();
 
-  private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
-  private boolean passwordChanged = false;
-
-  // Once master password is refused, do not ask for it again
-  private boolean masterPasswordRefused = false;
-
+  private static final Logger LOG = GithubUtil.LOG;
 
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
   }
 
   public Element getState() {
-    LOG.assertTrue(!ProgressManager.getInstance().hasProgressIndicator(), "Password should not be accessed under modal progress");
-
-    try {
-      if (passwordChanged && !masterPasswordRefused) {
-        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, getPassword());
-      }
-    }
-    catch (MasterPasswordUnavailableException e){
-      LOG.info("Couldn't store password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-      masterPasswordRefused = true;
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog("Error happened while storing password for github", "Error");
-      LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-    }
-    passwordChanged = false;
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, getLogin());
     element.setAttribute(HOST, getHost());
-    element.setAttribute(ANONIMOUS_GIST, String.valueOf(isAnonymous()));
+    element.setAttribute(ANONYMOUS_GIST, String.valueOf(isAnonymous()));
     element.setAttribute(PRIVATE_GIST, String.valueOf(isPrivateGist()));
     element.setAttribute(OPEN_IN_BROWSER_GIST, String.valueOf(isOpenInBrowserGist()));
     Element trustedHosts = new Element(TRUSTED_HOSTS);
@@ -111,7 +90,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     try {
       setLogin(element.getAttributeValue(LOGIN));
       setHost(element.getAttributeValue(HOST));
-      setAnonymousGist(Boolean.valueOf(element.getAttributeValue(ANONIMOUS_GIST)));
+      setAnonymousGist(Boolean.valueOf(element.getAttributeValue(ANONYMOUS_GIST)));
       setPrivateGist(Boolean.valueOf(element.getAttributeValue(PRIVATE_GIST)));
       setOpenInBrowserGist(Boolean.valueOf(element.getAttributeValue(OPEN_IN_BROWSER_GIST)));
       for (Object trustedHost : element.getChildren(TRUSTED_HOSTS)) {
@@ -126,40 +105,27 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   // TODO return null if no login instead of empty string
   @NotNull
   public String getLogin() {
-    return myLogin != null ? myLogin : "";
+    return StringUtil.notNullize(myLogin);
   }
 
   @NotNull
   public String getPassword() {
-    LOG.assertTrue(!ProgressManager.getInstance().hasProgressIndicator(), "Password should not be accessed under modal progress");
     String password;
     final Project project = ProjectManager.getInstance().getDefaultProject();
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    final PasswordSafe passwordSafe = PasswordSafe.getInstance();
     try {
-      password = passwordSafe.getMemoryProvider().getPassword(project, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
-      if (password != null) {
-        return password;
-      }
-      final MasterKeyPasswordSafe masterKeyProvider = passwordSafe.getMasterKeyProvider();
-      if (!masterKeyProvider.isEmpty()) {
-        // workaround for: don't ask for master password, if the requested password is not there.
-        // this should be fixed in PasswordSafe: don't ask master password to look for keys
-        // until then we assume that is PasswordSafe was used (there is anything there), then it makes sense to look there.
-        password = masterKeyProvider.getPassword(project, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
-      }
+      password = passwordSafe.getPassword(project, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-      masterPasswordRefused = true;
       password = "";
     }
 
-    passwordChanged = false;
-    return password != null ? password : "";
+    return StringUtil.notNullize(password);
   }
 
   public String getHost() {
-    return myHost != null ? myHost : GithubApiUtil.DEFAULT_GITHUB_HOST;
+    return StringUtil.notNullize(myHost, GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   public boolean isAnonymous() {
@@ -175,21 +141,33 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setLogin(final String login) {
-    myLogin = login != null ? login : "";
+    myLogin = StringUtil.notNullize(login);
   }
 
   public void setPassword(final String password) {
-    passwordChanged = !getPassword().equals(password);
+    setPassword(password, true);
+  }
+
+  public void setPassword(final String password, final boolean rememberPassword) {
     try {
-      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password != null ? password : "");
+      if (rememberPassword) {
+        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, StringUtil.notNullize(password));
+      }
+      else {
+        final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+        if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
+          passwordSafe.getMemoryProvider()
+            .storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, StringUtil.notNullize(password));
+        }
+      }
     }
     catch (PasswordSafeException e) {
-      LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
+      LOG.info("Couldn't set password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
     }
   }
 
   public void setHost(final String host) {
-    myHost = host != null ? host : GithubApiUtil.DEFAULT_GITHUB_HOST;
+    myHost = StringUtil.notNullize(host, GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   public void setAnonymousGist(final boolean anonymousGist) {
@@ -213,5 +191,16 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     if (!myTrustedHosts.contains(host)) {
       myTrustedHosts.add(host);
     }
+  }
+
+  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
+    setHost(auth.getHost());
+    setLogin(auth.getLogin());
+    setPassword(auth.getPassword(), rememberPassword);
+  }
+
+  @NotNull
+  public GithubAuthData getAuthData() {
+    return new GithubAuthData(getHost(), getLogin(), getPassword());
   }
 }

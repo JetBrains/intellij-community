@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.invalid.escape.in.string"), JavaHighlightingColors.INVALID_STRING_ESCAPE),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.operator.sign"), JavaHighlightingColors.OPERATION_SIGN),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parentheses"), JavaHighlightingColors.PARENTHS),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parentheses"), JavaHighlightingColors.PARENTHESES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.braces"), JavaHighlightingColors.BRACES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.brackets"), JavaHighlightingColors.BRACKETS),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.comma"), JavaHighlightingColors.COMMA),

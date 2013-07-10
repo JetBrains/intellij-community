@@ -30,6 +30,8 @@ import java.util.List;
  * @see RefManager
  */
 public interface RefEntity extends UserDataHolder {
+  RefEntity[] EMPTY_ELEMENTS_ARRAY = new RefEntity[0];
+
   /**
    * Returns the name of the node.
    *

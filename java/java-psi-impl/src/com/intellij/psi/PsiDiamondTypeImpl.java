@@ -287,7 +287,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   public static boolean haveConstructorsGenericsParameters(@NotNull final PsiClass psiClass) {
-    for (PsiMethod method : psiClass.getConstructors()) {
+    for (final PsiMethod method : psiClass.getConstructors()) {
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
         final PsiType type = parameter.getType();
         final Boolean accept = type.accept(new PsiTypeVisitor<Boolean>() {
@@ -304,7 +304,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
                 if (typaParamFound != null && typaParamFound) return true;
               }
             }
-            return PsiUtil.resolveClassInType(classType) instanceof PsiTypeParameter;
+            final PsiClass aClass = PsiUtil.resolveClassInType(classType);
+            return aClass instanceof PsiTypeParameter && ((PsiTypeParameter)aClass).getOwner() == method;
           }
 
           @Override

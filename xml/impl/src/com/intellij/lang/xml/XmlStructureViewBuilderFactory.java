@@ -27,6 +27,7 @@ import com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
+  @Override
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     if (!(psiFile instanceof XmlFile)) {
@@ -52,9 +54,10 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
     }
 
     return new TreeBasedStructureViewBuilder() {
+      @Override
       @NotNull
-      public StructureViewModel createStructureViewModel() {
-        return new XmlStructureViewTreeModel((XmlFile)psiFile);
+      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+        return new XmlStructureViewTreeModel((XmlFile)psiFile, editor);
       }
     };
   }

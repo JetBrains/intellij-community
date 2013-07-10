@@ -37,7 +37,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, AnalysisScope scope) {
+  protected void analyze(@NotNull final Project project, @NotNull AnalysisScope scope) {
     new AnalyzeDependenciesHandler(project, scope, myPanel.myTransitiveCB.isSelected() ? ((SpinnerNumberModel)myPanel.myBorderChooser.getModel()).getNumber().intValue() : 0).analyze();
     myPanel = null;
   }

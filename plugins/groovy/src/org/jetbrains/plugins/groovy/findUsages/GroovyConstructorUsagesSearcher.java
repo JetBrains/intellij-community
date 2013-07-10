@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -84,11 +83,10 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls, final boolean includeOverloads) {
     if (!constructor.isConstructor()) return;
 
-    SearchScope onlyGroovy = PsiUtil.restrictScopeToGroovyFiles(searchScope);
-
     final PsiClass clazz = constructor.getContainingClass();
     if (clazz == null) return;
 
+    SearchScope onlyGroovy = GroovyScopeUtil.restrictScopeToGroovyFiles(searchScope, GroovyScopeUtil.getEffectiveScope(constructor));
     Set<PsiClass> processed = collector.getSearchSession().getUserData(LITERALLY_CONSTRUCTED_CLASSES);
     if (processed == null) {
       collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed = new ConcurrentHashSet<PsiClass>());

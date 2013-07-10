@@ -237,6 +237,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA22005() throws Exception { doTest5(false);}
   public void testIDEA57259() throws Exception { doTest5(false);}
   public void testIDEA107957() throws Exception { doTest6(false);}
+  public void testIDEA109875() throws Exception { doTest6(false);}
   public void testIDEA106964() throws Exception { doTest5(false);}
   public void testIDEA107782() throws Exception { doTest5(false);}
   public void testInheritedWithDifferentArgsInTypeParams() throws Exception { doTest5(false);}
@@ -287,6 +288,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testIDEA104100() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
   public void testIDEA104160() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
+  public void testSOEInLeastUpperClass() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

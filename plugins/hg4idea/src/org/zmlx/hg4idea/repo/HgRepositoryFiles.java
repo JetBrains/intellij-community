@@ -35,12 +35,18 @@ public class HgRepositoryFiles {
   public static final String BRANCHEADSDIR = "cache";
   public static final String MERGE = "merge";
   public static final String BRANCH = "branch";
+  public static final String BOOKMARKS = "bookmarks";
+  public static final String CURRENT_BOOKMARK = "bookmarks.current";
+  public static final String CONFIG_HGRC = "hgrc";
 
 
   @NotNull private final String myBranchHeadsPath;
   @NotNull private final String myBranchHeadsDirPath;
   @NotNull private final String myMergePath;
   @NotNull private final String myBranchPath;
+  @NotNull private final String myBookmarksPath;
+  @NotNull private final String myCurrentBookmarkPath;
+  @NotNull private final String myConfigHgrcPath;
 
   @NotNull
   public static HgRepositoryFiles getInstance(@NotNull VirtualFile hgDir) {
@@ -52,6 +58,9 @@ public class HgRepositoryFiles {
     myBranchHeadsDirPath = hgDir.getPath() + slash(BRANCHEADSDIR);
     myBranchPath = hgDir.getPath() + slash(BRANCH);
     myMergePath = hgDir.getPath() + slash(MERGE);
+    myBookmarksPath = hgDir.getPath() + slash(BOOKMARKS);
+    myCurrentBookmarkPath = hgDir.getPath() + slash(CURRENT_BOOKMARK);
+    myConfigHgrcPath = hgDir.getPath() + slash(CONFIG_HGRC);
   }
 
   @NotNull
@@ -72,7 +81,6 @@ public class HgRepositoryFiles {
     return myBranchHeadsDirPath;
   }
 
-
   public boolean isbranchHeadsFile(String filePath) {
     return filePath.startsWith(myBranchHeadsPath);
   }
@@ -83,5 +91,17 @@ public class HgRepositoryFiles {
 
   public boolean isMergeFile(String filePath) {
     return filePath.startsWith(myMergePath);
+  }
+
+  public boolean isBookmarksFile(String filePath) {
+    return filePath.equals(myBookmarksPath);
+  }
+
+  public boolean isCurrentBookmarksFile(String filePath) {
+    return filePath.equals(myCurrentBookmarkPath);
+  }
+
+  public boolean isConfigHgrcFile(String filePath) {
+    return filePath.equals(myConfigHgrcPath);
   }
 }

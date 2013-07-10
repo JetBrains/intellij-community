@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;

@@ -18,8 +18,8 @@ public class RedundantCast15Test extends InspectionTestCase {
 
 
   private void doTest() throws Exception {
-    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new RedundantCastInspection());
-    doTest("redundantCast/generics/" + getTestName(false), tool, "java 1.5");
+    final LocalInspectionToolWrapper toolWrapper = new LocalInspectionToolWrapper(new RedundantCastInspection());
+    doTest("redundantCast/generics/" + getTestName(false), toolWrapper, "java 1.5");
   }
 
   public void testBoxingInRef() throws Exception { doTest(); }
@@ -42,10 +42,11 @@ public class RedundantCast15Test extends InspectionTestCase {
   public void testCastToUnboundWildcard() throws Exception { doTest();}
 
   public void testRawCastsToAvoidIncompatibility() throws Exception { doTest();}
-  
+
   public void testIDEA22899() throws Exception { doTest();}
   public void testRawCast1() throws Exception { doTest();}
   public void testInferenceFromCast() throws Exception { doTest();}
+  public void testGetClassProcessing() throws Exception { doTest();}
 
   public void testTypeParameterAccessChecksJava7() throws Exception {
     ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, getTestRootDisposable());

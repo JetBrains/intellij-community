@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,7 @@ public class Cvs2SettingsEditPanel {
 
   public void addCvsRootChangeListener(CvsRootChangeListener cvsRootChangeListener) {
     myCvsRootConfigurationPanelView.addCvsRootChangeListener(cvsRootChangeListener);
+    myExtConnectionSettingsEditor.addCvsRootChangeListener(cvsRootChangeListener);
   }
 
   public void updateFrom(final CvsRootConfiguration configuration) {
@@ -275,11 +276,17 @@ public class Cvs2SettingsEditPanel {
     }
   }
 
-  private static String getProxyPanelName(CvsRootData cvsRootData) {
+  private String getProxyPanelName(CvsRootData cvsRootData) {
     if (cvsRootData.METHOD == null) {
       return EMPTY;
     }
-    return cvsRootData.METHOD.supportsProxyConnection() ? NON_EMPTY_PROXY_SETTINGS : EMPTY;
+    if (cvsRootData.METHOD.supportsProxyConnection()) {
+      return NON_EMPTY_PROXY_SETTINGS;
+    }
+    if (cvsRootData.METHOD == CvsMethod.EXT_METHOD && myExtConnectionSettingsEditor.isUseInternalSshImplementation()) {
+      return NON_EMPTY_PROXY_SETTINGS;
+    }
+    return EMPTY;
   }
 
   private static String getSettingsPanelName(CvsRootData cvsRootData) {

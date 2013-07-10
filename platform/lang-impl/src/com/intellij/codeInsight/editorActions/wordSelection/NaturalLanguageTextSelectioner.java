@@ -70,7 +70,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
       }
       sentenceStart--;
     }
-    while (Character.isWhitespace(editorText.charAt(sentenceStart))) {
+    while (sentenceStart < end && Character.isWhitespace(editorText.charAt(sentenceStart))) {
       sentenceStart++;
     }
 

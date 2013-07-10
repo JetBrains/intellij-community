@@ -58,7 +58,7 @@ public abstract class PsiAnchor {
 
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-      if (virtualFile != null) return new PsiFileReference(virtualFile, element.getProject());
+      if (virtualFile != null) return new PsiFileReference(virtualFile, (PsiFile)element);
       return new HardReference(element);
     }
     if (element instanceof PsiDirectory) {
@@ -260,12 +260,25 @@ public abstract class PsiAnchor {
   }
 
   private static class PsiFileReference extends PsiAnchor {
-    protected final VirtualFile myFile;
-    protected final Project myProject;
+    private final VirtualFile myFile;
+    private final Project myProject;
+    @NotNull private final Language myLanguage;
 
-    private PsiFileReference(@NotNull VirtualFile file, @NotNull Project project) {
+    private PsiFileReference(@NotNull VirtualFile file, @NotNull PsiFile psiFile) {
       myFile = file;
-      myProject = project;
+      myProject = psiFile.getProject();
+      myLanguage = findLanguage(psiFile);
+    }
+
+    private static Language findLanguage(PsiFile file) {
+      FileViewProvider vp = file.getViewProvider();
+      Set<Language> languages = vp.getLanguages();
+      for (Language language : languages) {
+        if (file.equals(vp.getPsi(language))) {
+          return language;
+        }
+      }
+      throw new AssertionError("Non-retrievable file: " + file.getClass() + "; " + file.getLanguage() + "; " + languages);
     }
 
     @Override
@@ -276,7 +289,7 @@ public abstract class PsiAnchor {
     @Override
     @Nullable
     public PsiFile getFile() {
-      return SelfElementInfo.restoreFileFromVirtual(myFile, myProject);
+      return SelfElementInfo.restoreFileFromVirtual(myFile, myProject, myLanguage);
     }
 
     @Override
@@ -289,22 +302,33 @@ public abstract class PsiAnchor {
       return (int)myFile.getLength();
     }
 
-    public boolean equals(final Object o) {
+    @Override
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof PsiFileReference)) return false;
 
-      final PsiFileReference that = (PsiFileReference)o;
+      PsiFileReference reference = (PsiFileReference)o;
 
-      return myFile.equals(that.myFile);
+      if (!myFile.equals(reference.myFile)) return false;
+      if (!myLanguage.equals(reference.myLanguage)) return false;
+      if (!myProject.equals(reference.myProject)) return false;
+
+      return true;
     }
 
+    @Override
     public int hashCode() {
-      return myFile.hashCode();
+      return 31 * myFile.hashCode() + (myLanguage.hashCode());
     }
   }
-  private static class PsiDirectoryReference extends PsiFileReference {
+  
+  private static class PsiDirectoryReference extends PsiAnchor {
+    private final VirtualFile myFile;
+    private final Project myProject;
+    
     private PsiDirectoryReference(@NotNull VirtualFile file, @NotNull Project project) {
-      super(file, project);
+      myFile = file;
+      myProject = project;
       assert file.isDirectory() : file;
     }
 
@@ -319,8 +343,31 @@ public abstract class PsiAnchor {
     }
 
     @Override
+    public int getStartOffset() {
+      return 0;
+    }
+
+    @Override
     public int getEndOffset() {
       return -1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof PsiDirectoryReference)) return false;
+
+      PsiDirectoryReference reference = (PsiDirectoryReference)o;
+
+      if (!myFile.equals(reference.myFile)) return false;
+      if (myProject != null ? !myProject.equals(reference.myProject) : reference.myProject != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myFile.hashCode();
     }
   }
 

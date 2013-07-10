@@ -94,7 +94,7 @@ public class XTestValueNode implements XValueNode {
     return false;
   }
 
-  public boolean waitFor(long timeoutInMillis) throws InterruptedException {
-    return XDebuggerTestUtil.waitFor(myFinished, timeoutInMillis);
+  public void waitFor(long timeoutInMillis) throws InterruptedException {
+    if (!XDebuggerTestUtil.waitFor(myFinished, timeoutInMillis)) throw new AssertionError("Waiting timed out");
   }
 }

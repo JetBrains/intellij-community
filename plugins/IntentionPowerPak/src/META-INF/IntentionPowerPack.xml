@@ -1,0 +1,593 @@
+<idea-plugin version="2">
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <!-- Annotations -->
+    <intentionAction>
+      <className>com.siyeh.ipp.annotation.ExpandToNormalAnnotationIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.annotation.AnnotateOverriddenMethodsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
+    </intentionAction>
+
+    <!-- Numbers -->
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToDecimalIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToHexIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertToScientificNotationIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertToPlainIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToOctalIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToBinaryIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <!-- Boolean -->
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.DemorgansIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.RemoveBooleanEqualityIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.NegateComparisonIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.FlipComparisonIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+<!--
+    <intentionAction>
+      <className>com.siyeh.ipp.bool.FlipConjunctionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+-->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.equality.ReplaceEqualsWithEqualityIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.equality.ReplaceEqualityWithEqualsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.ExpandBooleanIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.ConvertToNestedIfIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <!-- Conditional Operator -->
+    <intentionAction>
+      <className>com.siyeh.ipp.conditional.FlipConditionalIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.conditional.ReplaceConditionalWithIfIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.ReplaceIfWithConditionalIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.conditional.RemoveConditionalIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <!-- Shift -->
+    <intentionAction>
+      <className>com.siyeh.ipp.shift.ReplaceMultiplyWithShiftIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.shift.operation</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.shift.ReplaceShiftWithMultiplyIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.shift.operation</categoryKey>
+    </intentionAction>
+
+    <!-- JUnit -->
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.ReplaceAssertEqualsWithAssertLiteralIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.ReplaceAssertLiteralWithAssertEqualsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.CreateAssertIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.FlipAssertLiteralIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.ConvertJUnit3TestCaseToJUnit4Intention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
+
+    <!-- Declaration -->
+
+    <!--
+    <intentionAction>
+      <className>com.siyeh.ipp.decls.MoveDeclarationIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+    -->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.braces.AddArrayCreationExpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.decls.SimplifyVariableIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.initialization.SplitDeclarationAndInitializationIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.interfacetoclass.ConvertInterfaceToClassIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.varargs.MakeMethodVarargsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.varargs.ConvertVarargParameterToArrayIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.varargs.WrapVarargArgumentsWithExplicitArrayIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.adapter.AdapterToListenerIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.types.ReplaceDiamondWithExplicitTypeArgumentsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.types.ReplaceLambdaWithAnonymousIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+   <intentionAction>
+      <className>com.siyeh.ipp.types.InferLambdaParameterTypeIntention</className>
+     <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.decls.ChangeVariableTypeToRhsTypeIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <!-- Imports -->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.imports.ReplaceOnDemandImportIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <!-- Comments -->
+    <intentionAction>
+      <className>com.siyeh.ipp.comment.ChangeToCStyleCommentIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.comments</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.comment.ChangeToEndOfLineCommentIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.comments</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.comment.MoveCommentToSeparateLineIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.comments</categoryKey>
+    </intentionAction>
+
+
+    <!-- Control Flow -->
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.SplitElseIfIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeElseIfIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeIfAndIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeIfOrIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.MergeParallelIfsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.switchtoif.ReplaceSwitchWithIfIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.switchtoif.ReplaceIfWithSwitchIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.trivialif.SimplifyIfElseIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForEachLoopWithIndexedForLoopIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForEachLoopWithOptimizedIndexedForLoopIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForEachLoopWithIteratorForLoopIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForLoopWithWhileLoopIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.whileloop.ReplaceWhileLoopWithDoWhileLoopIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.whileloop.ReplaceDoWhileLoopWithWhileLoopIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.whileloop.ExtractWhileLoopConditionToIfStatementIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.braces.AddBracesIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.braces.RemoveBracesIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReverseForLoopDirectionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+
+    <!-- Modifiers -->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePublicIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePackagePrivateIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakeProtectedIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePrivateIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+
+    <!-- Other -->
+    <intentionAction>
+      <className>com.siyeh.ipp.expression.FlipExpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.expression.FlipSetterCallIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.commutative.FlipCommutativeMethodCallIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.commutative.SwapMethodCallArgumentsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.parenthesis.RemoveUnnecessaryParenthesesIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithStringBufferIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithFormatStringIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.CopyConcatenatedStringToClipboardIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.JoinConcatenatedStringLiteralsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.MakeCallChainIntoCallSequenceIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.MergeCallSequenceToChainIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.DetailExceptionsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.ConvertCatchToThrowsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.SplitMultiCatchIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.ReplaceArmWithTryFinallyIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.MergeNestedTryStatementsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.SplitTryWithMultipleResourcesIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.ObscureThrownExceptionsIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceWithOperatorAssignmentIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithAssignmentIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithPostfixExpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplacePostfixExpressionWithOperatorAssignmentIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplacePostfixExpressionWithAssignmentIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.opassign.ReplaceAssignmentWithPostfixExpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.chartostring.CharToStringIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.chartostring.StringToCharIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.asserttoif.AssertToIfIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.asserttoif.IfToAssertionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.constant.ConstantExpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.constant.ConstantSubexpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.increment.ExtractIncrementIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.parenthesis.AddClarifyingParenthesesIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.types.MakeMethodDefaultIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+  </extensions>
+</idea-plugin>

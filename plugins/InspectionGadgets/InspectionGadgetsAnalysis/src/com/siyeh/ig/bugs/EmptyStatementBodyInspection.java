@@ -15,22 +15,33 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.FileTypeUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class EmptyStatementBodyInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean m_reportEmptyBlocks = true;
+
+  @SuppressWarnings("PublicField")
+  public boolean commentsAreContent = false;
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    node.addContent(new Element("option").setAttribute("name", "m_reportEmptyBlocks").setAttribute("value", String.valueOf(m_reportEmptyBlocks)));
+    if (commentsAreContent) {
+      node.addContent(new Element("option").setAttribute("name", "commentsAreContent").setAttribute("value", "true"));
+    }
+  }
 
   @Override
   @NotNull
@@ -57,8 +68,10 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("statement.with.empty.body.include.option"),
-                                          this, "m_reportEmptyBlocks");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("statement.with.empty.body.include.option"), "m_reportEmptyBlocks");
+    panel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.comments.option"), "commentsAreContent");
+    return panel;
   }
 
   @Override
@@ -137,22 +150,36 @@ public class EmptyStatementBodyInspection extends BaseInspection {
       registerStatementError(statement);
     }
 
-    private boolean isEmpty(PsiElement body) {
-      if (body instanceof PsiEmptyStatement) {
+    private boolean isEmpty(PsiElement element) {
+      if (!commentsAreContent && element instanceof PsiComment) {
+        return true;
+      } else if (element instanceof PsiEmptyStatement) {
+        if (commentsAreContent) {
+          final PsiElement[] children = element.getChildren();
+          for (PsiElement child : children) {
+            if (child instanceof PsiComment) {
+              return false;
+            }
+          }
+        }
         return true;
       }
-      else if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement block = (PsiBlockStatement)body;
+      else if (element instanceof PsiWhiteSpace) {
+        return true;
+      }
+      else if (element instanceof PsiBlockStatement) {
+        final PsiBlockStatement block = (PsiBlockStatement)element;
         return isEmpty(block.getCodeBlock());
       }
-      else if (m_reportEmptyBlocks && body instanceof PsiCodeBlock) {
-        final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
-        final PsiStatement[] statements = codeBlock.getStatements();
-        if (statements.length == 0) {
+      else if (m_reportEmptyBlocks && element instanceof PsiCodeBlock) {
+        final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
+        final PsiElement[] children = codeBlock.getChildren();
+        if (children.length == 2) {
           return true;
         }
-        for (PsiStatement statement : statements) {
-          if (!isEmpty(statement)) {
+        for (int i = 1; i < children.length - 1; i++) {
+          final PsiElement child = children[i];
+          if (!isEmpty(child)) {
             return false;
           }
         }

@@ -16,9 +16,13 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
+import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -178,5 +182,11 @@ public class ExternalSystemUiUtil {
         }
       }
     }
+  }
+
+  @NotNull
+  public static ExternalSystemUiAware getUiAware(@NotNull ProjectSystemId externalSystemId) {
+    ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+    return manager instanceof ExternalSystemUiAware ? (ExternalSystemUiAware)manager : DefaultExternalSystemUiAware.INSTANCE;
   }
 }

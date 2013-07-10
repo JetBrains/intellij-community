@@ -285,9 +285,6 @@
                     beanClass="com.intellij.codeInspection.InspectionEP">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
     </extensionPoint>
-    <!-- please use localInspection or globalInspection instead-->
-    <extensionPoint name="specialTool"
-                    beanClass="com.intellij.codeInspection.InspectionEP"/>
     <extensionPoint name="inspectionToolProvider"
                     interface="com.intellij.codeInspection.InspectionToolProvider"/>
     <extensionPoint name="inspectionToolsFactory"
@@ -721,7 +718,9 @@
 
     <extensionPoint name="projectViewNodeDecorator" interface="com.intellij.ide.projectView.ProjectViewNodeDecorator" area="IDEA_PROJECT"/>
 
+    <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider"/>
     <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider"/>
+
     <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider"/>
 
     <extensionPoint name="psiViewerExtension" interface="com.intellij.internal.psiView.PsiViewerExtension"/>

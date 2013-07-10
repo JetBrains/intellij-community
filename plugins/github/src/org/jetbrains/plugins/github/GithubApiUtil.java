@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
@@ -22,13 +23,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.auth.AuthenticationException;
+import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,32 +44,81 @@ public class GithubApiUtil {
   public static final String DEFAULT_GITHUB_HOST = "github.com";
 
   private static final int CONNECTION_TIMEOUT = 5000;
-  private static final Logger LOG = Logger.getInstance(GithubApiUtil.class);
+  private static final Logger LOG = GithubUtil.LOG;
+
+  private enum HttpVerb {
+    GET, POST, DELETE, HEAD
+  }
 
   @Nullable
   public static JsonElement getRequest(@NotNull String host, @NotNull String login, @NotNull String password,
                                        @NotNull String path) throws IOException {
-    return request(host, login, password, path, null, false);
+    return request(host, login, password, path, null, HttpVerb.GET);
   }
 
   @Nullable
-  public static JsonElement postRequest(@NotNull String host, @Nullable String login, @Nullable String password,
-                                        @NotNull String path, @Nullable String requestBody) throws IOException {
-    return request(host, login, password, path, requestBody, true);
+  public static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, null, HttpVerb.GET);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull String host, @NotNull String path, @Nullable String requestBody) throws IOException {
+    return request(host, null, null, path, requestBody, HttpVerb.POST);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
+    throws IOException {
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, requestBody, HttpVerb.POST);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull String host,
+                                        @NotNull GithubAuthData auth,
+                                        @NotNull String path,
+                                        @Nullable String requestBody) throws IOException {
+    return request(host, auth.getLogin(), auth.getPassword(), path, requestBody, HttpVerb.POST);
+  }
+
+  @Nullable
+  public static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    return request(auth.getHost(), auth.getLogin(), auth.getPassword(), path, null, HttpVerb.DELETE);
   }
 
   @Nullable
   private static JsonElement request(@NotNull String host, @Nullable String login, @Nullable String password,
-                                     @NotNull String path, @Nullable String requestBody, boolean post) throws IOException {
+                                     @NotNull String path,
+                                     @Nullable String requestBody, @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(host, login, password, path, requestBody, post);
+      method = doREST(host, login, password, path, requestBody, verb);
       String resp = method.getResponseBodyAsString();
       if (resp == null) {
         LOG.info(String.format("Unexpectedly empty response: %s", resp));
         return null;
       }
-      return parseResponse(resp);
+      if (method.getStatusCode() >= 400 && method.getStatusCode() <= 404) {
+        throw new AuthenticationException("Request response: " + method.getStatusText());
+      }
+
+      JsonElement ret = parseResponse(resp);
+
+      Header header = method.getResponseHeader("Link");
+      if (header != null) {
+        String s = header.getValue();
+        final int end = s.indexOf(">; rel=\"next\"");
+        final int begin = s.lastIndexOf('<', end);
+        if (begin >= 0 && end >= 0) {
+          JsonElement next = request(s.substring(begin + 1, end), login, password, "", requestBody, verb);
+          if (next != null) {
+            JsonArray merged = ret.getAsJsonArray();
+            merged.addAll(next.getAsJsonArray());
+            return merged;
+          }
+        }
+      }
+
+      return ret;
     }
     finally {
       if (method != null) {
@@ -79,92 +129,32 @@ public class GithubApiUtil {
 
   @NotNull
   private static HttpMethod doREST(@NotNull String host, @Nullable String login, @Nullable String password, @NotNull String path,
-                                   @Nullable final String requestBody, final boolean post) throws IOException {
+                                   @Nullable final String requestBody,
+                                   @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(login, password);
-    String uri = getApiUrl(host) + path;
+    String uri = GithubUrlUtil.getApiUrl(host) + path;
     return GithubSslSupport.getInstance().executeSelfSignedCertificateAwareRequest(client, uri,
      new ThrowableConvertor<String, HttpMethod, IOException>() {
        @Override
        public HttpMethod convert(String uri) throws IOException {
-         if (post) {
-           PostMethod method = new PostMethod(uri);
-           if (requestBody != null) {
-             method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
-           }
-           return method;
+         switch (verb) {
+           case POST:
+             PostMethod method = new PostMethod(uri);
+             if (requestBody != null) {
+               method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
+             }
+             return method;
+           case GET:
+             return new GetMethod(uri);
+           case DELETE:
+             return new DeleteMethod(uri);
+           case HEAD:
+             return new HeadMethod(uri);
+           default:
+             throw new IllegalStateException("Wrong HttpVerb: unknown method: " + verb.toString());
          }
-         return new GetMethod(uri);
        }
      });
-  }
-
-  @NotNull
-  public static String removeProtocolPrefix(final String url) {
-    if (url.startsWith("https://")) {
-      return url.substring(8);
-    }
-    else if (url.startsWith("http://")) {
-        return url.substring(7);
-    }
-    else if (url.startsWith("git@")) {
-      return url.substring(4);
-    }
-    else {
-      return url;
-    }
-  }
-
-  @NotNull
-  private static String getApiUrl(@NotNull String urlFromSettings) {
-    return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
-  }
-
-  @NotNull
-  public static String getApiUrl() {
-    return getApiUrl(GithubSettings.getInstance().getHost());
-  }
-
-  /**
-   * Returns the "host" part of Git URLs.
-   * E.g.: https://github.com
-   * Note: there is no trailing slash in the returned url.
-   */
-  @NotNull
-  public static String getGitHost() {
-    return "https://" + removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
-  }
-
-  /*
-   All API access is over HTTPS, and accessed from the api.github.com domain
-   (or through yourdomain.com/api/v3/ for enterprise).
-   http://developer.github.com/v3/
-  */
-  @NotNull
-  private static String getApiUrlWithoutProtocol(String urlFromSettings) {
-    String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings));
-    final String API_PREFIX = "api.";
-    final String ENTERPRISE_API_SUFFIX = "/api/v3";
-
-    if (url.equals(DEFAULT_GITHUB_HOST)) {
-      return API_PREFIX + url;
-    }
-    else if (url.equals(API_PREFIX + DEFAULT_GITHUB_HOST)) {
-      return url;
-    }
-    else if (url.endsWith(ENTERPRISE_API_SUFFIX)) {
-      return url;
-    }
-    else {
-      return url + ENTERPRISE_API_SUFFIX;
-    }
-  }
-
-  @NotNull
-  public static String removeTrailingSlash(@NotNull String s) {
-    if (s.endsWith("/")) {
-      return s.substring(0, s.length() - 1);
-    }
-    return s;
   }
 
   @NotNull

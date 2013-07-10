@@ -68,6 +68,7 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (child.getPsi() instanceof PsiResourceVariable && getResourceVariablesCount() == 1) {
       getTreeParent().deleteChildInternal(this);
+      return;
     }
 
     super.deleteChildInternal(child);

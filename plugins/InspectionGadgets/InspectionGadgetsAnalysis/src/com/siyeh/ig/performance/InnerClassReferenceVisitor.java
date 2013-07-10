@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,7 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
   }
 
   private boolean isClassStaticallyAccessible(PsiClass aClass) {
-    if (aClass.getContainingClass() != null &&
-        aClass.hasModifierProperty(PsiModifier.STATIC)) {
+    if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.STATIC)) {
       if (!PsiTreeUtil.isAncestor(aClass, innerClass, false)) {
         return true;
       }
@@ -45,11 +44,9 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
       return true;
     }
     PsiClass classScope = aClass;
-    final PsiClass outerClass =
-      ClassUtils.getContainingClass(innerClass);
+    final PsiClass outerClass = ClassUtils.getContainingClass(innerClass);
     while (classScope != null) {
-      if (InheritanceUtil.isInheritorOrSelf(outerClass, classScope,
-                                            true)) {
+      if (InheritanceUtil.isInheritorOrSelf(outerClass, classScope, true)) {
         return false;
       }
       final PsiElement scope = classScope.getScope();
@@ -64,33 +61,29 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitThisExpression(
-    @NotNull PsiThisExpression expression) {
+  public void visitThisExpression(@NotNull PsiThisExpression expression) {
     if (!referencesStaticallyAccessible) {
       return;
     }
     super.visitThisExpression(expression);
-    final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
-    if (isContainingClassQualifier(qualifier)) {
+    if (hasContainingClassQualifier(expression)) {
       referencesStaticallyAccessible = false;
     }
   }
 
   @Override
-  public void visitSuperExpression(
-    @NotNull PsiSuperExpression expression) {
+  public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
     if (!referencesStaticallyAccessible) {
       return;
     }
     super.visitSuperExpression(expression);
-    final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
-    if (isContainingClassQualifier(qualifier)) {
+    if (hasContainingClassQualifier(expression)) {
       referencesStaticallyAccessible = false;
     }
   }
 
-  private boolean isContainingClassQualifier(
-    PsiJavaCodeReferenceElement qualifier) {
+  private boolean hasContainingClassQualifier(PsiQualifiedExpression expression) {
+    final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
     if (qualifier == null) {
       return false;
     }
@@ -103,72 +96,58 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceElement(
-    @NotNull PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     if (!referencesStaticallyAccessible) {
       return;
     }
     final PsiElement parent = reference.getParent();
-    if (parent instanceof PsiThisExpression ||
-        parent instanceof PsiSuperExpression) {
+    if (parent instanceof PsiThisExpression || parent instanceof PsiSuperExpression) {
       return;
     }
     super.visitReferenceElement(reference);
-    final PsiElement element = reference.resolve();
-    if (!(element instanceof PsiClass)) {
-      return;
-    }
-    final PsiClass aClass = (PsiClass)element;
-    final PsiElement scope = aClass.getScope();
-    if (!(scope instanceof PsiClass)) {
-      return;
-    }
-    referencesStaticallyAccessible &=
-      aClass.hasModifierProperty(PsiModifier.STATIC);
-  }
 
-  @Override
-  public void visitReferenceExpression(
-    @NotNull PsiReferenceExpression expression) {
-    if (!referencesStaticallyAccessible) {
-      return;
-    }
-    super.visitReferenceExpression(expression);
-    final PsiExpression qualifier =
-      expression.getQualifierExpression();
+    final PsiElement qualifier = reference.getQualifier();
     if (qualifier instanceof PsiSuperExpression) {
       return;
     }
     if (qualifier instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)qualifier;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
       final PsiElement resolvedExpression = referenceExpression.resolve();
-      if (!(resolvedExpression instanceof PsiField) &&
-          !(resolvedExpression instanceof PsiMethod)) {
+      if (!(resolvedExpression instanceof PsiField) && !(resolvedExpression instanceof PsiMethod)) {
         return;
       }
     }
-    final PsiElement element = expression.resolve();
+    final PsiElement element = reference.resolve();
     if (element instanceof PsiMethod || element instanceof PsiField) {
       final PsiMember member = (PsiMember)element;
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       final PsiClass containingClass = member.getContainingClass();
-      referencesStaticallyAccessible &=
-        isClassStaticallyAccessible(containingClass);
+      if (innerClass.equals(containingClass)) {
+        return;
+      }
+      if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+        referencesStaticallyAccessible = false;
+        return;
+      }
+      referencesStaticallyAccessible &= isClassStaticallyAccessible(containingClass);
     }
-    if (element instanceof PsiLocalVariable ||
-        element instanceof PsiParameter) {
-      final PsiElement containingMethod =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiMethod.class);
-      final PsiElement referencedMethod =
-        PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+      final PsiElement containingMethod = PsiTreeUtil.getParentOfType(reference, PsiMethod.class);
+      final PsiElement referencedMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (containingMethod != null && referencedMethod != null &&
           !containingMethod.equals(referencedMethod)) {
         referencesStaticallyAccessible = false;
       }
+    }
+    else if ((element instanceof PsiClass)) {
+      final PsiClass aClass = (PsiClass)element;
+      final PsiElement scope = aClass.getScope();
+      if (!(scope instanceof PsiClass)) {
+        return;
+      }
+      referencesStaticallyAccessible &= aClass.hasModifierProperty(PsiModifier.STATIC);
     }
   }
 }

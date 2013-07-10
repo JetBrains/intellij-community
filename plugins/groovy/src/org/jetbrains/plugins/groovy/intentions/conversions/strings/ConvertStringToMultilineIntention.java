@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -37,12 +36,13 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -213,11 +213,11 @@ public class ConvertStringToMultilineIntention extends Intention {
       }
       else {
         final GrStringImpl gstring = (GrStringImpl)literal;
-        for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-          if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
-            appendSimpleStringValue(child.getPsi(), buffer, "\"\"\"");
+        for (PsiElement child : gstring.getAllContentParts()) {
+          if (child instanceof GrStringContent) {
+            appendSimpleStringValue(child, buffer, "\"\"\"");
           }
-          else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
+          else if (child instanceof GrStringInjection) {
             buffer.append(child.getText());
           }
         }

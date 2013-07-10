@@ -11,8 +11,11 @@
 # todo: socket permissions
 
 from mercurial.i18n import _
+from mercurial import util
 import server
 from client import client, QueryFailed
+
+testedwith = 'internal'
 
 def serve(ui, repo, **opts):
     '''start an inotify server for this repository'''
@@ -31,7 +34,7 @@ def debuginotify(ui, repo, **opts):
         ui.write(('  %s/\n') % path)
 
 def reposetup(ui, repo):
-    if not hasattr(repo, 'dirstate'):
+    if not util.safehasattr(repo, 'dirstate'):
         return
 
     class inotifydirstate(repo.dirstate.__class__):
@@ -41,11 +44,12 @@ def reposetup(ui, repo):
         # to start an inotify server if it won't start.
         _inotifyon = True
 
-        def status(self, match, subrepos, ignored, clean, unknown=True):
+        def status(self, match, subrepos, ignored, clean, unknown):
             files = match.files()
             if '.' in files:
                 files = []
-            if self._inotifyon and not ignored and not subrepos and not self._dirty:
+            if (self._inotifyon and not ignored and not subrepos and
+                not self._dirty):
                 cli = client(ui, repo)
                 try:
                     result = cli.statusquery(files, match, False,
@@ -79,8 +83,11 @@ cmdtable = {
     '^inserve':
         (serve,
          [('d', 'daemon', None, _('run server in background')),
-          ('', 'daemon-pipefds', '', _('used internally by daemon mode')),
-          ('t', 'idle-timeout', '', _('minutes to sit idle before exiting')),
-          ('', 'pid-file', '', _('name of file to write process ID to'))],
+          ('', 'daemon-pipefds', '',
+           _('used internally by daemon mode'), _('NUM')),
+          ('t', 'idle-timeout', '',
+           _('minutes to sit idle before exiting'), _('NUM')),
+          ('', 'pid-file', '',
+           _('name of file to write process ID to'), _('FILE'))],
          _('hg inserve [OPTION]...')),
     }

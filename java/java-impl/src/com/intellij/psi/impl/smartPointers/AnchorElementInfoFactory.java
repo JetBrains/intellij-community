@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
 
   @Nullable
   static PsiElement getAnchor(PsiElement element) {
-    LOG.assertTrue(element.isValid());
+    PsiUtilCore.ensureValid(element);
     PsiElement anchor = null;
     if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {

@@ -99,4 +99,10 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
   public PsiElement getNameIdentifierGroovy() {
     return getLabel();
   }
+
+  @Nullable
+  @Override
+  public PsiElement getNameIdentifier() {
+    return getNameIdentifierGroovy();
+  }
 }

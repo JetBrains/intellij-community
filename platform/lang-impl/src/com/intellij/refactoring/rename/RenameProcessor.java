@@ -220,7 +220,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       @Override
       public void run() {
         for (final AutomaticRenamer renamer : myRenamers) {
-          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages);
+          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
         }
       }
     };

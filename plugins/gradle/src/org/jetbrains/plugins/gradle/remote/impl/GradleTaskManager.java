@@ -51,8 +51,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       @Override
       public Void fun(ProjectConnection connection) {
         BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
-        if (!StringUtil.isEmpty(vmOptions)) {
-          launcher.setJvmArguments(vmOptions);
+        if (vmOptions != null) {
+          launcher.setJvmArguments(vmOptions.trim());
         }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();

@@ -35,16 +35,18 @@ abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
     String url = GithubUtil.findGithubRemoteUrl(repository);
     if (url == null) {
       GithubUtil.LOG.info(String.format("Repository is not under GitHub. Root: %s, Remotes: %s", repository.getRoot(),
-                                        GitUtil.getPrintableRemotes(repository.getRemotes())));
+                                           GitUtil.getPrintableRemotes(repository.getRemotes())));
       return;
     }
-    url = GithubUtil.makeGithubRepoUrlFromRemoteUrl(url);
-    String userAndRepository = GithubUtil.getUserAndRepositoryOrShowError(project, url);
+    GithubUserAndRepository userAndRepository = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
     if (userAndRepository == null) {
+      GithubNotifications
+        .showError(project, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER, "Cannot extract info about repository: " + url);
       return;
     }
 
-    String githubUrl = GithubApiUtil.getGitHost() + "/" + userAndRepository + "/commit/" + revisionHash;
+    String githubUrl = GithubUrlUtil.getGitHost() + '/' + userAndRepository.getUserName() + '/'
+                       + userAndRepository.getRepositoryName() + "/commit/" + revisionHash;
     BrowserUtil.launchBrowser(githubUrl);
   }
 

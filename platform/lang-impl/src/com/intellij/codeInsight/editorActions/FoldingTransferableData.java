@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package com.intellij.codeInsight.editorActions;
-
-import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
@@ -67,45 +65,5 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
 
   public FoldingData[] getData() {
     return myFoldingDatas;
-  }
-
-  public static class FoldingData implements Cloneable, Serializable {
-    private static @NonNls DataFlavor ourFlavor;
-
-    public int startOffset;
-    public int endOffset;
-    public final boolean isExpanded;
-
-    public FoldingData(int startOffset, int endOffset, boolean expanded){
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      isExpanded = expanded;
-    }
-
-    @Override
-    public Object clone() {
-      try{
-        return super.clone();
-      }
-      catch(CloneNotSupportedException e){
-        throw new RuntimeException();
-      }
-    }
-
-    public static DataFlavor getDataFlavor() {
-      if (ourFlavor != null) {
-        return ourFlavor;
-      }
-      try {
-        ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + FoldingData.class.getName(), "FoldingData");
-      }
-      catch (NoClassDefFoundError e) {
-        return null;
-      }
-      catch (IllegalArgumentException e) {
-        return null;
-      }
-      return ourFlavor;
-    }
   }
 }

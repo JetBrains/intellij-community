@@ -22,16 +22,14 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
-import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -109,22 +107,8 @@ public abstract class ChooseItemAction extends EditorAction {
 
     final Editor editor = lookup.getEditor();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-
-    final int end = editor.getCaretModel().getOffset();
-    final int start = lookup.getLookupStart();
-    final String prefix = !lookup.getItems().isEmpty() ? editor.getDocument().getText(TextRange.create(start, end)) : ListTemplatesHandler
-      .getPrefix(editor.getDocument(), end);
-
-    if (TemplateSettings.getInstance().getTemplates(prefix).isEmpty()) {
-      return false;
-    }
-
-    for (TemplateImpl template : SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false)) {
-      if (prefix.equals(template.getKey()) && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {
-        return true;
-      }
-    }
-    return false;
+    
+    return ((TemplateManagerImpl)TemplateManager.getInstance(file.getProject())).prepareTemplate(editor, shortcutChar, null) != null;
   }
 
   public static class Always extends ChooseItemAction {

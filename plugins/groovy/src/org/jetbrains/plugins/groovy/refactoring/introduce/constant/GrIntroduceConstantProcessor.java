@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -26,7 +27,6 @@ import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -111,7 +111,7 @@ public class GrIntroduceConstantProcessor {
       added = ((GrVariableDeclaration)targetClass.add(declaration));
     }
 
-    GrReferenceAdjuster.shortenReferences(added);
+    JavaCodeStyleManager.getInstance(added.getProject()).shortenClassReferences(added);
     return added;
   }
 
@@ -172,7 +172,7 @@ public class GrIntroduceConstantProcessor {
       PsiUtil.escalateVisibility(field, replaced);
     }
     if (replaced instanceof GrReferenceExpression) {
-      GrReferenceAdjuster.shortenReference((GrReferenceExpression)replaced);
+      org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference((GrReferenceExpression)replaced);
     }
     if (isOriginal) {
       updateCaretPosition(replaced);

@@ -138,7 +138,10 @@
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider"/>
     <extensionPoint name="frameEditorComponentProvider" interface="com.intellij.openapi.wm.ex.FrameEditorComponentProvider"/>
 
-    <extensionPoint name="statisticsService" interface="com.intellij.internal.statistic.connect.StatisticsService"/>
+    <extensionPoint name="statisticsService" beanClass="com.intellij.internal.statistic.connect.StatisticsServiceEP">
+      <with attribute="implementationClass" implements="com.intellij.internal.statistic.connect.StatisticsService"/>
+    </extensionPoint>
+
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>

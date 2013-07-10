@@ -431,15 +431,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    * Align parameter comments to longest parameter name
    */
   public boolean JD_ALIGN_PARAM_COMMENTS = true;
-  public int JD_MIN_PARM_NAME_LENGTH = 0;
-  public int JD_MAX_PARM_NAME_LENGTH = 30;
 
   /**
    * Align exception comments to longest exception name
    */
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
-  public int JD_MIN_EXCEPTION_NAME_LENGTH = 0;
-  public int JD_MAX_EXCEPTION_NAME_LENGTH = 30;
 
   public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS = false;
   public boolean JD_ADD_BLANK_AFTER_RETURN = false;

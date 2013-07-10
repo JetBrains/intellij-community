@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ public interface Notifications {
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
-
     /**
      * Registration is OPTIONAL: STICKY_BALLOON display type will be used by default.
      */
@@ -56,11 +55,6 @@ public interface Notifications {
           }
         }
       });
-    }
-
-    @Deprecated
-    public static void notify(@NotNull final Notification notification, @SuppressWarnings("UnusedParameters") final NotificationDisplayType displayType, @Nullable final Project project) {
-      notify(notification, project);
     }
 
     public static void notify(@NotNull final Notification notification) {

@@ -93,6 +93,13 @@ public class HgPushDialog extends DialogWrapper {
     });
   }
 
+  private void addPathsFromHgrc(VirtualFile repo) {
+    Collection<String> paths = HgUtil.getRepositoryPaths(myProject, repo);
+    for (String path : paths) {
+      myRepositoryURL.prependItem(path);
+    }
+  }
+
   public VirtualFile getRepository() {
     return hgRepositorySelectorComponent.getRepository();
   }
@@ -133,11 +140,12 @@ public class HgPushDialog extends DialogWrapper {
       @Override
       public void run() {
         final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-        final String defaultPath = HgPusher.getDefaultPushPath(myProject, repo);
+        final String defaultPath = HgUtil.getRepositoryDefaultPushPath(myProject, repo);
         final List<HgTagBranch> branches = HgPusher.getBranches(myProject, repo);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            addPathsFromHgrc(repo);
             if (defaultPath != null) {
               updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
               myCurrentRepositoryUrl = defaultPath;

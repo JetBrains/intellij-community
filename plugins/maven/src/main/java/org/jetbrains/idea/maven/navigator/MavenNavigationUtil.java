@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,7 @@ import java.io.File;
 public class MavenNavigationUtil {
   private static final String ARTIFACT_ID = "artifactId";
 
-  private MavenNavigationUtil() {
-  }
+  private MavenNavigationUtil() { }
 
   @Nullable
   public static Navigatable createNavigatableForPom(final Project project, final VirtualFile file) {
@@ -82,7 +81,7 @@ public class MavenNavigationUtil {
         MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, file);
         if (projectModel == null) return;
 
-        MavenDomDependency dependency = findDependency(projectModel, artifact);
+        MavenDomDependency dependency = findDependency(projectModel, artifact.getGroupId(), artifact.getArtifactId());
         if (dependency == null) return;
 
         XmlTag artifactId = dependency.getArtifactId().getXmlTag();
@@ -91,41 +90,6 @@ public class MavenNavigationUtil {
         navigate(project, artifactId.getContainingFile().getVirtualFile(), artifactId.getTextOffset() + artifactId.getName().length() + 2, requestFocus);
       }
     };
-    //final File pom = MavenArtifactUtil.getArtifactFile(myProjectsManager.getLocalRepository(), artifact.getMavenId());
-    //final VirtualFile vPom;
-    //if (pom.exists()) {
-    //vPom = LocalFileSystem.getInstance().findFileByIoFile(pom);
-    //} else {
-    //  final MavenProject mp = myProjectsManager.findProject(artifact);
-    //  vPom = mp == null ? null : mp.getFile();
-    //}
-    //if (vPom != null) {
-    //  return new Navigatable.Adapter() {
-    //    public void navigate(boolean requestFocus) {
-    //      int offset = 0;
-    //      try {
-    //        int index = new String(vPom.contentsToByteArray()).indexOf("<artifactId>" + artifact.getArtifactId() + "</artifactId>");
-    //        if (index != -1) {
-    //          offset += index + 12;
-    //        }
-    //      }
-    //      catch (IOException e) {//
-    //      }
-    //      new OpenFileDescriptor(project, vPom, offset).navigate(requestFocus);
-    //    }
-    //  };
-    //}
-    //
-    //final Module m = myProjectsManager.findModule(mavenProject);
-    //if (m == null) return null;
-    //final OrderEntry e = MavenRootModelAdapter.findLibraryEntry(m, artifact);
-    //if (e == null) return null;
-    //return new Navigatable.Adapter() {
-    //  public void navigate(boolean requestFocus) {
-    //    ProjectSettingsService.getInstance(project).openProjectLibrarySettings(new NamedLibraryElement(m, e));
-    //  }
-    //};
-
   }
 
   @Nullable
@@ -135,14 +99,14 @@ public class MavenNavigationUtil {
   }
 
   @Nullable
-  public static MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, @NotNull final MavenArtifact artifact) {
+  public static MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, final String groupId, final String artifactId) {
     MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor = new MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies>() {
       @Nullable
       @Override
       protected MavenDomDependency find(MavenDomDependencies element) {
         for (MavenDomDependency dependency : element.getDependencies()) {
-          if (Comparing.equal(artifact.getGroupId(), dependency.getGroupId().getStringValue())
-              && Comparing.equal(artifact.getArtifactId(), dependency.getArtifactId().getStringValue())) {
+          if (Comparing.equal(groupId, dependency.getGroupId().getStringValue()) &&
+              Comparing.equal(artifactId, dependency.getArtifactId().getStringValue())) {
             return dependency;
           }
         }

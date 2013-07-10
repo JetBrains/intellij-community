@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,13 +77,19 @@ public class PropertyRenameHandler implements RenameHandler, TitledHandler {
     final Pair<List<? extends PsiElement>, String> pair = askToRenameProperty((PsiMember)element);
     final List<? extends PsiElement> result = pair.getFirst();
     if (result.size() == 0) return;
-    if (result.size() == 1) {
-      PsiElementRenameHandler.invoke(result.get(0), project, result.get(0), editor);
-      return;
-    }
-    final String propertyName = pair.getSecond();
 
-    PsiElementRenameHandler.invoke(new PropertyForRename(result, propertyName, element.getManager()), project, element, editor);
+    PsiElement propertyToRename = getPropertyToRename(element, result, pair.getSecond());
+
+    PsiElementRenameHandler.invoke(propertyToRename, project, element, editor);
+  }
+
+  private static PsiElement getPropertyToRename(PsiElement element, List<? extends PsiElement> result, String propertyName) {
+    if (result.size() == 1) {
+      return result.get(0);
+    }
+    else /*if (result.size() > 1)*/ {
+      return new PropertyForRename(result, propertyName, element.getManager());
+    }
   }
 
   @Override

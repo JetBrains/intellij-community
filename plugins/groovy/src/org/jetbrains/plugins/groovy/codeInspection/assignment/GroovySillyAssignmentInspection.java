@@ -62,7 +62,7 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
 
-      final IElementType sign = assignment.getOperationToken();
+      final IElementType sign = assignment.getOperationTokenType();
       if (!sign.equals(GroovyTokenTypes.mASSIGN)) {
         return;
       }

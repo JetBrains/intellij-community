@@ -23,7 +23,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.hash.HashMap;
-import com.sun.jna.platform.unix.X11;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
@@ -49,6 +48,7 @@ import java.util.Properties;
 public final class DarculaLaf extends BasicLookAndFeel {
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
+
   public DarculaLaf() {
     try {
       if (SystemInfo.isWindows || SystemInfo.isLinux) {
@@ -58,8 +58,8 @@ public final class DarculaLaf extends BasicLookAndFeel {
         base = (BasicLookAndFeel)Class.forName(name).newInstance();
       }
     }
-    catch (Exception ignore) {
-      log(ignore);
+    catch (Exception e) {
+      log(e);
     }
   }
 
@@ -69,8 +69,8 @@ public final class DarculaLaf extends BasicLookAndFeel {
       superMethod.setAccessible(true);
       superMethod.invoke(base, defaults);
     }
-    catch (Exception ignore) {
-      log(ignore);
+    catch (Exception e) {
+      log(e);
     }
   }
 
@@ -85,15 +85,14 @@ public final class DarculaLaf extends BasicLookAndFeel {
     try {
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
-      final UIDefaults metalDefaults =
-        (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
+      final UIDefaults metalDefaults = (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
       if (SystemInfo.isLinux) {
-        Font font = findFont("Ubuntu");
+        Font font = findFont("DejaVu Sans");
         if (font != null) {
           for (Object key : defaults.keySet()) {
             if (key instanceof String && ((String)key).endsWith(".font")) {
-              defaults.put(key, new FontUIResource(font.deriveFont(15f)));
+              defaults.put(key, new FontUIResource(font.deriveFont(13f)));
             }
           }
         }
@@ -108,8 +107,8 @@ public final class DarculaLaf extends BasicLookAndFeel {
       MetalLookAndFeel.setCurrentTheme(new DarculaMetalTheme());
       return defaults;
     }
-    catch (Exception ignore) {
-      log(ignore);
+    catch (Exception e) {
+      log(e);
     }
     return super.getDefaults();
   }
@@ -294,7 +293,6 @@ public final class DarculaLaf extends BasicLookAndFeel {
     }
   }
 
-
   @Override
   public String getName() {
     return NAME;
@@ -354,7 +352,6 @@ public final class DarculaLaf extends BasicLookAndFeel {
       log(ignore);
     }
   }
-
 
   @Override
   public boolean getSupportsWindowDecorations() {

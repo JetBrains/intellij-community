@@ -21,6 +21,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
 
   public GotoFileModel(@NotNull Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
-    myMaxSize = WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
+    myMaxSize = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }
 
   @Override

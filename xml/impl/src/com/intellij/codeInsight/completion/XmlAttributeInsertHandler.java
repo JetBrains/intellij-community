@@ -37,7 +37,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
 
     final Document document = editor.getDocument();
     final int caretOffset = editor.getCaretModel().getOffset();
-    PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document);
+    PsiFile file = context.getFile();
     if (file.getLanguage() == HTMLLanguage.INSTANCE &&
         HtmlUtil.isSingleHtmlAttribute((String)item.getObject())) {
       return;

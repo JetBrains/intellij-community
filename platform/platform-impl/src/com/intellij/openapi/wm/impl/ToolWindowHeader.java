@@ -17,6 +17,8 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -51,7 +53,7 @@ import java.beans.PropertyChangeListener;
 /**
  * @author pegov
  */
-public abstract class ToolWindowHeader extends JPanel implements Disposable {
+public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
 
@@ -186,6 +188,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
     setOpaque(true);
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
+
+    UISettings.getInstance().addUISettingsListener(this, toolWindow.getContentUI());
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    clearCaches();
   }
 
   private void addDefaultActions(JPanel eastPanel) {
@@ -322,10 +331,14 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
   @Override
   public void setUI(PanelUI ui) {
-    myImage = null;
-    myActiveImage = null;
+    clearCaches();
     
     super.setUI(ui);
+  }
+
+  public void clearCaches() {
+    myImage = null;
+    myActiveImage = null;
   }
 
   @Override

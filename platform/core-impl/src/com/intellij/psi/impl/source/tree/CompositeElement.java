@@ -40,7 +40,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -856,7 +855,9 @@ public class CompositeElement extends TreeElement {
   // creates PSI and stores to the 'myWrapper', if not created already
   void createAllChildrenPsiIfNecessary() {
     synchronized (PsiLock.LOCK) { // guard for race condition with getPsi()
-      acceptTree(CREATE_CHILDREN_PSI);
+      for(TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        child.acceptTree(CREATE_CHILDREN_PSI);
+      }
     }
   }
   private static final RecursiveTreeElementWalkingVisitor CREATE_CHILDREN_PSI = new RecursiveTreeElementWalkingVisitor(false) {
@@ -867,12 +868,10 @@ public class CompositeElement extends TreeElement {
     @Override
     public void visitComposite(CompositeElement composite) {
       ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
-      if (composite.myWrapper != null) {
-        // someone else 've managed to create the PSI in the meantime. Abandon our attempts to cache everything.
-        stopWalking();
-        return;
+      if (composite.myWrapper == null) {
+        composite.createAndStorePsi();
       }
-      composite.createAndStorePsi();
+
       super.visitComposite(composite);
     }
   };

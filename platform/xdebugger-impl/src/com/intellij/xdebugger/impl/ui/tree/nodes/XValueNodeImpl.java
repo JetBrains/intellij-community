@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
@@ -126,7 +127,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
                                @NonNls @Nullable final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren, final boolean expand) {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       public void run() {
         setIcon(icon);
         if (name != null) {
@@ -156,7 +157,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   public void setFullValueEvaluator(@NotNull final XFullValueEvaluator fullValueEvaluator) {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       public void run() {
         myFullValueEvaluator = fullValueEvaluator;
         fireNodeChanged();

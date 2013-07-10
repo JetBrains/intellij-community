@@ -91,11 +91,15 @@ public class DataFlowRunner {
   }
 
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
+    return analyzeMethod(psiBlock, visitor, false);
+  }
+  
+  public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, InstructionVisitor visitor, boolean ignoreAssertions) {
     try {
       final Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
       if (initialStates == null) return RunnerResult.NOT_APPLICABLE;
 
-      final ControlFlow flow = createControlFlowAnalyzer().buildControlFlow(psiBlock);
+      final ControlFlow flow = createControlFlowAnalyzer().buildControlFlow(psiBlock, ignoreAssertions);
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
 
       int endOffset = flow.getInstructionCount();

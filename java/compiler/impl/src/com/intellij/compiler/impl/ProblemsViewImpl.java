@@ -70,7 +70,7 @@ public class ProblemsViewImpl extends ProblemsView{
         if (project.isDisposed()) {
           return;
         }
-        final ToolWindow tw = wm.registerToolWindow(PROBLEMS_TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM, project);
+        final ToolWindow tw = wm.registerToolWindow(PROBLEMS_TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM, project, true);
         tw.setIcon(AllIcons.Toolwindows.Problems);
         final Content content = ContentFactory.SERVICE.getInstance().createContent(myPanel, "", false);
         // todo: setup content?

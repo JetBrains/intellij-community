@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -35,7 +35,17 @@ public class ImportFromGradleControl
   extends AbstractImportFromExternalSystemControl<GradleProjectSettings, GradleSettingsListener, GradleSettings>
 {
   public ImportFromGradleControl() {
-    super(GradleConstants.SYSTEM_ID, new GradleSettings(ProjectManager.getInstance().getDefaultProject()), new GradleProjectSettings());
+    super(GradleConstants.SYSTEM_ID, new GradleSettings(ProjectManager.getInstance().getDefaultProject()), getInitialProjectSettings());
+  }
+
+  @NotNull
+  private static GradleProjectSettings getInitialProjectSettings() {
+    GradleProjectSettings result = new GradleProjectSettings();
+    String gradleHome = GradleUtil.getLastUsedGradleHome();
+    if (!StringUtil.isEmpty(gradleHome)) {
+      result.setGradleHome(gradleHome);
+    }
+    return result;
   }
   
   @NotNull
@@ -48,12 +58,6 @@ public class ImportFromGradleControl
   @Override
   protected ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
     return new GradleSystemSettingsControl(settings);
-  }
-
-  @NotNull
-  @Override
-  protected FileChooserDescriptor getLinkedProjectChooserDescriptor() {
-    return GradleUtil.getGradleProjectFileChooserDescriptor();
   }
 
   @Override

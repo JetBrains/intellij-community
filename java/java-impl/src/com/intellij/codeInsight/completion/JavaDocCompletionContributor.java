@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -38,10 +39,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,18 +124,19 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-      List<String> ret = new ArrayList<String>();
+      final List<String> ret = new ArrayList<String>();
       final PsiElement position = parameters.getPosition();
       final PsiDocComment comment = PsiTreeUtil.getParentOfType(position, PsiDocComment.class);
+      assert comment != null;
       final PsiElement parent = comment.getContext();
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
 
-      final JavadocManager manager = JavadocManager.SERVICE.getInstance(position.getProject());
-      final JavadocTagInfo[] infos = manager.getTagInfos(parent);
-      for (JavadocTagInfo info : infos) {
-        if (info.getName().equals(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
-        if (isInline != (info.isInline())) continue;
-        ret.add(info.getName());
+      for (JavadocTagInfo info : JavadocManager.SERVICE.getInstance(position.getProject()).getTagInfos(parent)) {
+        String tagName = info.getName();
+        if (tagName.equals(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
+        if (isInline != info.isInline()) continue;
+        ret.add(tagName);
+        addSpecialTags(ret, comment, tagName);
       }
 
       InspectionProfile inspectionProfile =
@@ -149,11 +154,43 @@ public class JavaDocCompletionContributor extends CompletionContributor {
           result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.INSERT_SPACE));
         }
       }
+      result.stopHere(); // no word completions at this point
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    public String toString() {
-      return "javadoc-tag-chooser";
+    private static void addSpecialTags(final List<String> result, PsiDocComment comment, String tagName) {
+      if ("author".equals(tagName)) {
+        result.add(tagName + " " + SystemProperties.getUserName());
+        return;
+      }
+
+      if ("param".equals(tagName)) {
+        PsiMethod psiMethod = PsiTreeUtil.getParentOfType(comment, PsiMethod.class);
+        if (psiMethod != null) {
+          PsiDocTag[] tags = comment.getTags();
+          for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
+            if (!JavaDocLocalInspection.isFound(tags, param)) {
+              result.add(tagName + " " + param.getName());
+            }
+          }
+        }
+        return;
+      }
+
+      if ("see".equals(tagName)) {
+        PsiMember member = PsiTreeUtil.getParentOfType(comment, PsiMember.class);
+        if (member instanceof PsiClass) {
+          InheritanceUtil.processSupers((PsiClass)member, false, new Processor<PsiClass>() {
+            @Override
+            public boolean process(PsiClass psiClass) {
+              String name = psiClass.getQualifiedName();
+              if (StringUtil.isNotEmpty(name) && !CommonClassNames.JAVA_LANG_OBJECT.equals(name)) {
+                result.add("see " + name);
+              }
+              return true;
+            }
+          });
+        }
+      }
     }
   }
 

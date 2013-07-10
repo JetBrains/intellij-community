@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 package git4idea.test
+
+import com.intellij.dvcs.repo.RepositoryManager
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 /**
  * @author Kirill Likhodedov
  */
-public class GitTestRepositoryManager implements GitRepositoryManager {
+public class GitTestRepositoryManager implements RepositoryManager<GitRepository> {
 
   private final List<GitRepository> myRepositories = new ArrayList<GitRepository>();
 

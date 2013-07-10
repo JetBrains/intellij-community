@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +29,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_CONTENT;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_INJECTION;
 
 /**
@@ -532,7 +529,6 @@ public class GrStringUtil {
     if (!(statements[0] instanceof GrReferenceExpression)) return false;
 
     final PsiElement next = injection.getNextSibling();
-    if (!(next instanceof LeafPsiElement)) return false;
 
     return checkBraceIsUnnecessary(statements[0], next);
   }
@@ -814,7 +810,7 @@ public class GrStringUtil {
       builder.append(quote);
       for (PsiElement child = regex.getFirstChild(); child!=null; child = child.getNextSibling()) {
         final IElementType type = child.getNode().getElementType();
-        if (type == mREGEX_CONTENT) {
+        if (type == mREGEX_CONTENT || type == GSTRING_CONTENT) {
           builder.append(escapeSymbolsForGString(unescapeSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), false));
         }
         else if (type == mDOLLAR_SLASH_REGEX_CONTENT) {
@@ -959,5 +955,13 @@ public class GrStringUtil {
       buffer.append("'");
     }
     return buffer;
+  }
+
+  public static PsiElement findContainingLiteral(PsiElement token) {
+
+    PsiElement parent = token.getParent();
+    if (parent instanceof GrStringContent) parent = parent.getParent();
+
+    return parent;
   }
 }

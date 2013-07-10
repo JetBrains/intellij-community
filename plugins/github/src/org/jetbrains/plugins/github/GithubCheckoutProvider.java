@@ -17,10 +17,15 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConsumer;
 import git4idea.actions.BasicAction;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.checkout.GitCloneDialog;
@@ -39,22 +44,30 @@ import java.util.List;
  */
 public class GithubCheckoutProvider implements CheckoutProvider {
 
-  private static Logger LOG  = GithubUtil.LOG;
-
   @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
-    if (!GithubUtil.testGitExecutable(project)){
+    if (!GithubUtil.testGitExecutable(project)) {
       return;
     }
     BasicAction.saveAll();
-    List<RepositoryInfo> availableRepos = null;
-    try {
-      availableRepos = GithubUtil.getAvailableRepos(project);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      GithubUtil.notifyError(project, "Couldn't get the list of GitHub repositories", GithubUtil.getErrorTextFromException(e));
-    }
+
+    final Ref<List<RepositoryInfo>> repositoryInfoRef = new Ref<List<RepositoryInfo>>();
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
+            @Override
+            public void consume(GithubAuthData authData) throws IOException {
+              repositoryInfoRef.set(GithubUtil.getAvailableRepos(authData));
+            }
+            });
+        }
+        catch (IOException e) {
+          GithubNotifications.showError(project, "Couldn't get the list of GitHub repositories", e);
+        }
+      }
+    });
+    final List<RepositoryInfo> availableRepos = repositoryInfoRef.get();
     if (availableRepos == null){
       return;
     }

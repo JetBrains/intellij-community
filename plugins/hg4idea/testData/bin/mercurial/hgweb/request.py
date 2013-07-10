@@ -8,7 +8,7 @@
 
 import socket, cgi, errno
 from mercurial import util
-from common import ErrorResponse, statusmessage
+from common import ErrorResponse, statusmessage, HTTP_NOT_MODIFIED
 
 shortcuts = {
     'cl': [('cmd', ['changelog']), ('rev', None)],
@@ -66,23 +66,34 @@ class wsgirequest(object):
 
     def drain(self):
         '''need to read all data from request, httplib is half-duplex'''
-        length = int(self.env.get('CONTENT_LENGTH', 0))
+        length = int(self.env.get('CONTENT_LENGTH') or 0)
         for s in util.filechunkiter(self.inp, limit=length):
             pass
 
-    def respond(self, status, type=None, filename=None, length=0):
+    def respond(self, status, type, filename=None, body=None):
         if self._start_response is not None:
-
-            self.httphdr(type, filename, length)
-            if not self.headers:
-                raise RuntimeError("request.write called before headers sent")
+            self.headers.append(('Content-Type', type))
+            if filename:
+                filename = (filename.split('/')[-1]
+                            .replace('\\', '\\\\').replace('"', '\\"'))
+                self.headers.append(('Content-Disposition',
+                                     'inline; filename="%s"' % filename))
+            if body is not None:
+                self.headers.append(('Content-Length', str(len(body))))
 
             for k, v in self.headers:
                 if not isinstance(v, str):
-                    raise TypeError('header value must be string: %r' % v)
+                    raise TypeError('header value must be string: %r' % (v,))
 
             if isinstance(status, ErrorResponse):
-                self.header(status.headers)
+                self.headers.extend(status.headers)
+                if status.code == HTTP_NOT_MODIFIED:
+                    # RFC 2616 Section 10.3.5: 304 Not Modified has cases where
+                    # it MUST NOT include any headers other than these and no
+                    # body
+                    self.headers = [(k, v) for (k, v) in self.headers if
+                                    k in ('Date', 'ETag', 'Expires',
+                                          'Cache-Control', 'Vary')]
                 status = statusmessage(status.code, status.message)
             elif status == 200:
                 status = '200 Script output follows'
@@ -92,13 +103,12 @@ class wsgirequest(object):
             self.server_write = self._start_response(status, self.headers)
             self._start_response = None
             self.headers = []
+        if body is not None:
+            self.write(body)
+            self.server_write = None
 
     def write(self, thing):
-        if hasattr(thing, "__iter__"):
-            for part in thing:
-                self.write(part)
-        else:
-            thing = str(thing)
+        if thing:
             try:
                 self.server_write(thing)
             except socket.error, inst:
@@ -114,22 +124,6 @@ class wsgirequest(object):
 
     def close(self):
         return None
-
-    def header(self, headers=[('Content-Type','text/html')]):
-        self.headers.extend(headers)
-
-    def httphdr(self, type=None, filename=None, length=0, headers={}):
-        headers = headers.items()
-        if type is not None:
-            headers.append(('Content-Type', type))
-        if filename:
-            filename = (filename.split('/')[-1]
-                        .replace('\\', '\\\\').replace('"', '\\"'))
-            headers.append(('Content-Disposition',
-                            'inline; filename="%s"' % filename))
-        if length:
-            headers.append(('Content-Length', str(length)))
-        self.header(headers)
 
 def wsgiapplication(app_maker):
     '''For compatibility with old CGI scripts. A plain hgweb() or hgwebdir()

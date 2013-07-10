@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +91,11 @@ public class QueueProcessor<T> {
   @NotNull
   public static QueueProcessor<Runnable> createRunnableQueueProcessor() {
     return new QueueProcessor<Runnable>(new RunnableConsumer());
+  }
+
+  @NotNull
+  public static QueueProcessor<Runnable> createRunnableQueueProcessor(ThreadToUse threadToUse) {
+    return new QueueProcessor<Runnable>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.FALSE);
   }
 
   @NotNull

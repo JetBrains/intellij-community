@@ -242,7 +242,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile || classLevel) {
-      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode), GroovyIndentProcessor.indentLabelBlock(blockPsi, myContext.getGroovySettings()));
+      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode), myContext.getGroovySettings().INDENT_LABEL_BLOCKS);
     }
 
     if (blockPsi instanceof GrMethod) {
@@ -324,7 +324,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return wrap;
   }
 
-  public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children, final boolean indentLabelBlocks) {
+  public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children, boolean indentLabelBlocks) {
 
     calculateAlignments(children, classLevel);
     final ArrayList<Block> subBlocks = new ArrayList<Block>();

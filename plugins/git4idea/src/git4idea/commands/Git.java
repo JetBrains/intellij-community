@@ -94,6 +94,10 @@ public interface Git {
 
   @NotNull
   GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+                        boolean updateTracking, @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull

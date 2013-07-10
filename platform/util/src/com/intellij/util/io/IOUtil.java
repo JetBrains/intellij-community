@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 
 public class IOUtil {
@@ -153,5 +154,31 @@ public class IOUtil {
     }
 
     return ok;
+  }
+
+  public static void syncStream(OutputStream stream) throws IOException {
+    stream.flush();
+
+    try {
+      Field outField = FilterOutputStream.class.getDeclaredField("out");
+      outField.setAccessible(true);
+      while (stream instanceof FilterOutputStream) {
+        Object o = outField.get(stream);
+        if (o instanceof OutputStream) {
+          stream = (OutputStream)o;
+        } else {
+          break;
+        }
+      }
+      if (stream instanceof FileOutputStream) {
+        ((FileOutputStream)stream).getFD().sync();
+      }
+    }
+    catch (NoSuchFieldException e) {
+      throw new RuntimeException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
@@ -194,8 +195,14 @@ public class QuickDocOnMouseOverManager {
       closeQuickDocIfPossible();
       return;
     }
+
+    VisualPosition visualPosition = editor.xyToVisualPosition(e.getMouseEvent().getPoint());
+    if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visualPosition)) {
+      closeQuickDocIfPossible();
+      return;
+    }
     
-    int mouseOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+    int mouseOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(visualPosition));
     PsiElement elementUnderMouse = psiFile.findElementAt(mouseOffset);
     if (elementUnderMouse == null || elementUnderMouse instanceof PsiWhiteSpace) {
       closeQuickDocIfPossible();
@@ -211,7 +218,7 @@ public class QuickDocOnMouseOverManager {
 
     PsiElement activeElement = myActiveElements.get(editor);
     if (targetElementUnderMouse.equals(activeElement)
-        && (myAlarm.getActiveRequestCount() > 0 // Request to show documentation for the target component has been already queued.
+        && (!myAlarm.isEmpty() // Request to show documentation for the target component has been already queued.
             || hint != null)) // Documentation for the target component is being shown.
     { 
       return;

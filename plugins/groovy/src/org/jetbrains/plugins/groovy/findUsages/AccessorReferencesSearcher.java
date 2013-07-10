@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * author ven
@@ -46,7 +45,8 @@ public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, 
       final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)element);
       if (propertyName == null) return;
 
-      queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope()),
+      queryParameters.getOptimizer().searchWord(propertyName, GroovyScopeUtil
+        .restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope()),
                                                 UsageSearchContext.IN_CODE, true, element);
     }
     else if (element instanceof GrField) {

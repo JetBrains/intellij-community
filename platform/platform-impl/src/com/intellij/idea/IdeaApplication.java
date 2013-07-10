@@ -18,12 +18,12 @@ package com.intellij.idea;
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -36,10 +36,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
@@ -54,12 +56,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings({"CallToPrintStackTrace"})
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
@@ -67,9 +67,18 @@ public class IdeaApplication {
 
   private static IdeaApplication ourInstance;
 
-  protected final String[] myArgs;
+  public static IdeaApplication getInstance() {
+    return ourInstance;
+  }
+
+  public static boolean isLoaded() {
+    return ourInstance != null && ourInstance.myLoaded;
+  }
+
+  private final String[] myArgs;
   private boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
+  private volatile boolean myLoaded = false;
 
   public IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
@@ -79,14 +88,15 @@ public class IdeaApplication {
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
 
-    if (Main.isCommandLine(args)) {
-      boolean headless = Main.isHeadless(args);
-      if (!headless) patchSystem();
+    boolean headless = Main.isHeadless();
+    if (!headless) {
+      patchSystem();
+    }
+
+    if (Main.isCommandLine()) {
       new CommandLineApplication(isInternal, false, headless);
     }
     else {
-      patchSystem();
-
       Splash splash = null;
       if (myArgs.length == 0) {
         myStarter = getStarter();
@@ -159,36 +169,32 @@ public class IdeaApplication {
 
   protected ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
-      PluginManager.getPlugins();
+      PluginManagerCore.getPlugins();
 
       ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
-      final ApplicationStarter[] starters = point.getExtensions();
+      ApplicationStarter[] starters = point.getExtensions();
       String key = myArgs[0];
       for (ApplicationStarter o : starters) {
         if (Comparing.equal(o.getCommandName(), key)) return o;
       }
     }
+
     return new IdeStarter();
   }
 
-  public static IdeaApplication getInstance() {
-    return ourInstance;
-  }
-
   public void run() {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     try {
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       app.load(PathManager.getOptionsPath());
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    catch (InvalidDataException e) {
-      e.printStackTrace();
-    }
 
-    myStarter.main(myArgs);
-    myStarter = null; //GC it
+      myStarter.main(myArgs);
+      myStarter = null; //GC it
+
+      myLoaded = true;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -252,36 +258,28 @@ public class IdeaApplication {
 
     @Override
     public void main(String[] args) {
-
       SystemDock.updateMenu();
+
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      // app.setupIdeQueue(IdeEventQueue.getInstance());
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      IdeEventQueue.getInstance().setWindowManager(windowManager);
 
-      try {
-        IdeEventQueue.getInstance().setWindowManager(windowManager);
+      Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
+      AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
+      lifecyclePublisher.appFrameCreated(args, willOpenProject);
 
-        final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
-        final AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
-        lifecyclePublisher.appFrameCreated(args, willOpenProject);
-        LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
-        PluginManager.dumpPluginClassStatistics();
-        if (!willOpenProject.get()) {
-          WelcomeFrame.showNow();
-          lifecyclePublisher.welcomeScreenDisplayed();
-        }
-        else {
-          windowManager.showFrame();
-        }
+      LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
+      PluginManagerCore.dumpPluginClassStatistics();
+
+      if (!willOpenProject.get()) {
+        WelcomeFrame.showNow();
+        lifecyclePublisher.welcomeScreenDisplayed();
       }
-      catch (PluginException e) {
-        Messages.showErrorDialog("Plugin " + e.getPluginId() + " couldn't be loaded, the IDE will now exit.\n" +
-                                 "See the full details in the log.\n" +
-                                 e.getMessage(), "Plugin Error");
-        System.exit(-1);
+      else {
+        windowManager.showFrame();
       }
 
       app.invokeLater(new Runnable() {
@@ -321,7 +319,6 @@ public class IdeaApplication {
         }
       }, ModalityState.NON_MODAL);
     }
-
   }
 
   private void loadProject() {

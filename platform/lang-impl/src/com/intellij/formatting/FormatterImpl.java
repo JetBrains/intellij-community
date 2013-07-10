@@ -718,7 +718,7 @@ public class FormatterImpl extends FormatterEx
   @NotNull
   public Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks, final int keepBlankLines,
                                final int prefLineFeeds) {
-    return getSpacingImpl(minSpaces, maxSpaces, -1, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
+    return getSpacingImpl(minSpaces, maxSpaces, minLineFeeds, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
   }
 
   private final Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.IconDeferrer;
@@ -142,7 +143,7 @@ public class IconUtil {
             (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
           icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
         }
-        if (file.isSymLink()) {
+        if (file.is(VFileProperty.SYMLINK)) {
           icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
         }
 
@@ -284,7 +285,7 @@ public class IconUtil {
   }
 
   /**
-   * Result icons look like original but have equal (maximum) size 
+   * Result icons look like original but have equal (maximum) size
    */
   @NotNull
   public static Icon[] getEqualSizedIcons(@NotNull Icon... icons) {

@@ -52,18 +52,18 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
-binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m -XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
-binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true")
+binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
+binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m")
+binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
 binding.setVariable("yjpOptions", { String systemSelector, String platformSuffix = "" ->
-  "-agentlib:yjpagent$platformSuffix=disablej2ee,disablealloc,disabletracing,onlylocal,builtinprobes=none,disableexceptiontelemetry,sessionname=$systemSelector".trim()
+  "-agentlib:yjpagent$platformSuffix=disablej2ee,disablealloc,disabletracing,onlylocal,builtinprobes=none,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
 })
-
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
   "${vmOptions32()} ${yjpOptions(systemSelector)}".trim()
 })
@@ -478,8 +478,8 @@ binding.setVariable("winVMOptions", { String target, String system_selector, Str
 })
 
 binding.setVariable("unixVMOptions", { String target, String name ->
-  ant.echo(file: "$target/bin/${name}.vmoptions", message: vmOptions32().replace(' ', '\n'))
-  ant.echo(file: "$target/bin/${name}64.vmoptions", message: vmOptions64().replace(' ', '\n'))
+  ant.echo(file: "$target/bin/${name}.vmoptions", message: "${vmOptions32()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
+  ant.echo(file: "$target/bin/${name}64.vmoptions", message: "${vmOptions64()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
   ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "unix")
 })
 
@@ -732,7 +732,8 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
-binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo, String launcherProperties, String pathsSelector, List resourcePaths ->
+binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo,
+                                          String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
 
   File launcherPropertiesTempFile = null;

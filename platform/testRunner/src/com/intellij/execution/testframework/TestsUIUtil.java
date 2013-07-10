@@ -100,7 +100,8 @@ public class TestsUIUtil {
   public static void notifyByBalloon(@NotNull final Project project,
                                      boolean started,
                                      final AbstractTestProxy root,
-                                     final TestConsoleProperties properties) {
+                                     final TestConsoleProperties properties, 
+                                     @Nullable final String comment) {
     if (project.isDisposed()) return;
     if (properties == null) return;
 
@@ -111,7 +112,7 @@ public class TestsUIUtil {
     String text;
     String balloonText;
     MessageType type;
-    TestResultPresentation testResultPresentation = new TestResultPresentation(root, started).getPresentation();
+    TestResultPresentation testResultPresentation = new TestResultPresentation(root, started, comment).getPresentation();
     type = testResultPresentation.getType();
     balloonText = testResultPresentation.getBalloonText();
     title = testResultPresentation.getTitle();
@@ -162,18 +163,20 @@ public class TestsUIUtil {
   private static class TestResultPresentation {
     private AbstractTestProxy myRoot;
     private boolean myStarted;
+    private final String myComment;
     private String myTitle;
     private String myText;
     private String myBalloonText;
     private MessageType myType;
 
-    public TestResultPresentation(AbstractTestProxy root, boolean started) {
+    public TestResultPresentation(AbstractTestProxy root, boolean started, String comment) {
       myRoot = root;
       myStarted = started;
+      myComment = comment;
     }
 
     public TestResultPresentation(AbstractTestProxy root) {
-      this(root, true);
+      this(root, true, null);
     }
 
     public String getTitle() {
@@ -221,6 +224,9 @@ public class TestsUIUtil {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");
           myText = passedCount + " passed";
           myType = MessageType.INFO;
+        }
+        if (myComment != null) {
+          myText += " " + myComment;
         }
         myBalloonText = myTitle + ": " + myText;
       }

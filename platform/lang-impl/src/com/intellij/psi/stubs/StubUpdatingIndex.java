@@ -25,17 +25,17 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -45,9 +45,12 @@ import java.util.concurrent.Callable;
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
+  // todo remove once we don't need this for stub-ast mismatch debug info
+  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 0, false);
+
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
-  private static final int VERSION = 22;
+  private static final int VERSION = 25;
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
@@ -74,15 +77,21 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
-      Language l = ((LanguageFileType)fileType).getLanguage();
-      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-      if (parserDefinition == null) return false;
+      final Language l = ((LanguageFileType)fileType).getLanguage();
+      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      if (parserDefinition == null) {
+        return false;
+      }
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
-      if (elementType instanceof IStubFileElementType &&
-                  (((IStubFileElementType)elementType).shouldBuildStubFor(file) ||
-                   IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID, file)))) {
-        return true;
+      if (elementType instanceof IStubFileElementType) {
+        if (((IStubFileElementType)elementType).shouldBuildStubFor(file)) {
+          return true;
+        }
+        final ID indexId = IndexInfrastructure.getStubId(INDEX_ID, file.getFileType());
+        if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
+          return true;
+        }
       }
     }
     final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
@@ -122,17 +131,50 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             final Stub rootStub = StubTreeBuilder.buildStubTree(inputData);
             if (rootStub == null) return;
 
+            VirtualFile file = inputData.getFile();
+            int contentLength = file.getFileType().isBinary() ? -1 : inputData.getContentAsText().length();
+            rememberIndexingStamp(file, contentLength);
+
             final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
             SerializationManagerEx.getInstanceEx().serialize(rootStub, bytes);
 
-            final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
-            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub));
+            final int key = Math.abs(FileBasedIndex.getFileId(file));
+            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength));
           }
         });
 
         return result;
       }
     };
+  }
+
+  private static void rememberIndexingStamp(final VirtualFile file, long contentLength) {
+    try {
+      DataOutputStream stream = INDEXED_STAMP.writeAttribute(file);
+      stream.writeLong(file.getTimeStamp());
+      stream.writeLong(contentLength);
+      stream.close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  public static String getIndexingStampInfo(VirtualFile file) {
+    try {
+      DataInputStream stream = INDEXED_STAMP.readAttribute(file);
+      if (stream == null) {
+        return "no data";
+      }
+
+      long stamp = stream.readLong();
+      long size = stream.readLong();
+      stream.close();
+      return "indexed at " + stamp + " with size " + size;
+    }
+    catch (IOException e) {
+      return ExceptionUtil.getThrowableText(e);
+    }
   }
 
   @NotNull

@@ -1,15 +1,27 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -57,36 +69,44 @@ import java.util.Set;
  */
 public final class DomManagerImpl extends DomManager {
   private static final Key<Object> MOCK = Key.create("MockElement");
+
   static final Key<WeakReference<DomFileElementImpl>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription> MOCK_DESCRIPTION = Key.create("MockDescription");
-
   static final SemKey<FileDescriptionCachedValueProvider> FILE_DESCRIPTION_KEY = SemKey.createKey("FILE_DESCRIPTION_KEY");
-  public static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
+  static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
   static final SemKey<IndexedElementInvocationHandler> DOM_INDEXED_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_INDEXED_HANDLER_KEY");
   static final SemKey<CollectionElementInvocationHandler> DOM_COLLECTION_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_COLLECTION_HANDLER_KEY");
   static final SemKey<CollectionElementInvocationHandler> DOM_CUSTOM_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_CUSTOM_HANDLER_KEY");
   static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
-  private final ConverterManagerImpl myConverterManager;
-
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
 
   private final Project myProject;
+  private final SemService mySemService;
+  private final ConverterManager myConverterManager;
   private final DomApplicationComponent myApplicationComponent;
   private final PsiFileFactory myFileFactory;
+  private final ProjectFileIndex myFileIndex;
 
   private long myModificationCount;
   private boolean myChanging;
-  private final ProjectFileIndex myFileIndex;
-  private final SemService mySemService;
 
-  public DomManagerImpl(final Project project, final XmlAspect xmlAspect) {
+  public DomManagerImpl(Project project,
+                        final XmlAspect xmlAspect,
+                        SemService semService,
+                        ConverterManager converterManager,
+                        DomApplicationComponent appComponent,
+                        PsiFileFactory fileFactory,
+                        ProjectFileIndex fileIndex) {
     myProject = project;
-    mySemService = SemService.getSemService(project);
-    myConverterManager = (ConverterManagerImpl)ServiceManager.getService(ConverterManager.class);
-    myApplicationComponent = DomApplicationComponent.getInstance();
-    final PomModel pomModel = PomManager.getModel(project);
+    mySemService = semService;
+    myConverterManager = converterManager;
+    myApplicationComponent = appComponent;
+    myFileFactory = fileFactory;
+    myFileIndex = fileIndex;
+
+    PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
@@ -105,11 +125,7 @@ public final class DomManagerImpl extends DomManager {
       }
     }, project);
 
-    myFileFactory = PsiFileFactory.getInstance(project);
-
-    final PsiManager psiManager = PsiManager.getInstance(project);
-
-    final Runnable setupVfsListeners = new Runnable() {
+    Runnable setupVfsListeners = new Runnable() {
       public void run() {
         final VirtualFileAdapter listener = new VirtualFileAdapter() {
           private final List<DomEvent> myDeletionEvents = new SmartList<DomEvent>();
@@ -125,7 +141,7 @@ public final class DomManagerImpl extends DomManager {
           }
 
           public void beforeFileDeletion(final VirtualFileEvent event) {
-            if (!project.isDisposed()) {
+            if (!myProject.isDisposed()) {
               beforeFileDeletion(event.getFile());
             }
           }
@@ -148,7 +164,7 @@ public final class DomManagerImpl extends DomManager {
 
           public void fileDeleted(VirtualFileEvent event) {
             if (!myDeletionEvents.isEmpty()) {
-              if (!project.isDisposed()) {
+              if (!myProject.isDisposed()) {
                 for (DomEvent domEvent : myDeletionEvents) {
                   fireEvent(domEvent);
                 }
@@ -164,18 +180,17 @@ public final class DomManagerImpl extends DomManager {
             }
           }
         };
-        VirtualFileManager.getInstance().addVirtualFileListener(listener, project);
+        VirtualFileManager.getInstance().addVirtualFileListener(listener, myProject);
       }
     };
 
-    final StartupManager startupManager = StartupManager.getInstance(project);
+    StartupManager startupManager = StartupManager.getInstance(project);
     if (!((StartupManagerEx)startupManager).startupActivityPassed()) {
       startupManager.registerStartupActivity(setupVfsListeners);
-    } else {
+    }
+    else {
       setupVfsListeners.run();
     }
-
-    myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   private void processVfsChange(final VirtualFile file) {
@@ -507,7 +522,4 @@ public final class DomManagerImpl extends DomManager {
   public SemService getSemService() {
     return mySemService;
   }
-
-
-  private final static Logger LOG = Logger.getInstance(DomManagerImpl.class);
 }

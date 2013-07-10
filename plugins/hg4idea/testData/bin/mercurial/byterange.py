@@ -9,10 +9,8 @@
 #   Lesser General Public License for more details.
 #
 #   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#      Free Software Foundation, Inc.,
-#      59 Temple Place, Suite 330,
-#      Boston, MA  02111-1307  USA
+#   License along with this library; if not, see
+#   <http://www.gnu.org/licenses/>.
 
 # This file is part of urlgrabber, a high-level cross-protocol url-grabber
 # Copyright 2002-2004 Michael D. Stenner, Ryan Tomayko
@@ -25,11 +23,6 @@ import urllib
 import urllib2
 import email.Utils
 
-try:
-    from cStringIO import StringIO
-except ImportError, msg:
-    from StringIO import StringIO
-
 class RangeError(IOError):
     """Error raised when an unsatisfiable range is requested."""
     pass
@@ -39,7 +32,7 @@ class HTTPRangeHandler(urllib2.BaseHandler):
 
     This was extremely simple. The Range header is a HTTP feature to
     begin with so all this class does is tell urllib2 that the
-    "206 Partial Content" reponse from the HTTP server is what we
+    "206 Partial Content" response from the HTTP server is what we
     expected.
 
     Example:
@@ -69,9 +62,9 @@ class HTTPRangeHandler(urllib2.BaseHandler):
         # HTTP's Range Not Satisfiable error
         raise RangeError('Requested Range Not Satisfiable')
 
-class RangeableFileObject:
+class RangeableFileObject(object):
     """File object wrapper to enable raw range handling.
-    This was implemented primarilary for handling range
+    This was implemented primarily for handling range
     specifications for file:// urls. This object effectively makes
     a file object look like it consists only of a range of bytes in
     the stream.
@@ -108,9 +101,7 @@ class RangeableFileObject:
         """This effectively allows us to wrap at the instance level.
         Any attribute not found in _this_ object will be searched for
         in self.fo.  This includes methods."""
-        if hasattr(self.fo, name):
-            return getattr(self.fo, name)
-        raise AttributeError(name)
+        return getattr(self.fo, name)
 
     def tell(self):
         """Return the position within the range.
@@ -175,10 +166,8 @@ class RangeableFileObject:
         offset is relative to the current position (self.realpos).
         """
         assert offset >= 0
-        if not hasattr(self.fo, 'seek'):
-            self._poor_mans_seek(offset)
-        else:
-            self.fo.seek(self.realpos + offset)
+        seek = getattr(self.fo, 'seek', self._poor_mans_seek)
+        seek(self.realpos + offset)
         self.realpos += offset
 
     def _poor_mans_seek(self, offset):
@@ -249,7 +238,6 @@ from urllib import splitport, splituser, splitpasswd, splitattr, \
                    unquote, addclosehook, addinfourl
 import ftplib
 import socket
-import sys
 import mimetypes
 import email
 
@@ -331,7 +319,7 @@ class FTPRangeHandler(urllib2.FTPHandler):
             headers = email.message_from_string(headers)
             return addinfourl(fp, headers, req.get_full_url())
         except ftplib.all_errors, msg:
-            raise IOError('ftp error', msg), sys.exc_info()[2]
+            raise IOError('ftp error', msg)
 
     def connect_ftp(self, user, passwd, host, port, dirs):
         fw = ftpwrapper(user, passwd, host, port, dirs)
@@ -361,7 +349,7 @@ class ftpwrapper(urllib.ftpwrapper):
             try:
                 self.ftp.nlst(file)
             except ftplib.error_perm, reason:
-                raise IOError('ftp error', reason), sys.exc_info()[2]
+                raise IOError('ftp error', reason)
             # Restore the transfer mode!
             self.ftp.voidcmd(cmd)
             # Try to retrieve as a file
@@ -375,7 +363,7 @@ class ftpwrapper(urllib.ftpwrapper):
                     fp = RangeableFileObject(fp, (rest,''))
                     return (fp, retrlen)
                 elif not str(reason).startswith('550'):
-                    raise IOError('ftp error', reason), sys.exc_info()[2]
+                    raise IOError('ftp error', reason)
         if not conn:
             # Set transfer mode to ASCII!
             self.ftp.voidcmd('TYPE A')
@@ -442,7 +430,7 @@ def range_tuple_normalize(range_tup):
     Return a tuple whose first element is guaranteed to be an int
     and whose second element will be '' (meaning: the last byte) or
     an int. Finally, return None if the normalized tuple == (0,'')
-    as that is equivelant to retrieving the entire file.
+    as that is equivalent to retrieving the entire file.
     """
     if range_tup is None:
         return None

@@ -21,13 +21,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -107,7 +107,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
                                                    final StringBuilder buffer) throws IncorrectOperationException {
     final GrExpression expr = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
     final GrExpression safeTypeExpr = newExpression.replaceWithExpression(expr, false);
-    GrReferenceAdjuster.shortenReferences(safeTypeExpr);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(safeTypeExpr);
   }
 
   private static void appendClosureTextByMethod(final PsiMethod method,

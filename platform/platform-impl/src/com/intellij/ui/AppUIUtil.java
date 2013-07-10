@@ -31,6 +31,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,9 +89,26 @@ public class AppUIUtil {
       application.invokeLater(runnable, new Condition() {
         @Override
         public boolean value(Object o) {
-          return (!project.isOpen()) || project.isDisposed();
+          return !project.isOpen() || project.isDisposed();
         }
       });
+    }
+  }
+
+  public static void invokeOnEdt(Runnable runnable) {
+    invokeOnEdt(runnable, null);
+  }
+
+  public static void invokeOnEdt(Runnable runnable, @Nullable Condition condition) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      runnable.run();
+    }
+    else if (condition == null) {
+      application.invokeLater(runnable);
+    }
+    else {
+      application.invokeLater(runnable, condition);
     }
   }
 

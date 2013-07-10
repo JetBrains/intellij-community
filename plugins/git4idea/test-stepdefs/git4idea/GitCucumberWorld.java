@@ -13,11 +13,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import cucumber.annotation.After;
@@ -29,15 +28,12 @@ import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
-import git4idea.test.GitTestInitUtil;
+import git4idea.test.GitTestUtil;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.BuiltInServerManager;
-import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -51,7 +47,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static com.intellij.dvcs.test.Executor.mkdir;
-import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -88,7 +83,7 @@ public class GitCucumberWorld {
   @Before
   @Order(0)
   public void setUp() throws Throwable {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+    PlatformTestCase.initPlatformLangPrefix();
     IdeaTestApplication.getInstance(null);
 
     String tempFileName = getClass().getName() + "-" + new Random().nextInt();
@@ -126,7 +121,7 @@ public class GitCucumberWorld {
     myAsyncTasks = new ArrayList<Future>();
 
     cd(myProjectRoot);
-    myRepository = createRepo(myProjectRoot);
+    myRepository = GitTestUtil.createRepository(myProject, myProjectRoot);
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
@@ -139,23 +134,10 @@ public class GitCucumberWorld {
     assumeTrue(myVcs.getVersion().isSupported());
   }
 
-  @NotNull
-  private static GitRepository createRepo(String root) {
-    GitTestInitUtil.initRepo(root);
-    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    vcsManager.setDirectoryMapping(root, GitVcs.NAME);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
-    GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(file);
-    assertNotNull("Couldn't find repository for root " + root, repository);
-    return repository;
-  }
-
   @Before("@remote")
   @Order(1)
   public void setUpRemoteOperations() {
-    ((BuiltInServerManagerImpl)BuiltInServerManager.getInstance()).setEnabledInUnitTestMode(true);
-    // default port will be occupied by main idea instance => define the custom default to avoid searching of free port
-    System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
+    GitTestUtil.setDefaultBuiltInServerPort();
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
 
@@ -164,13 +146,12 @@ public class GitCucumberWorld {
   public void setUpStandardMultipleRootsConfig() {
     cd(myProjectRoot);
     String community = mkdir("community");
-    createRepo(community);
+    GitTestUtil.createRepository(myProject, community);
   }
 
   @After("@remote")
   @Order(1)
   public void tearDownRemoteOperations() {
-    ((BuiltInServerManagerImpl)BuiltInServerManager.getInstance()).setEnabledInUnitTestMode(false);
   }
 
   @After

@@ -184,6 +184,8 @@
       <param name="outputDirectory" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
       <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
       <param name="resourceEncoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+
+      <param name="outputFileNameMapping" disableReferences="true"/>
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-acr-plugin">
@@ -230,6 +232,11 @@
       <param name="javaScriptBuildnumberCallback" language="JavaScript" languageInjectionPrefix="function() {return a + " languageInjectionSuffix="}" />
     </pluginDescriptor>
 
+    <pluginDescriptor mavenId="org.codehaus.mojo:buildnumber-maven-plugin">
+      <property name="buildNumber"/>
+      <property name="timestamp"/>
+    </pluginDescriptor>
+
     <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
       <param name="sqlCommand" language="SQL"/>
     </pluginDescriptor>
@@ -243,6 +250,8 @@
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-resources-plugin">
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+
+      <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
   </extensions>
 
@@ -415,6 +424,30 @@
             icon="MavenIcons.ExecuteMavenGoal">
     </action>
 
+    <action id="Maven.GroupProjects"
+            class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
+            text="Group Modules"
+            description="Group projects according to Maven structure"
+            icon="AllIcons.Nodes.Folder"/>
+    <action id="Maven.ShowIgnored"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
+            text="Show Ignored Projects"
+            description="Show ignored projects"
+            icon="AllIcons.Actions.ShowHiddens"/>
+    <action id="Maven.ShowBasicPhasesOnly"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
+            text="Show Basic Phases Only"
+            description="Show basic phases only"
+            icon="AllIcons.General.Filter"/>
+    <action id="Maven.AlwaysShowArtifactId"
+            class="org.jetbrains.idea.maven.navigator.actions.AlwaysShowArtifactIdAction"
+            text="Always Show ArtifactId"
+            description="Always Show ArtifactId instead of project name"/>
+    <action id="Maven.ShowVersions"
+            class="org.jetbrains.idea.maven.navigator.actions.ShowVersionsAction"
+            text="Show version"
+            description="Show version for Maven project"/>
+
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
@@ -460,24 +493,6 @@
       <separator/>
       <reference id="Maven.ShowSettings"/>
       <reference id="Maven.Help"/>
-      <action id="Maven.GroupProjects"
-              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
-              text="Group Modules"
-              description="Group projects according to Maven structure"
-              secondary="true"
-              icon="AllIcons.Nodes.Folder"/>
-      <action id="Maven.ShowIgnored"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-              text="Show Ignored Projects"
-              description="Show ignored projects"
-              secondary="true"
-              icon="AllIcons.Actions.ShowHiddens"/>
-      <action id="Maven.ShowBasicPhasesOnly"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
-              text="Show Basic Phases Only"
-              description="Show basic phases only"
-              secondary="true"
-              icon="AllIcons.General.Filter"/>
     </group>
 
     <group id="Maven.DependencyMenu">

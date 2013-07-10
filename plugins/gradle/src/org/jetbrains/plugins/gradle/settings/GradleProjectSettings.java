@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
 
-  @Nullable private String  myGradleHome;
+  @Nullable private String myGradleHome;
+
   private boolean myPreferLocalInstallationToWrapper;
 
   @Nullable

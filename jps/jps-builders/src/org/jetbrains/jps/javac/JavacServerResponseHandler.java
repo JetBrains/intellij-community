@@ -99,6 +99,13 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
         myOutputSink.save(fileObject);
         return false;
       }
+      
+      if (responseType == JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED) {
+        final JavacRemoteProto.Message.Response.OutputObject outputObject = response.getOutputObject();
+        final File file = new File(outputObject.getFilePath());
+        myDiagnosticSink.javaFileLoaded(file);
+        return false;
+      }
 
       if (responseType == JavacRemoteProto.Message.Response.Type.CLASS_DATA) {
         final JavacRemoteProto.Message.Response.ClassData data = response.getClassData();

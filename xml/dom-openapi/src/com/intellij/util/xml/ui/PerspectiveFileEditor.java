@@ -88,7 +88,10 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
         if (PerspectiveFileEditor.this.equals(oldEditor)) {
           if (newEditor instanceof TextEditor) {
             ensureInitialized();
-            setSelectionInTextEditor((TextEditor)newEditor, getSelectedDomElement());
+            DomElement selectedDomElement = getSelectedDomElement();
+            if (selectedDomElement != null) {
+              setSelectionInTextEditor((TextEditor)newEditor, selectedDomElement);
+            }
           }
         }
         else if (PerspectiveFileEditor.this.equals(newEditor)) {
@@ -101,7 +104,10 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
           }
           else if (oldEditor instanceof PerspectiveFileEditor) {
             ensureInitialized();
-            setSelectedDomElement(((PerspectiveFileEditor)oldEditor).getSelectedDomElement());
+            DomElement selectedDomElement = ((PerspectiveFileEditor)oldEditor).getSelectedDomElement();
+            if (selectedDomElement != null) {
+              setSelectedDomElement(selectedDomElement);
+            }
           }
         }
       }

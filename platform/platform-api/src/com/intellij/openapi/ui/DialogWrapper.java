@@ -100,6 +100,8 @@ public abstract class DialogWrapper {
 
   @NonNls public static final String FOCUSED_ACTION = "FocusedAction";
 
+  @NonNls private static final String NO_AUTORESIZE = "NoAutoResizeAndFit";
+
   private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
                                                                                 InputEvent.ALT_MASK | InputEvent.SHIFT_MASK);
 
@@ -771,6 +773,18 @@ public abstract class DialogWrapper {
     myPeer.toBack();
   }
 
+  protected boolean setAutoAdjustable(boolean autoAdjustable) {
+    JRootPane rootPane = getRootPane();
+    if (rootPane == null) return false;
+    rootPane.putClientProperty(NO_AUTORESIZE, autoAdjustable? null : Boolean.TRUE);
+    return true;
+  }
+  //true by default
+  public boolean isAutoAdjustable() {
+    JRootPane rootPane = getRootPane();
+    return rootPane == null || rootPane.getClientProperty(NO_AUTORESIZE) == null;
+  }
+
   /**
    * Dispose the wrapped and releases all resources allocated be the wrapper to help
    * more effecient garbage collection. You should never invoke this method twice or
@@ -793,7 +807,7 @@ public abstract class DialogWrapper {
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
       unregisterKeyboardActions(rootPane);
-      if (myActualSize != null) {
+      if (myActualSize != null && isAutoAdjustable()) {
         setSize(myActualSize.width, myActualSize.height);
       }
       myPeer.dispose();
@@ -1102,7 +1116,7 @@ public abstract class DialogWrapper {
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
 
-    final JPanel root = new JPanel(new BorderLayout());
+    final JPanel root = new JPanel(createRootLayout());
     //{
     //  @Override
     //  public void paint(Graphics g) {
@@ -1166,6 +1180,10 @@ public abstract class DialogWrapper {
     if (SystemInfo.isWindows) {
       installEnterHook(root);
     }
+  }
+
+  LayoutManager createRootLayout() {
+    return new BorderLayout();
   }
 
   private static void installEnterHook(JComponent root) {
@@ -1518,8 +1536,12 @@ public abstract class DialogWrapper {
           menuSelectionManager.clearSelectedPath();
         }
         else {
+          if (ApplicationManager.getApplication() == null) {
+            doCancelAction(e);
+            return;
+          }
           final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
-          if (ApplicationManager.getApplication() == null || popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
+          if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
             doCancelAction(e);
           }
         }

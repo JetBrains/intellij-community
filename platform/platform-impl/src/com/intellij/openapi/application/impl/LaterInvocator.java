@@ -51,7 +51,7 @@ public class LaterInvocator {
 
   public static final Object LOCK = new Object(); //public for tests
   private static final IdeEventQueue ourEventQueue = IdeEventQueue.getInstance();
-  private static final FrequentEventDetector ourFrequentEventDetector = new FrequentEventDetector(1000, 100);
+  private static final FrequentEventDetector ourFrequentEventDetector = new FrequentEventDetector(1009, 100);
 
   private LaterInvocator() {
   }

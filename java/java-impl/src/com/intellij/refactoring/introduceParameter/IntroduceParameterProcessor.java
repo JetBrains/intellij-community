@@ -382,7 +382,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
       ChangeContextUtil.clearContextInfo(myParameterInitializer);
 
-      // Replacing expression occurences
+      // Replacing expression occurrences
       for (UsageInfo usage : usages) {
         if (usage instanceof ChangedMethodCallInfo) {
           PsiElement element = usage.getElement();

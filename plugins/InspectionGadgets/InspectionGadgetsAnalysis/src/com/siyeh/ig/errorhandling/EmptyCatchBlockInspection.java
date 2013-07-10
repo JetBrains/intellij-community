@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -51,15 +50,13 @@ public class EmptyCatchBlockInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "empty.catch.block.display.name");
+    return InspectionGadgetsBundle.message("empty.catch.block.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "empty.catch.block.problem.descriptor");
+    return InspectionGadgetsBundle.message("empty.catch.block.problem.descriptor");
   }
 
   @Override
@@ -69,15 +66,10 @@ public class EmptyCatchBlockInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "empty.catch.block.comments.option"), "m_includeComments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "empty.catch.block.ignore.option"), "m_ignoreTestCases");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "empty.catch.block.ignore.ignore.option"),
-                             "m_ignoreIgnoreParameter");
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.comments.option"), "m_includeComments");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.ignore.option"), "m_ignoreTestCases");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.ignore.ignore.option"), "m_ignoreIgnoreParameter");
     return optionsPanel;
   }
 
@@ -92,13 +84,11 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "rename.catch.parameter.to.ignored");
+      return InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiCatchSection)) {
@@ -113,10 +103,8 @@ public class EmptyCatchBlockInspection extends BaseInspection {
       if (identifier == null) {
         return;
       }
-      final PsiElementFactory factory =
-        JavaPsiFacade.getInstance(project).getElementFactory();
-      final PsiIdentifier newIdentifier =
-        factory.createIdentifier("ignored");
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiIdentifier newIdentifier = factory.createIdentifier("ignored");
       identifier.replace(newIdentifier);
     }
   }
@@ -145,7 +133,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
 
     private void checkCatchSection(PsiCatchSection section) {
       final PsiCodeBlock block = section.getCatchBlock();
-      if (block == null || !isCatchBlockEmpty(block)) {
+      if (block == null || !isEmpty(block)) {
         return;
       }
       final PsiParameter parameter = section.getParameter();
@@ -167,21 +155,39 @@ public class EmptyCatchBlockInspection extends BaseInspection {
       registerError(catchToken);
     }
 
-    private boolean isCatchBlockEmpty(PsiCodeBlock block) {
-      if (m_includeComments) {
-        final PsiElement[] children = block.getChildren();
-        for (final PsiElement child : children) {
-          if (child instanceof PsiComment ||
-              child instanceof PsiStatement) {
+    private boolean isEmpty(PsiElement element) {
+      if (!m_includeComments && element instanceof PsiComment) {
+        return true;
+      } else if (element instanceof PsiEmptyStatement) {
+        if (m_includeComments) {
+          final PsiElement[] children = element.getChildren();
+          for (PsiElement child : children) {
+            if (child instanceof PsiComment) {
+              return false;
+            }
+          }
+        }
+        return true;
+      } else if (element instanceof PsiWhiteSpace) {
+        return true;
+      } else if (element instanceof PsiBlockStatement) {
+        final PsiBlockStatement block = (PsiBlockStatement)element;
+        return isEmpty(block.getCodeBlock());
+      } else if (element instanceof PsiCodeBlock) {
+        final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
+        final PsiElement[] children = codeBlock.getChildren();
+        if (children.length == 2) {
+          return true;
+        }
+        for (int i = 1; i < children.length - 1; i++) {
+          final PsiElement child = children[i];
+          if (!isEmpty(child)) {
             return false;
           }
         }
         return true;
       }
-      else {
-        final PsiStatement[] statements = block.getStatements();
-        return statements.length == 0;
-      }
+      return false;
     }
   }
 }

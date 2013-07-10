@@ -31,11 +31,17 @@ public class LiveTemplateLookupElement extends LookupElement {
   private final String myPrefix;
   private final TemplateImpl myTemplate;
   public final boolean sudden;
+  private final boolean myWorthShowingInAutoPopup;
 
   public LiveTemplateLookupElement(TemplateImpl template, boolean sudden) {
+    this(template, sudden, false);
+  }
+  
+  public LiveTemplateLookupElement(TemplateImpl template, boolean sudden, boolean worthShowingInAutoPopup) {
     this.sudden = sudden;
     myPrefix = template.getKey();
     myTemplate = template;
+    myWorthShowingInAutoPopup = worthShowingInAutoPopup;
   }
   @NotNull
   @Override
@@ -75,6 +81,6 @@ public class LiveTemplateLookupElement extends LookupElement {
 
   @Override
   public boolean isWorthShowingInAutoPopup() {
-    return false;
+    return myWorthShowingInAutoPopup;
   }
 }

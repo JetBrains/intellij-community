@@ -158,6 +158,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     return result;
   }
 
+  @NotNull
   private List<CodeSmellInfo> findCodeSmells(@NotNull PsiFile psiFile, final ProgressIndicator progress, @NotNull Document document) {
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 

@@ -64,7 +64,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     c.addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseMoved(MouseEvent e) {
-        if (isSearchField(c)) {
+        if (ui.getComponent() != null && isSearchField(c)) {
           if (ui.getActionUnder(e) != null) {
             c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           } else {

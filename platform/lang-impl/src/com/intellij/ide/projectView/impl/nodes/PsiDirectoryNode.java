@@ -37,6 +37,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
@@ -59,7 +60,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
-  
+
   protected boolean shouldShowModuleName() {
     return !PlatformUtils.isAppCode();
   }
@@ -290,7 +291,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       icon = LayeredIcon.create(icon, PlatformIcons.LOCKED_ICON);
     }
 
-    if (file.isSymLink()) {
+    if (file.is(VFileProperty.SYMLINK)) {
       icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
     }
 

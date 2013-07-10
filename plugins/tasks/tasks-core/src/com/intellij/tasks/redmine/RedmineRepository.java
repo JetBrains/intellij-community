@@ -67,11 +67,11 @@ public class RedmineRepository extends BaseRepositoryImpl {
 
   @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    @SuppressWarnings({"unchecked"}) List<Object> children = getIssues(query, max);
+    List<Element> children = getIssues(query, max);
 
-    final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
-      public Task fun(Object o) {
-        return createIssue((Element)o);
+    final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Element, Task>() {
+      public Task fun(Element o) {
+        return createIssue(o);
       }
     });
     return tasks.toArray(new Task[tasks.size()]);
@@ -188,8 +188,7 @@ public class RedmineRepository extends BaseRepositoryImpl {
     return super.isConfigured() && !StringUtil.isEmpty(myProjectId);
   }
 
-  @SuppressWarnings({"unchecked"})
-  private List<Object> getIssues(@Nullable String query, int max) throws Exception {
+  private List<Element> getIssues(@Nullable String query, int max) throws Exception {
     String url = "/projects/" + myProjectId + "/issues.xml?";
     final boolean hasKey = !StringUtil.isEmpty(myAPIKey) && !isUseHttpAuthentication();
     if (hasKey) {

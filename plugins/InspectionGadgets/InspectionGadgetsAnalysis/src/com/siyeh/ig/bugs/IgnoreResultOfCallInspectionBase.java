@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
+
   final List<String> methodNamePatterns = new ArrayList();
   final List<String> classNames = new ArrayList();
   /**
@@ -55,7 +56,9 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
                                           "java.math.BigDecimal,.*," +
                                           "java.net.InetAddress,.*," +
                                           "java.io.File,.*," +
-                                          "java.lang.Object,equals|hashCode";Map<String, Pattern> patternCache = null;
+                                          "java.lang.Object,equals|hashCode," +
+                                          "java.util.regex.Matcher,.*";
+  Map<String, Pattern> patternCache = null;
 
   public IgnoreResultOfCallInspectionBase() {
     parseString(callCheckString, classNames, methodNamePatterns);

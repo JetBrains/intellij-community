@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,46 +22,25 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Kirill Likhodedov
  */
-class GithubUser {
+public class GithubUser {
 
-  enum Plan {
-    FREE,
-    MICRO,
-    SMALL,
-    MEDIUM,
-    BRONZE,
-    SILVER,
-    GOLD,
-    PLATINUM,
-    ENTERPRISE;
+  @NotNull private final String myLogin;
+  private final int myPrivateRepos;
+  private final int myMaxPrivateRepos;
 
-    public boolean isPrivateRepoAllowed() {
-      return this != FREE;
-    }
-
-    public static Plan fromString(String name) {
-      for (Plan plan : values()) {
-        if (plan.name().equalsIgnoreCase(name)) {
-          return plan;
-        }
-      }
-      return defaultPlan();
-    }
-
-    private static Plan defaultPlan() {
-      return FREE;
-    }
-  }
-
-  @NotNull private final Plan myPlan;
-
-  GithubUser(@NotNull Plan plan) {
-    myPlan = plan;
+  GithubUser(@NotNull String login, int privateRepos, int maxPrivateRepos) {
+    myLogin = login;
+    myPrivateRepos = privateRepos;
+    myMaxPrivateRepos = maxPrivateRepos;
   }
 
   @NotNull
-  Plan getPlan() {
-    return myPlan;
+  public String getLogin() {
+    return myLogin;
+  }
+
+  public boolean canCreatePrivateRepo() {
+    return myMaxPrivateRepos > myPrivateRepos;
   }
 
 }

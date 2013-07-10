@@ -60,7 +60,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -204,7 +203,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
   public boolean isModified() {
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     if (templateSettings.getDefaultShortcutChar() != getDefaultShortcutChar()) {
-      if (isTest) System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar()+"; getDefaultShortcutChar()="+getDefaultShortcutChar());
+      if (isTest) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar()+"; getDefaultShortcutChar()="+getDefaultShortcutChar());
+      }
       return true;
     }
 
@@ -213,6 +215,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     if (checkAreEqual(collectTemplates(originalGroups), collectTemplates(newGroups))) return false;
     if (isTest) {
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println("LiveTemplatesConfig: originalGroups="+originalGroups+"; collectTemplates(originalGroups)="+collectTemplates(originalGroups)+";\n newGroups="+newGroups+"; collectTemplates(newGroups)="+collectTemplates(newGroups));
     }
     return true;
@@ -405,8 +408,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   @Nullable
   private TemplateGroup getGroup(int row) {
-    JTree tree = myTree;
-    TreePath path = tree.getPathForRow(row);
+    TreePath path = myTree.getPathForRow(row);
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (node.getUserObject() instanceof TemplateGroup) {
@@ -628,14 +630,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
         myCurrentTemplateEditor.focusKey();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
-
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(MouseEvent e) {
-        renameGroup();
-        return true;
-      }
-    }.installOn(myTree);
 
     installPopup();
 

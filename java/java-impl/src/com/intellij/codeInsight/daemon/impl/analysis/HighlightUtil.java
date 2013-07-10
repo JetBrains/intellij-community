@@ -1919,7 +1919,7 @@ public class HighlightUtil extends HighlightUtilBase {
           .parent(PsiMatchers.hasClass(PsiExpressionStatement.class))
           .parent(PsiMatchers.hasClass(PsiCodeBlock.class))
           .parent(PsiMatchers.hasClass(PsiMethod.class))
-          .dot(PsiMatchers.isConstructor(true))
+          .dot(JavaMatchers.isConstructor(true))
           .parent(PsiMatchers.hasClass(PsiClass.class))
           .getElement();
         if (parentClass == null) {
@@ -1936,6 +1936,13 @@ public class HighlightUtil extends HighlightUtilBase {
             !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
           return null;
         }
+
+        if (expression instanceof PsiJavaCodeReferenceElement &&
+            !aClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
+            PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
+          return null;
+        }
+
         final HighlightInfo highlightInfo = createMemberReferencedError(resolvedName, expression.getTextRange());
         if (expression instanceof PsiReferenceExpression && PsiUtil.isInnerClass(aClass)) {
           final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
@@ -2509,7 +2516,7 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiClass aClass = (PsiClass)resolved;
       if (refGrandParent instanceof PsiClass) {
         if (refGrandParent instanceof PsiTypeParameter) {
-          highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, resolveResult, ref);
+          highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, (PsiClass)refGrandParent, resolveResult, ref);
         }
         else {
           highlightInfo = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);

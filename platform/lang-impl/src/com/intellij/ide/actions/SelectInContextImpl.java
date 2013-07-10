@@ -112,16 +112,23 @@ public abstract class SelectInContextImpl implements SelectInContext {
   private static SelectInContext createEditorContext(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-    return createEditorContext(project, editor);
+    return doCreateEditorContext(project, editor, dataContext);
   }
 
   public static SelectInContext createEditorContext(Project project, FileEditor editor) {
+    return doCreateEditorContext(project, editor, null);
+  }
+
+  private static SelectInContext doCreateEditorContext(Project project, FileEditor editor, @Nullable DataContext dataContext) {
     if (project == null || editor == null) {
       return null;
     }
     VirtualFile file = FileEditorManagerEx.getInstanceEx(project).getFile(editor);
     if (file == null) {
-      return null;
+      file = dataContext == null ? null : PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      if (file == null) {
+        return null;
+      }
     }
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {

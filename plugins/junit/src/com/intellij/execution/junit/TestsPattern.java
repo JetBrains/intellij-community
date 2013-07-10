@@ -40,6 +40,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class TestsPattern extends TestPackage {
@@ -72,12 +74,8 @@ public class TestsPattern extends TestPackage {
     final Project project = myConfiguration.getProject();
     final Set<String> classNames = new HashSet<String>();
     for (String className : data.getPatterns()) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project,
-                                                                className.contains(",")
-                                                                ? className.substring(0, className.indexOf(','))
-                                                                : className,
-                                                                GlobalSearchScope.allScope(project));
-      if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
+      final PsiClass psiClass = getTestClass(project, className);
+      if (psiClass != null&& JUnitUtil.isTestClass(psiClass)) {
         classNames.add(className);
       }
     }
@@ -119,6 +117,13 @@ public class TestsPattern extends TestPackage {
     return super.findTests();
   }
 
+  private static PsiClass getTestClass(Project project, String className) {
+    return JavaExecutionUtil.findMainClass(project,
+                                           (className.contains(",")
+                                           ? className.substring(0, className.indexOf(','))
+                                           : className).trim(), GlobalSearchScope.allScope(project));
+  }
+  
   protected void configureClasspath() throws CantRunException {
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
 
@@ -144,7 +149,48 @@ public class TestsPattern extends TestPackage {
   @Nullable
   @Override
   public RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration) {
-    return null;
+    final RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
+    final JUnitConfiguration.Data data = configuration.getPersistentData();
+    final Set<String> patterns = data.getPatterns();
+    for (final String pattern : patterns) {
+      final PsiClass testClass = getTestClass(configuration.getProject(), pattern.trim());
+      if (testClass != null && testClass.equals(element)) {
+        final RefactoringElementListener listeners =
+          RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<PsiClass>() {
+            private String myOldName = testClass.getQualifiedName();
+            @Override
+            public void setName(String qualifiedName) {
+              final Set<String> replaced = new LinkedHashSet<String>();
+              for (String currentPattern : patterns) {
+                if (myOldName.equals(currentPattern)) {
+                  replaced.add(qualifiedName);
+                  myOldName = qualifiedName;
+                } else {
+                  replaced.add(currentPattern);
+                }
+              }
+              patterns.clear();
+              patterns.addAll(replaced);
+            }
+
+            @Override
+            public PsiClass getPsiElement() {
+              return testClass;
+            }
+
+            @Override
+            public void setPsiElement(PsiClass psiElement) {
+              if (psiElement == testClass) {
+                setName(psiElement.getQualifiedName());
+              }
+            }
+          });
+        if (listeners != null) {
+          composite.addListener(listeners);
+        }
+      }
+    }
+    return composite;
   }
 
   @Override

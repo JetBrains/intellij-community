@@ -8,6 +8,8 @@
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
   <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/InspectionGadgets.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>
@@ -139,6 +141,10 @@
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.ReferenceAdjuster"/>
+    </extensionPoint>
+
     <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
 
     <extensionPoint name="refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
@@ -208,6 +214,7 @@
                     interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
     <extensionPoint name="psi.clsDecompiledFileProvider"
                     interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
+    <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -243,6 +250,7 @@
 
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
+    <referencesSearch implementation="com.intellij.psi.impl.search.SPIReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
 
@@ -308,7 +316,7 @@
                             order="last, before default"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
-                            order="last, before javaLegacy"/>
+                            order="last, before javaLegacy, before wordCompletion"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor" id="smartNull"
                             order="last, before javaSmart"/>
@@ -428,7 +436,7 @@
     <projectService serviceInterface="com.intellij.slicer.SliceManager"
                     serviceImplementation="com.intellij.slicer.SliceManager"/>
 
-    <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManagerImpl"
+    <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
@@ -456,13 +464,14 @@
 
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
 
-    <specialTool shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
+    <globalInspection shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"/>
-    <specialTool shortName="UnusedLibrary" bundle="messages.InspectionsBundle" key="unused.library.display.name"
+                     implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"
+                     presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation"/>
+    <globalInspection shortName="UnusedLibrary" bundle="messages.InspectionsBundle" key="unused.library.display.name"
                      groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection"/>
-    <specialTool shortName="InconsistentLanguageLevel" displayName="Inconsistent language level settings"
+    <globalInspection shortName="InconsistentLanguageLevel" displayName="Inconsistent language level settings"
                      groupName="Modularization issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.inconsistentLanguageLevel.InconsistentLanguageLevelInspection"/>
     <globalInspection shortName="WeakerAccess" displayName="Declaration access can be weaker" groupName="Declaration redundancy"
@@ -611,7 +620,7 @@
     <localInspection language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection" />
-    <localInspection language="JAVA" shortName="CodeBlock2Expr" displayName="Lambda code block can be replaced with expression"
+    <localInspection language="JAVA" shortName="CodeBlock2Expr" displayName="Statement lambda can be replaced with expression lambda"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection" />
     <localInspection language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
@@ -898,6 +907,7 @@
     <codeInsight.implementMethod language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaImplementMethodsHandler"/>
     <codeInsight.delegateMethods language="JAVA" implementationClass="com.intellij.codeInsight.generation.GenerateDelegateHandler"/>
     <codeInsight.gotoSuper language="JAVA" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
+    <codeInsight.gotoSuper language="SPI" implementationClass="com.intellij.spi.SPIGotoSuperHandler"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider"/>
@@ -922,6 +932,8 @@
     <lang.smartEnterProcessor language="JAVA"
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
+
+    <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
 
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
@@ -1407,6 +1419,11 @@
     <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
 
     <welcomeScreen implementation="com.intellij.ide.ui.laf.darcula.DarculaWelcomeScreenProvider"/>
+    <fileTypeFactory implementation="com.intellij.spi.SPIFileTypeFactory"/>
+    <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>
+    <lang.commenter language="SPI" implementationClass="com.intellij.spi.SPICommenter"/>
+    <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
+    <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
   </extensions>
 
   <actions>

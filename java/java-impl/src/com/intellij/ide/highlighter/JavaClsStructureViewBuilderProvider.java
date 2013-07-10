@@ -27,6 +27,7 @@ import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaClsStructureViewBuilderProvider implements StructureViewBuilderProvider {
+  @Override
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(@NotNull final FileType fileType, @NotNull final VirtualFile file, @NotNull final Project project) {
 
@@ -58,9 +60,10 @@ public class JavaClsStructureViewBuilderProvider implements StructureViewBuilder
     final PsiJavaFile javaFile = (PsiJavaFile)psiFile;
     if (javaFile == null) return null;
     return new TreeBasedStructureViewBuilder() {
+      @Override
       @NotNull
-      public StructureViewModel createStructureViewModel() {
-        return new JavaFileTreeModel(javaFile);
+      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+        return new JavaFileTreeModel(javaFile, editor);
       }
     };
   }

@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor;
-import com.intellij.codeInsight.editorActions.ReferenceTransferableData;
+import com.intellij.codeInsight.editorActions.ReferenceData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
@@ -36,7 +36,7 @@ import java.util.ArrayList;
 public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcessor<GrReferenceElement> {
   private static final Logger LOG = Logger.getInstance(GroovyReferenceCopyPasteProcessor.class);
 
-  protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceTransferableData.ReferenceData> to) {
+  protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to) {
     if (element instanceof GrReferenceElement) {
       if (((GrReferenceElement)element).getQualifier() == null) {
         final GroovyResolveResult resolveResult = ((GrReferenceElement)element).advancedResolve();
@@ -67,13 +67,13 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
 
   protected GrReferenceElement[] findReferencesToRestore(PsiFile file,
                                                          RangeMarker bounds,
-                                                         ReferenceTransferableData.ReferenceData[] referenceData) {
+                                                         ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();
     GrReferenceElement[] refs = new GrReferenceElement[referenceData.length];
     for (int i = 0; i < referenceData.length; i++) {
-      ReferenceTransferableData.ReferenceData data = referenceData[i];
+      ReferenceData data = referenceData[i];
 
       PsiClass refClass = facade.findClass(data.qClassName, file.getResolveScope());
       if (refClass == null) continue;
@@ -110,14 +110,14 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
     return refs;
   }
 
-  protected void restoreReferences(ReferenceTransferableData.ReferenceData[] referenceData,
+  protected void restoreReferences(ReferenceData[] referenceData,
                                    GrReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {
       GrReferenceElement reference = refs[i];
       if (reference == null) continue;
       try {
         PsiManager manager = reference.getManager();
-        ReferenceTransferableData.ReferenceData refData = referenceData[i];
+        ReferenceData refData = referenceData[i];
         PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
         if (refClass != null) {
           if (refData.staticMemberName == null) {

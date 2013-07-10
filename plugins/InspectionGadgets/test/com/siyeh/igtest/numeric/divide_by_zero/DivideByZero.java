@@ -10,4 +10,9 @@ public class DivideByZero {
     return num % 0 % 1;
   }
 
+  void assignment(int i, double d) {
+    i /= 1-1;
+    d %= 0;
+    i /= d;
+  }
 }

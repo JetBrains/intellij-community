@@ -75,7 +75,7 @@ public class HtmlLanguageLevelForm {
       return XmlUtil.XHTML_URI;
     }
     if (myHtml5RadioButton.isSelected()) {
-      return Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
+      return Html5SchemaProvider.getHtml5SchemaLocation();
     }
     return myDoctypeTextField.getText();
   }
@@ -85,7 +85,7 @@ public class HtmlLanguageLevelForm {
       myHtml4RadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(false);
     }
-    else if (doctype.equals(Html5SchemaProvider.HTML5_SCHEMA_LOCATION)) {
+    else if (doctype.equals(Html5SchemaProvider.getHtml5SchemaLocation())) {
       myHtml5RadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(false);
     }

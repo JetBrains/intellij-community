@@ -19,6 +19,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
@@ -27,6 +28,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -60,7 +62,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  private PsiJavaFile myFile;
+  private volatile PsiJavaFile myFile;
   private volatile boolean writeActionInProgress;
   public void testStress() throws Exception {
     int numOfThreads = 10;
@@ -85,13 +87,18 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
         public void run() {
           for (int i = 0; i < readIterations; i++) {
             if (myPsiManager == null) return;
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
+            ProgressManager.getInstance().runProcess(new Runnable() {
               @Override
               public void run() {
-                assertFalse(writeActionInProgress);
-                readStep(random);
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    assertFalse(writeActionInProgress);
+                    readStep(random);
+                  }
+                });
               }
-            });
+            }, new DaemonProgressIndicator());
           }
 
           reads.countDown();
@@ -130,7 +137,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     assertTrue(psiClass.isValid());
     return psiClass;
   }
-  
+
   private synchronized void writeStep(final Random random) throws IncorrectOperationException {
     switch (random.nextInt(2)) {
       case 0 :
@@ -177,7 +184,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);
             final HighlightVisitorImpl visitor = new HighlightVisitorImpl(PsiResolveHelper.SERVICE.getInstance(getProject()));
-            visitor.analyze(myFile, false, infoHolder, new Runnable() {
+            visitor.analyze(myFile, true, infoHolder, new Runnable() {
               @Override
               public void run() {
                 visitor.visit(element);

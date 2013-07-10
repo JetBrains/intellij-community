@@ -211,7 +211,7 @@ public class Bookmark implements Navigatable {
 
     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
     if (builder instanceof TreeBasedStructureViewBuilder) {
-      StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel();
+      StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(null);
       Object element;
       try {
         element = model.getCurrentEditorElement();

@@ -90,9 +90,21 @@ public class EPathUtil {
   /**
    * @return url
    */
-  static String expandEclipsePath2Url(final String path, ModifiableRootModel model, final List<String> currentRoots) {
+  static String expandEclipsePath2Url(final String path,
+                                      final ModifiableRootModel model,
+                                      final List<String> currentRoots) {
     final VirtualFile contentRoot = getContentRoot(model);
     LOG.assertTrue(contentRoot != null);
+    return expandEclipsePath2Url(path, model, currentRoots, contentRoot);
+  }
+
+  /**
+   * @return url
+   */
+  static String expandEclipsePath2Url(final String path,
+                                      final ModifiableRootModel model,
+                                      final List<String> currentRoots, 
+                                      @NotNull final VirtualFile contentRoot) {
     final String rootPath = contentRoot.getPath();
     String url = null;
     if (new File(path).exists()) {  //absolute path
@@ -207,6 +219,12 @@ public class EPathUtil {
       final String projectUrl = projectBaseDir.getUrl();
       if (url.startsWith(projectUrl)) {
         return url.substring(projectUrl.length()); //leading /
+      }
+
+      final String path = VfsUtilCore.urlToPath(url);
+      final String projectPath = projectBaseDir.getPath();
+      if (path.startsWith(projectPath)) {
+        return ProjectRootManagerImpl.extractLocalPath(path.substring(projectPath.length()));
       }
 
       return ProjectRootManagerImpl.extractLocalPath(url);

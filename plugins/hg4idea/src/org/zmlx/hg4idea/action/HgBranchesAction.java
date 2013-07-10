@@ -34,12 +34,12 @@ public class HgBranchesAction extends HgAbstractGlobalAction {
   protected void execute(Project project, Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo) {
     HgRepository repository;
     if (selectedRepo != null) {
-      repository = HgRepositoryImpl.getFullInstance(selectedRepo, project, project);
+      repository = HgRepositoryImpl.getInstance(selectedRepo, project, project);
     }
     else {
       VirtualFile selectedRoot = HgUtil.getRootForSelectedFile(project);
       if (selectedRoot != null) {
-        repository = HgRepositoryImpl.getFullInstance(selectedRoot, project, project);
+        repository = HgRepositoryImpl.getInstance(selectedRoot, project, project);
       }
       else {
         return;

@@ -72,15 +72,24 @@ public class BuildFSState extends FSState {
     return super.getSourcesToRecompile(context, target);
   }
 
-  //public boolean isMarkedForRecompilation(BuildRootDescriptor rd, File file) {
-  //  final Map<BuildRootDescriptor, Set<File>> recompile = getDelta(rd.getTarget()).getSourcesToRecompile();
-  //  //noinspection SynchronizationOnLocalVariableOrMethodParameter
-  //  synchronized (recompile) {
-  //    final Set<File> files = recompile.get(rd);
-  //    return files != null && files.contains(file);
-  //  }
-  //}
+  public boolean isMarkedForRecompilation(@Nullable CompileContext context, BuildRootDescriptor rd, File file) {
+    FilesDelta delta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
+    if (delta == null) {
+      delta = getDelta(rd.getTarget());
+    }
+    
+    final Map<BuildRootDescriptor, Set<File>> recompile = delta.getSourcesToRecompile();
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (recompile) {
+      final Set<File> files = recompile.get(rd);
+      return files != null && files.contains(file);
+    }
+  }
 
+  /**
+   * Note: marked file will well be visible as "dirty" only on the next compilation round!
+   * @throws IOException
+   */
   @Override
   public boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);

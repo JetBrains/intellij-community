@@ -56,6 +56,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "testFramework-java",
     "debugger-openapi",
     "compiler-openapi",
+    "remote-servers-api",
     "dom-openapi",
     "execution-openapi",
     "jsp-openapi",
@@ -64,6 +65,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules,
     "compiler-impl",
+    "remote-servers-impl",
     "debugger-impl",
     "dom-impl",
     "execution-impl",
@@ -78,6 +80,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "platform-main",
     "testFramework",
     "tests_bootstrap",
+    "InspectionGadgetsAnalysis",
+    "InspectionGadgetsPlugin",
+    "IntentionPowerPackPlugin",
           ].flatten()
 
   ant.patternset(id: "resources.included") {
@@ -246,12 +251,6 @@ public def layoutCommunityPlugins(String home) {
         module("ant-jps-plugin")
       }
     }
-    layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin") {
-      jar("InspectionGadgetsAnalysis.jar") {
-        module("InspectionGadgetsAnalysis")
-      }
-    }
-    layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
     layoutPlugin("ToString", "generate-tostring", "toString")
     layoutPlugin("uiDesigner", "ui-designer", "uiDesigner") {
       dir("jps") {
@@ -695,6 +694,7 @@ def layoutCommunityJps(String home, String target) {
       include(name: "optimizedFileManager.jar")
       include(name: "log4j.jar")
       include(name: "jgoodies-forms.jar")
+      include(name: "ecj*.jar")
     }
     dir("test") {
       jar("jps-build-test.jar") {
@@ -765,6 +765,10 @@ def layout_core_upsource(String home, String target) {
       module("java-analysis-api")
       module("java-analysis-impl")
       module("InspectionGadgetsAnalysis")
+      module("xml-psi-api")
+      module("xml-psi-impl")
+      module("resources")
+      module("resources-en")
     }
 
     jar("annotations.jar") {
@@ -784,6 +788,7 @@ def layout_core_upsource(String home, String target) {
       include(name: "xstream-1.4.3.jar")
       include(name: "xpp3-1.1.4-min.jar")
       include(name: "jdom.jar")
+      include(name: "nanoxml*.jar")
     }
   }
 }

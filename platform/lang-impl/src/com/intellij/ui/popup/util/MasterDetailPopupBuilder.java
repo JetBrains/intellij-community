@@ -468,7 +468,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     @Override
     protected void addCenterComponentToContentPane(JPanel contentPane, JComponent component) {
       if (myAddDetailViewToEast) {
-        JBSplitter splitPane = new JBSplitter(false, 0.3f);
+        JBSplitter splitPane = new JBSplitter(0.3f);
         splitPane.setSplitterProportionKey(getSplitterProportionKey());
         splitPane.setFirstComponent(component);
         splitPane.setSecondComponent((JComponent)myDetailView);

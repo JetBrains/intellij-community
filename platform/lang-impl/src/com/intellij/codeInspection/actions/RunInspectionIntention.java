@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -46,8 +48,8 @@ import java.util.LinkedHashSet;
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
   private final String myShortName;
 
-  public RunInspectionIntention(final InspectionProfileEntry tool) {
-    myShortName = tool.getShortName();
+  public RunInspectionIntention(@NotNull InspectionToolWrapper toolWrapper) {
+    myShortName = toolWrapper.getShortName();
   }
 
   public RunInspectionIntention(final HighlightDisplayKey key) {
@@ -93,31 +95,37 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     rerunInspection(LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName), managerEx, analysisScope, file);
   }
 
-  public static void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
+  public static void rerunInspection(@NotNull InspectionToolWrapper toolWrapper,
+                                     @NotNull InspectionManagerEx managerEx,
+                                     @NotNull AnalysisScope scope,
                                      PsiElement psiElement) {
-    GlobalInspectionContextImpl inspectionContext = createContext(baseTool, managerEx, psiElement);
-    inspectionContext.doInspections(scope, managerEx);
+    GlobalInspectionContextImpl inspectionContext = createContext(toolWrapper, managerEx, psiElement);
+    inspectionContext.doInspections(scope);
   }
 
-  public static GlobalInspectionContextImpl createContext(final InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
+  public static GlobalInspectionContextImpl createContext(@NotNull InspectionToolWrapper toolWrapper,
+                                                          @NotNull InspectionManagerEx managerEx,
+                                                          PsiElement psiElement) {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
-    LinkedHashSet<InspectionProfileEntry> allEntries = new LinkedHashSet<InspectionProfileEntry>();
-    allEntries.add(baseTool);
-    rootProfile.collectDependentInspections(baseTool, allEntries);
-    InspectionProfileEntry[] toolsArray = allEntries.toArray(new InspectionProfileEntry[allEntries.size()]);
-    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(baseTool.getDisplayName(), toolsArray);
+    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
+    allWrappers.add(toolWrapper);
+    rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());
+    InspectionToolWrapper[] toolWrappers = allWrappers.toArray(new InspectionToolWrapper[allWrappers.size()]);
+    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(), toolWrappers);
     try {
       Element element = new Element("toCopy");
-
-      for (InspectionProfileEntry tool : allEntries) {
-        tool.writeSettings(element);
-        model.getInspectionTool(tool.getShortName(), psiElement).readSettings(element);
+      for (InspectionToolWrapper wrapper : toolWrappers) {
+        wrapper.getTool().writeSettings(element);
+        InspectionToolWrapper tw = psiElement == null ? model.getInspectionTool(wrapper.getShortName(), managerEx.getProject())
+                                                      : model.getInspectionTool(wrapper.getShortName(), psiElement);
+        tw.getTool().readSettings(element);
       }
     }
-    catch (Exception e) {
-      //skip
+    catch (WriteExternalException ignored) {
     }
-    model.setEditable(baseTool.getDisplayName());
+    catch (InvalidDataException ignored) {
+    }
+    model.setEditable(toolWrapper.getDisplayName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
     return inspectionContext;

@@ -140,6 +140,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
       return;
     }
 
+    myRootPane.setBorder(null);
     boolean isNotClassic = Boolean.parseBoolean(String.valueOf(Toolkit.getDefaultToolkit().getDesktopProperty("win.xpstyle.themeActive")));
     if (isNotClassic && (state & MAXIMIZED_BOTH) != 0) {
       IdeFrame[] projectFrames = WindowManager.getInstance().getAllProjectFrames();
@@ -158,9 +159,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
           break;
         }
       }
-    }
-    else {
-      myRootPane.setBorder(null);
     }
   }
 
@@ -535,6 +533,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   public void toggleFullScreen(boolean state) {
     if (myFrameDecorator != null) {
       myFrameDecorator.toggleFullScreen(state);
+    }
+    IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
+    for (IdeFrame frame : frames) {
+      ((IdeFrameImpl)frame).updateBorder();
     }
   }
 

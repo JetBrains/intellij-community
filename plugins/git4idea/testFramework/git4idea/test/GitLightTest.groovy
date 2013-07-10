@@ -16,11 +16,14 @@
 package git4idea.test
 
 import com.intellij.dvcs.test.MockProject
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import git4idea.GitPlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryImpl
+import org.jetbrains.annotations.NotNull
 import org.junit.After
 import org.junit.Before
 /**
@@ -67,7 +70,22 @@ class GitLightTest extends GitExecutor {
   }
 
   public GitRepository createRepository(String rootDir) {
-    return GitTestInitUtil.createRepository(rootDir, myPlatformFacade, myProject)
+    GitTestUtil.initRepo(rootDir);
+
+    // TODO this smells hacky
+    // the constructor and notifyListeners() should probably be private
+    // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
+    GitRepository repository = new GitRepositoryImpl(new MockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
+      @NotNull
+      @Override
+      public String getPresentableUrl() {
+        return rootDir;
+      }
+
+    };
+
+    ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository);
+    return repository;
   }
 
   /**

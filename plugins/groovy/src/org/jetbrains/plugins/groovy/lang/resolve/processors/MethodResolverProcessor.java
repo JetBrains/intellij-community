@@ -65,7 +65,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   private final boolean myTypedContext;
 
   public MethodResolverProcessor(@Nullable String name,
-                                 @NotNull GroovyPsiElement place,
+                                 @NotNull PsiElement place,
                                  boolean isConstructor,
                                  @Nullable PsiType thisType,
                                  @Nullable PsiType[] argumentTypes,

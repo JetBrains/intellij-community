@@ -394,6 +394,12 @@ public class DuplicatesFinder {
       match.registerReturnValue(new ContinueReturnValue());
     } else if (pattern instanceof PsiBreakStatement) {
       match.registerReturnValue(new BreakReturnValue());
+    }else if (pattern instanceof PsiMethodCallExpression) {
+      final PsiMethod patternMethod = ((PsiMethodCallExpression)pattern).resolveMethod();
+      final PsiMethod candidateMethod = ((PsiMethodCallExpression)candidate).resolveMethod();
+      if (patternMethod != null && candidateMethod != null) {
+        if (!MethodSignatureUtil.areSignaturesEqual(patternMethod, candidateMethod)) return false;
+      }
     } else if (pattern instanceof PsiReferenceExpression) {
       final PsiReferenceExpression patternRefExpr = (PsiReferenceExpression)pattern;
       final PsiReferenceExpression candidateRefExpr = (PsiReferenceExpression)candidate;

@@ -67,6 +67,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.*;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.GROOVY_DOC_COMMENT;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.kIN;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mCOMMA;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mELVIS;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mGDOC_COMMENT_DATA;
@@ -210,7 +211,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
     if (myType1 == mCOLON) {
-      if (GroovyIndentProcessor.indentLabelBlock(labeledStatement, myGroovySettings)) {
+      if (myGroovySettings.INDENT_LABEL_BLOCKS) {
         createLF(true);
       }
       else {
@@ -363,7 +364,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == PACKAGE_DEFINITION) {
       myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_BEFORE_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, Integer.MAX_VALUE / 2);
     }
-    else if (TYPE_DEFINITION_TYPES.contains(myType1) || TYPE_DEFINITION_TYPES.contains(myType2)) {
+    else if (isLeftOrRight(TYPE_DEFINITION_TYPES)) {
       if (myType1 == GROOVY_DOC_COMMENT) {
         createLF(true);
       }
@@ -748,6 +749,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitBinaryExpression(GrBinaryExpression expression) {
+
     @SuppressWarnings("SimplifiableConditionalExpression" )
     boolean spaceAround = isLeftOrRight(LOGICAL_OPERATORS)        ? mySettings.SPACE_AROUND_LOGICAL_OPERATORS :
                           isLeftOrRight(EQUALITY_OPERATORS)       ? mySettings.SPACE_AROUND_EQUALITY_OPERATORS :
@@ -756,7 +758,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                           isLeftOrRight(ADDITIVE_OPERATORS)       ? mySettings.SPACE_AROUND_ADDITIVE_OPERATORS :
                           isLeftOrRight(MULTIPLICATIVE_OPERATORS) ? mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS :
                           isLeftOrRight(SHIFT_OPERATORS)          ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
-                          false;
+                          isLeftOrRight(kIN);
     if (TokenSets.BINARY_OP_SET.contains(myType2)) {
       createDependentLFSpacing(mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE, spaceAround, expression.getTextRange());
     }
@@ -767,6 +769,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   private boolean isLeftOrRight(TokenSet operators) {
     return operators.contains(myType1) || operators.contains(myType2);
+  }
+
+  private boolean isLeftOrRight(IElementType type) {
+    return myType1 == type || myType2 == type;
   }
 
   @Override

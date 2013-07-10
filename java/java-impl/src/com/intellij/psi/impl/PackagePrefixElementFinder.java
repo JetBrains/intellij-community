@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
     final String qualifiedName = psiPackage.getQualifiedName();
 
     for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(scope)) {
-      if (StringUtil.isEmpty(qualifiedName) || StringUtil.startsWithConcatenationOf(prefix, qualifiedName, ".")) {
+      if (StringUtil.isEmpty(qualifiedName) || StringUtil.startsWithConcatenation(prefix, qualifiedName, ".")) {
         final int i = prefix.indexOf('.', qualifiedName.length() + 1);
         String childName = i >= 0 ? prefix.substring(0, i) : prefix;
         if (!packagesMap.containsKey(childName)) {
@@ -83,7 +83,7 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
 
   public boolean packagePrefixExists(String packageQName) {
     for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(null)) {
-      if (StringUtil.startsWithConcatenationOf(prefix, packageQName, ".") || prefix.equals(packageQName)) {
+      if (StringUtil.startsWithConcatenation(prefix, packageQName, ".") || prefix.equals(packageQName)) {
         return true;
       }
     }

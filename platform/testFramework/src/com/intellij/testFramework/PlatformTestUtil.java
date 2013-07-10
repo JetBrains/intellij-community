@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -66,6 +67,7 @@ import java.awt.event.InvocationEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.lang.ref.SoftReference;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
@@ -768,5 +770,12 @@ public class PlatformTestUtil {
   @NotNull
   public static String loadFileText(@NotNull String fileName) throws IOException {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
+  }
+
+  public static void tryGcSoftlyReachableObjects() {
+    List<Object> list = ContainerUtil.newArrayList();
+    for (int i = 0; i < 100; i++) {
+      list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
+    }
   }
 }

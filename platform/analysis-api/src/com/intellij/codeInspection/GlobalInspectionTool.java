@@ -197,4 +197,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   public boolean worksInBatchModeOnly() {
     return true;
   }
+
+  public void initialize(@NotNull GlobalInspectionContext context) {
+  }
 }

@@ -80,7 +80,6 @@ public class HgMergeProviderTest extends HgPlatformTest {
     verifyMergeData(myRepository.findChild(aFile), "base", "base modify with b", "base modify with a");
   }
 
-
   public void testMergeWithCommittedLocalChange() throws Exception {
     prepareSecondRepository();
     final Pair<VirtualFile, VirtualFile> files = prepareFileInBothRepositories();
@@ -139,7 +138,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     verifyMergeData(myChildRepo.findChild(bFile), "", "local", "server");
   }
 
-  public void testFileAddedNotCommited() throws Exception {
+  public void testFileAddedNotCommitted() throws Exception {
     // this is needed to have the same root changeset - otherwise conflicting root changeset will cause
     // an error during 'hg pull': "abort: repository is unrelated"
     prepareSecondRepository();
@@ -153,10 +152,10 @@ public class HgMergeProviderTest extends HgPlatformTest {
     //Add a file with the same name, but different content in child repository, don't commit.
     cd(myChildRepo);
     touch(bFile, "local");
+    myChildRepo.refresh(false, true);
     hg("add " + bFile);
 
     updateProject();
-
     verifyMergeData(myChildRepo.findChild(bFile), "", "local", "server");
   }
 
@@ -172,11 +171,16 @@ public class HgMergeProviderTest extends HgPlatformTest {
     touch(aFile, "basic");
     hg("add " + aFile);
     hg("commit -m 'create file' ");
+    hg("update");
+    myRepository.refresh(false, true);
+    final VirtualFile parentFile = myRepository.findChild(aFile);
+    assertNotNull("Can't find " + aFile + " in parent repo!", parentFile);
     cd(myChildRepo);
     hg("pull");
     hg("update");
+    myChildRepo.refresh(false, true);
     final VirtualFile childFile = myChildRepo.findChild(aFile);
-    return Pair.create(myRepository.findChild(aFile), childFile);
+    return Pair.create(parentFile, childFile);
   }
 
   private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer)
@@ -190,5 +194,4 @@ public class HgMergeProviderTest extends HgPlatformTest {
   private static void assertEquals(String s, byte[] bytes) {
     Assert.assertEquals(s, new String(bytes));
   }
-
 }

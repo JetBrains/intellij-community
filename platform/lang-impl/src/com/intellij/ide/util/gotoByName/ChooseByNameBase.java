@@ -23,6 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -62,6 +63,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
@@ -91,7 +93,6 @@ public abstract class ChooseByNameBase {
   protected final ChooseByNameModel myModel;
   protected ChooseByNameItemProvider myProvider;
   protected final String myInitialText;
-  private boolean myPreselectInitialText;
   private boolean mySearchInAnyPlace = false;
 
   protected Component myPreviouslyFocusedComponent;
@@ -436,9 +437,6 @@ public abstract class ChooseByNameBase {
     myFuture = new ArrayList<Pair<String, Integer>>();
     myTextField = new MyTextField();
     myTextField.setText(myInitialText);
-    if (myPreselectInitialText) {
-      myTextField.select(0, myInitialText.length());
-    }
 
     final ActionMap actionMap = new ActionMap();
     actionMap.setParent(myTextField.getActionMap());
@@ -459,7 +457,9 @@ public abstract class ChooseByNameBase {
 
     myTextFieldPanel.add(myTextField);
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+    boolean presentationMode = UISettings.getInstance().PRESENTATION_MODE;
+    int size = presentationMode ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
+    Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, size);
     myTextField.setFont(editorFont);
 
     if (checkBoxName != null) {
@@ -765,6 +765,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected void cancelListUpdater() {
+    cancelCalcElementsThread();
     myListUpdater.cancelAll();
   }
 
@@ -922,9 +923,9 @@ public abstract class ChooseByNameBase {
         final Runnable request = new Runnable() {
           @Override
           public void run() {
-            final CalcElementsCallback callback = new CalcElementsCallback() {
+            final Consumer<Set<?>> callback = new Consumer<Set<?>>() {
               @Override
-              public void run(@NotNull final Set<?> elements) {
+              public void consume(Set<?> elements) {
                 synchronized (myRebuildMutex) {
                   ApplicationManager.getApplication().assertIsDispatchThread();
                   if (checkDisposed()) {
@@ -959,10 +960,7 @@ public abstract class ChooseByNameBase {
               ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
             }
 
-            CalcElementsThread calcElementsThread =
-              new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
-            myCalcElementsThread = calcElementsThread;
-            ApplicationManager.getApplication().executeOnPooledThread(calcElementsThread);
+            scheduleCalcElements(text, myCheckBox.isSelected(), postRunnable == null, modalityState, callback);
           }
         };
 
@@ -974,6 +972,16 @@ public abstract class ChooseByNameBase {
         }
       }
     }, modalityState);
+  }
+
+  public void scheduleCalcElements(String text,
+                                    boolean checkboxState,
+                                    boolean canCancel,
+                                    ModalityState modalityState,
+                                    Consumer<Set<?>> callback) {
+    CalcElementsThread calcElementsThread = new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel);
+    myCalcElementsThread = calcElementsThread;
+    ApplicationManager.getApplication().executeOnPooledThread(calcElementsThread);
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -1117,10 +1125,6 @@ public abstract class ChooseByNameBase {
           }
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-          if (!myListModel.isEmpty()) {
-            int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
-            ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
-          }
 
           if (!myCommands.isEmpty()) {
             myAlarm.addRequest(this, DELAY);
@@ -1131,6 +1135,11 @@ public abstract class ChooseByNameBase {
           if (!checkDisposed()) {
             showList();
             updateDocPosition();
+
+            if (!myListModel.isEmpty()) {
+              int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
+              ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
+            }
           }
         }
       }, DELAY);
@@ -1391,7 +1400,7 @@ public abstract class ChooseByNameBase {
   private class CalcElementsThread implements Runnable {
     private final String myPattern;
     private boolean myCheckboxState;
-    private final CalcElementsCallback myCallback;
+    private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
 
     private Set<Object> myElements = null;
@@ -1401,7 +1410,7 @@ public abstract class ChooseByNameBase {
 
     CalcElementsThread(String pattern,
                        boolean checkboxState,
-                       CalcElementsCallback callback,
+                       Consumer<Set<?>> callback,
                        @NotNull ModalityState modalityState,
                        boolean canCancel) {
       myPattern = pattern;
@@ -1418,7 +1427,7 @@ public abstract class ChooseByNameBase {
       showCard(SEARCHING_CARD, 200);
 
       final Set<Object> elements = new LinkedHashSet<Object>();
-      Runnable action = new Runnable() {
+      final Runnable action = new Runnable() {
         @Override
         public void run() {
           try {
@@ -1442,7 +1451,14 @@ public abstract class ChooseByNameBase {
           }
         }
       };
-      ApplicationManager.getApplication().runReadAction(action);
+      Runnable readAction = new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(action);
+        }
+      };
+      ProgressManager.getInstance().runProcess(readAction, myCancelled);
+
 
       if (myCancelled.isCanceled()) {
         myShowCardAlarm.cancelAllRequests();
@@ -1452,7 +1468,7 @@ public abstract class ChooseByNameBase {
       final String cardToShow;
       if (elements.isEmpty() && !myCheckboxState) {
         myCheckboxState = true;
-        ApplicationManager.getApplication().runReadAction(action);
+        ProgressManager.getInstance().runProcess(readAction, myCancelled);
         cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
       }
       else {
@@ -1465,7 +1481,7 @@ public abstract class ChooseByNameBase {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          myCallback.run(myElements);
+          myCallback.consume(myElements);
         }
       }, myModalityState);
     }
@@ -1499,6 +1515,7 @@ public abstract class ChooseByNameBase {
     }
 
     private void showCard(final String card, final int delay) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       myShowCardAlarm.cancelAllRequests();
       myShowCardAlarm.addRequest(new Runnable() {
         @Override
@@ -1540,10 +1557,6 @@ public abstract class ChooseByNameBase {
     return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
   }
 
-  private interface CalcElementsCallback {
-    void run(Set<?> elements);
-  }
-
   private static class HintLabel extends JLabel {
     private HintLabel(String text) {
       super(text, RIGHT);
@@ -1572,7 +1585,6 @@ public abstract class ChooseByNameBase {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      cancelCalcElementsThread();
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();

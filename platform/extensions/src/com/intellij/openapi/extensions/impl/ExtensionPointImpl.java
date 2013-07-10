@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,9 +183,9 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         result = myExtensionsCache;
         if (result == null) {
           processAdapters();
-          final Class<T> extensionClass = getExtensionClass();
-          //noinspection unchecked
-          result = myExtensions.toArray((T[])Array.newInstance(extensionClass, myExtensions.size()));
+          Class<T> extensionClass = getExtensionClass();
+          @SuppressWarnings("unchecked") T[] a = (T[])Array.newInstance(extensionClass, myExtensions.size());
+          result = myExtensions.toArray(a);
 
           for (int i = result.length - 1; i >= 0; i--) {
             T t = result[i];
@@ -236,12 +236,16 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters.clear();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
+      final List<T> extensions = new ArrayList<T>(adapters.length);
       for (ExtensionComponentAdapter adapter : adapters) {
-        //noinspection unchecked
-        T extension = (T)adapter.getExtension();
+        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         assertClass(extension.getClass());
+        extensions.add(extension);
+      }
 
-        internalRegisterExtension(extension, adapter, myExtensions.size(), ArrayUtilRt.find(loadedAdapters, adapter) == -1);
+      for (int i = 0; i < extensions.size(); i++) {
+        T extension = extensions.get(i);
+        internalRegisterExtension(extension, adapters[i], myExtensions.size(), ArrayUtilRt.find(loadedAdapters, adapters[i]) == -1);
       }
       myExtensionAdapters.clear();
     }
@@ -334,8 +338,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     if (myEPListeners.add(listener)) {
       for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
         try {
-          //noinspection unchecked
-          listener.extensionAdded((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
+          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+          listener.extensionAdded(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
           myLogger.error(e);
@@ -348,8 +352,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
     for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
       try {
-        //noinspection unchecked
-        listener.extensionRemoved((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
+        @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+        listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
       }
       catch (Throwable e) {
         myLogger.error(e);
@@ -379,10 +383,9 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     if (extensionClass == null) {
       try {
         ClassLoader pluginClassLoader = myDescriptor.getPluginClassLoader();
-        //noinspection unchecked
-        myExtensionClass = extensionClass = pluginClassLoader == null
-                                            ? (Class<T>)Class.forName(myClassName)
-                                            : (Class<T>)Class.forName(myClassName, true, pluginClassLoader);
+        @SuppressWarnings("unchecked") Class<T> extClass = pluginClassLoader == null
+            ? (Class<T>)Class.forName(myClassName) : (Class<T>)Class.forName(myClassName, true, pluginClassLoader);
+        myExtensionClass = extensionClass = extClass;
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
@@ -422,8 +425,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           pluginContainer.unregisterComponent(componentKey);
         }
 
-        //noinspection unchecked
-        internalUnregisterExtension((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
+        @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+        internalUnregisterExtension(extension, componentAdapter.getPluginDescriptor());
         return true;
       }
       return false;

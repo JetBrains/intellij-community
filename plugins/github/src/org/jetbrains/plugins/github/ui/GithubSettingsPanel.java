@@ -17,10 +17,10 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
+import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -38,7 +38,7 @@ import java.io.IOException;
  * @date 10/20/10
  */
 public class GithubSettingsPanel {
-  private static Logger LOG  = GithubUtil.LOG;
+  private static final Logger LOG = GithubUtil.LOG;
 
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
@@ -65,7 +65,7 @@ public class GithubSettingsPanel {
       public void actionPerformed(ActionEvent e) {
         String password = isPasswordModified() ? getPassword() : settings.getPassword();
         try {
-          if (GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), password)){
+          if (GithubUtil.checkAuthData(new GithubAuthData(getHost(), getLogin(), password))) {
             Messages.showInfoMessage(myPane, "Connection successful", "Success");
           } else {
             Messages.showErrorDialog(myPane, "Can't login to " + getHost() + " using given credentials", "Login Failure");

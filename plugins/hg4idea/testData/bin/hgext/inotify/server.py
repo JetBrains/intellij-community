@@ -6,7 +6,7 @@
 # GNU General Public License version 2 or any later version.
 
 from mercurial.i18n import _
-from mercurial import cmdutil, osutil, util
+from mercurial import cmdutil, posix, osutil, util
 import common
 
 import errno
@@ -15,7 +15,6 @@ import socket
 import stat
 import struct
 import sys
-import tempfile
 
 class AlreadyStartedException(Exception):
     pass
@@ -213,7 +212,9 @@ class repowatcher(object):
             if time != int(st_mtime):
                 return 'l'
             return 'n'
-        if type_ == '?' and self.dirstate._ignore(fn):
+        if type_ == '?' and self.dirstate._dirignore(fn):
+            # we must check not only if the file is ignored, but if any part
+            # of its path match an ignore pattern
             return 'i'
         return type_
 
@@ -328,39 +329,15 @@ class socketlistener(object):
     def __init__(self, ui, root, repowatcher, timeout):
         self.ui = ui
         self.repowatcher = repowatcher
-        self.sock = socket.socket(socket.AF_UNIX)
-        self.sockpath = join(root, '.hg/inotify.sock')
-        self.realsockpath = None
         try:
-            self.sock.bind(self.sockpath)
-        except socket.error, err:
-            if err[0] == errno.EADDRINUSE:
-                raise AlreadyStartedException(_('cannot start: socket is '
-                                                'already bound'))
-            if err[0] == "AF_UNIX path too long":
-                if os.path.islink(self.sockpath) and \
-                        not os.path.exists(self.sockpath):
-                    raise util.Abort('inotify-server: cannot start: '
-                                    '.hg/inotify.sock is a broken symlink')
-                tempdir = tempfile.mkdtemp(prefix="hg-inotify-")
-                self.realsockpath = os.path.join(tempdir, "inotify.sock")
-                try:
-                    self.sock.bind(self.realsockpath)
-                    os.symlink(self.realsockpath, self.sockpath)
-                except (OSError, socket.error), inst:
-                    try:
-                        os.unlink(self.realsockpath)
-                    except:
-                        pass
-                    os.rmdir(tempdir)
-                    if inst.errno == errno.EEXIST:
-                        raise AlreadyStartedException(_('cannot start: tried '
-                            'linking .hg/inotify.sock to a temporary socket but'
-                            ' .hg/inotify.sock already exists'))
-                    raise
-            else:
-                raise
-        self.sock.listen(5)
+            self.sock = posix.unixdomainserver(
+                lambda p: os.path.join(root, '.hg', p),
+                'inotify')
+        except (OSError, socket.error), err:
+            if err.args[0] == errno.EADDRINUSE:
+                raise AlreadyStartedException(_('cannot start: '
+                                                'socket is already bound'))
+            raise
         self.fileno = self.sock.fileno
 
     def answer_stat_query(self, cs):
@@ -411,7 +388,7 @@ class socketlistener(object):
                 # try to send back our version to the client
                 # this way, the client too is informed of the mismatch
                 sock.sendall(chr(common.version))
-            except:
+            except socket.error:
                 pass
             return
 
@@ -435,10 +412,10 @@ class socketlistener(object):
             finally:
                 sock.shutdown(socket.SHUT_WR)
         except socket.error, err:
-            if err[0] != errno.EPIPE:
+            if err.args[0] != errno.EPIPE:
                 raise
 
-if sys.platform == 'linux2':
+if sys.platform.startswith('linux'):
     import linuxserver as _server
 else:
     raise ImportError
@@ -482,5 +459,6 @@ def start(ui, dirstate, root, opts):
 
     appendpid = ui.configbool('inotify', 'appendpid', False)
 
+    ui.debug('starting inotify server: %s\n' % ' '.join(runargs))
     cmdutil.service(opts, initfn=service.init, runfn=service.run,
                     logfile=logfile, runargs=runargs, appendpid=appendpid)

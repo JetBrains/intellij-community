@@ -23,6 +23,9 @@ public class MavenProjectsNavigatorState {
   public boolean showIgnored = true;
   public boolean showBasicPhasesOnly = true;
 
+  public boolean alwaysShowArtifactId = true;
+  public boolean showVersions = false;
+
   @Tag("treeState")
   public Element treeState;
 }

@@ -182,28 +182,20 @@ public class MinusculeMatcher implements Matcher {
     int startIndex = first.getStartOffset();
     boolean afterSeparator = StringUtil.indexOfAny(name, HARD_SEPARATORS, 0, startIndex) >= 0;
     boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
+    boolean finalMatch = iterable.get(iterable.size() - 1).getEndOffset() == name.length();
 
-    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 1);
+    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 2) + (finalMatch ? 1 : 0);
   }
 
   public boolean isStartMatch(@NotNull String name) {
     Iterable<TextRange> fragments = matchingFragments(name);
     if (fragments != null) {
       Iterator<TextRange> iterator = fragments.iterator();
-      if (!iterator.hasNext() || isStartMatch(name, iterator.next().getStartOffset())) {
+      if (!iterator.hasNext() || iterator.next().getStartOffset() == 0) {
         return true;
       }
     }
     return false;
-  }
-
-  private static boolean isStartMatch(@NotNull String name, int startIndex) {
-    for (int i = 0; i < startIndex; i++) {
-      if (!isWordSeparator(name.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override

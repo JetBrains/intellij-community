@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,7 +39,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -257,7 +257,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         PsiType type = methodType != null && methodType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : methodType;
         GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
-        GrReferenceAdjuster.shortenReferences(statement);
+        JavaCodeStyleManager.getInstance(statement.getProject()).shortenClassReferences(statement);
 
         // Replace all return statements with assignments to 'result' variable
         for (GrStatement returnStatement : returnStatements) {

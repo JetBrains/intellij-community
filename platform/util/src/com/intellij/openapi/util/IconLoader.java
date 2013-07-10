@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageObserver;
 import java.awt.image.ImageProducer;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -385,7 +386,9 @@ public final class IconLoader {
 
     @Override
     public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-      super.paintIcon(null, g, x, y);
+      final ImageObserver observer = getImageObserver();
+
+      UIUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);
     }
   }
 

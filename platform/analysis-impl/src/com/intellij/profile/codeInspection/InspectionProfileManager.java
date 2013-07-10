@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -40,7 +39,8 @@ import java.util.List;
  * Date: 29-Nov-2005
  */
 public abstract class InspectionProfileManager extends ApplicationProfileManager implements NamedComponent {
-  @NonNls private static final String INSPECTION_DIR = "inspection";
+  @NonNls protected static final String INSPECTION_DIR = "inspection";
+  @NonNls protected static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION_DIR;
 
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -53,10 +53,6 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
   public InspectionProfileManager() {
   }
 
-  @Override
-  @NotNull
-  public abstract Collection<Profile> getProfiles();
-
   protected abstract void initProfiles();
 
   public abstract Profile loadProfile(@NotNull String path) throws IOException, JDOMException;
@@ -68,24 +64,17 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
   }
 
   @Override
-  public abstract void updateProfile(@NotNull Profile profile);
-
-
-  @Override
-  public abstract Profile createProfile();
-
-  @Override
-  public void addProfileChangeListener(final ProfileChangeAdapter listener) {
+  public void addProfileChangeListener(@NotNull final ProfileChangeAdapter listener) {
     myProfileChangeAdapters.add(listener);
   }
 
   @Override
-  public void addProfileChangeListener(ProfileChangeAdapter listener, Disposable parentDisposable) {
+  public void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable) {
     ContainerUtil.add(listener, myProfileChangeAdapters, parentDisposable);
   }
 
   @Override
-  public void removeProfileChangeListener(final ProfileChangeAdapter listener) {
+  public void removeProfileChangeListener(@NotNull final ProfileChangeAdapter listener) {
     myProfileChangeAdapters.remove(listener);
   }
 
@@ -103,22 +92,6 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
     }
   }
 
-  @Override
-  public abstract void setRootProfile(String rootProfile);
-
-
-  @Override
-  public abstract Profile getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent);
-
-  @Override
-  public abstract Profile getRootProfile();
-
-  @Override
-  public abstract void deleteProfile(final String profile);
-
-  @Override
-  public abstract void addProfile(final Profile profile);
-
   @Nullable
   public static File getProfileDirectory() {
     String directoryPath = PathManager.getConfigPath() + File.separator + INSPECTION_DIR;
@@ -130,10 +103,6 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
     }
     return directory;
   }
-
-  @Override
-  @NotNull
-  public abstract String[] getAvailableProfileNames();
 
   @Override
   public Profile getProfile(@NotNull final String name) {

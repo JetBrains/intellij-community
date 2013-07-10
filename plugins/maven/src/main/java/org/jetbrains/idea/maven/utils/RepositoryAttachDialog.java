@@ -46,6 +46,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
@@ -219,7 +220,18 @@ public class RepositoryAttachDialog extends DialogWrapper {
       }
       myCombobox.setSelectedItem(null);
     }
-    Collections.sort(myShownItems);
+
+    // use maven version sorter
+    ArrayList<Comparable> comparables = new ArrayList<Comparable>(myShownItems.size());
+    for (String item : myShownItems) {
+      comparables.add(new MavenVersionComparable(item));
+    }
+    Collections.sort(comparables);
+    myShownItems.clear();
+    for (Comparable comparable : comparables) {
+      myShownItems.add(comparable.toString());
+    }
+
     ((CollectionComboBoxModel)myCombobox.getModel()).update();
     myInUpdate = false;
     field.setText(myFilterString);

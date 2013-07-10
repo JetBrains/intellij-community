@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class MessageTreeNode extends XDebuggerTreeNode {
-  private boolean myEllipsis;
+  private final boolean myEllipsis;
   private XDebuggerTreeNodeHyperlink myLink;
 
   private MessageTreeNode(XDebuggerTree tree, @Nullable final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
@@ -68,6 +68,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     myEllipsis = false;
   }
 
+  @Override
   protected List<? extends TreeNode> getChildren() {
     return Collections.emptyList();
   }
@@ -82,6 +83,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return myLink;
   }
 
+  @Override
   public List<? extends XDebuggerTreeNode> getLoadedChildren() {
     return null;
   }
@@ -144,7 +146,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     }
     while (matcher.find());
 
-    if (prev < (message.length() - 1)) {
+    if (prev < message.length()) {
       objects.add(message.substring(prev));
     }
     return new MessageTreeNodeWithLinks(tree, objects);

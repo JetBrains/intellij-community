@@ -46,6 +46,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   private class OptionsPanel extends JPanel {
+    private final JCheckBox myIgnoreAssertions;
+    private final JCheckBox myReportConstantReferences;
     private final JCheckBox mySuggestNullables;
     private final JCheckBox myDontReportTrueAsserts;
 
@@ -75,6 +77,24 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         @Override
         public void stateChanged(ChangeEvent e) {
           DONT_REPORT_TRUE_ASSERT_STATEMENTS = myDontReportTrueAsserts.isSelected();
+        }
+      });
+      
+      myIgnoreAssertions = new JCheckBox("Ignore assert statements");
+      myIgnoreAssertions.setSelected(IGNORE_ASSERT_STATEMENTS);
+      myIgnoreAssertions.getModel().addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          IGNORE_ASSERT_STATEMENTS = myIgnoreAssertions.isSelected();
+        }
+      });
+
+      myReportConstantReferences = new JCheckBox("Warn when reading a value guaranteed to be constant");
+      myReportConstantReferences.setSelected(REPORT_CONSTANT_REFERENCE_VALUES);
+      myReportConstantReferences.getModel().addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          REPORT_CONSTANT_REFERENCE_VALUES = myReportConstantReferences.isSelected();
         }
       });
 
@@ -121,6 +141,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       gc.insets.left = 0;
       gc.gridy++;
       add(myDontReportTrueAsserts, gc);
+
+      gc.gridy++;
+      add(myIgnoreAssertions, gc);
+
+      gc.gridy++;
+      add(myReportConstantReferences, gc);
     }
   }
 

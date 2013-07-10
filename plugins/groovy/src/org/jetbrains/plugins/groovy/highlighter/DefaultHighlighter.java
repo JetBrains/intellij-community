@@ -177,7 +177,7 @@ public class DefaultHighlighter {
 
   public static final TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey(BRACKETS_ID, JavaHighlightingColors.BRACKETS);
 
-  public static final TextAttributesKey PARENTHESES = TextAttributesKey.createTextAttributesKey(PARENTHESES_ID, JavaHighlightingColors.PARENTHS);
+  public static final TextAttributesKey PARENTHESES = TextAttributesKey.createTextAttributesKey(PARENTHESES_ID, JavaHighlightingColors.PARENTHESES);
 
   public static final TextAttributesKey OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(OPERATION_SIGN_ID, JavaHighlightingColors.OPERATION_SIGN);
 

@@ -201,14 +201,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     private final Executor myExecutor;
 
     private ExecutorAction(@NotNull final Executor executor) {
-      super(executor.getStartActionText(), executor.getActionName(), executor.getIcon());
+      super(executor.getStartActionText(), executor.getDescription(), executor.getIcon());
       myExecutor = executor;
     }
 
     @Override
     public void update(final AnActionEvent e) {
-      super.update(e);
-
       final Presentation presentation = e.getPresentation();
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 

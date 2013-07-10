@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.model.completion;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.NegatingComparable;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -33,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesVersionConverter;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
 import java.util.Set;
 
@@ -72,21 +75,35 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
       String groupId = coordinates.getGroupId().getStringValue();
       String artifactId = coordinates.getArtifactId().getStringValue();
 
-      if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(artifactId)) {
-        Set<String> versions = MavenProjectIndicesManager.getInstance(project).getVersions(groupId, artifactId);
+      if (StringUtil.isEmptyOrSpaces(artifactId)) return;
 
-        CompletionResultSet newResultSet = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
-          new LookupElementWeigher("mavenVersionWeigher") {
-            @Nullable
-            @Override
-            public Comparable weigh(@NotNull LookupElement element) {
-              return new NegatingComparable(new MavenVersionComparable(element.getLookupString()));
-            }
-          }));
+      CompletionResultSet newResultSet = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
+        new LookupElementWeigher("mavenVersionWeigher") {
+          @Nullable
+          @Override
+          public Comparable weigh(@NotNull LookupElement element) {
+            return new NegatingComparable(new MavenVersionComparable(element.getLookupString()));
+          }
+        }));
 
-        for (String version : versions) {
-          newResultSet.addElement(LookupElementBuilder.create(version));
+      MavenProjectIndicesManager indicesManager = MavenProjectIndicesManager.getInstance(project);
+
+      Set<String> versions;
+
+      if (StringUtil.isEmptyOrSpaces(groupId)) {
+        if (!(coordinates instanceof MavenDomPlugin)) return;
+
+        versions = indicesManager.getVersions(MavenArtifactUtil.DEFAULT_GROUPS[0], artifactId);
+        for (int i = 0; i < MavenArtifactUtil.DEFAULT_GROUPS.length; i++) {
+          versions = Sets.union(versions, indicesManager.getVersions(MavenArtifactUtil.DEFAULT_GROUPS[i], artifactId));
         }
+      }
+      else {
+        versions = indicesManager.getVersions(groupId, artifactId);
+      }
+
+      for (String version : versions) {
+        newResultSet.addElement(LookupElementBuilder.create(version));
       }
     }
   }

@@ -44,7 +44,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   }
 
   @NotNull
-  protected S getInitialSettings() {
+  public S getInitialSettings() {
     return myInitialSettings;
   }
 

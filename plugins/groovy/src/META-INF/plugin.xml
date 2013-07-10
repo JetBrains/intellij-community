@@ -149,6 +149,7 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrBooleanTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrGenericTypeConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
@@ -397,6 +398,9 @@
                              implementationClass="org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator"/>
     <lang.elementManipulator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel"
                              implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelManipulator"/>
+    <lang.elementManipulator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent"
+                             implementationClass="org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator"/>
+
 
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
 
@@ -449,6 +453,8 @@
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>
+    
+    <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider$GroovyExtensionVetoSPI"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
@@ -1020,6 +1026,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.GrRedundantElseIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.control.FlipIfIntention</className>
     </intentionAction>
     <intentionAction>
@@ -1402,6 +1413,7 @@
                                      implementation="org.jetbrains.plugins.groovy.debugger.GroovyPositionManagerFactory"/>
     <debugger.positionManagerFactory order="after groovyPositionManager"
                                      implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
+    <codeStyle.ReferenceAdjuster language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

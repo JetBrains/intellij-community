@@ -55,10 +55,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class HighlightClassUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -94,19 +91,32 @@ public class HighlightClassUtil {
   static HighlightInfo checkClassWithAbstractMethods(PsiClass aClass, PsiElement implementsFixElement, TextRange range) {
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
 
-    if (abstractMethod == null || abstractMethod.getContainingClass() == null) {
+    if (abstractMethod == null) {
       return null;
     }
+
+    final PsiClass superClass = abstractMethod.getContainingClass();
+    if (superClass == null) {
+      return null;
+    }
+
     String baseClassName = HighlightUtil.formatClass(aClass, false);
     String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
     String message = JavaErrorMessages.message(aClass instanceof PsiEnumConstantInitializer || implementsFixElement instanceof PsiEnumConstant ? "enum.constant.should.implement.method" : "class.must.be.abstract",
                                                baseClassName,
                                                methodName,
-                                               HighlightUtil.formatClass(abstractMethod.getContainingClass(), false));
+                                               HighlightUtil.formatClass(superClass, false));
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
-    if (ClassUtil.getAnyMethodToImplement(aClass) != null) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(implementsFixElement));
+    final PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
+    if (anyMethodToImplement != null) {
+      if (!anyMethodToImplement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
+          JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) {
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(implementsFixElement));
+      } else {
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(anyMethodToImplement, PsiModifier.PROTECTED, true, true));
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(anyMethodToImplement, PsiModifier.PUBLIC, true, true));
+      }
     }
     if (!(aClass instanceof PsiAnonymousClass)
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
@@ -367,7 +377,7 @@ public class HighlightClassUtil {
       .parent(PsiMatchers.hasClass(PsiModifierList.class))
       .parent(PsiMatchers.hasClass(parentClass))
       .parent(PsiMatchers.hasClass(PsiClass.class))
-      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, false))
+      .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, false))
       .parent(PsiMatchers.hasClass(PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class))
       .getElement();
   }
@@ -377,9 +387,9 @@ public class HighlightClassUtil {
     // keyword points to 'class' or 'interface' or 'enum'
     if (new PsiMatcherImpl(keyword)
       .parent(PsiMatchers.hasClass(PsiClass.class))
-      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, true))
+      .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, true))
       .parent(PsiMatchers.hasClass(PsiClass.class))
-      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, false))
+      .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, false))
       .parent(PsiMatchers.hasClass(PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class))
       .getElement() == null) {
       return null;
@@ -985,7 +995,7 @@ public class HighlightClassUtil {
       if (classReference == null) return;
       final PsiClass psiClass = (PsiClass)classReference.resolve();
       if (psiClass == null) return;
-      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, psiClass);
+      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, psiClass, false);
       if (chooser == null) return;
 
       final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
@@ -999,12 +1009,17 @@ public class HighlightClassUtil {
           newExpression = (PsiNewExpression)startElement.replace(newExpression);
           final PsiClass psiClass = newExpression.getAnonymousClass();
           if (psiClass == null) return;
-          PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
-          PsiClass resolve = baseClassType.resolve();
-          if (resolve == null) return;
-          PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(resolve, psiClass, PsiSubstitutor.EMPTY);
+          Map<PsiClass, PsiSubstitutor> subst = new HashMap<PsiClass, PsiSubstitutor>();
           for (PsiMethodMember selectedElement : selectedElements) {
-            selectedElement.setSubstitutor(superClassSubstitutor);
+            final PsiClass baseClass = selectedElement.getElement().getContainingClass();
+            if (baseClass != null) {
+              PsiSubstitutor substitutor = subst.get(baseClass);
+              if (substitutor == null) {
+                substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, PsiSubstitutor.EMPTY);
+                subst.put(baseClass, substitutor);
+              }
+              selectedElement.setSubstitutor(substitutor);
+            }
           }
           OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
                                                                        chooser.isInsertOverrideAnnotation());

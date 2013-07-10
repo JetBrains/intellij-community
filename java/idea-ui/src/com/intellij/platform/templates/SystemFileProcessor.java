@@ -53,7 +53,7 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
   @Override
   protected String encodeFileText(String content, VirtualFile file, Project project) throws IOException {
     final String fileName = file.getName();
-    if (file.getParent().getName().equals(".idea") && fileName.equals("workspace.xml")) {
+    if (file.getParent().getName().equals(Project.DIRECTORY_STORE_FOLDER) && fileName.equals("workspace.xml")) {
 
       List<Object> componentList = new ArrayList<Object>();
       for (String componentName : COMPONENT_NAMES) {

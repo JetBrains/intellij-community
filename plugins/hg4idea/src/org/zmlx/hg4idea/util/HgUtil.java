@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -44,6 +45,7 @@ import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
 import java.awt.*;
 import java.io.*;
@@ -547,5 +549,42 @@ public abstract class HgUtil {
       branchText += state.toString() + " ";
     }
     return branchText + repository.getCurrentBranch();
+  }
+
+  @NotNull
+  public static HgRepositoryManager getRepositoryManager(@NotNull Project project) {
+    return ServiceManager.getService(project, HgRepositoryManager.class);
+  }
+
+  @Nullable
+  public static String getRepositoryDefaultPath(@NotNull Project project, @NotNull VirtualFile root) {
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getDefaultPath();
+  }
+
+  @Nullable
+  public static String getRepositoryDefaultPushPath(@NotNull Project project, @NotNull VirtualFile root) {
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getDefaultPushPath();
+  }
+
+  @Nullable
+  public static String getConfig(@NotNull Project project,
+                                 @NotNull VirtualFile root,
+                                 @NotNull String section,
+                                 @Nullable String configName) {
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getNamedConfig(section, configName);
+  }
+
+  @NotNull
+  public static Collection<String> getRepositoryPaths(@NotNull Project project,
+                                                      @NotNull VirtualFile root) {
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    assert hgRepository != null : "Repository can't be null for root " + root.getName();
+    return hgRepository.getRepositoryConfig().getPaths();
   }
 }

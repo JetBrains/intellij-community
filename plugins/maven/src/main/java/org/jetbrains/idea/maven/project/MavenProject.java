@@ -28,7 +28,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -47,6 +46,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MavenProject {
+
+  private static final Key<MavenArtifactIndex> DEPENDENCIES_CACHE_KEY = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY");
+
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
 
@@ -482,65 +484,52 @@ public class MavenProject {
     return res;
   }
 
-  //private String getCompilerArgument() {
-  //  return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), "compilerArgument");
-  //}
-  //
-  //private String getCompilerArguments(){
-  //  StringBuilder compilerArguments = new StringBuilder();
-  //  Element compilerArgumentsElement = MavenJDOMUtil.findChildByPath(getCompilerConfig(), "compilerArguments");
-  //  if(compilerArgumentsElement != null){
-  //    List compilerArgumentsElements = compilerArgumentsElement.getChildren();
-  //    for(Object compilerArgumentsElementKey: compilerArgumentsElements){
-  //      String key = ((Element)compilerArgumentsElementKey).getName();
-  //      String value = ((Element)compilerArgumentsElementKey).getValue();
-  //      compilerArguments.append(prepareKeyValue(key)).append(" ").append(prepareValueContent(value));
-  //    }
-  //  }
-  //  return compilerArguments.toString();
-  //}
-  //
-  //private static String prepareValueContent(String value) {
-  //  return (value == null || value.length() == 0)? "" : value + " ";
-  //}
-  //
-  //private static String prepareKeyValue(final String key) {
-  //  return (key.startsWith( "-A" ))? key.substring(2) : key;
-  //}
-
   @Nullable
   public List<String> getDeclaredAnnotationProcessors() {
     Element compilerConfig = getCompilerConfig();
-    if (compilerConfig == null) return null;
+    if (compilerConfig != null) {
+      Element processors = compilerConfig.getChild("annotationProcessors");
+      if (processors != null) {
+        List<String> res = new ArrayList<String>();
 
-    Element processors = compilerConfig.getChild("annotationProcessors");
-    if (processors == null) return null;
+        for (Element element : processors.getChildren("annotationProcessor")){
+          String processorClassName = element.getTextTrim();
+          if (!processorClassName.isEmpty()) {
+            res.add(processorClassName);
+          }
+        }
 
-    List<String> res = new ArrayList<String>();
-
-    for (Element element : (List<Element>)processors.getChildren("annotationProcessor")){
-      String processorClassName = element.getTextTrim();
-      if (!processorClassName.isEmpty()) {
-        res.add(processorClassName);
+        return res;
       }
     }
 
-    return res;
+    MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
+    if (bscMavenPlugin != null) {
+      Element cfg = bscMavenPlugin.getGoalConfiguration("process");
+      if (cfg == null) {
+        cfg = bscMavenPlugin.getConfigurationElement();
+      }
+
+      if (cfg != null) {
+        Element processors = cfg.getChild("processors");
+        if (processors != null) {
+          List<String> res = new ArrayList<String>();
+
+          for (Element element : processors.getChildren("processor")){
+            String processorClassName = element.getTextTrim();
+            if (!processorClassName.isEmpty()) {
+              res.add(processorClassName);
+            }
+          }
+
+          return res;
+        }
+      }
+    }
+
+    return null;
   }
   
-  //private String getArgumentsForAnnotationProcessor(){
-  //  return getCompilerArguments() + formatCompilerArgument(getCompilerArgument()) ;
-  //}
-  
-  //private static String formatCompilerArgument(String compilerArgument){
-  //  String[] splitArguments = compilerArgument.split("\\s+");
-  //  List<String> formattedArguments = new ArrayList<String>();
-  //  for(String splitArgument: splitArguments){
-  //    formattedArguments.add((splitArgument.startsWith( "-A" ))? splitArgument.substring(2) : splitArgument);
-  //  }
-  //  return StringUtil.join(formattedArguments, " ");
-  //}
-
   @NotNull
   public String getOutputDirectory() {
     return myState.myOutputDirectory;
@@ -789,10 +778,6 @@ public class MavenProject {
     return myState.myDependencyTree;
   }
 
-  public boolean isSupportedDependency(@NotNull MavenArtifact artifact, @NotNull SupportedRequestType type) {
-    return getSupportedDependencyTypes(type).contains(artifact.getType());
-  }
-
   @NotNull
   public Set<String> getSupportedPackagings() {
     Set<String> result = ContainerUtil.newHashSet(MavenConstants.TYPE_POM,
@@ -804,20 +789,14 @@ public class MavenProject {
     return result;
   }
 
-  @NotNull
-  public Set<String> getSupportedDependencyTypes(@NotNull SupportedRequestType type) {
-    Set<String> result = ContainerUtil.newTroveSet(MavenConstants.TYPE_JAR,
-                                                   MavenConstants.TYPE_TEST_JAR,
-                                                   "maven-plugin",
-                                                   "ejb", "ejb-client", "jboss-har", "jboss-sar", "war", "ear", "bundle");
-    if (type == SupportedRequestType.FOR_COMPLETION) {
-      result.add(MavenConstants.TYPE_POM);
-    }
+  public Set<String> getDependencyTypesFromImporters(@NotNull SupportedRequestType type) {
+    THashSet<String> res = new THashSet<String>();
 
     for (MavenImporter each : getSuitableImporters()) {
-      each.getSupportedDependencyTypes(result, type);
+      each.getSupportedDependencyTypes(res, type);
     }
-    return result;
+
+    return res;
   }
 
   @NotNull
@@ -838,6 +817,8 @@ public class MavenProject {
     List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies);
     dependenciesCopy.add(dependency);
     state.myDependencies = dependenciesCopy;
+
+    state.myCache.clear();
   }
 
   @NotNull
@@ -846,22 +827,12 @@ public class MavenProject {
   }
 
   public List<MavenArtifact> findDependencies(@NotNull MavenId id) {
-    List<MavenArtifact> result = new SmartList<MavenArtifact>();
-    for (MavenArtifact each : getDependencies()) {
-      if (id.equals(each.getGroupId(), each.getArtifactId(), each.getVersion())) result.add(each);
-    }
-    return result;
+    return getDependencyArtifactIndex().findArtifacts(id);
   }
 
   @NotNull
   public List<MavenArtifact> findDependencies(@Nullable String groupId, @Nullable String artifactId) {
-    List<MavenArtifact> result = new SmartList<MavenArtifact>();
-    for (MavenArtifact each : getDependencies()) {
-      if (Comparing.equal(artifactId, each.getArtifactId()) && Comparing.equal(groupId, each.getGroupId())) {
-        result.add(each);
-      }
-    }
-    return result;
+    return getDependencyArtifactIndex().findArtifacts(groupId, artifactId);
   }
 
   public boolean hasUnresolvedArtifacts() {
@@ -1009,6 +980,16 @@ public class MavenProject {
       if (result != null) return result;
     }
     return Pair.create(type.getDefaultClassifier(), type.getDefaultExtension());
+  }
+
+  public MavenArtifactIndex getDependencyArtifactIndex() {
+    MavenArtifactIndex res = getCachedValue(DEPENDENCIES_CACHE_KEY);
+    if (res == null) {
+      res = MavenArtifactIndex.build(getDependencies());
+      res = putCachedValue(DEPENDENCIES_CACHE_KEY, res);
+    }
+
+    return res;
   }
 
   @Nullable

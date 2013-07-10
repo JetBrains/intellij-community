@@ -281,10 +281,8 @@ public class InspectionValidatorWrapper implements Validator {
                                                                                  final LocalInspectionTool inspectionTool,
                                                                                  final HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
-    for (CommonProblemDescriptor descriptor : InspectionRunningUtil.runInspectionOnFile(file, inspectionTool)) {
-      if (descriptor instanceof ProblemDescriptor) {
-        problemsMap.put((ProblemDescriptor)descriptor, level);
-      }
+    for (ProblemDescriptor descriptor : InspectionRunningUtil.runInspectionOnFile(file, inspectionTool)) {
+      problemsMap.put(descriptor, level);
     }
     return problemsMap;
   }

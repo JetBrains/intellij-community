@@ -101,7 +101,25 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   public boolean isSelected(AnActionEvent e) {
     VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
-    if (editor == null) return false;
+    if (editor != null) {
+      return isAnnotated(editor);
+    }
+    VirtualFile selectedFile = context.getSelectedFile();
+    if (selectedFile == null) {
+      return false;
+    }
+    
+    for (FileEditor fileEditor : FileEditorManager.getInstance(context.getProject()).getEditors(selectedFile)) {
+      if (fileEditor instanceof TextEditor) {
+        if (isAnnotated(((TextEditor)fileEditor).getEditor())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isAnnotated(@NotNull Editor editor) {
     Collection annotations = editor.getUserData(KEY_IN_EDITOR);
     return annotations != null && !annotations.isEmpty();
   }
@@ -109,14 +127,18 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   public void setSelected(AnActionEvent e, boolean selected) {
     final VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
+    VirtualFile selectedFile = context.getSelectedFile();
+    if (selectedFile == null) return;
+    
     if (!selected) {
-      if (editor != null) {
-        editor.getGutter().closeAllAnnotations();
+      for (FileEditor fileEditor : FileEditorManager.getInstance(context.getProject()).getEditors(selectedFile)) {
+        if (fileEditor instanceof TextEditor) {
+          ((TextEditor)fileEditor).getEditor().getGutter().closeAllAnnotations();
+        }
       }
     }
     else {
       if (editor == null) {
-        VirtualFile selectedFile = context.getSelectedFile();
         FileEditor[] fileEditors = FileEditorManager.getInstance(context.getProject()).openFile(selectedFile, false);
         for (FileEditor fileEditor : fileEditors) {
           if (fileEditor instanceof TextEditor) {

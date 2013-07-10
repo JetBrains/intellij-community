@@ -15,7 +15,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,42 +42,56 @@ public class ExternalSystemIdeNotificationManager {
                                                  @NotNull String externalProjectName,
                                                  @NotNull ProjectSystemId externalSystemId)
   {
-    NotificationGroup group = ExternalSystemUtil.getToolWindowElement(NotificationGroup.class,
-                                                                      project,
-                                                                      ExternalSystemDataKeys.NOTIFICATION_GROUP,
-                                                                      externalSystemId);
-    if (group == null) {
+    if (project.isDisposed() || !project.isOpen()) {
       return;
     }
-
-    ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (!(manager instanceof ExternalSystemConfigurableAware)) {
       return;
     }
     final Configurable configurable = ((ExternalSystemConfigurableAware)manager).getConfigurable(project);
 
     EditorNotifications.getInstance(project).updateAllNotifications();
-    
-    final Notification notification = group.createNotification(
-      ExternalSystemBundle.message("notification.project.refresh.fail.description",
-                                   externalSystemId.getReadableName(), externalProjectName, message),
-      ExternalSystemBundle.message("notification.action.show.settings", externalSystemId.getReadableName()),
-      NotificationType.WARNING,
-      new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
-            return;
-          }
-          ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+    String title = ExternalSystemBundle.message("notification.project.refresh.fail.description",
+                                                externalSystemId.getReadableName(), externalProjectName, message);
+    String messageToShow = ExternalSystemBundle.message("notification.action.show.settings", externalSystemId.getReadableName());
+    showNotification(title, messageToShow, NotificationType.WARNING, project, externalSystemId, new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+          return;
         }
+        ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
       }
-    );
+    });
+  }
 
-    applyNotification(notification, project);
+  public void showNotification(@NotNull final String title,
+                               @NotNull final String message,
+                               @NotNull final NotificationType type,
+                               @NotNull final Project project,
+                               @NotNull final ProjectSystemId externalSystemId,
+                               @Nullable final NotificationListener listener)
+  {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        NotificationGroup group = ExternalSystemUtil.getToolWindowElement(NotificationGroup.class,
+                                                                          project,
+                                                                          ExternalSystemDataKeys.NOTIFICATION_GROUP,
+                                                                          externalSystemId);
+        if (group == null) {
+          return;
+        }
+
+        Notification notification = group.createNotification(title, message, type, listener);
+        applyNotification(notification, project); 
+      }
+    });
+    
   }
   
-  private void applyNotification(@NotNull Notification notification, @NotNull Project project) {
+  private void applyNotification(@NotNull final Notification notification, @NotNull final Project project) {
     final Notification oldNotification = myNotification.get();
     if (oldNotification != null && myNotification.compareAndSet(oldNotification, null)) {
       oldNotification.expire();
@@ -85,6 +101,8 @@ public class ExternalSystemIdeNotificationManager {
       return;
     }
 
-    notification.notify(project);
+    if (!project.isDisposed() && project.isOpen()) {
+      notification.notify(project);
+    }
   }
 }

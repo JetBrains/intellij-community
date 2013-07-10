@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,18 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class SshProxyFactory {
-  private SshProxyFactory() {
-  }
+
+  private SshProxyFactory() {}
 
   @Nullable
   public static ProxyData createAndRegister(final ConnectionSettings connectionSettings) {
-    ProxyData result = null;
-    if (! connectionSettings.isUseProxy()) return null;
+    if (!connectionSettings.isUseProxy()) return null;
     final int type = connectionSettings.getProxyType();
-    if ((ProxySettings.SOCKS4 == type) || (ProxySettings.SOCKS5 == type)) {
+    ProxyData result = null;
+    if (ProxySettings.SOCKS4 == type || ProxySettings.SOCKS5 == type) {
       result = new SocksProxyData(connectionSettings);
       SocksAuthenticatorManager.getInstance().register(connectionSettings);
     } else if (ProxySettings.HTTP == type) {
-      /*String proxyHost, int proxyPort, String proxyUser, String proxyPass*/
       result = new HTTPProxyData(connectionSettings.getProxyHostName(), connectionSettings.getProxyPort(),
                                  connectionSettings.getProxyLogin(), connectionSettings.getProxyPassword());
     }

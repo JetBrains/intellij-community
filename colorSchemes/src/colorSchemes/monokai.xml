@@ -130,6 +130,12 @@
         <option name="FOREGROUND" value="E6DB74" />
       </value>
     </option>
+    <option name="COFFEESCRIPT.PARAMETER">
+      <value>
+        <option name="FOREGROUND" value="FD971F" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
     <option name="COFFEESCRIPT.JAVASCRIPT_ID">
       <value>
         <option name="FOREGROUND" value="E6DB74" />

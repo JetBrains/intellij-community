@@ -24,7 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
-import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 
 import java.util.List;
 
@@ -53,7 +52,7 @@ public class ClosureBodyBlock extends GroovyBlock {
       GroovyBlockGenerator generator = new GroovyBlockGenerator(this);
       List<ASTNode> children = GroovyBlockGenerator.getClosureBodyVisibleChildren(myNode.getTreeParent());
 
-      mySubBlocks = generator.generateSubBlockForCodeBlocks(false, children, GroovyIndentProcessor.indentLabelBlock(myNode.getPsi(), myContext.getGroovySettings()));
+      mySubBlocks = generator.generateSubBlockForCodeBlocks(false, children, myContext.getGroovySettings().INDENT_LABEL_BLOCKS);
 
       //at least -> exists
       assert !mySubBlocks.isEmpty();

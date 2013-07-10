@@ -54,24 +54,29 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
     };
   }
 
+  @Override
   public JComponent getComponent() {
     return myEditorTextField;
   }
 
+  @Override
   protected void doSetText(String text) {
     myEditorTextField.setText(text);
   }
 
+  @Override
   public String getText() {
     return myEditorTextField.getText();
   }
 
+  @Override
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     final Editor editor = myEditorTextField.getEditor();
     return editor != null ? editor.getContentComponent() : null;
   }
 
+  @Override
   public void selectAll() {
     myEditorTextField.selectAll();
   }

@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,6 @@ public abstract class RepositoryImpl implements Repository, Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRootDir;
-  @Nullable private final MessageBus myMessageBus;
 
 
   @NotNull protected volatile State myState;
@@ -42,8 +40,6 @@ public abstract class RepositoryImpl implements Repository, Disposable {
     myProject = project;
     myRootDir = dir;
     Disposer.register(parentDisposable, this);
-
-    myMessageBus = project.getMessageBus();
   }
 
   @Override
@@ -84,11 +80,6 @@ public abstract class RepositoryImpl implements Repository, Disposable {
 
   @Override
   public void dispose() {
-  }
-
-  @Nullable
-  public MessageBus getMessageBus() {
-    return myMessageBus;
   }
 
 

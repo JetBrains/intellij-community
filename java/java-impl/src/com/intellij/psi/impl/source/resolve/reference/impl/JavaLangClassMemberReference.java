@@ -163,7 +163,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   private static String getMethodTypes(PsiMethod method) {
     final StringBuilder buf = new StringBuilder();
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      buf.append(", ").append(((PsiClassReferenceType)parameter.getType()).getReference().getReferenceName()).append(".class");
+      buf.append(", ").append(TypeConversionUtil.erasure(parameter.getType()).getPresentableText()).append(".class");
     }
     return buf.toString();
   }

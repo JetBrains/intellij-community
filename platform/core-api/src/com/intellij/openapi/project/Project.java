@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Project interface class.
  */
 public interface Project extends ComponentManager, AreaInstance {
-  @NonNls String DIRECTORY_STORE_FOLDER = ".idea";
+  @NonNls String DIRECTORY_STORE_FOLDER = ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR;
 
   /**
    * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation

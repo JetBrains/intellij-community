@@ -97,9 +97,6 @@
     <action id="ExtractMethod">
       <keyboard-shortcut first-keystroke="meta alt M" />
     </action>
-    <action id="Faces.Create.Model.Element">
-      <keyboard-shortcut first-keystroke="meta N" />
-    </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="meta O" />
     </action>

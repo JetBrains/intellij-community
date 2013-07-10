@@ -116,9 +116,13 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectStacks(@NotNull XExecutionStack thread) throws InterruptedException {
+    return collectStacks(thread, TIMEOUT * 2);
+  }
+
+  public static List<XStackFrame> collectStacks(XExecutionStack thread, long timeout) throws InterruptedException {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
-    return container.waitFor(TIMEOUT * 2).first;
+    return container.waitFor(timeout).first;
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression) throws InterruptedException {
@@ -163,12 +167,16 @@ public class XDebuggerTestUtil {
   }
 
   public static XTestValueNode computePresentation(@NotNull XValue value) throws InterruptedException {
+    return computePresentation(value, TIMEOUT);
+  }
+
+  public static XTestValueNode computePresentation(XValue value, long timeout) throws InterruptedException {
     XTestValueNode node = new XTestValueNode();
     if (value instanceof XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
-    Assert.assertTrue("timed out", node.waitFor(TIMEOUT));
+    node.waitFor(timeout);
     return node;
   }
 

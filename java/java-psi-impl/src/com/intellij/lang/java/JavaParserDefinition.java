@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.lexer.JavaDocLexer;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -34,6 +35,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -41,14 +43,19 @@ import org.jetbrains.annotations.NotNull;
 public class JavaParserDefinition implements ParserDefinition {
   @Override
   @NotNull
-  public Lexer createLexer(final Project project) {
-    final LanguageLevel languageLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
-    return createLexer(languageLevel);
+  public Lexer createLexer(@Nullable Project project) {
+    LanguageLevel level = project != null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevel.HIGHEST;
+    return createLexer(level);
   }
 
   @NotNull
-  public static Lexer createLexer(final LanguageLevel languageLevel) {
-    return new JavaLexer(languageLevel);
+  public static Lexer createLexer(@NotNull LanguageLevel level) {
+    return new JavaLexer(level);
+  }
+
+  @NotNull
+  public static Lexer createDocLexer(@NotNull LanguageLevel level) {
+    return new JavaDocLexer(level);
   }
 
   @Override
@@ -98,24 +105,27 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @Override
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    final PsiFile containingFile = left.getTreeParent().getPsi().getContainingFile();
-    final Lexer lexer;
-    if(containingFile instanceof PsiJavaFile)
-      lexer = new JavaLexer(((PsiJavaFile)containingFile).getLanguageLevel());
-    else lexer = new JavaLexer(LanguageLevel.HIGHEST);
-    if(right.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) return SpaceRequirements.MUST_NOT;
-    if(left.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) return SpaceRequirements.MUST_NOT;
-    final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer);
-    if(left.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
+    if (right.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN ||
+        left.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
+      return SpaceRequirements.MUST_NOT;
+    }
 
-    if(left.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+    PsiFile containingFile = left.getTreeParent().getPsi().getContainingFile();
+    LanguageLevel level = containingFile instanceof PsiJavaFile? ((PsiJavaFile)containingFile).getLanguageLevel() : LanguageLevel.HIGHEST;
+    Lexer lexer = createLexer(level);
+    SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer);
+    if (left.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+      return SpaceRequirements.MUST_LINE_BREAK;
+    }
+
+    if (left.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       String text = left.getText();
       if (text.length() > 0 && Character.isWhitespace(text.charAt(text.length() - 1))) {
         return SpaceRequirements.MAY;
       }
     }
 
-    if(right.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+    if (right.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       String text = right.getText();
       if (text.length() > 0 && Character.isWhitespace(text.charAt(0))) {
         return SpaceRequirements.MAY;

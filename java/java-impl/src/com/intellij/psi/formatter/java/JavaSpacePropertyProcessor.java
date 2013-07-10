@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -296,7 +296,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
       else if (myRole1 == ChildRole.FIELD) {
         int lines = Math.max(getLinesAroundField(), getLinesAroundMethod()) + 1;
-        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, 0, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE,
+        // IJ has been keeping initialization block which starts at the same line as a field for a while.
+        // However, it's not convenient for a situation when particular code is created via PSI - it's easier to not bothering
+        // with whitespace elements when inserting, say, new initialization blocks. That's why we don't enforce new line
+        // only during explicit reformatting ('Reformat' action).
+        int minLineFeeds = FormatterUtil.isFormatterCalledExplicitly() ? 0 : 1;
+        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, 1, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE,
                                          lines);
       }
       else if (myRole1 == ChildRole.CLASS) {
@@ -1613,7 +1618,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (res == null) {
       if (!checkToken(token1) || !checkToken(token2)) return true;
       String text = token1.getText() + token2.getText();
-      Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+      Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
       lexer.start(text);
       boolean canMerge = lexer.getTokenType() == type1;
       lexer.advance();
@@ -1625,7 +1630,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static boolean checkToken(final ASTNode token1) {
-    Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+    Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
     final String text = token1.getText();
     lexer.start(text);
     if (lexer.getTokenType() != token1.getElementType()) return false;

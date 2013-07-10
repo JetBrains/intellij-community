@@ -12,4 +12,9 @@ public class JavaFXNamespaceProvider implements XmlFileNSInfoProvider {
   public String[][] getDefaultNamespaces(@NotNull XmlFile file) {
     return JavaFxFileTypeFactory.isFxml(file) ? NAMESPACES : null;
   }
+
+  @Override
+  public boolean overrideNamespaceFromDocType(@NotNull XmlFile file) {
+    return false;
+  }
 }

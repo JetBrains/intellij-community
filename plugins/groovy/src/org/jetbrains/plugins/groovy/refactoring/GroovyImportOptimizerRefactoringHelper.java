@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
@@ -48,12 +47,9 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
     Set<GroovyFile> files = new HashSet<GroovyFile>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
-      final PsiElement element = usage.getElement();
-      if (element != null) {
-        final PsiFile file = element.getContainingFile();
-        if (file instanceof GroovyFile && file.isValid()) {
-          files.add((GroovyFile)file);
-        }
+      PsiFile file = usage.getFile();
+      if (file instanceof GroovyFile && file.isValid()) {
+        files.add((GroovyFile)file);
       }
     }
     return files;

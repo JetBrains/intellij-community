@@ -25,8 +25,8 @@
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/component/*)"/>
 
   <actions>
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction"

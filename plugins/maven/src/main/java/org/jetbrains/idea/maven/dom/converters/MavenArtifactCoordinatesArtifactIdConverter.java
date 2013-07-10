@@ -18,7 +18,9 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Collections;
 import java.util.Set;
@@ -27,7 +29,21 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
   @Override
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId()) || StringUtil.isEmpty(id.getArtifactId())) return false;
-    return manager.hasArtifactId(id.getGroupId(), id.getArtifactId());
+    if (manager.hasArtifactId(id.getGroupId(), id.getArtifactId())) {
+      return true;
+    }
+
+    // Check if artifact was found on importing.
+    MavenProject mavenProject = findMavenProject(context);
+    if (mavenProject != null) {
+      for (MavenArtifact artifact : mavenProject.findDependencies(id.getGroupId(), id.getArtifactId())) {
+        if (artifact.isResolved()) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   @Override

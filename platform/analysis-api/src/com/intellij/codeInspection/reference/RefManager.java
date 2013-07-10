@@ -103,9 +103,10 @@ public abstract class RefManager {
   @Nullable
   public abstract String getType(final RefEntity ref);
 
-  public abstract RefEntity getRefinedElement(final RefEntity ref);
+  @NotNull
+  public abstract RefEntity getRefinedElement(@NotNull RefEntity ref);
 
-  public abstract Element export(RefEntity entity, Element element, final int actualLine);
+  public abstract Element export(@NotNull RefEntity entity, @NotNull Element element, final int actualLine);
 
   @Nullable
   public abstract String getGroupName(final RefElement entity);
@@ -114,7 +115,7 @@ public abstract class RefManager {
 
   public abstract String getQualifiedName(RefEntity refEntity);
 
-  public abstract void removeRefElement(RefElement refElement, List<RefElement> deletedRefs);
+  public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs);
 
   @NotNull
   public abstract PsiManager getPsiManager();

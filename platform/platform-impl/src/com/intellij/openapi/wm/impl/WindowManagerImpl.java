@@ -731,9 +731,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
       frameElement.setAttribute(HEIGHT_ATTR, Integer.toString(rectangle.height));
 
-      final boolean isAppleJDK = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.7");
-
-      if (!(frame.isInFullScreen() && isAppleJDK)) {
+      if (!(frame.isInFullScreen() && SystemInfo.isAppleJvm)) {
         frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(extendedState));
       }
 

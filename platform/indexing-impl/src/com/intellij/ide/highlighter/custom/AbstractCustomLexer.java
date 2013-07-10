@@ -33,8 +33,8 @@ public class AbstractCustomLexer extends LexerBase {
   protected int myStartOffset = 0;
   protected int myEndOffset = 0;
   private final TokenParser[] myTokenParsers;
-  private TokenInfo myCurrentToken;
-  private int myPosition;
+  protected TokenInfo myCurrentToken;
+  protected int myPosition;
 
   public AbstractCustomLexer(List<TokenParser> tokenParsers) {
     myTokenParsers = tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
@@ -86,9 +86,13 @@ public class AbstractCustomLexer extends LexerBase {
     }
 
     if (!tokenFound) {
-      myCurrentToken.updateData(myPosition, myPosition + 1, CustomHighlighterTokenType.CHARACTER);
+      handleTokenNotFound();
     }
     myPosition = myCurrentToken.getEnd();
+  }
+
+  protected void handleTokenNotFound() {
+    myCurrentToken.updateData(myPosition, myPosition + 1, CustomHighlighterTokenType.CHARACTER);
   }
 
   public CharSequence getBufferSequence() {

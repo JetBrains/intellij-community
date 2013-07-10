@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +32,7 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -42,10 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -266,7 +266,17 @@ public class GenerateMembersUtil {
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
-      substituteThrows(factory, sourceMethod.getThrowsList(), resultMethod.getThrowsList(), collisionResolvedSubstitutor, sourceMethod);
+      final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes());
+      if (target instanceof PsiClass) {
+        final PsiClass[] supers = ((PsiClass)target).getSupers();
+        for (PsiClass aSuper : supers) {
+          final PsiMethod psiMethod = aSuper.findMethodBySignature(sourceMethod, true);
+          if (psiMethod != null && psiMethod != sourceMethod) {
+            ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY), psiMethod.getThrowsList().getReferencedTypes()));
+          }
+        }
+      }
+      substituteThrows(factory, resultMethod.getThrowsList(), collisionResolvedSubstitutor, sourceMethod, thrownTypes);
       return resultMethod;
     }
     catch (IncorrectOperationException e) {
@@ -400,11 +410,11 @@ public class GenerateMembersUtil {
   }
 
   private static void substituteThrows(@NotNull JVMElementFactory factory,
-                                       @NotNull PsiReferenceList sourceThrowsList,
                                        @NotNull PsiReferenceList targetThrowsList,
-                                       @NotNull PsiSubstitutor substitutor, 
-                                       @NotNull PsiMethod sourceMethod) {
-    for (PsiClassType thrownType : sourceThrowsList.getReferencedTypes()) {
+                                       @NotNull PsiSubstitutor substitutor,
+                                       @NotNull PsiMethod sourceMethod, 
+                                       List<PsiClassType> thrownTypes) {
+    for (PsiClassType thrownType : thrownTypes) {
       targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod)));
     }
   }
@@ -504,7 +514,7 @@ public class GenerateMembersUtil {
     PsiModifierList targetModifierList = targetParam.getModifierList();
     if (sourceModifierList != null && targetModifierList != null) {
       if (sourceParam.getLanguage() == targetParam.getLanguage()) {
-        targetModifierList.replace(sourceModifierList);
+        targetModifierList = (PsiModifierList)targetModifierList.replace(sourceModifierList);
       }
       else {
         JVMElementFactory factory = JVMElementFactories.requireFactory(targetParam.getLanguage(), targetParam.getProject());
@@ -514,6 +524,30 @@ public class GenerateMembersUtil {
         for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
           targetModifierList.setModifierProperty(m, sourceParam.hasModifierProperty(m));
         }
+      }
+      processAnnotations(sourceModifierList.getProject(), targetModifierList, targetModifierList.getResolveScope());
+    }
+  }
+
+  private static void processAnnotations(Project project, PsiModifierList modifierList, GlobalSearchScope moduleScope) {
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final Set<String> toRemove = new HashSet<String>();
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      final String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName != null) {
+        for (OverrideImplementsAnnotationsHandler handler : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
+          final String[] annotations2Remove = handler.annotationsToRemove(project, qualifiedName);
+          Collections.addAll(toRemove, annotations2Remove);
+          if (moduleScope != null && psiFacade.findClass(qualifiedName, moduleScope) == null) {
+            toRemove.add(qualifiedName);
+          }
+        }
+      }
+    }
+    for (String fqn : toRemove) {
+      final PsiAnnotation psiAnnotation = modifierList.findAnnotation(fqn);
+      if (psiAnnotation != null) {
+        psiAnnotation.delete();
       }
     }
   }

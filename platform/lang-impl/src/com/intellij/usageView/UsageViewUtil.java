@@ -44,12 +44,12 @@ public class UsageViewUtil {
   }
 
   public static String getShortName(final PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid());
+    LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
   public static String getLongName(final PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid());
+    LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 

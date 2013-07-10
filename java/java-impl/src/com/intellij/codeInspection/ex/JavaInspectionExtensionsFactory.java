@@ -31,6 +31,7 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory {
@@ -62,7 +63,7 @@ public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory
   }
 
   @Override
-  public boolean isProjectConfiguredToRunInspections(final Project project, final boolean online) {
+  public boolean isProjectConfiguredToRunInspections(@NotNull final Project project, final boolean online) {
     return GlobalJavaInspectionContextImpl.isInspectionsEnabled(online, project);
   }
 }

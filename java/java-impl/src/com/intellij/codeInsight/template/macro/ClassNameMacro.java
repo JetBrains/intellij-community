@@ -58,12 +58,8 @@ public class ClassNameMacro extends Macro {
     }
 
     if (aClass == null) return null;
-    String result = aClass.getName();
-    while (aClass.getContainingClass() != null && aClass.getContainingClass().getName() != null) {
-      result = aClass.getContainingClass().getName() + "$" + result;
-      aClass = aClass.getContainingClass();
-    }
-    return new TextResult(result);
+    String qname = aClass.getQualifiedName();
+    return qname == null ? null : new TextResult(qname);
   }
 
   @Override

@@ -19,6 +19,8 @@ import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -30,8 +32,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -71,7 +73,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
-  private ToolWindow myToolWindow;
+  private ToolWindowEx myToolWindow;
 
   public static MavenProjectsNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectsNavigator.class);
@@ -139,6 +141,28 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
   }
 
+  public boolean getAlwaysShowArtifactId() {
+    return myState.alwaysShowArtifactId;
+  }
+
+  public void setAlwaysShowArtifactId(boolean value) {
+    if (myState.alwaysShowArtifactId != value) {
+      myState.alwaysShowArtifactId = value;
+      scheduleStructureUpdate();
+    }
+  }
+
+  public boolean getShowVersions() {
+    return myState.showVersions;
+  }
+
+  public void setShowVersions(boolean value) {
+    if (myState.showVersions != value) {
+      myState.showVersions = value;
+      scheduleStructureUpdate();
+    }
+  }
+
   @Override
   public void initComponent() {
     if (!isNormalProject()) return;
@@ -157,6 +181,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     if (isUnitTestMode()) return;
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         initToolWindow();
       }
     });
@@ -216,7 +241,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-    myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow = (ToolWindowEx)manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
 
     final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {
@@ -232,6 +257,18 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     };
     manager.addToolWindowManagerListener(listener);
+
+    ActionManager actionManager = ActionManager.getInstance();
+
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(actionManager.getAction("Maven.GroupProjects"));
+    group.add(actionManager.getAction("Maven.ShowIgnored"));
+    group.add(actionManager.getAction("Maven.ShowBasicPhasesOnly"));
+    group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
+    group.add(actionManager.getAction("Maven.ShowVersions"));
+
+    myToolWindow.setAdditionalGearActions(group);
+
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
         manager.removeToolWindowManagerListener(listener);

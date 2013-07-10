@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -35,7 +36,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -349,7 +349,7 @@ public class CreateSnapShotAction extends AnAction {
       myFormNameTextField.setText(suggestFormName());
 
       final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      final TextAttributes attributes = globalScheme.getAttributes(SyntaxHighlighterColors.STRING);
+      final TextAttributes attributes = globalScheme.getAttributes(JavaHighlightingColors.STRING);
       final SimpleTextAttributes titleAttributes =
         new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, attributes.getForegroundColor());
 

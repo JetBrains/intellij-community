@@ -72,6 +72,15 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   private static final @NonNls String HTTPS_PROTOCOL = "https://";
   private static final @NonNls String FTP_PROTOCOL = "ftp://";
   private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
+  private final boolean myForceResultIsValid;
+
+  public FetchExtResourceAction() {
+    myForceResultIsValid = false;
+  }
+
+  public FetchExtResourceAction(boolean forceResultIsValid) {
+    myForceResultIsValid = forceResultIsValid;
+  }
 
   protected String getQuickFixKeyId() {
     return "fetch.external.resource";
@@ -375,6 +384,9 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   }
 
   protected boolean resultIsValid(final Project project, ProgressIndicator indicator, final String resourceUrl, FetchResult result) {
+    if (myForceResultIsValid) {
+      return true;
+    }
     if (!ApplicationManager.getApplication().isUnitTestMode() &&
         result.contentType != null &&
         result.contentType.contains(HTML_MIME) &&

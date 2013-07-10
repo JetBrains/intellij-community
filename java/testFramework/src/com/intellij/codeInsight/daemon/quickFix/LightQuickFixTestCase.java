@@ -113,8 +113,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return parseActionHint(file, contents, " \"(.*)\" \"(true|false)\".*");
   }
 
-  public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents, @NonNls @RegExp String actionPattern) {
-    PsiFile hostFile = InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(file);
+  @NotNull
+  public static Pair<String, Boolean> parseActionHint(@NotNull PsiFile file, @NotNull String contents, @NotNull @NonNls @RegExp String actionPattern) {
+    PsiFile hostFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
     String comment = commenter.getLineCommentPrefix();

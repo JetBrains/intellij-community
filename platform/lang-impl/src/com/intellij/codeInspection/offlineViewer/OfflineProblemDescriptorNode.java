@@ -24,25 +24,28 @@ import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
-
-  public OfflineProblemDescriptorNode(final OfflineProblemDescriptor descriptor,
-                                      final DescriptorProviderInspection tool) {
-    super(descriptor, tool);
+  public OfflineProblemDescriptorNode(final OfflineProblemDescriptor descriptor, @NotNull LocalInspectionToolWrapper toolWrapper) {
+    super(descriptor, toolWrapper);
   }
 
   private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
@@ -66,7 +69,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     if (userObject == null) {
       return null;
     }
-    myElement = ((OfflineProblemDescriptor)userObject).getRefElement(myTool.getContext().getRefManager());
+    myElement = ((OfflineProblemDescriptor)userObject).getRefElement(myToolWrapper.getContext().getRefManager());
     return myElement;
   }
 
@@ -77,42 +80,41 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     if (userObject instanceof CommonProblemDescriptor) {
       return (CommonProblemDescriptor)userObject;
     }
-    final InspectionManager inspectionManager = InspectionManager.getInstance(myTool.getContext().getProject());
+
+    final InspectionManager inspectionManager = InspectionManager.getInstance(myToolWrapper.getContext().getProject());
     final OfflineProblemDescriptor offlineProblemDescriptor = (OfflineProblemDescriptor)userObject;
     final RefEntity element = getElement();
-    if (myTool instanceof LocalInspectionToolWrapper) {
+    if (myToolWrapper instanceof LocalInspectionToolWrapper) {
       if (element instanceof RefElement) {
         final PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null) {
           PsiFile containingFile = psiElement.getContainingFile();
           final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
-          final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)myTool).getTool();
+          final LocalInspectionTool localTool = ((LocalInspectionToolWrapper)myToolWrapper).getTool();
           final int startOffset = psiElement.getTextRange().getStartOffset();
           final int endOffset = psiElement.getTextRange().getEndOffset();
           LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
-          final PsiElementVisitor visitor = localInspectionTool.buildVisitor(holder, false, session);
-          localInspectionTool.inspectionStarted(session, false);
+          final PsiElementVisitor visitor = localTool.buildVisitor(holder, false, session);
+          localTool.inspectionStarted(session, false);
           final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile,
                                                                             startOffset,
                                                                             endOffset);
           for (PsiElement el : elementsInRange) {
             el.accept(visitor);
           }
-          localInspectionTool.inspectionFinished(session, holder);
+          localTool.inspectionFinished(session, holder);
           if (holder.hasResults()) {
             final List<ProblemDescriptor> list = holder.getResults();
             final int idx = offlineProblemDescriptor.getProblemIndex();
-            if (list != null) {
-              int curIdx = 0;
-              for (ProblemDescriptor descriptor : list) {
-                final PsiNamedElement member = localInspectionTool.getProblemElement(descriptor.getPsiElement());
-                if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
-                  if (curIdx == idx) {
-                    setUserObject(descriptor);
-                    return descriptor;
-                  }
-                  curIdx++;
+            int curIdx = 0;
+            for (ProblemDescriptor descriptor : list) {
+              final PsiNamedElement member = localTool.getProblemElement(descriptor.getPsiElement());
+              if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
+                if (curIdx == idx) {
+                  setUserObject(descriptor);
+                  return descriptor;
                 }
+                curIdx++;
               }
             }
           }
@@ -147,11 +149,12 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   }
 
   @Nullable
-  private LocalQuickFix[] getFixes(CommonProblemDescriptor descriptor, List<String> hints) {
-    final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+  private LocalQuickFix[] getFixes(@NotNull CommonProblemDescriptor descriptor, List<String> hints) {
+    final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(hints == null ? 1 : hints.size());
     if (hints == null) {
       addFix(descriptor, fixes, null);
-    } else {
+    }
+    else {
       for (String hint : hints) {
         addFix(descriptor, fixes, hint);
       }
@@ -159,8 +162,9 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     return fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]);
   }
 
-  private void addFix(final CommonProblemDescriptor descriptor, final List<LocalQuickFix> fixes, String hint) {
-    final IntentionAction intentionAction = myTool.findQuickFixes(descriptor, hint);
+  private void addFix(@NotNull CommonProblemDescriptor descriptor, final List<LocalQuickFix> fixes, String hint) {
+    InspectionToolPresentation presentation = ((GlobalInspectionContextImpl)myToolWrapper.getContext()).getPresentation(myToolWrapper);
+    final IntentionAction intentionAction = presentation.findQuickFixes(descriptor, hint);
     if (intentionAction instanceof QuickFixWrapper) {
       fixes.add(((QuickFixWrapper)intentionAction).getFix());
     }

@@ -15,29 +15,25 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
 *
 * @author Dmitry Skavish
 */
 public class NameDesc {
+  @NotNull public final String name;
+  @Nullable public final String desc;
 
-  public String name;
-  public String desc;
-  private String type;
-
-  public NameDesc(String name, String desc) {
+  public NameDesc(@NotNull String name, @Nullable String desc) {
     this.name = name;
     this.desc = desc;
   }
 
-  public NameDesc(String name, String desc, String type) {
-    this.name = name;
-    this.desc = desc;
-    this.type = type;
-  }
-
+  @NotNull
+  @Override
   public String toString() {
-    if (type == null) return name;
-    return name + ": " + type;
+    return name;
   }
 }

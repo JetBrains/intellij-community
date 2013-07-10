@@ -139,7 +139,7 @@ public class CompletionLookupArranger extends LookupArranger {
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 
-    final String invariant = presentation.getItemText() + "###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
+    final String invariant = presentation.getItemText() + "\0###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
 
     CompletionSorterImpl sorter = obtainSorter(element);
@@ -332,9 +332,9 @@ public class CompletionLookupArranger extends LookupArranger {
         return old;
       }
 
-      Object selectedValue = ((LookupImpl)lookup).getList().getSelectedValue();
+      Object selectedValue = lookup.getList().getSelectedValue();
       if (selectedValue instanceof EmptyLookupItem && ((EmptyLookupItem)selectedValue).isLoading()) {
-        int index = ((LookupImpl)lookup).getList().getSelectedIndex();
+        int index = lookup.getList().getSelectedIndex();
         if (index >= 0 && index < items.size()) {
           return index;
         }
@@ -351,7 +351,7 @@ public class CompletionLookupArranger extends LookupArranger {
     String selectedText = lookup.getEditor().getSelectionModel().getSelectedText();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isPrefixItem(lookup, item, true) && !isLiveTemplate(item) ||
+      if (isAlphaSorted() && isPrefixItem(lookup, item, true) && !isLiveTemplate(item) ||
           item.getLookupString().equals(selectedText)) {
         return i;
       }

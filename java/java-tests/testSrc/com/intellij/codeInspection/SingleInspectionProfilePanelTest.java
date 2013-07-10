@@ -103,7 +103,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
   }
 
   private JavaDocLocalInspection getInspection(InspectionProfileImpl profile) {
-    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
+    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName(), getProject());
     assert original != null;
     return (JavaDocLocalInspection)original.getTool();
   }

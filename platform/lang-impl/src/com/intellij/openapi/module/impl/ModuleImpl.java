@@ -65,6 +65,8 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   private String myName;
 
+  private String myModuleType;
+
   private IModuleStore myComponentStore;
   private final ModuleScopeProvider myModuleScopeProvider;
 
@@ -237,16 +239,28 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
+    if (ELEMENT_TYPE.equals(optionName)) {
+      myModuleType = optionValue;
+    }
     getStateStore().setOption(optionName, optionValue);
   }
 
   @Override
   public void clearOption(@NotNull String optionName) {
+    if (ELEMENT_TYPE.equals(optionName)) {
+      myModuleType = null;
+    }
     getStateStore().clearOption(optionName);
   }
 
   @Override
   public String getOptionValue(@NotNull String optionName) {
+    if (ELEMENT_TYPE.equals(optionName)) {
+      if (myModuleType == null) {
+        myModuleType = getStateStore().getOptionValue(optionName);
+      }
+      return myModuleType;
+    }
     return getStateStore().getOptionValue(optionName);
   }
 
@@ -315,8 +329,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return StringUtil.trimEnd(fileName, ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 

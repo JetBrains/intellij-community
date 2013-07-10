@@ -41,7 +41,6 @@ class p4_source(converter_source):
         self.parent = {}
         self.encoding = "latin_1"
         self.depotname = {}           # mapping from local name to depot name
-        self.modecache = {}
         self.re_type = re.compile(
             "([a-z]+)?(text|binary|symlink|apple|resource|unicode|utf\d+)"
             "(\+\w+)?$")
@@ -54,7 +53,7 @@ class p4_source(converter_source):
 
     def _parse_view(self, path):
         "Read changes affecting the path"
-        cmd = 'p4 -G changes -s submitted "%s"' % path
+        cmd = 'p4 -G changes -s submitted %s' % util.shellquote(path)
         stdout = util.popen(cmd, mode='rb')
         for d in loaditer(stdout):
             c = d.get("change", None)
@@ -73,7 +72,7 @@ class p4_source(converter_source):
             else:
                 views = {"//": ""}
         else:
-            cmd = 'p4 -G client -o "%s"' % path
+            cmd = 'p4 -G client -o %s' % util.shellquote(path)
             clientspec = marshal.load(util.popen(cmd, mode='rb'))
 
             views = {}
@@ -106,10 +105,9 @@ class p4_source(converter_source):
         ui.status(_('collecting p4 changelists\n'))
         lastid = None
         for change in self.p4changes:
-            cmd = "p4 -G describe %s" % change
+            cmd = "p4 -G describe -s %s" % change
             stdout = util.popen(cmd, mode='rb')
             d = marshal.load(stdout)
-
             desc = self.recode(d["desc"])
             shortdesc = desc.split("\n", 1)[0]
             t = '%s %s' % (d["change"], repr(shortdesc)[1:-1])
@@ -121,7 +119,8 @@ class p4_source(converter_source):
                 parents = []
 
             date = (int(d["time"]), 0)     # timezone not set
-            c = commit(author=self.recode(d["user"]), date=util.datestr(date),
+            c = commit(author=self.recode(d["user"]),
+                       date=util.datestr(date, '%Y-%m-%d %H:%M:%S %1%2'),
                        parents=parents, desc=desc, branch='',
                        extra={"p4": change})
 
@@ -149,7 +148,8 @@ class p4_source(converter_source):
         return self.heads
 
     def getfile(self, name, rev):
-        cmd = 'p4 -G print "%s#%s"' % (self.depotname[name], rev)
+        cmd = 'p4 -G print %s' \
+            % util.shellquote("%s#%s" % (self.depotname[name], rev))
         stdout = util.popen(cmd, mode='rb')
 
         mode = None
@@ -183,17 +183,12 @@ class p4_source(converter_source):
         if mode is None:
             raise IOError(0, "bad stat")
 
-        self.modecache[(name, rev)] = mode
-
         if keywords:
             contents = keywords.sub("$\\1$", contents)
         if mode == "l" and contents.endswith("\n"):
             contents = contents[:-1]
 
-        return contents
-
-    def getmode(self, name, rev):
-        return self.modecache[(name, rev)]
+        return contents, mode
 
     def getchanges(self, rev):
         return self.files[rev], {}

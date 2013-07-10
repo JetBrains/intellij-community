@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -50,7 +50,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     if (classMembers == null) return null;
 
     List<ClassMember> res = new ArrayList<ClassMember>();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     for (ClassMember classMember : classMembers) {
       if (classMember instanceof PsiMethodMember) {
         final PsiMethod method = ((PsiMethodMember)classMember).getElement();
@@ -92,6 +92,10 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
 
     List<PsiGenerationInfo<GrMethod>> grConstructors = new ArrayList<PsiGenerationInfo<GrMethod>>();
 
+    final Project project = aClass.getProject();
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+
     for (GenerationInfo generationInfo : list) {
       final PsiMember constructorMember = generationInfo.getPsiMember();
       assert constructorMember instanceof PsiMethod;
@@ -115,10 +119,8 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
       final String[] paramNames = ArrayUtil.toStringArray(parametersNames);
       final String[] paramTypes = ArrayUtil.toStringArray(parametersTypes);
       assert constructorName != null;
-      GrMethod grConstructor =
-        GroovyPsiElementFactory.getInstance(aClass.getProject()).createConstructorFromText(constructorName, paramTypes, paramNames, body);
-
-      GrReferenceAdjuster.shortenReferences(grConstructor);
+      GrMethod grConstructor = factory.createConstructorFromText(constructorName, paramTypes, paramNames, body);
+      codeStyleManager.shortenClassReferences(grConstructor);
 
       grConstructors.add(new GroovyGenerationInfo<GrMethod>(grConstructor));
     }

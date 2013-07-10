@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
-import junit.framework.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -118,12 +118,46 @@ public class FileUtilTest {
     for (int i = 0; i < arr.length; i++) {
       String s = arr[i];
       final ThreeState state = FileUtil.isAncestorThreeState(root, s, false);
-      Assert.assertEquals("" + i, expectedResult[i], state);
+      assertEquals(String.valueOf(i), expectedResult[i], state);
     }
+
     for (int i = 0; i < arr.length; i++) {
       String s = arr[i];
       final ThreeState state = FileUtil.isAncestorThreeState(root, s, true);
-      Assert.assertEquals("" + i, expectedResult2[i], state);
+      assertEquals(String.valueOf(i), expectedResult2[i], state);
     }
+  }
+
+  @Test
+  public void testRepeatableOperation() throws Exception {
+    abstract class CountableIOOperation implements FileUtilRt.RepeatableIOOperation<Boolean, IOException> {
+      private int count = 0;
+
+      @Override
+      public Boolean execute(boolean lastAttempt) throws IOException {
+        count++;
+        return stop(lastAttempt) ? true : null;
+      }
+
+      protected abstract boolean stop(boolean lastAttempt);
+    }
+
+    CountableIOOperation successful = new CountableIOOperation() {
+      @Override protected boolean stop(boolean lastAttempt) { return true; }
+    };
+    FileUtilRt.doIOOperation(successful);
+    assertEquals(1, successful.count);
+
+    CountableIOOperation failed = new CountableIOOperation() {
+      @Override protected boolean stop(boolean lastAttempt) { return false; }
+    };
+    FileUtilRt.doIOOperation(failed);
+    assertEquals(10, failed.count);
+
+    CountableIOOperation lastShot = new CountableIOOperation() {
+      @Override protected boolean stop(boolean lastAttempt) { return lastAttempt; }
+    };
+    FileUtilRt.doIOOperation(lastShot);
+    assertEquals(10, lastShot.count);
   }
 }

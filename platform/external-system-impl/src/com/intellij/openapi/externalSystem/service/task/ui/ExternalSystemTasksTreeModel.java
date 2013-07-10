@@ -16,14 +16,14 @@
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
-import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
       Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();
       Object e2 = ((ExternalSystemNode<?>)t2).getDescriptor().getElement();
       if (e1 instanceof ExternalProjectPojo) {
-        if (e2 instanceof ExternalTaskPojo) {
+        if (e2 instanceof ExternalTaskExecutionInfo) {
           return 1;
         }
         else {
@@ -60,7 +60,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
           return -1;
         }
         else {
-          return ((ExternalTaskPojo)e1).getName().compareTo(((ExternalTaskPojo)e2).getName());
+          return getTaskName((ExternalTaskExecutionInfo)e1).compareTo(getTaskName((ExternalTaskExecutionInfo)e2));
         }
       }
     }
@@ -68,17 +68,18 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
 
   @NotNull private final TreeNode[] myNodeHolder  = new TreeNode[1];
   @NotNull private final int[]      myIndexHolder = new int[1];
+
   @NotNull private final ExternalSystemUiAware myUiAware;
+  @NotNull private final ProjectSystemId       myExternalSystemId;
 
   public ExternalSystemTasksTreeModel(@NotNull ProjectSystemId externalSystemId) {
     super(new ExternalSystemNode<String>(new ExternalSystemNodeDescriptor<String>("", "", null)));
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-    if (manager instanceof ExternalSystemUiAware) {
-      myUiAware = (ExternalSystemUiAware)manager;
-    }
-    else {
-      myUiAware = DefaultExternalSystemUiAware.INSTANCE;
-    }
+    myExternalSystemId = externalSystemId;
+    myUiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
+  }
+
+  private static String getTaskName(@NotNull ExternalTaskExecutionInfo taskInfo) {
+    return taskInfo.getSettings().getTaskNames().get(0);
   }
 
   /**
@@ -110,6 +111,27 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     return result;
   }
 
+  /**
+   * Asks current model to remove all nodes which have given data as a {@link ExternalSystemNodeDescriptor#getElement() payload}.
+   *
+   * @param payload  target payload
+   */
+  public void pruneNodes(@NotNull Object payload) {
+    Deque<ExternalSystemNode<?>> toProcess = new ArrayDeque<ExternalSystemNode<?>>();
+    toProcess.addFirst(getRoot());
+    while (!toProcess.isEmpty()) {
+      ExternalSystemNode<?> node = toProcess.removeLast();
+      if (payload.equals(node.getDescriptor().getElement())) {
+        removeNodeFromParent(node);
+      }
+      else {
+        for (int i = 0; i < node.getChildCount(); i++) {
+          toProcess.addFirst(node.getChildAt(i));
+        }
+      }
+    }
+  }
+
   public void ensureSubProjectsStructure(@NotNull ExternalProjectPojo topLevelProject,
                                          @NotNull Collection<ExternalProjectPojo> subProjects)
   {
@@ -124,7 +146,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     for (int i = 0; i < topLevelProjectNode.getChildCount(); i++) {
       ExternalSystemNode<?> child = topLevelProjectNode.getChildAt(i);
       Object childElement = child.getDescriptor().getElement();
-      if (childElement instanceof ExternalTaskPojo) {
+      if (childElement instanceof ExternalTaskExecutionInfo) {
         taskWeights.put(childElement, subProjects.size() + i);
         continue;
       }
@@ -152,6 +174,9 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   }
 
   public void ensureTasks(@NotNull String externalProjectConfigPath, @NotNull Collection<ExternalTaskPojo> tasks) {
+    if (tasks.isEmpty()) {
+      return;
+    }
     ExternalSystemNode<ExternalProjectPojo> moduleNode = findProjectNode(externalProjectConfigPath);
     if (moduleNode == null) {
       LOG.warn(String.format(
@@ -160,11 +185,14 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
       ));
       return;
     }
-    Set<ExternalTaskPojo> toAdd = ContainerUtilRt.newHashSet(tasks);
+    Set<ExternalTaskExecutionInfo> toAdd = ContainerUtilRt.newHashSet();
+    for (ExternalTaskPojo task : tasks) {
+      toAdd.add(buildTaskInfo(task));
+    }
     for (int i = 0; i < moduleNode.getChildCount(); i++) {
       ExternalSystemNode<?> childNode = moduleNode.getChildAt(i);
       Object element = childNode.getDescriptor().getElement();
-      if (element instanceof ExternalTaskPojo) {
+      if (element instanceof ExternalTaskExecutionInfo) {
         if (!toAdd.remove(element)) {
           moduleNode.remove(childNode);
           myIndexHolder[0] = i;
@@ -173,15 +201,24 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
         }
       }
     }
-    
+
     if (!toAdd.isEmpty()) {
-      for (ExternalTaskPojo pojo : toAdd) {
-        moduleNode.add(new ExternalSystemNode<ExternalTaskPojo>(descriptor(pojo, myUiAware.getTaskIcon())));
+      for (ExternalTaskExecutionInfo taskInfo : toAdd) {
+        moduleNode.add(new ExternalSystemNode<ExternalTaskExecutionInfo>(descriptor(taskInfo, myUiAware.getTaskIcon())));
         myIndexHolder[0] = moduleNode.getChildCount() - 1;
         nodesWereInserted(moduleNode, myIndexHolder);
       }
     }
     ExternalSystemUiUtil.sort(moduleNode, this, NODE_COMPARATOR);
+  }
+
+  @NotNull
+  private ExternalTaskExecutionInfo buildTaskInfo(@NotNull ExternalTaskPojo task) {
+    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+    settings.setExternalProjectPath(task.getLinkedExternalProjectPath());
+    settings.setTaskNames(Collections.singletonList(task.getName()));
+    settings.setExternalSystemIdString(myExternalSystemId.toString());
+    return new ExternalTaskExecutionInfo(settings, ToolWindowId.RUN);
   }
 
   @SuppressWarnings("unchecked")

@@ -20,9 +20,9 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
@@ -79,7 +79,7 @@ public class RunInspectionAction extends GotoActionBase {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            runInspection(project, (InspectionProfileEntry)element, virtualFile, psiElement, psiFile);
+            runInspection(project, (InspectionToolWrapper)element, virtualFile, psiElement, psiFile);
           }
         });
       }
@@ -87,16 +87,18 @@ public class RunInspectionAction extends GotoActionBase {
   }
 
   private static void runInspection(@NotNull Project project,
-                                    @NotNull InspectionProfileEntry profileEntry,
+                                    @NotNull InspectionToolWrapper toolWrapper,
                                     @Nullable VirtualFile virtualFile,
-                                    PsiElement psiElement, PsiFile psiFile) {
+                                    PsiElement psiElement,
+                                    PsiFile psiFile) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Module module = virtualFile != null ? ModuleUtilCore.findModuleForFile(virtualFile, project) : null;
 
     AnalysisScope analysisScope = null;
     if (psiFile != null) {
       analysisScope = new AnalysisScope(psiFile);
-    } else {
+    }
+    else {
       if (virtualFile != null && virtualFile.isDirectory()) {
         final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFile);
         if (psiDirectory != null) {
@@ -114,7 +116,7 @@ public class RunInspectionAction extends GotoActionBase {
     final FileFilterPanel fileFilterPanel = new FileFilterPanel();
     fileFilterPanel.init();
 
-    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
+    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
@@ -135,11 +137,11 @@ public class RunInspectionAction extends GotoActionBase {
       }
     };
 
-    AnalysisScope scope = analysisScope;
-    dlg.show();
-    if (!dlg.isOK()) return;
+    dialog.show();
+    if (!dialog.isOK()) return;
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
-    scope = dlg.getScope(uiOptions, scope, project, module);
-    RunInspectionIntention.rerunInspection(profileEntry, managerEx, scope, psiFile);
+    AnalysisScope scope = dialog.getScope(uiOptions, analysisScope, project, module);
+    PsiElement element = psiFile == null ? psiElement : psiFile;
+    RunInspectionIntention.rerunInspection(toolWrapper, managerEx, scope, element);
   }
 }

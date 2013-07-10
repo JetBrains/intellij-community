@@ -32,6 +32,7 @@ import java.util.Map;
 public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTagChild {
   XmlTag[] EMPTY = new XmlTag[0];
 
+  @Override
   @NotNull @NonNls String getName();
   @NotNull @NonNls String getNamespace();
   @NotNull @NonNls String getLocalName();

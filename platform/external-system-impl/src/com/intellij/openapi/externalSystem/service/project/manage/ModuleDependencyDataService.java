@@ -31,7 +31,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -92,10 +94,19 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       @Override
       public void run() {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        Map<String /* dependency module name */, ModuleOrderEntry> toRemove = ContainerUtilRt.newHashMap();
+        for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+          if (entry instanceof ModuleOrderEntry) {
+            ModuleOrderEntry e = (ModuleOrderEntry)entry;
+            toRemove.put(e.getModuleName(), e);
+          }
+        }
+        
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
         try {
           for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
             final ModuleDependencyData dependencyData = dependencyNode.getData();
+            toRemove.remove(dependencyData.getName());
             final String moduleName = dependencyData.getName();
             Module ideDependencyModule = myProjectStructureHelper.findIdeModule(moduleName, module.getProject());
             if (ideDependencyModule == null) {
@@ -134,6 +145,10 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         }
         finally {
           moduleRootModel.commit();
+        }
+
+        if (!toRemove.isEmpty()) {
+          removeData(toRemove.values(), module, synchronous);
         }
       }
     });

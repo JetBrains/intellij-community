@@ -423,7 +423,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       return ensurePanel().isModified();
     }
 
-    public void applyPanel() {
+    public void applyPanel() throws ConfigurationException {
       ensurePanel().apply();
     }
 

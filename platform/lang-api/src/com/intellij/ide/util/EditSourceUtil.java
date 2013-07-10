@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.util;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -54,13 +54,13 @@ public class EditSourceUtil {
     return desc;
   }
 
-  public static boolean canNavigate (PsiElement element) {
+  public static boolean canNavigate(PsiElement element) {
     if (element == null || !element.isValid()) {
       return false;
     }
 
     VirtualFile file = PsiUtilCore.getVirtualFile(element.getNavigationElement());
-    return file != null && file.isValid() && !file.isSpecialFile() && !VfsUtilCore.isBrokenLink(file);
+    return file != null && file.isValid() && !file.is(VFileProperty.SPECIAL) && !VfsUtilCore.isBrokenLink(file);
   }
 
   public static void navigate(NavigationItem item, boolean requestFocus, boolean useCurrentWindow) {

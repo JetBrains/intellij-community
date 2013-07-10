@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +34,7 @@ import java.util.Set;
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
 
+  @NotNull
   private final PsiElement[] myScope;
   private final boolean myIgnoreInjectedPsi;
 
@@ -67,8 +67,10 @@ public class LocalSearchScope extends SearchScope {
       LOG.assertTrue(element != null, "null element");
       LOG.assertTrue(element.getContainingFile() != null, element.getClass().getName());
       if (element instanceof PsiFile) {
-        List<PsiFile> files = ((PsiFile)element).getViewProvider().getAllFiles();
-        ContainerUtil.addAll(localScope, files);
+        for (PsiFile file : ((PsiFile)element).getViewProvider().getAllFiles()) {
+          if (file == null) throw new IllegalArgumentException("file "+element+" returned null in its getAllFiles()");
+          localScope.add(file);
+        }
       }
       else if (element.getTextRange() != null){
         localScope.add(element);
@@ -86,6 +88,7 @@ public class LocalSearchScope extends SearchScope {
     return myDisplayName == null ? super.getDisplayName() : myDisplayName;
   }
 
+  @NotNull
   public PsiElement[] getScope() {
     return myScope;
   }

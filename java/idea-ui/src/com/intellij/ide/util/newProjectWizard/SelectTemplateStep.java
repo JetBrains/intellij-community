@@ -156,7 +156,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public String getHelpId() {
-    return myWizardContext.isCreatingNewProject() ? "New_Project_Main_Settings" : "Add_Module_Main_Settings";
+    String helpId = myWizardContext.isCreatingNewProject() ? "New_Project_Main_Settings" : "Add_Module_Main_Settings";
+    ProjectTemplate projectTemplate = getSelectedTemplate();
+    if (projectTemplate instanceof WebProjectTemplate) {
+      WebProjectTemplate webProjectTemplate = (WebProjectTemplate) projectTemplate;
+      String subHelpId = webProjectTemplate.getHelpId();
+      if (subHelpId != null) {
+        helpId = helpId + ":" + subHelpId;
+      }
+    }
+    return helpId;
   }
 
   private static NamePathComponent initNamePathComponent(WizardContext context) {

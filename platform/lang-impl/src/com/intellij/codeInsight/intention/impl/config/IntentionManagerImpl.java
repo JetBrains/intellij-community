@@ -237,6 +237,6 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   public boolean hasActiveRequests() {
-    return myInitActionsAlarm.getActiveRequestCount() > 0;
+    return !myInitActionsAlarm.isEmpty();
   }
 }

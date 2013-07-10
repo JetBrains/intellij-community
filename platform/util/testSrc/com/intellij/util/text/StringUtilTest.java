@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 22, 2006
+ * @since Dec 22, 2006
  */
 public class StringUtilTest extends TestCase {
   public void testToUpperCase() {
@@ -74,12 +74,12 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testStartsWithConcatenation() {
-    assertTrue(StringUtil.startsWithConcatenationOf("something.withdot", "something", "."));
-    assertTrue(StringUtil.startsWithConcatenationOf("something.withdot", "", "something."));
-    assertTrue(StringUtil.startsWithConcatenationOf("something.", "something", "."));
-    assertTrue(StringUtil.startsWithConcatenationOf("something", "something", ""));
-    assertFalse(StringUtil.startsWithConcatenationOf("something", "something", "."));
-    assertFalse(StringUtil.startsWithConcatenationOf("some", "something", ""));
+    assertTrue(StringUtil.startsWithConcatenation("something.with.dot", "something", "."));
+    assertTrue(StringUtil.startsWithConcatenation("something.with.dot", "", "something."));
+    assertTrue(StringUtil.startsWithConcatenation("something.", "something", "."));
+    assertTrue(StringUtil.startsWithConcatenation("something", "something", "", "", ""));
+    assertFalse(StringUtil.startsWithConcatenation("something", "something", "", "", "."));
+    assertFalse(StringUtil.startsWithConcatenation("some", "something", ""));
   }
 
   public void testNaturalCompare() {

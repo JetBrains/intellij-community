@@ -22,6 +22,7 @@
  */
 package com.intellij.xml.refactoring;
 
+import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -121,7 +122,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
     final PsiReference reference = myTag.getReference();
     if (reference instanceof TagNameReference) {
-      LookupElement[] lookupItems = ((TagNameReference)reference).getVariants();
+      LookupElement[] lookupItems = TagNameReferenceCompletionProvider.getTagNameVariants(myTag, myTag.getNamespacePrefix());
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix);

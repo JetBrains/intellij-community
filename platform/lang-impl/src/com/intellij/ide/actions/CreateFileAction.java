@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +168,10 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
         return super.canClose(inputString);
       }
 
-      FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(getFileName(inputString));
+      final PsiDirectory psiDirectory = getDirectory();
+
+      final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(new FakeVirtualFile(psiDirectory.getVirtualFile(), getFileName(inputString)),
+                                                                        psiDirectory.getProject());
       return type != null && super.canClose(getFileName(inputString));
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
-    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
+    SearchScope searchScope = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
 
     orderSearching(searchScope, method.getName(), queryParameters.getOptimizer(), method.getParameterList().getParametersCount());
 

@@ -394,6 +394,14 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     return myTable;
   }
 
+  public void invertSelection() {
+    final int count = getElementCount();
+    for (int i = 0; i < count; i++) {
+      T type = getElementAt(i);
+      setElementMarked(type, !isElementMarked(type));
+    }
+  }
+
   public void setAllElementsMarked(boolean marked) {
     final int[] rows = new int[myTableModel.getRowCount()];
     for (int idx = 0; idx < rows.length; idx++) {

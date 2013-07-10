@@ -43,7 +43,6 @@ import java.util.List;
  */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
 
-  private final ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   @NotNull private final RunContentDescriptor myDescriptor;
   @NotNull private final Executor myExecutor;
@@ -51,7 +50,6 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   public RestartAction(@NotNull final Executor executor,
                        final ProgramRunner runner,
-                       final ProcessHandler processHandler,//todo kill ProcessHandler here, use descriptor.getProcessHandler() is need
                        @NotNull final RunContentDescriptor descriptor,
                        @NotNull final ExecutionEnvironment env) {
     Disposer.register(descriptor, this);
@@ -59,7 +57,6 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
     myEnvironment = env;
     getTemplatePresentation().setEnabled(false);
-    myProcessHandler = processHandler;
     myRunner = runner;
     myDescriptor = descriptor;
     myExecutor = executor;
@@ -108,22 +105,8 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   public void restart() {
     Project project = myEnvironment.getProject();
-    if (project == null)
-      return;
-    if (myProcessHandler != null) {
-      ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                              myExecutor,
-                                                              myEnvironment.getExecutionTarget(),
-                                                              myEnvironment.getRunnerAndConfigurationSettings(),
-                                                              myProcessHandler);
-    }
-    else {
-      ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                              myExecutor,
-                                                              myEnvironment.getExecutionTarget(),
-                                                              myEnvironment.getRunnerAndConfigurationSettings(),
-                                                              myDescriptor);
-    }
+    if (project != null && !ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId()))
+      ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, myRunner, myEnvironment, myDescriptor);
   }
 
   @Override

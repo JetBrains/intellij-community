@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 
@@ -39,48 +40,59 @@ public class OpenFileInBrowserAction extends DumbAwareAction {
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     final Presentation presentation = e.getPresentation();
 
-    if (file != null && file.getVirtualFile() != null) {
-      presentation.setVisible(true);
+    if (file == null || file.getVirtualFile() == null) {
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
 
-      Pair<WebBrowserUrlProvider, Url> browserUrlProvider = WebBrowserServiceImpl.getProvider(file);
-      final boolean isHtmlFile = HtmlUtil.isHtmlFile(file);
-      presentation.setEnabled(browserUrlProvider != null || isHtmlFile);
-
-      String text = getTemplatePresentation().getText();
-      String description = getTemplatePresentation().getDescription();
-
-      if (browserUrlProvider != null) {
-        final String customText = browserUrlProvider.first.getOpenInBrowserActionText(file);
-        if (customText != null) {
-          text = customText;
-        }
-        final String customDescription = browserUrlProvider.first.getOpenInBrowserActionDescription(file);
-        if (customDescription != null) {
-          description = customDescription;
-        }
-        if (isHtmlFile) {
-          description += " (hold Shift to open URL of local file)";
-        }
+    Pair<WebBrowserUrlProvider, Url> browserUrlProvider = WebBrowserServiceImpl.getProvider(file);
+    final boolean isHtmlFile = HtmlUtil.isHtmlFile(file);
+    if (browserUrlProvider == null) {
+      if (file.getVirtualFile() instanceof LightVirtualFile) {
+        presentation.setVisible(false);
+        presentation.setEnabled(false);
+        return;
       }
-
-      presentation.setText(text);
-      presentation.setDescription(description);
-
-      GeneralSettings settings = GeneralSettings.getInstance();
-      if (!settings.isUseDefaultBrowser()) {
-        BrowsersConfiguration.BrowserFamily family = BrowsersConfiguration.getInstance().findFamilyByPath(settings.getBrowserPath());
-        if (family != null) {
-          presentation.setIcon(family.getIcon());
-        }
-      }
-
-      if (ActionPlaces.isPopupPlace(e.getPlace())) {
-        presentation.setVisible(presentation.isEnabled());
+      else {
+        presentation.setEnabled(isHtmlFile);
       }
     }
     else {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabled(true);
+    }
+    presentation.setVisible(true);
+
+    String text = getTemplatePresentation().getText();
+    String description = getTemplatePresentation().getDescription();
+
+    if (browserUrlProvider != null) {
+      final String customText = browserUrlProvider.first.getOpenInBrowserActionText(file);
+      if (customText != null) {
+        text = customText;
+      }
+      final String customDescription = browserUrlProvider.first.getOpenInBrowserActionDescription(file);
+      if (customDescription != null) {
+        description = customDescription;
+      }
+      if (isHtmlFile) {
+        description += " (hold Shift to open URL of local file)";
+      }
+    }
+
+    presentation.setText(text);
+    presentation.setDescription(description);
+
+    GeneralSettings settings = GeneralSettings.getInstance();
+    if (!settings.isUseDefaultBrowser()) {
+      BrowsersConfiguration.BrowserFamily family = BrowsersConfiguration.getInstance().findFamilyByPath(settings.getBrowserPath());
+      if (family != null) {
+        presentation.setIcon(family.getIcon());
+      }
+    }
+
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      presentation.setVisible(presentation.isEnabled());
     }
   }
 

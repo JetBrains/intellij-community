@@ -119,6 +119,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private void onClone() {
+    try {
+      myEditor.apply();
+    }
+    catch (ConfigurationException ignore) {
+    }
+    
     final FileTemplate selected = myCurrentTab.getSelectedTemplate();
     if (selected == null) {
       return;
@@ -138,6 +144,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     }
     final FileTemplate newTemplate = new CustomFileTemplate(name, selected.getExtension());
     newTemplate.setText(selected.getText());
+    newTemplate.setReformatCode(selected.isReformatCode());
     myCurrentTab.addTemplate(newTemplate);
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);
@@ -460,9 +467,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     boolean errorInName = true;
     String errorString = null;
     for (FileTemplate template : templates) {
-      if (isInternalTemplateName(template.getName())) {
-        continue;
-      }
       final String currName = template.getName();
       final String currExt = template.getExtension();
       if (currName.length() == 0) {

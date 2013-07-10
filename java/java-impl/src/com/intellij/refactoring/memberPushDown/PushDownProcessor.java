@@ -161,7 +161,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Key<Boolean> REMOVE_QUALIFIER_KEY = Key.create("REMOVE_QUALIFIER_KEY");
   private static final Key<PsiClass> REPLACE_QUALIFIER_KEY = Key.create("REPLACE_QUALIFIER_KEY");
 
-  private void encodeRefs() {
+  protected void encodeRefs() {
     final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
     for (MemberInfo memberInfo : myMemberInfos) {
       movedMembers.add(memberInfo.getMember());
@@ -328,7 +328,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
+  protected void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, targetClass, PsiSubstitutor.EMPTY);
     for (MemberInfo memberInfo : myMemberInfos) {

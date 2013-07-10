@@ -19,7 +19,7 @@ import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
-import com.intellij.framework.library.FrameworkAvailabilityCondition;
+import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;

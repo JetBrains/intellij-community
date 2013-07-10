@@ -46,6 +46,10 @@ public class JBSplitter extends Splitter {
     super(vertical, proportion);
   }
 
+  public JBSplitter(float proportion) {
+    super(false, proportion);
+  }
+
   public JBSplitter(boolean vertical, float proportion, float minProp, float maxProp) {
     super(vertical, proportion, minProp, maxProp);
   }

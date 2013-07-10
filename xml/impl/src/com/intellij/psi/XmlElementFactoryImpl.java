@@ -42,8 +42,9 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     myProject = project;
   }
 
+  @Override
   @NotNull
-  public XmlTag createTagFromText(@NotNull @NonNls String text, @NotNull Language language) throws IncorrectOperationException {
+  public XmlTag createTagFromText(@NotNull @NonNls CharSequence text, @NotNull Language language) throws IncorrectOperationException {
     assert language instanceof XMLLanguage:"Tag can be created only for xml language";
     FileType type = language.getAssociatedFileType();
     if (type == null) type = StdFileTypes.XML;
@@ -53,11 +54,13 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return tag;
   }
 
+  @Override
   @NotNull
-  public XmlTag createTagFromText(@NotNull String text) throws IncorrectOperationException {
+  public XmlTag createTagFromText(@NotNull CharSequence text) throws IncorrectOperationException {
     return createTagFromText(text, StdFileTypes.XML.getLanguage());
   }
 
+  @Override
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
     final char quoteChar;
@@ -78,6 +81,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return attributes[0];
   }
 
+  @Override
   @NotNull
   public XmlText createDisplayText(@NotNull String s) throws IncorrectOperationException {
     final XmlTag tagFromText = createTagFromText("<a>" + XmlTagUtil.getCDATAQuote(s) + "</a>");
@@ -86,6 +90,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return textElements[0];
   }
 
+  @Override
   @NotNull
   public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
     final XmlDocument document = createXmlDocument(text, "dummy.xhtml", XHtmlFileType.INSTANCE);
@@ -94,7 +99,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return tag;
   }
 
-  private XmlDocument createXmlDocument(@NonNls final String text, @NonNls final String fileName, FileType fileType) {
+  private XmlDocument createXmlDocument(@NonNls final CharSequence text, @NonNls final String fileName, FileType fileType) {
     final XmlDocument document = ((XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text)).getDocument();
     assert document != null;
     return document;

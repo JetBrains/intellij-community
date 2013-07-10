@@ -370,12 +370,20 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         host.addMessage(((XmlAttributeImpl)attribute).getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
       }
     }
-    final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(parentTag, myPsiClass);
+    PsiClass aClass = myPsiClass;
+    final XmlAttribute constAttr = context.getAttribute(FxmlConstants.FX_CONSTANT);
+    if (constAttr != null) {
+      final PsiField constField = aClass.findFieldByName(constAttr.getValue(), false);
+      if (constField != null) {
+        aClass = PsiUtil.resolveClassInType(constField.getType());
+      }
+    }
+    final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(parentTag, aClass);
     if (canCoerceError != null) {
       host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
     }
-    if (myPsiClass != null && myPsiClass.isValid()) {
-      final String message = JavaFxPsiUtil.isAbleToInstantiate(myPsiClass);
+    if (aClass != null && aClass.isValid()) {
+      final String message = JavaFxPsiUtil.isAbleToInstantiate(aClass);
       if (message != null) {
         host.addMessage(context, message, ValidationHost.ErrorType.ERROR);
       }

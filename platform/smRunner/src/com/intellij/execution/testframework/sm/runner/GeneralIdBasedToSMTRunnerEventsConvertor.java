@@ -17,7 +17,6 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
@@ -36,7 +35,7 @@ import java.util.Set;
 /**
  * @author Sergey Simonchik
  */
-public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEventsProcessor {
+public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class.getName());
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
@@ -67,7 +66,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onStartTesting() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         myTestsRootProxy.setStarted();
 
@@ -78,7 +77,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
   @Override
   public void onTestsReporterAttached() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         myTestsRootProxy.setTestsReporterAttached();
       }
@@ -86,7 +85,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onFinishTesting() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         if (myIsTestingFinished) {
           // has been already invoked!
@@ -118,7 +117,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         doStartNode(testStartedEvent, false);
       }
@@ -126,7 +125,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onSuiteStarted(@NotNull final TestSuiteStartedEvent suiteStartedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         doStartNode(suiteStartedEvent, true);
       }
@@ -196,7 +195,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         SMTestProxy testProxy = getProxyToFinish(testFinishedEvent);
         if (testProxy != null) {
@@ -209,7 +208,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onSuiteFinished(@NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         SMTestProxy suiteProxy = getProxyToFinish(suiteFinishedEvent);
         if (suiteProxy != null) {
@@ -232,7 +231,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         Node activeNode = findActiveNode();
         SMTestProxy activeProxy = activeNode.getProxy();
@@ -250,7 +249,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   public void onError(@NotNull final String localizedMessage,
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         Node activeNode = findActiveNode();
         SMTestProxy activeProxy = activeNode.getProxy();
@@ -261,7 +260,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
   public void onCustomProgressTestsCategory(@Nullable final String categoryName,
                                             final int testCount) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnCustomProgressTestsCategory(categoryName, testCount);
       }
@@ -269,7 +268,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onCustomProgressTestStarted() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnCustomProgressTestStarted();
       }
@@ -277,7 +276,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onCustomProgressTestFailed() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnCustomProgressTestFailed();
       }
@@ -285,7 +284,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         Node node = findNode(testFailedEvent);
         if (node == null) {
@@ -320,7 +319,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         Node node = findNode(testIgnoredEvent);
         if (node == null) {
@@ -339,7 +338,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         Node node = findNode(testOutputEvent);
         if (node == null) {
@@ -358,7 +357,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   }
 
   public void onTestsCountInSuite(final int count) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnTestsCountInSuite(count);
       }
@@ -460,7 +459,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
    * Remove listeners,  etc
    */
   public void dispose() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    super.dispose();
+    addToInvokeLater(new Runnable() {
       public void run() {
         myEventsListeners.clear();
 

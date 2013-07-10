@@ -21,4 +21,16 @@ public interface ToolExtensionPoints {
   @NonNls String INVALID_PROPERTY_KEY_INSPECTION_TOOL = "com.intellij.invalidPropertyKeyInspectionTool";
   @NonNls String I18N_INSPECTION_TOOL = "com.intellij.i18nInspectionTool";
   @NonNls String JAVA15_INSPECTION_TOOL = "com.intellij.java15InspectionTool";
+
+
+  @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
+
+  @NonNls String DEAD_CODE_TOOL = "com.intellij.deadCode";
+
+  @NonNls String JAVADOC_LOCAL = "com.intellij.javaDocNotNecessary";
+
+  @NonNls String VISIBLITY_TOOL = "com.intellij.visibility";
+
+  @NonNls String EMPTY_METHOD_TOOL = "com.intellij.canBeEmpty";
+
 }

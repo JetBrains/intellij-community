@@ -263,7 +263,7 @@
       </group>
 
       <!-- View -->
-      <group id="ViewMenu" popup="true">
+      <group id="ViewMenu" popup="true" compact="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
@@ -319,7 +319,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" configurable="true" popup="true">
+      <group id="ToolsMenu" configurable="true" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
         <separator/>
@@ -576,7 +576,6 @@
       </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
-      <action internal="true" id="RestartInfo" class="com.intellij.internal.RestartInfoAction" text="Restart Info"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb mode"/>
       <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
       <separator/>
@@ -623,6 +622,7 @@
       <action id="DirDiffMenu.SetNoOperation" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetNoOperation" text="Set Do Nothing"/>
       <separator/>
       <action id="DirDiffMenu.SetDefault" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDefault" text="Set Default"/>
+      <action id="DirDiffMenu.WarnOnDeletion" class="com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion" text="Warn When Delete" />
     </group>
 
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction" text="Rerun"/>

@@ -16,15 +16,15 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +90,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
 
     private void cancel() {
       mySession.removeSessionListener(this);
-      DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+      AppUIUtil.invokeOnEdt(new Runnable() {
         @Override
         public void run() {
           cancelEditing();

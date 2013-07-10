@@ -1,4 +1,3 @@
-
 /*
  * User: anna
  * Date: 29-Jan-2007
@@ -8,7 +7,7 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
@@ -40,12 +39,12 @@ public class SuppressActionWrapper extends ActionGroup {
   private final Project myProject;
   private final InspectionManagerEx myManager;
   private final Set<InspectionTreeNode> myNodesToSuppress = new HashSet<InspectionTreeNode>();
-  private final InspectionTool myTool;
+  private final InspectionToolWrapper myToolWrapper;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
 
-  public SuppressActionWrapper(final Project project,
-                                  final InspectionTool tool,
-                                  final TreePath[] paths) {
+  public SuppressActionWrapper(@NotNull final Project project,
+                               @NotNull final InspectionToolWrapper toolWrapper,
+                               @NotNull final TreePath[] paths) {
     super(InspectionsBundle.message("suppress.inspection.problem"), false);
     myProject = project;
     myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
@@ -63,13 +62,13 @@ public class SuppressActionWrapper extends ActionGroup {
         }
       });
     }
-    myTool = tool;
+    myToolWrapper = toolWrapper;
   }
 
   @Override
   @NotNull
   public SuppressTreeAction[] getChildren(@Nullable final AnActionEvent e) {
-    final SuppressIntentionAction[] suppressActions = myTool.getSuppressActions();
+    final SuppressIntentionAction[] suppressActions = InspectionManagerEx.getSuppressActions(myToolWrapper.getTool());
     if (suppressActions == null || suppressActions.length == 0) return new SuppressTreeAction[0];
     final SuppressTreeAction[] actions = new SuppressTreeAction[suppressActions.length];
     for (int i = 0; i < suppressActions.length; i++) {
@@ -93,7 +92,7 @@ public class SuppressActionWrapper extends ActionGroup {
           if (startModificationCount != tracker.getModificationCount()) {
             final Set<GlobalInspectionContextImpl> globalInspectionContexts = myManager.getRunningContexts();
             for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-              context.ignoreElement(myTool, element);
+              context.ignoreElement(myToolWrapper.getTool(), element);
             }
           }
         }
@@ -108,7 +107,7 @@ public class SuppressActionWrapper extends ActionGroup {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(myTool != null && myTool.getSuppressActions() != null);
+    e.getPresentation().setEnabled(InspectionManagerEx.getSuppressActions(myToolWrapper.getTool()) != null);
   }
 
   private static Pair<PsiElement, CommonProblemDescriptor> getContentToSuppress(InspectionTreeNode node) {

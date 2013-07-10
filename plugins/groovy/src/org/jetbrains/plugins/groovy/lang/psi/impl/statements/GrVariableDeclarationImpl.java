@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.psi.util.CachedValueProvider;
@@ -28,7 +29,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -121,7 +121,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
       newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
     }
 
-    GrReferenceAdjuster.shortenReferences(newTypeElement);
+    JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(newTypeElement);
   }
 
   @Override

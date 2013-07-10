@@ -19,7 +19,7 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Condition;
@@ -74,10 +74,7 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final ExtensionsArea rootArea = Extensions.getRootArea();
-      final ExtensionPoint<Condition<PsiElement>> extensionPoint = rootArea.getExtensionPoint(
-        "com.intellij.cantBeStatic");
-      final Condition<PsiElement>[] addins = extensionPoint.getExtensions();
+      final Condition<PsiElement>[] addins = InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensions();
       for (Condition<PsiElement> addin : addins) {
         if (addin.value(initializer)) {
           return;

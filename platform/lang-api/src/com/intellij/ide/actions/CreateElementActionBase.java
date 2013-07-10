@@ -133,6 +133,10 @@ public abstract class CreateElementActionBase extends AnAction {
       myDirectory = directory;
     }
 
+    public PsiDirectory getDirectory() {
+      return myDirectory;
+    }
+
     @Override
     public boolean checkInput(final String inputString) {
       return true;

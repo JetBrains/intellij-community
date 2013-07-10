@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -35,15 +34,13 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inner.class.may.be.static.display.name");
+    return InspectionGadgetsBundle.message("inner.class.may.be.static.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "inner.class.may.be.static.problem.descriptor");
+    return InspectionGadgetsBundle.message("inner.class.may.be.static.problem.descriptor");
   }
 
   @Override
@@ -65,15 +62,12 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiJavaToken classNameToken =
-        (PsiJavaToken)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiJavaToken classNameToken = (PsiJavaToken)descriptor.getPsiElement();
       final PsiClass innerClass = (PsiClass)classNameToken.getParent();
       assert innerClass != null;
       final SearchScope useScope = innerClass.getUseScope();
-      final Query<PsiReference> query =
-        ReferencesSearch.search(innerClass, useScope);
+      final Query<PsiReference> query = ReferencesSearch.search(innerClass, useScope);
       final Collection<PsiReference> references = query.findAll();
       for (final PsiReference reference : references) {
         final PsiElement element = reference.getElement();
@@ -81,10 +75,8 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
         if (!(parent instanceof PsiNewExpression)) {
           continue;
         }
-        final PsiNewExpression newExpression =
-          (PsiNewExpression)parent;
-        final PsiExpression qualifier =
-          newExpression.getQualifier();
+        final PsiNewExpression newExpression = (PsiNewExpression)parent;
+        final PsiExpression qualifier = newExpression.getQualifier();
         if (qualifier == null) {
           continue;
         }
@@ -103,15 +95,11 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     return new InnerClassMayBeStaticVisitor();
   }
 
-  private static class InnerClassMayBeStaticVisitor
-    extends BaseInspectionVisitor {
+  private static class InnerClassMayBeStaticVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      if (aClass.getContainingClass() != null &&
-          !aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        // inner class cannot have static declarations
+      if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       if (aClass instanceof PsiAnonymousClass) {
@@ -122,8 +110,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
         if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
           continue;
         }
-        final InnerClassReferenceVisitor visitor =
-          new InnerClassReferenceVisitor(innerClass);
+        final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(innerClass);
         innerClass.accept(visitor);
         if (!visitor.canInnerClassBeStatic()) {
           continue;

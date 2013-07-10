@@ -38,4 +38,6 @@ public interface XmlFileNSInfoProvider {
   @Nullable
   @NonNls
   String[][] getDefaultNamespaces(@NotNull XmlFile file);
+
+  boolean overrideNamespaceFromDocType(@NotNull XmlFile file);
 }

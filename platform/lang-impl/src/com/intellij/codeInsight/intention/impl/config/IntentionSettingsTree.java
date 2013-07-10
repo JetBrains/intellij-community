@@ -20,7 +20,12 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
@@ -44,6 +49,7 @@ public abstract class IntentionSettingsTree {
   private FilterComponent myFilter;
 
   private final Map<IntentionActionMetaData, Boolean> myIntentionToCheckStatus = new HashMap<IntentionActionMetaData, Boolean>();
+  private JPanel myNorthPanel;
 
   protected IntentionSettingsTree() {
     initTree();
@@ -90,7 +96,19 @@ public abstract class IntentionSettingsTree {
     myFilter = new MyFilterComponent();
     myComponent = new JPanel(new BorderLayout());
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    myComponent.add(myFilter, BorderLayout.NORTH);
+    myNorthPanel = new JPanel(new BorderLayout());
+    myNorthPanel.add(myFilter, BorderLayout.CENTER);
+
+    final DefaultActionGroup group = new DefaultActionGroup();
+    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
+
+    final DefaultTreeExpander treeExpander = new DefaultTreeExpander(myTree);
+    group.add(actionManager.createExpandAllAction(treeExpander, myTree));
+    group.add(actionManager.createCollapseAllAction(treeExpander, myTree));
+
+    myNorthPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.WEST);
+
+    myComponent.add(myNorthPanel, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);
 
     myFilter.reset();
@@ -392,6 +410,6 @@ public abstract class IntentionSettingsTree {
   }
 
   public JPanel getToolbarPanel() {
-    return myFilter;
+    return myNorthPanel;
   }
 }

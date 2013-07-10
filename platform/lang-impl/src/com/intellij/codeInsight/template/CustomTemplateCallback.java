@@ -22,7 +22,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -51,8 +50,6 @@ public class CustomTemplateCallback {
   public CustomTemplateCallback(Editor editor, PsiFile file, boolean wrapping) {
     myProject = file.getProject();
     myTemplateManager = TemplateManager.getInstance(myProject);
-
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     int offset = getOffset(wrapping, editor);
     PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);

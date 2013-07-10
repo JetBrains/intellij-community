@@ -35,6 +35,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.Language;
@@ -833,18 +834,15 @@ public class HighlightMethodUtil {
   }
 
   @Nullable
-  static HighlightInfo checkDuplicateMethod(PsiClass aClass, PsiMethod method) {
+  static HighlightInfo checkDuplicateMethod(PsiClass aClass,
+                                            @NotNull PsiMethod method,
+                                            @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
     if (aClass == null || method instanceof ExternallyDefinedPsiElement) return null;
     MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-    int methodCount = 0;
-    final PsiMethod[] methodsByName = aClass.findMethodsByName(method.getName(), false);
-    for (PsiMethod other : methodsByName) {
-      if (other instanceof ExternallyDefinedPsiElement) continue;
-      if (other == method ||
-          other.isConstructor() == method.isConstructor() && other.getSignature(PsiSubstitutor.EMPTY).equals(methodSignature)) {
-        methodCount++;
-        if (methodCount > 1) break;
-      }
+    int methodCount = 1;
+    List<PsiMethod> methods = (List<PsiMethod>)duplicateMethods.get(methodSignature);
+    if (methods.size() > 1) {
+      methodCount++;
     }
 
     if (methodCount == 1 && aClass.isEnum() &&
@@ -874,6 +872,7 @@ public class HighlightMethodUtil {
     if (hasNoBody) {
       if (isExtension) {
         description = JavaErrorMessages.message("extension.method.should.have.a.body");
+        additionalFixes.add(new AddMethodBodyFix(method));
       }
       else if (isInterface && isStatic) {
         description = "Static methods in interfaces should have a body";

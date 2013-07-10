@@ -187,7 +187,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     }
   }
 
-  private void showPopup(MouseEvent e) {
+  private void showPopup(@NotNull MouseEvent e) {
     if (!actionEnabled) {
       return;
     }

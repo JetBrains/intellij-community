@@ -15,19 +15,41 @@
  */
 package git4idea.test;
 
+import com.intellij.notification.Notification;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
+import git4idea.Notificator;
+import git4idea.repo.GitRepository;
+import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManagerImpl;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.dvcs.test.Executor.cd;
+import static com.intellij.dvcs.test.Executor.touch;
 import static com.intellij.dvcs.test.TestRepositoryUtil.createDir;
 import static com.intellij.dvcs.test.TestRepositoryUtil.createFile;
+import static git4idea.test.GitExecutor.git;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitTestUtil {
+
+  private static final String USER_NAME = "John Doe";
+  private static final String USER_EMAIL = "John.Doe@example.com";
 
   /**
    * <p>Creates file structure for given paths. Path element should be a relative (from project root)
@@ -58,4 +80,58 @@ public class GitTestUtil {
     return result;
   }
 
+  /**
+   * Init, set up username and make initial commit.
+   *
+   * @param repoRoot
+   */
+  public static void initRepo(@NotNull String repoRoot) {
+    cd(repoRoot);
+    git("init");
+    setupUsername();
+    touch("initial.txt");
+    git("add initial.txt");
+    git("commit -m initial");
+  }
+
+  public static void setupUsername() {
+    git("config user.name " + USER_NAME);
+    git("config user.email " + USER_EMAIL);
+  }
+
+  /**
+   * Creates a Git repository in the given root directory;
+   * registers it in the Settings;
+   * return the {@link GitRepository} object for this newly created repository.
+   */
+  @NotNull
+  public static GitRepository createRepository(@NotNull Project project, @NotNull String root) {
+    initRepo(root);
+    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+    vcsManager.setDirectoryMapping(root, GitVcs.NAME);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file);
+    assertNotNull("Couldn't find repository for root " + root, repository);
+    return repository;
+  }
+
+  public static void assertNotification(@NotNull Project project, @Nullable Notification expected) {
+    if (expected == null) {
+      assertNull("Notification is unexpected here", expected);
+      return;
+    }
+
+    Notification actualNotification = ((TestNotificator)ServiceManager.getService(project, Notificator.class)).getLastNotification();
+    Assert.assertNotNull("No notification was shown", actualNotification);
+    Assert.assertEquals("Notification has wrong title", expected.getTitle(), actualNotification.getTitle());
+    Assert.assertEquals("Notification has wrong type", expected.getType(), actualNotification.getType());
+    Assert.assertEquals("Notification has wrong content", expected.getContent(), actualNotification.getContent());
+  }
+
+  /**
+   * Default port will be occupied by main idea instance => define the custom default to avoid searching of free port
+   */
+  public static void setDefaultBuiltInServerPort() {
+    System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
+  }
 }

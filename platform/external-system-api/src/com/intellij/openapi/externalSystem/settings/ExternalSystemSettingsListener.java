@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.settings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Defines callback for external system settings change.
@@ -31,7 +32,7 @@ public interface ExternalSystemSettingsListener<S extends ExternalProjectSetting
   
   void onProjectsLinked(@NotNull Collection<S> settings);
 
-  void onProjectsUnlinked(@NotNull Collection<String> linkedProjectPaths);
+  void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths);
   
   void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath);
 

@@ -12,8 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -21,6 +23,8 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationLine;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +33,9 @@ import java.util.regex.Pattern;
 
 public class HgAnnotateCommand {
 
+  private static final Logger LOG = Logger.getInstance(HgAnnotateCommand.class);
   private static final Pattern LINE_PATTERN = Pattern.compile(
-    "\\s*(.+)\\s+([0-9]+)\\s+([0-9a-fA-F]+)\\s+([0-9]{4}-[0-9]{2}-[0-9]{2}):\\s*([0-9]+):\\s(.*)"
+    "\\s*(.+)\\s+([0-9]+)\\s+([0-9a-fA-F]+)\\s+([a-zA-Z]{3}\\s+[a-zA-Z]{3}\\s+[0-9]{2}\\s+.*[0-9]{4}.+):\\s*([0-9]+):\\s(.*)"
   );
 
   private static final int USER_GROUP = 1;
@@ -48,7 +53,7 @@ public class HgAnnotateCommand {
 
   public List<HgAnnotationLine> execute(@NotNull HgFile hgFile, VcsFileRevision revision) {
     final List<String> arguments = new ArrayList<String>();
-    arguments.add("-cqnudl");
+    arguments.add("-cvnudl");
     if (revision != null) {
       arguments.add("-r");
       HgRevisionNumber revisionNumber = (HgRevisionNumber)revision.getRevisionNumber();
@@ -72,7 +77,15 @@ public class HgAnnotateCommand {
       if (matcher.matches()) {
         String user = matcher.group(USER_GROUP);
         HgRevisionNumber rev = HgRevisionNumber.getInstance(matcher.group(REVISION_GROUP), matcher.group(CHANGESET_GROUP));
-        String date = matcher.group(DATE_GROUP);
+        String dateGroup = matcher.group(DATE_GROUP).trim();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
+        String date = "";
+        try {
+          date = DateFormatUtil.formatPrettyDate(dateFormat.parse(dateGroup));
+        }
+        catch (ParseException e) {
+          LOG.error("Couldn't parse annotation date ", e);
+        }
         Integer lineNumber = Integer.valueOf(matcher.group(LINE_NUMBER_GROUP));
         String content = matcher.group(CONTENT_GROUP);
         HgAnnotationLine annotationLine = new HgAnnotationLine(

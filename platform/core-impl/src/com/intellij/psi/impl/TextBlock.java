@@ -92,17 +92,13 @@ public class TextBlock {
   }
 
   public void performAtomically(@NotNull Runnable runnable) {
-    boolean wasLocked = isLocked();
-    if (!wasLocked) {
-      lock();
-    }
+    assert !isLocked();
+    lock();
     try {
       runnable.run();
     }
     finally {
-      if (!wasLocked) {
-        unlock();
-      }
+      unlock();
     }
   }
 
@@ -114,5 +110,15 @@ public class TextBlock {
     }
 
     return textBlock;
+  }
+
+  @Override
+  public String toString() {
+    return "TextBlock{" +
+           "myStartOffset=" + myStartOffset +
+           ", myTextEndOffset=" + myTextEndOffset +
+           ", myPsiEndOffset=" + myPsiEndOffset +
+           ", myIsLocked=" + myIsLocked +
+           '}';
   }
 }

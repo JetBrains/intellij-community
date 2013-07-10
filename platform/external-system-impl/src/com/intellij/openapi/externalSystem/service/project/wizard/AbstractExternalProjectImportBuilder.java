@@ -1,8 +1,10 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
@@ -14,7 +16,6 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -31,6 +32,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -40,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * GoF builder for gradle-backed projects.
@@ -63,7 +62,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   @NotNull private final C                             myControl;
   @NotNull private final ProjectSystemId               myExternalSystemId;
 
-  private DataNode<ProjectData> myExternalProjectNode;
+  private DataNode<ProjectData>               myExternalProjectNode;
 
   public AbstractExternalProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager,
                                               @NotNull ProjectDataManager projectDataManager,
@@ -95,7 +94,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   @NotNull
-  public C getControl() {
+  public C getControl(@Nullable Project currentProject) {
+    myControl.setCurrentProject(currentProject);
     return myControl;
   }
 
@@ -114,7 +114,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel)
   {
-    System.setProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
+    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
     final DataNode<ProjectData> externalProjectNode = getExternalProjectNode();
     if (externalProjectNode != null) {
       beforeCommit(externalProjectNode, project);
@@ -124,11 +124,10 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @Override
       public void run() {
         AbstractExternalSystemSettings systemSettings = mySettingsManager.getSettings(project, myExternalSystemId);
-        ExternalProjectSettings projectSettings = myControl.getProjectSettings().clone();
-        final String linkedProjectPath = projectSettings.getExternalProjectPath();
-        assert linkedProjectPath != null;
+        final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
         Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
         projects.add(projectSettings);
+        systemSettings.copyFrom(myControl.getSystemSettings());
         systemSettings.setLinkedProjectsSettings(projects);
 
         if (externalProjectNode != null) {
@@ -139,6 +138,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                 @Override
                 public void run() {
                   myProjectDataManager.importData(externalProjectNode.getKey(), Collections.singleton(externalProjectNode), project, true);
+                  myExternalProjectNode = null;
                 }
               });
             }
@@ -153,7 +153,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                   @Override
                   public void run(@NotNull final ProgressIndicator indicator) {
                     ExternalSystemResolveProjectTask task
-                      = new ExternalSystemResolveProjectTask(myExternalSystemId, project, linkedProjectPath, true);
+                      = new ExternalSystemResolveProjectTask(myExternalSystemId, project, projectSettings.getExternalProjectPath(), true);
                     task.execute(indicator);
                     DataNode<ProjectData> projectWithResolvedLibraries = task.getExternalProject();
                     if (projectWithResolvedLibraries == null) {
@@ -170,6 +170,16 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       }
     });
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private ExternalProjectSettings getCurrentExternalProjectSettings() {
+    ExternalProjectSettings result = myControl.getProjectSettings().clone();
+    File externalProjectConfigFile = getExternalProjectConfigToUse(new File(result.getExternalProjectPath()));
+    final String linkedProjectPath = FileUtil.toCanonicalPath(externalProjectConfigFile.getPath());
+    assert linkedProjectPath != null;
+    result.setExternalProjectPath(linkedProjectPath);
+    return result;
   }
 
   protected abstract void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project);
@@ -244,15 +254,16 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param wizardContext             current wizard context
    * @throws ConfigurationException   if gradle project is not defined and can't be constructed
    */
+  @SuppressWarnings("unchecked")
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
-    String externalSystemName = myExternalSystemId.getReadableName();
+    final String externalSystemName = myExternalSystemId.getReadableName();
     File projectFile = getProjectFile();
     if (projectFile == null) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
     }
     projectFile = getExternalProjectConfigToUse(projectFile);
     final Ref<ConfigurationException> error = new Ref<ConfigurationException>();
-    ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
+    final ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
       @Override
       public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
         myExternalProjectNode = externalProject;
@@ -261,25 +272,39 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
         if (!StringUtil.isEmpty(errorDetails)) {
+          assert errorDetails != null;
           LOG.warn(errorDetails);
         }
         error.set(new ConfigurationException(ExternalSystemBundle.message("error.resolve.with.reason", errorMessage),
                                              ExternalSystemBundle.message("error.resolve.generic")));
       }
     };
-    try {
-      final Project project = getProject(wizardContext);
-      ExternalSystemUtil.refreshProject(
-        project,
-        myExternalSystemId,
-        projectFile.getAbsolutePath(),
-        callback,
-        false,
-        true
-      );
-    }
-    catch (IllegalArgumentException e) {
-      throw new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName));
+
+    final Project project = getProject(wizardContext);
+    final File finalProjectFile = projectFile;
+    final Ref<ConfigurationException> exRef = new Ref<ConfigurationException>();
+    executeAndRestoreDefaultProjectSettings(project, new Runnable() {
+      @Override
+      public void run() {
+        try {
+          ExternalSystemUtil.refreshProject(
+            project,
+            myExternalSystemId,
+            finalProjectFile.getAbsolutePath(),
+            callback,
+            false,
+            true
+          );
+        }
+        catch (IllegalArgumentException e) {
+          exRef.set(
+            new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName)));
+        }
+      }
+    });
+    ConfigurationException ex = exRef.get();
+    if (ex != null) {
+      throw ex;
     }
     if (myExternalProjectNode == null) {
       ConfigurationException exception = error.get();
@@ -289,6 +314,34 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     else {
       applyProjectSettings(wizardContext);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void executeAndRestoreDefaultProjectSettings(@NotNull Project project, @NotNull Runnable task) {
+    if (!project.isDefault()) {
+      task.run();
+      return;
+    }
+
+    AbstractExternalSystemSettings systemSettings = mySettingsManager.getSettings(project, myExternalSystemId);
+    Object systemStateToRestore = null;
+    if (systemSettings instanceof PersistentStateComponent) {
+      systemStateToRestore = ((PersistentStateComponent)systemSettings).getState();
+    }
+    systemSettings.copyFrom(myControl.getSystemSettings());
+    Collection projectSettingsToRestore = systemSettings.getLinkedProjectsSettings();
+    systemSettings.setLinkedProjectsSettings(Collections.singleton(getCurrentExternalProjectSettings()));
+    try {
+      task.run();
+    }
+    finally {
+      if (systemStateToRestore != null) {
+        ((PersistentStateComponent)systemSettings).loadState(systemStateToRestore);
+      }
+      else {
+        systemSettings.setLinkedProjectsSettings(projectSettingsToRestore);
+      }
     }
   }
 

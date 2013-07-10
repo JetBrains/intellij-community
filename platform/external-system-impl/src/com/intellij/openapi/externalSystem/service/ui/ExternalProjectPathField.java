@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -23,34 +24,54 @@ import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.serialization.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemNode;
+import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTree;
+import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Denis Zhdanov
  * @since 24.05.13 19:13
  */
-public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
+public class ExternalProjectPathField extends ComponentWithBrowseButton<ExternalProjectPathField.MyPathAndProjectButtonPanel>
+  implements TextAccessor
+{
 
   @NotNull private static final String PROJECT_FILE_TO_START_WITH_KEY = "external.system.task.project.file.to.start";
 
@@ -62,11 +83,11 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
                                   @NotNull FileChooserDescriptor descriptor,
                                   @NotNull String fileChooserTitle)
   {
-    super(createTextField(project, externalSystemId), new MyBrowseListener(descriptor, fileChooserTitle, project));
+    super(createPanel(project, externalSystemId), new MyBrowseListener(descriptor, fileChooserTitle, project));
     ActionListener[] listeners = getButton().getActionListeners();
     for (ActionListener listener : listeners) {
       if (listener instanceof MyBrowseListener) {
-        ((MyBrowseListener)listener).setPathField(getChildComponent());
+        ((MyBrowseListener)listener).setPathField(getChildComponent().getTextField());
         break;
       }
     }
@@ -75,17 +96,78 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
   }
 
   @NotNull
+  private static MyPathAndProjectButtonPanel createPanel(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
+    final EditorTextField textField = createTextField(project, externalSystemId);
+    
+    final FixedSizeButton selectRegisteredProjectButton = new FixedSizeButton();
+    selectRegisteredProjectButton.setIcon(AllIcons.Actions.Module);
+    String tooltipText = ExternalSystemBundle.message("run.configuration.tooltip.choose.registered.project",
+                                                      externalSystemId.getReadableName());
+    selectRegisteredProjectButton.setToolTipText(tooltipText);
+    selectRegisteredProjectButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final Ref<JBPopup> popupRef = new Ref<JBPopup>();
+        final Tree tree = buildRegisteredProjectsTree(project, externalSystemId);
+        tree.setBorder(IdeBorderFactory.createEmptyBorder(8));
+        Runnable treeSelectionCallback = new Runnable() {
+          @Override
+          public void run() {
+            TreePath path = tree.getSelectionPath();
+            if (path != null) {
+              Object lastPathComponent = path.getLastPathComponent();
+              if (lastPathComponent instanceof ExternalSystemNode) {
+                Object e = ((ExternalSystemNode)lastPathComponent).getDescriptor().getElement();
+                if (e instanceof ExternalProjectPojo) {
+                  ExternalProjectPojo pojo = (ExternalProjectPojo)e;
+                  textField.setText(pojo.getPath());
+                  Editor editor = textField.getEditor();
+                  if (editor != null) {
+                    collapseIfPossible(editor, externalSystemId, project);
+                  }
+                }
+              }
+            }
+            popupRef.get().closeOk(null); 
+          }
+        };
+        JBPopup popup = new PopupChooserBuilder(tree)
+          .setTitle(ExternalSystemBundle.message("run.configuration.title.choose.registered.project", externalSystemId.getReadableName()))
+          .setResizable(true)
+          .setItemChoosenCallback(treeSelectionCallback)
+          .setAutoselectOnMouseMove(true)
+          .setCloseOnEnter(false)
+          .createPopup();
+        popupRef.set(popup);
+        popup.showUnderneathOf(selectRegisteredProjectButton);
+      }
+    });
+    return new MyPathAndProjectButtonPanel(textField, selectRegisteredProjectButton);
+  }
+
+  @NotNull
+  private static Tree buildRegisteredProjectsTree(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
+    ExternalSystemTasksTreeModel model = new ExternalSystemTasksTreeModel(externalSystemId);
+    ExternalSystemTasksTree result = new ExternalSystemTasksTree(model, ContainerUtilRt.<String, Boolean>newHashMap());
+    
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+    assert manager != null;
+    AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects = settings.getAvailableProjects();
+    List<ExternalProjectPojo> rootProjects = ContainerUtilRt.newArrayList(projects.keySet());
+    ContainerUtil.sort(rootProjects);
+    for (ExternalProjectPojo rootProject : rootProjects) {
+      model.ensureSubProjectsStructure(rootProject, projects.get(rootProject));
+    }
+    return result;
+  }
+  
+  @NotNull
   private static EditorTextField createTextField(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
     final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    final ExternalSystemUiAware uiAware;
-    if (manager instanceof ExternalSystemUiAware) {
-      uiAware = (ExternalSystemUiAware)manager;
-    }
-    else {
-      uiAware = DefaultExternalSystemUiAware.INSTANCE;
-    }
+    final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
     TextFieldCompletionProvider provider = new TextFieldCompletionProviderDumbAware() {
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
@@ -122,9 +204,9 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
   
   @Override
   public void setText(final String text) {
-    getChildComponent().setText(text);
+    getChildComponent().getTextField().setText(text);
 
-    Editor editor = getChildComponent().getEditor();
+    Editor editor = getChildComponent().getTextField().getEditor();
     if (editor != null) {
       collapseIfPossible(editor, myExternalSystemId, myProject);
     }
@@ -137,13 +219,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
     final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    final ExternalSystemUiAware uiAware;
-    if (manager instanceof ExternalSystemUiAware) {
-      uiAware = (ExternalSystemUiAware)manager;
-    }
-    else {
-      uiAware = DefaultExternalSystemUiAware.INSTANCE;
-    }
+    final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
 
     String rawText = editor.getDocument().getText();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : settings.getAvailableProjects().entrySet()) {
@@ -175,7 +251,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
 
   @Override
   public String getText() {
-    return getChildComponent().getText();
+    return getChildComponent().getTextField().getText();
   }
   
   private static class MyBrowseListener implements ActionListener {
@@ -218,6 +294,27 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<EditorTe
         myPathField.setText(path);
         component.setValue(PROJECT_FILE_TO_START_WITH_KEY, path);
       }
+    }
+  }
+  
+  public static class MyPathAndProjectButtonPanel extends JPanel {
+
+    @NotNull private final EditorTextField myTextField;
+    @NotNull private final FixedSizeButton myRegisteredProjectsButton;
+
+    public MyPathAndProjectButtonPanel(@NotNull EditorTextField textField,
+                                       @NotNull FixedSizeButton registeredProjectsButton)
+    {
+      super(new GridBagLayout());
+      myTextField = textField;
+      myRegisteredProjectsButton = registeredProjectsButton;
+      add(myTextField, new GridBag().weightx(1).fillCellHorizontally());
+      add(myRegisteredProjectsButton, new GridBag().insets(0, 3, 0, 0));
+    }
+
+    @NotNull
+    public EditorTextField getTextField() {
+      return myTextField;
     }
   }
 }

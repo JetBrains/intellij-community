@@ -124,7 +124,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       final GrAssignmentExpression assignmentExpression =
           (GrAssignmentExpression) ConditionalUtils.stripBraces(thenBranch);
       final IElementType operator =
-          assignmentExpression.getOperationToken();
+          assignmentExpression.getOperationTokenType();
       final String operatorText = getTextForOperator(operator);
       final GrExpression lhs = assignmentExpression.getLValue();
       final String lhsText = lhs.getText();
@@ -146,7 +146,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       final GrAssignmentExpression assignmentExpression =
           (GrAssignmentExpression) ConditionalUtils.stripBraces(thenBranch);
       final IElementType operator =
-          assignmentExpression.getOperationToken();
+          assignmentExpression.getOperationTokenType();
       final GrExpression lhs = assignmentExpression.getLValue();
       final String lhsText = lhs.getText();
       replaceStatement(statement,
@@ -170,7 +170,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       final GrAssignmentExpression assignmentExpression =
           (GrAssignmentExpression) ConditionalUtils.stripBraces(thenBranch);
       final IElementType operator =
-          assignmentExpression.getOperationToken();
+          assignmentExpression.getOperationTokenType();
       final String operatorText = getTextForOperator(operator);
       final GrExpression lhs = assignmentExpression.getLValue();
       final String lhsText = lhs.getText();
@@ -226,7 +226,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       final GrAssignmentExpression assignmentExpression =
           (GrAssignmentExpression) ConditionalUtils.stripBraces(thenBranch);
       final IElementType operator =
-          assignmentExpression.getOperationToken();
+          assignmentExpression.getOperationTokenType();
       final String operatorText = getTextForOperator(operator);
       final GrExpression lhs = assignmentExpression.getLValue();
       final String lhsText = lhs.getText();
@@ -352,8 +352,8 @@ public class GroovyTrivialIfInspection extends BaseInspection {
           (GrAssignmentExpression) thenBranch;
       final GrAssignmentExpression elseExpression =
           (GrAssignmentExpression) elseBranch;
-      final IElementType thenSign = thenExpression.getOperationToken();
-      final IElementType elseSign = elseExpression.getOperationToken();
+      final IElementType thenSign = thenExpression.getOperationTokenType();
+      final IElementType elseSign = elseExpression.getOperationTokenType();
       if (!thenSign.equals(elseSign)) {
         return false;
       }
@@ -377,8 +377,8 @@ public class GroovyTrivialIfInspection extends BaseInspection {
           (GrAssignmentExpression) thenBranch;
       final GrAssignmentExpression elseExpression =
           (GrAssignmentExpression) elseBranch;
-      final IElementType thenSign = thenExpression.getOperationToken();
-      final IElementType elseSign = elseExpression.getOperationToken();
+      final IElementType thenSign = thenExpression.getOperationTokenType();
+      final IElementType elseSign = elseExpression.getOperationTokenType();
       if (!thenSign.equals(elseSign)) {
         return false;
       }
@@ -412,8 +412,8 @@ public class GroovyTrivialIfInspection extends BaseInspection {
           (GrAssignmentExpression) thenBranch;
       final GrAssignmentExpression elseExpression =
           (GrAssignmentExpression) elseBranch;
-      final IElementType thenSign = thenExpression.getOperationToken();
-      final IElementType elseSign = elseExpression.getOperationToken();
+      final IElementType thenSign = thenExpression.getOperationTokenType();
+      final IElementType elseSign = elseExpression.getOperationTokenType();
       if (!thenSign.equals(elseSign)) {
         return false;
       }
@@ -447,8 +447,8 @@ public class GroovyTrivialIfInspection extends BaseInspection {
           (GrAssignmentExpression) thenBranch;
       final GrAssignmentExpression elseExpression =
           (GrAssignmentExpression) elseBranch;
-      final IElementType thenSign = thenExpression.getOperationToken();
-      final IElementType elseSign = elseExpression.getOperationToken();
+      final IElementType thenSign = thenExpression.getOperationTokenType();
+      final IElementType elseSign = elseExpression.getOperationTokenType();
       if (!thenSign.equals(elseSign)) {
         return false;
       }

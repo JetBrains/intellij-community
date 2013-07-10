@@ -85,11 +85,13 @@ public class MockApplication extends MockComponentManager implements Application
     return true;
   }
 
+  @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
   }
 
+  @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
@@ -139,11 +141,13 @@ public class MockApplication extends MockComponentManager implements Application
     return computation.compute();
   }
 
+  @NotNull
   @Override
   public AccessToken acquireReadActionLock() {
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
+  @NotNull
   @Override
   public AccessToken acquireWriteActionLock(@Nullable Class marker) {
     return AccessToken.EMPTY_ACCESS_TOKEN;
@@ -250,10 +254,10 @@ public class MockApplication extends MockComponentManager implements Application
   @Override
   public void saveSettings() {
   }
-  
+
   private static class ExecutorServiceHolder {
     private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
-  
+
     private static ThreadPoolExecutor createServiceImpl() {
       return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
         @NotNull

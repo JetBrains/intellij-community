@@ -15,16 +15,25 @@
  */
 package git4idea.test;
 
+import com.intellij.openapi.ui.DialogWrapper;
+
 /**
- * TestDialogHandler is invoked by {@link TestDialogManager} instead of showing a dialog on a screen (which is usually impossible for tests).
- * It's purpose is to modify dialog fields and return the dialog exit code which will be transferred to the code which has invoked the dialog.
+ * TestDialogHandler is invoked by the {@link TestDialogManager} instead of showing a dialog on a screen
+ * (which is usually impossible for tests).
+ * It's purpose is to modify dialog fields and return the dialog exit code,
+ * which will be available to the code which has invoked the dialog.
+ *
  * @author Kirill Likhodedov
  */
-public interface TestDialogHandler<T> {
+public interface TestDialogHandler<T extends DialogWrapper> {
+
   /**
-   * Do something with dialog fields and return the exit code - as if user pressed one of exit buttons.
+   * Do something with the dialog (modify its instance fields, for example)
+   * and return the exit code - as if user pressed one of exit buttons.
+   *
    * @param dialog dialog to be handled.
-   * @return DialogWrapper exit code, for example, {@link com.intellij.openapi.ui.DialogWrapper#OK_EXIT_CODE}.
+   * @return DialogWrapper exit code, for example, {@link DialogWrapper#OK_EXIT_CODE}.
    */
   int handleDialog(T dialog);
+
 }

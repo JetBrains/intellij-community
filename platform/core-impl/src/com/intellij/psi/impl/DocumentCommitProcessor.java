@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomManager;
@@ -35,7 +36,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -52,7 +52,7 @@ import java.util.Arrays;
 public abstract class DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
 
-  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project, PsiFile excludeFile);
+  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project);
   public abstract void commitAsynchronously(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason);
 
   protected static class CommitTask {
@@ -105,10 +105,8 @@ public abstract class DocumentCommitProcessor {
   @Nullable("returns runnable to execute under write action in AWT to finish the commit")
   public Processor<Document> doCommit(@NotNull final CommitTask task,
                                       @NotNull final PsiFile file,
-                                      final boolean synchronously,
-                                      @NotNull PsiDocumentManager documentManager) {
+                                      final boolean synchronously) {
     Document document = task.document;
-    ((PsiDocumentManagerBase)documentManager).clearTreeHardRef(document);
     final TextBlock textBlock = TextBlock.get(file);
     if (textBlock.isEmpty()) return null;
     final long startDocModificationTimeStamp = document.getModificationStamp();
@@ -123,20 +121,8 @@ public abstract class DocumentCommitProcessor {
     final String oldPsiText = ApplicationManager.getApplication().isInternal() && ApplicationManager.getApplication().isUnitTestMode()
                               ? myTreeElementBeingReparsedSoItWontBeCollected.getText()
                               : null;
-    int startOffset;
-    int endOffset;
-    int lengthShift;
-    if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-      startOffset = textBlock.getStartOffset();
-      int psiEndOffset = textBlock.getPsiEndOffset();
-      endOffset = psiEndOffset;
-      lengthShift = textBlock.getTextEndOffset() - psiEndOffset;
-    }
-    else {
-      startOffset = 0;
-      endOffset = document.getTextLength();
-      lengthShift = document.getTextLength() - myTreeElementBeingReparsedSoItWontBeCollected.getTextLength();
-    }
+    final TextRange changedPsiRange =
+      getChangedPsiRange(file, textBlock.getStartOffset(), textBlock.getPsiEndOffset(), document.getTextLength());
     if (!assertBeforeCommit(document, file, textBlock, chars, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected)) {
       return new Processor<Document>() {
         @Override
@@ -151,7 +137,7 @@ public abstract class DocumentCommitProcessor {
       };
     }
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-    final DiffLog diffLog = blockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars, task.indicator);
+    final DiffLog diffLog = blockSupport.reparseRange(file, changedPsiRange, chars, task.indicator);
 
     return new Processor<Document>() {
       @Override
@@ -163,17 +149,12 @@ public abstract class DocumentCommitProcessor {
         }
 
         try {
-          textBlock.performAtomically(new Runnable() {
+          CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
             @Override
             public void run() {
-              CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
-                @Override
-                public void run() {
-                  synchronized (PsiLock.LOCK) {
-                    doActualPsiChange(file, diffLog);
-                  }
-                }
-              });
+              synchronized (PsiLock.LOCK) {
+                doActualPsiChange(file, diffLog);
+              }
             }
           });
 
@@ -181,12 +162,18 @@ public abstract class DocumentCommitProcessor {
         }
         finally {
           textBlock.clear();
-          SmartPointerManagerImpl.synchronizePointers(file);
         }
 
         return true;
       }
     };
+  }
+
+  public static TextRange getChangedPsiRange(PsiFile file, int changeStart, int changeEnd, int newTextLength) {
+    if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
+      return new TextRange(changeStart, changeEnd);
+    }
+    return new TextRange(0, newTextLength);
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
@@ -227,22 +214,22 @@ public abstract class DocumentCommitProcessor {
     int startOffset = textBlock.getStartOffset();
     int psiEndOffset = textBlock.getPsiEndOffset();
     if (oldPsiText != null) {
-      @NonNls String msg = "PSI/document inconsistency before reparse: ";
+      @NonNls String msg = "PSI/document inconsistency before reparse: file=" + file + " of class " + file.getClass();
       if (startOffset >= oldPsiText.length()) {
-        msg += "startOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
+        msg += "\nstartOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
         startOffset = oldPsiText.length();
       }
 
       String psiPrefix = oldPsiText.substring(0, startOffset);
       String docPrefix = chars.subSequence(0, startOffset).toString();
-      String psiSuffix = oldPsiText.substring(psiEndOffset);
+      String psiSuffix = psiEndOffset > oldPsiText.length() ? "<psiEndOffset too large>" : oldPsiText.substring(psiEndOffset);
       String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
       if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
         if (!psiPrefix.equals(docPrefix)) {
-          msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
+          msg = msg + "\n\npsiPrefix=" + psiPrefix + "\n\ndocPrefix=" + docPrefix;
         }
         if (!psiSuffix.equals(docSuffix)) {
-          msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
+          msg = msg + "\n\npsiSuffix=" + psiSuffix + "\n\ndocSuffix=" + docSuffix;
         }
         LOG.error(msg);
         return false;
@@ -279,7 +266,7 @@ public abstract class DocumentCommitProcessor {
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
         BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-        final DiffLog diffLog = blockSupport.reparseRange(file, 0, documentText.length(), 0, documentText, createProgressIndicator());
+        final DiffLog diffLog = blockSupport.reparseRange(file, new TextRange(0, documentText.length()), documentText, createProgressIndicator());
         CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
           @Override
           public void run() {

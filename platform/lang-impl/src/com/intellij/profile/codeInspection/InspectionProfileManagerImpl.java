@@ -17,6 +17,7 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -26,6 +27,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -39,8 +41,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.Profile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -49,7 +51,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -63,14 +64,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, ExportableComponent, JDOMExternalizable,
                                                                                    NamedComponent {
-  @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private final SeverityRegistrar mySeverityRegistrar;
-  @NonNls private static final String INSPECTION_DIR = "inspection";
-  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION_DIR;
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
@@ -86,8 +84,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
       @Override
       public InspectionProfileImpl readScheme(final Document document) {
-        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
-        profile.load(document.getRootElement());
+        InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
+        read(profile, document.getRootElement());
         return profile;
       }
 
@@ -127,6 +125,22 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
   }
 
+  private static void read(@NotNull final InspectionProfileImpl profile, @NotNull Element element) {
+    try {
+      profile.readExternal(element);
+    }
+    catch (Exception e) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
+                                   InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
+        }
+      }, ModalityState.NON_MODAL);
+    }
+  }
+
+  @NotNull
   private static InspectionProfileImpl createSampleProfile() {
     return new InspectionProfileImpl("Default");
   }
@@ -207,47 +221,26 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()){
-      InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), myRegistrar, this);
-      Element rootElement = JDOMUtil.loadDocument(file).getRootElement();
-      final Element profileElement = rootElement.getChild("profile");
-      if (profileElement != null) {
-        rootElement = profileElement;
+      try {
+        return InspectionProfileLoadUtil.load(file, myRegistrar, this);
       }
-      profile.load(rootElement);
-      return profile;
+      catch (IOException e) {
+        throw e;
+      }
+      catch (JDOMException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
+                                     InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
+          }
+        }, ModalityState.NON_MODAL);
+      }
     }
     return getProfile(path, false);
-  }
-
-  private static String getProfileName(Document document) {
-    String name = getRootElementAttribute(document, PROFILE_NAME_TAG);
-    if (name != null) return name;
-    return "unnamed";
-  }
-
-  private static String getProfileName(File file) {
-    String name = getRootElementAttribute(file, PROFILE_NAME_TAG);
-    if (name != null) return name;
-    return FileUtil.getNameWithoutExtension(file);
-  }
-
-  private static String getRootElementAttribute(final Document document, @NonNls String name) {
-    Element root = document.getRootElement();
-    return root.getAttributeValue(name);
-  }
-
-  @Nullable
-  private static String getRootElementAttribute(final File file, @NonNls String name) {
-    try {
-      Document doc = JDOMUtil.loadDocument(file);
-      return getRootElementAttribute(doc, name);
-    }
-    catch (JDOMException e) {
-      return null;
-    }
-    catch (IOException e) {
-      return null;
-    }
   }
 
   @Override
@@ -312,11 +305,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     if (returnRootProfileIfNamedIsAbsent) {
       return getRootProfile();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
+  @NotNull
   @Override
   public Profile getRootProfile() {
     Profile current = mySchemesManager.getCurrentScheme();
@@ -335,7 +327,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   @Override
-  public void addProfile(final Profile profile) {
+  public void addProfile(@NotNull final Profile profile) {
     mySchemesManager.addNewScheme(profile, true);
   }
 
@@ -351,6 +343,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return getProfile(name, true);
   }
 
+  @NotNull
   public SchemesManager<Profile, InspectionProfileImpl> getSchemesManager() {
     return mySchemesManager;
   }
@@ -363,7 +356,9 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          InspectionProjectProfileManagerImpl.getInstanceImpl(project).updateStatusBar();
+          if (!project.isDisposed()) {
+            DaemonListeners.getInstance(project).updateStatusBar();
+          }
         }
       });
     }

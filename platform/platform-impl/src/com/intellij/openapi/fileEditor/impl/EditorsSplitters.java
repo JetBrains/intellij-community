@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -188,7 +189,7 @@ public class EditorsSplitters extends JBPanel {
       }
 
       painter.appendLine("Open a file by name with " + getActionShortcutText("GotoFile")).smaller().withBullet()
-        .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()
+        .appendLine("Open Recent files with " + getActionShortcutText(IdeActions.ACTION_RECENT_FILES)).smaller().withBullet()
         .appendLine("Open Navigation Bar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
         .appendLine("Drag'n'Drop file(s) here from " + ShowFilePathAction.getFileManagerName()).smaller().withBullet()
         .draw(g, new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {

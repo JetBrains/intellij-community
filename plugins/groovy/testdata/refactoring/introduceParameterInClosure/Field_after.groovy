@@ -1,6 +1,6 @@
 class X {
   def a
-  public foo = { int x, final def anObject ->
+  public foo = { int x, final anObject ->
     print x
     print anObject
   }

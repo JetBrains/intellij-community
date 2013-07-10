@@ -51,7 +51,8 @@ public class RunnerRegistryImpl extends RunnerRegistry {
   }
 
   @Override
-  public ProgramRunner getRunner(final String executorId, final RunProfile settings) {
+  public ProgramRunner getRunner(@NotNull final String executorId, final RunProfile settings) {
+    if (settings == null) return null;
     final ProgramRunner[] runners = getRegisteredRunners();
     for (final ProgramRunner runner : runners) {
       if (runner.canRun(executorId, settings)) {

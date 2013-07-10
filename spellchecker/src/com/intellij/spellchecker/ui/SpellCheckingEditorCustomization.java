@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -24,17 +25,15 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Allows to enforce editors to use/don't use spell checking ignoring user-defined spelling inspection settings.
@@ -49,7 +48,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   public static final SpellCheckingEditorCustomization ENABLED = new SpellCheckingEditorCustomization(true);
   public static final SpellCheckingEditorCustomization DISABLED = new SpellCheckingEditorCustomization(false);
 
-  private static final Set<LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashSet<LocalInspectionToolWrapper>();
+  private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<String, LocalInspectionToolWrapper>();
   private static final boolean READY = init();
 
   @NotNull
@@ -70,7 +69,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
       try {
         LocalInspectionTool tool = inspectionClass.newInstance();
-        SPELL_CHECK_TOOLS.add(new LocalInspectionToolWrapper(tool));
+        SPELL_CHECK_TOOLS.put(tool.getShortName(), new LocalInspectionToolWrapper(tool));
       }
       catch (Throwable e) {
         return false;
@@ -152,29 +151,9 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       myDelegate = delegate;
     }
 
-    @NotNull
     @Override
-    public List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(PsiElement element) {
-      Set<LocalInspectionToolWrapper> result = new THashSet<LocalInspectionToolWrapper>(myDelegate.getHighlightingLocalInspectionTools(element), new TObjectHashingStrategy<LocalInspectionToolWrapper>() {
-        @Override
-        public int computeHashCode(LocalInspectionToolWrapper object) {
-          return object.getShortName().hashCode();
-        }
-
-        @Override
-        public boolean equals(LocalInspectionToolWrapper o1, LocalInspectionToolWrapper o2) {
-          return o1.getShortName().equals(o2.getShortName());
-        }
-      });
-
-      if (myUseSpellCheck) {
-        result.removeAll(SPELL_CHECK_TOOLS);
-        result.addAll(SPELL_CHECK_TOOLS);
-      }
-      else {
-        result.removeAll(SPELL_CHECK_TOOLS);
-      }
-      return new ArrayList<LocalInspectionToolWrapper>(result);
+    public boolean isToolEnabled(HighlightDisplayKey key) {
+      return myDelegate.isToolEnabled(key) && SPELL_CHECK_TOOLS.containsKey(key.toString()) && myUseSpellCheck;
     }
 
     public void setUseSpellCheck(boolean useSpellCheck) {

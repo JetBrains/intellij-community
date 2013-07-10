@@ -28,15 +28,14 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.HashSet;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -102,6 +101,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private void checkLambdaApplicable(List<CandidateInfo> conflicts) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(myArgumentsList)) return;
     for (int i = 0; i < myActualParameterTypes.length; i++) {
       PsiType parameterType = myActualParameterTypes[i];
       if (parameterType instanceof PsiLambdaExpressionType) {
@@ -190,7 +190,17 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private void checkSameSignatures(final List<CandidateInfo> conflicts) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
-    Map<MethodSignature, CandidateInfo> signatures = new HashMap<MethodSignature, CandidateInfo>();
+    Map<MethodSignature, CandidateInfo> signatures = new THashMap<MethodSignature, CandidateInfo>(conflicts.size());
+    Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    for (CandidateInfo conflict : conflicts) {
+      final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
+      for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+        final PsiMethod superMethod = methodSignature.getMethod();
+        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(superMethod.getContainingClass().getQualifiedName())) {
+          superMethods.add(superMethod);
+        }
+      }
+    }
     nextConflict:
     for (int i=0; i<conflicts.size();i++) {
       ProgressManager.checkCanceled();
@@ -198,16 +208,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiMethod method = (PsiMethod)info.getElement();
       assert method != null;
 
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        for (int k=i-1; k>=0; k--) {
-          ProgressManager.checkCanceled();
-          PsiMethod existingMethod = (PsiMethod)conflicts.get(k).getElement();
-          if (PsiSuperMethodImplUtil.isSuperMethodSmart(existingMethod, method)) {
-            conflicts.remove(i);
-            i--;
-            continue nextConflict;
-          }
-        }
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && superMethods.contains(method)) {
+        conflicts.remove(i);
+        i--;
+        continue;
       }
 
       PsiClass class1 = method.getContainingClass();

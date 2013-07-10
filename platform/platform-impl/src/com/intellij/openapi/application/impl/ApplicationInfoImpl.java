@@ -95,6 +95,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String[] myEssentialPluginsIds;
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
+  private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
 
   private Rectangle myAboutLogoRect;
@@ -163,6 +164,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_STATISTICS = "statistics";
   @NonNls private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
   @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
+  @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
 
   @NonNls private static final String ELEMENT_THIRD_PARTY = "third-party";
 
@@ -396,6 +398,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getStatisticsServiceUrl() {
     return myStatisticsServiceUrl;
+  }
+
+  public String getStatisticsServiceKey() {
+    return myStatisticsServiceKey;
   }
 
   @Override
@@ -655,11 +661,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element statisticsElement = parentNode.getChild(ELEMENT_STATISTICS);
     if (statisticsElement != null) {
       myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
-      myStatisticsServiceUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
+      myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
+      myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
     }
     else {
       myStatisticsSettingsUrl = "http://jetbrains.com/idea/statistics/stat-assistant.xml";
-      myStatisticsServiceUrl = "http://jetbrains.com/idea/statistics/index.jsp";
+      myStatisticsServiceUrl  = "http://jetbrains.com/idea/statistics/index.jsp";
+      myStatisticsServiceKey  = null;
     }
 
     Element thirdPartyElement = parentNode.getChild(ELEMENT_THIRD_PARTY);

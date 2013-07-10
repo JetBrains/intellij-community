@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
@@ -218,7 +219,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     };
 
-    @SuppressWarnings({"ManualArrayToCollectionCopy"})
+    @SuppressWarnings({"ManualArrayToCollectionCopy", "ConstantConditions"})
     SwitcherPanel(final Project project, String title, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
@@ -229,11 +230,11 @@ public class Switcher extends AnAction implements DumbAware {
       setFocusable(true);
       addKeyListener(this);
       setBorder(new EmptyBorder(0, 0, 0, 0));
-      setBackground(Color.WHITE);
+      setBackground(JBColor.background());
       pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
 
       final Font font = pathLabel.getFont();
-      pathLabel.setFont(font.deriveFont((float)10));
+      pathLabel.setFont(font.deriveFont(Math.max(10f, font.getSize() - 4f)));
 
       descriptions = new JPanel(new BorderLayout()) {
         @Override
@@ -1104,7 +1105,8 @@ public class Switcher extends AnAction implements DumbAware {
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
 
-        final Color color = FileColorManager.getInstance(myProject).getFileColor(virtualFile);
+        // calc color the same way editor tabs do this, i.e. including extensions
+        Color color = EditorTabbedContainer.calcTabColor(myProject, virtualFile);
 
         if (!selected &&  color != null) {
           setBackground(color);

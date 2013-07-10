@@ -106,8 +106,8 @@ public class IndexInfrastructure {
     return stamp;
   }
 
-  public static long getIndexCreationStamp(ID<?, ?> indexName, VirtualFile forFile) {
-    return getIndexCreationStamp(getStubId(indexName, forFile.getFileType()));
+  public static long getIndexCreationStamp(ID<?, ?> indexName, FileType fileType) {
+    return getIndexCreationStamp(getStubId(indexName, fileType));
   }
 
   public static ID getStubId(ID<?, ?> indexName, FileType fileType) {

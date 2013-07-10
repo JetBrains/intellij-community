@@ -6,7 +6,8 @@ println "bugaga
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    PsiElement(Gstring content)('Pre ')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('Pre ')
     GString injection
       PsiElement($)('$')
       Closable block
@@ -30,7 +31,8 @@ Groovy script
           Command arguments
             Compound Gstring
               PsiElement(Gstring begin)('"')
-              PsiElement(Gstring content)('bugaga')
+              GrStringContentImpl(GString content element)
+                PsiElement(Gstring content)('bugaga')
               PsiErrorElement:String end expected
                 <empty list>
         PsiElement(new line)('\n ')

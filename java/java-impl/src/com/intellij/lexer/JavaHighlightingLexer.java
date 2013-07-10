@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,26 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 
-
 /**
  * @author max
  */
 public class JavaHighlightingLexer extends LayeredLexer {
   public JavaHighlightingLexer(LanguageLevel languageLevel) {
-    super(new JavaLexer(languageLevel));
+    super(JavaParserDefinition.createLexer(languageLevel));
     registerSelfStoppingLayer(new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.STRING_LITERAL}, IElementType.EMPTY_ARRAY);
 
     registerSelfStoppingLayer(new StringLiteralLexer('\'', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.CHARACTER_LITERAL}, IElementType.EMPTY_ARRAY);
 
-    LayeredLexer docLexer = new LayeredLexer(new JavaDocLexer(languageLevel.isAtLeast(LanguageLevel.JDK_1_5)));
+    LayeredLexer docLexer = new LayeredLexer(JavaParserDefinition.createDocLexer(languageLevel));
 
     HtmlHighlightingLexer lexer = new HtmlHighlightingLexer();
     lexer.setHasNoEmbeddments(true);

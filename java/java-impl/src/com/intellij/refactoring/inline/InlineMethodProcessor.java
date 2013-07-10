@@ -404,7 +404,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
       }
       else {
-        RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+        CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
         if (myMethod.isConstructor()) {
           for (UsageInfo usage : usages) {
             PsiElement element = usage.getElement();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ThreeState;
@@ -139,7 +140,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
-    return file.isValid() && file.isSpecialFile() ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
+    return file.isValid() && file.is(VFileProperty.SPECIAL) ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
   }
 
   public void projectClosed() {

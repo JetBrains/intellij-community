@@ -60,7 +60,7 @@ public class TypeExpression extends Expression {
 
       @Override
       public String toString() {
-        return myItems.size() == 1 ? type.getCanonicalText() : super.toString();
+        return myItems.size() == 1 ? super.toString() : type.getPresentableText();
       }
     };
   }
@@ -83,10 +83,6 @@ public class TypeExpression extends Expression {
       }
     }
     return result.toArray(new LookupElement[result.size()]);
-  }
-
-  public boolean hasSuggestions() {
-    return myItems.size() > 1;
   }
 
 }

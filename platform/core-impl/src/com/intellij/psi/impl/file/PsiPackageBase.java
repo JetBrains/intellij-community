@@ -103,7 +103,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
     if (myQualifiedName.isEmpty()) return null;
     int index = myQualifiedName.lastIndexOf('.');
-    if (index < 0) {
+    if (index <= 0) {
       return myQualifiedName;
     }
     else {

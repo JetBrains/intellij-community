@@ -28,6 +28,9 @@
       <interface-class>org.zmlx.hg4idea.HgRepositoryWatcher</interface-class>
       <implementation-class>org.zmlx.hg4idea.HgRepositoryWatcher</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.zmlx.hg4idea.repo.HgRepositoryManager</implementation-class>
+    </component>
   </project-components>
 
   <actions>

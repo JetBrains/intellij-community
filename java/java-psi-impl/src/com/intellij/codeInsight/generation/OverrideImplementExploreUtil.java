@@ -30,12 +30,17 @@ public class OverrideImplementExploreUtil {
 
   @NotNull
   public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
-    if (aClass.isInterface()) return Collections.emptySet();
+    if (aClass.isAnnotationType()) return Collections.emptySet();
     return getMapToOverrideImplement(aClass, false).keySet();
   }
 
   @NotNull
-  private static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement) {
+  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement) {
+    return getMapToOverrideImplement(aClass, toImplement, true);
+  }
+
+  @NotNull
+  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement, boolean skipImplemented) {
     Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<MethodSignature,PsiMethod>();
     Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<MethodSignature,PsiMethod>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<MethodSignature,PsiMethod>();
@@ -55,7 +60,7 @@ public class OverrideImplementExploreUtil {
         continue;
       }
       // filter already implemented
-      if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) {
+      if (skipImplemented && MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) {
         continue;
       }
 

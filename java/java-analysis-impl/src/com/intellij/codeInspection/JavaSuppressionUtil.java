@@ -106,7 +106,7 @@ public class JavaSuppressionUtil {
     return result;
   }
 
-  static PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID) {
+  public static PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID) {
     PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
     if (element != null) return element;
     element = getAnnotationMemberSuppressedIn(owner, inspectionToolID);

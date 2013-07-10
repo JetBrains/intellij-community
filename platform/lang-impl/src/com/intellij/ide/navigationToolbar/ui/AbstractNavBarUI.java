@@ -58,7 +58,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    return navBarItem.getFont();
+    return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
   }
 
   @Override

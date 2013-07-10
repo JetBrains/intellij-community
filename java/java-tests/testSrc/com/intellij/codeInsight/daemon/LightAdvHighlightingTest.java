@@ -119,6 +119,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testFieldDoubleInitialization() { doTest(false, false); }
   public void testAssignToFinal() { doTest(false, false); }
   public void testUnhandledExceptionsInSuperclass() { doTest(false, false); }
+  public void testNoUnhandledExceptionsMultipleInheritance() { doTest(false, false); }
   public void testAssignmentCompatible () { doTest(false, false); }
   public void testMustBeBoolean() { doTest(false, false); }
 

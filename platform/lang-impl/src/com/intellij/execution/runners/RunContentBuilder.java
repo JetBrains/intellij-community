@@ -205,8 +205,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(),
-                                                          contentDescriptor, getEnvironment());
+    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, contentDescriptor, getEnvironment());
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
     contentDescriptor.setRestarter(new Runnable() {

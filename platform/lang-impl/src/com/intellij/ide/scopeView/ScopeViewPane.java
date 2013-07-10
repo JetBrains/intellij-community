@@ -114,14 +114,16 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public JComponent createComponent() {
-    myViewPanel = new ScopeTreeViewPanel(myProject);
-    Disposer.register(this, myViewPanel);
-    myViewPanel.initListeners();
-    myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
-    myTree = myViewPanel.getTree();
-    PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
-    enableDnD();
+    if (myViewPanel == null) {
+      myViewPanel = new ScopeTreeViewPanel(myProject);
+      Disposer.register(this, myViewPanel);
+      myViewPanel.initListeners();
+      myTree = myViewPanel.getTree();
+      PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
+      enableDnD();
+    }
 
+    myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
     return myViewPanel.getPanel();
   }
 
@@ -139,6 +141,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     NamedScope[] scopes = myDependencyValidationManager.getScopes();
     scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes());
     scopes = NonProjectFilesScope.removeFromList(scopes);
+    scopes = ArrayUtil.remove(scopes, CustomScopesProviderEx.getAllScope());
     String[] ids = new String[scopes.length];
     for (int i = 0; i < scopes.length; i++) {
       final NamedScope scope = scopes[i];

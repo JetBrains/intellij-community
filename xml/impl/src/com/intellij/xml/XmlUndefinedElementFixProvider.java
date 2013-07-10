@@ -16,13 +16,37 @@
 package com.intellij.xml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
-public interface XmlUndefinedElementFixProvider {
+public abstract class XmlUndefinedElementFixProvider {
+  public static final ExtensionPointName<XmlUndefinedElementFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.undefinedElementFixProvider");
 
-  @NotNull IntentionAction[] createFixes(final @NotNull XmlElement element);
+  /**
+   *
+   * @param tag
+   * @return null if this provider doesn't know anything about this file; empty array if no fixes are available and no other
+   * providers should be asked
+   */
+  @Nullable
+  public IntentionAction[] createFixes(final @NotNull XmlAttribute attribute) {
+    return null;
+  }
+
+  /**
+   *
+   * @param tag
+   * @return null if this provider doesn't know anything about this file; empty array if no fixes are available and no other
+   * providers should be asked
+   */
+  @Nullable
+  public IntentionAction[] createFixes(final @NotNull XmlTag tag) {
+    return null;
+  }
 }

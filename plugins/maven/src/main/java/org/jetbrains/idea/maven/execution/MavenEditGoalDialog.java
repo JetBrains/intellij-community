@@ -19,10 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
@@ -115,6 +112,16 @@ public class MavenEditGoalDialog extends DialogWrapper {
           return file.findChild(MavenConstants.POM_XML) != null;
         }
       });
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    if (workDirectoryField.getText().trim().isEmpty()) {
+      return new ValidationInfo("Working directory is empty", workDirectoryField);
+    }
+
+    return null;
   }
 
   @NotNull

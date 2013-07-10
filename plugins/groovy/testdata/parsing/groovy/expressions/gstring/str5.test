@@ -5,10 +5,12 @@ b.c string """
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    PsiElement(Gstring content)('My\n')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('My\n')
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('a')
-    PsiElement(Gstring content)('.\nb.c string ')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('.\nb.c string ')
     PsiElement(Gstring end)('"""')

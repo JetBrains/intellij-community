@@ -30,9 +30,9 @@ import java.util.Map;
  *         Date: 8/3/12
  */
 public class ObjectStubTree<T extends Stub> {
-
-  protected static final Key<ObjectStubTree> STUB_TO_TREE_REFERENCE = Key.create("stub to tree reference");
+  private static final Key<ObjectStubTree> STUB_TO_TREE_REFERENCE = Key.create("stub to tree reference");
   protected final ObjectStubBase myRoot;
+  private String myDebugInfo;
   protected final List<T> myPlainList = new ArrayList<T>();
 
   public ObjectStubTree(@NotNull final ObjectStubBase root, final boolean withBackReference) {
@@ -71,6 +71,19 @@ public class ObjectStubTree<T extends Stub> {
     for (Stub child : root.getChildrenStubs()) {
       enumerateStubs(child, result);
     }
+  }
+
+  public void setDebugInfo(String info) {
+    ObjectStubTree ref = myRoot.getUserData(STUB_TO_TREE_REFERENCE);
+    if (ref != null) {
+      assert ref == this;
+      info += "; with backReference";
+    }
+    myDebugInfo = info;
+  }
+
+  public String getDebugInfo() {
+    return myDebugInfo;
   }
 
   private static class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>,TObjectObjectProcedure<Object,int[]> {

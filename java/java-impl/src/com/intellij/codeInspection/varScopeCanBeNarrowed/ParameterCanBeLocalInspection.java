@@ -153,11 +153,12 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     protected PsiElement applyChanges(@NotNull final Project project,
-                                       @NotNull final String localName,
-                                       @Nullable final PsiExpression initializer,
-                                       @NotNull final PsiParameter parameter,
-                                       @NotNull final Collection<PsiReference> references,
-                                       @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+                                      @NotNull final String localName,
+                                      @Nullable final PsiExpression initializer,
+                                      @NotNull final PsiParameter parameter,
+                                      @NotNull final Collection<PsiReference> references,
+                                      boolean delete, 
+                                      @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;

@@ -84,8 +84,8 @@ public abstract class PropertyTable extends JBTable {
 
   private final AbstractTableModel myModel = new PropertyTableModel();
   private List<PropertiesContainer> myContainers = Collections.emptyList();
-  private List<Property> myProperties = Collections.emptyList();
-  private final Set<String> myExpandedProperties = new HashSet<String>();
+  protected List<Property> myProperties = Collections.emptyList();
+  protected final Set<String> myExpandedProperties = new HashSet<String>();
 
   private boolean mySkipUpdate;
   private boolean myStoppingEditing;
@@ -861,13 +861,9 @@ public abstract class PropertyTable extends JBTable {
       message = "No message";
     }
 
-    Messages.showMessageDialog(formatErrorGettingValueMessage(message),
+    Messages.showMessageDialog(MessageFormat.format("Error setting value: {0}", message),
                                "Invalid Input",
                                Messages.getErrorIcon());
-  }
-
-  private static String formatErrorGettingValueMessage(String message) {
-    return MessageFormat.format("Error setting value: {0}", message);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -1324,7 +1320,7 @@ public abstract class PropertyTable extends JBTable {
         }
         catch (Exception e) {
           LOG.debug(e);
-          renderer.append(formatErrorGettingValueMessage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          renderer.append(MessageFormat.format("Error getting value: {0}", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return renderer;
         }
       }

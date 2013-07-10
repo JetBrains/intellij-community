@@ -136,7 +136,7 @@ public class DfaValueFactory {
     }
 
     if (!variable.hasModifierProperty(PsiModifier.VOLATILE) && isEffectivelyUnqualified(referenceExpression)) {
-      return getVarFactory().createVariableValue(variable, referenceExpression.getType(), false, null, false);
+      return getVarFactory().createVariableValue(variable, referenceExpression.getType(), false, null, null);
     }
 
     return null;

@@ -21,7 +21,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.HtmlLinkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -32,7 +32,7 @@ import java.util.Set;
 public class LinkedToHtmlFilesContributor extends RelatedToHtmlFilesContributor {
   @Override
   public void fillRelatedFiles(@NotNull final XmlFile xmlFile, @NotNull final Set<PsiFile> resultSet) {
-    HtmlUtil.processLinks(xmlFile, new Processor<XmlTag>() {
+    HtmlLinkUtil.processLinks(xmlFile, new Processor<XmlTag>() {
       @Override
       public boolean process(XmlTag tag) {
         final XmlAttribute attribute = tag.getAttribute("href");

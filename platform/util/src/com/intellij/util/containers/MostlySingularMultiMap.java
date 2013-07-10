@@ -59,6 +59,30 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     }
   }
 
+  public boolean remove(@NotNull K key, @NotNull V value) {
+    Object current = myMap.get(key);
+    if (current == null) {
+      return false;
+    }
+    if (current instanceof Object[]) {
+      Object[] curArr = (Object[])current;
+      Object[] newArr = ArrayUtil.remove(curArr, value, ArrayUtil.OBJECT_ARRAY_FACTORY);
+      myMap.put(key, newArr);
+      return newArr.length == curArr.length-1;
+    }
+
+    if (value.equals(current)) {
+      myMap.remove(key);
+      return true;
+    }
+
+    return false;
+  }
+
+  public boolean removeAllValues(@NotNull K key) {
+    return myMap.remove(key) != null;
+  }
+
   @NotNull
   public Set<K> keySet() {
     return myMap.keySet();
@@ -192,7 +216,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     @NotNull
     @Override
     public Iterable get(@NotNull Object name) {
-      return EmptyIterable.getInstance();
+      return ContainerUtil.emptyList();
     }
   }
 }

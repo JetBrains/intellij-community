@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -110,6 +111,30 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
   private void updateControls() {
     setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPathPanel.getText()));    
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
+    AbstractAction selectAll = new AbstractAction("Select &All") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myChooser.setAllElementsMarked(true);
+      }
+    };
+    AbstractAction selectNone = new AbstractAction("Select &None") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myChooser.setAllElementsMarked(false);
+      }
+    };
+    AbstractAction invert = new AbstractAction("&Invert") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myChooser.invertSelection();
+      }
+    };
+    return new Action[]{selectAll, selectNone, invert};
   }
 
   @Override

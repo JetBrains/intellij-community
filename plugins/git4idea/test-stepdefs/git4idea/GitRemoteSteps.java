@@ -105,8 +105,8 @@ public class GitRemoteSteps {
     @NotNull
     @Override
     public String askPassword(@NotNull String url) {
-      myPasswordAskedWaiter.countDown();
       myPasswordAsked  = true;
+      myPasswordAskedWaiter.countDown();
       try {
         assertTrue("Password was not supplied during the reasonable period of time",
                    myPasswordSuppliedWaiter.await(TIMEOUT, TimeUnit.SECONDS));
@@ -120,8 +120,8 @@ public class GitRemoteSteps {
     @NotNull
     @Override
     public String askUsername(@NotNull String url) {
-      myUsernameAskedWaiter.countDown();
       myUsernameAsked  = true;
+      myUsernameAskedWaiter.countDown();
       try {
         assertTrue("Password was not supplied during the reasonable period of time",
                    myUsernameSuppliedWaiter.await(TIMEOUT, TimeUnit.SECONDS));
@@ -134,13 +134,13 @@ public class GitRemoteSteps {
 
 
     void supplyPassword(@NotNull String password) {
-      myPasswordSuppliedWaiter.countDown();
       myPassword = password;
+      myPasswordSuppliedWaiter.countDown();
     }
 
     void supplyUsername(@NotNull String username) {
-      myUsernameSuppliedWaiter.countDown();
       myUsername = username;
+      myUsernameSuppliedWaiter.countDown();
     }
 
     void waitUntilPasswordIsAsked() throws InterruptedException {

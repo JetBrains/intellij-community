@@ -284,8 +284,8 @@ public class ResolveUtil {
         if (!psiClass.processDeclarations(processor, state, null, place)) return false;
       }
     }
-    if (!processNonCodeMembers(type, nonCodeProcessor, place, state)) return false;
     if (!processCategoryMembers(place, nonCodeProcessor, state)) return false;
+    if (!processNonCodeMembers(type, nonCodeProcessor, place, state)) return false;
     return true;
   }
 
@@ -649,7 +649,10 @@ public class ResolveUtil {
     return variants;
   }
 
-  public static GroovyResolveResult[] getAllClassConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor, @Nullable PsiType[] argTypes) {
+  public static GroovyResolveResult[] getAllClassConstructors(@NotNull PsiClass psiClass,
+                                                              @NotNull PsiSubstitutor substitutor,
+                                                              @Nullable PsiType[] argTypes,
+                                                              @NotNull PsiElement place) {
     final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, argTypes, PsiType.EMPTY_ARRAY);
     ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
     for (PsiMethod constructor : psiClass.getConstructors()) {

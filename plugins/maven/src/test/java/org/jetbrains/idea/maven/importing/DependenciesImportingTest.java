@@ -19,7 +19,10 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -32,7 +35,6 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -1599,19 +1601,25 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.CLASSES, "file://foo.classes");
     addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES, "file://foo.sources");
     addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(), "file://foo.javadoc");
+    addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES, "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa");
+    addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(), "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb");
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc"));
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                                     "file://foo.sources",
+                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/",
+                                     "file://foo.javadoc",
+                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb"));
 
     scheduleResolveAll();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc"));
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources", "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc", "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb"));
   }
 
   public void testDifferentSystemDependenciesWithSameId() throws Exception {

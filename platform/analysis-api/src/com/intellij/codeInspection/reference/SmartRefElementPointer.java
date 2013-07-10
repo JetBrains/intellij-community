@@ -17,6 +17,7 @@ package com.intellij.codeInspection.reference;
 
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -37,7 +38,7 @@ public interface SmartRefElementPointer {
 
   void writeExternal(Element parentNode);
 
-  boolean resolve(RefManager manager);
+  boolean resolve(@NotNull RefManager manager);
 
   void freeReference();
 }

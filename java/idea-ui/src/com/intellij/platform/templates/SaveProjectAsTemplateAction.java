@@ -162,7 +162,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
               if (relativePath == null) {
                 throw new RuntimeException("Can't find relative path for " + virtualFile);
               }
-              final boolean system = ".idea".equals(virtualFile.getParent().getName());
+              final boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
               if (system) {
                 if (!fileName.equals("description.html") &&
                     !fileName.equals(PROJECT_TEMPLATE_XML) &&

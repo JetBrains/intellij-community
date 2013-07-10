@@ -120,14 +120,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       String fullPath = getTestDataPath() + filePath;
 
       final File ioFile = new File(fullPath);
-      String fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8);
-      fileText = StringUtil.convertLineSeparators(fileText);
-
+      String fileText = preprocessFileText(FileUtil.loadFile(ioFile, CharsetToolkit.UTF8));
       configureFromFileText(ioFile.getName(), fileText);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected String preprocessFileText(String text) {
+    return StringUtil.convertLineSeparators(text);
   }
 
   @NonNls

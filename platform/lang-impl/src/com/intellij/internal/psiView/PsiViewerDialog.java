@@ -961,7 +961,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       BlockTreeNode descriptor = (BlockTreeNode)blockElementsSet.iterator().next();
       PsiElement rootPsi = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
-      PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(rootPsi.getContainingFile(), blockStart);
+      PsiFile file = rootPsi.getContainingFile();
+      PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
+      if (currentPsiEl == null) currentPsiEl = file;
       int blockLength = descriptor.getBlock().getTextRange().getLength();
       while (currentPsiEl.getParent() != null &&
              currentPsiEl.getTextRange().getStartOffset() == blockStart &&

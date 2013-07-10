@@ -8,8 +8,8 @@
 
 from common import NoRepo, commandline, commit, converter_source
 from mercurial.i18n import _
-from mercurial import util
-import os, shutil, tempfile, stat, locale
+from mercurial import encoding, util
+import os, shutil, tempfile, stat
 from email.Parser import Parser
 
 class gnuarch_source(converter_source, commandline):
@@ -36,10 +36,10 @@ class gnuarch_source(converter_source, commandline):
 
         # Could use checktool, but we want to check for baz or tla.
         self.execmd = None
-        if util.find_exe('baz'):
+        if util.findexe('baz'):
             self.execmd = 'baz'
         else:
-            if util.find_exe('tla'):
+            if util.findexe('tla'):
                 self.execmd = 'tla'
             else:
                 raise util.Abort(_('cannot find a GNU Arch tool'))
@@ -54,9 +54,8 @@ class gnuarch_source(converter_source, commandline):
         self.changes = {}
         self.parents = {}
         self.tags = {}
-        self.modecache = {}
         self.catlogparser = Parser()
-        self.locale = locale.getpreferredencoding()
+        self.encoding = encoding.encoding
         self.archives = []
 
     def before(self):
@@ -90,7 +89,7 @@ class gnuarch_source(converter_source, commandline):
 
             # Get the complete list of revisions for that tree version
             output, status = self.runlines('revisions', '-r', '-f', treeversion)
-            self.checkexit(status, 'failed retrieveing revisions for %s'
+            self.checkexit(status, 'failed retrieving revisions for %s'
                            % treeversion)
 
             # No new iteration unless a revision has a continuation-of header
@@ -139,19 +138,12 @@ class gnuarch_source(converter_source, commandline):
             raise util.Abort(_('internal calling inconsistency'))
 
         # Raise IOError if necessary (i.e. deleted files).
-        if not os.path.exists(os.path.join(self.tmppath, name)):
+        if not os.path.lexists(os.path.join(self.tmppath, name)):
             raise IOError
 
-        data, mode = self._getfile(name, rev)
-        self.modecache[(name, rev)] = mode
-
-        return data
-
-    def getmode(self, name, rev):
-        return self.modecache[(name, rev)]
+        return self._getfile(name, rev)
 
     def getchanges(self, rev):
-        self.modecache = {}
         self._update(rev)
         changes = []
         copies = {}
@@ -192,7 +184,7 @@ class gnuarch_source(converter_source, commandline):
         cmdline = [self.execmd, cmd]
         cmdline += args
         cmdline = [util.shellquote(arg) for arg in cmdline]
-        cmdline += ['>', util.nulldev, '2>', util.nulldev]
+        cmdline += ['>', os.devnull, '2>', os.devnull]
         cmdline = util.quotecommand(' '.join(cmdline))
         self.ui.debug(cmdline, '\n')
         return os.system(cmdline)

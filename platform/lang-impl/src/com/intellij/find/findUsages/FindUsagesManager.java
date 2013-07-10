@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -318,11 +319,25 @@ public class FindUsagesManager implements JDOMExternalizable {
     usageSearcher.generate(new Processor<Usage>() {
       @Override
       public boolean process(final Usage usage) {
+        if (isInComment(usage)) return true;
         used.set(true);
         return false;
       }
     });
     return used.get();
+  }
+
+  private static boolean isInComment(Usage usage) {
+    if (!(usage instanceof UsageInfo2UsageAdapter)) return false;
+    UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+    if (!usageInfo.isNonCodeUsage()) return false;
+    SmartPsiFileRange psiRangePointer = usageInfo.getPsiFileRange();
+    if (psiRangePointer == null) return false;
+    Segment range = psiRangePointer.getRange();
+    PsiFile file = psiRangePointer.getContainingFile();
+    if (file == null || range == null) return false;
+    PsiElement element = file.findElementAt(range.getStartOffset());
+    return element instanceof PsiComment;
   }
 
   @NotNull
@@ -334,6 +349,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
 
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+    dropResolveCacheRegularly(indicator, handler.getProject());
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -482,10 +498,31 @@ public class FindUsagesManager implements JDOMExternalizable {
     myAnotherManager.searchAndShowUsages(targets, new Factory<UsageSearcher>() {
       @Override
       public UsageSearcher create() {
+        dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), myProject);
         return createUsageSearcher(descriptor, handler, findUsagesOptions, null);
       }
     }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(elements.get(0), findUsagesOptions, toOpenInNewTab), null);
     addToHistory(elements, findUsagesOptions);
+  }
+
+  private static void dropResolveCacheRegularly(ProgressIndicator indicator, final Project project) {
+    if (indicator instanceof ProgressIndicatorEx) {
+      ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
+        volatile long lastCleared = System.currentTimeMillis();
+
+        @Override
+        public void setFraction(double fraction) {
+          super.setFraction(fraction);
+          long current = System.currentTimeMillis();
+          if (current - lastCleared >= 500) {
+            lastCleared = current;
+            // fraction is changed when each file is processed =>
+            // resolve caches used when searching in that file are likely to be not needed anymore
+            PsiManager.getInstance(project).dropResolveCaches();
+          }
+        }
+      });
+    }
   }
 
   @NotNull

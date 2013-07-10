@@ -19,6 +19,7 @@ import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubApiUtil;
+import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
 import java.text.ParseException;
@@ -33,7 +34,7 @@ import java.util.regex.Pattern;
  */
 @Tag("GitHub")
 public class GitHubRepository extends BaseRepositoryImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.github.GitHubRepository");
+  private static final Logger LOG = GithubUtil.LOG;
 
   private Pattern myPattern;
   private String myRepoAuthor;

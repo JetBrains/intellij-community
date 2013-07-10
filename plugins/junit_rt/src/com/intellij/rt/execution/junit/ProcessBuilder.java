@@ -15,6 +15,7 @@
  */
 package com.intellij.rt.execution.junit;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ public class ProcessBuilder {
   private static final String WIN_SHELL_SPECIALS = "&<>()@^|";
 
   private final List myParameters = new ArrayList();
+  private File myWorkingDir = null;
 
   public void add(final String parameter) {
     myParameters.add(parameter);
@@ -37,6 +39,10 @@ public class ProcessBuilder {
     for (int i = 0; i < parameters.size(); i++) {
       add((String)parameters.get(i));
     }
+  }
+
+  public void setWorkingDir(File workingDir) {
+    myWorkingDir = workingDir;
   }
 
   // please keep an implementation in sync with [util] CommandLineUtil.toCommandLine()
@@ -79,7 +85,7 @@ public class ProcessBuilder {
       commandLine[i] = parameter;
     }
 
-    return Runtime.getRuntime().exec(commandLine);
+    return Runtime.getRuntime().exec(commandLine, null, myWorkingDir);
   }
 
   private static boolean containsAnyChar(String value, String chars) {

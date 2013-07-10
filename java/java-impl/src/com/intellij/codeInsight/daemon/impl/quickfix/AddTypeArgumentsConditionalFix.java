@@ -102,8 +102,8 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction {
     return true;
   }
 
-  public static void register(HighlightInfo highlightInfo, PsiExpression expression, PsiType lType) {
-    if (expression instanceof PsiConditionalExpression) {
+  public static void register(HighlightInfo highlightInfo, PsiExpression expression, @NotNull PsiType lType) {
+    if (lType != PsiType.NULL && expression instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
       final PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
       if (thenExpression != null && elseExpression != null) {

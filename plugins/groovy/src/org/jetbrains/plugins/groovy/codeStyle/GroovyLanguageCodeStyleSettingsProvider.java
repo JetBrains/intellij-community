@@ -34,9 +34,9 @@ import javax.swing.*;
  */
 public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
 
-  public static final String IN_SPOCK_ONLY = "In Spock only";
   public static final String ABSOLUTE = "Absolute";
-  public static final String RELATIVE = "Relative";
+  public static final String RELATIVE = "Indent statements after label";
+  public static final String RELATIVE_REVERSED = "Indent labels";
 
   @NotNull
   @Override
@@ -264,8 +264,6 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     defaultSettings.SPACE_WITHIN_BRACES = true;
     defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     defaultSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    //defaultSettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    defaultSettings.getIndentOptions().LABEL_INDENT_SIZE = 2;
     return defaultSettings;
   }
 
@@ -300,7 +298,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
         myStyleLabel = new JBLabel("Label indent style:");
 
-        myLabelIndentStyle = new JComboBox(new Object[] {IN_SPOCK_ONLY, ABSOLUTE, RELATIVE});
+        myLabelIndentStyle = new JComboBox(new Object[] {ABSOLUTE, RELATIVE, RELATIVE_REVERSED});
         add(myStyleLabel, myLabelIndentStyle);
       }
 
@@ -320,7 +318,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
           return !RELATIVE.equals(myLabelIndentStyle.getSelectedItem());
         }
         else {
-          return !IN_SPOCK_ONLY.equals(myLabelIndentStyle.getSelectedItem());
+          return !RELATIVE_REVERSED.equals(myLabelIndentStyle.getSelectedItem());
         }
       }
 
@@ -342,7 +340,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
           myLabelIndentStyle.setSelectedItem(RELATIVE);
         }
         else {
-          myLabelIndentStyle.setSelectedItem(IN_SPOCK_ONLY);
+          myLabelIndentStyle.setSelectedItem(RELATIVE_REVERSED);
         }
       }
 

@@ -59,7 +59,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     @NotNull
     @Override
     public String getDisplayName() {
-      return "Annotator";
+      return getShortName();
     }
 
     @NotNull
@@ -112,7 +112,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       if (element == null) {
         element = file;
       }
-      
+
       GlobalInspectionUtil.createProblem(
         element,
         info,

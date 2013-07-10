@@ -37,7 +37,7 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
 
   public StatisticsTableModel() {
     super(new ColumnTest(), new ColumnDuration(), new ColumnResults());
-    setSortable(false); // TODO: fix me
+    setSortable(true);
   }
 
   public void updateModelOnProxySelected(final SMTestProxy proxy) {
@@ -95,8 +95,6 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
     }
 
     final List<SMTestProxy> list = new ArrayList<SMTestProxy>();
-    // suite's total statistics
-    list.add(suite);
     // chiled's statistics
     list.addAll(suite.getChildren());
 

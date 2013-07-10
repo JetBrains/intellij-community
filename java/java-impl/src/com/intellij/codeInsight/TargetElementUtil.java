@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -299,7 +300,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return super.acceptImplementationForReference(reference, element);
   }
 
-  private static class PsiElementFindProcessor<T extends PsiElement> implements Processor<T> {
+  private static class PsiElementFindProcessor<T extends PsiClass> implements Processor<T> {
     private final T myElement;
 
     public PsiElementFindProcessor(T t) {
@@ -308,6 +309,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     @Override
     public boolean process(T t) {
+      if (InheritanceUtil.isInheritorOrSelf(t, myElement, true)) return false;
       return !myElement.getManager().areElementsEquivalent(myElement, t);
     }
   }

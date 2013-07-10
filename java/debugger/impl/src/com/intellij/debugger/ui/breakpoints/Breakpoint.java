@@ -34,8 +34,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiClass;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
@@ -79,6 +79,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
    * Request for creating all needed JPDA requests in the specified VM
    * @param debuggerProcess the requesting process
    */
+  @Override
   public abstract void processClassPrepare(DebugProcess debuggerProcess, final ReferenceType referenceType);
 
   public abstract String getDisplayName ();
@@ -164,6 +165,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     return null;
   }
 
+  @Override
   public boolean processLocatableEvent(final SuspendContextCommandImpl action, final LocatableEvent event) throws EventProcessingException {
     final SuspendContextImpl context = action.getSuspendContext();
     if(!isValid()) {
@@ -222,6 +224,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   
           try {
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+              @Override
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl.build(expressionToEvaluate, ContextUtil.getContextElement(context), ContextUtil.getSourcePosition(context));
               }
@@ -266,7 +269,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       }
 
       private void removeBreakpoint() {
-        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+        AppUIUtil.invokeOnEdt(new Runnable() {
           @Override
           public void run() {
             DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this);
@@ -288,6 +291,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     RequestManagerImpl.deleteRequests(this);
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
     String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
@@ -296,6 +300,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     }
   }
 
+  @Override
   public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
     JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().toExternalForm());

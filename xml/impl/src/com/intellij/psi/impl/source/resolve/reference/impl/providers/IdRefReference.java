@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -23,6 +24,7 @@ import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -63,7 +65,7 @@ public class IdRefReference extends BasicAttributeValueReference {
           attribute = tag.getAttribute(IdReferenceProvider.STYLE_ID_ATTR_NAME, null);
         }
       }
-      return attribute != null ? attribute.getValueElement() : null;
+      return attribute != null ? attribute.getValueElement() : getImplicitIdRefValueElement(tag);
     }
     else {
       return element;
@@ -79,7 +81,7 @@ public class IdRefReference extends BasicAttributeValueReference {
         if (s == null) s = tag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME);
         if (s == null) s = tag.getAttributeValue(IdReferenceProvider.STYLE_ID_ATTR_NAME);
       }
-      return s;
+      return s != null ? s: getImplicitIdRefValue(tag);
     } else if (element instanceof PsiComment) {
       return getImplicitIdValue((PsiComment) element);
     }
@@ -87,9 +89,36 @@ public class IdRefReference extends BasicAttributeValueReference {
     return null;
   }
 
+  @Nullable
+  public static XmlAttribute getImplicitIdRefAttr(@NotNull XmlTag tag) {
+    for (ImplicitIdRefProvider idRefProvider : Extensions.getExtensions(ImplicitIdRefProvider.EXTENSION_POINT_NAME)) {
+      XmlAttribute value = idRefProvider.getIdRefAttribute(tag);
+      if (value != null) return value;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static XmlAttributeValue getImplicitIdRefValueElement(@NotNull XmlTag tag) {
+    for (ImplicitIdRefProvider idRefProvider : Extensions.getExtensions(ImplicitIdRefProvider.EXTENSION_POINT_NAME)) {
+      XmlAttribute value = idRefProvider.getIdRefAttribute(tag);
+      if (value != null) return value.getValueElement();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static String getImplicitIdRefValue(@NotNull XmlTag tag) {
+    XmlAttributeValue attribute = getImplicitIdRefValueElement(tag);
+
+    return attribute != null ? attribute.getValue() : null;
+  }
+
   protected static boolean isAcceptableTagType(final XmlTag subTag) {
     return subTag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME) != null ||
-           subTag.getAttributeValue(IdReferenceProvider.FOR_ATTR_NAME) != null ||
+           subTag.getAttributeValue(IdReferenceProvider.FOR_ATTR_NAME) != null || getImplicitIdRefValue(subTag) != null ||
            (subTag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME) != null &&
             subTag.getName().indexOf(".directive") == -1);
   }

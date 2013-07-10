@@ -25,10 +25,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class TextOccurrencesUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.TextOccurrencesUtil");
   private TextOccurrencesUtil() {
   }
 
@@ -72,13 +75,19 @@ public class TextOccurrencesUtil {
     return helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
       @Override
       public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
-        UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
-          @Override
-          public UsageInfo compute() {
-            return factory.createUsageInfo(psiFile, startOffset, endOffset);
-          }
-        });
-        return usageInfo == null || processor.process(usageInfo);
+        try {
+          UsageInfo usageInfo = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
+            @Override
+            public UsageInfo compute() {
+              return factory.createUsageInfo(psiFile, startOffset, endOffset);
+            }
+          });
+          return usageInfo == null || processor.process(usageInfo);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          return true;
+        }
       }
     }, searchScope);
   }
@@ -145,7 +154,7 @@ public class TextOccurrencesUtil {
       offset = text.indexOf(stringToSearch, offset);
       if (offset < 0) break;
       final PsiReference referenceAt = scope.findReferenceAt(offset);
-      if (!ignoreReferences && referenceAt != null && referenceAt.resolve() != null) continue;
+      if (!ignoreReferences && referenceAt != null && (referenceAt.resolve() != null || (referenceAt instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)referenceAt).multiResolve(true).length > 0))) continue;
 
       if (offset > 0) {
         char c = text.charAt(offset - 1);

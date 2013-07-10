@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="module" module-name="indexing-api" exported="" />
     <orderEntry type="module" module-name="projectModel-impl" />
+    <orderEntry type="library" exported="" name="NanoXML" level="project" />
   </component>
 </module>
 

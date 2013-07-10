@@ -93,7 +93,6 @@ public interface Repository {
   @NotNull
   Project getProject();
 
-
   @NotNull
   State getState();
 
@@ -104,16 +103,19 @@ public interface Repository {
   @Nullable
   String getCurrentRevision();
 
-
   /**
    * @return true if current repository is "fresh", i.e. if no commits have been made yet.
    */
   boolean isFresh();
 
   /**
-   * Synchronously updates the Vcs Repository by reading information from .git/config and .git/refs/...
+   * Synchronously updates the Repository by reading information about it from disk (e.g. for Git: from .git/config and .git/refs/...)
    */
   void update();
 
+  /**
+   * Returns a detailed String representation suitable for logging purposes.
+   */
+  @NotNull
   String toLogString();
 }

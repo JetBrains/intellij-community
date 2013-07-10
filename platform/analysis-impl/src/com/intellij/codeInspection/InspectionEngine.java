@@ -15,9 +15,18 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.Divider;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
@@ -27,10 +36,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class InspectionEngine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEngine");
@@ -100,5 +106,93 @@ public class InspectionEngine {
     });
 
     return resultDescriptors;
+  }
+
+  @NotNull
+  public static List<ProblemDescriptor> runInspectionOnFile(@NotNull final PsiFile file,
+                                                            @NotNull InspectionToolWrapper toolWrapper,
+                                                            @NotNull final GlobalInspectionContext inspectionContext) {
+    final InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
+    toolWrapper.initialize(inspectionContext);
+    RefManagerImpl refManager = (RefManagerImpl)inspectionContext.getRefManager();
+    refManager.inspectionReadActionStarted();
+    try {
+      if (toolWrapper instanceof LocalInspectionToolWrapper) {
+        LocalInspectionTool localTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
+        return inspect(Collections.singletonList(localTool), file, inspectionManager, false, false, new EmptyProgressIndicator());
+      }
+      if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+        final GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
+        final List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
+        if (globalTool instanceof GlobalSimpleInspectionTool) {
+          GlobalSimpleInspectionTool simpleTool = (GlobalSimpleInspectionTool)globalTool;
+          ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
+          ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
+            @Nullable
+            @Override
+            public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
+              return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+            }
+
+            @Override
+            public void ignoreElement(@NotNull RefEntity refEntity) {
+              throw new RuntimeException();
+            }
+
+            @Override
+            public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
+              if (!(refEntity instanceof RefElement)) return;
+              PsiElement element = ((RefElement)refEntity).getElement();
+              convertToProblemDescriptors(element, commonProblemDescriptors, descriptors);
+            }
+
+            @Override
+            public RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
+              throw new RuntimeException();
+            }
+          };
+          simpleTool.checkFile(file, inspectionManager, problemsHolder, inspectionContext, collectProcessor);
+          return descriptors;
+        }
+        RefElement fileRef = refManager.getReference(file);
+        final AnalysisScope scope = new AnalysisScope(file);
+        fileRef.accept(new RefVisitor(){
+          @Override
+          public void visitElement(@NotNull RefEntity elem) {
+            CommonProblemDescriptor[] elemDescriptors = globalTool.checkElement(elem, scope, inspectionManager, inspectionContext);
+            if (descriptors != null) {
+              convertToProblemDescriptors(file, elemDescriptors, descriptors);
+            }
+
+            for (RefEntity child : elem.getChildren()) {
+              child.accept(this);
+            }
+          }
+        });
+        return descriptors;
+      }
+    }
+    finally {
+      refManager.inspectionReadActionFinished();
+      toolWrapper.cleanup();
+      inspectionContext.cleanup();
+    }
+    return Collections.emptyList();
+  }
+
+  private static void convertToProblemDescriptors(PsiElement element,
+                                                  CommonProblemDescriptor[] commonProblemDescriptors,
+                                                  List<ProblemDescriptor> descriptors) {
+    for (CommonProblemDescriptor common : commonProblemDescriptors) {
+      if (common instanceof ProblemDescriptor) {
+        descriptors.add((ProblemDescriptor)common);
+      }
+      else {
+        ProblemDescriptorBase base =
+          new ProblemDescriptorBase(element, element, common.getDescriptionTemplate(), (LocalQuickFix[])common.getFixes(),
+                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false, false);
+        descriptors.add(base);
+      }
+    }
   }
 }

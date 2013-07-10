@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
@@ -128,7 +129,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
       if (allBranchesHaveTheSameName(currentBranches)) {
         String branchName = currentBranches.values().iterator().next().getName(); 
         StringBuilder sb = new StringBuilder(DESCRIPTION_START + code(branchName) + " was rejected in repositories <br/>");
-        for (GitRepository repository : GitUtil.sortRepositories(currentBranches.keySet())) {
+        for (GitRepository repository : RepositoryUtil.sortRepositories(currentBranches.keySet())) {
           sb.append(HTML_IDENT).append(code(repository.getPresentableUrl())).append("<br/>");
         }
         sb.append(DESCRIPTION_ENDING);

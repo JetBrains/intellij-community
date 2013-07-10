@@ -15,9 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar.ui;
 
-import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -26,11 +24,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaNavBarUI extends CommonNavBarUI {
-  @Override
-  public Font getElementFont(NavBarItem navBarItem) {
-    return UIUtil.getLabelFont().deriveFont(11.0f);
-  }
-
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
   }

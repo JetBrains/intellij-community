@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="extensions" />
     <orderEntry type="module" module-name="resources-en" />
+    <orderEntry type="module" module-name="projectModel-impl" />
   </component>
 </module>
 

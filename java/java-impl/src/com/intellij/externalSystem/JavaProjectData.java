@@ -17,6 +17,7 @@ package com.intellij.externalSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -33,9 +34,9 @@ import java.util.regex.Pattern;
  * @since 4/12/13 12:27 PM
  */
 public class JavaProjectData extends AbstractExternalEntityData {
-  
-  @NotNull public static final Key<JavaProjectData> KEY = Key.create(JavaProjectData.class);
-  
+
+  @NotNull public static final Key<JavaProjectData> KEY = Key.create(JavaProjectData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
+
   private static final Logger LOG = Logger.getInstance("#" + JavaProjectData.class.getName());
 
   private static final long serialVersionUID = 1L;
@@ -47,7 +48,7 @@ public class JavaProjectData extends AbstractExternalEntityData {
   @NotNull private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
   @NotNull private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
 
-  @NotNull private  String myCompileOutputPath;
+  @NotNull private String myCompileOutputPath;
 
   public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
     super(owner);

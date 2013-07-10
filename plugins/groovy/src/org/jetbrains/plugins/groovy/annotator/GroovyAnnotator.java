@@ -73,10 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterru
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -287,6 +284,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkStringNameIdentifier(referenceExpression);
     checkThisOrSuperReferenceExpression(referenceExpression, myHolder);
     checkFinalFieldAccess(referenceExpression);
+    checkFinalParameterAccess(referenceExpression);
     if (ResolveUtil.isKeyOfMap(referenceExpression)) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
@@ -296,6 +294,19 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
       myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(KEYWORD);
+    }
+  }
+
+  private void checkFinalParameterAccess(GrReferenceExpression ref) {
+    final PsiElement resolved = ref.resolve();
+
+    if (resolved instanceof GrParameter) {
+      final GrParameter parameter = (GrParameter)resolved;
+      if (parameter.isPhysical() && parameter.hasModifierProperty(FINAL) && PsiUtil.isLValue(ref)) {
+        if (parameter.getDeclarationScope() instanceof PsiMethod) {
+          myHolder.createErrorAnnotation(ref, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", parameter.getName()));
+        }
+      }
     }
   }
 
@@ -1085,17 +1096,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
         }
       }
-      else {
-        final PsiClass outerClass = clazz.getContainingClass();
-        if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
-            outerClass != null &&
-            !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
-          String qname = clazz.getQualifiedName();
-          LOG.assertTrue(qname != null, clazz.getText());
-          Annotation annotation = myHolder.createErrorAnnotation(refElement, GroovyBundle.message("cannot.reference.non.static", qname));
-          annotation.setTextAttributes(UNRESOLVED_ACCESS);
-        }
-      }
     }
   }
 
@@ -1265,9 +1265,10 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitGStringExpression(GrString gstring) {
-    for (String part : gstring.getTextParts()) {
-      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(part.length()), null)) {
-        myHolder.createErrorAnnotation(gstring, GroovyBundle.message("illegal.escape.character.in.string.literal"));
+    for (GrStringContent part : gstring.getContents()) {
+      final String text = part.getText();
+      if (!GrStringUtil.parseStringCharacters(text, new StringBuilder(text.length()), null)) {
+        myHolder.createErrorAnnotation(part, GroovyBundle.message("illegal.escape.character.in.string.literal"));
         return;
       }
     }
@@ -1390,6 +1391,17 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
+    final PsiElement identifier = nameValuePair.getNameIdentifierGroovy();
+    if (identifier == null) {
+      final PsiElement parent = nameValuePair.getParent();
+      if (parent instanceof GrAnnotationArgumentList) {
+        final int count = ((GrAnnotationArgumentList)parent).getAttributes().length;
+        if (count > 1) {
+          myHolder.createErrorAnnotation(nameValuePair, GroovyBundle.message("attribute.name.expected"));
+        }
+      }
+    }
+
     final GrAnnotationMemberValue value = nameValuePair.getValue();
 
     checkAnnotationAttributeValue(value, value);

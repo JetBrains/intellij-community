@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     //noinspection unchecked
     final List<SymbolicName> symNames = myLogInformation.getAllSymbolicNames();
     for (final SymbolicName symName : symNames) {
-      if (StringUtil.startsWithConcatenationOf(symName.getRevision(), myCvsRevision.getNumber(), ".") &&
+      if (StringUtil.startsWithConcatenation(symName.getRevision(), myCvsRevision.getNumber(), ".") &&
           !processedSymbolicNames.contains(symName)) {
         CvsRevisionNumber number = new CvsRevisionNumber(symName.getRevision().trim());
         final int[] subRevisions = number.getSubRevisions();

@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -38,12 +37,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -144,10 +144,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, StubIdList>, IOException>() {
             @Override
             public MapIndexStorage<K, StubIdList> compute() throws IOException {
-              final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-              if (indicator != null) {
-                indicator.setIndeterminate(true);
-              }
+              FileBasedIndexImpl.configureIndexDataLoadingProgress(ProgressManager.getInstance().getProgressIndicator());
+
               return new MapIndexStorage<K, StubIdList>(
                 IndexInfrastructure.getStorageFile(indexKey),
                 extension.getKeyDescriptor(),
@@ -230,7 +228,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-    final PsiManager psiManager = PsiManager.getInstance(project);
 
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
@@ -246,6 +243,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         return container.forEach(new ValueContainer.ContainerAction<StubIdList>() {
           @Override
           public boolean perform(final int id, @NotNull final StubIdList value) {
+            ProgressManager.checkCanceled();
             if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {
@@ -289,11 +287,18 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   @Override
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
+    Set<K> allKeys = ContainerUtil.newTroveSet();
+    processAllKeys(indexKey, project, new CommonProcessors.CollectProcessor<K>(allKeys));
+    return allKeys;
+  }
+
+  @Override
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project, Processor<K> processor) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
-      return index.getAllKeys();
+      return index.processAllKeys(processor);
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -305,7 +310,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
       throw e;
     }
-    return Collections.emptyList();
+    return true;
   }
 
   @Override
@@ -428,28 +433,45 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   @Override
   protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
-    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(psi);
-    if (faultyContainer != null) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      PsiFile psiFile = psi.getManager().findFile(file);
-
-      String msg = "Invalid stub element type in index: " + file;
-      msg += "; found: " + psi;
-      msg += "; file stamp: " + file.getModificationStamp();
-      msg += "; file modCount: " + file.getModificationCount();
-      if (document != null) {
-        msg += "; unsaved: " + FileDocumentManager.getInstance().isDocumentUnsaved(document);
-        msg += "; doc stamp: " + document.getModificationStamp();
-        msg += "; committed: " + PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
-      }
-      if (psiFile != null) {
-        msg += "; psi stamp: " + psiFile.getModificationStamp();
-        msg += "; viewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
-      }
-      LOG.error(msg);
+    if (file == null) {
+      super.reportStubPsiMismatch(psi, file);
       return;
     }
-    super.reportStubPsiMismatch(psi, file);
 
+    String msg = "Invalid stub element type in index: " + file;
+    msg += "; found: " + psi;
+    msg += "\nfile stamp: " + file.getModificationStamp();
+    msg += "; file size: " + file.getLength();
+    msg += "; file modCount: " + file.getModificationCount();
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) {
+      msg += "\nsaved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
+      msg += "; doc stamp: " + document.getModificationStamp();
+      msg += "; doc size: " + document.getTextLength();
+      msg += "; committed: " + PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
+    }
+
+    PsiFile psiFile = psi.getManager().findFile(file);
+    if (psiFile != null) {
+      msg += "\npsiFile size: " + psiFile.getTextLength();
+      msg += "; viewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
+      if (psiFile instanceof PsiFileImpl) {
+        StubTree stub = ((PsiFileImpl)psiFile).getStubTree();
+        if (stub == null) {
+          FileElement treeElement = ((PsiFileImpl)psiFile).getTreeElement();
+          msg += "; ast loaded: " + (treeElement != null);
+          if (treeElement != null) {
+            msg += "; ast parsed: " + treeElement.isParsed();
+            msg += "; ast size: " + treeElement.getTextLength();
+          }
+        } else {
+          msg += "\nstub info=" + stub.getDebugInfo();
+        }
+      }
+    }
+
+    msg += "\nindexing info: " + StubUpdatingIndex.getIndexingStampInfo(file);
+    LOG.error(msg);
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlText extends XmlTagChild {
+  @Override
   String getText();
   /**
    * Substituted text

@@ -187,7 +187,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     myTypeParameterReplacements = buildTypeParameterReplacements();
     List<PsiClass> inheritors = new ArrayList<PsiClass>();
 
-    RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+    CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
     // Process usages
     for (final UsageInfo usage : usages) {

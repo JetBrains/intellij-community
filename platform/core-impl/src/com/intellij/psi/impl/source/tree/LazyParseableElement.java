@@ -179,21 +179,11 @@ public class LazyParseableElement extends CompositeElement {
 
       if (parsedNode == null) return;
       super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
-
-      //if (getNotCachedLength() != text.length()) {
-      //  if (ApplicationManager.getApplication().isInternal()) {
-      //    LOG.error("Inconsistent reparse: type=" + getElementType() + "; text=" + text + "; treeText=" + getText());
-      //  } else {
-      //    LOG.error("Inconsistent reparse: type=" + getElementType());
-      //  }
-      //}
-
-      if (!(parsedNode instanceof CompositeElement)) return;
     }
 
     // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
     // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
-    ((CompositeElement)parsedNode).createAllChildrenPsiIfNecessary();
+    createAllChildrenPsiIfNecessary();
   }
 
   @Override

@@ -16,6 +16,8 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.command.HgShowConfigCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -80,20 +81,19 @@ public class HgPusher {
             if (dialog.isOK()) {
               dialog.rememberSettings();
               pushCommand.set(preparePushCommand(myProject, dialog));
+              new Task.Backgroundable(myProject, "Pushing...", false) {
+                @Override
+                public void run(@NotNull ProgressIndicator indicator) {
+                  if (pushCommand.get() != null) {
+                    push(myProject, pushCommand.get());
+                  }
+                }
+              }.queue();
             }
           }
         });
-
-        if (pushCommand.get() != null) {
-          push(myProject, pushCommand.get());
-        }
       }
     });
-  }
-
-  public static String getDefaultPushPath(@NotNull Project project, @NotNull VirtualFile repo) {
-    final HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-    return configCommand.getDefaultPushPath(repo);
   }
 
   @NotNull

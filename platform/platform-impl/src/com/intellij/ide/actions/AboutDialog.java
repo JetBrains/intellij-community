@@ -17,6 +17,9 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -57,6 +60,7 @@ public class AboutDialog extends JDialog {
   private void init(Window window) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     JPanel mainPanel = new JPanel(new BorderLayout());
+    mainPanel.setFocusable(true); //doesn't work under Oracle 1.7 if nothing focusable
     final JComponent closeListenerOwner;
     Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
     final InfoSurface infoSurface;
@@ -75,26 +79,23 @@ public class AboutDialog extends JDialog {
     setUndecorated(true);
     setContentPane(mainPanel);
     final Ref<Long> showTime = Ref.create(System.currentTimeMillis());
-    addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        int code = e.getKeyCode();
-        if (code == KeyEvent.VK_ESCAPE && e.getModifiers() == 0) {
-          dispose();
-        }
-        else if (infoSurface != null) {
-          if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META) {
-            showTime.set(System.currentTimeMillis());
-            e.consume();
-          }
-          else if ((code == KeyEvent.VK_C && (e.isControlDown() || e.isMetaDown()))
-                   || (!SystemInfo.isMac && code == KeyEvent.VK_INSERT && e.isControlDown())) {
-            copyInfoToClipboard(infoSurface.getText());
-            showTime.set(System.currentTimeMillis());
-            e.consume();
-          }
+
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (infoSurface != null) {
+          copyInfoToClipboard(infoSurface.getText());
         }
       }
-    });
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), mainPanel);
+
+    new AnAction() {
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        dispose();
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), mainPanel);
 
     //final long delta = Patches.APPLE_BUG_ID_3716865 ? 100 : 0;
     final long delta = 500; //reproducible on Windows too
@@ -134,7 +135,6 @@ public class AboutDialog extends JDialog {
     catch (Exception ignore) {
     }
   }
-
 
   private static class InfoSurface extends JPanel {
     final Color col;

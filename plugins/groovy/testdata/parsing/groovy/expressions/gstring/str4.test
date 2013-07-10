@@ -5,12 +5,14 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    PsiElement(Gstring content)('My ')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('My ')
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('string')
-    PsiElement(Gstring content)('.'do' sometihng\n')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('.'do' sometihng\n')
     PsiElement(Gstring end)('"""')
   PsiElement(new line)('\n')
   Additive expression

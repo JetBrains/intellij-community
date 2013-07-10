@@ -131,9 +131,7 @@ public class PsiScopesUtil {
     }
     else if (type instanceof PsiDisjunctionType) {
       final PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
-      if (lub != null) {
-        processTypeDeclarations(lub, place, processor);
-      }
+      processTypeDeclarations(lub, place, processor);
     }
     else {
       final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
@@ -307,7 +305,10 @@ public class PsiScopesUtil {
         final PsiElement referenceName = methodCall.getMethodExpression().getReferenceNameElement();
         final PsiManager manager = call.getManager();
         final PsiElement qualifier = ref.getQualifier();
-
+        if (referenceName == null) {
+          // e.g. "manager.(beginTransaction)"
+          throw new MethodProcessorSetupFailedException("Can't resolve method name for this expression");
+        }
         if (referenceName instanceof PsiIdentifier && qualifier instanceof PsiExpression) {
           PsiType type = ((PsiExpression)qualifier).getType();
           if (type != null && qualifier instanceof PsiReferenceExpression) {

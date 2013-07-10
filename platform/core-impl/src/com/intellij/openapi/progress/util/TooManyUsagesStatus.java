@@ -87,7 +87,6 @@ public class TooManyUsagesStatus {
 
     @Override
     public void pauseProcessingIfTooManyUsages() {
-      int i = 0;
     }
   }
 }

@@ -6,15 +6,16 @@ import com.intellij.lang.html.structureView.Html5SectionsNodeProvider;
 import com.intellij.testFramework.FileStructureTestBase;
 
 public class HtmlFileStructureTest extends FileStructureTestBase {
-
   private boolean myHtml5OutlineModeDefault;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myHtml5OutlineModeDefault = PropertiesComponent.getInstance().getBoolean(getHtml5OutlineModePropertyName(), false);
     setHtml5OutlineMode(true);
   }
 
+  @Override
   public void tearDown() throws Exception {
     PropertiesComponent.getInstance().setValue(getHtml5OutlineModePropertyName(), String.valueOf(myHtml5OutlineModeDefault));
     super.tearDown();
@@ -24,14 +25,17 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
     return FileStructurePopup.getPropertyName(Html5SectionsNodeProvider.HTML5_OUTLINE_PROVIDER_PROPERTY);
   }
 
+  @Override
   protected String getFileExtension() {
     return "html";
   }
 
+  @Override
   protected String getBasePath() {
     return "/xml/tests/testData/structureView/";
   }
 
+  @Override
   protected boolean isCommunity() {
     return true;
   }

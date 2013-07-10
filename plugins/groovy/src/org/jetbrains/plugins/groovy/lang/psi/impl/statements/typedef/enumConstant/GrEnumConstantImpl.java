@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -203,12 +203,15 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
     PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
     PsiClass clazz = getContainingClass();
-    assert clazz != null;
-    PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
-    MethodResolverProcessor processor =
-      new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY, incompleteCode, false);
-    clazz.processDeclarations(processor, ResolveState.initial(), null, this);
-    return processor.getCandidates();
+    return ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, argTypes, this);
+  }
+
+  @NotNull
+  @Override
+  public PsiClass getContainingClass() {
+    PsiClass aClass = super.getContainingClass();
+    assert aClass != null;
+    return aClass;
   }
 
   private class MyReference implements PsiPolyVariantReference {

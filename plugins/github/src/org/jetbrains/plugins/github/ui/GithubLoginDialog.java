@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -16,20 +17,17 @@ import java.io.IOException;
  */
 public class GithubLoginDialog extends DialogWrapper {
 
-  private static Logger LOG  = GithubUtil.LOG;
+  private static final Logger LOG = GithubUtil.LOG;
 
   private final GithubLoginPanel myGithubLoginPanel;
-  private final Project myProject;
 
-  // TODO: login to github must be merged with tasks server settings
   public GithubLoginDialog(final Project project) {
     super(project, true);
-    myProject = project;
     myGithubLoginPanel = new GithubLoginPanel(this);
     final GithubSettings settings = GithubSettings.getInstance();
     myGithubLoginPanel.setHost(settings.getHost());
     myGithubLoginPanel.setLogin(settings.getLogin());
-    myGithubLoginPanel.setPassword(settings.getPassword());
+    myGithubLoginPanel.setPassword("");
     setTitle("Login to GitHub");
     setOKButtonText("Login");
     init();
@@ -37,7 +35,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @NotNull
   protected Action[] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   @Override
@@ -57,16 +55,12 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final String login = myGithubLoginPanel.getLogin();
-    final String password = myGithubLoginPanel.getPassword();
-    final String host = myGithubLoginPanel.getHost();
+    final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
-      boolean loggedSuccessfully = GithubUtil.checkCredentials(myProject, host, login, password);
+      boolean loggedSuccessfully = GithubUtil.checkAuthData(auth);
       if (loggedSuccessfully) {
         final GithubSettings settings = GithubSettings.getInstance();
-        settings.setLogin(login);
-        settings.setPassword(password);
-        settings.setHost(host);
+        settings.setAuthData(auth, myGithubLoginPanel.shouldSavePassword());
         super.doOKAction();
       }
       else {
@@ -81,5 +75,10 @@ public class GithubLoginDialog extends DialogWrapper {
 
   public void clearErrors() {
     setErrorText(null);
+  }
+
+  @NotNull
+  public GithubAuthData getAuthData() {
+    return myGithubLoginPanel.getAuthData();
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -304,7 +304,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
         final GrCodeReferenceElement _ref =
           factory.createReferenceElementFromText(myInterfaceName + (addTypeParam ? "<" + generateTypeText(myPsiClass) + ">" : ""));
         final GrCodeReferenceElement ref = (GrCodeReferenceElement)list.add(_ref);
-        GrReferenceAdjuster.shortenReferences(ref);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
       }
       if (comparable != null && !myPsiClass.isInterface()) {
         final PsiMethod baseMethod = comparable.getMethods()[0];

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.Collection;
 
 /**
@@ -37,14 +36,8 @@ public class MavenExecuteGoalDialog extends MavenEditGoalDialog {
   @NotNull
   @Override
   protected Action getOKAction() {
-    return new DialogWrapperAction("&Execute") {
-      {
-        putValue(DEFAULT_ACTION, Boolean.TRUE);
-      }
-      @Override
-      protected void doAction(ActionEvent e) {
-        doOKAction();
-      }
-    };
+    Action action = super.getOKAction();
+    action.putValue(Action.NAME, "&Execute");
+    return action;
   }
 }

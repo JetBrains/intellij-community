@@ -54,17 +54,17 @@ public class JDOMXIncluder {
       throw new NullPointerException("Document must not be null");
     }
 
-    Document result = (Document)original.clone();
+    Document result = original.clone();
 
     Element root = result.getRootElement();
-    List resolved = resolve(root, base);
+    List<Content> resolved = resolve(root, base);
 
     // check that the list returned contains
     // exactly one root element
     Element newRoot = null;
-    Iterator iterator = resolved.iterator();
+    Iterator<Content> iterator = resolved.iterator();
     while (iterator.hasNext()) {
-      Object o = iterator.next();
+      Content o = iterator.next();
       if (o instanceof Element) {
         if (newRoot != null) {
           throw new XIncludeException("Tried to include multiple roots");
@@ -74,7 +74,7 @@ public class JDOMXIncluder {
       else if (o instanceof Comment || o instanceof ProcessingInstruction) {
         // do nothing
       }
-      else if (o instanceof Text || o instanceof String) {
+      else if (o instanceof Text) {
         throw new XIncludeException("Tried to include text node outside of root element");
       }
       else if (o instanceof EntityRef) {
@@ -91,7 +91,7 @@ public class JDOMXIncluder {
     }
 
     // Could probably combine two loops
-    List<Object> newContent = result.getContent();
+    List<Content> newContent = result.getContent();
     // resolved contains list of new content
     // use it to replace old root element
     iterator = resolved.iterator();
@@ -99,7 +99,7 @@ public class JDOMXIncluder {
     // put in nodes before root element
     int rootPosition = newContent.indexOf(result.getRootElement());
     while (iterator.hasNext()) {
-      Object o = iterator.next();
+      Content o = iterator.next();
       if (o instanceof Comment || o instanceof ProcessingInstruction) {
         newContent.add(rootPosition, o);
         rootPosition++;
@@ -118,7 +118,7 @@ public class JDOMXIncluder {
     int addPosition = rootPosition + 1;
     // put in nodes after root element
     while (iterator.hasNext()) {
-      Object o = iterator.next();
+      Content o = iterator.next();
       if (o instanceof Comment || o instanceof ProcessingInstruction) {
         newContent.add(addPosition, o);
         addPosition++;
@@ -131,11 +131,11 @@ public class JDOMXIncluder {
     return result;
   }
 
-  public static List resolve(@NotNull Element original, String base) throws XIncludeException {
+  public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
     Stack<String> bases = new Stack<String>();
     if (base != null) bases.push(base);
 
-    List result = resolve(original, bases);
+    List<Content> result = resolve(original, bases);
     bases.pop();
     return result;
 
@@ -148,7 +148,7 @@ public class JDOMXIncluder {
     return false;
 
   }
-  protected static List<Object> resolve(Element original, Stack<String> bases) throws XIncludeException {
+  protected static List<Content> resolve(Element original, Stack<String> bases) throws XIncludeException {
     if (bases.size() != 0) bases.peek();
 
     if (isIncludeElement(original)) {
@@ -156,14 +156,14 @@ public class JDOMXIncluder {
     }
     else {
       Element resolvedElement = resolveNonXIncludeElement(original, bases);
-      List<Object> resultList = new ArrayList<Object>();
+      List<Content> resultList = new ArrayList<Content>(1);
       resultList.add(resolvedElement);
       return resultList;
     }
 
   }
 
-  private static List<Object> resolveXIncludeElement(Element element, Stack<String> bases) throws XIncludeException {
+  private static List<Content> resolveXIncludeElement(Element element, Stack<String> bases) throws XIncludeException {
     String base = "";
     if (bases.size() != 0) base = bases.peek();
 
@@ -212,7 +212,7 @@ public class JDOMXIncluder {
       assert !bases.contains(remote.toExternalForm()) : "Circular XInclude Reference to " + remote.toExternalForm();
 
       final Element fallbackElement = element.getChild("fallback", element.getNamespace());
-      List<Object> remoteParsed = parseRemote(bases, remote, fallbackElement);
+      List<Content> remoteParsed = parseRemote(bases, remote, fallbackElement);
       if (remoteParsed.size() > 0) {
         remoteParsed = extractNeededChildren(element, remoteParsed);
       }
@@ -222,7 +222,7 @@ public class JDOMXIncluder {
 
         if (o instanceof Element) {
           Element e = (Element)o;
-          List<Object> nodes = resolve(e, bases);
+          List<? extends Content> nodes = resolve(e, bases);
           remoteParsed.addAll(i, nodes);
           i += nodes.size();
           remoteParsed.remove(i);
@@ -243,8 +243,8 @@ public class JDOMXIncluder {
       try {
         String encoding = element.getAttributeValue(ENCODING);
         String s = StreamUtil.readText(URLUtil.openResourceStream(remote), encoding);
-        List<Object> resultList = new ArrayList<Object>();
-        resultList.add(s);
+        List<Content> resultList = new ArrayList<Content>(1);
+        resultList.add(new Text(s));
         return resultList;
       }
       catch (IOException e) {
@@ -261,7 +261,7 @@ public class JDOMXIncluder {
   public static Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
 
   @Nullable
-  private static List<Object> extractNeededChildren(final Element element, List<Object> remoteElements) {
+  private static List<Content> extractNeededChildren(final Element element, List<Content> remoteElements) {
     final String xpointer = element.getAttributeValue(XPOINTER);
     if (xpointer != null) {
 
@@ -288,7 +288,7 @@ public class JDOMXIncluder {
         if (subTagName != null) {
           e = e.getChild(subTagName.substring(1));    // cut off the slash
         }
-        return new ArrayList<Object>(e.getContent());
+        return new ArrayList<Content>(e.getContent());
       }
       else
         return Collections.emptyList();
@@ -298,14 +298,15 @@ public class JDOMXIncluder {
     }
   }
 
-  private static List<Object> parseRemote(final Stack<String> bases, final URL remote, @Nullable Element fallbackElement) {
+  @NotNull
+  private static List<Content> parseRemote(final Stack<String> bases, final URL remote, @Nullable Element fallbackElement) {
     try {
       Document doc = JDOMUtil.loadResourceDocument(remote);
       bases.push(remote.toExternalForm());
 
       Element root = doc.getRootElement();
 
-      final List<Object> list = resolve(root, bases);
+      final List<Content> list = resolve(root, bases);
 
       bases.pop();
       return list;
@@ -326,13 +327,13 @@ public class JDOMXIncluder {
     if (bases.size() != 0) bases.peek();
 
     Element result = new Element(original.getName(), original.getNamespace());
-    Iterator attributes = original.getAttributes().iterator();
+    Iterator<Attribute> attributes = original.getAttributes().iterator();
     while (attributes.hasNext()) {
-      Attribute a = (Attribute)attributes.next();
-      result.setAttribute((Attribute)a.clone());
+      Attribute a = attributes.next();
+      result.setAttribute(a.clone());
     }
 
-    for (Object o : original.getContent())  {
+    for (Content o : original.getContent())  {
       if (o instanceof Element) {
         Element element = (Element)o;
         if (isIncludeElement(element)) {
@@ -342,14 +343,8 @@ public class JDOMXIncluder {
           result.addContent(resolveNonXIncludeElement(element, bases));
         }
       }
-      else if (o instanceof String) {
-        result.addContent((String)o);
-      }
-      else if (o instanceof Content) {
-        result.addContent((Content)((Content)o).clone());
-      }
       else {
-        throw new XIncludeException("Unexpected Type " + o.getClass());
+        result.addContent(o.clone());
       }
     } // end while
 

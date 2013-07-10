@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -287,7 +287,7 @@ public abstract class CreateClassFix {
       @Override
       public void run() {
         final PsiElement newRef = ref.bindToElement(targetClass);
-        GrReferenceAdjuster.shortenReferences(newRef);
+        JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(newRef);
       }
     });
   }

@@ -54,10 +54,6 @@ class FileElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
-  public void documentAndPsiInSync() {
-  }
-
-  @Override
   public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
   }
 

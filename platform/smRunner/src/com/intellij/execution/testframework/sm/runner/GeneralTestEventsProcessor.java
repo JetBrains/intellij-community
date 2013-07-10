@@ -17,63 +17,118 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.testIntegration.TestLocationProvider;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author: Roman Chernyatchik
- *
+ * <p/>
  * Processes events of test runner in general text-based form
- *
+ * <p/>
  * NB: Test name should be unique for all suites. E.g. it can consist of suite name
  * and name of test method
  */
-public interface GeneralTestEventsProcessor extends Disposable {
-  void onStartTesting();
+public abstract class GeneralTestEventsProcessor implements Disposable {
+  private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
+    new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
+      @Override
+      public boolean process(Runnable runnable) {
+        runnable.run();
+        return true;
+      }
+    }, getDisposedCondition(), 300);
 
-  void onTestsCountInSuite(final int count);
+  public abstract void onStartTesting();
 
-  void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
+  public abstract void onTestsCountInSuite(final int count);
 
-  void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
+  public abstract void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
 
-  void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
+  public abstract void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
 
-  void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
+  public abstract void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
 
-  void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
+  public abstract void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
 
-  void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
+  public abstract void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
 
-  void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
+  public abstract void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
 
-  void onUncapturedOutput(@NotNull final String text,
-                          final Key outputType);
+  public abstract void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
 
-  void onError(@NotNull final String localizedMessage,
-               @Nullable final String stackTrace,
-               final boolean isCritical);
+  public abstract void onUncapturedOutput(@NotNull final String text,
+                                          final Key outputType);
+
+  public abstract void onError(@NotNull final String localizedMessage,
+                               @Nullable final String stackTrace,
+                               final boolean isCritical);
 
   // Custom progress statistics
 
   /**
    * @param categoryName If isn't empty then progress statistics will use only custom start/failed events.
-   * If name is null statistics will be switched to normal mode
-   * @param testCount - 0 will be considered as unknown tests number
+   *                     If name is null statistics will be switched to normal mode
+   * @param testCount    - 0 will be considered as unknown tests number
    */
-  void onCustomProgressTestsCategory(@Nullable final String categoryName,
-                                     final int testCount);
-  void onCustomProgressTestStarted();
-  void onCustomProgressTestFailed();
-  void onTestsReporterAttached();
+  public abstract void onCustomProgressTestsCategory(@Nullable final String categoryName,
+                                                     final int testCount);
 
-  void setLocator(@NotNull TestLocationProvider locator);
+  public abstract void onCustomProgressTestStarted();
 
-  void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
+  public abstract void onCustomProgressTestFailed();
 
-  void onFinishTesting();
+  public abstract void onTestsReporterAttached();
 
-  void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
+  public abstract void setLocator(@NotNull TestLocationProvider locator);
+
+  public abstract void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
+
+  public abstract void onFinishTesting();
+
+  public abstract void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
+
+  @Override
+  public void dispose() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myTransferToEDTQueue.drain();
+        }
+      });
+    }
+  }
+
+  public Condition getDisposedCondition() {
+    return Condition.FALSE;
+  }
+
+  /**
+   * Adds runnable to Event Dispatch Queue
+   * if we aren't in UnitTest of Headless environment mode
+   *
+   * @param runnable Runnable
+   */
+  public void addToInvokeLater(final Runnable runnable) {
+    final Application application = ApplicationManager.getApplication();
+    final boolean unitTestMode = application.isUnitTestMode();
+    if (unitTestMode) {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    } else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      myTransferToEDTQueue.offer(runnable);
+    }
+  }
 }

@@ -181,4 +181,9 @@ public abstract class Property<T extends PropertiesContainer> {
   public String getJavadocText() {
     return null;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof Property && getPath().equals(((Property) obj).getPath());
+  }
 }

@@ -18,6 +18,7 @@ package com.siyeh.ipp.whileloop;
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
@@ -35,7 +36,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     final PsiStatement body = doWhileStatement.getBody();
     final PsiElement parent = doWhileStatement.getParent();
     boolean noBraces = !(parent instanceof PsiCodeBlock);
-    final StringBuilder replacementText = new StringBuilder();
+    @NonNls final StringBuilder replacementText = new StringBuilder();
     if (noBraces) {
       final PsiElement[] parentChildren = parent.getChildren();
       for (PsiElement child : parentChildren) {
@@ -53,6 +54,16 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       if (children.length > 2) {
         for (int i = 1, length = children.length - 1; i < length; i++) {
           final PsiElement child = children[i];
+          if (child instanceof PsiDeclarationStatement) {
+            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+            final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+            for (PsiElement declaredElement : declaredElements) {
+              if (declaredElement instanceof PsiVariable) {
+                final PsiVariable variable = (PsiVariable)declaredElement;
+                variable.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+              }
+            }
+          }
           if (noBraces) {
             replacementText.append(child.getText());
           }

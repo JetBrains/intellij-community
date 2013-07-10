@@ -159,7 +159,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public PsiTypeElement getTypeElement() {
-    return PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiTypeElement) {
+        //noinspection unchecked
+        return (PsiTypeElement)child;
+      }
+    }
+    return null;
   }
 
   @Override

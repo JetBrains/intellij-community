@@ -113,6 +113,12 @@
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
     </option>
+    <option name="COFFEESCRIPT.PARAMETER">
+      <value>
+        <option name="EFFECT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="E6E1DC" />
+      </value>
+    </option>
     <option name="COFFEESCRIPT.HEREDOC_CONTENT">
       <value>
         <option name="FOREGROUND" value="A5C261" />

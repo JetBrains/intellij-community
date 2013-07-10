@@ -24,13 +24,13 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -79,7 +79,7 @@ public class ExtractUtil {
       realStatement = null;
       for (GrStatement statement : newStatement) {
         realStatement = declarationOwner.addStatementBefore(statement, statements[0]);
-        GrReferenceAdjuster.shortenReferences(realStatement);
+        JavaCodeStyleManager.getInstance(realStatement.getProject()).shortenClassReferences(realStatement);
       }
       LOG.assertTrue(realStatement != null);
       // remove old statements
@@ -98,7 +98,7 @@ public class ExtractUtil {
       // Expression call replace
       GrExpression methodCall = createMethodCall(helper);
       realStatement = oldExpr.replaceWithExpression(methodCall, true);
-      GrReferenceAdjuster.shortenReferences(realStatement);
+      JavaCodeStyleManager.getInstance(realStatement.getProject()).shortenClassReferences(realStatement);
     }
     return realStatement;
   }

@@ -204,7 +204,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
       @Override
       public void run() {
-        if (LafManager.getInstance().getCurrentLookAndFeel().getName().equals(laf)) return;
+        //if (LafManager.getInstance().getCurrentLookAndFeel().getName().equals(laf)) return;
         laf = LafManager.getInstance().getCurrentLookAndFeel().getName();
         panel.get().removeAll();
         myScrollPane = null;

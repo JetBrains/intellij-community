@@ -1583,4 +1583,68 @@ anon.fo<caret>o()
       foo().bar.first().subs<caret>tring(1, 2)
     ''', PsiMethod)
   }
+
+  void testMixinClosure() {
+    resolveByText('''
+def foo() {
+    def x = { a -> print a}
+    Integer.metaClass.abc = { print 'something' }
+    1.a<caret>bc()
+}
+''', PsiMethod)
+  }
+
+  void testPreferCategoryMethods() {
+    def resolved = resolveByText('''
+class TimeCategory {
+    public static TimeDuration minus(final Date lhs, final Date rhs) {
+        return new TimeDuration()
+    }
+}
+
+class TimeDuration {}
+
+void bug() {
+    use (TimeCategory) {
+        def duration = new Date() - new Date()
+        print durat<caret>ion
+    }
+}
+''', GrVariable)
+
+    assertEquals("TimeDuration", resolved.typeGroovy.canonicalText)
+  }
+
+  void testPreferCategoryMethods2() {
+    def resolved = resolveByText('''
+class TimeCategory {
+    public static TimeDuration minus(final Date lhs, final Date rhs) {
+        return new TimeDuration((int) days, hours, minutes, seconds, (int) milliseconds);
+    }
+}
+
+class TimeDuration {}
+
+void bug() {
+    use (TimeCategory) {
+        def duration = new Date().minus(new Date())
+        print durat<caret>ion
+    }
+}
+''', GrVariable)
+
+    assertEquals("TimeDuration", resolved.typeGroovy.canonicalText)
+  }
+
+
+  void testNegatedIf() {
+    resolveByText('''\
+def foo(x) {
+  if (!(x instanceof String)) return
+
+  x.subst<caret>ring(1)
+}
+''', PsiMethod)
+
+  }
 }

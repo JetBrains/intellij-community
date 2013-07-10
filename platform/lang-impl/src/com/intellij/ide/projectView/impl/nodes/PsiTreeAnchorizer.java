@@ -16,27 +16,51 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class PsiTreeAnchorizer extends TreeAnchorizer {
 
+  private static final Key<PsiAnchor> PSI_ANCHORIZER_ANCHOR = Key.create("PSI_ANCHORIZER_ANCHOR");
+
   @Override
   public Object createAnchor(Object element) {
     if (element instanceof PsiElement) {
-      return PsiAnchor.create((PsiElement)element);
-    }
+      final PsiElement psiElement = (PsiElement)element;
 
+      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+        @Override
+        public Object compute() {
+          PsiAnchor anchor = psiElement.getUserData(PSI_ANCHORIZER_ANCHOR);
+          if (!psiElement.isValid()) {
+            return anchor != null ? anchor : psiElement;
+          }
+
+          if (anchor == null || anchor.retrieve() != psiElement) {
+            psiElement.putUserData(PSI_ANCHORIZER_ANCHOR, anchor = PsiAnchor.create(psiElement));
+          }
+          return anchor;
+        }
+      });
+    }
     return super.createAnchor(element);
   }
-
   @Override
+  @Nullable
   public Object retrieveElement(Object pointer) {
     if (pointer instanceof PsiAnchor) {
-      return ((PsiAnchor)pointer).retrieve();
+      PsiElement retrieve = ((PsiAnchor)pointer).retrieve();
+      if (retrieve == null) {
+        //System.out.println("Null anchor: " + pointer);
+      }
+      return retrieve;
     }
 
     return super.retrieveElement(pointer);

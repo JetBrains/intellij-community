@@ -82,6 +82,28 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
   }
 
   @Override
+  public PsiMethod[] findGetters(PsiClass psiClass, String propertyName) {
+    final String getterName = suggestGetterName(propertyName);
+    final PsiMethod specificGetter = psiClass
+      .findMethodBySignature(JavaPsiFacade.getElementFactory(psiClass.getProject()).createMethod(getterName, PsiType.VOID), false);
+    if (specificGetter != null) {
+      final PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, propertyName, false, false);
+      return getter == null ? new PsiMethod[] {specificGetter} : new PsiMethod[] {getter, specificGetter};
+    }
+    return super.findGetters(psiClass, propertyName);
+  }
+
+  @Override
+  public String suggestGetterName(String propertyName) {
+    return propertyName + "Property";
+  }
+
+  @Override
+  public boolean isSimpleGetter(PsiMethod method, String oldPropertyName) {
+    return method.getName().equals(suggestGetterName(oldPropertyName));
+  }
+
+  @Override
   public boolean isReadOnly(PsiField field) {
     return !InheritanceUtil.isInheritor(field.getType(), JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_WRITABLE_VALUE);
   }

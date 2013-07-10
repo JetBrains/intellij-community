@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -46,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -236,20 +236,10 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
         }
       });
       previewPanel.add(tabbedPane, BorderLayout.CENTER);
-      previewPanel.addAncestorListener(new AncestorListener() {
+      previewPanel.addAncestorListener(new AncestorListenerAdapter() {
         @Override
         public void ancestorAdded(AncestorEvent event) {
           selectCurrentLanguageTab();
-        }
-
-        @Override
-        public void ancestorRemoved(AncestorEvent event) {
-          // Do nothing
-        }
-
-        @Override
-        public void ancestorMoved(AncestorEvent event) {
-          // Do nothing
         }
       });
     }

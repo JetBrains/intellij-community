@@ -41,14 +41,17 @@ import java.util.List;
 /**
  * @author max
  */
-public class SameParameterValueInspection extends GlobalJavaInspectionTool {
+public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + SameParameterValueInspection.class.getName());
 
   @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, @NotNull GlobalInspectionContext globalContext,
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                @NotNull AnalysisScope scope,
+                                                @NotNull InspectionManager manager,
+                                                @NotNull GlobalInspectionContext globalContext,
                                                 @NotNull ProblemDescriptionsProcessor processor) {
-    ArrayList<ProblemDescriptor> problems = null;
+    List<ProblemDescriptor> problems = null;
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 

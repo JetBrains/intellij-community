@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
@@ -39,7 +40,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -219,7 +219,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     PsiElement anchor = calculateAnchorToInsertBefore(owner, helper.getContext());
     GrMethod newMethod = (GrMethod)owner.addBefore(method, anchor);
     renameParameterOccurrences(newMethod, helper);
-    GrReferenceAdjuster.shortenReferences(newMethod);
+    JavaCodeStyleManager.getInstance(newMethod.getProject()).shortenClassReferences(newMethod);
     PsiElement prev = newMethod.getPrevSibling();
     if (!PsiUtil.isLineFeed(prev)) {
       newMethod.getParent().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", newMethod.getNode());

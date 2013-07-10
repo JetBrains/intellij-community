@@ -589,7 +589,7 @@ public class GitHistoryUtils {
   /**
    * <p>Get & parse git log detailed output with commits, their parents and their changes.</p>
    *
-   * <p>Warning: this is method is effective by speed, but don't query too much, because the whole log output is retrieved at once,
+   * <p>Warning: this is method is efficient by speed, but don't query too much, because the whole log output is retrieved at once,
    *    and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
@@ -608,7 +608,7 @@ public class GitHistoryUtils {
 
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.skipNulls(ContainerUtil.map(records, new Function<GitLogRecord, GitCommit>() {
+    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, GitCommit>() {
       @Override
       public GitCommit fun(GitLogRecord record) {
         try {
@@ -619,7 +619,7 @@ public class GitHistoryUtils {
           return null;
         }
       }
-    }));
+    });
   }
 
   private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record)

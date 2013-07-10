@@ -24,7 +24,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRememberedInputs;
-import org.zmlx.hg4idea.command.HgShowConfigCommand;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -67,6 +66,13 @@ public class HgPullDialog extends DialogWrapper {
     });
   }
 
+  private void addPathsFromHgrc(VirtualFile repo) {
+    Collection<String> paths = HgUtil.getRepositoryPaths(project, repo);
+    for (String path : paths) {
+      myRepositoryURL.prependItem(path);
+    }
+  }
+
   public void rememberSettings() {
     final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(project);
     rememberedInputs.addRepositoryUrl(HgUtil.removePasswordIfNeeded(getSource()));
@@ -100,13 +106,13 @@ public class HgPullDialog extends DialogWrapper {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        VirtualFile repo = hgRepositorySelector.getRepository();
-        HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-        final String defaultPath = configCommand.getDefaultPath(repo);
+        final VirtualFile repo = hgRepositorySelector.getRepository();
+        final String defaultPath = HgUtil.getRepositoryDefaultPath(project,repo);
         if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
             public void run() {
+              addPathsFromHgrc(repo);
               myRepositoryURL.setText(HgUtil.removePasswordIfNeeded(defaultPath));
               myCurrentRepositoryUrl = defaultPath;
             }

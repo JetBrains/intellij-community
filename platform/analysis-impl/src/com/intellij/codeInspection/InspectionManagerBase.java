@@ -17,11 +17,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class InspectionManagerBase extends InspectionManager {
   private final Project myProject;
+  @NonNls protected String myCurrentProfileName;
 
   public InspectionManagerBase(Project project) {
     myProject = project;
@@ -169,4 +173,14 @@ public class InspectionManagerBase extends InspectionManager {
     return createProblemDescriptor(psiElement, descriptionTemplate, showTooltip, highlightType, true, fixes);
   }
 
+  public String getCurrentProfile() {
+    if (myCurrentProfileName == null) {
+      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
+      myCurrentProfileName = profileManager.getProjectProfile();
+      if (myCurrentProfileName == null) {
+        myCurrentProfileName = InspectionProfileManager.getInstance().getRootProfile().getName();
+      }
+    }
+    return myCurrentProfileName;
+  }
 }

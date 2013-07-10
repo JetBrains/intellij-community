@@ -15,6 +15,8 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,11 +25,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.IconUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgBookmarkCreateCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
@@ -37,6 +41,7 @@ import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -59,10 +64,23 @@ public class HgBranchPopupActions {
 
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
-    popupGroup.addAction(new NewBranchAction(myProject, Collections.singletonList(myRepository)));
+    popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
+    popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
 
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
+    }
+
+    popupGroup.addSeparator("Bookmarks");
+    List<String> bookmarks = new ArrayList<String>(myRepository.getBookmarks());
+    String currentBookmark = myRepository.getCurrentBookmark();
+    Collections.sort(bookmarks);
+    for (String bookmark : bookmarks) {
+      AnAction bookmarkAction = new BranchActions(myProject, bookmark, myRepository);
+      if (bookmark.equals(currentBookmark)) {
+        bookmarkAction.getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
+      }
+      popupGroup.add(bookmarkAction);
     }
 
     popupGroup.addSeparator("Branches");
@@ -76,52 +94,82 @@ public class HgBranchPopupActions {
     return popupGroup;
   }
 
-  static class NewBranchAction extends DumbAwareAction {
-    private final Project myProject;
-    private final List<HgRepository> myRepositories;
+  private static class HgNewBranchAction extends NewBranchAction<HgRepository> {
+    @NotNull final VirtualFile myPreselectedRepo;
 
-    NewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories) {
-      super("New Branch", "Create and checkout new branch", IconUtil.getAddIcon());
-      myProject = project;
-      myRepositories = repositories;
+    HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
+      super(project, repositories);
+      myPreselectedRepo = preselectedRepo;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       final String name = HgUtil.getNewBranchNameFromUser(myProject, "Create New Branch");
-
+      if (name == null) {
+        return;
+      }
       try {
-        new HgBranchCreateCommand(myProject, HgUtil.getRootForSelectedFile(myProject), name).execute(new HgCommandResultHandler() {
+        new HgBranchCreateCommand(myProject, myPreselectedRepo, name).execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
             myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(myProject)
-                .notifyError(result, "Creation  failed", "Branch creation [" + name + "] failed");
+                .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
             }
           }
         });
       }
       catch (HgCommandException exception) {
-        HgAbstractGlobalAction.handleException(myProject, exception);
+        HgAbstractGlobalAction.handleException(myProject, "Can't create new branch: ", exception);
       }
+    }
+  }
+
+  private static class HgNewBookmarkAction extends DumbAwareAction {
+    protected final List<HgRepository> myRepositories;
+    protected Project myProject;
+    @NotNull final VirtualFile myPreselectedRepo;
+
+    HgNewBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull VirtualFile preselectedRepo) {
+      super("New Bookmark", "Create new bookmark", null);
+      myProject = project;
+      myRepositories = repositories;
+      myPreselectedRepo = preselectedRepo;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      if (anyRepositoryIsFresh()) {
+      if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
         e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
+        e.getPresentation().setDescription("Bookmark creation is not possible before the first commit.");
       }
     }
 
-    private boolean anyRepositoryIsFresh() {
-      for (HgRepository repository : myRepositories) {
-        if (repository.isFresh()) {
-          return true;
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+
+      final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myProject);
+      bookmarkDialog.show();
+      if (bookmarkDialog.isOK()) {
+        try {
+          final String name = bookmarkDialog.getName();
+          new HgBookmarkCreateCommand(myProject, myPreselectedRepo, name,
+                                      bookmarkDialog.isActive()).execute(new HgCommandResultHandler() {
+            @Override
+            public void process(@Nullable HgCommandResult result) {
+              myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+              if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+                new HgCommandResultNotifier(myProject)
+                  .notifyError(result, "Creation failed", "Bookmark creation [" + name + "] failed");
+              }
+            }
+          });
+        }
+        catch (HgCommandException exception) {
+          HgAbstractGlobalAction.handleException(myProject, exception);
         }
       }
-      return false;
     }
   }
 

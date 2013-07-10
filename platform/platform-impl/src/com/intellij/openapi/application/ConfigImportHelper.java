@@ -402,7 +402,7 @@ public class ConfigImportHelper {
       dir = dir.substring(1, dir.length() - 1);
     }
     if (replaceUserHome) {
-      if (dir.startsWith("~\\") || dir.startsWith("~//") || StringUtil.startsWithConcatenationOf(dir, "~", File.separator)) {
+      if (dir.startsWith("~\\") || dir.startsWith("~//") || StringUtil.startsWithConcatenation(dir, "~", File.separator)) {
         dir = SystemProperties.getUserHome() + dir.substring(1);
       }
     }

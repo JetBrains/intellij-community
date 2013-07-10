@@ -105,12 +105,12 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public BaseComponent getComponent(String name) {
+  public BaseComponent getComponent(@NotNull String name) {
     return null;
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     return null;
   }
 
@@ -121,7 +121,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   @Override
   @NotNull
-  public <T> T[] getComponents(Class<T> baseClass) {
+  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
     return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
@@ -132,7 +132,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
     return null;
   }
 
@@ -177,17 +177,19 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
+  @NotNull
   @Override
   public MessageBus getMessageBus() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void dispose() {
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
   }
 

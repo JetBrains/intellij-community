@@ -33,6 +33,10 @@
     <component>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryKindLoader</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -201,11 +205,6 @@
 
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</interface-class>
-      <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</implementation-class>
     </component>
 
     <component>

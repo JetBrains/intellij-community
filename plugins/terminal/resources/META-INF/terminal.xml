@@ -6,4 +6,12 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="Terminal" anchor="bottom" icon="AllIcons.Ide.NoNotifications13"
+                factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory" secondary="true"/>
+
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.TerminalView"
+                        serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
+  </extensions>
 </idea-plugin>

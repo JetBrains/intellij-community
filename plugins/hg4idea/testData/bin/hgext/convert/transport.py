@@ -15,9 +15,9 @@
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
 
+from mercurial import util
 from svn.core import SubversionException, Pool
 import svn.ra
 import svn.client
@@ -43,7 +43,7 @@ def _create_auth_baton(pool):
         svn.client.get_ssl_client_cert_pw_file_provider(pool),
         svn.client.get_ssl_server_trust_file_provider(pool),
         ]
-    # Platform-dependant authentication methods
+    # Platform-dependent authentication methods
     getprovider = getattr(svn.core, 'svn_auth_get_platform_specific_provider',
                           None)
     if getprovider:
@@ -54,7 +54,7 @@ def _create_auth_baton(pool):
                 if p:
                     providers.append(p)
     else:
-        if hasattr(svn.client, 'get_windows_simple_provider'):
+        if util.safehasattr(svn.client, 'get_windows_simple_provider'):
             providers.append(svn.client.get_windows_simple_provider(pool))
 
     return svn.core.svn_auth_open(providers, pool)
@@ -73,7 +73,7 @@ class SvnRaTransport(object):
         self.password = ''
 
         # Only Subversion 1.4 has reparent()
-        if ra is None or not hasattr(svn.ra, 'reparent'):
+        if ra is None or not util.safehasattr(svn.ra, 'reparent'):
             self.client = svn.client.create_context(self.pool)
             ab = _create_auth_baton(self.pool)
             if False:
@@ -85,7 +85,7 @@ class SvnRaTransport(object):
             self.client.config = svn_config
             try:
                 self.ra = svn.client.open_ra_session(
-                    self.svn_url.encode('utf8'),
+                    self.svn_url,
                     self.client, self.pool)
             except SubversionException, (inst, num):
                 if num in (svn.core.SVN_ERR_RA_ILLEGAL_URL,
@@ -98,9 +98,8 @@ class SvnRaTransport(object):
             svn.ra.reparent(self.ra, self.svn_url.encode('utf8'))
 
     class Reporter(object):
-        def __init__(self, (reporter, report_baton)):
-            self._reporter = reporter
-            self._baton = report_baton
+        def __init__(self, reporter_data):
+            self._reporter, self._baton = reporter_data
 
         def set_path(self, path, revnum, start_empty, lock_token, pool=None):
             svn.ra.reporter2_invoke_set_path(self._reporter, self._baton,

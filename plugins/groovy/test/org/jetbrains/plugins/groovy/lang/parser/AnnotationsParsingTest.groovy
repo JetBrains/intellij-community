@@ -34,4 +34,5 @@ public class AnnotationsParsingTest extends GroovyParsingTestCase {
   public void testDefAttribute() {doTest()}
   public void testLineFeedAfterRef() {doTest()}
   public void testKeywordsAttributes() {doTest()}
+  public void testMess() { doTest() }
 }

@@ -112,7 +112,10 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     int limit = vcsConfiguration.LIMIT_HISTORY ? vcsConfiguration.MAXIMUM_HISTORY_ROWS : -1;
 
     final HgLogCommand logCommand = new HgLogCommand(project);
-    logCommand.setFollowCopies(!filePath.isDirectory());
+    //workaround: --follow  options doesn't work with largefiles extension;
+    //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html
+    logCommand
+      .setFollowCopies(!filePath.isDirectory() && HgUtil.getConfig(project, vcsRoot, "extensions", "largefiles") == null);
     logCommand.setIncludeRemoved(true);
     try {
       return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);

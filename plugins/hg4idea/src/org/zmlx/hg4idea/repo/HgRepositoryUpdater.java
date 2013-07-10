@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
@@ -40,21 +41,26 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final QueueProcessor<Object> myUpdateQueue;
-  @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
   @Nullable private final VirtualFile myBranchHeadsDir;
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
+  @NotNull private final QueueProcessor<Object> myUpdateConfigQueue;
 
 
-  HgRepositoryUpdater(@NotNull HgRepository repository) {
+  HgRepositoryUpdater(@NotNull final HgRepository repository) {
     VirtualFile hgDir = repository.getHgDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);
     myRepositoryFiles = HgRepositoryFiles.getInstance(hgDir);
     RepositoryUtil.visitVcsDirVfs(hgDir, HgRepositoryFiles.getSubDirRelativePaths());
 
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
-
     Project project = repository.getProject();
     myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
+    myUpdateConfigQueue = new QueueProcessor<Object>(new Consumer<Object>() {
+      @Override
+      public void consume(Object dummy) {
+        repository.updateConfig();
+      }
+    }, project.getDisposed());
     if (!project.isDisposed()) {
       myMessageBusConnection = project.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -63,7 +69,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       myMessageBusConnection = null;
     }
   }
-
 
   @Override
   public void dispose() {
@@ -86,6 +91,9 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean branchHeadsChanged = false;
     boolean branchFileChanged = false;
     boolean mergeFileChanged = false;
+    boolean bookmarksFileChanged = false;
+    boolean currentBookmarkFileChanged = false;
+    boolean configHgrcChanged = false;
     for (VFileEvent event : events) {
       String filePath = event.getPath();
       if (filePath == null) {
@@ -101,12 +109,23 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
       }
+      else if (myRepositoryFiles.isBookmarksFile(filePath)) {
+        bookmarksFileChanged = true;
+      }
+      else if (myRepositoryFiles.isCurrentBookmarksFile(filePath)) {
+        currentBookmarkFileChanged = true;
+      }
+
+      else if (myRepositoryFiles.isConfigHgrcFile(filePath)) {
+        configHgrcChanged = true;
+      }
     }
 
-
-    if (branchHeadsChanged || branchFileChanged || mergeFileChanged) {
-      myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
+    if (branchHeadsChanged || branchFileChanged || mergeFileChanged || bookmarksFileChanged || currentBookmarkFileChanged) {
+      myUpdateQueue.add(Void.TYPE);
+    }
+    if (configHgrcChanged) {
+      myUpdateConfigQueue.add(Void.TYPE);
     }
   }
-
 }

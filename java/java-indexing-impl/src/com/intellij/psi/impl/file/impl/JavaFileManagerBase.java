@@ -278,7 +278,7 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
     for (PsiClass aClass : classes) {
       PsiFile file = aClass.getContainingFile();
       if (file == null) {
-        LOG.error("aClass=" + aClass);
+        LOG.error("aClass=" + aClass + " of class " + aClass.getClass() + "; valid=" + aClass.isValid());
         continue;
       }
       final boolean valid = aClass.isValid();

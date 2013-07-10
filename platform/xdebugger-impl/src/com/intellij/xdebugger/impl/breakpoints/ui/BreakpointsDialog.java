@@ -29,7 +29,7 @@ import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.Function;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -38,7 +38,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +117,7 @@ public class BreakpointsDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new BorderLayout());
 
-    JBSplitter splitPane = new JBSplitter(false, 0.3f);
+    JBSplitter splitPane = new JBSplitter(0.3f);
     splitPane.setSplitterProportionKey(getSplitterProportionKey());
 
     splitPane.setFirstComponent(createMasterView());

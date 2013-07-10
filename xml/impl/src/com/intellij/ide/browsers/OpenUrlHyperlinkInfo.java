@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +35,11 @@ import java.awt.event.MouseEvent;
  * @author nik
  */
 public class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
-  private String myUrl;
+  private final String myUrl;
   private final Condition<BrowsersConfiguration.BrowserFamily> mySuitableBrowsers;
 
   public OpenUrlHyperlinkInfo(@NotNull String url) {
-    this(url, Condition.TRUE);
+    this(url, Conditions.<BrowsersConfiguration.BrowserFamily>alwaysTrue());
   }
 
   public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<BrowsersConfiguration.BrowserFamily> suitableBrowsers) {

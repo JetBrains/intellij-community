@@ -39,7 +39,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
   protected abstract void analyzeClasses(final Project project, final AnalysisScope scope, ProgressIndicator indicator);
 
   @Override
-  protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
+  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {

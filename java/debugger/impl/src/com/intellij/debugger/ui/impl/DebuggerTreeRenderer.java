@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -193,14 +193,14 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             valueLabelAttribs = XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES;
           }
           else {
-            TextAttributes highlightingAttribs = null;
+            TextAttributes attributes = null;
             if (valueDescriptor.isNull()){
-              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.KEYWORD);
+              attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(JavaHighlightingColors.KEYWORD);
             }
             else if (valueDescriptor.isString()) {
-              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.STRING);
+              attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(JavaHighlightingColors.STRING);
             }
-            valueLabelAttribs = highlightingAttribs != null? SimpleTextAttributes.fromTextAttributes(highlightingAttribs) : DEFAULT_ATTRIBUTES;
+            valueLabelAttribs = attributes != null? SimpleTextAttributes.fromTextAttributes(attributes) : DEFAULT_ATTRIBUTES;
           }
 
           final EvaluateException exception = descriptor.getEvaluateException();
@@ -248,7 +248,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           }
 
           if (escapeAttribs == null) { // lazy init
-            final TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+            TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(JavaHighlightingColors.VALID_STRING_ESCAPE);
             if (fromHighlighter != null) {
               escapeAttribs = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
             }

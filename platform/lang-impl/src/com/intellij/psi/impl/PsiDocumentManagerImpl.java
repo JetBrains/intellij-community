@@ -64,7 +64,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
           @Override
           public PsiFile compute() {
-            return getCachedPsiFile(virtualFile);
+            return myProject.isDisposed() ? null : getCachedPsiFile(virtualFile);
           }
         });
         fireDocumentCreated(document, psiFile);
@@ -138,20 +138,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
                                               boolean synchronously) {
     EditorWindow.disposeInvalidEditors();  // in write action
     return super.finishCommitInWriteAction(document, finishProcessors, synchronously);
-  }
-
-  @Override
-  public void commitOtherFilesAssociatedWithDocument(final Document document, final PsiFile psiFile) {
-    super.commitOtherFilesAssociatedWithDocument(document, psiFile);
-    final FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider != null && viewProvider.getAllFiles().size() > 1) {
-      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
-        @Override
-        public void run() {
-          doCommit(document, psiFile);
-        }
-      });
-    }
   }
 
   @Override

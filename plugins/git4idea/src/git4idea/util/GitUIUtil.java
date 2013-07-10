@@ -23,10 +23,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.Function;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -39,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -393,43 +390,4 @@ public class GitUIUtil {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
-  @NotNull
-  public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
-    VirtualFile projectDir = project.getBaseDir();
-
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
-    }
-
-    return repositoryPath.isEmpty() ? "<Project>" : repositoryPath;
-  }
-
-  @NotNull
-  public static String getShortRepositoryName(@NotNull GitRepository repository) {
-    return getShortRepositoryName(repository.getProject(), repository.getRoot());
-  }
-
-  @NotNull
-  public static String getShortNames(@NotNull Collection<GitRepository> repositories) {
-    return StringUtil.join(repositories, new Function<GitRepository, String>() {
-      @Override
-      public String fun(GitRepository repository) {
-        return getShortRepositoryName(repository);
-      }
-    }, ", ");
-  }
-
-  @NotNull
-  public static String joinRootsPaths(@NotNull Collection<VirtualFile> roots) {
-    return StringUtil.join(roots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getPresentableUrl();
-      }
-    }, ", ");
-  }
 }

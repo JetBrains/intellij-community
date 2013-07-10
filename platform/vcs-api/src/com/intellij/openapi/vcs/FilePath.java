@@ -74,7 +74,7 @@ public interface FilePath {
    */
   FileType getFileType();
 
-  VirtualFile refresh();
+  void refresh();
 
   void hardRefresh();
 

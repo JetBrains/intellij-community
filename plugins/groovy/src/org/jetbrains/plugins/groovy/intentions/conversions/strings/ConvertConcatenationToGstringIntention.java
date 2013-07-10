@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
@@ -55,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -190,8 +190,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   private static void performIntention(GrBinaryExpression expr, StringBuilder builder, boolean multiline) {
-    GrExpression left = (GrExpression)skipParentheses(expr.getLeftOperand(), false);
-    GrExpression right = (GrExpression)skipParentheses(expr.getRightOperand(), false);
+    GrExpression left = (GrExpression)PsiUtil.skipParentheses(expr.getLeftOperand(), false);
+    GrExpression right = (GrExpression)PsiUtil.skipParentheses(expr.getRightOperand(), false);
     getOperandText(left, builder, multiline);
     getOperandText(right, builder, multiline);
   }
@@ -265,23 +265,6 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       return true;
     }
     return false;
-  }
-
-  @Nullable
-  private static PsiElement skipParentheses(PsiElement element, boolean up) {
-    if (up) {
-      PsiElement parent = element.getParent();
-      while (parent instanceof GrParenthesizedExpression) {
-        parent = parent.getParent();
-      }
-      return parent;
-    }
-    else {
-      while (element instanceof GrParenthesizedExpression) {
-        element = ((GrParenthesizedExpression)element).getOperand();
-      }
-      return element;
-    }
   }
 
   private static class MyPredicate implements PsiElementPredicate {

@@ -62,7 +62,7 @@ import java.util.List;
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<ProjectSettings>,
-  SystemSettings extends AbstractExternalSystemSettings<ProjectSettings, L>
+  SystemSettings extends AbstractExternalSystemSettings<SystemSettings, ProjectSettings, L>
   > implements SearchableConfigurable, Configurable.NoScroll
 {
 
@@ -186,9 +186,11 @@ public abstract class AbstractExternalSystemConfigurable<
   @NotNull
   protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
   
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected String getProjectName(@NotNull String path) {
-    return new File(path).getParentFile().getName();
+    File file = new File(path);
+    return file.isDirectory() ? file.getName() : file.getParentFile().getName();
   }
 
   private void prepareSystemSettings(@NotNull SystemSettings s) {

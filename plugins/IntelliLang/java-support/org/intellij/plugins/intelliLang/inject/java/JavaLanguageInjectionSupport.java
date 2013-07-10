@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -197,21 +197,26 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     else if (parent instanceof PsiVariable) {
       if (doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, languageId)) return true;
     }
+    else if (target instanceof PsiVariable) {
+      if (doAddLanguageAnnotation(project, (PsiModifierListOwner)target, languageId)) return true;
+    }
     return false;
   }
 
-  static boolean doAddLanguageAnnotation(final Project project, final PsiModifierListOwner modifierListOwner,
-                                         final String languageId) {
+  public static boolean doAddLanguageAnnotation(final Project project, final PsiModifierListOwner modifierListOwner, final String languageId) {
     if (!Configuration.getProjectInstance(project).getAdvancedConfiguration().isSourceModificationAllowed()) return false;
     if (modifierListOwner.getModifierList() == null || !PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)) return false;
-    if (!OrderEntryFix.isAnnotationsJarInPath(ModuleUtil.findModuleForPsiElement(modifierListOwner))) {
+    if (!OrderEntryFix.isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))) {
       // todo add languageId comment
       return false;
     }
     new WriteCommandAction(project, modifierListOwner.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
-        final PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()
-          .createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
+        JVMElementFactory factory = JVMElementFactories.getFactory(modifierListOwner.getLanguage(), modifierListOwner.getProject());
+        if (factory == null) {
+          factory = JavaPsiFacade.getElementFactory(modifierListOwner.getProject());
+        }
+        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
         final PsiModifierList list = modifierListOwner.getModifierList();
         assert list != null;
         final PsiAnnotation existingAnnotation = list.findAnnotation(AnnotationUtil.LANGUAGE);
@@ -227,8 +232,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return true;
   }
 
-  private static boolean doInjectInJavaMethod(final Project project, final PsiMethod psiMethod, final int parameterIndex,
-                                              final String languageId) {
+  public static boolean doInjectInJavaMethod(@NotNull final Project project,
+                                             @Nullable final PsiMethod psiMethod,
+                                             final int parameterIndex,
+                                             @NotNull final String languageId) {
     if (psiMethod == null) return false;
     if (parameterIndex < -1) return false;
     if (parameterIndex >= psiMethod.getParameterList().getParametersCount()) return false;

@@ -199,7 +199,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       return new CompactSyntaxTokenManager(new SimpleCharStream(preprocessor, 1, 1), initialState);
     } catch (NoSuchMethodError e) {
       final Class<CompactSyntaxTokenManager> managerClass = CompactSyntaxTokenManager.class;
-      LOG.error("Unsupported version of RNGOM in classpath", e,
+      LOG.error("Unsupported version of RNGOM in classpath. Please check your IDEA and JDK installation.", e,
                 "Actual parameter types: " + Arrays.toString(managerClass.getConstructors()[0].getParameterTypes()),
                 "Location of " + managerClass.getName() + ": " + getSourceLocation(managerClass),
                 "Location of " + CharStream.class.getName() + ": " + getSourceLocation(CharStream.class));
@@ -215,7 +215,9 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
         return location.toExternalForm();
       }
     }
-    final URL resource = clazz.getClassLoader().getResource(clazz.getName().replace('.', '/') + ".class");
+    final String name = clazz.getName().replace('.', '/') + ".class";
+    final ClassLoader loader = clazz.getClassLoader();
+    final URL resource = loader != null ? loader.getResource(name) : ClassLoader.getSystemResource(name);
     return resource != null ? resource.toExternalForm() : "<unknown>";
   }
 

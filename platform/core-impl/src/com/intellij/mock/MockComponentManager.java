@@ -63,7 +63,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  public BaseComponent getComponent(String name) {
+  public BaseComponent getComponent(@NotNull String name) {
     return null;
   }
 
@@ -85,13 +85,13 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);
     return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
     return getComponent(interfaceClass);
   }
 
@@ -102,7 +102,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   @NotNull
-  public <T> T[] getComponents(Class<T> baseClass) {
+  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
     final List<?> list = myPicoContainer.getComponentInstancesOfType(baseClass);
     return list.toArray((T[])Array.newInstance(baseClass, 0));
   }
@@ -113,6 +113,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return myPicoContainer;
   }
 
+  @NotNull
   @Override
   public MessageBus getMessageBus() {
     return myMessageBus;
@@ -127,8 +128,9 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   public void dispose() {
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
   }
 

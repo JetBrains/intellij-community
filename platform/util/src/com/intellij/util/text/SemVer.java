@@ -78,7 +78,12 @@ public class SemVer {
     }
     Integer major = toInteger(comps[0]);
     Integer minor = toInteger(comps[1]);
-    Integer patch = toInteger(comps[2]);
+    String patchStr = comps[2];
+    int dashInd = patchStr.indexOf('-');
+    if (dashInd >= 0) {
+      patchStr = patchStr.substring(0, dashInd);
+    }
+    Integer patch = toInteger(patchStr);
     if (major != null && minor != null && patch != null) {
       return new SemVer(major, minor, patch);
     }

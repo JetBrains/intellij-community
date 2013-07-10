@@ -5,7 +5,8 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import getopt
+import getopt, util
+from i18n import _
 
 def gnugetopt(args, options, longoptions):
     """Parse options mostly like getopt.gnu_getopt.
@@ -43,6 +44,7 @@ def fancyopts(args, options, state, gnu=False):
       long option
       default value
       description
+      option value label(optional)
 
     option types include:
 
@@ -59,7 +61,11 @@ def fancyopts(args, options, state, gnu=False):
     argmap = {}
     defmap = {}
 
-    for short, name, default, comment in options:
+    for option in options:
+        if len(option) == 5:
+            short, name, default, comment, dummy = option
+        else:
+            short, name, default, comment = option
         # convert opts to getopt format
         oname = name
         name = name.replace('-', '_')
@@ -70,7 +76,7 @@ def fancyopts(args, options, state, gnu=False):
         # copy defaults to state
         if isinstance(default, list):
             state[name] = default[:]
-        elif hasattr(default, '__call__'):
+        elif getattr(default, '__call__', False):
             state[name] = None
         else:
             state[name] = default
@@ -100,7 +106,11 @@ def fancyopts(args, options, state, gnu=False):
         if t is type(fancyopts):
             state[name] = defmap[name](val)
         elif t is type(1):
-            state[name] = int(val)
+            try:
+                state[name] = int(val)
+            except ValueError:
+                raise util.Abort(_('invalid value %r for option %s, '
+                                   'expected int') % (val, opt))
         elif t is type(''):
             state[name] = val
         elif t is type([]):

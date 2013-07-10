@@ -5,13 +5,13 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -43,12 +43,24 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean isStartMatch(LookupElement element) {
-    return ContainerUtil.or(element.getAllLookupStrings(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return myCaseInsensitiveMatcher.isStartMatch(s);
+    for (String s : element.getAllLookupStrings()) {
+      FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
+      if (ranges == null) continue;
+      if (ranges.isEmpty() || isStartMatchModuloUnderscores(s, ranges.get(0).getStartOffset())) {
+        return true;
       }
-    });
+    }
+
+    return false;
+  }
+
+  private static boolean isStartMatchModuloUnderscores(@NotNull String name, int startIndex) {
+    for (int i = 0; i < startIndex; i++) {
+      if (name.charAt(i) != '_') {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

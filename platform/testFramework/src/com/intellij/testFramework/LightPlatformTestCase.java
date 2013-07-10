@@ -122,7 +122,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
   @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
-  private final Map<String, InspectionTool> myAvailableInspectionTools = new THashMap<String, InspectionTool>();
+  private final Map<String, InspectionToolWrapper> myAvailableInspectionTools = new THashMap<String, InspectionToolWrapper>();
   private static boolean ourHaveShutdownHook;
   private ThreadTracker myThreadTracker;
 
@@ -339,7 +339,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static void doSetup(@NotNull LightProjectDescriptor descriptor,
                              @NotNull LocalInspectionTool[] localInspectionTools,
-                             @NotNull final Map<String, InspectionTool> availableInspectionTools)
+                             @NotNull final Map<String, InspectionToolWrapper> availableInspectionTools)
     throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
@@ -361,16 +361,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
       @Override
       @NotNull
-      public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        final Collection<InspectionTool> tools = availableInspectionTools.values();
-        return tools.toArray(new InspectionTool[tools.size()]);
+      public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
+        final Collection<InspectionToolWrapper> tools = availableInspectionTools.values();
+        return tools.toArray(new InspectionToolWrapper[tools.size()]);
       }
 
+      @NotNull
       @Override
-      public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
-        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
-        for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
+      public List<Tools> getAllEnabledInspectionTools(Project project) {
+        List<Tools> result = new ArrayList<Tools>();
+        for (InspectionToolWrapper toolWrapper : getInspectionTools(null)) {
+          result.add(new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true));
         }
         return result;
       }
@@ -382,24 +383,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       @Override
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        InspectionTool localInspectionTool = availableInspectionTools.get(key.toString());
-        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
+        InspectionToolWrapper toolWrapper = availableInspectionTools.get(key.toString());
+        return toolWrapper == null ? HighlightDisplayLevel.WARNING : toolWrapper.getDefaultLevel();
       }
 
       @Override
-      public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-        if (availableInspectionTools.containsKey(shortName)) {
-          return availableInspectionTools.get(shortName);
-        }
-        return null;
+      public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
+        return availableInspectionTools.get(shortName);
       }
 
       @Override
-      public InspectionProfileEntry getToolById(@NotNull String id, @NotNull PsiElement element) {
-        if (availableInspectionTools.containsKey(id)) {
-          return availableInspectionTools.get(id);
-        }
-        return null;
+      public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {
+        return availableInspectionTools.get(id);
       }
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
@@ -445,7 +440,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     final List<InspectionEP> eps = ContainerUtil.newArrayList();
     ContainerUtil.addAll(eps, Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION));
     ContainerUtil.addAll(eps, Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION));
-    ContainerUtil.addAll(eps, (InspectionEP[])Extensions.getExtensions("com.intellij.specialTool"));
 
     next:
     for (int i = 0; i < classes.length; i++) {
@@ -467,30 +461,25 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
+  protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
+    enableInspectionTool(myAvailableInspectionTools, toolWrapper);
+  }
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    if (tool instanceof InspectionTool) {
-      enableInspectionTool(myAvailableInspectionTools, (InspectionTool)tool);
-    }
-    else if (tool instanceof LocalInspectionTool) {
-      enableInspectionTool(myAvailableInspectionTools, new LocalInspectionToolWrapper((LocalInspectionTool)tool));
-    }
-    else if (tool instanceof GlobalInspectionTool) {
-      enableInspectionTool(myAvailableInspectionTools, new GlobalInspectionToolWrapper((GlobalInspectionTool)tool));
-    }
-    else {
-      throw new IllegalArgumentException("Unexpected inspection type: " + tool);
-    }
+    InspectionToolWrapper toolWrapper = InspectionToolRegistrar.wrapTool(tool);
+    enableInspectionTool(myAvailableInspectionTools, toolWrapper);
   }
 
-  private static void enableInspectionTool(@NotNull Map<String, InspectionTool> availableLocalTools, @NotNull InspectionTool wrapper) {
-    final String shortName = wrapper.getShortName();
+  public static void enableInspectionTool(@NotNull Map<String, InspectionToolWrapper> availableLocalTools,
+                                          @NotNull InspectionToolWrapper toolWrapper) {
+    final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
-      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), wrapper instanceof LocalInspectionToolWrapper
-                                                                        ? ((LocalInspectionToolWrapper)wrapper).getTool().getID()
-                                                                        : wrapper.getShortName());
+      String id = toolWrapper instanceof LocalInspectionToolWrapper
+                  ? ((LocalInspectionToolWrapper)toolWrapper).getTool().getID()
+                  : toolWrapper.getShortName();
+      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), id);
     }
-    availableLocalTools.put(shortName, wrapper);
+    availableLocalTools.put(shortName, toolWrapper);
   }
 
   @NotNull

@@ -63,14 +63,10 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Dec 25, 2003
- * Time: 9:47:59 PM
- * To change this template use Options | File Templates.
+ * @author stathik
+ * @since Dec 25, 2003
  */
 public abstract class PluginManagerMain implements Disposable {
-
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls private static final String TEXT_PREFIX = "<html><head>" +
@@ -80,10 +76,10 @@ public abstract class PluginManagerMain implements Disposable {
                                                     "        }" +
                                                     "    </style>" +
                                                     "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
-  @NonNls private static final String TEXT_SUFIX = "</body></html>";
+  @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   @NonNls private static final String HTML_PREFIX = "<a href=\"";
-  @NonNls private static final String HTML_SUFIX = "</a>";
+  @NonNls private static final String HTML_SUFFIX = "</a>";
 
   private boolean requireShutdown = false;
 
@@ -398,17 +394,17 @@ public abstract class PluginManagerMain implements Disposable {
   private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {
     if (text != null) {
       text.insert(0, TEXT_PREFIX);
-      text.append(TEXT_SUFIX);
+      text.append(TEXT_SUFFIX);
       pane.setText(SearchUtil.markup(text.toString(), filter).trim());
       pane.setCaretPosition(0);
     }
     else {
-      pane.setText(TEXT_PREFIX + TEXT_SUFIX);
+      pane.setText(TEXT_PREFIX + TEXT_SUFFIX);
     }
   }
 
   private static String composeHref(String vendorUrl) {
-    return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFIX;
+    return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
   }
 
   public boolean isModified() {

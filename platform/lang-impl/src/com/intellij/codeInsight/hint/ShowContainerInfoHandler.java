@@ -58,7 +58,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
 
     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
     if (builder instanceof TreeBasedStructureViewBuilder) {
-      StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
+      StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel(editor);
       boolean goOneLevelUp = true;
       try {
         if (container == null) {

@@ -75,7 +75,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     if (renderer.isShowFlatten()) {
       final File parentFile = filePath.getIOFile().getParentFile();
       if (parentFile != null) {
-        renderer.append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(" (" + FileUtil.getLocationRelativeToUserHome(parentFile.getPath()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       appendSwitched(renderer);
     }

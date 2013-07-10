@@ -37,6 +37,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -255,7 +256,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   public PsiType createTypeFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     return createTypeInner(text, context, false);
   }
- 
+
   @NotNull
   @Override
   public PsiTypeElement createTypeElementFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
@@ -327,7 +328,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return (PsiExpression)element;
   }
 
-  protected PsiJavaFile createDummyJavaFile(final String text) {
+  protected PsiJavaFile createDummyJavaFile(@NonNls final String text) {
     final FileType type = JavaFileType.INSTANCE;
     return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(DUMMY_FILE_NAME, type, text);
   }

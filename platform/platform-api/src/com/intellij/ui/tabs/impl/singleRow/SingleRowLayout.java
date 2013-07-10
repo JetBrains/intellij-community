@@ -364,7 +364,8 @@ public class SingleRowLayout extends TabLayout {
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {
-    return getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize())
+    TabLabel label = myTabs.myInfo2Label.get(eachInfo);
+    return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
                                       + (myTabs.isEditorTabs() ? JBTabsImpl.getInterTabSpaceLength() : 0);
   }
 

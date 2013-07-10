@@ -19,6 +19,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,6 +58,10 @@ public class PsiElementRenameHandler implements RenameHandler {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
+    if (element == null) {
+      element = BaseRefactoringAction.getElementAtCaret(editor, file);
+    }
+
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
     invoke(element, project, nameSuggestionContext, editor);
@@ -83,7 +88,9 @@ public class PsiElementRenameHandler implements RenameHandler {
       return;
     }
 
-    if (nameSuggestionContext != null && !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
+    if (nameSuggestionContext != null &&
+        nameSuggestionContext.isPhysical() &&
+        !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
       final String message = "Selected element is used from non-project files. These usages won't be renamed. Proceed anyway?";
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
       if (Messages.showYesNoDialog(project, message,

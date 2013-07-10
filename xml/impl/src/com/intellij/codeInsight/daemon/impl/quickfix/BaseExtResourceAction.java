@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
@@ -75,7 +75,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     PsiReference currentRef = file.getViewProvider().findReferenceAt(offset, file.getLanguage());
     if (currentRef == null) currentRef = file.getViewProvider().findReferenceAt(offset);
     if (currentRef instanceof URLReference ||
-        currentRef instanceof URIReferenceProvider.DependentNSReference) {
+        currentRef instanceof DependentNSReference) {
       return currentRef.getCanonicalText();
     }
     return null;

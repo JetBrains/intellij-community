@@ -5,7 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import struct, difflib
+import struct, difflib, re
 
 def splitnewlines(text):
     '''like str.splitlines, but only split on newlines.'''
@@ -19,6 +19,7 @@ def splitnewlines(text):
 
 def _normalizeblocks(a, b, blocks):
     prev = None
+    r = []
     for curr in blocks:
         if prev is None:
             prev = curr
@@ -40,9 +41,10 @@ def _normalizeblocks(a, b, blocks):
             while (b1end + shift < b2end and
                    a[a1end + shift] == b[b1end + shift]):
                 shift += 1
-        yield a1, b1, l1 + shift
+        r.append((a1, b1, l1 + shift))
         prev = a2 + shift, b2 + shift, l2 - shift
-    yield prev
+    r.append(prev)
+    return r
 
 def bdiff(a, b):
     a = str(a).splitlines(True)
@@ -76,3 +78,10 @@ def blocks(a, b):
     d = _normalizeblocks(an, bn, d)
     return [(i, i + n, j, j + n) for (i, j, n) in d]
 
+def fixws(text, allws):
+    if allws:
+        text = re.sub('[ \t\r]+', '', text)
+    else:
+        text = re.sub('[ \t\r]+', ' ', text)
+        text = text.replace(' \n', '\n')
+    return text

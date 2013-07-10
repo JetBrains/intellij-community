@@ -130,7 +130,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     try {
       ourPreventInlineRenameFlag.set(Boolean.TRUE);
       RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
-      assert handler != null;
+      assert handler != null : elementToRename;
       handler.invoke(
         elementToRename.getProject(),
         editor,

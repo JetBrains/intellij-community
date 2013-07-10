@@ -50,11 +50,13 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty OPEN_FAILURE_LINE = new BooleanProperty("openFailureLine", true);
   public static final BooleanProperty TRACK_CODE_COVERAGE = new BooleanProperty("trackCodeCoverage", false);
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
+  public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
 
   private final Project myProject;
   private final Executor myExecutor;
   private ConsoleView myConsole;
   private boolean myUsePredefinedMessageFilter = true;
+  private GlobalSearchScope myScope;
 
   protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners =
     new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();
@@ -70,6 +72,13 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public GlobalSearchScope getScope() {
+    if (myScope == null) {
+      myScope = initScope();
+    }
+    return myScope;
+  }
+
+  protected GlobalSearchScope initScope() {
     Module[] modules = getConfiguration().getModules();
     if (modules.length == 0) return GlobalSearchScope.allScope(myProject);
 

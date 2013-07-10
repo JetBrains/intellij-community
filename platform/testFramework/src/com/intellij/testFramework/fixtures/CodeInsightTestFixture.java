@@ -25,7 +25,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -54,7 +54,7 @@ import java.util.List;
 /**
  *
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
- * @see http://confluence.jetbrains.net/display/IDEADEV/Testing+IntelliJ+IDEA+Plugins
+ * @link http://confluence.jetbrains.net/display/IDEADEV/Testing+IntelliJ+IDEA+Plugins
  *
  * @author Dmitry Avdeev
  */
@@ -132,7 +132,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Copies a file from the testdata directory to the same relative path in the test project directory
    * and opens it in the in-memory editor.
    *
-   * @param file path to the file, relative to the testdata path.
+   * @param filePath path to the file, relative to the testdata path.
    * @return the PSI file for the copied and opened file.
    */
   PsiFile configureByFile(@TestDataFile @NonNls String filePath);
@@ -141,7 +141,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Copies multiple files from the testdata directory to the same relative paths in the test project directory
    * and opens the first of them in the in-memory editor.
    *
-   * @param files path to the files, relative to the testdata path.
+   * @param filePaths path to the files, relative to the testdata path.
    * @return the PSI files for the copied files.
    */
   PsiFile[] configureByFiles(@TestDataFile @NonNls String... filePaths);
@@ -178,7 +178,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Loads the specified virtual file from the test project directory into the in-memory editor.
    *
    * @param f the file to load.
-   * @return the PSI file for the loaded file.
    */
   void configureFromExistingVirtualFile(VirtualFile f);
 
@@ -224,13 +223,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param inspections inspections to be enabled in highlighting tests.
    * @see #enableInspections(com.intellij.codeInspection.InspectionToolProvider...)
    */
-  void enableInspections(InspectionProfileEntry... inspections);
+  void enableInspections(@NotNull InspectionProfileEntry... inspections);
 
-  void enableInspections(Class<? extends LocalInspectionTool>... inspections);
+  void enableInspections(@NotNull Class<? extends LocalInspectionTool>... inspections);
 
   void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections);
 
-  void disableInspections(InspectionProfileEntry... inspections);
+  void disableInspections(@NotNull InspectionProfileEntry... inspections);
 
   /**
    * Enable all inspections provided by given providers.
@@ -259,9 +258,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Check highlighting of file already loaded by configure* methods
-   * @param checkWarnings
-   * @param checkInfos
-   * @param checkWeakWarnings
    * @return duration
    */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
@@ -281,7 +277,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file);
   HighlightTestInfo testFile(@NonNls @NotNull String... filePath);
 
-  void testInspection(String testDir, InspectionTool tool);
+  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper toolWrapper);
 
   /**
    * @return all highlight infos for current file
@@ -292,7 +288,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    *
-   * @param filePaths
    * @return null if no reference found.
    *
    * @see #getReferenceAtCaretPositionWithAssertion(String...)
@@ -304,7 +299,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    * Asserts that the reference exists.
    *
-   * @param filePaths
    * @return founded reference
    *
    * @see #getReferenceAtCaretPosition(String...)
@@ -370,9 +364,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Runs basic completion in caret position in fileBefore.
    * Implies that there is only one completion variant and it was inserted automatically, and checks the result file text with fileAfter
-   * @param fileBefore
-   * @param fileAfter
-   * @param additionalFiles
    */
   void testCompletion(@TestDataFile @NonNls String fileBefore, @TestDataFile @NonNls String fileAfter, final String... additionalFiles);
 
@@ -381,7 +372,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Runs basic completion in caret position in fileBefore.
    * Checks that lookup is shown and it contains items with given lookup strings
-   * @param fileBefore
    * @param items most probably will contain > 1 items
    */
   void testCompletionVariants(@TestDataFile @NonNls String fileBefore, @NonNls String... items);
@@ -392,7 +382,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
    * @param fileAfter result file to be checked against.
    * @param newName new name for the element.
-   * @param additionalFiles
    * @see #testRename(String, String)
    */
   void testRename(@TestDataFile @NonNls String fileBefore,

@@ -91,6 +91,10 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   private List<HighlightInfo> doTest(final int maxMillis) throws Exception {
     configureByFile(getFilePath(""));
 
+    return startTest(maxMillis);
+  }
+
+  private List<HighlightInfo> startTest(int maxMillis) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     getFile().getText(); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
@@ -123,5 +127,21 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
+  }
+
+  public void testDuplicateMethods() throws Exception {
+    StringBuilder text = new StringBuilder("class X {\n");
+    int N = 1000;
+    for (int i=0;i<N;i++) {
+      text.append("public void visit(C" + i + " param) {}\n");
+    }
+    for (int i=0;i<N;i++) {
+      text.append("class C" + i + " {}\n");
+    }
+    text.append("}");
+    configureFromFileText("x.java", text.toString());
+
+    List<HighlightInfo> infos = startTest(Math.max(1000, 10000 - JobSchedulerImpl.CORES_COUNT * 1000));
+    assertEmpty(infos);
   }
 }

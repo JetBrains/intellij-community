@@ -33,14 +33,18 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
     doTest(false);
   }
   private void doTest(boolean lowercase) {
-    doTest("dataFlow/" + getTestName(lowercase), new DataFlowInspection());
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    doTest("dataFlow/" + getTestName(lowercase), inspection);
   }
 
   private void doTest15() {
     doTest15(false);
   }
   private void doTest15(boolean lowercase) {
-    doTest("dataFlow/" + getTestName(lowercase), new DataFlowInspection(), "java 1.5");
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    doTest("dataFlow/" + getTestName(lowercase), inspection, "java 1.5");
   }
 
   public void testNpe1() { doTest(true); }

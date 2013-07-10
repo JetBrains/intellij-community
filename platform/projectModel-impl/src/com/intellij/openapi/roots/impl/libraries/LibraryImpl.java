@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -271,7 +270,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     myProperties = myKind.createDefaultProperties();
     final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
     if (propertiesElement != null) {
-      final Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], myProperties.getClass()));
+      final Class<?> stateClass = ComponentSerializationUtil.getStateClass(myProperties.getClass());
       //noinspection unchecked
       myProperties.loadState(XmlSerializer.deserialize(propertiesElement, stateClass));
     }

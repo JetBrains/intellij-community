@@ -20,6 +20,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -28,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
@@ -63,6 +63,6 @@ public class TogglePopupHintsAction extends AnAction{
     LOG.assertTrue(project!=null);
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     codeAnalyzer.setImportHintsEnabled(psiFile,!codeAnalyzer.isImportHintsEnabled(psiFile));
-    InspectionProjectProfileManagerImpl.getInstanceImpl(project).updateStatusBar();
+    DaemonListeners.getInstance(project).updateStatusBar();
   }
 }

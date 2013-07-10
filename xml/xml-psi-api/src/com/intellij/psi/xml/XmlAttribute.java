@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public interface XmlAttribute extends XmlElement, PsiNamedElement {
   XmlAttribute[] EMPTY_ARRAY = new XmlAttribute[0];
 
+  @Override
   @NonNls @NotNull String getName();
 
   @NonNls @NotNull String getLocalName();
@@ -37,6 +38,7 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
 
   @NonNls @NotNull String getNamespacePrefix();
 
+  @Override
   XmlTag getParent();
 
   /**

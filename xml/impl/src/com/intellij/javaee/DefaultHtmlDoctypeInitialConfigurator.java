@@ -14,7 +14,7 @@ public class DefaultHtmlDoctypeInitialConfigurator {
     if (!propertiesComponent.getBoolean("DefaultHtmlDoctype.MigrateToHtml5", false)) {
       propertiesComponent.setValue("DefaultHtmlDoctype.MigrateToHtml5", Boolean.TRUE.toString());
       ExternalResourceManagerEx.getInstanceEx()
-        .setDefaultHtmlDoctype(Html5SchemaProvider.HTML5_SCHEMA_LOCATION, projectManager.getDefaultProject());
+        .setDefaultHtmlDoctype(Html5SchemaProvider.getHtml5SchemaLocation(), projectManager.getDefaultProject());
     }
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -37,80 +38,107 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
     super(tag);
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final XmlTag tag = getElement();
     if (tag == null || !tag.isValid()) return Collections.emptyList();
 
     return ContainerUtil.map2List(tag.getSubTags(), new Function<XmlTag, StructureViewTreeElement>() {
+      @Override
       public StructureViewTreeElement fun(final XmlTag subTag) {
         return new HtmlTagTreeElement(subTag);
       }
     });
   }
 
+  @Override
   public String getPresentableText() {
     final XmlTag tag = getElement();
-    if (tag == null) return IdeBundle.message("node.structureview.invalid");
-
+    if (tag == null) {
+      return IdeBundle.message("node.structureview.invalid");
+    }
     return getTagPresentation(tag);
   }
 
+  @Nullable
+  @Override
   public String getLocationString() {
     final XmlTag tag = getElement();
-    if (tag == null) return null;
+    if (tag == null) {
+      return null;
+    }
 
-    final String text = normalizeSpacesAndShortenIfLong(tag.getValue().getTrimmedText());
-    return text.isEmpty() ? null : text;
+    if (tag.getName().equalsIgnoreCase("img") || tag.getName().equalsIgnoreCase("script")) {
+      String src = tag.getAttributeValue("src");
+      if (StringUtil.isEmpty(src)) {
+        return null;
+      }
+      else {
+        assert src != null;
+        return StringUtil.shortenPathWithEllipsis(src, MAX_TEXT_LENGTH, true);
+      }
+    }
+    else {
+      return StringUtil.nullize(normalizeSpacesAndShortenIfLong(tag.getValue().getTrimmedText()));
+    }
   }
 
+  @Override
   public boolean isSearchInLocationString() {
     return true;
   }
 
   public static String getTagPresentation(final @NotNull XmlTag tag) {
-    final String id = XmlTagTreeElement.toCanonicalForm(tag.getAttributeValue("id"));
+    StringBuilder builder = new StringBuilder(tag.getLocalName());
 
-    final String classValue = tag.getAttributeValue("class");
-    final List<String> classValues = classValue != null ? StringUtil.split(classValue, " ") : Collections.<String>emptyList();
-
-    final StringBuilder text = new StringBuilder(tag.getLocalName());
-
+    String id = XmlTagTreeElement.toCanonicalForm(tag.getAttributeValue("id"));
     if (id != null) {
-      text.append("#").append(id);
+      builder.append('#').append(id);
     }
 
+    String classValue = tag.getAttributeValue("class");
+    List<String> classValues = classValue == null ? Collections.<String>emptyList() : StringUtil.split(classValue, " ");
     if (!classValues.isEmpty()) {
-      text.append('.').append(StringUtil.join(classValues, "."));
+      builder.append('.');
+      StringUtil.join(classValues, ".", builder);
     }
 
-    return text.toString();
+    return builder.toString();
   }
 
-  @NotNull
+  @Nullable
   public static String normalizeSpacesAndShortenIfLong(final @NotNull String text) {
-    return shortenTextIfLong(normalizeSpaces(text));
+    StringBuilder builder = normalizeSpaces(text);
+    return builder == null ? null : shortenTextIfLong(builder);
   }
 
-  private static String normalizeSpaces(final String text) {
-    final StringBuilder buf = new StringBuilder();
+  @Nullable
+  private static StringBuilder normalizeSpaces(@NotNull String text) {
+    if (text.isEmpty()) {
+      return null;
+    }
 
-    for (char ch : text.toCharArray()) {
-      if (ch <= ' ' || Character.isSpaceChar(ch)) {
+    final StringBuilder buf = new StringBuilder(text.length());
+    for (int i = 0, length = text.length(); i < length; i++) {
+      char c = text.charAt(i);
+      if (c <= ' ' || Character.isSpaceChar(c)) {
         if (buf.length() == 0 || buf.charAt(buf.length() - 1) != ' ') {
           buf.append(' ');
         }
       }
       else {
-        buf.append(ch);
+        buf.append(c);
       }
     }
-
-    return buf.toString();
+    return buf;
   }
 
-  private static String shortenTextIfLong(final String text) {
-    if (text.length() <= MAX_TEXT_LENGTH) return text;
+  @Nullable
+  private static String shortenTextIfLong(@NotNull StringBuilder text) {
+    if (text.length() <= MAX_TEXT_LENGTH) {
+      return text.toString();
+    }
 
     int index;
     for (index = MAX_TEXT_LENGTH; index > MAX_TEXT_LENGTH - 20; index--) {
@@ -119,14 +147,16 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
       }
     }
 
-    final int endIndex = Character.isLetter(index) ? MAX_TEXT_LENGTH : index;
-    return text.substring(0, endIndex) + "...";
+    text.setLength(Character.isLetter(index) ? MAX_TEXT_LENGTH : index);
+    return text.append("\u2026").toString();
   }
 
+  @Override
   public String getLocationPrefix() {
     return "  ";
   }
 
+  @Override
   public String getLocationSuffix() {
     return "";
   }

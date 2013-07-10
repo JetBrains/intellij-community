@@ -60,6 +60,6 @@ public class RefreshAllExternalProjectsAction extends AnAction implements DumbAw
     // We save all documents because there is a possible case that there is an external system config file changed inside the ide.
     FileDocumentManager.getInstance().saveAllDocuments();
     
-    ExternalSystemUtil.refreshProjects(project, externalSystemId);
+    ExternalSystemUtil.refreshProjects(project, externalSystemId, true);
   }
 }
