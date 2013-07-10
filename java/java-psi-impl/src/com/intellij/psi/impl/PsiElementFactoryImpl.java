@@ -755,4 +755,33 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     GeneratedMarkerVisitor.markGenerated(catchSection);
     return catchSection;
   }
+
+  @Override
+  public boolean isValidClassName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidMethodName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidParameterName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidFieldName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidLocalVariableName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  private boolean isIdentifier(@NotNull String name) {
+    return JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name);
+  }
 }

@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -1100,5 +1101,30 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(qName, resolveScope);
+  }
+
+  @Override
+  public boolean isValidClassName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidMethodName(@NotNull String name) {
+    return true;
+  }
+
+  @Override
+  public boolean isValidParameterName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidFieldName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidLocalVariableName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
   }
 }

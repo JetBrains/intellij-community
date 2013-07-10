@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
@@ -382,7 +383,13 @@ public class GenerateMembersUtil {
                                            @NotNull PsiParameterList targetParameterList,
                                            @NotNull PsiSubstitutor substitutor, PsiElement target) {
     PsiParameter[] parameters = sourceParameterList.getParameters();
-    UniqueNameGenerator generator = new UniqueNameGenerator();
+    UniqueNameGenerator generator = new UniqueNameGenerator(Arrays.asList(parameters), new Function<PsiParameter, String>() {
+      @Override
+      public String fun(PsiParameter parameter) {
+        return parameter.getName();
+      }
+    });
+
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
@@ -394,7 +401,9 @@ public class GenerateMembersUtil {
         isBaseNameGenerated = false;
       }
 
-      if (paramName == null || isBaseNameGenerated && !isSubstituted && isBaseNameGenerated(codeStyleManager, parameterType, paramName)) {
+      if (paramName == null ||
+          isBaseNameGenerated && !isSubstituted && isBaseNameGenerated(codeStyleManager, parameterType, paramName) ||
+          !factory.isValidParameterName(paramName)) {
         String[] names = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, substituted).names;
         if (names.length > 0) {
           paramName = generator.generateUniqueName(names[0]);
