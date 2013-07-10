@@ -129,12 +129,20 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
     while (lexer.getTokenType() != null) {
       if (lexer.getTokenType() == myTemplateElementType) {
-        result.append(buf, lexer.getTokenStart(), lexer.getTokenEnd());
+        appendCurrentTemplateToken(result, buf, lexer);
       }
       lexer.advance();
     }
 
     return result;
+  }
+
+  /**
+   * Override to modify appended token text. For example: replace a trailing space with a newline.
+   * Should append exact <code>lexer.getTokenEnd() - lexer.getTokenStart()</code> characters!
+   */
+  protected StringBuilder appendCurrentTemplateToken(StringBuilder result, CharSequence buf, Lexer lexer) {
+    return result.append(buf, lexer.getTokenStart(), lexer.getTokenEnd());
   }
 
   private void insertOuters(TreeElement root, Lexer lexer, final CharTable table) {
