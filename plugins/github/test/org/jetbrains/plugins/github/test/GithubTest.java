@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -29,8 +30,10 @@ import git4idea.DialogManager;
 import git4idea.Notificator;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
+import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestDialogManager;
@@ -125,6 +128,17 @@ public abstract class GithubTest extends UsefulTestCase {
       public void forgetPassword() {
       }
     });
+  }
+
+  // workaround: user on test server got "" as username, so git can't generate default identity
+  protected void setGitIdentity(VirtualFile root) {
+    try {
+      GitConfigUtil.setValue(myProject, root, "user.name", "Github Test");
+      GitConfigUtil.setValue(myProject, root, "user.email", "githubtest@jetbrains.com");
+    }
+    catch (VcsException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override

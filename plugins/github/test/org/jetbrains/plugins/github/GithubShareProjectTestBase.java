@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitUtil;
+import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.test.GitExecutor;
@@ -73,6 +75,10 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
                                           new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
                                             @Override
                                             public int handleDialog(GithubShareAction.GithubUntrackedFilesDialog dialog) {
+                                              // actually we should ask user for name/email ourselves (like in CommitDialog)
+                                              for (GitRepository repository : GitUtil.getRepositoryManager(myProject).getRepositories()) {
+                                                setGitIdentity(repository.getRoot());
+                                              }
                                               return DialogWrapper.OK_EXIT_CODE;
                                             }
                                           });

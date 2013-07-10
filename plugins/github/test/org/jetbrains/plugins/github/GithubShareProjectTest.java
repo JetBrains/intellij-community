@@ -46,6 +46,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     cd(myProjectRoot.getPath());
     git("init");
+    setGitIdentity(myProjectRoot);
     git("add file.txt");
     git("commit -m init");
 
