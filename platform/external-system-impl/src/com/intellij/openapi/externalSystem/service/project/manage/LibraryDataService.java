@@ -74,14 +74,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
   }
 
   public void importLibrary(@NotNull final LibraryData toImport, @NotNull final Project project, boolean synchronous) {
-    Map<OrderRootType, Collection<File>> libraryFiles = ContainerUtilRt.newHashMap();
-    for (LibraryPathType pathType : LibraryPathType.values()) {
-      final Set<String> paths = toImport.getPaths(pathType);
-      if (paths.isEmpty()) {
-        continue;
-      }
-      libraryFiles.put(myLibraryPathTypeMapper.map(pathType), ContainerUtil.map(paths, PATH_TO_FILE));
-    }
+    Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
 
     Library library = myProjectStructureHelper.findIdeLibrary(toImport, project);
     if (library != null) {
@@ -89,6 +82,19 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
       return;
     }
     importLibrary(toImport.getName(), libraryFiles, project, synchronous);
+  }
+
+  @NotNull
+  public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
+    Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
+    for (LibraryPathType pathType : LibraryPathType.values()) {
+      final Set<String> paths = data.getPaths(pathType);
+      if (paths.isEmpty()) {
+        continue;
+      }
+      result.put(myLibraryPathTypeMapper.map(pathType), ContainerUtil.map(paths, PATH_TO_FILE));
+    }
+    return result;
   }
 
   public void importLibrary(@NotNull final String libraryName,
@@ -120,9 +126,10 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     });
   }
 
-  private static void registerPaths(@NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
-                                    @NotNull Library.ModifiableModel model,
-                                    @NotNull String libraryName)
+  @SuppressWarnings("MethodMayBeStatic")
+  public void registerPaths(@NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
+                            @NotNull Library.ModifiableModel model,
+                            @NotNull String libraryName)
   {
     for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
