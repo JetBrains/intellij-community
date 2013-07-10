@@ -24,10 +24,12 @@ public class GithubLoginDialog extends DialogWrapper {
   public GithubLoginDialog(final Project project) {
     super(project, true);
     myGithubLoginPanel = new GithubLoginPanel(this);
+
     final GithubSettings settings = GithubSettings.getInstance();
     myGithubLoginPanel.setHost(settings.getHost());
     myGithubLoginPanel.setLogin(settings.getLogin());
-    myGithubLoginPanel.setPassword("");
+    myGithubLoginPanel.setAuthType(settings.getAuthType());
+
     setTitle("Login to GitHub");
     setOKButtonText("Login");
     init();
@@ -57,8 +59,7 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
-      boolean loggedSuccessfully = GithubUtil.checkAuthData(auth);
-      if (loggedSuccessfully) {
+      if (GithubUtil.checkAuthData(auth)) {
         final GithubSettings settings = GithubSettings.getInstance();
         settings.setAuthData(auth, myGithubLoginPanel.shouldSavePassword());
         super.doOKAction();

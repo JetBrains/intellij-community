@@ -106,7 +106,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final GithubAuthData auth = dialog.isAnonymous() ? null : getValidAuthData(project);
+    final GithubAuthData auth = dialog.isAnonymous() ? GithubAuthData.createAnonymous() : getValidAuthData(project);
     if (!dialog.isAnonymous() && auth == null) {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
       return;
@@ -173,9 +173,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  static String createGist(@NotNull Project project,
-                           @Nullable GithubAuthData auth,
-                           @NotNull List<NamedContent> contents,
+  static String createGist(@NotNull Project project, @NotNull GithubAuthData auth, @NotNull List<NamedContent> contents,
                            boolean isPrivate,
                            @NotNull String description,
                            @Nullable String filename) {
@@ -186,12 +184,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     String requestBody = prepareCreateJsonRequest(description, isPrivate, contents, filename);
     try {
       JsonElement jsonElement;
-      if (auth == null) {
-        jsonElement = GithubApiUtil.postRequest("/gists", requestBody);
-      }
-      else {
-        jsonElement = GithubApiUtil.postRequest(auth, "/gists", requestBody);
-      }
+      jsonElement = GithubApiUtil.postRequest(auth, "/gists", requestBody);
       return getUrlFromJson(project, jsonElement);
     }
     catch (IOException e) {

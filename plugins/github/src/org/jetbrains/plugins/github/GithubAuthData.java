@@ -24,31 +24,59 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 public class GithubAuthData {
+  public enum AuthType {BASIC, TOKEN, ANONYMOUS}
+
+  private final AuthType myAuthType;
   private @NotNull final String myHost;
+  private @NotNull final String myLogin;
   private @Nullable final BasicAuth myBasicAuth;
   private @Nullable final TokenAuth myTokenAuth;
 
-  private GithubAuthData(@NotNull String host, @Nullable BasicAuth basicAuth, @Nullable TokenAuth tokenAuth) {
+  private GithubAuthData(@NotNull AuthType authType,
+                         @NotNull String host,
+                         @NotNull String login,
+                         @Nullable BasicAuth basicAuth,
+                         @Nullable TokenAuth tokenAuth) {
+    myAuthType = authType;
     myHost = host;
+    myLogin = login;
     myBasicAuth = basicAuth;
     myTokenAuth = tokenAuth;
   }
 
+  public static GithubAuthData createAnonymous() {
+    return createAnonymous(GithubApiUtil.DEFAULT_GITHUB_HOST, "");
+  }
+
   public static GithubAuthData createAnonymous(@NotNull String host) {
-    return new GithubAuthData(host, null, null);
+    return createAnonymous(host, "");
+  }
+
+  public static GithubAuthData createAnonymous(@NotNull String host, @NotNull String login) {
+    return new GithubAuthData(AuthType.ANONYMOUS, host, login, null, null);
   }
 
   public static GithubAuthData createBasicAuth(@NotNull String host, @NotNull String login, @NotNull String password) {
-    return new GithubAuthData(host, new BasicAuth(login, password), null);
+    return new GithubAuthData(AuthType.BASIC, host, login, new BasicAuth(login, password), null);
   }
 
-  public static GithubAuthData createTokenAuth(@NotNull String host, @NotNull String token) {
-    return new GithubAuthData(host, null, new TokenAuth(token));
+  public static GithubAuthData createTokenAuth(@NotNull String host, @NotNull String login, @NotNull String token) {
+    return new GithubAuthData(AuthType.TOKEN, host, login, null, new TokenAuth(token));
+  }
+
+  @NotNull
+  public AuthType getAuthType() {
+    return myAuthType;
   }
 
   @NotNull
   public String getHost() {
     return myHost;
+  }
+
+  @NotNull
+  public String getLogin() {
+    return myLogin;
   }
 
   @Nullable
@@ -71,12 +99,12 @@ public class GithubAuthData {
     }
 
     @NotNull
-    String getLogin() {
+    public String getLogin() {
       return myLogin;
     }
 
     @NotNull
-    String getPassword() {
+    public String getPassword() {
       return myPassword;
     }
   }
@@ -89,7 +117,7 @@ public class GithubAuthData {
     }
 
     @NotNull
-    String getToken() {
+    public String getToken() {
       return myToken;
     }
   }

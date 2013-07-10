@@ -51,19 +51,8 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement getRequest(@NotNull String host, @NotNull String login, @NotNull String password,
-                                       @NotNull String path) throws IOException {
-    return request(GithubAuthData.createBasicAuth(host, login, password), path, null, HttpVerb.GET);
-  }
-
-  @Nullable
   public static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
     return request(auth, path, null, HttpVerb.GET);
-  }
-
-  @Nullable
-  public static JsonElement postRequest(@NotNull String path, @Nullable String requestBody) throws IOException {
-    return request(GithubAuthData.createAnonymous(GithubUrlUtil.getApiUrl()), path, requestBody, HttpVerb.POST);
   }
 
   @Nullable
@@ -80,7 +69,8 @@ public class GithubApiUtil {
   @Nullable
   private static JsonElement request(@NotNull GithubAuthData auth,
                                      @NotNull String path,
-                                     @Nullable String requestBody, @NotNull HttpVerb verb) throws IOException {
+                                     @Nullable String requestBody,
+                                     @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
       method = doREST(auth, path, requestBody, verb);
@@ -123,41 +113,43 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  private static HttpMethod doREST(@NotNull final GithubAuthData auth, @NotNull String path, @Nullable final String requestBody,
+  private static HttpMethod doREST(@NotNull final GithubAuthData auth,
+                                   @NotNull String path,
+                                   @Nullable final String requestBody,
                                    @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(auth.getBasicAuth());
     String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
-    return GithubSslSupport.getInstance().executeSelfSignedCertificateAwareRequest(client, uri,
-     new ThrowableConvertor<String, HttpMethod, IOException>() {
-       @Override
-       public HttpMethod convert(String uri) throws IOException {
-         HttpMethod method;
-         switch (verb) {
-           case POST:
-             method = new PostMethod(uri);
-             if (requestBody != null) {
-               ((PostMethod)method).setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
-             }
-             break;
-           case GET:
-             method = new GetMethod(uri);
-             break;
-           case DELETE:
-             method = new DeleteMethod(uri);
-             break;
-           case HEAD:
-             method = new HeadMethod(uri);
-             break;
-           default:
-             throw new IllegalStateException("Wrong HttpVerb: unknown method: " + verb.toString());
-         }
-         GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
-         if (tokenAuth != null) {
-           method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
-         }
-         return method;
-       }
-     });
+    return GithubSslSupport.getInstance()
+      .executeSelfSignedCertificateAwareRequest(client, uri, new ThrowableConvertor<String, HttpMethod, IOException>() {
+        @Override
+        public HttpMethod convert(String uri) throws IOException {
+          HttpMethod method;
+          switch (verb) {
+            case POST:
+              method = new PostMethod(uri);
+              if (requestBody != null) {
+                ((PostMethod)method).setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
+              }
+              break;
+            case GET:
+              method = new GetMethod(uri);
+              break;
+            case DELETE:
+              method = new DeleteMethod(uri);
+              break;
+            case HEAD:
+              method = new HeadMethod(uri);
+              break;
+            default:
+              throw new IllegalStateException("Wrong HttpVerb: unknown method: " + verb.toString());
+          }
+          GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+          if (tokenAuth != null) {
+            method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
+          }
+          return method;
+        }
+      });
   }
 
   @NotNull
@@ -170,7 +162,7 @@ public class GithubApiUtil {
     client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
-    if (proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)){
+    if (proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)) {
       client.getHostConfiguration().setProxy(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT);
       if (proxySettings.PROXY_AUTHENTICATION) {
         client.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN,
