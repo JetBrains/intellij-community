@@ -852,7 +852,7 @@ public class CompositeElement extends TreeElement {
       for (int i = 0; i < psiElements.size(); i++) {
         CompositeElement node = nodes.get(i);
         if (node.myWrapper == null) {
-          node.setPsi(psiElements.get(i));
+          node.myWrapper = psiElements.get(i);
         }
       }
     }
