@@ -514,7 +514,7 @@ public class MacMessagesImpl extends MacMessages {
 
     Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    final ID nativeFocusedWindow = invoke(MacUtil.findWindowForTitle(foremostWindowTitle), "autorelease");
+    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
 
     paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
