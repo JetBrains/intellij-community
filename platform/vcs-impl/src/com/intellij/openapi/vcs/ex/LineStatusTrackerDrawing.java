@@ -23,7 +23,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -225,8 +227,6 @@ public class LineStatusTrackerDrawing {
         actionList.remove(rollback);
         actionList.remove(localShowPrevAction);
         actionList.remove(localShowNextAction);
-        actionList.add(globalShowPrevAction);
-        actionList.add(globalShowNextAction);
       }
     };
     lightweightHint.addHintListener(closeListener);
