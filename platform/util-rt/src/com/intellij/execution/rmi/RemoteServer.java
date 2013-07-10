@@ -106,7 +106,10 @@ public class RemoteServer {
     @Nullable
     @Override
     public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-      return null;
+      if (Object.class.equals(method.getDeclaringClass())) {
+        return method.invoke(this, args);
+      }
+      throw new NamingException("JNDI service is disabled");
     }
   }
 }
