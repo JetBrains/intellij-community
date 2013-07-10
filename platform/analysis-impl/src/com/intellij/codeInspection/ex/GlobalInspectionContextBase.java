@@ -163,7 +163,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
     myTools.clear();
 
-    EntryPointsManager.getInstance(getProject()).cleanup();
+    EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(getProject());
+    if (entryPointsManager != null) {
+      entryPointsManager.cleanup();
+    }
 
     if (myRefManager != null) {
       ((RefManagerImpl)myRefManager).cleanup();
