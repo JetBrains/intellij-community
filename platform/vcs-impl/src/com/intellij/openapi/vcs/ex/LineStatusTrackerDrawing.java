@@ -168,9 +168,6 @@ public class LineStatusTrackerDrawing {
     @SuppressWarnings("unchecked")
     final List<AnAction> actionList = (List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
 
-    actionList.remove(globalShowPrevAction);
-    actionList.remove(globalShowNextAction);
-
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
