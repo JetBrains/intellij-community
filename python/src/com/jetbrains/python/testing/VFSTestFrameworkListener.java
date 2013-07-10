@@ -7,8 +7,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
@@ -48,12 +50,13 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
-          String path = event.getPath();
+          if (!(event.getFileSystem() instanceof LocalFileSystem) || event instanceof VFileContentChangeEvent)
+            continue;
+          final String path = event.getPath();
           boolean containsNose = path.contains(PyNames.NOSE_TEST);
           boolean containsPy = path.contains("py-1") || path.contains(PyNames.PY_TEST);
           boolean containsAt = path.contains(PyNames.AT_TEST);
           if (!containsAt && !containsNose && !containsPy) continue;
-          SDKLOOP:
           for (Sdk sdk : PythonSdkType.getAllSdks()) {
             if (PySdkUtil.isRemote(sdk)) {
               continue;
@@ -62,15 +65,15 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
               if (path.contains(root)) {
                 if (containsNose) {
                   updateTestFrameworks(sdk, PyNames.NOSE_TEST);
-                  break SDKLOOP;
+                  return;
                 }
                 else if (containsPy) {
                   updateTestFrameworks(sdk, PyNames.PY_TEST);
-                  break SDKLOOP;
+                  return;
                 }
                 else {
                   updateTestFrameworks(sdk, PyNames.AT_TEST);
-                  break SDKLOOP;
+                  return;
                 }
               }
             }
