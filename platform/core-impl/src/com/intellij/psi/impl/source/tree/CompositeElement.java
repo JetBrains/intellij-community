@@ -40,10 +40,13 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -823,27 +826,37 @@ public class CompositeElement extends TreeElement {
 
   // creates PSI and stores to the 'myWrapper', if not created already
   void createAllChildrenPsiIfNecessary() {
+    final List<CompositeElement> nodes = ContainerUtil.newArrayList();
+    final List<PsiElement> psiElements = ContainerUtil.newArrayList();
+    RecursiveTreeElementWalkingVisitor visitor = new RecursiveTreeElementWalkingVisitor(false) {
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+      }
+
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
+        if (composite.myWrapper == null) {
+          nodes.add(composite);
+          psiElements.add(composite.createPsiNoLock());
+        }
+
+        super.visitComposite(composite);
+      }
+    };
+
+    for(TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      child.acceptTree(visitor);
+    }
     synchronized (PsiLock.LOCK) { // guard for race condition with getPsi()
-      for(TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        child.acceptTree(CREATE_CHILDREN_PSI);
+      for (int i = 0; i < psiElements.size(); i++) {
+        CompositeElement node = nodes.get(i);
+        if (node.myWrapper == null) {
+          node.setPsi(psiElements.get(i));
+        }
       }
     }
   }
-  private static final RecursiveTreeElementWalkingVisitor CREATE_CHILDREN_PSI = new RecursiveTreeElementWalkingVisitor(false) {
-    @Override
-    public void visitLeaf(LeafElement leaf) {
-    }
-
-    @Override
-    public void visitComposite(CompositeElement composite) {
-      ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
-      if (composite.myWrapper == null) {
-        composite.createAndStorePsi();
-      }
-
-      super.visitComposite(composite);
-    }
-  };
 
   private static void repairRemovedElement(final CompositeElement oldParent, final TreeElement oldChild) {
     if(oldChild == null) return;
