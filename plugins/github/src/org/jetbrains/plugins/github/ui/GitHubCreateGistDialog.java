@@ -37,7 +37,7 @@ public class GitHubCreateGistDialog extends DialogWrapper {
     myGithubCreateGistPanel = new GitHubCreateGistPanel();
     // Use saved settings for controls
     final GithubSettings settings = GithubSettings.getInstance();
-    myGithubCreateGistPanel.setAnonymous(settings.isAnonymous());
+    myGithubCreateGistPanel.setAnonymous(settings.isAnonymousGist());
     myGithubCreateGistPanel.setPrivate(settings.isPrivateGist());
     myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
 

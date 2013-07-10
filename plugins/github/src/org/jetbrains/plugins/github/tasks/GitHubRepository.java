@@ -19,6 +19,7 @@ import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubApiUtil;
+import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
@@ -39,6 +40,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private Pattern myPattern;
   private String myRepoAuthor;
   private String myRepoName;
+  private GithubAuthData myAuth = GithubAuthData.createAnonymous(GITHUB_HOST);
 
   public static final String GITHUB_HOST = "https://github.com";
 
@@ -57,6 +59,10 @@ public class GitHubRepository extends BaseRepositoryImpl {
 
   public GitHubRepository(GitHubRepositoryType type) {
     super(type);
+  }
+
+  public void setAuthData(@NotNull GithubAuthData auth) {
+    myAuth = auth;
   }
 
   @Override
@@ -100,7 +106,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
       path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues";
     }
 
-    JsonElement response = GithubApiUtil.getRequest(getUrl(), getUsername(), getPassword(), path);
+    JsonElement response = GithubApiUtil.getRequest(myAuth, path);
 
     JsonArray issuesArray;
     if (noQuery) {
@@ -256,7 +262,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
 
   private Comment[] fetchComments(final String id) throws Exception {
     String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id + "/comments";
-    JsonElement response = GithubApiUtil.getRequest(getUrl(), getUsername(), getPassword(), path);
+    JsonElement response = GithubApiUtil.getRequest(myAuth, path);
     if (response == null || !response.isJsonArray()) {
       throw new Exception(String.format("Couldn't get information about issue %s%nResponse: %s", id, response));
     }
@@ -325,7 +331,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   @Override
   public Task findTask(String id) throws Exception {
     String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id;
-    JsonElement response = GithubApiUtil.getRequest(getUrl(), getUsername(), getPassword(), path);
+    JsonElement response = GithubApiUtil.getRequest(myAuth, path);
     if (response == null || !response.isJsonObject()) {
       throw new Exception(String.format("Couldn't get information about issue %s%nResponse: %s", id, response));
     }

@@ -57,7 +57,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void deleteGithubRepo() throws IOException {
-    GithubUtil.deleteGithubRepository(myGitHubSettings.getAuthData(), PROJECT_NAME);
+    GithubUtil.deleteGithubRepository(myGitHubSettings.getAuthData(), myLogin1, PROJECT_NAME);
   }
 
   protected void registerDefaultShareDialogHandler() {
@@ -86,7 +86,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
 
   protected void checkGithubExists() throws IOException {
     GithubAuthData auth = myGitHubSettings.getAuthData();
-    RepositoryInfo githubInfo = GithubUtil.getDetailedRepoInfo(auth, auth.getLogin(), PROJECT_NAME);
+    RepositoryInfo githubInfo = GithubUtil.getDetailedRepoInfo(auth, myLogin1, PROJECT_NAME);
     assertNotNull("GitHub repository does not exist", githubInfo);
   }
 

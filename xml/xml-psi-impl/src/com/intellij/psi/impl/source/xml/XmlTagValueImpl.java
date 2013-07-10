@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -95,7 +96,17 @@ public class XmlTagValueImpl implements XmlTagValue{
     return myTrimmedText = consolidatedText.toString().trim();
   }
 
+  @Override
   public void setText(String value) {
+    setText(value, false);
+  }
+
+  @Override
+  public void setEscapedText(String value) {
+    setText(value, true);
+  }
+
+  private void setText(String value, boolean defaultPolicy) {
     try {
       XmlText text = null;
       if (value != null) {
@@ -109,7 +120,11 @@ public class XmlTagValueImpl implements XmlTagValue{
           text.delete();
         }
         else {
-          text.setValue(value);
+          if (defaultPolicy && text instanceof XmlTextImpl) {
+            ((XmlTextImpl)text).doSetValue(value, new DefaultXmlPsiPolicy());
+          } else {
+            text.setValue(value);
+          }
         }
       }
 

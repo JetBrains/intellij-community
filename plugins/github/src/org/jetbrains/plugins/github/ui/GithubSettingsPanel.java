@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
@@ -38,7 +39,13 @@ import java.io.IOException;
  * @date 10/20/10
  */
 public class GithubSettingsPanel {
+  private static final String DEFAULT_PASSWORD_TEXT = "************";
+  private final static String AUTH_PASSWORD = "Password";
+  private final static String AUTH_TOKEN = "Token";
+
   private static final Logger LOG = GithubUtil.LOG;
+
+  private final GithubSettings mySettings;
 
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
@@ -46,10 +53,12 @@ public class GithubSettingsPanel {
   private JPanel myPane;
   private JButton myTestButton;
   private JTextField myHostTextField;
+  private JComboBox myAuthTypeComboBox;
 
   private boolean myPasswordModified;
 
-  public GithubSettingsPanel(final GithubSettings settings) {
+  public GithubSettingsPanel(@NotNull final GithubSettings settings) {
+    mySettings = settings;
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(final HyperlinkEvent e) {
@@ -60,14 +69,20 @@ public class GithubSettingsPanel {
       "<html>Do not have an account at github.com? <a href=\"https://github.com\">" + "Sign up" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    myAuthTypeComboBox.addItem(AUTH_PASSWORD);
+    myAuthTypeComboBox.addItem(AUTH_TOKEN);
+
+    reset();
+
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String password = isPasswordModified() ? getPassword() : settings.getPassword();
+        GithubAuthData auth = isPasswordModified() ? getAuthData() : mySettings.getAuthData();
         try {
-          if (GithubUtil.checkAuthData(new GithubAuthData(getHost(), getLogin(), password))) {
+          if (GithubUtil.checkAuthData(auth)) {
             Messages.showInfoMessage(myPane, "Connection successful", "Success");
-          } else {
+          }
+          else {
             Messages.showErrorDialog(myPane, "Can't login to " + getHost() + " using given credentials", "Login Failure");
           }
         }
@@ -76,7 +91,7 @@ public class GithubSettingsPanel {
           Messages.showErrorDialog(myPane, String.format("Can't login to %s: %s", getHost(), GithubUtil.getErrorTextFromException(ex)),
                                    "Login Failure");
         }
-        setPassword(password);
+        //TODO: do we really need "setPassword(password);" here?
       }
     });
 
@@ -102,29 +117,64 @@ public class GithubSettingsPanel {
     return myPane;
   }
 
-  public void setLogin(final String login) {
-    myLoginTextField.setText(login);
+  @NotNull
+  public String getHost() {
+    return myHostTextField.getText().trim();
   }
 
-  public void setPassword(final String password) {
-    // Show password as blank if password is empty
-    myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
-  }
-
+  @NotNull
   public String getLogin() {
     return myLoginTextField.getText().trim();
   }
 
-  public String getPassword() {
-    return String.valueOf(myPasswordField.getPassword());
-  }
-
-  public void setHost(final String host) {
+  public void setHost(@NotNull final String host) {
     myHostTextField.setText(host);
   }
 
-  public String getHost() {
-    return myHostTextField.getText().trim();
+  public void setLogin(@NotNull final String login) {
+    myLoginTextField.setText(login);
+  }
+
+  @NotNull
+  private String getPassword() {
+    return String.valueOf(myPasswordField.getPassword());
+  }
+
+  private void setPassword(@NotNull final String password) {
+    // Show password as blank if password is empty
+    myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
+  }
+
+  public void setAuthType(@NotNull final GithubAuthData.AuthType type) {
+    switch (type) {
+      case BASIC:
+        myAuthTypeComboBox.setSelectedItem(AUTH_PASSWORD);
+        break;
+      case TOKEN:
+        myAuthTypeComboBox.setSelectedItem(AUTH_TOKEN);
+        break;
+      case ANONYMOUS:
+      default:
+        myAuthTypeComboBox.setSelectedItem(AUTH_PASSWORD);
+    }
+  }
+
+  @NotNull
+  public GithubAuthData getAuthData() {
+    Object selected = myAuthTypeComboBox.getSelectedItem();
+    if (selected == AUTH_PASSWORD) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
+    if (selected == AUTH_TOKEN) return GithubAuthData.createTokenAuth(getHost(), getLogin(), getPassword());
+    LOG.error("GithubSettingsPanel: illegal selection: anonymous AuthData created");
+    return GithubAuthData.createAnonymous(getHost());
+  }
+
+  public void reset() {
+    String login = mySettings.getLogin();
+    setHost(mySettings.getHost());
+    setLogin(login);
+    setPassword(login.isEmpty() ? "" : DEFAULT_PASSWORD_TEXT);
+    setAuthType(mySettings.getAuthType());
+    resetPasswordModification();
   }
 
   public boolean isPasswordModified() {

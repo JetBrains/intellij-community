@@ -76,7 +76,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
-    if (gitRepository == null){
+    if (gitRepository == null) {
       setVisibleEnabled(e, false, false);
       return;
     }
