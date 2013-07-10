@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.display.BackBuffer;
 import com.jediterm.terminal.display.StyleState;
@@ -38,6 +39,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 public class JBTerminalPanel extends TerminalPanel {
@@ -101,6 +103,11 @@ public class JBTerminalPanel extends TerminalPanel {
       return null;
     }
     return (String)contents.getTransferData(DataFlavor.stringFlavor);
+  }
+
+  @Override
+  protected BufferedImage createBufferedImage(int width, int height) {
+    return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
   }
 }
 
