@@ -32,6 +32,11 @@ import java.util.Hashtable;
 import java.util.Random;
 
 public class RemoteServer {
+  static {
+    // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
+    System.setProperty("apple.awt.UIElement", "true");
+  }
+
   private static Remote ourRemote;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
