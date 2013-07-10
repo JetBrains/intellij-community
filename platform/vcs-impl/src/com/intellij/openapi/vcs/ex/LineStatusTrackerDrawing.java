@@ -220,7 +220,7 @@ public class LineStatusTrackerDrawing {
     }
 
     final LightweightHint lightweightHint = new LightweightHint(component);
-    lightweightHint.addHintListener(new HintListener() {
+    HintListener closeListener = new HintListener() {
       public void hintHidden(final EventObject event) {
         actionList.remove(rollback);
         actionList.remove(localShowPrevAction);
@@ -228,11 +228,17 @@ public class LineStatusTrackerDrawing {
         actionList.add(globalShowPrevAction);
         actionList.add(globalShowNextAction);
       }
-    });
+    };
+    lightweightHint.addHintListener(closeListener);
 
     HintManagerImpl.getInstanceImpl().showEditorHint(lightweightHint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
                                                                              HintManagerImpl.HIDE_BY_SCROLLING,
                                                                              -1, false, new HintHint(editor, point));
+
+    if (!lightweightHint.isVisible()) {
+      closeListener.hintHidden(null);
+    }
+    
   }
 
   private static String getFileName(final Document document) {
