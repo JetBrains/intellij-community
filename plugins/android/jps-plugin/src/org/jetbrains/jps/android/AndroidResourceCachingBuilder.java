@@ -2,6 +2,7 @@ package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Processor;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
@@ -103,7 +104,7 @@ public class AndroidResourceCachingBuilder extends TargetBuilder<BuildRootDescri
         FileUtil.processFilesRecursively(new File(dir), new Processor<File>() {
           @Override
           public boolean process(File file) {
-            if (file.isFile()) {
+            if (file.isFile() && FileUtilRt.extensionEquals(file.getName(), "png")) {
               srcFiles.add(file.getPath());
             }
             return true;
