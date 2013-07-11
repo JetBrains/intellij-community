@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -264,6 +265,12 @@ public interface JVMElementFactory {
    */
   @NotNull
   PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope);
+
+  /**
+   * Creates doc comment from text
+   */
+  @NotNull
+  PsiDocComment createDocCommentFromText(@NotNull String text);
 
   /**
    * Checks whether name is a valid class name in the current language
