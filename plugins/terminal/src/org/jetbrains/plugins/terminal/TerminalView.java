@@ -1,11 +1,9 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
@@ -14,19 +12,21 @@ import com.intellij.ui.content.ContentFactory;
 import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 /**
  * @author traff
  */
 public class TerminalView {
 
-  public void openTerminal(Project project, ToolWindow toolWindow) {
+  private TerminalWidget myTerminalWidget;
+
+  public void createTerminal(Project project, ToolWindow toolWindow) {
 
     LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
-    
-    TerminalWidget terminalWidget = terminalRunner.createTerminalWidget();
+
+    myTerminalWidget = terminalRunner.createTerminalWidget();
 
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
@@ -34,24 +34,56 @@ public class TerminalView {
         return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
       }
     };
-    panel.setContent(terminalWidget.getComponent());
+    panel.setContent(myTerminalWidget.getComponent());
+    
+    panel.addFocusListener(createFocusListener());
 
-    ActionToolbar toolbar = createToolbar(project, terminalRunner, terminalWidget);
+    ActionToolbar toolbar = createToolbar(project, terminalRunner, myTerminalWidget);
+    toolbar.getComponent().addFocusListener(createFocusListener());
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
 
+    content.setPreferredFocusableComponent(myTerminalWidget.getComponent());
     toolWindow.getContentManager().addContent(content);
+  }
+
+  private FocusListener createFocusListener() {
+    return new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myTerminalWidget.getComponent().requestFocusInWindow();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+
+      }
+    };
+  }
+
+  public void openSession(Project project, ToolWindow terminal) {
+    LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
+    terminalRunner.openSession(myTerminalWidget);
+    
+    terminal.activate(new Runnable() {
+      @Override
+      public void run() {
+
+      }
+    }, true);
   }
 
   public static TerminalView getInstance() {
     return ServiceManager.getService(TerminalView.class);
   }
 
-  private static ActionToolbar createToolbar(Project project, final LocalTerminalDirectRunner terminalRunner, final TerminalWidget terminal) {
+  private static ActionToolbar createToolbar(Project project,
+                                             final LocalTerminalDirectRunner terminalRunner,
+                                             final TerminalWidget terminal) {
     DefaultActionGroup group = new DefaultActionGroup();
-    
+
     group.add(new NewSession(terminalRunner, terminal));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);

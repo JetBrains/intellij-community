@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import icons.TerminalIcons;
 
 /**
@@ -33,12 +35,21 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
   }
 
   public static void runLocalTerminal(final Project project) {
-   
-    
+    ToolWindow terminal = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
+    if (terminal.isActive()) {
+      TerminalView.getInstance().openSession(project, terminal);
+    }
+    terminal.activate(new Runnable() {
+      @Override
+      public void run() {
+
+      }
+    }, true);
   }
 
   public static LocalTerminalDirectRunner createTerminalRunner(Project project) {
-    String[] terminalCommand = SystemInfo.isMac ? new String[]{"/bin/bash", "--login"} : new String[]{"/bin/bash"};
+    //String[] terminalCommand = SystemInfo.isMac ? new String[]{"/bin/bash", "--login"} : new String[]{"/bin/bash"};
+    String[] terminalCommand = new String[]{"/bin/bash", "--login"};
 
     return new LocalTerminalDirectRunner(project, terminalCommand);
   }
