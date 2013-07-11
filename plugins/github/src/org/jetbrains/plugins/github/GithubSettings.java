@@ -171,7 +171,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
     setHost(auth.getHost());
     setLogin(auth.getLogin());
@@ -179,9 +178,11 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
     switch (auth.getAuthType()) {
       case BASIC:
+        assert auth.getBasicAuth() != null;
         setPassword(auth.getBasicAuth().getPassword(), rememberPassword);
         break;
       case TOKEN:
+        assert auth.getTokenAuth() != null;
         setPassword(auth.getTokenAuth().getToken(), rememberPassword);
         break;
       case ANONYMOUS:

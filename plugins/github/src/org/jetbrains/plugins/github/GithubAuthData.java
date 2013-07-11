@@ -19,18 +19,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Container for authentication data: host, login and password.
+ * Container for authentication data:
+ * - host
+ * - login
+ *    - login/password pair
+ *    or
+ *    - OAuth2 access token
  *
  * @author Aleksey Pivovarov
  */
 public class GithubAuthData {
   public enum AuthType {BASIC, TOKEN, ANONYMOUS}
 
-  private final AuthType myAuthType;
-  private @NotNull final String myHost;
-  private @NotNull final String myLogin;
-  private @Nullable final BasicAuth myBasicAuth;
-  private @Nullable final TokenAuth myTokenAuth;
+  @NotNull private final AuthType myAuthType;
+  @NotNull private final String myHost;
+  @NotNull private final String myLogin;
+  @Nullable private final BasicAuth myBasicAuth;
+  @Nullable private final TokenAuth myTokenAuth;
 
   private GithubAuthData(@NotNull AuthType authType,
                          @NotNull String host,
@@ -90,8 +95,8 @@ public class GithubAuthData {
   }
 
   public static class BasicAuth {
-    private @NotNull final String myLogin;
-    private @NotNull final String myPassword;
+    @NotNull private final String myLogin;
+    @NotNull private final String myPassword;
 
     private BasicAuth(@NotNull String login, @NotNull String password) {
       myLogin = login;
@@ -110,7 +115,7 @@ public class GithubAuthData {
   }
 
   public static class TokenAuth {
-    private @NotNull final String myToken;
+    @NotNull private final String myToken;
 
     private TokenAuth(@NotNull String token) {
       myToken = token;

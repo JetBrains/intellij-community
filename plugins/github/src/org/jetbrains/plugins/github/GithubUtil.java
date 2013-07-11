@@ -147,9 +147,28 @@ public class GithubUtil {
     }
   }
 
-  public static boolean checkAuthData(GithubAuthData auth) throws IOException {
+  public static boolean checkAuthData(@NotNull GithubAuthData auth) throws IOException {
     if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
       return false;
+    }
+
+    switch (auth.getAuthType()) {
+      case BASIC:
+        GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
+        assert basicAuth != null;
+        if (StringUtil.isEmptyOrSpaces(basicAuth.getLogin()) || StringUtil.isEmptyOrSpaces(basicAuth.getPassword())) {
+          return false;
+        }
+        break;
+      case TOKEN:
+        GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+        assert tokenAuth != null;
+        if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
+          return false;
+        }
+        break;
+      case ANONYMOUS:
+        return false;
     }
 
     try {
@@ -162,7 +181,13 @@ public class GithubUtil {
 
   private static boolean testConnection(@NotNull GithubAuthData auth) throws IOException {
     GithubUser user = getCurrentUserInfo(auth);
-    return user != null;
+    if (user == null) {
+      return false;
+    }
+    if (!user.getLogin().equalsIgnoreCase(auth.getLogin())) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
