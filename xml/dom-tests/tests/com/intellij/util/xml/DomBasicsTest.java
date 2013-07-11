@@ -128,7 +128,7 @@ public class DomBasicsTest extends DomTestCase {
     assertEquals("foo", rootElement.getValue());
   }
 
-  public void testAcceptChidren() throws Throwable {
+  public void testAcceptChildren() throws Throwable {
     final MyElement element = createElement("<a><child-element/><child/><child-element/></a>");
     final Set<DomElement> visited = new HashSet<DomElement>();
     element.acceptChildren(new DomElementVisitor() {
