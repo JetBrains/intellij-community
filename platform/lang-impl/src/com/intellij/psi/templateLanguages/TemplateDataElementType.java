@@ -82,7 +82,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
     final PsiFile templateFile = createTemplateFile(file, language, chars, viewProvider);
 
-    final TreeElement parsed = ((PsiFileImpl)templateFile).calcTreeElement();
+    final FileElement parsed = ((PsiFileImpl)templateFile).calcTreeElement();
+    prepareParsedTemplateFile(parsed);
     Lexer langLexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(file.getProject());
     final Lexer lexer = new MergingLexerAdapter(
       new TemplateBlackAndWhiteLexer(createBaseLexer(viewProvider), langLexer, myTemplateElementType, myOuterElementType),
@@ -93,7 +94,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     if (parsed != null) {
       final TreeElement element = parsed.getFirstChildNode();
       if (element != null) {
-        ((CompositeElement)parsed).rawRemoveAllChildren();
+        parsed.rawRemoveAllChildren();
         treeElement.rawAddChildren(element);
       }
     }
@@ -110,6 +111,9 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return childNode;
   }
 
+  protected void prepareParsedTemplateFile(FileElement root) {
+  }
+
   protected Language getTemplateFileLanguage(TemplateLanguageFileViewProvider viewProvider) {
     return viewProvider.getTemplateDataLanguage();
   }
@@ -123,7 +127,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return createFromText(language, templateText, file.getManager());
   }
 
-  private CharSequence createTemplateText(CharSequence buf, Lexer lexer) {
+  protected CharSequence createTemplateText(CharSequence buf, Lexer lexer) {
     StringBuilder result = new StringBuilder(buf.length());
     lexer.start(buf);
 
@@ -137,12 +141,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return result;
   }
 
-  /**
-   * Override to modify appended token text. For example: replace a trailing space with a newline.
-   * Should append exact <code>lexer.getTokenEnd() - lexer.getTokenStart()</code> characters!
-   */
-  protected StringBuilder appendCurrentTemplateToken(StringBuilder result, CharSequence buf, Lexer lexer) {
-    return result.append(buf, lexer.getTokenStart(), lexer.getTokenEnd());
+  protected void appendCurrentTemplateToken(StringBuilder result, CharSequence buf, Lexer lexer) {
+    result.append(buf, lexer.getTokenStart(), lexer.getTokenEnd());
   }
 
   private void insertOuters(TreeElement root, Lexer lexer, final CharTable table) {
