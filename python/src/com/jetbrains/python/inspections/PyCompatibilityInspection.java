@@ -19,7 +19,12 @@ import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.validation.CompatibilityVisitor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import org.jetbrains.annotations.Nls;
@@ -261,7 +266,20 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       super.visitPyElement(node);
       if (shouldBeCompatibleWithPy3()) {
-        if (PyNames.BASESTRING.equals(node.getText())) {
+        final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getContainingFile());
+        final String nodeText = node.getText();
+        if (nodeText.endsWith("iteritems") || nodeText.endsWith("iterkeys") || nodeText.endsWith("itervalues")) {
+          final PyExpression qualifier = node.getQualifier();
+          if (qualifier != null) {
+            final PyType type = context.getType(qualifier);
+            final PyClassType dictType = PyBuiltinCache.getInstance(node).getDictType();
+            if (PyTypeChecker.match(dictType, type, context)) {
+              registerProblem(node, "dict.iterkeys(), dict.iteritems() and dict.itervalues() methods are not available in py3");
+            }
+          }
+        }
+
+        if (PyNames.BASESTRING.equals(nodeText)) {
           PsiElement res = node.getReference().resolve();
           if (res != null) {
             ProjectFileIndex ind = ProjectRootManager.getInstance(node.getProject()).getFileIndex();
