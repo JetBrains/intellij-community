@@ -317,14 +317,6 @@ public class GenerateMembersUtil {
   }
 
   @NotNull
-  private static PsiClassType[] filterTypeParameterSuperTypes(@NotNull PsiClassType[] types) {
-    if (types.length == 1 && types[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      return PsiClassType.EMPTY_ARRAY;
-    }
-    return types;
-  }
-
-  @NotNull
   private static PsiTypeParameter resolveTypeParametersCollision(@NotNull JVMElementFactory factory,
                                                                  @NotNull PsiTypeParameterList sourceTypeParameterList,
                                                                  @Nullable PsiElement target,
@@ -333,12 +325,12 @@ public class GenerateMembersUtil {
     for (PsiType type : substitutor.getSubstitutionMap().values()) {
       if (type != null && Comparing.equal(type.getCanonicalText(), typeParam.getName())) {
         final String newName = suggestUniqueTypeParameterName(typeParam.getName(), sourceTypeParameterList, PsiTreeUtil.getParentOfType(target, PsiClass.class, false));
-        final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, filterTypeParameterSuperTypes(typeParam.getSuperTypes()));
+        final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, typeParam.getSuperTypes());
         substitutor.put(typeParam, factory.createType(newTypeParameter));
         return newTypeParameter;
       }
     }
-    return factory.createTypeParameter(typeParam.getName(), filterTypeParameterSuperTypes(typeParam.getSuperTypes()));
+    return factory.createTypeParameter(typeParam.getName(), typeParam.getSuperTypes());
   }
 
   @NotNull

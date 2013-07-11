@@ -196,9 +196,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("def <").append(name);
-    if (superTypes.length > 0) {
+    if (superTypes.length > 1 ||
+        superTypes.length == 1 && !superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       builder.append(" extends ");
       for (PsiClassType type : superTypes) {
+        if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue;
         builder.append(type.getCanonicalText()).append(',');
       }
 
