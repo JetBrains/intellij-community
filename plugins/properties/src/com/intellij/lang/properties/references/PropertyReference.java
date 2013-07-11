@@ -15,15 +15,11 @@
  */
 package com.intellij.lang.properties.references;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +28,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class PropertyReference extends PropertyReferenceBase implements QuickFixProvider, LocalQuickFixProvider {
+public class PropertyReference extends PropertyReferenceBase implements LocalQuickFixProvider {
   @Nullable private final String myBundleName;
 
   public PropertyReference(@NotNull final String key, @NotNull final PsiElement element, @Nullable final String bundleName, final boolean soft, final TextRange range) {
@@ -55,12 +51,6 @@ public class PropertyReference extends PropertyReferenceBase implements QuickFix
 
   protected List<PropertiesFile> retrievePropertyFilesByBundleName(String bundleName, PsiElement element) {
     return I18nUtil.propertiesFilesByBundleName(bundleName, element);
-  }
-
-  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-    List<PropertiesFile> propertiesFiles = retrievePropertyFilesByBundleName(myBundleName, reference.getElement());
-    CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, propertiesFiles);
-    QuickFixAction.registerQuickFixAction(info, fix);
   }
 
   public LocalQuickFix[] getQuickFixes() {

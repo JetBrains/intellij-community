@@ -619,7 +619,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         .range(startOffset + referenceRange.getStartOffset(), startOffset + referenceRange.getEndOffset())
         .descriptionAndTooltip(description).create();
       addToResults(info);
-      if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
       if (reference instanceof LocalQuickFixProvider) {
         LocalQuickFix[] fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
         if (fixes != null) {
