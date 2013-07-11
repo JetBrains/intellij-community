@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
@@ -10,6 +11,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -27,16 +29,14 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
-import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.many;
-import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.maybe;
-import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.token;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.*;
 
 /**
  * @author vlan
  */
 public class PyTypeParser {
   private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.<TextRange, PyType>emptyMap(), Collections.<PyType, TextRange>emptyMap(),
-                                                                 Collections.<PyType, PyImportElement>emptyMap());
+                                                                  Collections.<PyType, PyImportElement>emptyMap());
 
   public static class ParseResult {
     @Nullable private PyType myType;
@@ -251,113 +251,189 @@ public class PyTypeParser {
       final Token<PyElementType> first = value.getFirst();
       final List<Token<PyElementType>> rest = value.getSecond();
       final TextRange firstRange = first.getRange();
-      final String firstText = first.getText().toString();
+      final boolean unqualified = rest.isEmpty();
 
-      if (rest.isEmpty()) {
-        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(myAnchor);
-
-        if ("unknown".equals(firstText)) {
-          return EMPTY_RESULT;
-        }
-        else if (PyNames.NONE.equals(firstText)) {
-          return new ParseResult(PyNoneType.INSTANCE, firstRange);
-        }
-        else if ("integer".equals(firstText) || ("long".equals(firstText) && LanguageLevel.forElement(myAnchor).isPy3K())) {
-          final PyClassType type = builtinCache.getIntType();
-          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
-        }
-        else if ("string".equals(firstText)) {
-          final PyType type = builtinCache.getStringType(LanguageLevel.forElement(myAnchor));
-          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
-        }
-        else if ("bytes".equals(firstText)) {
-          final PyClassType type = builtinCache.getBytesType(LanguageLevel.forElement(myAnchor));
-          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
-        }
-        else if ("unicode".equals(firstText)) {
-          final PyClassType type = builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor));
-          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
-        }
-        else if ("boolean".equals(firstText)) {
-          final PyClassType type = builtinCache.getBoolType();
-          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
-        }
-        else if ("dictionary".equals(firstText)) {
-          final PyClassType type = builtinCache.getDictType();
-          return type != null ? new ParseResult(type, firstRange) : EMPTY_RESULT;
-        }
-
-        final PyType builtinType = builtinCache.getObjectType(firstText);
-        if (builtinType != null) {
-          return new ParseResult(builtinType, firstRange);
+      if (unqualified) {
+        final ParseResult result = parseBuiltinType(first);
+        if (result != null) {
+          return result;
         }
       }
 
       final PsiFile file = myAnchor.getContainingFile();
+      final List<Token<PyElementType>> tokens = new ArrayList<Token<PyElementType>>();
+      tokens.add(first);
+      tokens.addAll(rest);
 
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+        final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
+        final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
+        final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();
 
-        PsiElement resolved = pyFile.getElementNamed(firstText);
-        if (resolved == null) {
-          resolved = new QualifiedNameResolverImpl(firstText).fromElement(myAnchor).firstResult();
-        }
+        PyType type = resolveQualifierType(tokens, pyFile, context, types, fullRanges, imports);
 
-        if (resolved instanceof PyTypedElement) {
-          final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
-          final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
-          final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();
-          final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
-          PyType type = context.getType((PyTypedElement)resolved);
+        if (type != null) {
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+          final PyExpression expression = myAnchor instanceof PyExpression ? (PyExpression)myAnchor : null;
+
+          for (Token<PyElementType> token : tokens) {
+            final PyType qualifierType = type;
+            type = null;
+            final List<? extends RatedResolveResult> results = qualifierType.resolveMember(token.getText().toString(), expression,
+                                                                                           AccessDirection.READ, resolveContext);
+            if (results != null && !results.isEmpty()) {
+              final PsiElement resolved = results.get(0).getElement();
+              if (resolved instanceof PyTypedElement) {
+                type = context.getType((PyTypedElement)resolved);
+              }
+            }
+            if (type == null) {
+              break;
+            }
+            types.put(token.getRange(), type);
+            fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
+          }
           if (type != null) {
+            return new ParseResult(type, types, fullRanges, imports);
+          }
+        }
+      }
+
+      if (unqualified) {
+        final ParseResult result = fromClassNameIndex(first);
+        if (result != null) {
+          return result;
+        }
+      }
+
+      return EMPTY_RESULT;
+    }
+
+    @Nullable
+    private PyType resolveQualifierType(@NotNull List<Token<PyElementType>> tokens,
+                                        @NotNull PyFile file,
+                                        @NotNull TypeEvalContext context,
+                                        @NotNull Map<TextRange, PyType> types,
+                                        @NotNull Map<PyType, TextRange> fullRanges,
+                                        @NotNull Map<PyType, PyImportElement> imports) {
+      if (tokens.isEmpty()) {
+        return null;
+      }
+      final Token<PyElementType> firstToken = tokens.get(0);
+      final String firstText = firstToken.getText().toString();
+      final TextRange firstRange = firstToken.getRange();
+      PyType type = null;
+      PsiElement resolved = file.getElementNamed(firstText);
+      if (resolved != null) {
+        // Local or imported name
+        if (resolved instanceof PyTypedElement) {
+          type = context.getType((PyTypedElement)resolved);
+          if (type != null) {
+            tokens.remove(0);
             if (type instanceof PyClassLikeType) {
               type = ((PyClassLikeType)type).toInstance();
             }
             types.put(firstRange, type);
             fullRanges.put(type, firstRange);
-            for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
+            for (PyFromImportStatement fromImportStatement : file.getFromImports()) {
               for (PyImportElement importElement : fromImportStatement.getImportElements()) {
                 if (firstText.equals(importElement.getVisibleName())) {
                   imports.put(type, importElement);
                 }
               }
             }
-
-            final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-            final PyExpression expression = myAnchor instanceof PyExpression ? (PyExpression)myAnchor : null;
-
-            for (Token<PyElementType> token : rest) {
-              final List<? extends RatedResolveResult> results =
-                type.resolveMember(token.getText().toString(), expression, AccessDirection.READ, resolveContext);
-              if (results != null && !results.isEmpty()) {
-                resolved = results.get(0).getElement();
-                if (resolved instanceof PyTypedElement) {
-                  type = context.getType((PyTypedElement)resolved);
-                }
+            for (PyImportElement importElement : file.getImportTargets()) {
+              if (firstText.equals(importElement.getVisibleName())) {
+                imports.put(type, importElement);
               }
-              if (type == null) {
-                break;
-              }
-              types.put(token.getRange(), type);
-              fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
-            }
-            if (type != null) {
-              return new ParseResult(type, types, fullRanges, imports);
             }
           }
         }
       }
-
-      if (rest.isEmpty()) {
-        final Collection<PyClass> classes = PyClassNameIndex.find(firstText, myAnchor.getProject(), true);
-        if (classes.size() == 1) {
-          final PyClassTypeImpl type = new PyClassTypeImpl(classes.iterator().next(), false);
-          type.assertValid("PyClassNameIndex.find().iterator().next()");
-          return new ParseResult(type, firstRange);
+      else {
+        // Implicitly available in the type string
+        PyQualifiedName qName = null;
+        while (!tokens.isEmpty()) {
+          final Token<PyElementType> token = tokens.get(0);
+          final String name = token.getText().toString();
+          qName = qName != null ? qName.append(name) : PyQualifiedName.fromComponents(name);
+          PsiElement module = new QualifiedNameResolverImpl(qName).fromElement(myAnchor).firstResult();
+          if (module == null) {
+            break;
+          }
+          if (module instanceof PsiDirectory) {
+            module = PyUtil.getPackageElement((PsiDirectory)module);
+          }
+          if (module instanceof PyTypedElement) {
+            final PyType moduleType = context.getType((PyTypedElement)module);
+            if (moduleType != null) {
+              type = moduleType;
+              types.put(token.getRange(), type);
+              fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
+            }
+          }
+          tokens.remove(0);
         }
       }
+      return type;
+    }
 
-      return EMPTY_RESULT;
+    @Nullable
+    private ParseResult parseBuiltinType(@NotNull Token<PyElementType> token) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(myAnchor);
+      final String name = token.getText().toString();
+      final TextRange range = token.getRange();
+
+      if ("unknown".equals(name)) {
+        return EMPTY_RESULT;
+      }
+      else if (PyNames.NONE.equals(name)) {
+        return new ParseResult(PyNoneType.INSTANCE, range);
+      }
+      else if ("integer".equals(name) || ("long".equals(name) && LanguageLevel.forElement(myAnchor).isPy3K())) {
+        final PyClassType type = builtinCache.getIntType();
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
+      else if ("string".equals(name)) {
+        final PyType type = builtinCache.getStringType(LanguageLevel.forElement(myAnchor));
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
+      else if ("bytes".equals(name)) {
+        final PyClassType type = builtinCache.getBytesType(LanguageLevel.forElement(myAnchor));
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
+      else if ("unicode".equals(name)) {
+        final PyClassType type = builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor));
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
+      else if ("boolean".equals(name)) {
+        final PyClassType type = builtinCache.getBoolType();
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
+      else if ("dictionary".equals(name)) {
+        final PyClassType type = builtinCache.getDictType();
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
+
+      final PyType builtinType = builtinCache.getObjectType(name);
+      if (builtinType != null) {
+        return new ParseResult(builtinType, range);
+      }
+
+      return null;
+    }
+
+    @Nullable
+    private ParseResult fromClassNameIndex(@NotNull Token<PyElementType> token) {
+      final Collection<PyClass> classes = PyClassNameIndex.find(token.getText().toString(), myAnchor.getProject(), true);
+      if (classes.size() == 1) {
+        final PyClassTypeImpl type = new PyClassTypeImpl(classes.iterator().next(), false);
+        type.assertValid("PyClassNameIndex.find().iterator().next()");
+        return new ParseResult(type, token.getRange());
+      }
+      return null;
     }
   }
 

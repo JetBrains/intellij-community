@@ -87,6 +87,9 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     else if (myType instanceof PyImportedModuleType) {
       result = ((PyImportedModuleType)myType).getImportedModule().resolve();
     }
+    else if (myType instanceof PyModuleType) {
+      result = ((PyModuleType)myType).getModule();
+    }
     if (result != null) {
       if (myImportElement != null) {
         results.add(new ImportedResolveResult(result,
