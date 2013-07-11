@@ -774,4 +774,13 @@ new A.Inner(new A(), new A()) //correct
 ''')
   }
 
+  void testClosureIsNotAssignableToSAMInGroovy2_1() {
+    testHighlighting('''\
+interface X {
+  def foo()
+}
+
+X <warning>x</warining> = {print 2}
+''')
+  }
 }
