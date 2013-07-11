@@ -40,6 +40,7 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
 
   @SuppressWarnings("unchecked")
   public ArrangementComboBoxUiComponent(@NotNull List<ArrangementSettingsToken> tokens) {
+    super(tokens);
     ArrangementSettingsToken[] tokensArray = tokens.toArray(new ArrangementSettingsToken[tokens.size()]);
     Arrays.sort(tokensArray, new Comparator<ArrangementSettingsToken>() {
       @Override

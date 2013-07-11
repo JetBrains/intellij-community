@@ -43,6 +43,7 @@ public class ArrangementCheckBoxUiComponent extends AbstractArrangementUiCompone
   @NotNull private final JLabel                        myTextLabel;
 
   public ArrangementCheckBoxUiComponent(@NotNull ArrangementSettingsToken token) {
+    super(token);
     myComponent.setOpaque(false);
     myCondition = new ArrangementAtomMatchCondition(token);
     myCheckBox = new JBCheckBox();

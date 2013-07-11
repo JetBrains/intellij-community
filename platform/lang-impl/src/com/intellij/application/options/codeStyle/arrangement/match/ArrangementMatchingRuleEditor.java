@@ -281,9 +281,14 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     try {
       for (ArrangementUiComponent component : myComponents.values()) {
         ArrangementSettingsToken token = component.getToken();
-        if (token != null && (token.equals(orderType) || mySettingsManager.isEnabled(token, condition))) {
+        if (token != null && (component.getAvailableTokens().contains(orderType) || mySettingsManager.isEnabled(token, condition))) {
           component.setEnabled(true);
-          component.setSelected(conditionTokens.containsKey(token));
+          if (component.getAvailableTokens().contains(orderType)) {
+            component.chooseToken(orderType);
+          }
+          else {
+            component.setSelected(conditionTokens.containsKey(token));
+          }
           Object value = conditionTokens.get(token);
           if (value != null) {
             component.setData(value);

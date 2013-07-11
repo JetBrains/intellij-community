@@ -32,6 +32,7 @@ import com.intellij.ui.RoundedLineBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 /**
  * {@link ArrangementUiComponent} for {@link ArrangementAtomMatchCondition} representation.
@@ -77,6 +79,8 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     }
   };
 
+  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = ContainerUtilRt.newHashSet();
+
   @NotNull private final BorderStrategy                myBorderStrategy;
   @NotNull private final String                        myText;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
@@ -91,8 +95,8 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @NotNull private Color myBackgroundColor;
 
   @Nullable private final Dimension myTextControlSize;
-  @Nullable private Rectangle myScreenBounds;
-  @Nullable private Listener  myListener;
+  @Nullable private       Rectangle myScreenBounds;
+  @Nullable private       Listener  myListener;
 
   private boolean myEnabled = true;
   private boolean mySelected;
@@ -105,6 +109,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   {
     myColorsProvider = colorsProvider;
     myCondition = condition;
+    myAvailableTokens.add(condition.getType());
     myCloseCallback = closeCallback;
     ArrangementSettingsToken type = condition.getType();
     if (StdArrangementTokens.Regexp.is(type)) {
@@ -352,6 +357,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @Override
   public ArrangementSettingsToken getToken() {
     return myCondition.getType();
+  }
+
+  @NotNull
+  @Override
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
+    return myAvailableTokens;
   }
 
   @Override
