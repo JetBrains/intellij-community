@@ -114,6 +114,11 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
+  public void applyFix() {
+    invoke(myStartElement.getProject(), (PsiDirectory)myStartElement.getElement());
+  }
+
+  @Override
   public boolean isAvailable(@NotNull Project project,
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
