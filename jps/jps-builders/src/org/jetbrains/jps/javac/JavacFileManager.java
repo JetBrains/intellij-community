@@ -25,6 +25,9 @@ import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 /**
@@ -187,6 +190,25 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
     return new OutputFileObject(myContext, dir, fileName, file, kind, className, src != null? src.toUri() : null);
+  }
+
+  @Override
+  public ClassLoader getClassLoader(Location location) {
+    final Iterable<? extends File> path = getLocation(location);
+    if (path == null) {
+      return null;
+    }
+    final List<URL> urls = new ArrayList<URL>();
+    for (File f: path) {
+      try {
+        urls.add(f.toURI().toURL());
+      } 
+      catch (MalformedURLException e) {
+        throw new AssertionError(e);
+      }
+    }
+    // ensure processor's loader will not resolve against JPS classes and libraries used in JPS
+    return new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
   }
 
   private File getSingleOutputDirectory(final Location loc, final JavaFileObject sourceFile) {
