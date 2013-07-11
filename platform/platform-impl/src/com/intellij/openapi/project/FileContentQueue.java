@@ -259,7 +259,7 @@ public class FileContentQueue {
 
     synchronized (myProceedWithLoadingLock) {
       myLoadedBytesInQueue -= result.getLength();
-      myProceedWithLoadingLock.notifyAll(); // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
+      if (myLoadedBytesInQueue < MAX_SIZE_OF_BYTES_IN_QUEUE) myProceedWithLoadingLock.notifyAll(); // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
     }
 
     return result;
