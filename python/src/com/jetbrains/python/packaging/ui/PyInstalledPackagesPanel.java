@@ -1,5 +1,6 @@
 package com.jetbrains.python.packaging.ui;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +20,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -126,6 +128,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         }, ModalityState.any());
       }
     });
+  }
+
+  @Override
+  protected Set<String> getPackagesToPostpone() {
+    return Sets.newHashSet("pip", "distutils", "setuptools");
   }
 
   private void installManagementTool(@NotNull final Sdk sdk, final String name) {
