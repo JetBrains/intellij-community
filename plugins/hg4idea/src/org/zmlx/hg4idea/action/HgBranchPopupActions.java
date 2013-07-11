@@ -261,11 +261,13 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(myProject, mySelectedRepository.getRoot());
+        final VirtualFile repository = mySelectedRepository.getRoot();
+        HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(myProject, repository);
         hgUpdateCommand.setBranch(myBranch);
         HgCommandResult result = hgUpdateCommand.execute();
         if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
           new HgCommandResultNotifier(myProject).notifyError(result, "", "Update failed");
+          new HgConflictResolver(myProject).resolve(repository);
         }
         myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
       }

@@ -25,6 +25,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.ui.HgUpdateToDialog;
 import org.zmlx.hg4idea.util.HgBranchesAndTags;
 import org.zmlx.hg4idea.util.HgErrorUtil;
@@ -66,7 +67,8 @@ public class HgUpdateToAction extends HgAbstractGlobalAction {
   }
 
   public void updateTo(HgUpdateToDialog dialog, final Project project) {
-    final HgUpdateCommand command = new HgUpdateCommand(project, dialog.getRepository());
+    final VirtualFile repository = dialog.getRepository();
+    final HgUpdateCommand command = new HgUpdateCommand(project, repository);
     command.setClean(dialog.isRemoveLocalChanges());
     if (dialog.isRevisionSelected()) {
       command.setRevision(dialog.getRevision());
@@ -81,6 +83,7 @@ public class HgUpdateToAction extends HgAbstractGlobalAction {
       @Override
       public void run() {
         HgCommandResult result = command.execute();
+        new HgConflictResolver(project).resolve(repository);
         if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
           new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
         }
