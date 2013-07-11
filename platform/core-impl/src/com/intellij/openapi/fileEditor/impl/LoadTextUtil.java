@@ -351,7 +351,9 @@ public final class LoadTextUtil {
       return convertLineSeparators(buffer).first;
     }
 
-    assert !file.isDirectory() : "'"+file.getPresentableUrl() + "' is directory";
+    if (file.isDirectory()) {
+      throw new AssertionError("'" + file.getPresentableUrl() + "' is directory");
+    }
     final FileType fileType = file.getFileType();
 
     if (fileType.isBinary()) {
