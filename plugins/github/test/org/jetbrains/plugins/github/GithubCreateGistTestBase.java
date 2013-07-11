@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonObject;
+import com.intellij.openapi.util.Clock;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.test.GithubTest;
 
@@ -31,10 +33,13 @@ import static org.jetbrains.plugins.github.GithubCreateGistAction.NamedContent;
 public abstract class GithubCreateGistTestBase extends GithubTest {
   protected String GIST_ID = null;
   protected JsonObject GIST = null;
+  protected String GIST_DESCRIPTION;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    long time = Clock.getTime();
+    GIST_DESCRIPTION = getTestName(false) + "_" + DateFormatUtil.formatDate(time);
   }
 
   @Override
