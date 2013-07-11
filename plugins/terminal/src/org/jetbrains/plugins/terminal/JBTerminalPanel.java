@@ -57,12 +57,14 @@ public class JBTerminalPanel extends TerminalPanel {
 
     setSelectionColor(new TextStyle(myColorScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR),
                                     myColorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
+    
+    setLineSpace(myColorScheme.getConsoleLineSpacing());
   }
 
   protected Font createFont() {
 
     Font normalFont = Font.decode(getFontName());
-    //Font normalFont = null;
+    
     if (normalFont == null) {
       normalFont = super.createFont();
     }
