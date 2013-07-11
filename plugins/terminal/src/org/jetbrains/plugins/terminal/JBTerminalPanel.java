@@ -52,6 +52,7 @@ public class JBTerminalPanel extends TerminalPanel {
                          @NotNull EditorColorsScheme scheme) {
     super(settingsProvider, backBuffer, styleState);
     myColorScheme = scheme;
+    
 
     styleState.setDefaultStyle(new TextStyle(myColorScheme.getDefaultForeground(), myColorScheme.getDefaultBackground()));
 
