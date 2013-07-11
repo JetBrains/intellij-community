@@ -1,68 +1,169 @@
 package org.jetbrains.plugins.github.tasks;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.FormBuilder;
+import org.apache.commons.httpclient.auth.AuthenticationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.*;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Dennis.Ushakov
  */
 public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepository> {
+  private JTextField myToken;
   private JTextField myRepoName;
   private JTextField myRepoAuthor;
-  private JBLabel myRepositoryAuthorLabel;
-  private JBLabel myRepositoryLabel;
+  private JButton myTokenButton;
+  private JBLabel myRepoAuthorLabel;
+  private JBLabel myRepoLabel;
+  private JCheckBox myPrivateRepo;
 
-  public GitHubRepositoryEditor(final Project project,
-                                final GitHubRepository repository,
-                                Consumer<GitHubRepository> changeListener) {
+  public GitHubRepositoryEditor(final Project project, final GitHubRepository repository, Consumer<GitHubRepository> changeListener) {
     super(project, repository, changeListener);
+    myUserNameText.setVisible(false);
+    myUsernameLabel.setVisible(false);
+    myPasswordText.setVisible(false);
+    myPasswordLabel.setVisible(false);
 
-    // project author, by default same as username
+    myToken.setText(repository.getToken());
     myRepoAuthor.setText(repository.getRepoAuthor());
-
-    // project id
     myRepoName.setText(repository.getRepoName());
+    myPrivateRepo.setSelected(false);
 
-    myUrlLabel.setVisible(false);
-    myURLText.setVisible(false);
-
-    setAnchor(myRepositoryAuthorLabel);
+    setAnchor(myRepoAuthorLabel);
   }
 
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myRepositoryAuthorLabel = new JBLabel("Repository author:", SwingConstants.RIGHT);
+    myUrlLabel.setText("Host:");
+
+    myRepoAuthorLabel = new JBLabel("Repository author:", SwingConstants.RIGHT);
     myRepoAuthor = new JTextField();
     installListener(myRepoAuthor);
 
-    myRepositoryLabel = new JBLabel("Repository:", SwingConstants.RIGHT);
+    myRepoLabel = new JBLabel("Repository:", SwingConstants.RIGHT);
     myRepoName = new JTextField();
     installListener(myRepoName);
 
-    return FormBuilder.createFormBuilder().addLabeledComponent(myRepositoryAuthorLabel, myRepoAuthor)
-      .addLabeledComponent(myRepositoryLabel, myRepoName).getPanel();
+    myToken = new JTextField();
+    installListener(myToken);
+    myTokenButton = new JButton("API token");
+    myTokenButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        generateToken();
+        doApply();
+      }
+    });
+
+    myPrivateRepo = new JCheckBox("Private repository");
+    installListener(myPrivateRepo);
+
+    return FormBuilder.createFormBuilder().setAlignLabelOnRight(true).addLabeledComponent(myTokenButton, myToken)
+      .addLabeledComponent(myRepoAuthorLabel, myRepoAuthor).addLabeledComponent(myRepoLabel, myRepoName)
+      .addComponentToRightColumn(myPrivateRepo).getPanel();
   }
 
   @Override
   public void apply() {
     myRepository.setRepoName(myRepoName.getText().trim());
     myRepository.setRepoAuthor(myRepoAuthor.getText().trim());
+    myRepository.setToken(myToken.getText().trim());
     myUseHttpAuthenticationCheckBox.setSelected(!StringUtil.isEmpty(myUserNameText.getText()));
     super.apply();
   }
 
   @Override
+  protected void afterTestConnection(final boolean b) {
+    if (b) {
+      final Ref<Collection<String>> scopesRef = new Ref<Collection<String>>();
+      final Ref<IOException> exceptionRef = new Ref<IOException>();
+      ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            scopesRef
+              .set(GithubApiUtil.getTokenScopes(GithubAuthData.createTokenAuth(myURLText.getText().trim(), myToken.getText().trim())));
+          }
+          catch (IOException e) {
+            exceptionRef.set(e);
+          }
+        }
+      });
+      if (!exceptionRef.isNull()) {
+        GithubNotifications.showErrorDialog(myProject, "Error", "Can't check token scopes");
+        return;
+      }
+      Collection<String> scopes = scopesRef.get();
+      if (scopes == null) {
+        GithubNotifications.showErrorDialog(myProject, "Error", "Can't check token scopes");
+        return;
+      }
+      if (myPrivateRepo.isSelected()) {
+        scopes.remove("repo");
+      }
+      if (scopes.isEmpty()) {
+        return;
+      }
+      GithubNotifications
+        .showWarningDialog(myProject, "Unneeded token scopes detected", "Unneeded scopes: " + StringUtil.join(scopes, ", "));
+    }
+  }
+
+  private void generateToken() {
+    final Ref<String> tokenRef = new Ref<String>();
+    final Ref<IOException> exceptionRef = new Ref<IOException>();
+    final Collection<String> scopes = myPrivateRepo.isSelected() ? Collections.<String>singleton("repo") : Collections.<String>emptyList();
+    ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          tokenRef.set(GithubUtil.runWithValidAuth(myProject, indicator, new ThrowableConvertor<GithubAuthData, String, IOException>() {
+            @Nullable
+            @Override
+            public String convert(GithubAuthData auth) throws IOException {
+              return GithubUtil.getScopedToken(auth, scopes, "Intellij tasks plugin");
+
+            }
+          }));
+        }
+        catch (IOException e) {
+          exceptionRef.set(e);
+        }
+      }
+    });
+    if (!exceptionRef.isNull()) {
+      if (exceptionRef.get() instanceof AuthenticationException) {
+        GithubNotifications.showWarningDialog(myProject, "Can't get access token", "You need to provide basic authentication");
+        return;
+      }
+      GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get().getMessage());
+      return;
+    }
+    if (!tokenRef.isNull()) {
+      myToken.setText(tokenRef.get());
+    }
+  }
+
+  @Override
   public void setAnchor(@Nullable final JComponent anchor) {
     super.setAnchor(anchor);
-    myRepositoryAuthorLabel.setAnchor(anchor);
-    myRepositoryLabel.setAnchor(anchor);
+    myRepoAuthorLabel.setAnchor(anchor);
+    myRepoLabel.setAnchor(anchor);
   }
 }

@@ -16,6 +16,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+// TODO: remove ?
+
 /**
  * @author oleg
  * @date 10/26/10
@@ -28,10 +30,10 @@ public class GithubCheckoutListener implements CheckoutListener {
 
   @Override
   public void processOpenedProject(final Project lastOpenedProject) {
-    final GithubUserAndRepository info = getGithubProjectInfo(lastOpenedProject);
-    if (info != null) {
-      processProject(lastOpenedProject, info.getUserName(), info.getRepositoryName());
-    }
+    //final GithubUserAndRepository info = getGithubProjectInfo(lastOpenedProject);
+    //if (info != null) {
+    //  processProject(lastOpenedProject, info.getUserName(), info.getRepositoryName());
+    //}
   }
 
   @Nullable
@@ -79,9 +81,8 @@ public class GithubCheckoutListener implements CheckoutListener {
       }
     }
     // Create new one if not found exists
-    GithubSettings settings = GithubSettings.getInstance();
     final GitHubRepository repository = new GitHubRepository(new GitHubRepositoryType());
-    repository.setAuthData(settings.getAuthData());
+    repository.setToken("");
     repository.setRepoAuthor(author);
     repository.setRepoName(name);
     final ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>(Arrays.asList(allRepositories));
