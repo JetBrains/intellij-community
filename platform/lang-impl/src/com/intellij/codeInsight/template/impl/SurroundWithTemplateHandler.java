@@ -104,10 +104,10 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     return template.isApplicable(file, editor.getSelectionModel().getSelectionStart(), true);
   }
 
-  public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {
+  public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selectionOnly) {
 
     int startOffset = editor.getCaretModel().getOffset();
-    if (selection && editor.getSelectionModel().hasSelection()) {
+    if (editor.getSelectionModel().hasSelection()) {
       startOffset = editor.getSelectionModel().getSelectionStart();
     }
 
@@ -116,7 +116,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
       if (!template.isDeactivated() &&
-          template.isSelectionTemplate() == selection &&
+          (!selectionOnly || template.isSelectionTemplate()) &&
           TemplateManagerImpl.isApplicable(file, startOffset, template)) {
         list.add(template);
       }

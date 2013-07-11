@@ -734,9 +734,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       if (shortcutChar != null && getShortcutChar(template) != shortcutChar) {
         continue;
       }
-      if (template.isSelectionTemplate()) {
-        continue;
-      }
       if (hasArgument && !template.hasArgument()) {
         continue;
       }

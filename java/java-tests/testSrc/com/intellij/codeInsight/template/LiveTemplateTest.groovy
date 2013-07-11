@@ -616,4 +616,10 @@ class Foo {
     assert myFixture.lookupElementStrings == ['value', 'value1']
   }
 
+  public void "test invoke surround template by tab"() {
+    myFixture.configureByText "a.txt", "B<caret>"
+    myFixture.type('\t')
+    myFixture.checkResult("{<caret>}")
+  }
+
 }
