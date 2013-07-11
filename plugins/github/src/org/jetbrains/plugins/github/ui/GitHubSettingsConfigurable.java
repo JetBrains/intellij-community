@@ -4,8 +4,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,25 +41,13 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable, VcsCo
   }
 
   public boolean isModified() {
-    return mySettingsPane != null && (!Comparing.equal(mySettings.getHost(), mySettingsPane.getHost()) ||
-                                      !Comparing.equal(mySettings.getLogin(), mySettingsPane.getLogin()) ||
-                                      isPasswordModified());
-  }
-
-  private boolean isPasswordModified() {
-    return mySettingsPane.isPasswordModified();
+    return mySettingsPane != null && mySettingsPane.isModified();
   }
 
   public void apply() throws ConfigurationException {
     if (mySettingsPane != null) {
-      if (isPasswordModified()) {
         mySettings.setAuthData(mySettingsPane.getAuthData(), true);
-        mySettingsPane.resetPasswordModification();
-      }
-      else {
-        mySettings.setHost(mySettingsPane.getHost());
-        mySettings.setLogin(mySettingsPane.getLogin());
-      }
+        mySettingsPane.resetCredentialsModification();
     }
   }
 
