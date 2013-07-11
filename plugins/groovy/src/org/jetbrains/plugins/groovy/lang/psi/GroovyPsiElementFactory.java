@@ -228,7 +228,8 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrMethod createConstructorFromText(String constructorName, CharSequence constructorText, @Nullable PsiElement context);
 
-  public abstract GrDocComment createDocCommentFromText(String text) ;
+  @NotNull
+  public abstract GrDocComment createDocCommentFromText(@NotNull String text) ;
 
   public abstract GrDocTag createDocTagFromText(String text) ;
 

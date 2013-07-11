@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -833,7 +834,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createMethodFromText(text.toString(), context);
   }
 
-  public GrDocComment createDocCommentFromText(String text) {
+  @NotNull
+  public GrDocComment createDocCommentFromText(@NotNull String text) {
     return (GrDocComment)createGroovyFileChecked(text).getFirstChild();
   }
 
@@ -962,14 +964,30 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException {
     StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
+      builder.append("def <T>");
       if (returnType != null) {
         builder.append(returnType.getCanonicalText());
       }
-      else {
-        builder.append("def");
+      builder.append(' ');
+      if (GroovyNamesUtil.isIdentifier(name)) {
+        builder.append(name);
       }
-      builder.append(' ').append(name).append("(){}");
-      return createMethodFromText(builder);
+      else {
+        builder.append('"');
+        builder.append(GrStringUtil.escapeSymbolsForGString(name, true, false));
+        builder.append('"');
+      }
+      builder.append("(){}");
+      GrMethod method = createMethodFromText(builder);
+      if (returnType != null) {
+        method.getModifierList().setModifierProperty(GrModifier.DEF, false);
+      }
+      PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+      assert typeParameterList != null;
+      typeParameterList.getFirstChild().delete();
+      typeParameterList.getFirstChild().delete();
+      typeParameterList.getFirstChild().delete();
+      return method;
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
