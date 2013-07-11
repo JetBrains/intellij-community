@@ -585,7 +585,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   public LocalQuickFix[] getQuickFixes() {
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     for (final FileReferenceHelper helper : getHelpers()) {
-      result.addAll(helper.registerFixes(null, this));
+      result.addAll(helper.registerFixes(this));
     }
     return result.toArray(new LocalQuickFix[result.size()]);
   }

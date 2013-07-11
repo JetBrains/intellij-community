@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -43,7 +42,7 @@ public abstract class FileReferenceHelper {
   }
 
   @NotNull
-  public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
+  public List<? extends LocalQuickFix> registerFixes(FileReference reference) {
     return Collections.emptyList();
   }
 

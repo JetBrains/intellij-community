@@ -41,8 +41,8 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
 
   @NotNull
   @Override
-  public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
-    return FileReferenceQuickFixProvider.registerQuickFix(info, reference);
+  public List<? extends LocalQuickFix> registerFixes(FileReference reference) {
+    return FileReferenceQuickFixProvider.registerQuickFix(reference);
   }
 
   @Override
