@@ -47,15 +47,16 @@ import java.util.regex.Pattern;
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @NonNls private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all-(.*)\\.jar");
-
   private static GroovyConfigUtils myGroovyConfigUtils;
+
   @NonNls public static final String GROOVY_JAR_PATTERN_NOVERSION = "groovy\\.jar";
   @NonNls public static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
   public static final String NO_VERSION = "<no version>";
   public static final String GROOVY1_7 = "1.7";
   public static final String GROOVY1_8 = "1.8";
   public static final String GROOVY2_0 = "2.0";
-  public static final String GROOVY2_1_0 = "2.1.0";
+  public static final String GROOVY2_1 = "2.1";
+  public static final String GROOVY2_2 = "2.2";
 
   private GroovyConfigUtils() {
   }
