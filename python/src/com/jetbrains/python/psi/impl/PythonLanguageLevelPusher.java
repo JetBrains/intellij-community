@@ -42,7 +42,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new PythonLanguageLevelPusher());
   }
 
-  public void initExtra(Project project, MessageBus bus, Engine languageLevelUpdater) {
+  public void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     Set<Sdk> usedSdks = new HashSet<Sdk>();
     for (Module module : modules) {
@@ -69,10 +69,11 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return LanguageLevel.getDefault();
   }
 
-  public LanguageLevel getImmediateValue(Project project, VirtualFile file) {
+  public LanguageLevel getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
+    if (file == null) return null;
 
     final Module module = ModuleUtil.findModuleForFile(file, project);
     if (module != null) {
@@ -98,7 +99,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return null;
   }
 
-  public LanguageLevel getImmediateValue(Module module) {
+  public LanguageLevel getImmediateValue(@NotNull Module module) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
@@ -107,13 +108,13 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return PythonSdkType.getLanguageLevelForSdk(sdk);
   }
 
-  public boolean acceptsFile(VirtualFile file) {
+  public boolean acceptsFile(@NotNull VirtualFile file) {
     return false;
   }
 
   private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 2, true);
 
-  public void persistAttribute(VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
+  public void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
     if (iStream != null) {
       try {
@@ -136,7 +137,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     }
   }
 
-  public void afterRootsChanged(Project project) {
+  public void afterRootsChanged(@NotNull Project project) {
     Set<Sdk> updatedSdks = new HashSet<Sdk>();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     boolean needReparseOpenFiles = false;
