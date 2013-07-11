@@ -41,6 +41,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.List;
 
 public class JBTerminalPanel extends TerminalPanel {
   private final EditorColorsScheme myColorScheme;
@@ -59,15 +60,16 @@ public class JBTerminalPanel extends TerminalPanel {
   }
 
   protected Font createFont() {
-    Font normalFont = Font.decode(myColorScheme.getConsoleFontName());
+
+    Font normalFont = Font.decode(getFontName());
     //Font normalFont = null;
     if (normalFont == null) {
-      return super.createFont();
+      normalFont = super.createFont();
     }
-    else {
-      normalFont = normalFont.deriveFont(myColorScheme.getConsoleFontSize());
-      return normalFont;
-    }
+
+    normalFont = normalFont.deriveFont((float)myColorScheme.getConsoleFontSize());
+
+    return normalFont;
   }
 
   protected void setupAntialiasing(Graphics graphics, boolean antialiasing) {
@@ -108,6 +110,24 @@ public class JBTerminalPanel extends TerminalPanel {
   @Override
   protected BufferedImage createBufferedImage(int width, int height) {
     return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+  }
+
+  public String getFontName() {
+    List<String> fonts = myColorScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
+
+    for (String font : fonts) {
+      if (isApplicable(font)) {
+        return font;
+      }
+    }
+    return "Monospaced-14";
+  }
+
+  private static boolean isApplicable(String font) {
+    if ("Source Code Pro".equals(font)) {
+      return false;
+    }
+    return true;
   }
 }
 
