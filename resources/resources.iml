@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="images" exported="" />
     <orderEntry type="module" module-name="community-resources" exported="" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="InspectionGadgetsAnalysis" />
+    <orderEntry type="module" module-name="InspectionGadgetsPlugin" />
     <orderEntry type="module" module-name="IntentionPowerPackPlugin" />
     <orderEntry type="module" module-name="remote-servers-impl" exported="" scope="RUNTIME" />
   </component>
