@@ -17,9 +17,6 @@
 package org.intellij.plugins.relaxNG.xml.dom.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
@@ -53,7 +50,7 @@ import java.util.Set;
  * Date: 18.08.2007
  */
 public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue>
-        implements QuickFixProvider<DefinitionReference>, LocalQuickFixProvider,
+        implements LocalQuickFixProvider,
         EmptyResolveMessageProvider, Function<Define, ResolveResult> {
 
   private final boolean myIsParentRef;
@@ -141,16 +138,6 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
       return new LocalQuickFix[]{ new CreatePatternFix(this) };
     }
     return LocalQuickFix.EMPTY_ARRAY;
-  }
-
-  public void registerQuickfix(HighlightInfo info, final DefinitionReference reference) {
-    assert reference == this;
-    final XmlTag tag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
-    assert tag != null;
-    final RngGrammar scope = myValue.getParentOfType(RngGrammar.class, true);
-    if (scope != null) {
-      QuickFixAction.registerQuickFixAction(info, new CreatePatternFix(this));
-    }
   }
 
   @NotNull
