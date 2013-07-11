@@ -239,4 +239,9 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertFalse(assertInstanceOf(nestedBlock.getNode(), LazyParseableElement.class).isParsed());
   }
 
+  public void testTypeCanonicalText() {
+    PsiType type = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("some .unknown. Foo<? extends String>", null);
+    assertEquals("some.unknown.Foo<? extends String>", type.getCanonicalText());
+  }
+
 }

@@ -46,7 +46,15 @@ public class SourceUtil {
       @Override
       public void visitLeaf(LeafElement leaf) {
         if (!REF_FILTER.contains(leaf.getElementType())) {
-          buffer.append(leaf.getText());
+          String leafText = leaf.getText();
+          if (buffer.length() > 0 && leafText.length() > 0 && Character.isJavaIdentifierPart(leafText.charAt(0))) {
+            char lastInBuffer = buffer.charAt(buffer.length() - 1);
+            if (lastInBuffer == '?' || Character.isJavaIdentifierPart(lastInBuffer)) {
+              buffer.append(" ");
+            }
+          }
+
+          buffer.append(leafText);
         }
       }
 
