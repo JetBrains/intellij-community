@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.VcsLogRefresher;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -38,6 +39,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final GitRepositoryReader myReader;
+  @NotNull private final LogRefresher myLogRefresher;
   @NotNull private final VirtualFile myGitDir;
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
 
@@ -63,6 +65,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
     else {
       myUntrackedFilesHolder = null;
     }
+    myLogRefresher = new LogRefresher(project, this);
     update();
   }
 
@@ -225,6 +228,26 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
       myCurrentRevision = currentRevision;
       myCurrentBranch = currentBranch;
       myBranches = branches;
+    }
+  }
+
+  /**
+   * Tells the log to refresh when Git repository change is detected.
+   */
+  private static class LogRefresher implements GitRepositoryChangeListener {
+
+    @NotNull private final Project myProject;
+    @NotNull private final GitRepository myRepository;
+
+    LogRefresher(@NotNull Project project, @NotNull GitRepository repository) {
+      myProject = project;
+      myRepository = repository;
+      myProject.getMessageBus().connect(myProject).subscribe(GIT_REPO_CHANGE, this);
+    }
+
+    @Override
+    public void repositoryChanged(@NotNull GitRepository repository) {
+      myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refreshAll(myRepository.getRoot());
     }
   }
 

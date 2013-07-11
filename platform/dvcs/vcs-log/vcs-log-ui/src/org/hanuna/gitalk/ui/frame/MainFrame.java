@@ -68,9 +68,7 @@ public class MainFrame {
         myLogDataHolder.refresh(new Runnable() {
           @Override
           public void run() {
-            myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refreshAll();
-            myUI.reloadModel();
-            myUI.updateUI();
+            myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refreshCompletely();
           }
         });
       }

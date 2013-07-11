@@ -20,10 +20,10 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
@@ -39,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class VcsLogDataHolder implements VcsLogRefresher {
 
+  public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
+
   private static final Logger LOG = Logger.getInstance("Git.Log");
 
   @NotNull private final Project myProject;
@@ -46,6 +48,7 @@ public class VcsLogDataHolder implements VcsLogRefresher {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final VcsCommitCache myCommitCache;
+  @NotNull private final Runnable myRefreshCompletedEvent;
 
   @NotNull private DataPack myDataPack;
 
@@ -71,6 +74,13 @@ public class VcsLogDataHolder implements VcsLogRefresher {
     myDataLoaderQueue = taskQueue;
     myCommitCache = commitCache;
     myDataPack = dataPack;
+
+    myRefreshCompletedEvent = new Runnable() {
+      @Override
+      public void run() {
+        myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
+      }
+    };
   }
 
   public void refresh(@NotNull final Runnable onSuccess) {
@@ -84,27 +94,18 @@ public class VcsLogDataHolder implements VcsLogRefresher {
   }
 
   @Override
-  public void refreshAll() {
-    refresh(EmptyRunnable.getInstance());
+  public void refreshCompletely() {
+    refresh(myRefreshCompletedEvent);
   }
 
   @Override
-  public void refreshRefs() {
-    // TODO
-    refreshAll();
-    //myDataLoaderQueue.run(new Task.Backgroundable() {
-    //  @Override
-    //  public void run(@NotNull ProgressIndicator indicator) {
-    //    try {
-    //      Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
-    //      myDataPack = DataPack.build(myDataPack.get)
-    //    }
-    //    catch (VcsException e) {
-    //      // TODO
-    //      throw new RuntimeException(e);
-    //    }
-    //  }
-    //});
+  public void refreshAll(@NotNull VirtualFile root) {
+    refresh(myRefreshCompletedEvent);
+  }
+
+  @Override
+  public void refreshRefs(@NotNull VirtualFile root) {
+    refreshAll(root); // TODO
   }
 
   private static void doRefresh(@NotNull BackgroundTaskQueue queue, @NotNull Project project, @NotNull final VcsLogProvider logProvider,

@@ -34,6 +34,13 @@ public class VcsLogUI {
   public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project) {
     myLogDataHolder = logDataHolder;
     myMainFrame = new MainFrame(myLogDataHolder, this, project);
+    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
+      @Override
+      public void run() {
+        reloadModel();
+        updateUI();
+      }
+    });
     reloadModel();
     updateUI();
   }
