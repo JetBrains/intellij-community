@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.validation.CompatibilityVisitor;
@@ -253,6 +254,28 @@ public class PyCompatibilityInspection extends PyInspection {
         for (final PyElement problemElement : problemElements)
           myHolder.registerProblem(problemElement, errorMessage, isPy3? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
                                                           ProblemHighlightType.GENERIC_ERROR);
+      }
+    }
+
+    @Override
+    public void visitPyReferenceExpression(PyReferenceExpression node) {
+      super.visitPyElement(node);
+      if (shouldBeCompatibleWithPy3()) {
+        if (PyNames.BASESTRING.equals(node.getText())) {
+          PsiElement res = node.getReference().resolve();
+          if (res != null) {
+            ProjectFileIndex ind = ProjectRootManager.getInstance(node.getProject()).getFileIndex();
+            PsiFile file = res.getContainingFile();
+            if (file != null ) {
+              final VirtualFile virtualFile = file.getVirtualFile();
+                if (virtualFile != null && ind.isInLibraryClasses(virtualFile)) {
+                registerProblem(node, "basestring type is not available in py3");
+              }
+            } else {
+              registerProblem(node, "basestring type is not available in py3");
+            }
+          }
+        }
       }
     }
   }
