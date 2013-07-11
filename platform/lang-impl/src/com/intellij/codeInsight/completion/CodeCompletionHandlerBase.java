@@ -51,6 +51,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -199,8 +200,8 @@ public class CodeCompletionHandlerBase {
       CompletionContributor dummyIdentifierChanger;
 
       @Override
-      public void setFileCopyPatcher(@NotNull FileCopyPatcher fileCopyPatcher) {
-        super.setFileCopyPatcher(fileCopyPatcher);
+      public void setDummyIdentifier(@NotNull String dummyIdentifier) {
+        super.setDummyIdentifier(dummyIdentifier);
 
         if (dummyIdentifierChanger != null) {
           LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
@@ -546,7 +547,12 @@ public class CodeCompletionHandlerBase {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            initContext.getFileCopyPatcher().patchFileCopy(hostCopy[0], copyDocument, hostMap);
+            String dummyIdentifier = initContext.getDummyIdentifier();
+            if (StringUtil.isEmpty(dummyIdentifier)) return;
+
+            int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
+            int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+            copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
           }
         });
       }
