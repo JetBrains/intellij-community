@@ -24,6 +24,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -254,10 +255,10 @@ public class CodeCompletionHandlerBase {
     }
     message += "\n" + DebugUtil.currentStackTrace();
 
-    LOG.error(LogMessageEx.createEvent("Commit unsuccessful", message,
+    throw new LogEventException("Commit unsuccessful", message,
                                        new Attachment(psiFile.getViewProvider().getVirtualFile().getPath() + "_file.txt", fileText),
                                        createAstAttachment(psiFile, psiFile),
-                                       new Attachment("docText.txt", document.getText())));
+                                       new Attachment("docText.txt", document.getText()));
   }
 
   private static void checkEditorValid2(Editor editor) {
@@ -322,11 +323,11 @@ public class CodeCompletionHandlerBase {
                           boolean hasModifiers,
                           int invocationCount,
                           PsiFile hostCopy,
-                          Editor hostEditor, OffsetMap hostMap, OffsetTranslator translator) {
+                          OffsetMap hostMap, OffsetTranslator translator) {
     final Editor editor = initContext.getEditor();
     checkEditorValid2(editor);
 
-    CompletionContext context = createCompletionContext(hostCopy, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostEditor, hostMap, initContext.getFile());
+    CompletionContext context = createCompletionContext(hostCopy, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostMap, initContext.getFile());
     CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -570,14 +571,14 @@ public class CodeCompletionHandlerBase {
             Disposer.dispose(translator);
             return;
           }
-          doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostEditor, hostMap, translator);
+          doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostMap, translator);
         }
       });
     }
     else {
       PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
 
-      doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostEditor, hostMap, translator);
+      doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostMap, translator);
     }
   }
 
@@ -596,7 +597,6 @@ public class CodeCompletionHandlerBase {
 
   private static CompletionContext createCompletionContext(PsiFile hostCopy,
                                                            int hostStartOffset,
-                                                           Editor hostEditor,
                                                            OffsetMap hostMap, PsiFile originalFile) {
     assert hostCopy.isValid() : "file became invalid: " + hostCopy.getClass();
     if (hostMap.getOffset(CompletionInitializationContext.START_OFFSET) >= hostCopy.getTextLength()) {
@@ -634,10 +634,6 @@ public class CodeCompletionHandlerBase {
       map.addOffset(key, injectedDocument.hostToInjected(hostMap.getOffset(key)));
     }
     return map;
-  }
-
-  private boolean isAutocompleteCommonPrefixOnInvocation() {
-    return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
   protected void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
