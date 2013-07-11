@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
@@ -384,15 +383,9 @@ public class GenerateMembersUtil {
                                            @NotNull PsiParameterList targetParameterList,
                                            @NotNull PsiSubstitutor substitutor, PsiElement target) {
     PsiParameter[] parameters = sourceParameterList.getParameters();
-    UniqueNameGenerator generator = new UniqueNameGenerator(Arrays.asList(parameters), new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter parameter) {
-        return parameter.getName();
-      }
-    });
+    UniqueNameGenerator generator = new UniqueNameGenerator();
 
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
+    for (PsiParameter parameter : parameters) {
       final PsiType parameterType = parameter.getType();
       final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope());
       @NonNls String paramName = parameter.getName();
@@ -409,9 +402,13 @@ public class GenerateMembersUtil {
         if (names.length > 0) {
           paramName = generator.generateUniqueName(names[0]);
         }
+        else {
+          paramName = generator.generateUniqueName("p");
+        }
       }
-
-      if (paramName == null) paramName = "p" + i;
+      else if (!generator.value(paramName)) {
+        paramName = generator.generateUniqueName(paramName);
+      }
       generator.addExistingName(paramName);
       final PsiParameter newParameter = factory.createParameter(paramName, substituted, target);
       copyOrReplaceModifierList(parameter, newParameter);

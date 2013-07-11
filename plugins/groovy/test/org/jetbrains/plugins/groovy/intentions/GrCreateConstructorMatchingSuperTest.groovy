@@ -62,8 +62,8 @@ class <caret>Inh extends Base {
 }
 ''', '''\
 class Inh extends Base {
-    def Inh(String s2, String s) {
-        super(s2, s)
+    def Inh(String s, String s2) {
+        super(s, s2)
     }
 }
 ''')
