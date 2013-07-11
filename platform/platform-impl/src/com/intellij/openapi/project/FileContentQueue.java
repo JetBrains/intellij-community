@@ -206,12 +206,11 @@ public class FileContentQueue {
         result = myLoadedContentsQueue.poll();
         if (result == null) {
           VirtualFile virtualFileToLoad = myFilesToLoadQueue.poll();
-          while (virtualFileToLoad != null) {
+          if (virtualFileToLoad != null) {
+            FileContent content = new FileContent(virtualFileToLoad);
             if (isValidFile(virtualFileToLoad)) {
-              FileContent content = new FileContent(virtualFileToLoad);
               try {
                 content.getBytes();
-                return content;
               } catch (Throwable t) {
                 if (t instanceof IOException || t instanceof InvalidVirtualFileAccessException) {
                   LOG.info(t);
@@ -219,8 +218,10 @@ public class FileContentQueue {
                   LOG.error(t);
                 }
               }
+            } else {
+              content.setEmptyContent();
             }
-            virtualFileToLoad = myFilesToLoadQueue.poll();
+            return content;
           }
 
           // take last content which is loaded by another thread
