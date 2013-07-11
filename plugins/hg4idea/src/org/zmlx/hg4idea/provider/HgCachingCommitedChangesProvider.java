@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
+import org.zmlx.hg4idea.ui.HgVersionFilterComponent;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -46,6 +47,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class HgCachingCommitedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
@@ -156,20 +158,13 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     return false;
   }
 
-  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-                                   RepositoryLocation repositoryLocation,
-                                   int i,
-                                   AsynchConsumer<CommittedChangeList> committedChangeListAsynchConsumer) throws VcsException {
-    throw new UnsupportedOperationException();  //TODO implement method
-  }
-
   @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }
 
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean b) {
-    return null;
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
+    return new HgVersionFilterComponent(showDateFilter);
   }
 
   @Nullable
@@ -190,21 +185,64 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     return null;
   }
 
+  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
+                                   RepositoryLocation repositoryLocation,
+                                   int maxCount,
+                                   final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+
+    try {
+      getCommittedChangesImpl(changeBrowserSettings, repositoryLocation, maxCount, new AsynchConsumer<HgCommittedChangeList>() {
+        public void finished() {
+          consumer.finished();
+        }
+
+        public void consume(HgCommittedChangeList hgCommittedChangeList) {
+          consumer.consume(hgCommittedChangeList);
+        }
+      } );
+    }
+    finally {
+      consumer.finished();
+    }
+  }
+
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                                        RepositoryLocation repositoryLocation,
                                                        int maxCount) throws VcsException {
+
+    final List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
+
+    getCommittedChangesImpl(changeBrowserSettings, repositoryLocation, maxCount, new AsynchConsumer<HgCommittedChangeList>() {
+      public void finished() {
+      }
+
+      public void consume(HgCommittedChangeList hgCommittedChangeList) {
+        result.add( 0, hgCommittedChangeList );
+      }
+    });
+
+    return result;
+  }
+
+
+  private void getCommittedChangesImpl(ChangeBrowserSettings settings, RepositoryLocation repositoryLocation, int maxCount,
+                                        final AsynchConsumer<HgCommittedChangeList> committedChangeListAsynchConsumer)
+    throws VcsException {
+
     VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
 
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
 
-    List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
     List<String> args = null;
-    if (changeBrowserSettings != null) {
-      args = new ArrayList<String>();
-      if (changeBrowserSettings.USE_CHANGE_AFTER_FILTER) {
-        args.add("-r tip:" + changeBrowserSettings.getChangeAfterFilter());
+    if (settings != null) {
+      HgLogArgsBuilder argsBuilder = new HgLogArgsBuilder(settings, maxCount);
+      args = argsBuilder.getLogArgs();
+
+      if (null == args) {
+        // Don't try to get ALL revisions...performance is just too bad. Instead, enforce a sane number of results.
+        maxCount = maxCount == 0 ? 500 : maxCount;
       }
     }
     final List<HgFileRevision> localRevisions;
@@ -213,7 +251,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
-      return result;
+      return;
     }
     Collections.reverse(localRevisions);
 
@@ -237,11 +275,10 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
         changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
       }
 
-      result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getBranchName(), revision.getCommitMessage(),
-                                           revision.getAuthor(), revision.getRevisionDate(), changes));
+      committedChangeListAsynchConsumer.consume(
+        new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getBranchName(), revision.getCommitMessage(), revision.getAuthor(),
+                                  revision.getRevisionDate(), changes));
     }
-    Collections.reverse(result);
-    return result;
   }
 
   private Change createChange(VirtualFile root,
@@ -368,4 +405,74 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       return branch.isEmpty() ? "default" : branch;
     }
   };
+
+
+
+  private static class HgLogArgsBuilder {
+
+    private final ChangeBrowserSettings myBrowserSettings;
+
+    HgLogArgsBuilder(ChangeBrowserSettings browserSettings, int maxCount) {
+      myBrowserSettings = browserSettings;
+    }
+
+    List<String> getLogArgs() {
+
+      StringBuilder args = new StringBuilder();
+
+      Date afterDate = myBrowserSettings.getDateAfter();
+      Date beforeDate = myBrowserSettings.getDateBefore();
+      Long afterFilter = myBrowserSettings.getChangeAfterFilter();
+      Long beforeFilter = myBrowserSettings.getChangeBeforeFilter();
+      String author = myBrowserSettings.getUserFilter();
+
+      final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+      if ((null != afterFilter) && (null != beforeFilter)) {
+        args.append(afterFilter).append(":").append(beforeFilter);
+      }
+      else if (null != afterFilter) {
+        args.append("tip:").append(afterFilter);
+      }
+      else if (null != beforeFilter) {
+        args.append("'reverse(:").append(beforeFilter).append(")'");
+      }
+
+      if (null != afterDate) {
+        if (args.length()>0) {
+          args.append(" and ");
+        }
+        args.append("date('>").append(dateFormatter.format(afterDate)).append("')");
+      }
+
+      if (null != beforeDate ) {
+        if (args.length()>0) {
+          args.append(" and ");
+        }
+
+        args.append("date('<").append(dateFormatter.format(beforeDate)).append("')");
+      }
+
+      if (null != author) {
+        if (args.length()>0) {
+          args.append(" and ");
+          args.append("user('").append(author).append("')");
+        }
+        else {
+          // No other parameters? Just get the most recent changesets.
+          args.append("reverse(user('").append(author).append("'))");
+        }
+      }
+
+
+      if (args.length()>0) {
+        List<String> logArgs = new ArrayList<String>();
+        logArgs.add("-r");
+        logArgs.add(args.toString());
+        return logArgs;
+      }
+
+      return null;
+    }
+  }
 }
