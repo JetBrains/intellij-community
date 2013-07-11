@@ -261,7 +261,7 @@ public class GenerateMembersUtil {
 
     try {
       final PsiMethod resultMethod = createMethod(factory, sourceMethod, target);
-      copyDocComment(sourceMethod, resultMethod);
+      copyDocComment(sourceMethod, resultMethod, factory);
       copyModifiers(sourceMethod.getModifierList(), resultMethod.getModifierList());
       final PsiSubstitutor collisionResolvedSubstitutor =
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
@@ -306,13 +306,22 @@ public class GenerateMembersUtil {
     for (PsiTypeParameter typeParam : sourceTypeParameterList.getTypeParameters()) {
       final PsiTypeParameter substitutedTypeParam = substituteTypeParameter(factory, typeParam, substitutor, sourceMethod);
 
-      final PsiTypeParameter resolvedTypeParam = resolveTypeParametersCollision(factory, sourceTypeParameterList, target, substitutedTypeParam, substitutor);
+      final PsiTypeParameter resolvedTypeParam = resolveTypeParametersCollision(factory, sourceTypeParameterList, target,
+                                                                                substitutedTypeParam, substitutor);
       targetTypeParameterList.add(resolvedTypeParam);
       if (substitutedTypeParam != resolvedTypeParam) {
         substitutionMap.put(typeParam, factory.createType(resolvedTypeParam));
       }
     }
     return substitutionMap.isEmpty() ? substitutor : factory.createSubstitutor(substitutionMap);
+  }
+
+  @NotNull
+  private static PsiClassType[] filterTypeParameterSuperTypes(@NotNull PsiClassType[] types) {
+    if (types.length == 1 && types[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      return PsiClassType.EMPTY_ARRAY;
+    }
+    return types;
   }
 
   @NotNull
@@ -324,12 +333,12 @@ public class GenerateMembersUtil {
     for (PsiType type : substitutor.getSubstitutionMap().values()) {
       if (type != null && Comparing.equal(type.getCanonicalText(), typeParam.getName())) {
         final String newName = suggestUniqueTypeParameterName(typeParam.getName(), sourceTypeParameterList, PsiTreeUtil.getParentOfType(target, PsiClass.class, false));
-        final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, typeParam.getSuperTypes());
+        final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, filterTypeParameterSuperTypes(typeParam.getSuperTypes()));
         substitutor.put(typeParam, factory.createType(newTypeParameter));
         return newTypeParameter;
       }
     }
-    return typeParam;
+    return factory.createTypeParameter(typeParam.getName(), filterTypeParameterSuperTypes(typeParam.getSuperTypes()));
   }
 
   @NotNull
@@ -428,12 +437,12 @@ public class GenerateMembersUtil {
     }
   }
 
-  private static void copyDocComment(PsiMethod source, PsiMethod target) {
+  private static void copyDocComment(PsiMethod source, PsiMethod target, JVMElementFactory factory) {
     final PsiElement navigationElement = source.getNavigationElement();
     if (navigationElement instanceof PsiDocCommentOwner) {
       final PsiDocComment docComment = ((PsiDocCommentOwner)navigationElement).getDocComment();
       if (docComment != null) {
-        target.addAfter(docComment, null);
+        target.addAfter(factory.createDocCommentFromText(docComment.getText()), null);
       }
     }
   }

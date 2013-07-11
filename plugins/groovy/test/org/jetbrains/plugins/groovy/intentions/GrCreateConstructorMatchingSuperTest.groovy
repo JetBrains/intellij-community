@@ -40,7 +40,7 @@ class <caret>Inheritor extends Base {
 ''', '''\
 class Inheritor extends Base {
     /**
-     *  my doc
+     * my doc
      */
     Inheritor(int x) {
         super(x)
