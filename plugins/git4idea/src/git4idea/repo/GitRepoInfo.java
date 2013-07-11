@@ -16,7 +16,6 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.util.Comparing;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
@@ -94,10 +93,10 @@ public class GitRepoInfo {
     if (myState != info.myState) return false;
     if (myCurrentRevision != null ? !myCurrentRevision.equals(info.myCurrentRevision) : info.myCurrentRevision != null) return false;
     if (myCurrentBranch != null ? !myCurrentBranch.equals(info.myCurrentBranch) : info.myCurrentBranch != null) return false;
-    if (!Comparing.haveEqualElements(myRemotes, info.myRemotes)) return false;
-    if (!Comparing.haveEqualElements(myBranchTrackInfos, info.myBranchTrackInfos)) return false;
-    if (!Comparing.haveEqualElements(myLocalBranches, info.myLocalBranches)) return false;
-    if (!Comparing.haveEqualElements(myRemoteBranches, info.myRemoteBranches)) return false;
+    if (!myRemotes.equals(info.myRemotes)) return false;
+    if (!myBranchTrackInfos.equals(info.myBranchTrackInfos)) return false;
+    if (!myLocalBranches.equals(info.myLocalBranches)) return false;
+    if (!myRemoteBranches.equals(info.myRemoteBranches)) return false;
 
     return true;
   }
@@ -107,19 +106,11 @@ public class GitRepoInfo {
     int result = myCurrentBranch != null ? myCurrentBranch.hashCode() : 0;
     result = 31 * result + (myCurrentRevision != null ? myCurrentRevision.hashCode() : 0);
     result = 31 * result + myState.hashCode();
-    result = 31 * result + hashCodeForCollectionComparison(myRemotes);
-    result = 31 * result + hashCodeForCollectionComparison(myLocalBranches);
-    result = 31 * result + hashCodeForCollectionComparison(myRemoteBranches);
-    result = 31 * result + hashCodeForCollectionComparison(myBranchTrackInfos);
+    result = 31 * result + myRemotes.hashCode();
+    result = 31 * result + myLocalBranches.hashCode();
+    result = 31 * result + myRemoteBranches.hashCode();
+    result = 31 * result + myBranchTrackInfos.hashCode();
     return result;
-  }
-
-  private static <T> int hashCodeForCollectionComparison(@NotNull Collection<T> collection) {
-    int i = 0;
-    for (T element : collection) {
-      i += element.hashCode();
-    }
-    return i;
   }
 
   @Override
