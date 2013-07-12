@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
@@ -157,7 +158,7 @@ public class MavenProjectsManagerWatcher {
                   protected void run(Result result) throws Throwable {
                     for (Document each : copy) {
                       PsiDocumentManager.getInstance(myProject).commitDocument(each);
-                      FileDocumentManager.getInstance().saveDocument(each);
+                      ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
                     }
                   }
                 }.execute();
