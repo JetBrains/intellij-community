@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="external-system-api" />
     <orderEntry type="library" name="asm4" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="Xerces" level="project" />
   </component>
   <component name="copyright">
     <Base>

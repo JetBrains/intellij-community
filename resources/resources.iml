@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="InspectionGadgetsPlugin" />
     <orderEntry type="module" module-name="IntentionPowerPackPlugin" />
     <orderEntry type="module" module-name="remote-servers-impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="generate-tostring" />
   </component>
   <component name="copyright">
     <Base>
