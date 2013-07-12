@@ -315,7 +315,7 @@ public class PyStringFormatInspection extends PyInspection {
       private void checkExpressionType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName, PsiElement problemTarget) {
         final PyType actual = myTypeEvalContext.getType(expression);
         final PyType expected = PyTypeParser.getTypeByName(problemTarget, expectedTypeName);
-        if (actual != null && !(actual instanceof PyTypeReference)) {
+        if (actual != null) {
           checkTypeCompatible(problemTarget, actual, expected);
         }
       }

@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +129,7 @@ public class PyOperatorReference extends PyReferenceImpl {
       final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
       final PyType type = typeEvalContext.getType(object);
       typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
-      if (type != null && !(type instanceof PyTypeReference)) {
+      if (type != null) {
         List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
         if (res != null && res.size() > 0) {
           results.addAll(res);

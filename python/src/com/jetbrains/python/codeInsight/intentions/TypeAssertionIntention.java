@@ -15,7 +15,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +63,7 @@ public class TypeAssertionIntention implements IntentionAction {
       return false;
     }
     final PyType type = TypeEvalContext.codeAnalysis(file).getType(problemElement);
-    return (type == null || type instanceof PyReturnTypeReference);
+    return type == null;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
