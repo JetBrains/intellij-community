@@ -93,11 +93,11 @@ public class PyTypeChecker {
     }
     if (actual instanceof PyUnionType) {
       for (PyType m : ((PyUnionType)actual).getMembers()) {
-        if (!match(expected, m, context, substitutions, recursive)) {
-          return false;
+        if (match(expected, m, context, substitutions, recursive)) {
+          return true;
         }
       }
-      return true;
+      return false;
     }
     if (expected instanceof PyUnionType) {
       for (PyType t : ((PyUnionType)expected).getMembers()) {

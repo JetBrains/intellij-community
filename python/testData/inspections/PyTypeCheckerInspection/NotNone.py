@@ -14,8 +14,8 @@ def test():
     x1 = f1()
     x2 = f2()
     x3 = 1
-    f(<warning descr="Expected type 'one of (int, str, list)', got 'one of (int, None)' instead">x1</warning>)
-    f(<warning descr="Expected type 'one of (int, str, list)', got 'one of (int, str, None)' instead">x2</warning>)
+    f(x1)  # Weaker union types
+    f(x2)  # Weaker union types
     f(x3)
     if x1:
         f(x1)
