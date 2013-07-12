@@ -218,7 +218,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   private String getTestCompletionFilePath() {
-    return getTestDataPath() + getName() + "/" + TEST_COMPLETION_FILE_NAME;
+    return getName() + "/" + TEST_COMPLETION_FILE_NAME;
   }
 
   private String getBeforeCompletionFilePath() {
