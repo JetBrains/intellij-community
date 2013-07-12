@@ -184,4 +184,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testBoundedGeneric() {
     doTest();
   }
+
+  public void testNotImportedClassInDocString() {
+    doMultiFileTest();
+  }
 }
