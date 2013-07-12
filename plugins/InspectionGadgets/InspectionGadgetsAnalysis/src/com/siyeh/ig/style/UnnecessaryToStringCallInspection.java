@@ -174,6 +174,20 @@ public class UnnecessaryToStringCallInspection extends BaseInspection {
           if (!isCallToMethodIn(methodCallExpression, "java.io.PrintStream", "java.io.PrintWriter")) {
             return true;
           }
+        } else if ("trace".equals(name) || "debug".equals(name) || "info".equals(name) || "warn".equals(name) || "error".equals(name)) {
+          if (!isCallToMethodIn(methodCallExpression, "org.slf4j.Logger")) {
+            return true;
+          }
+          int l = 1;
+          for (int i = 0; i < expressions.length; i++) {
+            final PsiExpression expression1 = expressions[i];
+            if (i == 0 && TypeUtils.expressionHasTypeOrSubtype(expression1, "org.slf4j.Marker")) {
+              l = 2;
+            }
+            if (expression1 == expression && i < l) {
+              return true;
+            }
+          }
         } else {
           return true;
         }
