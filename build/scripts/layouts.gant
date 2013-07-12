@@ -718,8 +718,6 @@ def layout_core(String home, String target) {
       module("extensions")
       module("java-psi-api")
       module("java-psi-impl")
-      module("analysis-api")
-      module("analysis-impl")
     }
 
     jar("annotations.jar") {
