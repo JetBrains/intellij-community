@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,15 @@ public class RetinaImage {
   }
 
 
-  public static BufferedImage create(Image image, final int width, int height, int type) {
-    return SystemInfo.isAppleJvm ? AppleHiDPIScaledImage.create(width, height, type)
-                      : new JBHiDPIScaledImage(image, width, height, type);
+  private static BufferedImage create(Image image, final int width, int height, int type) {
+    if (SystemInfo.isAppleJvm) {
+      return AppleHiDPIScaledImage.create(width, height, type);
+    } else {
+      if (image == null) {
+        return new JBHiDPIScaledImage(width, height, type);
+      } else {
+        return new JBHiDPIScaledImage(image, width, height, type);
+      }
+    }
   }
 }

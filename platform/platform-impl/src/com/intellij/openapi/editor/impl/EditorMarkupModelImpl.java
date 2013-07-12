@@ -477,7 +477,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
 
-      ((Graphics2D)g).drawImage(myCachedTrack, null, 0, 0);
+      UIUtil.drawImage(g, myCachedTrack, null, 0, 0);
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {

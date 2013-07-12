@@ -330,10 +330,10 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (isPaintBorder()) {
       g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
       g.setColor(getBorderColor());
-      int rightX = myImage.getWidth() - 1;
-      final int h = myImage.getHeight();
+      int rightX = size.width - 1;
+      final int h = size.height;
       UIUtil.drawLine(g, 0, 0, rightX, 0);
-      UIUtil.drawLine(g, rightX, 0, rightX, h);
+      UIUtil.drawLine(g, rightX, 0, rightX, h - 1);
       UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
     }
 
@@ -391,7 +391,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     @Override
     public void paint(Graphics g) {
-      g.drawImage(myImage, 0, 0, null);
+      UIUtil.drawImage(g, myImage, 0, 0, null);
     }
   }
 }

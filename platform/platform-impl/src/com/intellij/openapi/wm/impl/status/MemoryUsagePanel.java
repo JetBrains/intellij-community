@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       g2.dispose();
     }
 
-    g.drawImage(myBufferedImage, 0, 0, null);
+    UIUtil.drawImage(g, myBufferedImage, 0, 0, null);
   }
 
   private static void setGradient(Graphics2D g2, boolean invert, int height, Color start, Color end) {
