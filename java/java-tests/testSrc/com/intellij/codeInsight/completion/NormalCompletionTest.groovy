@@ -918,6 +918,7 @@ public class ListUtils {
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testQualifierCastingWithUnknownAssignments() throws Throwable { doTest(); }
   public void testQualifierCastingBeforeLt() throws Throwable { doTest(); }
+  public void testCastQualifierForPrivateFieldReference() throws Throwable { doTest(); }
   public void testNoReturnInTernary() throws Throwable { doTest(); }
 
   public void testOrAssignmentDfa() throws Throwable { doTest(); }
