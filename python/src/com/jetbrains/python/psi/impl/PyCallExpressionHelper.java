@@ -406,12 +406,6 @@ public class PyCallExpressionHelper {
               }
             }
             if (t != null && !(t instanceof PyNoneType)) {
-              if (t instanceof PyTypeReference) {
-                PyType resolved = ((PyTypeReference)t).resolve(callee, context);
-                if (resolved == null && cls != null) {
-                  return PyUnionType.createWeakType(new PyClassTypeImpl(cls, false));
-                }
-              }
               return t;
             }
           }
@@ -424,11 +418,7 @@ public class PyCallExpressionHelper {
           }
           if (target instanceof Callable) {
             final Callable callable = (Callable)target;
-            PyType returnType = callable.getReturnType(context, (PyReferenceExpression)callee);
-            if (returnType != null) {
-              return returnType;
-            }
-            return new PyReturnTypeReference(callable);
+            return callable.getReturnType(context, (PyReferenceExpression)callee);
           }
         }
       }

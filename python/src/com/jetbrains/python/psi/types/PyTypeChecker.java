@@ -62,7 +62,7 @@ public class PyTypeChecker {
           return false;
         }
       }
-      else if (actual != null && !(actual instanceof PyReturnTypeReference)) {
+      else if (actual != null) {
         substitutions.put(generic, actual);
       }
       else if (bound != null) {
@@ -78,15 +78,6 @@ public class PyTypeChecker {
       if (c != null && "object".equals(c.getName())) {
         return true;
       }
-    }
-    if ((expected instanceof PyTypeReference || actual instanceof PyTypeReference) && !recursive) {
-      return true;
-    }
-    if (expected instanceof PyTypeReference) {
-      return match(((PyTypeReference)expected).resolve(null, context), actual, context, substitutions, recursive);
-    }
-    if (actual instanceof PyTypeReference) {
-      return match(expected, ((PyTypeReference)actual).resolve(null, context), context, substitutions, false);
     }
     if (isUnknown(actual)) {
       return true;
@@ -170,7 +161,7 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null || type instanceof PyTypeReference || type instanceof PyGenericType) {
+    if (type == null || type instanceof PyGenericType) {
       return true;
     }
     if (type instanceof PyUnionType) {
@@ -432,7 +423,7 @@ public class PyTypeChecker {
 
   @Nullable
   public static Boolean isCallable(@Nullable PyType type) {
-    if (type == null || type instanceof PyTypeReference) {
+    if (type == null) {
       return null;
     }
     else if (type instanceof PyUnionType) {

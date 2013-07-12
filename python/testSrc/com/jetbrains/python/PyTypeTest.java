@@ -226,19 +226,6 @@ public class PyTypeTest extends PyTestCase {
     doTest("int", text);
   }
 
-  public void testReturnTypeReferenceEquality() {
-    final String text = "def foo(x): return x.bar\n" +
-                        "def xyzzy(a, x):\n" +
-                        "    if a:\n" +
-                        "        return foo(x)\n" +
-                        "    else:\n" +
-                        "        return foo(x)\n" +
-                        "expr = xyzzy(a, b)";
-    PyExpression expr = parseExpr(text);
-    PyType t = getTypeEvalContext(expr).getType(expr);
-    assertInstanceOf(t, PyTypeReference.class);
-  }
-
   public void testIsInstance() {
       doTest("str",
              "def f(c):\n" +
@@ -299,7 +286,7 @@ public class PyTypeTest extends PyTestCase {
                                   "expr = foo(1)");
     TypeEvalContext context = getTypeEvalContext(expr);
     PyType actual = context.getType(expr);
-    assertFalse(actual.isBuiltin(context));
+    assertNull(actual);
   }
 
   public void testGenericConcrete() {
@@ -605,7 +592,6 @@ public class PyTypeTest extends PyTestCase {
     PyType expected = PyTypeParser.getTypeByName(expr, expectedType);
     if (expected != null) {
       assertNotNull(context.printTrace(), actual);
-      assertFalse(context.printTrace(), actual instanceof PyReturnTypeReference);
       assertTrue(msg(expected, actual, context), PyTypeChecker.match(expected, actual, context));
     }
   }
