@@ -824,7 +824,7 @@
     <treeStructureProvider implementation="com.jetbrains.web2py.projectView.Web2PyTreeStructureProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.web2py.refactoring.Web2PyRefactoringListenerProvider"/>
     <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.web2py.completion.Web2PyKeywordCompletionContributor"/>
+                            implementationClass="com.jetbrains.web2py.templates.completion.Web2PyKeywordCompletionContributor"/>
 
     <quoteHandler fileType="Web2Py" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <typedHandler implementation="com.jetbrains.web2py.editor.Web2PyBracesHandler" id="Web2PyBracesHandler"/>
