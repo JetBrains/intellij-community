@@ -3,12 +3,11 @@ package org.hanuna.gitalk.log.parser;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
-import com.intellij.openapi.vcs.changes.Change;
-
+import com.intellij.vcs.log.VcsCommitImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -105,65 +104,7 @@ public class CommitParser {
 
     final String commitMessage = line.substring(nextIndex + 2);
 
-    return new VcsCommit() {
-      @NotNull
-      @Override
-      public String getFullMessage() {
-        return commitMessage;
-      }
-
-      @NotNull
-      @Override
-      public Hash getHash() {
-        return Hash.build(hashStr);
-      }
-
-      @NotNull
-      @Override
-      public String getAuthorName() {
-        return authorName;
-      }
-
-      @NotNull
-      @Override
-      public String getAuthorEmail() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public long getAuthorTime() {
-        return timestamp;
-      }
-
-      @NotNull
-      @Override
-      public String getCommitterName() {
-        return getAuthorName();
-      }
-
-      @NotNull
-      @Override
-      public String getCommitterEmail() {
-        return getAuthorEmail();
-      }
-
-      @Override
-      public long getCommitTime() {
-        return getAuthorTime();
-      }
-
-      @NotNull
-      @Override
-      public List<Hash> getParents() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      @NotNull
-      public Collection<Change> getChanges() {
-        throw new UnsupportedOperationException();
-      }
-    };
+    return new VcsCommitImpl(Hash.build(hashStr), Collections.<Hash>emptyList(), commitMessage, authorName ,timestamp);
   }
 
 

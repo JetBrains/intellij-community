@@ -36,9 +36,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsCommitImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
@@ -478,6 +481,31 @@ public class GitHistoryUtils {
       }
     }
     return null;
+  }
+
+  public static List<? extends VcsCommit> readAllMiniDetails(Project project, VirtualFile root) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("--full-history", "--sparse");
+    h.endOptions();
+
+    String output = h.run();
+
+    List<GitLogRecord> records = parser.parse(output);
+
+    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsCommitImpl>() {
+      @Override
+      public VcsCommitImpl fun(GitLogRecord record) {
+        List<Hash> parents = new SmartList<Hash>();
+        for (String parent : record.getParentsHashes()) {
+          parents.add(Hash.build(parent));
+        }
+        return new VcsCommitImpl(Hash.build(record.getHash()), parents,
+                                 record.getSubject(), record.getAuthorName(), record.getAuthorTimeStamp());
+      }
+    });
   }
 
   private static class MyTokenAccumulator {

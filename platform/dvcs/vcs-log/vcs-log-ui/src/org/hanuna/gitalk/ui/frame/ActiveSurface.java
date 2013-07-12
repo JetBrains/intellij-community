@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsCommitDetails;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.ui.VcsLogUI;
@@ -91,7 +91,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
       }
       Node node = myGraphTable.getSelectedNodes().get(0);
       try {
-        VcsCommit commitData = myLogDataHolder.getDataPack().getCommitDataGetter().getCommitData(node);
+        VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
         sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(commitData.getChanges(), Change.class));
       }
       catch (VcsException e) {
@@ -122,7 +122,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
         List<Change> changes = new ArrayList<Change>();
         for (Node node : myGraphTable.getSelectedNodes()) {
           try {
-            VcsCommit commitData = myLogDataHolder.getDataPack().getCommitDataGetter().getCommitData(node);
+            VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
             changes.addAll(commitData.getChanges());
           }
           catch (VcsException ex) {

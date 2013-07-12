@@ -92,8 +92,7 @@ public class VcsLogControllerImpl implements VcsLogController {
     myRoot = root;
     myDataLoaderQueue = new BackgroundTaskQueue(myProject, "Loading history...");
     myCommitCache  = new VcsCommitCache(myLogProvider, myRoot);
-    dataPack = DataPack.build(Collections.<VcsCommit>emptyList(), Collections.<Ref>emptyList(), new EmptyProgressIndicator(), myCommitCache,
-                              myLogProvider, myRoot);
+    dataPack = DataPack.build(Collections.<VcsCommit>emptyList(), Collections.<Ref>emptyList(), new EmptyProgressIndicator());
   }
 
   @Override
@@ -102,8 +101,8 @@ public class VcsLogControllerImpl implements VcsLogController {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           MyTimer timer = new MyTimer("Read all history");
-          dataPack = DataPack.build(myLogProvider.readNextBlock(myRoot), myLogProvider.readAllRefs(myRoot),
-                                    indicator, myCommitCache, myLogProvider, myRoot);
+          dataPack = DataPack.build(myLogProvider.readFirstBlock(myRoot), myLogProvider.readAllRefs(myRoot),
+                                    indicator);
           timer.print();
         }
         catch (VcsException e) {
@@ -138,7 +137,7 @@ public class VcsLogControllerImpl implements VcsLogController {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          List<? extends VcsCommit> nextPart = myLogProvider.readNextBlock(myRoot);
+          List<? extends VcsCommit> nextPart = myLogProvider.readFirstBlock(myRoot);
           dataPack.appendCommits(nextPart);
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override

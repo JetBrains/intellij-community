@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -10,7 +11,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsCommitDetails;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.ui.render.PrintParameters;
@@ -82,7 +83,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return;
       }
       Hash hash = node.getCommitHash();
-      myDataPanel.setData(myLogDataHolder.getDataPack().getCommitDataGetter().getCommitData(hash));
+      try {
+        myDataPanel.setData(myLogDataHolder.getCommitDetailsGetter().getCommitData(hash));
+      }
+      catch (VcsException e1) {
+        throw new RuntimeException(e1); // TODO
+      }
       myRefsPanel.setRefs(myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash));
     }
   }
@@ -123,7 +129,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setOpaque(false);
     }
 
-    void setData(VcsCommit commit) {
+    void setData(VcsCommitDetails commit) {
       myHashLabel.setText(commit.getHash().toShortString());
       myCommitMessage.setText(commit.getFullMessage());
 

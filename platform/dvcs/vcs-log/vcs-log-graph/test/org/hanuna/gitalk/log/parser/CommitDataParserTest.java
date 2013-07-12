@@ -17,7 +17,7 @@ public class CommitDataParserTest {
     s.append(commitData.getHash()).append("|-");
     s.append(commitData.getAuthorName()).append("|-");
     s.append(commitData.getAuthorTime()).append("|-");
-    s.append(commitData.getFullMessage());
+    s.append(commitData.getSubject());
     return s.toString();
   }
 
@@ -61,7 +61,7 @@ public class CommitDataParserTest {
     VcsCommit commitData = CommitParser.parseCommitData("af56|-author |-|-message");
     Assert.assertEquals("author ", commitData.getAuthorName());
     Assert.assertEquals(0, commitData.getAuthorTime());
-    Assert.assertEquals("message", commitData.getFullMessage());
+    Assert.assertEquals("message", commitData.getSubject());
   }
 
 }

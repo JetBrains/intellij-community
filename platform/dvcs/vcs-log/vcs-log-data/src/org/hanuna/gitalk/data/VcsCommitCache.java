@@ -18,8 +18,8 @@ package org.hanuna.gitalk.data;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,14 +28,16 @@ import java.util.Collections;
 /**
  * @author Kirill Likhodedov
  */
-public class VcsCommitCache {
+public class VcsCommitCache<T extends CommitParents> {
 
-  private final SLRUCache<Hash, VcsCommit> myCache = new SLRUCache<Hash, VcsCommit>(5000, 5000) {
+  private final SLRUCache<Hash, T> myCache = new SLRUCache<Hash, T>(5000, 5000) {
     @NotNull
     @Override
-    public VcsCommit createValue(Hash key) {
+    public T createValue(Hash key) {
       try {
-        return myLogProvider.readCommitsData(myRoot, Collections.singletonList(key.toStrHash())).get(0);
+        // TODO load in background OR prove that this is a not normal situation when something is not in the cache and queried from the UI
+        //assert !EventQueue.isDispatchThread();
+        return (T)myLogProvider.readDetails(myRoot, Collections.singletonList(key.toStrHash())).get(0);
       }
       catch (VcsException e) {
         // TODO
@@ -51,7 +53,7 @@ public class VcsCommitCache {
     myRoot = root;
   }
 
-  public void put(Hash hash, VcsCommit commit) {
+  public void put(Hash hash, T commit) {
     myCache.put(hash, commit);
   }
 
@@ -59,7 +61,7 @@ public class VcsCommitCache {
     return myCache.getIfCached(hash) != null;
   }
 
-  public VcsCommit get(Hash hash) {
+  public T get(Hash hash) {
     return myCache.get(hash);
   }
 }

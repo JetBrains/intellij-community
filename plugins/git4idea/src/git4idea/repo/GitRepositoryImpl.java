@@ -247,7 +247,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
 
     @Override
     public void repositoryChanged(@NotNull GitRepository repository) {
-      myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refreshAll(myRepository.getRoot());
+      myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refresh(myRepository.getRoot());
     }
   }
 

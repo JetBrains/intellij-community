@@ -19,10 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
-import com.intellij.vcs.log.VcsCommit;
-import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.history.GitHistoryUtils;
@@ -52,7 +49,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommit> readNextBlock(@NotNull VirtualFile root) throws VcsException {
+  public List<? extends VcsCommitDetails> readFirstBlock(@NotNull VirtualFile root) throws VcsException {
     return GitHistoryUtils.history(myProject, root, "HEAD", "--branches", "--remotes", "--tags", "--date-order",
                                                       "--encoding=UTF-8", "--full-history", "--sparse",
                                                       "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE);
@@ -60,7 +57,19 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommit> readCommitsData(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+  public List<? extends CommitParents> readAllHashes(@NotNull VirtualFile root) throws VcsException {
+    return readAllMiniDetails(root);
+  }
+
+  @NotNull
+  @Override
+  public List<? extends VcsCommit> readAllMiniDetails(@NotNull VirtualFile root) throws VcsException {
+    return GitHistoryUtils.readAllMiniDetails(myProject, root);
+  }
+
+  @NotNull
+  @Override
+  public List<? extends VcsCommitDetails> readDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
     return GitHistoryUtils.commitsDetails(myProject, root, hashes);
   }
 

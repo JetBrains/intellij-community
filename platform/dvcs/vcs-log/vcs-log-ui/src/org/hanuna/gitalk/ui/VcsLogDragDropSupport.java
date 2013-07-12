@@ -3,7 +3,6 @@ package org.hanuna.gitalk.ui;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.vcs.log.Hash;
@@ -267,12 +266,7 @@ public class VcsLogDragDropSupport {
       if (commitsBeingDragged.size() == 1) {
         Node node = commitsBeingDragged.get(0);
         String message = null;
-        try {
-          message = myUiController.getDataPack().getCommitDataGetter().getCommitData(node).getFullMessage();
-        }
-        catch (VcsException e) {
-          throw new RuntimeException(e);
-        }
+        message = "some message"; //myUiController.getDataPack().getCommitDataGetter().getCommitData(node).getFullMessage();
         return "\"" + message + "\"";
       }
 

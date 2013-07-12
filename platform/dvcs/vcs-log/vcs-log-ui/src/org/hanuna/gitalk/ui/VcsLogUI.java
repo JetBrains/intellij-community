@@ -61,7 +61,7 @@ public class VcsLogUI {
   }
 
   public void reloadModel() {
-    myGraphModel = new GraphTableModel(myLogDataHolder.getDataPack());
+    myGraphModel = new GraphTableModel(myLogDataHolder);
   }
 
   public void updateUI() {

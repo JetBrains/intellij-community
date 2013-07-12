@@ -1,11 +1,12 @@
 package org.hanuna.gitalk.data;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Predicate;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.rebase.FakeCommitParents;
@@ -32,15 +33,10 @@ public class DataPack {
   @NotNull private final GraphModel myGraphModel;
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final GraphPrintCellModel myPrintCellModel;
-  @NotNull private final CacheCommitDataGetter myCommitDataGetter;
 
   @NotNull
-  public static DataPack build(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<Ref> allRefs,
-                               @NotNull ProgressIndicator indicator, @NotNull VcsCommitCache commitDataCache,
-                               @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
-    for (VcsCommit commit : commits) {
-      commitDataCache.put(commit.getHash(), commit);
-    }
+  public static DataPack build(@NotNull List<? extends CommitParents> commits, @NotNull Collection<Ref> allRefs,
+                               @NotNull ProgressIndicator indicator) {
     indicator.setText("Building graph...");
 
     MutableGraph graph = GraphBuilder.build(commits, allRefs);
@@ -68,26 +64,19 @@ public class DataPack {
         }
       }
     });
-    return new DataPack(graphModel, refsModel, printCellModel, commitDataCache, logProvider, root);
+    return new DataPack(graphModel, refsModel, printCellModel);
   }
 
-  private DataPack(@NotNull GraphModel graphModel, @NotNull RefsModel refsModel, @NotNull GraphPrintCellModel printCellModel,
-                   @NotNull VcsCommitCache commitDataCache, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
+  private DataPack(@NotNull GraphModel graphModel, @NotNull RefsModel refsModel, @NotNull GraphPrintCellModel printCellModel) {
     myGraphModel = graphModel;
     myRefsModel = refsModel;
     myPrintCellModel = printCellModel;
-    myCommitDataGetter = new CacheCommitDataGetter(this, commitDataCache, logProvider, root);
   }
 
   public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
     MyTimer timer = new MyTimer("append commits");
     myGraphModel.appendCommitsToGraph(commitParentsList);
     timer.print();
-  }
-
-  @NotNull
-  public CacheCommitDataGetter getCommitDataGetter() {
-    return myCommitDataGetter;
   }
 
   @NotNull

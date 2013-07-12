@@ -6,6 +6,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsCommit;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.data.rebase.FakeCommitParents;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
@@ -28,9 +29,11 @@ public class GraphTableModel extends AbstractTableModel {
   private final Map<Hash, String> reworded = new HashMap<Hash, String>();
   private final Set<Hash> fixedUp = new HashSet<Hash>();
   private final Set<Hash> applied = new HashSet<Hash>();
+  @NotNull private final VcsLogDataHolder myDataHolder;
 
-  public GraphTableModel(@NotNull DataPack dataPack) {
-    this.dataPack = dataPack;
+  public GraphTableModel(@NotNull VcsLogDataHolder dataHolder) {
+    myDataHolder = dataHolder;
+    this.dataPack = dataHolder.getDataPack();
   }
 
   @Override
@@ -52,7 +55,7 @@ public class GraphTableModel extends AbstractTableModel {
     }
     else {
       try {
-        data = dataPack.getCommitDataGetter().getCommitData(commitNode);
+        data = myDataHolder.getMiniDetailsGetter().getCommitData(commitNode);
       }
       catch (VcsException e) {
         throw new RuntimeException(e);
@@ -69,7 +72,7 @@ public class GraphTableModel extends AbstractTableModel {
             message = reworded.get(commitNode.getCommitHash());
           }
           else {
-            message = data.getFullMessage();
+            message = data.getSubject();
             refs = dataPack.getRefsModel().refsToCommit(data.getHash());
           }
         }

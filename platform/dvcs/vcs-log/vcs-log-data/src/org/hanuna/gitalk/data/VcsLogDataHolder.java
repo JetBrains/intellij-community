@@ -23,17 +23,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>Holds the commit data loaded from the VCS, and is capable to {@link #refresh(Runnable) refresh} this data by request.</p>
  * <p>The commit data is acquired via {@link #getDataPack()}.</p>
  * <p>If refresh is in progress, {@link #getDataPack()} returns the previous data pack (possible not actual anymore).
- *    When refresh completes, the data pack instance is updated. Refreshes are chained.</p>
+ * When refresh completes, the data pack instance is updated. Refreshes are chained.</p>
+ * <p>Thread-safety: TODO </p>
+ * <p/>
+ * TODO: error handling
  *
  * @author Kirill Likhodedov
  */
@@ -47,47 +54,99 @@ public class VcsLogDataHolder implements VcsLogRefresher {
   @NotNull private final VcsLogProvider myLogProvider;
   @NotNull private final VirtualFile myRoot;
   @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
-  @NotNull private final VcsCommitCache myCommitCache;
-  @NotNull private final Runnable myRefreshCompletedEvent;
+  @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
+  @NotNull private final CommitDetailsGetter myDetailsGetter;
 
-  @NotNull private DataPack myDataPack;
+  @NotNull private volatile DataPack myDataPack;
+  @Nullable private volatile List<? extends CommitParents> myAllLog; // null means the whole log was not yet read
 
+  public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
+    myProject = project;
+    myLogProvider = logProvider;
+    myRoot = root;
+    myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
+    myMiniDetailsGetter = new MiniDetailsGetter(this, logProvider, root);
+    myDetailsGetter = new CommitDetailsGetter(this, logProvider, root);
+  }
+
+  /**
+   * Initializes the VcsLogDataHolder in background in the following sequence:
+   * <ul>
+   * <li>Loads the first part of the log with details.</li>
+   * <li>Invokes the Consumer to initialize the UI with the initial data pack.</li>
+   * <li>Loads the whole log in background. When completed, substitutes the data and tells the UI to refresh itself.</li>
+   * </ul>
+   *
+   * @param onInitialized This is called when the holder is initialized with the initial data received from the VCS.
+   *                      The consumer is called on the EDT.
+   */
   public static void init(@NotNull final Project project, @NotNull final VcsLogProvider logProvider, @NotNull final VirtualFile root,
-                          @NotNull final Consumer<VcsLogDataHolder> onSuccess) {
-    final BackgroundTaskQueue taskQueue = new BackgroundTaskQueue(project, "Loading history...");
-    final VcsCommitCache commitCache = new VcsCommitCache(logProvider, root);
-
-    doRefresh(taskQueue, project, logProvider, root, commitCache, new Consumer<DataPack>() {
+                          @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProvider, root);
+    dataHolder.loadFirstPart(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
-        VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProvider, root, taskQueue, commitCache, dataPack);
-        onSuccess.consume(dataHolder);
+        dataHolder.myDataPack = dataPack;
+        onInitialized.consume(dataHolder);
+        dataHolder.loadAllLog();
       }
     });
   }
 
-  private VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
-                           @NotNull BackgroundTaskQueue taskQueue, @NotNull VcsCommitCache commitCache, @NotNull DataPack dataPack) {
-    myProject = project;
-    myLogProvider = logProvider;
-    myRoot = root;
-    myDataLoaderQueue = taskQueue;
-    myCommitCache = commitCache;
-    myDataPack = dataPack;
-
-    myRefreshCompletedEvent = new Runnable() {
+  private void loadAllLog() {
+    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
-      public void run() {
-        myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
+      public void consume(ProgressIndicator indicator) throws VcsException {
+        List<? extends CommitParents> all = myLogProvider.readAllHashes(myRoot);
+        Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
+
+        myAllLog = all;
+        myDataPack = DataPack.build(all, refs, indicator);
+        notifyAboutDataRefresh();
       }
-    };
+    });
+  }
+
+  private void loadFirstPart(final Consumer<DataPack> onSuccess) {
+    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
+      @Override
+      public void consume(ProgressIndicator indicator) throws VcsException {
+        List<? extends VcsCommitDetails> commits = myLogProvider.readFirstBlock(myRoot);
+        Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
+
+        myDetailsGetter.saveInCache(commits);
+        myMiniDetailsGetter.saveInCache(commits);
+
+        myDataPack = DataPack.build(commits, refs, indicator);
+
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            onSuccess.consume(myDataPack);
+          }
+        });
+      }
+    });
+  }
+
+  private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task) {
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          task.consume(indicator);
+        }
+        catch (VcsException e) {
+          throw new RuntimeException(e); // TODO
+        }
+      }
+    });
   }
 
   public void refresh(@NotNull final Runnable onSuccess) {
-    doRefresh(myDataLoaderQueue, myProject, myLogProvider, myRoot, myCommitCache, new Consumer<DataPack>() {
+    loadFirstPart(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
-        myDataPack = dataPack;
         onSuccess.run();
       }
     });
@@ -95,43 +154,27 @@ public class VcsLogDataHolder implements VcsLogRefresher {
 
   @Override
   public void refreshCompletely() {
-    refresh(myRefreshCompletedEvent);
+    refresh(new Runnable() {
+      @Override
+      public void run() {
+        notifyAboutDataRefresh();
+      }
+    });
   }
 
   @Override
-  public void refreshAll(@NotNull VirtualFile root) {
-    refresh(myRefreshCompletedEvent);
+  public void refresh(@NotNull VirtualFile root) {
+    refresh(new Runnable() {
+      @Override
+      public void run() {
+        notifyAboutDataRefresh();
+      }
+    });
   }
 
   @Override
   public void refreshRefs(@NotNull VirtualFile root) {
-    refreshAll(root); // TODO
-  }
-
-  private static void doRefresh(@NotNull BackgroundTaskQueue queue, @NotNull Project project, @NotNull final VcsLogProvider logProvider,
-                                @NotNull final VirtualFile root, @NotNull final VcsCommitCache commitCache,
-                                @NotNull final Consumer<DataPack> dataPackConsumer) {
-    queue.run(new Task.Backgroundable(project, "Loading history...", false) {
-      public void run(@NotNull final ProgressIndicator indicator) {
-        try {
-          final DataPack dataPack = DataPack.build(logProvider.readNextBlock(root), logProvider.readAllRefs(root), indicator, commitCache,
-                                                   logProvider, root);
-
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              dataPackConsumer.consume(dataPack);
-            }
-          });
-        }
-        catch (VcsException e) {
-          // TODO
-          //notifyError(e);
-          throw new RuntimeException(e);
-        }
-
-      }
-    });
+    refresh(root); // TODO no need to query the VCS for commit & rebuild the whole log; just replace refs labels.
   }
 
   @NotNull
@@ -139,4 +182,16 @@ public class VcsLogDataHolder implements VcsLogRefresher {
     return myDataPack;
   }
 
+  private void notifyAboutDataRefresh() {
+    myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
+  }
+
+  public CommitDetailsGetter getCommitDetailsGetter() {
+    return myDetailsGetter;
+  }
+
+  @NotNull
+  public MiniDetailsGetter getMiniDetailsGetter() {
+    return myMiniDetailsGetter;
+  }
 }
