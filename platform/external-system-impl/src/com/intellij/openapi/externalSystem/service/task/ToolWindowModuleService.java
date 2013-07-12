@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -65,7 +66,7 @@ public class ToolWindowModuleService extends AbstractToolWindowService<ModuleDat
   @Override
   protected void processData(@NotNull final Collection<DataNode<ModuleData>> nodes,
                              @NotNull Project project,
-                             @NotNull final ExternalSystemTasksTreeModel model)
+                             @Nullable final ExternalSystemTasksTreeModel model)
   {
     if (nodes.isEmpty()) {
       return;
