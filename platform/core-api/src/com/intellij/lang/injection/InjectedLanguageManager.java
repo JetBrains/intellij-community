@@ -92,4 +92,6 @@ public abstract class InjectedLanguageManager {
   public abstract List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile);
 
   public abstract void startRunInjectors(@NotNull Document hostDocument, boolean synchronously);
+
+  public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
 }

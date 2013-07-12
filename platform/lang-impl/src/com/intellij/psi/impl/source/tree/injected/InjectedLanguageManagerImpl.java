@@ -395,6 +395,11 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
   }
 
+  @Override
+  public void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(host, visitor);
+  }
+
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public static void pushInjectors(@NotNull Project project) {
