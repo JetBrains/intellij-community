@@ -356,6 +356,39 @@ foo()
     }
   }
 
+  public void "test in static inner class"() {
+    myFixture.addFileToProject "Foo.groovy", """
+class Outer {               //1
+    static class Inner {
+        def x = 1
+
+        def test2() {
+            println x       //6
+        }
+
+        String toString() { 'str' }
+    }
+
+    def test() {
+        def z = new Inner()
+
+        println z.x
+        z.test2()
+    }
+}
+
+public static void main(String[] args) {
+    new Outer().test()
+}
+"""
+    addBreakpoint('Foo.groovy', 6)
+    runDebugger 'Foo', {
+      waitForBreakpoint()
+      eval 'x', '1'
+      eval 'this', 'str'
+    }
+  }
+
   private def addBreakpoint(String fileName, int line) {
     VirtualFile file = null
     edt {
