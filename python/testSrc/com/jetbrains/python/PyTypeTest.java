@@ -555,7 +555,8 @@ public class PyTypeTest extends PyTestCase {
     doTest("int",
            "def foo(bar):\n" +
            "    expr = bar\n" +
-           "def use_foo():\n" +
+           "def use_foo(x):\n" +
+           "    foo(x)\n" +
            "    foo(3)\n");
   }
 
