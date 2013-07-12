@@ -192,6 +192,14 @@
       <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
     </pluginDescriptor>
 
+    <pluginDescriptor mavenId="org.apache.maven.plugins:maven-assembly-plugin">
+      <param name="descriptors/descriptor" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
+      <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+      <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
+      <param name="formats/format" values="dir, zip, tar, tar.gz, tar.bz2" soft="true" />
+      <param name="tarLongFileMode" values="warn, fail, truncate, gnu, omit" />
+    </pluginDescriptor>
+
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-invoker-plugin">
       <param name="extraArtifacts/extraArtifact" refProvider="org.jetbrains.idea.maven.dom.references.MavenDependencyReferenceProvider"/>
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>

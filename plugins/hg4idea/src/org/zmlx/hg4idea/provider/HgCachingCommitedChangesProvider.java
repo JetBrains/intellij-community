@@ -39,6 +39,7 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.ui.HgVersionFilterComponent;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.datatransfer.StringSelection;
@@ -46,6 +47,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class HgCachingCommitedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
@@ -156,20 +158,13 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     return false;
   }
 
-  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-                                   RepositoryLocation repositoryLocation,
-                                   int i,
-                                   AsynchConsumer<CommittedChangeList> committedChangeListAsynchConsumer) throws VcsException {
-    throw new UnsupportedOperationException();  //TODO implement method
-  }
-
   @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }
 
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean b) {
-    return null;
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
+    return new HgVersionFilterComponent(showDateFilter);
   }
 
   @Nullable
@@ -190,6 +185,22 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     return null;
   }
 
+  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
+                                   RepositoryLocation repositoryLocation,
+                                   int maxCount,
+                                   final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+
+    try {
+      List<CommittedChangeList> results = getCommittedChanges(changeBrowserSettings, repositoryLocation, maxCount);
+      for (CommittedChangeList result : results) {
+        consumer.consume(result);
+      }
+    }
+    finally {
+      consumer.finished();
+    }
+  }
+
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                                        RepositoryLocation repositoryLocation,
                                                        int maxCount) throws VcsException {
@@ -202,9 +213,10 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     hgLogCommand.setLogFile(false);
     List<String> args = null;
     if (changeBrowserSettings != null) {
-      args = new ArrayList<String>();
-      if (changeBrowserSettings.USE_CHANGE_AFTER_FILTER) {
-        args.add("-r tip:" + changeBrowserSettings.getChangeAfterFilter());
+      HgLogArgsBuilder argsBuilder = new HgLogArgsBuilder(changeBrowserSettings);
+      args = argsBuilder.getLogArgs();
+      if (null == args) {
+        maxCount = maxCount == 0 ? VcsConfiguration.getInstance(project).MAXIMUM_HISTORY_ROWS  : maxCount;
       }
     }
     final List<HgFileRevision> localRevisions;
@@ -368,4 +380,60 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       return branch.isEmpty() ? "default" : branch;
     }
   };
+
+  private static class HgLogArgsBuilder {
+
+    @NotNull private final ChangeBrowserSettings myBrowserSettings;
+
+    HgLogArgsBuilder(@NotNull ChangeBrowserSettings browserSettings) {
+      myBrowserSettings = browserSettings;
+    }
+
+    @Nullable
+    List<String> getLogArgs() {
+
+      StringBuilder args = new StringBuilder();
+
+      Date afterDate = myBrowserSettings.getDateAfter();
+      Date beforeDate = myBrowserSettings.getDateBefore();
+      Long afterFilter = myBrowserSettings.getChangeAfterFilter();
+      Long beforeFilter = myBrowserSettings.getChangeBeforeFilter();
+
+      final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+      if ((null != afterFilter) && (null != beforeFilter)) {
+        args.append(afterFilter).append(":").append(beforeFilter);
+      }
+      else if (null != afterFilter) {
+        args.append("tip:").append(afterFilter);
+      }
+      else if (null != beforeFilter) {
+        args.append("'reverse(:").append(beforeFilter).append(")'");
+      }
+
+      if (null != afterDate) {
+        if (args.length() > 0) {
+          args.append(" and ");
+        }
+        args.append("date('>").append(dateFormatter.format(afterDate)).append("')");
+      }
+
+      if (null != beforeDate) {
+        if (args.length() > 0) {
+          args.append(" and ");
+        }
+
+        args.append("date('<").append(dateFormatter.format(beforeDate)).append("')");
+      }
+
+      if (args.length() > 0) {
+        List<String> logArgs = new ArrayList<String>();
+        logArgs.add("-r");
+        logArgs.add(args.toString());
+        return logArgs;
+      }
+
+      return null;
+    }
+  }
 }

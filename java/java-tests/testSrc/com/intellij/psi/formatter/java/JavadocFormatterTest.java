@@ -352,4 +352,168 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
     doClassTest(before, after);
   }
+
+  public void testJavadocFormattingIndependentOfMethodIndentation() {
+    getCurrentCodeStyleSettings().RIGHT_MARGIN = 50;
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getCurrentCodeStyleSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getCurrentCodeStyleSettings().JD_P_AT_EMPTY_LINES = false;
+    getCurrentCodeStyleSettings().JD_KEEP_EMPTY_LINES = false;
+    getCurrentCodeStyleSettings().JD_ADD_BLANK_AFTER_DESCRIPTION = false;
+    String before1 = "class A {\n" +
+                     "    /**\n" +
+                     "     * Some really great independent test approach purpose live fish\n" +
+                     "     * banana split string be accurate when writing tests and code\n" +
+                     "     * read write buffer.\n" +
+                     "     *\n" +
+                     "     * Some text after empty line\n" +
+                     "     *\n" +
+                     "     */\n" +
+                     "void foo() {\n" +
+                     "\n" +
+                     "}\n" +
+                     "}";
+
+    String before2 = "class A {\n" +
+                     "    /**\n" +
+                     "     * Some really great independent test approach purpose live fish\n" +
+                     "     * banana split string be accurate when writing tests and code\n" +
+                     "     * read write buffer.\n" +
+                     "     *\n" +
+                     "     * Some text after empty line\n" +
+                     "     *\n" +
+                     "     */\n" +
+                     "    void foo() {\n" +
+                     "\n" +
+                     "    }\n" +
+                     "}";
+
+    formatEveryoneAndCheckIfResultEqual(before1, before2);
+  }
+
+  public void testJavadocAlignmentForInnerClasses() {
+    getCurrentCodeStyleSettings().RIGHT_MARGIN = 40;
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getCurrentCodeStyleSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+
+    String code = "public class Outer {\n" +
+                  "    class Inner {\n" +
+                  "        /**\n" +
+                  "         * Password from wild forest big house\n" +
+                  "         */\n" +
+                  "        public int getMagic() {\n" +
+                  "            return 312;\n" +
+                  "        }\n" +
+                  "\n" +
+                  "class InnerInner {\n" +
+                  "/**\n" +
+                  " * Special magic needs special rules\n" +
+                  " */\n" +
+                  "public int innerMagic() {\n" +
+                  "    return 1;\n" +
+                  "}\n" +
+                  "}\n" +
+                  "    }\n" +
+                  "}";
+
+    String result = "public class Outer {\n" +
+                    "    class Inner {\n" +
+                    "        /**\n" +
+                    "         * Password from wild forest big\n" +
+                    "         * house\n" +
+                    "         */\n" +
+                    "        public int getMagic() {\n" +
+                    "            return 312;\n" +
+                    "        }\n" +
+                    "\n" +
+                    "        class InnerInner {\n" +
+                    "            /**\n" +
+                    "             * Special magic needs\n" +
+                    "             * special rules\n" +
+                    "             */\n" +
+                    "            public int innerMagic() {\n" +
+                    "                return 1;\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}";
+    doTextTest(code, result);
+  }
+
+  public void testAlignmentWithNoTopClassMembersIndentation() {
+    getCurrentCodeStyleSettings().RIGHT_MARGIN = 40;
+    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getCurrentCodeStyleSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE).DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true;
+
+    String before = "public class Outer {\n" +
+                    "class Inner {\n" +
+                    "/**\n" +
+                    " * Password from wild forest big\n" +
+                    " * house\n" +
+                    " */\n" +
+                    "public int getMagic() {\n" +
+                    "    return 312;\n" +
+                    "}\n" +
+                    "\n" +
+                    "class InnerInner {\n" +
+                    "/**\n" +
+                    " * Special magic needs special rules\n" +
+                    " */\n" +
+                    "public int innerMagic() {\n" +
+                    "    return 1;\n" +
+                    "}\n" +
+                    "\n" +
+                    "class InnerInnerInner {\n" +
+                    "int iii;\n" +
+                    "class TripleInner {\n" +
+                    "int ti;\n" +
+                    "}\n" +
+                    "}\n" +
+                    "}\n" +
+                    "}\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "        System.out.println(\"AAA!\");\n" +
+                    "    }\n" +
+                    "}";
+
+   String after = "public class Outer {\n" +
+                  "class Inner {\n" +
+                  "    /**\n" +
+                  "     * Password from wild forest big\n" +
+                  "     * house\n" +
+                  "     */\n" +
+                  "    public int getMagic() {\n" +
+                  "        return 312;\n" +
+                  "    }\n" +
+                  "\n" +
+                  "    class InnerInner {\n" +
+                  "        /**\n" +
+                  "         * Special magic needs special\n" +
+                  "         * rules\n" +
+                  "         */\n" +
+                  "        public int innerMagic() {\n" +
+                  "            return 1;\n" +
+                  "        }\n" +
+                  "\n" +
+                  "        class InnerInnerInner {\n" +
+                  "            int iii;\n" +
+                  "\n" +
+                  "            class TripleInner {\n" +
+                  "                int ti;\n" +
+                  "            }\n" +
+                  "        }\n" +
+                  "    }\n" +
+                  "}\n" +
+                  "\n" +
+                  "public static void main(String[] args) {\n" +
+                  "    System.out.println(\"AAA!\");\n" +
+                  "}\n" +
+                  "}";
+
+    doTextTest(before, after);
+
+  }
 }

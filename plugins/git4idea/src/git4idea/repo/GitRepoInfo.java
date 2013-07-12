@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Kirill Likhodedov
@@ -31,10 +33,10 @@ public class GitRepoInfo {
   @Nullable private final GitLocalBranch myCurrentBranch;
   @Nullable private final String myCurrentRevision;
   @NotNull private final Repository.State myState;
-  @NotNull private final Collection<GitRemote> myRemotes;
-  @NotNull private final Collection<GitLocalBranch> myLocalBranches;
-  @NotNull private final Collection<GitRemoteBranch> myRemoteBranches;
-  @NotNull private final Collection<GitBranchTrackInfo> myBranchTrackInfos;
+  @NotNull private final Set<GitRemote> myRemotes;
+  @NotNull private final Set<GitLocalBranch> myLocalBranches;
+  @NotNull private final Set<GitRemoteBranch> myRemoteBranches;
+  @NotNull private final Set<GitBranchTrackInfo> myBranchTrackInfos;
 
   public GitRepoInfo(@Nullable GitLocalBranch currentBranch, @Nullable String currentRevision, @NotNull Repository.State state,
                      @NotNull Collection<GitRemote> remotes, @NotNull Collection<GitLocalBranch> localBranches,
@@ -42,10 +44,10 @@ public class GitRepoInfo {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myState = state;
-    myRemotes = remotes;
-    myLocalBranches = localBranches;
-    myRemoteBranches = remoteBranches;
-    myBranchTrackInfos = branchTrackInfos;
+    myRemotes = new LinkedHashSet<GitRemote>(remotes);
+    myLocalBranches = new LinkedHashSet<GitLocalBranch>(localBranches);
+    myRemoteBranches = new LinkedHashSet<GitRemoteBranch>(remoteBranches);
+    myBranchTrackInfos = new LinkedHashSet<GitBranchTrackInfo>(branchTrackInfos);
   }
 
   @Nullable

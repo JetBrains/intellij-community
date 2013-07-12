@@ -40,7 +40,7 @@ class <caret>Inheritor extends Base {
 ''', '''\
 class Inheritor extends Base {
     /**
-     *  my doc
+     * my doc
      */
     Inheritor(int x) {
         super(x)
@@ -48,5 +48,24 @@ class Inheritor extends Base {
 }
 ''')
 
+  }
+
+  void testInvalidOriginalParameterName() {
+    myFixture.addClass('''\
+class Base {
+  Base(String in, String s) {
+  }
+}''')
+
+    doTextTest('''\
+class <caret>Inh extends Base {
+}
+''', '''\
+class Inh extends Base {
+    def Inh(String s, String s2) {
+        super(s, s2)
+    }
+}
+''')
   }
 }

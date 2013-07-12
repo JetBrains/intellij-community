@@ -17,8 +17,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
@@ -60,7 +58,7 @@ import java.util.List;
  * @author cdr
  */
 public class FileReference implements PsiFileReference, FileReferenceOwner, PsiPolyVariantReference,
-                                      QuickFixProvider<FileReference>, LocalQuickFixProvider,
+                                      LocalQuickFixProvider,
                                       EmptyResolveMessageProvider, BindablePsiReference {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
@@ -555,13 +553,6 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     catch (IncorrectOperationException e) {
       LOG.error("Cannot rename " + getClass() + " from " + myFileReferenceSet.getClass() + " to " + newName);
       throw e;
-    }
-  }
-
-  @Override
-  public void registerQuickfix(HighlightInfo info, FileReference reference) {
-    for (final FileReferenceHelper helper : getHelpers()) {
-      helper.registerFixes(info, reference);
     }
   }
 

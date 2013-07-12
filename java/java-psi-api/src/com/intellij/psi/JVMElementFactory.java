@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -135,7 +136,7 @@ public interface JVMElementFactory {
 
   /**
    * Creates new reference element by type
-   * @param type the type for which reference element should be creted
+   * @param type the type for which reference element should be created
    * @return the reference element
    */
   @NotNull
@@ -264,4 +265,45 @@ public interface JVMElementFactory {
    */
   @NotNull
   PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope);
+
+  /**
+   * Creates doc comment from text
+   */
+  @NotNull
+  PsiDocComment createDocCommentFromText(@NotNull String text);
+
+  /**
+   * Checks whether name is a valid class name in the current language
+   * @param name name to checks
+   * @return true if name is a valid name
+   */
+  boolean isValidClassName(@NotNull String name);
+
+  /**
+   * Checks whether name is a valid method name in the current language
+   * @param name name to checks
+   * @return true if name is a valid name
+   */
+  boolean isValidMethodName(@NotNull String name);
+
+  /**
+   * Checks whether name is a valid parameter name in the current language
+   * @param name name to checks
+   * @return true if name is a valid name
+   */
+  boolean isValidParameterName(@NotNull String name);
+
+  /**
+   * Checks whether name is a valid field name in the current language
+   * @param name name to checks
+   * @return true if name is a valid name
+   */
+  boolean isValidFieldName(@NotNull String name);
+
+  /**
+   * Checks whether name is a valid local variable name in the current language
+   * @param name name to checks
+   * @return true if name is a valid name
+   */
+  boolean isValidLocalVariableName(@NotNull String name);
 }

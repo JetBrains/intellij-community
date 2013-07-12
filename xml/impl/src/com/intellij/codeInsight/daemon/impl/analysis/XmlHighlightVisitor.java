@@ -25,7 +25,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
@@ -619,7 +619,17 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         .range(startOffset + referenceRange.getStartOffset(), startOffset + referenceRange.getEndOffset())
         .descriptionAndTooltip(description).create();
       addToResults(info);
-      if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
+      if (reference instanceof LocalQuickFixProvider) {
+        LocalQuickFix[] fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
+        if (fixes != null) {
+          InspectionManager manager = InspectionManager.getInstance(reference.getElement().getProject());
+          for (LocalQuickFix fix : fixes) {
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(value, description, fix,
+                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
+            QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
+          }
+        }
+      }
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
     }
   }

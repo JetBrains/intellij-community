@@ -215,6 +215,10 @@ public class EmptyXmlTag implements XmlTag {
       }
 
       @Override
+      public void setEscapedText(String value) {
+      }
+
+      @Override
       public boolean hasCDATA() {
         return false;
       }

@@ -43,7 +43,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testAnonymous() throws Throwable {
     List<NamedContent> expected = createContent();
 
-    String url = GithubCreateGistAction.createGist(myProject, null, expected, true, "description", null);
+    String url = GithubCreateGistAction.createGist(myProject, GithubAuthData.createAnonymous(myHost), expected, true, "description", null);
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -114,7 +114,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     List<NamedContent> expected = createContent();
 
     GithubAuthData auth = myGitHubSettings.getAuthData();
-    GithubAuthData myAuth = new GithubAuthData(auth.getHost(), auth.getLogin() + "some_suffix", auth.getPassword());
+    GithubAuthData myAuth = GithubAuthData.createBasicAuth(auth.getHost(), myLogin1 + "some_suffix", myPassword);
     String url = GithubCreateGistAction.createGist(myProject, myAuth, expected, true, "description", null);
     assertNull("Gist was created", url);
 
@@ -125,7 +125,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     List<NamedContent> expected = createContent();
 
     GithubAuthData auth = myGitHubSettings.getAuthData();
-    GithubAuthData myAuth = new GithubAuthData(auth.getHost(), auth.getLogin(), auth.getPassword() + "some_suffix");
+    GithubAuthData myAuth = GithubAuthData.createBasicAuth(auth.getHost(), myLogin1, myPassword + "some_suffix");
     String url = GithubCreateGistAction.createGist(myProject, myAuth, expected, true, "description", null);
     assertNull("Gist was created", url);
 

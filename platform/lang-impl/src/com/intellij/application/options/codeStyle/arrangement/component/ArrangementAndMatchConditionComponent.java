@@ -37,6 +37,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * {@link ArrangementUiComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
@@ -48,7 +49,8 @@ import java.util.Map;
  */
 public class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
 
-  @NotNull private final List<ArrangementUiComponent> myComponents = ContainerUtilRt.newArrayList();
+  @NotNull private final List<ArrangementUiComponent>  myComponents      = ContainerUtilRt.newArrayList();
+  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = ContainerUtilRt.newHashSet();
 
   @NotNull private final ArrangementCompositeMatchCondition mySetting;
   @Nullable private      Rectangle                          myScreenBounds;
@@ -85,6 +87,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
       assert operand != null;
       ArrangementUiComponent component = factory.getComponent(operand, rule, true);
       myComponents.add(component);
+      myAvailableTokens.addAll(component.getAvailableTokens());
       JComponent uiComponent = component.getUiComponent();
       add(uiComponent, constraints);
     }
@@ -224,6 +227,12 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   @Override
   public ArrangementSettingsToken getToken() {
     return myComponentUnderMouse == null ? null : myComponentUnderMouse.getToken();
+  }
+
+  @NotNull
+  @Override
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
+    return myAvailableTokens;
   }
 
   @Override

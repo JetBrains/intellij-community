@@ -37,5 +37,7 @@ public interface XmlTagValue {
 
   void setText(String value);
 
+  void setEscapedText(String value);
+
   boolean hasCDATA();
 }

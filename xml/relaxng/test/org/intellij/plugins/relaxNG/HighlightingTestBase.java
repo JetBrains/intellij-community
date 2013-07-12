@@ -16,22 +16,17 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -210,18 +205,23 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   protected void doTestQuickFix(String file, String ext) throws Throwable {
     final PsiReference psiReference = myTestFixture.getReferenceAtCaretPositionWithAssertion(file + "." + ext);
     assertNull("Reference", psiReference.resolve());
-    assertTrue("QuickFixProvider", psiReference instanceof QuickFixProvider);
+    assertTrue(psiReference.getClass().getName() + " is not a QuickFixProvider", psiReference instanceof LocalQuickFixProvider);
 
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(0, 0).descriptionAndTooltip("").create();
-    ((QuickFixProvider)psiReference).registerQuickfix(info, psiReference);
-    assertTrue("One action expected", info.quickFixActionRanges.size() == 1);
+    final LocalQuickFix[] fixes = ((LocalQuickFixProvider)psiReference).getQuickFixes();
 
-    final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> rangePair = info.quickFixActionRanges.get(0);
-    final IntentionAction action = rangePair.first.getAction();
+    assertTrue("One action expected", fixes != null && fixes.length == 1);
 
-    assertTrue("action is enabled", action.isAvailable(myTestFixture.getProject(), myTestFixture.getEditor(), myTestFixture.getFile()));
-    myTestFixture.launchAction(action);
-
+    final Project project = myTestFixture.getProject();
+    new WriteCommandAction.Simple(project, myTestFixture.getFile()) {
+      @Override
+      protected void run() throws Throwable {
+        ProblemDescriptor problemDescriptor = InspectionManager.getInstance(project).createProblemDescriptor(psiReference.getElement(), "foo",
+                                                                                               fixes,
+                                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                               true);
+        fixes[0].applyFix(project, problemDescriptor);
+      }
+    }.execute();
     myTestFixture.checkResultByFile(file + "_after." + ext);
   }
 

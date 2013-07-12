@@ -16,6 +16,7 @@
 package com.intellij.xml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -46,7 +47,7 @@ public abstract class XmlUndefinedElementFixProvider {
    * providers should be asked
    */
   @Nullable
-  public IntentionAction[] createFixes(final @NotNull XmlTag tag) {
+  public LocalQuickFix[] createFixes(final @NotNull XmlTag tag) {
     return null;
   }
 }

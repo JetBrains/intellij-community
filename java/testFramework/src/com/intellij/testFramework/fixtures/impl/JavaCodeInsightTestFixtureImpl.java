@@ -26,6 +26,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,7 +89,16 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
 
   @Override
   public void tearDown() throws Exception {
-    ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches
-    super.tearDown();
+    try {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches
+        }
+      });
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

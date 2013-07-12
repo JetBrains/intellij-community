@@ -261,7 +261,51 @@ class A {
 }''', false, false, false, CUR_METHOD, false, null)
   }
 
+  void testGStringInjection() {
+    doTest('''\
+class GroovyLightProjectDescriptor  {
+    public void configureModule() {
+        print ("$<selection>mockGroovy2_1LibraryName</selection>!/");
+    }
 
+    def getMockGroovy2_1LibraryName() {''}
+}
+''', '''\
+class GroovyLightProjectDescriptor  {
+    def f
+
+    public void configureModule() {
+        f = mockGroovy2_1LibraryName
+        print ("${f}!/");
+    }
+
+    def getMockGroovy2_1LibraryName() {''}
+}
+''', false, false, false, CUR_METHOD)
+  }
+
+  void testGStringInjection2() {
+    doTest('''\
+class GroovyLightProjectDescriptor  {
+    public void configureModule() {
+        print ("$<selection>mockGroovy2_1LibraryName</selection>.bytes!/");
+    }
+
+    def getMockGroovy2_1LibraryName() {''}
+}
+''', '''\
+class GroovyLightProjectDescriptor  {
+    def f
+
+    public void configureModule() {
+        f = mockGroovy2_1LibraryName
+        print ("${f.bytes}!/");
+    }
+
+    def getMockGroovy2_1LibraryName() {''}
+}
+''', false, false, false, CUR_METHOD)
+  }
 
 
   private void doTest(final boolean isStatic,

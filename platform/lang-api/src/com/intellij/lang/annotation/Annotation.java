@@ -122,7 +122,8 @@ public final class Annotation implements Segment {
     registerFix(fix,range, null);
   }
 
-  public void registerFix(@NotNull LocalQuickFix fix, TextRange range, HighlightDisplayKey key, @NotNull ProblemDescriptor problemDescriptor) {
+  public void registerFix(@NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key,
+                          @NotNull ProblemDescriptor problemDescriptor) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }

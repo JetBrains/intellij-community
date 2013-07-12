@@ -100,7 +100,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
 
     final ArrayList<TemplateImpl> result = ContainerUtil.newArrayList();
     for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-      if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(template, contextTypes)) {
+      if (!template.isDeactivated() && TemplateManagerImpl.isApplicable(template, contextTypes)) {
         result.add(template);
       }
     }

@@ -34,6 +34,8 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" exported="" />
     <orderEntry type="module" module-name="external-system-api" />
+    <orderEntry type="library" name="asm4" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
   <component name="copyright">
     <Base>

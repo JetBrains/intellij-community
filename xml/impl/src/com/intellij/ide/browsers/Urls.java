@@ -22,7 +22,7 @@ public final class Urls {
   public static final CharMatcher SLASH_MATCHER = CharMatcher.is('/');
 
   // about ";" see WEB-100359
-  private static final Pattern URI_PATTERN = Pattern.compile("^(?:([^:/?#]+)://)?([^/?#]*)([^?#;]*)(.*)");
+  private static final Pattern URI_PATTERN = Pattern.compile("^([^:/?#]+)://([^/?#]*)([^?#;]*)(.*)");
 
   @NotNull
   public static Url newFromEncoded(@NotNull String url) {

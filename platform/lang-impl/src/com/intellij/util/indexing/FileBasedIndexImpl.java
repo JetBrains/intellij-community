@@ -612,9 +612,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull final ID<K, ?> indexId,
-                                                                                       @NotNull final KeyDescriptor<K> keyDescriptor,
-                                                                                       @NotNull MemoryIndexStorage<K, ?> storage)
+  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull final ID<K, ?> indexId,
+                                                                                      @NotNull final KeyDescriptor<K> keyDescriptor,
+                                                                                      @NotNull MemoryIndexStorage<K, ?> storage)
     throws IOException {
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
     final Ref<Boolean> isBufferingMode = new Ref<Boolean>(false);

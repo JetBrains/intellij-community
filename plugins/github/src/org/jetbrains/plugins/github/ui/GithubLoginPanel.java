@@ -24,6 +24,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -42,6 +43,10 @@ public class GithubLoginPanel {
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
   private JCheckBox mySavePasswordCheckBox;
+  private JComboBox myAuthTypeComboBox;
+
+  private final static String AUTH_PASSWORD = "Password";
+  private final static String AUTH_TOKEN = "Token";
 
   public GithubLoginPanel(final GithubLoginDialog dialog) {
     DocumentListener listener = new DocumentAdapter() {
@@ -62,6 +67,10 @@ public class GithubLoginPanel {
     });
     mySignupTextField.setBackground(UIUtil.TRANSPARENT_COLOR);
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+    myAuthTypeComboBox.addItem(AUTH_PASSWORD);
+    myAuthTypeComboBox.addItem(AUTH_TOKEN);
+
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
       mySavePasswordCheckBox.setVisible(false);
@@ -73,27 +82,39 @@ public class GithubLoginPanel {
     return myPane;
   }
 
-  public void setHost(final String host) {
+  public void setHost(@NotNull String host) {
     myHostTextField.setText(host);
   }
 
-  public void setLogin(final String login) {
+  public void setLogin(@NotNull String login) {
     myLoginTextField.setText(login);
   }
 
-  public void setPassword(final String password) {
-    myPasswordField.setText(password);
+  public void setAuthType(@NotNull GithubAuthData.AuthType type) {
+    switch (type) {
+      case BASIC:
+        myAuthTypeComboBox.setSelectedItem(AUTH_PASSWORD);
+        break;
+      case TOKEN:
+        myAuthTypeComboBox.setSelectedItem(AUTH_TOKEN);
+        break;
+      case ANONYMOUS:
+        myAuthTypeComboBox.setSelectedItem(AUTH_PASSWORD);
+    }
   }
 
+  @NotNull
   public String getHost() {
     return myHostTextField.getText().trim();
   }
 
+  @NotNull
   public String getLogin() {
     return myLoginTextField.getText().trim();
   }
 
-  public String getPassword() {
+  @NotNull
+  private String getPassword() {
     return String.valueOf(myPasswordField.getPassword());
   }
 
@@ -107,7 +128,11 @@ public class GithubLoginPanel {
 
   @NotNull
   public GithubAuthData getAuthData() {
-    return new GithubAuthData(getHost(), getLogin(), getPassword());
+    Object selected = myAuthTypeComboBox.getSelectedItem();
+    if (selected == AUTH_PASSWORD) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
+    if (selected == AUTH_TOKEN) return GithubAuthData.createTokenAuth(getHost(), getLogin(), getPassword());
+    GithubUtil.LOG.error("GithubLoginPanel illegal selection: anonymous AuthData created");
+    return GithubAuthData.createAnonymous(getHost(), getLogin());
   }
 }
 

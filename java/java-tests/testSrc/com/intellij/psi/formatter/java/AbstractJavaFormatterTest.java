@@ -39,6 +39,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -129,35 +130,47 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     doTextTest(Action.REFORMAT, text, textAfter);
   }
 
-  public void doTextTest(final Action action, final String text, String textAfter) throws IncorrectOperationException {
+  public void doTextTest(@NotNull final Action action, @NotNull final String text, @NotNull String textAfter) throws IncorrectOperationException {
     final PsiFile file = createFile("A.java", text);
-
-    if (myLineRange != null) {
-      final DocumentImpl document = new DocumentImpl(text);
-      myTextRange =
-        new TextRange(document.getLineStartOffset(myLineRange.getStartOffset()), document.getLineEndOffset(myLineRange.getEndOffset()));
-    }
-
-    /*
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            performFormatting(file);
-          }
-        });
-      }
-    }, null, null);
-
-    assertEquals(prepareText(textAfter), prepareText(file.getText()));
-
-
-    */
-
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
     final Document document = manager.getDocument(file);
+    if (document == null) {
+      fail("Document is null");
+      return;
+    }
+    replaceAndProcessDocument(action, text, file, document);
+    assertEquals(textAfter, document.getText());
+    manager.commitDocument(document);
+    assertEquals(textAfter, file.getText());
+  }
 
+  public void formatEveryoneAndCheckIfResultEqual(@NotNull final String...before) {
+    assert before.length > 1;
+    final PsiFile file = createFile("A.java", "");
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+    final Document document = manager.getDocument(file);
+    String afterFirst = replaceAndProcessDocument(Action.REFORMAT, before[0], file, document);
+    for (String nextBefore: before) {
+      assertEquals(afterFirst, replaceAndProcessDocument(Action.REFORMAT, nextBefore, file, document));
+    }
+  }
 
+  @NotNull
+  private String replaceAndProcessDocument(@NotNull final Action action,
+                                           @NotNull final String text,
+                                           @NotNull final PsiFile file,
+                                           @Nullable final Document document) throws IncorrectOperationException
+  {
+    if (document == null) {
+      fail("Don't expect the document to be null");
+      return null;
+    }
+    if (myLineRange != null) {
+      final DocumentImpl doc = new DocumentImpl(text);
+      myTextRange =
+        new TextRange(doc.getLineStartOffset(myLineRange.getStartOffset()), doc.getLineEndOffset(myLineRange.getEndOffset()));
+    }
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
@@ -181,15 +194,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       }
     }, action == Action.REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
 
-
-    if (document == null) {
-      fail("Don't expect the document to be null");
-      return;
-    }
-    assertEquals(textAfter, document.getText());
-    manager.commitDocument(document);
-    assertEquals(textAfter, file.getText());
-
+    return document.getText();
   }
 
   public void doMethodTest(@NonNls final String before, @NonNls final String after) throws Exception {

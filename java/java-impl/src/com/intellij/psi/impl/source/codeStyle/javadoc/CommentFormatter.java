@@ -15,16 +15,21 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,7 +64,7 @@ public class CommentFormatter {
     processElementComment(psiElement);
   }
 
-  private void processElementComment(PsiElement psiElement) {
+  private void processElementComment(@Nullable PsiElement psiElement) {
     if (psiElement instanceof PsiClass) {
       String newCommentText = formatClassComment((PsiClass)psiElement);
       replaceDocComment(newCommentText, (PsiDocCommentOwner)psiElement);
@@ -77,7 +82,7 @@ public class CommentFormatter {
     }
   }
 
-  private void replaceDocComment(String newCommentText, final PsiDocCommentOwner psiDocCommentOwner) {
+  private void replaceDocComment(@Nullable String newCommentText, @NotNull final PsiDocCommentOwner psiDocCommentOwner) {
     final PsiDocComment oldComment = psiDocCommentOwner.getDocComment();
     if (newCommentText != null) newCommentText = stripSpaces(newCommentText);
     if (newCommentText == null || oldComment == null || newCommentText.equals(oldComment.getText())) {
@@ -99,7 +104,7 @@ public class CommentFormatter {
 
   private static String stripSpaces(String text) {
     String[] lines = LineTokenizer.tokenize(text.toCharArray(), false);
-    StringBuffer buf = new StringBuffer(text.length());
+    StringBuilder buf = new StringBuilder(text.length());
     for (int i = 0; i < lines.length; i++) {
       if (i > 0) buf.append('\n');
       buf.append(rTrim(lines[i]));
@@ -117,7 +122,7 @@ public class CommentFormatter {
   }
 
   @Nullable
-  private String formatClassComment(PsiClass psiClass) {
+  private String formatClassComment(@NotNull PsiClass psiClass) {
     final String info = getOrigCommentInfo(psiClass);
     if (info == null) return null;
 
@@ -126,7 +131,7 @@ public class CommentFormatter {
   }
 
   @Nullable
-  private String formatMethodComment(PsiMethod psiMethod) {
+  private String formatMethodComment(@NotNull PsiMethod psiMethod) {
     final String info = getOrigCommentInfo(psiMethod);
     if (info == null) return null;
 
@@ -135,7 +140,7 @@ public class CommentFormatter {
   }
 
   @Nullable
-  private String formatFieldComment(PsiField psiField) {
+  private String formatFieldComment(@NotNull PsiField psiField) {
     final String info = getOrigCommentInfo(psiField);
     if (info == null) return null;
 
@@ -149,8 +154,9 @@ public class CommentFormatter {
    * @param element the specified element
    * @return text chunk
    */
+  @Nullable
   private static String getOrigCommentInfo(PsiDocCommentOwner element) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     PsiElement e = element.getFirstChild();
     if (!(e instanceof PsiComment)) {
       // no comments for this element
@@ -188,39 +194,38 @@ public class CommentFormatter {
   }
 
   /**
-   * For the specified element returns its indentation
-   * 
-   * @param element the specified element
-   * @return indentation as string
+   * Computes indentation of PsiClass, PsiMethod and PsiField elements after formatting
+   * @param element PsiClass or PsiMethod or PsiField
+   * @return indentation size
    */
-  private static String getIndent(PsiElement element) {
-    PsiElement e = element.getFirstChild();
-    PsiWhiteSpace lastWS = null;
-    for (; ; e = e.getNextSibling()) {
-      if (e instanceof PsiWhiteSpace) {
-        lastWS = (PsiWhiteSpace)e;
-      }
-      else if (e instanceof PsiComment) {
-        lastWS = null;
-      }
-      else {
+  private int getIndentSpecial(@NotNull PsiElement element) {
+    assert(element instanceof PsiClass ||
+           element instanceof PsiField ||
+           element instanceof PsiMethod);
+
+    int indentSize = mySettings.getIndentSize(JavaFileType.INSTANCE);
+    boolean doNotIndentTopLevelClassMembers = mySettings.getCommonSettings(JavaLanguage.INSTANCE).DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS;
+
+    int indent = 0;
+    PsiClass top = PsiUtil.getTopLevelClass(element);
+    while (top != null && !element.isEquivalentTo(top)) {
+      if (doNotIndentTopLevelClassMembers && element.getParent().isEquivalentTo(top)) {
         break;
       }
+      element = element.getParent();
+      indent += indentSize;
     }
 
-    e = lastWS == null ? element.getPrevSibling() : lastWS;
-    if (!(e instanceof PsiWhiteSpace)) return "";
-    PsiWhiteSpace ws = (PsiWhiteSpace)e;
-    String t = ws.getText();
-    int l = t.length();
-    int i = l;
-    while (--i >= 0) {
-      char ch = t.charAt(i);
-      if (ch == '\n' || ch == '\r') break;
-    }
-    if (i < 0) return t;
-    i++;
-    if (i == l) return "";
-    return t.substring(i);
+    return indent;
+  }
+
+  /**
+   * Used while formatting javadocs. We need precise element indentation after formatting to wrap comments correctly.
+   * Used only for PsiClass, PsiMethod and PsiFields.
+   * @return indent which would be used for the given element when it's formatted according to the current code style settings
+   */
+  @NotNull
+  private String getIndent(@NotNull PsiElement element) {
+    return StringUtil.repeatSymbol(' ', getIndentSpecial(element));
   }
 }

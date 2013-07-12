@@ -164,6 +164,34 @@ public abstract class AbstractIndentParser implements PsiParser {
     }
   }
 
+  protected void advanceUntil(TokenSet tokenSet) {
+    while (getTokenType() != null && !isNewLine() && !tokenSet.contains(getTokenType())) {
+      advance();
+    }
+  }
+
+  protected void advanceUntilEol() {
+    advanceUntil(TokenSet.EMPTY);
+  }
+
+  protected void errorUntil(TokenSet tokenSet, String message) {
+    PsiBuilder.Marker errorMarker = mark();
+    advanceUntil(tokenSet);
+    errorMarker.error(message);
+  }
+
+  protected void errorUntilEol(String message) {
+    PsiBuilder.Marker errorMarker = mark();
+    advanceUntilEol();
+    errorMarker.error(message);
+  }
+
+  protected void expectEolOrEof() {
+    if (!isNewLine() && !eof()) {
+      errorUntilEol("End of line expected");
+    }
+  }
+
   protected abstract IElementType getIndentElementType();
   protected abstract IElementType getEolElementType();
 }

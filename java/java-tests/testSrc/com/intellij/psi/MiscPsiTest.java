@@ -1,6 +1,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -8,32 +9,28 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestCase;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-@PlatformTestCase.WrapInCommand
-public class MiscPsiTest extends PsiTestCase{
-  private VirtualFile myRoot;
-
+public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    myRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        runnable.run();
+      }
+    }.execute();
   }
 
   public void testCopyTextFile() throws Exception{
-    VirtualFile vFile = myRoot.createChildData(null, "Test.txt");
-    final String text = "1234567890";
-    vFile.setBinaryContent(text.getBytes());
+    String text = "1234567890";
+    PsiFile file = myFixture.addFileToProject("Test.txt", text);
 
-    VirtualFile vDir = myRoot.createChildDirectory(null, "dir");
+    VirtualFile vDir = myFixture.getTempDirFixture().findOrCreateDir("dir");
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    PsiFile file = myPsiManager.findFile(vFile);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertTrue(file instanceof PsiPlainTextFile);
-    PsiDirectory dir = myPsiManager.findDirectory(vDir);
+    PsiDirectory dir = getPsiManager().findDirectory(vDir);
     PsiFile fileCopy = (PsiFile)file.copy();
     fileCopy = (PsiFile) fileCopy.setName("NewTest.txt");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
@@ -41,21 +38,21 @@ public class MiscPsiTest extends PsiTestCase{
 
     assertEquals(text, new String(newFile.getVirtualFile().contentsToByteArray()));
     assertEquals(newFile.getVirtualFile().getModificationStamp(), newFile.getViewProvider().getModificationStamp());
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(newFile);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(newFile);
     assertEquals(newFile.getVirtualFile().getModificationStamp(), document.getModificationStamp());
   }
 
   public void testCopyBinaryFile() throws Exception{
-    VirtualFile vFile = myRoot.createChildData(null, "Test.xxx");
+    VirtualFile vFile = myFixture.addFileToProject("Test.xxx", "").getVirtualFile();
     final byte[] bytes = new byte[]{12,34,56,78,90,45,83,0x22,(byte)0xff, (byte)0xff, (byte)0xff, (byte)0xee};
     vFile.setBinaryContent(bytes);
 
-    VirtualFile vDir = myRoot.createChildDirectory(null, "dir");
+    VirtualFile vDir = myFixture.getTempDirFixture().findOrCreateDir("dir");
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    PsiFile file = myPsiManager.findFile(vFile);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiFile file = getPsiManager().findFile(vFile);
     assertTrue(file instanceof PsiBinaryFile);
-    PsiDirectory dir = myPsiManager.findDirectory(vDir);
+    PsiDirectory dir = getPsiManager().findDirectory(vDir);
     PsiFile fileCopy = (PsiFile)file.copy();
     fileCopy = (PsiFile) fileCopy.setName("NewTest.xxx");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
@@ -65,15 +62,14 @@ public class MiscPsiTest extends PsiTestCase{
   }
 
   public void testCopyBinaryToTextFile() throws Exception{
-    VirtualFile vFile = myRoot.createChildData(null, "Test.xxx");
     String text = "1234567890";
-    vFile.setBinaryContent(text.getBytes());
+    VirtualFile vFile = myFixture.addFileToProject("Test.xxx", text).getVirtualFile();
 
-    VirtualFile vDir = myRoot.createChildDirectory(null, "dir");
+    VirtualFile vDir = myFixture.getTempDirFixture().findOrCreateDir("dir");
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    PsiFile file = myPsiManager.findFile(vFile);
-    PsiDirectory dir = myPsiManager.findDirectory(vDir);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiFile file = getPsiManager().findFile(vFile);
+    PsiDirectory dir = getPsiManager().findDirectory(vDir);
     PsiFile fileCopy = (PsiFile)file.copy();
     fileCopy = (PsiFile) fileCopy.setName("NewTest.txt");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
@@ -85,12 +81,11 @@ public class MiscPsiTest extends PsiTestCase{
   }
 
   public void testSCR4212() throws Exception{
-    VirtualFile vFile = myRoot.createChildData(null, "Test.java");
     String text = "class A{{ return(Object)new String(); }}";
-    VfsUtil.saveText(vFile, text);
+    VirtualFile vFile = myFixture.addFileToProject("Test.java", text).getVirtualFile();
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(vFile);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiJavaFile file = (PsiJavaFile)getPsiManager().findFile(vFile);
     PsiClass aClass = file.getClasses()[0];
     PsiClassInitializer initializer = aClass.getInitializers()[0];
     PsiStatement statement = initializer.getBody().getStatements()[0];
@@ -116,17 +111,16 @@ public class MiscPsiTest extends PsiTestCase{
   }
 
   public void testSCR5929() throws Exception {
-    VirtualFile vFileA = myRoot.createChildData(null, "A.java");
     String text = "class A{ /** @see a.B */ }";
-    VfsUtil.saveText(vFileA, text);
+    VirtualFile vFileA = myFixture.addFileToProject("A.java", text).getVirtualFile();
 
-    VirtualFile dir = myRoot.createChildDirectory(null, "a");
+    VirtualFile dir = myFixture.getTempDirFixture().findOrCreateDir("a");
     VirtualFile vFileB = dir.createChildData(null, "B.java");
     text = "class B{}";
     VfsUtil.saveText(vFileB, text);
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    PsiFile fileA = myPsiManager.findFile(vFileA);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiFile fileA = getPsiManager().findFile(vFileA);
     PsiJavaFile fileACopy = (PsiJavaFile)fileA.copy();
     PsiClass aClass = fileACopy.getClasses()[0];
     aClass.setName("A2");
@@ -134,26 +128,25 @@ public class MiscPsiTest extends PsiTestCase{
   }
 
   public void testCopyClass() throws Exception {
-    VirtualFile vFile = myRoot.createChildData(null, "A.java");
     String text = "package aaa; class A{}";
-    VfsUtil.saveText(vFile, text);
+    VirtualFile vFile = myFixture.addFileToProject("A.java", text).getVirtualFile();
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    PsiFile file = myPsiManager.findFile(vFile);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiFile file = getPsiManager().findFile(vFile);
     PsiJavaFile fileACopy = (PsiJavaFile)file.copy();
     PsiClass aClass = fileACopy.getClasses()[0];
     aClass.setName("ANew");
     PsiFile newFile = (PsiFile)file.getContainingDirectory().add(fileACopy);
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(newFile);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(newFile);
     FileDocumentManager.getInstance().saveDocument(document);
     assertEquals(newFile.getVirtualFile().getModificationStamp(), newFile.getViewProvider().getModificationStamp());
     assertFalse(FileDocumentManager.getInstance().isFileModified(newFile.getVirtualFile()));
   }
 
   public void testSCR15954() throws Exception {
-    PsiJavaFile file = (PsiJavaFile)createFile("A.java", "class A{\nA(){}\n}");
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("A.java", "class A{\nA(){}\n}");
 
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
     Document document = psiDocumentManager.getDocument(file);
     document.insertString(document.getTextLength(), " "); // insert a trailing space to strip
     psiDocumentManager.commitAllDocuments();
@@ -186,6 +179,10 @@ public class MiscPsiTest extends PsiTestCase{
     });
 
     assertEquals("@A({ c})", annotation.getText());
+  }
+
+  private JavaPsiFacade getJavaFacade() {
+    return JavaPsiFacade.getInstance(getProject());
   }
 
   public void testJavaLangObjectSuperMethod() throws Exception {
@@ -231,7 +228,7 @@ public class MiscPsiTest extends PsiTestCase{
   }
 
   public void testDoNotExpandNestedChameleons() throws Exception {
-    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class A {{{}}}");
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A {{{}}}");
     file.getNode();
 
     PsiCodeBlock initializer = file.getClasses()[0].getInitializers()[0].getBody();
@@ -240,6 +237,11 @@ public class MiscPsiTest extends PsiTestCase{
     PsiCodeBlock nestedBlock = ((PsiBlockStatement)initializer.getStatements()[0]).getCodeBlock();
     assertTrue(assertInstanceOf(initializer.getNode(), LazyParseableElement.class).isParsed());
     assertFalse(assertInstanceOf(nestedBlock.getNode(), LazyParseableElement.class).isParsed());
+  }
+
+  public void testTypeCanonicalText() {
+    PsiType type = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("some .unknown. Foo<? extends String>", null);
+    assertEquals("some.unknown.Foo<? extends String>", type.getCanonicalText());
   }
 
 }

@@ -102,8 +102,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     // Create new one if not found exists
     GithubSettings settings = GithubSettings.getInstance();
     final GitHubRepository repository = new GitHubRepository(new GitHubRepositoryType());
-    repository.setUsername(settings.getLogin());
-    repository.setPassword(settings.getPassword());
+    repository.setAuthData(settings.getAuthData());
     repository.setRepoAuthor(author);
     repository.setRepoName(name);
     final ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>(Arrays.asList(allRepositories));

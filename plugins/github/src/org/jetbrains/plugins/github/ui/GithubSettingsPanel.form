@@ -15,9 +15,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <component id="c0234" class="javax.swing.JLabel">
         <constraints>
@@ -25,14 +22,6 @@
         </constraints>
         <properties>
           <text value="Login:"/>
-        </properties>
-      </component>
-      <component id="d7c6c" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Password:"/>
         </properties>
       </component>
       <component id="28ddd" class="javax.swing.JTextPane" binding="mySignupTextField">
@@ -48,7 +37,6 @@
         </properties>
         <clientProperties>
           <JEditorPane.honorDisplayProperties class="java.lang.Boolean" value="true"/>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
         </clientProperties>
       </component>
       <component id="9edbd" class="javax.swing.JPasswordField" binding="myPasswordField">
@@ -58,9 +46,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <component id="8a6dd" class="javax.swing.JButton" binding="myTestButton" default-binding="true">
         <constraints>
@@ -90,9 +75,15 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
+      </component>
+      <component id="be50e" class="javax.swing.JComboBox" binding="myAuthTypeComboBox">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <model/>
+          <toolTipText value=""/>
+        </properties>
       </component>
     </children>
   </grid>

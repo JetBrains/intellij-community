@@ -16,19 +16,25 @@
 
 package org.intellij.plugins.relaxNG.compact.psi.impl;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -49,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: 14.08.2007
  */
 public class RncNameImpl extends RncElementImpl implements RncName, PsiReference,
-        EmptyResolveMessageProvider, QuickFixProvider<RncNameImpl> {
+        EmptyResolveMessageProvider, LocalQuickFixProvider {
 
   private enum Kind {
     NAMESPACE, DATATYPES
@@ -140,10 +146,13 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return "Unresolved namespace prefix ''{0}''";
   }
 
-  public void registerQuickfix(HighlightInfo info, final RncNameImpl reference) {
-    if (reference.getPrefix() == null) return; // huh?
-
-    QuickFixAction.registerQuickFixAction(info, new CreateDeclFix(reference));
+  @Nullable
+  @Override
+  public LocalQuickFix[] getQuickFixes() {
+    if (getPrefix() != null) {
+      return new LocalQuickFix[] { new CreateDeclFix(this) };
+    }
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 
   private static class MyResolver extends BaseScopeProcessor {
@@ -187,7 +196,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     }
   }
 
-  public static class CreateDeclFix implements IntentionAction {
+  public static class CreateDeclFix implements LocalQuickFix {
     private final RncNameImpl myReference;
 
     public CreateDeclFix(RncNameImpl reference) {
@@ -195,7 +204,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     }
 
     @NotNull
-      public String getText() {
+    public String getName() {
       return getFamilyName() + " '" + myReference.getPrefix() + "'";
     }
 
@@ -204,11 +213,8 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       return "Create " + myReference.getKind().name().toLowerCase() + " declaration";
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return myReference.isValid();
-    }
-
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final String prefix = myReference.getPrefix();
       final PsiFileFactory factory = PsiFileFactory.getInstance(myReference.getProject());
       final RncFile psiFile = (RncFile)factory.createFileFromText("dummy.rnc",
@@ -237,13 +243,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
 
       CodeStyleManager.getInstance(e.getManager().getProject()).reformatNewlyAddedElement(blockNode, newNode);
 
-      final SmartPsiElementPointer<RncDecl> p = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(e);
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-
-      final RncDecl d = p.getElement();
-      assert d != null;
-
-      final PsiElement literal = d.getLastChild();
+      final PsiElement literal = e.getLastChild();
       assert literal != null;
 
       final ASTNode literalNode = literal.getNode();
@@ -252,34 +252,39 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       assert literalNode.getElementType() == RncTokenTypes.LITERAL;
 
       final int offset = literal.getTextRange().getStartOffset();
-      editor.getDocument().deleteString(literal.getTextRange().getStartOffset(), literal.getTextRange().getEndOffset());
 
-      final TemplateManager manager = TemplateManager.getInstance(project);
-      final Template t = manager.createTemplate("", "");
-      t.addTextSegment("\"");
-      final Expression expression = new Expression() {
-        public Result calculateResult(ExpressionContext context) {
-          return new TextResult("");
+      literal.delete();
+
+      VirtualFile virtualFile = myReference.getElement().getContainingFile().getVirtualFile();
+      if (virtualFile != null) {
+        Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, offset), true);
+        if (editor != null) {
+          RncDecl rncDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(e);
+
+          final TemplateManager manager = TemplateManager.getInstance(project);
+          final Template t = manager.createTemplate("", "");
+          t.addTextSegment(" \"");
+          final Expression expression = new Expression() {
+            public Result calculateResult(ExpressionContext context) {
+              return new TextResult("");
+            }
+
+            public Result calculateQuickResult(ExpressionContext context) {
+              return calculateResult(context);
+            }
+
+            public LookupItem[] calculateLookupItems(ExpressionContext context) {
+              return LookupItem.EMPTY_ARRAY;
+            }
+          };
+          t.addVariable("uri", expression, expression, true);
+          t.addTextSegment("\"");
+          t.addEndVariable();
+
+          editor.getCaretModel().moveToOffset(rncDecl.getTextRange().getEndOffset());
+          manager.startTemplate(editor, t);
         }
-
-        public Result calculateQuickResult(ExpressionContext context) {
-          return calculateResult(context);
-        }
-
-        public LookupItem[] calculateLookupItems(ExpressionContext context) {
-          return LookupItem.EMPTY_ARRAY;
-        }
-      };
-      t.addVariable("uri", expression, expression, true);
-      t.addTextSegment("\"");
-      t.addEndVariable();
-
-      editor.getCaretModel().moveToOffset(offset);
-      manager.startTemplate(editor, t);
-    }
-
-    public boolean startInWriteAction() {
-      return true;
+      }
     }
   }
 }

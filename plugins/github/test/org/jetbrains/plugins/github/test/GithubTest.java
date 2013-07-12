@@ -40,6 +40,7 @@ import git4idea.test.TestDialogManager;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import static org.junit.Assume.assumeNotNull;
@@ -72,9 +73,11 @@ public abstract class GithubTest extends UsefulTestCase {
 
   @NotNull private IdeaProjectTestFixture myProjectFixture;
 
+  @NotNull protected GithubAuthData myAuth;
   @NotNull protected String myHost;
   @NotNull protected String myLogin1;
   @NotNull protected String myLogin2;
+  @NotNull protected String myPassword;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GithubTest() {
@@ -111,13 +114,13 @@ public abstract class GithubTest extends UsefulTestCase {
       @NotNull
       @Override
       public String askPassword(@NotNull String url) {
-        return myGitHubSettings.getPassword();
+        return myPassword;
       }
 
       @NotNull
       @Override
       public String askUsername(@NotNull String url) {
-        return myGitHubSettings.getLogin();
+        return myLogin1;
       }
 
       @Override
@@ -145,15 +148,13 @@ public abstract class GithubTest extends UsefulTestCase {
   protected void setUp() throws Exception {
     final String host = System.getenv("idea.test.github.host");
     final String login1 = System.getenv("idea.test.github.login1");
-    final String password1 = System.getenv("idea.test.github.password1");
     final String login2 = System.getenv("idea.test.github.login2");
-    //final String password2 = System.getenv("idea.test.github.password2");
+    final String password = System.getenv("idea.test.github.password1");
 
     // TODO change to assert when a stable Github testing server is ready
     assumeNotNull(host);
     assumeNotNull(login1);
-    assumeNotNull(password1);
-    //assumeNotNull(password2);
+    assumeNotNull(password);
 
     super.setUp();
 
@@ -166,14 +167,14 @@ public abstract class GithubTest extends UsefulTestCase {
     myGitSettings = GitVcsSettings.getInstance(myProject);
     myGitSettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
 
-    myGitHubSettings = GithubSettings.getInstance();
-    myGitHubSettings.setHost(host);
-    myGitHubSettings.setLogin(login1);
-    myGitHubSettings.setPassword(password1);
-
     myHost = host;
     myLogin1 = login1;
     myLogin2 = login2;
+    myPassword = password;
+    myAuth = GithubAuthData.createBasicAuth(host, login1, password);
+
+    myGitHubSettings = GithubSettings.getInstance();
+    myGitHubSettings.setAuthData(myAuth, false);
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
