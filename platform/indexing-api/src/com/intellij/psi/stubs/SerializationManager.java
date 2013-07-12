@@ -68,4 +68,5 @@ public abstract class SerializationManager {
     }
   }
 
+  public abstract String internString(String string);
 }
