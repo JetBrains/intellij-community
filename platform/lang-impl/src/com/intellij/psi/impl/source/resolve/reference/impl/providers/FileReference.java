@@ -17,15 +17,12 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -35,20 +32,14 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.FilteringProcessor;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,28 +55,6 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
 
   public static final FileReference[] EMPTY = new FileReference[0];
-
-  private static final TObjectHashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiElement>() {
-    @Override
-
-    public int computeHashCode(final PsiElement object) {
-      if (object instanceof PsiNamedElement) {
-        final String name = ((PsiNamedElement)object).getName();
-        if (name != null) {
-          return name.hashCode();
-        }
-      }
-      return object.hashCode();
-    }
-
-    @Override
-    public boolean equals(final PsiElement o1, final PsiElement o2) {
-      if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
-        return Comparing.equal(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
-      }
-      return o1.equals(o2);
-    }
-  };
 
   private final int myIndex;
   private TextRange myRange;
@@ -268,60 +237,22 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @Override
   @NotNull
   public Object[] getVariants() {
-    final String s = getText();
-    if (s != null && s.equals("/")) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    FileReferenceCompletion completion = FileReferenceCompletion.getInstance();
+    if (completion != null) {
+      return completion.getFileReferenceCompletionVariants(this);
     }
-
-    final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector =
-      new CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem>();
-    final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
-      @Override
-      public boolean execute(@NotNull PsiFileSystemItem fileSystemItem) {
-        return new FilteringProcessor<PsiFileSystemItem>(myFileReferenceSet.getReferenceCompletionFilter(), collector).process(
-          getOriginalFile(fileSystemItem));
-      }
-    };
-    for (PsiFileSystemItem context : getContexts()) {
-      for (final PsiElement child : context.getChildren()) {
-        if (child instanceof PsiFileSystemItem) {
-          processor.execute((PsiFileSystemItem)child);
-        }
-      }
-    }
-    final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
-    final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(set);
-
-    final Object[] variants = new Object[candidates.length];
-    for (int i = 0; i < candidates.length; i++) {
-      variants[i] = createLookupItem(candidates[i]);
-    }
-    if (!myFileReferenceSet.isUrlEncoded()) {
-      return variants;
-    }
-    List<Object> encodedVariants = new ArrayList<Object>(variants.length);
-    for (int i = 0; i < candidates.length; i++) {
-      final PsiElement element = candidates[i];
-      if (element instanceof PsiNamedElement) {
-        final PsiNamedElement psiElement = (PsiNamedElement)element;
-        String name = psiElement.getName();
-        final String encoded = encode(name, psiElement);
-        if (encoded == null) continue;
-        if (!encoded.equals(name)) {
-          final Icon icon = psiElement.getIcon(Iconable.ICON_FLAG_READ_STATUS | Iconable.ICON_FLAG_VISIBILITY);
-          LookupElementBuilder item = FileInfoManager.getFileLookupItem(candidates[i], encoded, icon);
-          encodedVariants.add(item.withTailText(" (" + name + ")"));
-        }
-        else {
-          encodedVariants.add(variants[i]);
-        }
-      }
-    }
-    return ArrayUtil.toObjectArray(encodedVariants);
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  /**
+   * Generates a lookup item for the specified completion variant candidate.
+   *
+   * @param candidate the element to show in the completion list.
+   * @return the lookup item representation (PsiElement, LookupElement or String). If returns null,
+   * {@code FileInfoManager.getFileLookupItem(candidate)} will be used to create the lookup item.
+   */
   protected Object createLookupItem(PsiElement candidate) {
-    return FileInfoManager.getFileLookupItem(candidate);
+    return null;
   }
 
   /**
