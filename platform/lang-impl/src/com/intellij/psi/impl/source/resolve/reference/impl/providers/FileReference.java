@@ -387,9 +387,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
         }
       }
       if (root == null) {
-        PsiFileSystemItem _dstItem = FileReferenceHelperRegistrar.NullFileReferenceHelper.INSTANCE.getPsiFileSystemItem(project, dstVFile);
+        PsiFileSystemItem _dstItem = NullFileReferenceHelper.INSTANCE.getPsiFileSystemItem(project, dstVFile);
         if (_dstItem != null) {
-          PsiFileSystemItem _root = FileReferenceHelperRegistrar.NullFileReferenceHelper.INSTANCE.findRoot(project, dstVFile);
+          PsiFileSystemItem _root = NullFileReferenceHelper.INSTANCE.findRoot(project, dstVFile);
           if (_root != null) {
             root = _root;
             dstItem = _dstItem;

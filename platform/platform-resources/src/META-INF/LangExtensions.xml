@@ -727,6 +727,8 @@
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
+    <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
+
     <projectConfigurable instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
     <projectConfigurable instance="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors" displayName="File Colors"/>
 
