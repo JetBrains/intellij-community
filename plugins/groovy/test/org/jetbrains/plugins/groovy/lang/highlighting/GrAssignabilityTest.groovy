@@ -780,7 +780,7 @@ interface X {
   def foo()
 }
 
-X <warning>x</warining> = {print 2}
+X <warning>x</warning> = {print 2}
 ''')
   }
 }
