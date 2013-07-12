@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.data;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -7,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
+import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
@@ -28,6 +30,7 @@ import java.util.List;
  */
 public abstract class DataGetter<T extends CommitParents> {
 
+  private static final Logger LOG = VcsLogLogger.LOG;
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
@@ -50,6 +53,8 @@ public abstract class DataGetter<T extends CommitParents> {
     if (node != null) {
       return getCommitData(node);
     }
+    // TODO this can happen if an old hash was requested before the whole log was loaded
+    LOG.error("Node for hash " + commitHash + " was not found");
     return myCache.get(commitHash);
   }
 
