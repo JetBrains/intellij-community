@@ -1823,4 +1823,36 @@ def foo(Util util) {
         }
       ''', CompletionType.SMART)
   }
+
+  void testDollarInGString() {
+    doCompletionTest('''\
+class Autocompletion {
+    def reportDir = '/'
+    def reportDirectory = '/'
+    def fileName = "$reportD<caret>${File.separator}"
+}
+''', '''\
+class Autocompletion {
+    def reportDir = '/'
+    def reportDirectory = '/'
+    def fileName = "$reportDir<caret>${File.separator}"
+}
+''', '\t', CompletionType.BASIC)
+  }
+
+  void testDollarInGString2() {
+    doCompletionTest('''\
+class Autocompletion {
+    def reportDir = '/'
+    def fileName = "$report<caret>D${File.separator}"
+}
+''', '''\
+class Autocompletion {
+    def reportDir = '/'
+    def fileName = "$reportDir<caret>${File.separator}"
+}
+''', '\t', CompletionType.BASIC)
+  }
+
+
 }
