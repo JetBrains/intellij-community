@@ -27,4 +27,12 @@ public class UnnecessaryToString {
     void builder(StringBuilder builder, Object o) {
         builder.append(o.toString());
     }
+
+  public static void main22(String[] args) {
+    foo(args[0].toString());
+  }
+
+  static void foo(String s) {
+    System.out.println(s);
+  }
 }
