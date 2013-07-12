@@ -61,6 +61,16 @@ public abstract class FileTypeRegistry {
   public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 
   /**
+   * Returns the file type for the specified extension.
+   * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
+   *
+   * @param extension The extension for which the file type is requested, not including the leading '.'.
+   * @return The file type instance, or {@link UnknownFileType#INSTANCE} if corresponding file type not found
+   */
+  @NotNull
+  public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
+
+  /**
    * Tries to detect whether the file is text or not by analyzing its content.
    * @param file to analyze
    * @return {@link com.intellij.openapi.fileTypes.PlainTextFileType} if file looks like text,
