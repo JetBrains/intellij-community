@@ -204,6 +204,7 @@ libraryLicense(name: "JSch", libraryName: "JSch", version: "0.1.49", license: "B
 libraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: "CPL 1.0", url: "http://junit.org/")
 libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.8", license: "CPL 1.0", url: "http://junit.org/")
 libraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0", url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://logging.apache.org/license.html")
+libraryLicense(name: "markdownj", libraryName: "markdownj", version: "0.4.2", license: "New BSD", url: "https://code.google.com/p/markdownj/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "Maven", version: "2.2.1", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "plexus-util", version: "2.0.6", license: "Apache 2.0", url: "http://maven.apache.org/", libraryNames:['plexus-utils-2.0.6.jar'], licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "aether-api", version: "1.11", libraryNames: ["aether-api-1.11.jar"], license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
