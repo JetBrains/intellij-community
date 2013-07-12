@@ -46,8 +46,8 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable, VcsCo
 
   public void apply() throws ConfigurationException {
     if (mySettingsPane != null) {
-        mySettings.setAuthData(mySettingsPane.getAuthData(), true);
-        mySettingsPane.resetCredentialsModification();
+      mySettings.setCredentials(mySettingsPane.getHost(), mySettingsPane.getLogin(), mySettingsPane.getAuthData(), true);
+      mySettingsPane.resetCredentialsModification();
     }
   }
 

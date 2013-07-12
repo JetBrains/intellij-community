@@ -80,15 +80,15 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.AUTH_TYPE;
   }
 
-  public void setHost(@NotNull String host) {
+  private void setHost(@NotNull String host) {
     myState.HOST = StringUtil.notNullize(host, GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
-  public void setLogin(@NotNull String login) {
+  private void setLogin(@NotNull String login) {
     myState.LOGIN = login;
   }
 
-  public void setAuthType(@NotNull AuthType authType) {
+  private void setAuthType(@NotNull AuthType authType) {
     myState.AUTH_TYPE = authType;
   }
 
@@ -164,16 +164,14 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
       case BASIC:
         return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
       case TOKEN:
-        return GithubAuthData.createTokenAuth(getHost(), getLogin(), getPassword());
+        return GithubAuthData.createTokenAuth(getHost(), getPassword());
       case ANONYMOUS:
       default:
         throw new IllegalStateException("GithubSettings: getAuthData - wrong AuthType: " + getAuthType());
     }
   }
 
-  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
-    setHost(auth.getHost());
-    setLogin(auth.getLogin());
+  private void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
     setAuthType(auth.getAuthType());
 
     switch (auth.getAuthType()) {
@@ -189,5 +187,11 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
       default:
         throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + getAuthType());
     }
+  }
+
+  public void setCredentials(@NotNull String host, @NotNull String login, @NotNull GithubAuthData auth, boolean rememberPassword) {
+    setHost(host);
+    setLogin(login);
+    setAuthData(auth, rememberPassword);
   }
 }

@@ -134,7 +134,7 @@ public class GithubUtil {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     boolean valid = false;
     try {
-      valid = checkAuthData(auth);
+      valid = checkAuthData(auth, GithubSettings.getInstance().getLogin());
     }
     catch (IOException e) {
       LOG.error("Connection error", e);
@@ -147,7 +147,7 @@ public class GithubUtil {
     }
   }
 
-  public static boolean checkAuthData(@NotNull GithubAuthData auth) throws IOException {
+  public static boolean checkAuthData(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
       return false;
     }
@@ -172,19 +172,19 @@ public class GithubUtil {
     }
 
     try {
-      return testConnection(auth);
+      return testConnection(auth, login);
     }
     catch (AuthenticationException e) {
       return false;
     }
   }
 
-  private static boolean testConnection(@NotNull GithubAuthData auth) throws IOException {
+  private static boolean testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     GithubUser user = getCurrentUserInfo(auth);
     if (user == null) {
       return false;
     }
-    if (!user.getLogin().equalsIgnoreCase(auth.getLogin())) {
+    if (login != null && !login.equalsIgnoreCase(user.getLogin())) {
       return false;
     }
     return true;

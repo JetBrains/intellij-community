@@ -78,7 +78,7 @@ public class GithubSettingsPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          if (GithubUtil.checkAuthData(getAuthData())) {
+          if (GithubUtil.checkAuthData(getAuthData(), getLogin())) {
             Messages.showInfoMessage(myPane, "Connection successful", "Success");
           }
           else {
@@ -224,7 +224,7 @@ public class GithubSettingsPanel {
     }
     Object selected = myAuthTypeComboBox.getSelectedItem();
     if (AUTH_PASSWORD.equals(selected)) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
-    if (AUTH_TOKEN.equals(selected)) return GithubAuthData.createTokenAuth(getHost(), getLogin(), getPassword());
+    if (AUTH_TOKEN.equals(selected)) return GithubAuthData.createTokenAuth(getHost(), getPassword());
     LOG.error("GithubSettingsPanel: illegal selection: anonymous AuthData created");
     return GithubAuthData.createAnonymous(getHost());
   }
