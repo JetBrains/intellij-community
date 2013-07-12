@@ -338,6 +338,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Override
   public boolean isTopControlFlowOwner() {
-    return true;
+    return !(getParent() instanceof GrStringInjection);
   }
 }

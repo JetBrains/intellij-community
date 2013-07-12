@@ -1647,4 +1647,20 @@ def foo(x) {
 ''', PsiMethod)
 
   }
+
+  void testInferredTypeInsideGStringInjection() {
+    resolveByText('''\
+class A {}
+class B extends A {
+    String bar() {'bar'}
+}
+
+def foo(A b) {
+    if (b instanceof B) {
+        doSomethingElse("Message: ${b.ba<caret>r()}")
+
+    }
+}
+''', PsiMethod)
+  }
 }
