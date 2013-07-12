@@ -20,7 +20,6 @@ import com.intellij.util.text.DateFormatUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.tasks.GitHubRepository;
 
 import java.util.Date;
 
@@ -29,10 +28,12 @@ import java.util.Date;
  */
 public class GitHubComment extends SimpleComment {
   @Nullable private final String myGravatarId;
+  @NotNull private final String myHost;
 
-  public GitHubComment(@Nullable Date date, @Nullable String author, @NotNull String text, @Nullable String gravatarId) {
+  public GitHubComment(@Nullable Date date, @Nullable String author, @NotNull String text, @Nullable String gravatarId, @NotNull String host) {
     super(date, author, text);
     myGravatarId = gravatarId;
+    myHost = host;
   }
 
   public void appendTo(StringBuilder builder) {
@@ -44,7 +45,7 @@ public class GitHubComment extends SimpleComment {
       }
     builder.append("</td><td>");
     if (getAuthor() != null) {
-      builder.append("<b>Author:</b> <a href=\"").append(GitHubRepository.GITHUB_HOST).append('/')
+      builder.append("<b>Author:</b> <a href=\"").append(myHost).append('/')
              .append(getAuthor()).append("\">").append(getAuthor()).append("</a><br>");
     }
     if (getDate() != null) {

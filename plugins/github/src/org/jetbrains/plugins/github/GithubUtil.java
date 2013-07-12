@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +42,7 @@ import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,7 +58,7 @@ public class GithubUtil {
   public static final Logger LOG = Logger.getInstance("github");
 
   @Nullable
-  public static GithubAuthData runAndGetValidAuth(@NotNull Project project,
+  public static GithubAuthData runAndGetValidAuth(@Nullable Project project,
                                                   @NotNull ProgressIndicator indicator,
                                                   @NotNull ThrowableConsumer<GithubAuthData, IOException> task) throws IOException {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
@@ -86,7 +89,7 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static <T> T runWithValidAuth(@NotNull Project project,
+  public static <T> T runWithValidAuth(@Nullable Project project,
                                        @NotNull ProgressIndicator indicator,
                                        @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
@@ -115,7 +118,7 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static GithubAuthData getValidAuthData(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+  public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
@@ -130,11 +133,11 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static GithubAuthData getValidAuthDataFromConfig(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+  public static GithubAuthData getValidAuthDataFromConfig(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     boolean valid = false;
     try {
-      valid = checkAuthData(auth);
+      valid = checkAuthData(auth, GithubSettings.getInstance().getLogin());
     }
     catch (IOException e) {
       LOG.error("Connection error", e);
@@ -147,22 +150,47 @@ public class GithubUtil {
     }
   }
 
-  public static boolean checkAuthData(GithubAuthData auth) throws IOException {
+  public static boolean checkAuthData(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
       return false;
     }
 
+    switch (auth.getAuthType()) {
+      case BASIC:
+        GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
+        assert basicAuth != null;
+        if (StringUtil.isEmptyOrSpaces(basicAuth.getLogin()) || StringUtil.isEmptyOrSpaces(basicAuth.getPassword())) {
+          return false;
+        }
+        break;
+      case TOKEN:
+        GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+        assert tokenAuth != null;
+        if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
+          return false;
+        }
+        break;
+      case ANONYMOUS:
+        return false;
+    }
+
     try {
-      return testConnection(auth);
+      return testConnection(auth, login);
     }
     catch (AuthenticationException e) {
       return false;
     }
   }
 
-  private static boolean testConnection(@NotNull GithubAuthData auth) throws IOException {
+  private static boolean testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     GithubUser user = getCurrentUserInfo(auth);
-    return user != null;
+    if (user == null) {
+      return false;
+    }
+    if (login != null && !login.equalsIgnoreCase(user.getLogin())) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -265,6 +293,32 @@ public class GithubUtil {
       return null;
     }
     return result.getAsJsonObject();
+  }
+
+  @Nullable
+  public static String getScopedToken(@NotNull GithubAuthData auth, @NotNull Collection<String> scopes, @Nullable String note)
+    throws IOException {
+    String path = "/authorizations";
+
+    JsonObject request = new JsonObject();
+    JsonArray json = new JsonArray();
+    for (String scope : scopes) {
+      json.add(new JsonPrimitive(scope));
+    }
+    request.add("scopes", json);
+    request.addProperty("note", note != null ? note : "Intellij GitHub plugin");
+
+    JsonElement result = GithubApiUtil.postRequest(auth, path, request.toString());
+
+    if (result == null || !result.isJsonObject()) {
+      return null;
+    }
+    JsonElement token = result.getAsJsonObject().get("token");
+    if (token == null) {
+      return null;
+    }
+
+    return token.getAsString();
   }
 
   @Nullable

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.IOException;
 
 /**
@@ -55,7 +55,7 @@ public class GithubSettingsPanel {
   private JTextField myHostTextField;
   private JComboBox myAuthTypeComboBox;
 
-  private boolean myPasswordModified;
+  private boolean myCredentialsModified;
 
   public GithubSettingsPanel(@NotNull final GithubSettings settings) {
     mySettings = settings;
@@ -77,9 +77,8 @@ public class GithubSettingsPanel {
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        GithubAuthData auth = isPasswordModified() ? getAuthData() : mySettings.getAuthData();
         try {
-          if (GithubUtil.checkAuthData(auth)) {
+          if (GithubUtil.checkAuthData(getAuthData(), getLogin())) {
             Messages.showInfoMessage(myPane, "Connection successful", "Success");
           }
           else {
@@ -91,24 +90,74 @@ public class GithubSettingsPanel {
           Messages.showErrorDialog(myPane, String.format("Can't login to %s: %s", getHost(), GithubUtil.getErrorTextFromException(ex)),
                                    "Login Failure");
         }
-        //TODO: do we really need "setPassword(password);" here?
       }
     });
 
     myPasswordField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
-        myPasswordModified = true;
+        myCredentialsModified = true;
       }
 
       @Override
       public void removeUpdate(DocumentEvent e) {
-        myPasswordModified = true;
+        myCredentialsModified = true;
       }
 
       @Override
       public void changedUpdate(DocumentEvent e) {
-        myPasswordModified = true;
+        myCredentialsModified = true;
+      }
+    });
+
+    DocumentListener passwordEraser = new DocumentListener() {
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        if (!myCredentialsModified) {
+          setPassword("");
+          myCredentialsModified = true;
+        }
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        if (!myCredentialsModified) {
+          setPassword("");
+          myCredentialsModified = true;
+        }
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+        if (!myCredentialsModified) {
+          setPassword("");
+          myCredentialsModified = true;
+        }
+      }
+    };
+
+    myHostTextField.getDocument().addDocumentListener(passwordEraser);
+    myLoginTextField.getDocument().addDocumentListener(passwordEraser);
+
+    myPasswordField.addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (!myCredentialsModified) {
+          setPassword("");
+          myCredentialsModified = true;
+        }
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+      }
+    });
+
+    myAuthTypeComboBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        setPassword("");
+        myCredentialsModified = true;
       }
     });
   }
@@ -145,6 +194,15 @@ public class GithubSettingsPanel {
     myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
   }
 
+  @NotNull
+  public GithubAuthData.AuthType getAuthType() {
+    Object selected = myAuthTypeComboBox.getSelectedItem();
+    if (AUTH_PASSWORD.equals(selected)) return GithubAuthData.AuthType.BASIC;
+    if (AUTH_TOKEN.equals(selected)) return GithubAuthData.AuthType.TOKEN;
+    LOG.error("GithubSettingsPanel: illegal selection: basic AuthType returned");
+    return GithubAuthData.AuthType.BASIC;
+  }
+
   public void setAuthType(@NotNull final GithubAuthData.AuthType type) {
     switch (type) {
       case BASIC:
@@ -161,9 +219,12 @@ public class GithubSettingsPanel {
 
   @NotNull
   public GithubAuthData getAuthData() {
+    if (!myCredentialsModified) {
+      return mySettings.getAuthData();
+    }
     Object selected = myAuthTypeComboBox.getSelectedItem();
-    if (selected == AUTH_PASSWORD) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
-    if (selected == AUTH_TOKEN) return GithubAuthData.createTokenAuth(getHost(), getLogin(), getPassword());
+    if (AUTH_PASSWORD.equals(selected)) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
+    if (AUTH_TOKEN.equals(selected)) return GithubAuthData.createTokenAuth(getHost(), getPassword());
     LOG.error("GithubSettingsPanel: illegal selection: anonymous AuthData created");
     return GithubAuthData.createAnonymous(getHost());
   }
@@ -174,15 +235,18 @@ public class GithubSettingsPanel {
     setLogin(login);
     setPassword(login.isEmpty() ? "" : DEFAULT_PASSWORD_TEXT);
     setAuthType(mySettings.getAuthType());
-    resetPasswordModification();
+    resetCredentialsModification();
   }
 
-  public boolean isPasswordModified() {
-    return myPasswordModified;
+  public boolean isModified() {
+    return !Comparing.equal(mySettings.getHost(), getHost()) ||
+           !Comparing.equal(mySettings.getLogin(), getLogin()) ||
+           !Comparing.equal(mySettings.getAuthType(), getAuthType()) ||
+           myCredentialsModified;
   }
 
-  public void resetPasswordModification() {
-    myPasswordModified = false;
+  public void resetCredentialsModification() {
+    myCredentialsModified = false;
   }
 }
 

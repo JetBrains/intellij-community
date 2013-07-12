@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Comment;
@@ -40,13 +41,8 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private Pattern myPattern;
   private String myRepoAuthor;
   private String myRepoName;
-  private GithubAuthData myAuth = GithubAuthData.createAnonymous(GITHUB_HOST);
-
-  public static final String GITHUB_HOST = "https://github.com";
-
-  {
-    setUrl(GITHUB_HOST);
-  }
+  private String myToken;
+  private GithubAuthData myAuthData;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public GitHubRepository() {}
@@ -55,14 +51,11 @@ public class GitHubRepository extends BaseRepositoryImpl {
     super(other);
     setRepoName(other.myRepoName);
     setRepoAuthor(other.myRepoAuthor);
+    setToken(other.myToken);
   }
 
   public GitHubRepository(GitHubRepositoryType type) {
     super(type);
-  }
-
-  public void setAuthData(@NotNull GithubAuthData auth) {
-    myAuth = auth;
   }
 
   @Override
@@ -89,13 +82,10 @@ public class GitHubRepository extends BaseRepositoryImpl {
     return getIssues(query);
   }
 
-  @Override
-  public String getUrl() {
-    return GITHUB_HOST;
-  }
-
   @NotNull
   private Task[] getIssues(@Nullable String query) throws Exception {
+    initAuthData();
+
     String path;
     boolean noQuery = StringUtil.isEmpty(query);
     if (!noQuery) {
@@ -106,7 +96,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
       path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues";
     }
 
-    JsonElement response = GithubApiUtil.getRequest(myAuth, path);
+    JsonElement response = GithubApiUtil.getRequest(myAuthData, path);
 
     JsonArray issuesArray;
     if (noQuery) {
@@ -261,19 +251,20 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   private Comment[] fetchComments(final String id) throws Exception {
+    initAuthData();
     String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id + "/comments";
-    JsonElement response = GithubApiUtil.getRequest(myAuth, path);
+    JsonElement response = GithubApiUtil.getRequest(myAuthData, path);
     if (response == null || !response.isJsonArray()) {
       throw new Exception(String.format("Couldn't get information about issue %s%nResponse: %s", id, response));
     }
-    return createComments(response.getAsJsonArray());
+    return createComments(response.getAsJsonArray(), getUrl());
   }
 
-  private static Comment[] createComments(final JsonArray response) {
+  private static Comment[] createComments(final JsonArray response, @NotNull String host) {
     final List<Comment> comments = new ArrayList<Comment>();
 
     for (JsonElement element : response) {
-      Comment comment = parseComment(element);
+      Comment comment = parseComment(element, host);
       if (comment != null) {
         comments.add(comment);
       }
@@ -285,7 +276,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  private static Comment parseComment(JsonElement element) {
+  private static Comment parseComment(JsonElement element, @NotNull String host) {
     JsonObject commentObject = element.getAsJsonObject();
     final JsonElement text = commentObject.get("body");
     if (text == null) {
@@ -311,8 +302,8 @@ public class GitHubRepository extends BaseRepositoryImpl {
     catch (ParseException e) {
       LOG.warn(e);
     }
-    return new GitHubComment(date.get(), author == null ? null : author.getAsString(),
-                             text.getAsString(), gravatar == null ? null : gravatar.getAsString());
+    return new GitHubComment(date.get(), author == null ? null : author.getAsString(), text.getAsString(),
+                             gravatar == null ? null : gravatar.getAsString(), host);
   }
 
   @Nullable
@@ -330,8 +321,9 @@ public class GitHubRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(String id) throws Exception {
+    initAuthData();
     String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id;
-    JsonElement response = GithubApiUtil.getRequest(myAuth, path);
+    JsonElement response = GithubApiUtil.getRequest(myAuthData, path);
     if (response == null || !response.isJsonObject()) {
       throw new Exception(String.format("Couldn't get information about issue %s%nResponse: %s", id, response));
     }
@@ -360,13 +352,30 @@ public class GitHubRepository extends BaseRepositoryImpl {
     myRepoAuthor = repoAuthor;
   }
 
+  public String getToken() {
+    return myToken;
+  }
+
+  public void setToken(@NotNull String token) {
+    myToken = token;
+  }
+
+  private void initAuthData() {
+    if (myAuthData == null) {
+      myAuthData = GithubAuthData.createTokenAuth(getUrl(), getToken());
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
     if (!(o instanceof GitHubRepository)) return false;
 
     GitHubRepository that = (GitHubRepository)o;
-    if (getRepoName() != null ? !getRepoName().equals(that.getRepoName()) : that.getRepoName() != null) return false;
+    if (!Comparing.equal(getRepoAuthor(), that.getRepoAuthor())) return false;
+    if (!Comparing.equal(getRepoName(), that.getRepoName())) return false;
+    if (!Comparing.equal(getToken(), that.getToken())) return false;
+
     return true;
   }
 
