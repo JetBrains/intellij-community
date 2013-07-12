@@ -39,6 +39,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.Splash;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -322,10 +323,14 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(AWTEvent e) {
-    if (e instanceof InputEvent && !IdeaApplication.isLoaded()) {
-      // input event processing requires application components to be instantiated
-      ((InputEvent)e).consume();
-      return;
+    if (!IdeaApplication.isLoaded() && e instanceof InputEvent) {
+      Object source = e.getSource();
+      //keep in mind the IntelliJ Server login dialog
+      if (source instanceof Splash || !(source instanceof Window)) {
+        // input event processing requires application components to be instantiated
+        ((InputEvent)e).consume();
+        return;
+      }
     }
 
     e = mapEvent(e);

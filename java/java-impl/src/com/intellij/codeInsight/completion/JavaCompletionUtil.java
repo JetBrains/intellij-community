@@ -362,6 +362,7 @@ public class JavaCompletionUtil {
       PsiElement ctx = createContextWithXxxVariable(element, composite);
       javaReference = (PsiReferenceExpression) JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("xxx.xxx", ctx);
       qualifierType = runtimeQualifier;
+      processor.setQualifierType(qualifierType);
     }
 
     javaReference.processVariants(processor);

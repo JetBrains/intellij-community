@@ -38,7 +38,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   private final IElementType myType;
   private volatile int myStartOffsetInParent = -1;
-  @NonNls protected static final String START_OFFSET_LOCK = new String("TreeElement.START_OFFSET_LOCK");
 
   public TreeElement(IElementType type) {
     myType = type;
@@ -117,34 +116,29 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     if (myParent == null) return -1;
     int offsetInParent = myStartOffsetInParent;
     if (offsetInParent != -1) return offsetInParent;
-    
-    synchronized (START_OFFSET_LOCK) {
-      TreeElement cur = this;
-      offsetInParent = myStartOffsetInParent;
-      if (offsetInParent != -1) return offsetInParent;
 
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
-      while (true) {
-        TreeElement prev = cur.getTreePrev();
-        if (prev == null) break;
-        cur = prev;
-        offsetInParent = cur.myStartOffsetInParent;
-        if (offsetInParent != -1) break;
-      }
-
-      if (offsetInParent == -1) {
-        cur.myStartOffsetInParent = offsetInParent = 0;
-      }
-
-      while (cur != this) {
-        TreeElement next = cur.getTreeNext();
-        offsetInParent += cur.getTextLength();
-        next.myStartOffsetInParent = offsetInParent;
-        cur = next;
-      }
-      return offsetInParent;
+    TreeElement cur = this;
+    while (true) {
+      TreeElement prev = cur.getTreePrev();
+      if (prev == null) break;
+      cur = prev;
+      offsetInParent = cur.myStartOffsetInParent;
+      if (offsetInParent != -1) break;
     }
+
+    if (offsetInParent == -1) {
+      cur.myStartOffsetInParent = offsetInParent = 0;
+    }
+
+    while (cur != this) {
+      TreeElement next = cur.getTreeNext();
+      offsetInParent += cur.getTextLength();
+      next.myStartOffsetInParent = offsetInParent;
+      cur = next;
+    }
+    return offsetInParent;
   }
 
   public int getTextOffset() {

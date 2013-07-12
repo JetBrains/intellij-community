@@ -52,5 +52,13 @@ public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
     manager.startTemplate(myFixture.getEditor(), template);
     myFixture.checkResult '<tag><selection><</selection><caret></tag>'
   }
+
+  public void "test insert CDATA by CD and tab"() {
+    myFixture.configureByText 'a.xml', '<tag><caret></tag>'
+    myFixture.type('CD\t')
+    myFixture.checkResult '''<tag><![CDATA[
+
+]]></tag>'''
+  }
   
 }

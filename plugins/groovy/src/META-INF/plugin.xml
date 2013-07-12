@@ -150,6 +150,7 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrBooleanTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrGenericTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureToSamConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
@@ -1414,6 +1415,7 @@
     <debugger.positionManagerFactory order="after groovyPositionManager"
                                      implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
     <codeStyle.ReferenceAdjuster language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.groovy.jarFinder.GroovyFindJarQuickFixProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

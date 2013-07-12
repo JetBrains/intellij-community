@@ -1859,7 +1859,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final BufferedImage buffer = getUserData(BUFFER);
       if (buffer != null) {
         final Rectangle rect = getContentComponent().getVisibleRect();
-        g.drawImage(buffer, null, rect.x, rect.y);
+        UIUtil.drawImage(g, buffer, null, rect.x, rect.y);
         return;
       }
     }

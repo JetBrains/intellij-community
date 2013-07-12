@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -515,8 +516,10 @@ public class GrStringUtil {
     final GrExpression expression = injection.getExpression();
     LOG.assertTrue(expression != null);
     final GroovyPsiElementFactory instance = GroovyPsiElementFactory.getInstance(injection.getProject());
-    final GrClosableBlock closure = instance.createClosureFromText("{" + expression.getText() + "}");
-    injection.getNode().replaceChild(expression.getNode(), closure.getNode());
+    final GrClosableBlock closure = instance.createClosureFromText("{foo}");
+    closure.getNode().replaceChild(closure.getStatements()[0].getNode(), expression.getNode());
+    injection.getNode().addChild(closure.getNode());
+    CodeEditUtil.setNodeGeneratedRecursively(expression.getNode(), true);
   }
 
   public static boolean checkGStringInjectionForUnnecessaryBraces(GrStringInjection injection) {

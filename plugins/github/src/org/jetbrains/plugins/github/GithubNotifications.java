@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 
@@ -98,22 +99,22 @@ public class GithubNotifications {
     LOG.warn(title + "; " + prefix + highlight + postfix + "; " + url);
   }
 
-  public static void showInfoDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showInfoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
     Messages.showInfoMessage(project, message, title);
     LOG.info(title + "; " + message);
   }
 
-  public static void showWarningDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showWarningDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
     Messages.showWarningDialog(project, message, title);
     LOG.warn(title + "; " + message);
   }
 
-  public static void showErrorDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
     Messages.showErrorDialog(project, message, title);
     LOG.warn(title + "; " + message);
   }
 
-  public static int showYesNoDialog(final @NotNull Project project, final @NotNull String title, final @NotNull String message) {
+  public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
     return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }
 }

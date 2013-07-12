@@ -424,7 +424,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
 
         String s = name.toLowerCase();
-        if (s.contains("idea") || s.contains("eclipse")) {
+        if (s.contains("idea")) {
           continue;
         }
 
@@ -447,7 +447,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     rootProjectTaskCandidates.forEachEntry(new TObjectIntProcedure<Pair<String, String>>() {
       @Override
       public boolean execute(Pair<String, String> p, int occurrenceNumber) {
-        if (occurrenceNumber >= modules.size() - 1) {
+        if (modules.size() == 1 || occurrenceNumber >= modules.size() - 1) {
           rootProjectTasks.add(new TaskData(GradleConstants.SYSTEM_ID, p.first, rootProjectPath, p.second));
         }
         return true;

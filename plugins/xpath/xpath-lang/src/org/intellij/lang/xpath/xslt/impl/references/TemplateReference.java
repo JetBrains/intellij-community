@@ -22,15 +22,9 @@
  */
 package org.intellij.lang.xpath.xslt.impl.references;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
-import org.intellij.lang.xpath.xslt.quickfix.CreateTemplateFix;
-import org.intellij.lang.xpath.xslt.util.NamedTemplateMatcher;
-
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.PsiPolyVariantReference;
@@ -41,53 +35,61 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
+import org.intellij.lang.xpath.xslt.quickfix.CreateTemplateFix;
+import org.intellij.lang.xpath.xslt.util.NamedTemplateMatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class TemplateReference extends AttributeReference implements EmptyResolveMessageProvider, QuickFixProvider<TemplateReference>, PsiPolyVariantReference {
-    private final String myName;
+class TemplateReference extends AttributeReference implements EmptyResolveMessageProvider, LocalQuickFixProvider, PsiPolyVariantReference {
+  private final String myName;
 
-    public TemplateReference(XmlAttribute attribute) {
-        super(attribute, createMatcher(attribute), false);
-        myName = attribute.getValue();
+  public TemplateReference(XmlAttribute attribute) {
+    super(attribute, createMatcher(attribute), false);
+    myName = attribute.getValue();
+  }
+
+  private static ResolveUtil.Matcher createMatcher(XmlAttribute attribute) {
+    return new NamedTemplateMatcher(PsiTreeUtil.getParentOfType(attribute, XmlDocument.class), attribute.getValue());
+  }
+
+  @NotNull
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
+    final PsiElement element = resolve();
+    if (element != null) {
+      return new ResolveResult[]{new PsiElementResolveResult(element)};
     }
 
-    private static ResolveUtil.Matcher createMatcher(XmlAttribute attribute) {
-        return new NamedTemplateMatcher(PsiTreeUtil.getParentOfType(attribute, XmlDocument.class), attribute.getValue());
-    }
-
-    @NotNull
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
-        final PsiElement element = resolve();
-        if (element != null) {
-            return new ResolveResult[]{ new PsiElementResolveResult(element) };
+    final XmlFile xmlFile = (XmlFile)getElement().getContainingFile();
+    if (xmlFile != null) {
+      final List<PsiElementResolveResult> targets = new SmartList<PsiElementResolveResult>();
+      XsltIncludeIndex.processBackwardDependencies(xmlFile, new Processor<XmlFile>() {
+        public boolean process(XmlFile xmlFile) {
+          final PsiElement e = ResolveUtil.resolve(new NamedTemplateMatcher(xmlFile.getDocument(), myName));
+          if (e != null) {
+            targets.add(new PsiElementResolveResult(e));
+          }
+          return true;
         }
-
-        final XmlFile xmlFile = (XmlFile)getElement().getContainingFile();
-        if (xmlFile != null) {
-            final List<PsiElementResolveResult> targets = new SmartList<PsiElementResolveResult>();
-            XsltIncludeIndex.processBackwardDependencies(xmlFile, new Processor<XmlFile>() {
-                public boolean process(XmlFile xmlFile) {
-                    final PsiElement e = ResolveUtil.resolve(new NamedTemplateMatcher(xmlFile.getDocument(), myName));
-                    if (e != null) {
-                        targets.add(new PsiElementResolveResult(e));
-                    }
-                    return true;
-                }
-            });
-            return targets.toArray(new ResolveResult[targets.size()]);
-        } else {
-            return ResolveResult.EMPTY_ARRAY;
-        }
+      });
+      return targets.toArray(new ResolveResult[targets.size()]);
     }
-
-    public void registerQuickfix(HighlightInfo highlightInfo, TemplateReference psiReference) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateTemplateFix(myAttribute.getParent(), myName));
+    else {
+      return ResolveResult.EMPTY_ARRAY;
     }
+  }
 
-    @NotNull
-    public String getUnresolvedMessagePattern() {
-        return "Cannot resolve template ''{0}''";
-    }
+  @Nullable
+  @Override
+  public LocalQuickFix[] getQuickFixes() {
+    return new LocalQuickFix[] { new CreateTemplateFix(myAttribute.getParent(), myName) };
+  }
+
+  @NotNull
+  public String getUnresolvedMessagePattern() {
+    return "Cannot resolve template ''{0}''";
+  }
 }

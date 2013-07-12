@@ -1,5 +1,5 @@
 /*
- * Copyright 0-2 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,34 +119,22 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return !superClass.isInterface();
   }
 
-  @NotNull
-  private static List<PsiMethod> overrideOrImplementMethod(PsiClass aClass,
-                                                       PsiMethod method,
-                                                       PsiSubstitutor substitutor,
-                                                       boolean toCopyJavaDoc,
-                                                       boolean insertOverrideIfPossible) throws IncorrectOperationException {
-    return overrideOrImplementMethod(aClass, method, substitutor, createDefaultDecorator(aClass, method, toCopyJavaDoc, insertOverrideIfPossible));
-  }
-
   public static List<PsiMethod> overrideOrImplementMethod(PsiClass aClass,
-      PsiMethod method,
-      PsiSubstitutor substitutor,
-      Consumer<PsiMethod> decorator) throws IncorrectOperationException {
+                                                          PsiMethod method,
+                                                          PsiSubstitutor substitutor,
+                                                          boolean toCopyJavaDoc,
+                                                          boolean insertOverrideIfPossible) throws IncorrectOperationException {
     if (!method.isValid() || !substitutor.isValid()) return Collections.emptyList();
 
     List<PsiMethod> results = new ArrayList<PsiMethod>();
     for (final MethodImplementor implementor : getImplementors()) {
       final PsiMethod[] prototypes = implementor.createImplementationPrototypes(aClass, method);
-      if (implementor.isBodyGenerated()) {
-        ContainerUtil.addAll(results, prototypes);
-      }
-      else {
-        for (PsiMethod prototype : prototypes) {
-          decorator.consume(prototype);
-          results.add(prototype);
-        }
+      for (PsiMethod prototype : prototypes) {
+        implementor.createDecorator(aClass, method, toCopyJavaDoc, insertOverrideIfPossible).consume(prototype);
+        results.add(prototype);
       }
     }
+
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
@@ -163,6 +151,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
           defaultValue.getParent().deleteChildRange(defaultKeyword, defaultValue);
         }
       }
+      Consumer<PsiMethod> decorator = createDefaultDecorator(aClass, method, toCopyJavaDoc, insertOverrideIfPossible);
       decorator.consume(result);
       results.add(result);
     }

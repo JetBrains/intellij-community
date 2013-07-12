@@ -846,6 +846,11 @@ public class TemplateState implements Disposable {
     else {
       if (!myTemplate.isSelectionTemplate() && !myTemplate.isInline()) { //do not move caret to the end of range for selection templates
         offset = myTemplateRange.getEndOffset();
+      } else {
+        int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
+        if (selectionSegment >= 0 && mySegments.getSegmentStart(selectionSegment) == mySegments.getSegmentEnd(selectionSegment)) {
+          offset = mySegments.getSegmentStart(selectionSegment);
+        }
       }
     }
 

@@ -23,10 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.apache.commons.httpclient.methods.*;
@@ -35,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Kirill Likhodedov
@@ -184,6 +183,34 @@ public class GithubApiUtil {
     }
     catch (JsonSyntaxException jse) {
       throw new IOException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+    }
+  }
+
+  @Nullable
+  public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
+    HttpMethod method = null;
+    try {
+      method = doREST(auth, "", null, HttpVerb.GET);
+
+      if (method.getStatusCode() >= 400 && method.getStatusCode() <= 404) {
+        throw new AuthenticationException("Request response: " + method.getStatusText());
+      }
+
+      Header header = method.getResponseHeader("X-OAuth-Scopes");
+      if (header == null) {
+        return null;
+      }
+
+      Collection<String> scopes = new ArrayList<String>();
+      for (HeaderElement elem : header.getElements()) {
+        scopes.add(elem.getName());
+      }
+      return scopes;
+    }
+    finally {
+      if (method != null) {
+        method.releaseConnection();
+      }
     }
   }
 }

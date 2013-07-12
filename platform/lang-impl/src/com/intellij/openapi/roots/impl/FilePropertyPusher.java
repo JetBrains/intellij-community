@@ -33,7 +33,7 @@ import java.io.IOException;
 public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
-  void initExtra(Project project, MessageBus bus, Engine languageLevelUpdater);
+  void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater);
   @NotNull
   Key<T> getFileDataKey();
   boolean pushDirectoriesOnly();
@@ -42,19 +42,19 @@ public interface FilePropertyPusher<T> {
   T getDefaultValue();
 
   @Nullable
-  T getImmediateValue(Project project, VirtualFile file);
+  T getImmediateValue(@NotNull Project project, @Nullable VirtualFile file);
 
   @Nullable
-  T getImmediateValue(Module module);
+  T getImmediateValue(@NotNull Module module);
 
-  boolean acceptsFile(VirtualFile file);
+  boolean acceptsFile(@NotNull VirtualFile file);
 
-  void persistAttribute(VirtualFile fileOrDir, @NotNull T value) throws IOException;
+  void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
-  public interface Engine {
+  interface Engine {
     void pushAll();
-    void pushRecursively(final VirtualFile vile, final Project project);
+    void pushRecursively(VirtualFile vile, Project project);
   }
 
-  void afterRootsChanged(Project project);
+  void afterRootsChanged(@NotNull Project project);
 }

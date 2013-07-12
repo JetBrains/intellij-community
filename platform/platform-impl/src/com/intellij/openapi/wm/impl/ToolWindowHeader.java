@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,13 +297,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     Image image;
     if (isActive()) {
-      if (myActiveImage == null || myActiveImage.getHeight() != r.height || type != myImageType) {
+      if (myActiveImage == null || /*myActiveImage.getHeight() != r.height ||*/ type != myImageType) {
         myActiveImage = drawToBuffer(true, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
       
       image = myActiveImage;
     } else {
-      if (myImage == null || myImage.getHeight() != r.height || type != myImageType) {
+      if (myImage == null || /*myImage.getHeight() != r.height ||*/ type != myImageType) {
         myImage = drawToBuffer(false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
       
@@ -314,7 +314,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     Rectangle clipBounds = clip.getBounds();
     for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x+=150) {
-      g2d.drawImage(image, x, 0, null);
+      UIUtil.drawImage(g, image, x, 0, null);
     }
   }
   

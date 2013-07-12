@@ -125,23 +125,25 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
-  private static <T> T findPusherValuesUpwards(final Project project, final VirtualFile dir, FilePropertyPusher<T> pusher, T moduleValue) {
+  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<T> pusher, T moduleValue) {
     final T value = pusher.getImmediateValue(project, dir);
     if (value != null) return value;
     if (moduleValue != null) return moduleValue;
     final VirtualFile parent = dir.getParent();
     if (parent != null) return findPusherValuesUpwards(project, parent, pusher);
-    return pusher.getDefaultValue();
+    T projectValue = pusher.getImmediateValue(project, null);
+    return projectValue != null? projectValue : pusher.getDefaultValue();
   }
 
-  private static <T> T findPusherValuesUpwards(final Project project, final VirtualFile dir, FilePropertyPusher<T> pusher) {
+  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<T> pusher) {
     final T userValue = dir.getUserData(pusher.getFileDataKey());
     if (userValue != null) return userValue;
     final T value = pusher.getImmediateValue(project, dir);
     if (value != null) return value;
     final VirtualFile parent = dir.getParent();
     if (parent != null) return findPusherValuesUpwards(project, parent, pusher);
-    return pusher.getDefaultValue();
+    T projectValue = pusher.getImmediateValue(project, null);
+    return projectValue != null ? projectValue : pusher.getDefaultValue();
   }
 
   public void pushAll(final FilePropertyPusher... pushers) {

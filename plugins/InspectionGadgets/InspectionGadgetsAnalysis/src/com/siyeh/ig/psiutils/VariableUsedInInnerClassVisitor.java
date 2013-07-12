@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
   private boolean inInnerClass = false;
 
   public VariableUsedInInnerClassVisitor(@NotNull PsiVariable variable) {
-    super();
     this.variable = variable;
   }
 
@@ -37,19 +36,27 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClass(@NotNull PsiClass psiClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
     if (usedInInnerClass) {
       return;
     }
     final boolean wasInInnerClass = inInnerClass;
-    inInnerClass = true;
-    super.visitClass(psiClass);
+    if (!inInnerClass) {
+      inInnerClass = true;
+      PsiElement child = aClass.getLBrace();
+      while (child != null) {
+        child.accept(this);
+        child = child.getNextSibling();
+      }
+    } else {
+      inInnerClass = true;
+      super.visitClass(aClass);
+    }
     inInnerClass = wasInInnerClass;
   }
 
   @Override
-  public void visitReferenceExpression(
-    @NotNull PsiReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
     if (usedInInnerClass) {
       return;
     }

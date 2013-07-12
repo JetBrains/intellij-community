@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -520,7 +520,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     protected void paintComponent(final Graphics g) {
       final Graphics2D g2 = (Graphics2D) g;
       if (shadow != null) {
-        g2.drawImage(shadow, 0, 0, null);
+        UIUtil.drawImage(g2, shadow, 0, 0, null);
       }
 
       super.paintComponent(g);

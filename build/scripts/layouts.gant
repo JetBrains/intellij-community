@@ -83,6 +83,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "InspectionGadgetsAnalysis",
     "InspectionGadgetsPlugin",
     "IntentionPowerPackPlugin",
+    "generate-tostring",
           ].flatten()
 
   ant.patternset(id: "resources.included") {
@@ -251,7 +252,6 @@ public def layoutCommunityPlugins(String home) {
         module("ant-jps-plugin")
       }
     }
-    layoutPlugin("ToString", "generate-tostring", "toString")
     layoutPlugin("uiDesigner", "ui-designer", "uiDesigner") {
       dir("jps") {
         jar("ui-designer-jps-plugin.jar") {
@@ -718,8 +718,6 @@ def layout_core(String home, String target) {
       module("extensions")
       module("java-psi-api")
       module("java-psi-impl")
-      module("analysis-api")
-      module("analysis-impl")
     }
 
     jar("annotations.jar") {

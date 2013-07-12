@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,11 +131,11 @@ public class EditorFragmentComponent extends JPanel {
       @Override
       protected void paintComponent(Graphics graphics) {
         if (markersImage != null) {
-          graphics.drawImage(markersImage, 0, 0, null);
-          graphics.drawImage(textImage, rowHeader.getWidth(), 0, null);
+          UIUtil.drawImage(graphics, markersImage, 0, 0, null);
+          UIUtil.drawImage(graphics, textImage, rowHeader.getWidth(), 0, null);
         }
         else {
-          graphics.drawImage(textImage, 0, 0, null);
+          UIUtil.drawImage(graphics, textImage, 0, 0, null);
         }
       }
     };

@@ -16,10 +16,9 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -81,7 +80,7 @@ public class XsltReferenceContributor {
     }
   }
 
-  static class NamespacePrefixReference extends PrefixReference implements QuickFixProvider {
+  static class NamespacePrefixReference extends PrefixReference implements LocalQuickFixProvider {
     public NamespacePrefixReference(PsiElement element) {
       super((XmlAttribute)element.getParent());
     }
@@ -92,17 +91,21 @@ public class XsltReferenceContributor {
       return XsltNamespaceContext.getPrefixes(myAttribute).toArray();
     }
 
+    @Nullable
     @Override
-    public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+    public LocalQuickFix[] getQuickFixes() {
       final XmlAttributeValue valueElement = myAttribute.getValueElement();
       if (valueElement != null) {
-        QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText()) {
-          @Override
-          public boolean showHint(@NotNull Editor editor) {
-            return false;
+        return new LocalQuickFix[] {
+          new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText()) {
+            @Override
+            public boolean showHint(@NotNull Editor editor) {
+              return false;
+            }
           }
-        });
+        };
       }
+      return LocalQuickFix.EMPTY_ARRAY;
     }
   }
 

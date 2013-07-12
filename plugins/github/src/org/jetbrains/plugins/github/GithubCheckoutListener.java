@@ -16,6 +16,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+// TODO: remove ?
+
 /**
  * @author oleg
  * @date 10/26/10
@@ -28,14 +30,14 @@ public class GithubCheckoutListener implements CheckoutListener {
 
   @Override
   public void processOpenedProject(final Project lastOpenedProject) {
-    final Pair<String, String> info = getGithubProjectInfo(lastOpenedProject);
-    if (info != null) {
-      processProject(lastOpenedProject, info.first, info.second);
-    }
+    //final GithubUserAndRepository info = getGithubProjectInfo(lastOpenedProject);
+    //if (info != null) {
+    //  processProject(lastOpenedProject, info.getUserName(), info.getRepositoryName());
+    //}
   }
 
   @Nullable
-  private static Pair<String, String> getGithubProjectInfo(final Project project) {
+  private static GithubUserAndRepository getGithubProjectInfo(final Project project) {
     final GitRepository gitRepository = GithubUtil.getGitRepository(project, null);
     if (gitRepository == null) {
       return null;
@@ -46,28 +48,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     if (url == null) {
       return null;
     }
-    int i = url.lastIndexOf("/");
-    if (i == -1) {
-      return null;
-    }
-    String name = url.substring(i + 1);
-    if (name.endsWith(".git")) {
-      name = name.substring(0, name.length() - 4);
-    }
-    url = url.substring(0, i);
-    // We don't want https://
-    if (url.startsWith("https://")) {
-      url = url.substring(8);
-    }
-    i = url.lastIndexOf(':');
-    if (i == -1) {
-      i = url.lastIndexOf('/');
-    }
-    if (i == -1) {
-      return null;
-    }
-    final String author = url.substring(i + 1);
-    return Pair.create(author, name);
+    return GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
   }
 
   private static void processProject(final Project openedProject, final String author, final String name) {
@@ -100,9 +81,8 @@ public class GithubCheckoutListener implements CheckoutListener {
       }
     }
     // Create new one if not found exists
-    GithubSettings settings = GithubSettings.getInstance();
     final GitHubRepository repository = new GitHubRepository(new GitHubRepositoryType());
-    repository.setAuthData(settings.getAuthData());
+    repository.setToken("");
     repository.setRepoAuthor(author);
     repository.setRepoName(name);
     final ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>(Arrays.asList(allRepositories));

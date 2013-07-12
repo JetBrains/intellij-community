@@ -162,7 +162,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     for (LibraryDependencyData dependencyData : toImport) {
       switch (dependencyData.getLevel()) {
         case MODULE:
-          @SuppressWarnings("ConstantConditions") Library moduleLib = moduleLibraryTable.createLibrary(null);
+          @SuppressWarnings("ConstantConditions") Library moduleLib = moduleLibraryTable.createLibrary(dependencyData.getName());
           Library.ModifiableModel libModel = moduleLib.getModifiableModel();
           try {
             Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(dependencyData.getTarget());

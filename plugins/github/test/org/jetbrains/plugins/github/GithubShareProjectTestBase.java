@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitRepository;
@@ -42,7 +44,8 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
     Random rnd = new Random();
-    PROJECT_NAME = "new_project_from_share_test_" + rnd.nextLong();
+    long time = Clock.getTime();
+    PROJECT_NAME = "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
     registerHttpAuthService();
   }
 

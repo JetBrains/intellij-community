@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       cached.put(type, image);
     }
 
-    g.drawImage(image, 0, 0, null);
+    UIUtil.drawImage(g, image, 0, 0, null);
 
     Icon icon = item.getIcon();
     final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
@@ -127,6 +127,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   private BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
     int w = item.getWidth();
     int h = item.getHeight();
+    int offset = (w - getDecorationOffset());
+    int h2 = h / 2;
 
     BufferedImage result = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
@@ -137,20 +139,22 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     Graphics2D g2 = result.createGraphics();
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+
     Path2D.Double shape = new Path2D.Double();
     shape.moveTo(0, 0);
-    shape.lineTo(w - getDecorationOffset(), 0);
-    shape.lineTo(w, h / 2);
-    shape.lineTo(w - getDecorationOffset(), h);
+
+    shape.lineTo(offset, 0);
+    shape.lineTo(w, h2);
+    shape.lineTo(offset, h);
     shape.lineTo(0, h);
     shape.closePath();
 
     Path2D.Double endShape = new Path2D.Double();
-    endShape.moveTo(w - getDecorationOffset(), 0);
+    endShape.moveTo(offset, 0);
     endShape.lineTo(w, 0);
     endShape.lineTo(w, h);
-    endShape.lineTo(w - getDecorationOffset(), h);
-    endShape.lineTo(w, h / 2);
+    endShape.lineTo(offset, h);
+    endShape.lineTo(w, h2);
     endShape.closePath();
 
     if (bg != null && toolbarVisible) {
@@ -164,13 +168,13 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (selected) {
       Path2D.Double focusShape = new Path2D.Double();
       if (toolbarVisible || floating) {
-        focusShape.moveTo(w-getDecorationOffset(), 0);
+        focusShape.moveTo(offset, 0);
       } else {
         focusShape.moveTo(0, 0);
-        focusShape.lineTo(w - getDecorationOffset(), 0);
+        focusShape.lineTo(offset, 0);
       }
-      focusShape.lineTo(w - 1, h / 2);
-      focusShape.lineTo(w - getDecorationOffset(), h - 1);
+      focusShape.lineTo(w - 1, h2);
+      focusShape.lineTo(offset, h - 1);
       if (!toolbarVisible && !floating) {
         focusShape.lineTo(0, h - 1);
 
@@ -193,14 +197,14 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
       Path2D.Double endFocusShape = new Path2D.Double();
       if (toolbarVisible || floating) {
-        endFocusShape.moveTo(w - getDecorationOffset(), 0);
+        endFocusShape.moveTo(offset, 0);
       } else {
         endFocusShape.moveTo(w, 0);
-        endFocusShape.lineTo(w - getDecorationOffset(), 0);
+        endFocusShape.lineTo(offset, 0);
       }
 
-      endFocusShape.lineTo(w - 1, h / 2);
-      endFocusShape.lineTo(w - getDecorationOffset(), h - 1);
+      endFocusShape.lineTo(w - 1, h2);
+      endFocusShape.lineTo(offset, h - 1);
 
       if (!toolbarVisible && !floating) {
         endFocusShape.lineTo(w, h - 1);
@@ -211,7 +215,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     }
 
 
-    g2.translate(w - getDecorationOffset(), 0);
+    g2.translate(offset, 0);
     int off = getDecorationOffset() - 1;
 
     if (!floating || !item.isLastElement()) {

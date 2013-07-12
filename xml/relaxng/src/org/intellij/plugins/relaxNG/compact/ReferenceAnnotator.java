@@ -17,14 +17,10 @@
 package org.intellij.plugins.relaxNG.compact;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
@@ -33,7 +29,6 @@ import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -110,16 +105,14 @@ public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
     }
     annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
 
-    if (reference instanceof QuickFixProvider) {
-      HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(annotation.getStartOffset(), annotation.getEndOffset()).create();
-
-      ((QuickFixProvider)reference).registerQuickfix(info, reference);
-
-      List<Pair<HighlightInfo.IntentionActionDescriptor,TextRange>> ranges = info.quickFixActionRanges;
-      if (ranges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
-          annotation.registerFix(pair.first.getAction(), pair.second);
+    if (reference instanceof LocalQuickFixProvider) {
+      LocalQuickFix[] fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
+      if (fixes != null) {
+        InspectionManager inspectionManager = InspectionManager.getInstance(reference.getElement().getProject());
+        for (LocalQuickFix fix : fixes) {
+          ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(reference.getElement(), annotation.getMessage(), fix,
+                                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, true);
+          annotation.registerFix(fix, null, null, descriptor);
         }
       }
     }

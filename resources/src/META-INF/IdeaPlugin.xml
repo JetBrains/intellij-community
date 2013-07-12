@@ -39,6 +39,10 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -214,6 +218,9 @@
                     interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
     <extensionPoint name="psi.clsDecompiledFileProvider"
                     interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
+
+    <extensionPoint name="java.compilerOutputIndex" area="IDEA_PROJECT"
+                    interface="com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex"/>
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
   </extensionPoints>
 
@@ -1424,6 +1431,32 @@
     <lang.commenter language="SPI" implementationClass="com.intellij.spi.SPICommenter"/>
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
+
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.MethodsUsageIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.bigram.BigramMethodsUsageIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.singleton.TwinVariablesIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.singleton.ParamsInMethodOccurrencesIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.quickInheritance.QuickMethodsIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.quickInheritance.QuickInheritanceIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.callingLocation.MethodCallingLocationIndex"/>
+    <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
+                            implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor"/>
+    <weigher order="first" key="completion" id="methodsChainsCompletionContributor"
+             implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsWeigher"/>
+
+    <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
+                        serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
+    <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringContext"
+                        serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringContext"/>
+
+    <localInspection language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not override 'toString()' method"
+                     groupName="toString() issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection"/>
+    <localInspection language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupName="toString() issues"
+                     enabledByDefault="false" level="WARNING" runForWholeFile="true"
+                     implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
   </extensions>
 
   <actions>
