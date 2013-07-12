@@ -23,7 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -121,7 +121,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     documentManager.commitAllDocuments();
     for (PsiFile root : roots) {
       Document document = documentManager.getDocument(root);
-      PsiDocumentManagerImpl.checkConsistency(root, document);
+      PsiDocumentManagerBase.checkConsistency(root, document);
       assert root.getText().equals(document.getText());
     }
   }
