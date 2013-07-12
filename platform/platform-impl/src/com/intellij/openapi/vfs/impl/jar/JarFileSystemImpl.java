@@ -230,11 +230,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public boolean isCaseSensitive() {
-    return true;
-  }
-
-  @Override
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     return getHandler(fileOrDirectory).exists(fileOrDirectory);
   }

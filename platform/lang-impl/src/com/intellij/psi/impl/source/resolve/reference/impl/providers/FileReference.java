@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
@@ -205,7 +204,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   private static boolean caseSensitivityApplies(PsiDirectory context, boolean caseSensitive) {
     VirtualFileSystem fs = context.getVirtualFile().getFileSystem();
-    return fs instanceof NewVirtualFileSystem && ((NewVirtualFileSystem)fs).isCaseSensitive() == caseSensitive;
+    return fs.isCaseSensitive() == caseSensitive;
   }
 
   private boolean isAllowedEmptyPath(String text) {

@@ -47,11 +47,6 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return ApplicationManager.getApplication().getComponent(TempFileSystem.class);
   }
 
-  @Override
-  public boolean isCaseSensitive() {
-    return true;
-  }
-
   @NotNull
   @Override
   protected String extractRootPath(@NotNull final String path) {
