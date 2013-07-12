@@ -23,9 +23,17 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public abstract class TrelloModel {
-  private String id;
+  public static final String ILLEGAL_ID = "ILLEGAL_ID";
+
+  private String id = ILLEGAL_ID;
 
 
+  /**
+   * Trello always provides objects IDs as part of its REST responses. But it may still be null
+   * if e.g. object was incorrectly created manually, or it is some kind of stub implementation
+   * as for UNSPECIFIED_BOARD and UNSPECIFIED_LIST in TrelloRepositoryEditor. ILLEGAL_ID
+   * value serves as fallback in such cases.
+   */
   @Attribute("id")
   @NotNull
   public String getId() {
@@ -59,11 +67,11 @@ public abstract class TrelloModel {
     if (obj == this) return true;
     if (!(obj instanceof TrelloModel)) return false;
     TrelloModel model = (TrelloModel) obj;
-    return id != null && id.equals(model.id);
+    return !id.equals(ILLEGAL_ID) && id.equals(model.id);
   }
 
   @Override
   public final int hashCode() {
-    return id != null ? id.hashCode() : 0;
+    return id.hashCode();
   }
 }

@@ -48,24 +48,12 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     public String getName() {
       return "-- from all boards --";
     }
-
-    @NotNull
-    @Override
-    public String getId() {
-      return "";
-    }
   };
 
   private final static TrelloList UNSPECIFIED_LIST = new TrelloList() {
     @Override
     public String getName() {
       return "-- from all lists --";
-    }
-
-    @NotNull
-    @Override
-    public String getId() {
-      return "";
     }
   };
 
