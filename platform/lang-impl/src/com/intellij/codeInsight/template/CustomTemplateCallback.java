@@ -130,7 +130,7 @@ public class CustomTemplateCallback {
     TemplateSettings settings = TemplateSettings.getInstance();
     List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : settings.getTemplates(templateKey)) {
-      if (!template.isDeactivated() && !template.isSelectionTemplate()) {
+      if (!template.isDeactivated()) {
         candidates.add(template);
       }
     }
