@@ -15,7 +15,7 @@ import java.util.List;
 public class CommitDetailsGetter extends DataGetter<VcsCommitDetails> {
 
   CommitDetailsGetter(VcsLogDataHolder dataHolder, VcsLogProvider logProvider, VirtualFile root) {
-    super(dataHolder, logProvider, root, new VcsCommitCache<VcsCommitDetails>(logProvider, root));
+    super(dataHolder, logProvider, root, new VcsCommitCache<VcsCommitDetails>());
   }
 
   @Override

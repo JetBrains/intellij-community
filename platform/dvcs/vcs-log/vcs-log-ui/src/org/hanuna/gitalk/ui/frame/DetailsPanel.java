@@ -84,7 +84,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       Hash hash = node.getCommitHash();
       try {
-        myDataPanel.setData(myLogDataHolder.getCommitDetailsGetter().getCommitData(hash));
+        myDataPanel.setData(myLogDataHolder.getCommitDetailsGetter().getCommitData(node));
       }
       catch (VcsException e1) {
         throw new RuntimeException(e1); // TODO

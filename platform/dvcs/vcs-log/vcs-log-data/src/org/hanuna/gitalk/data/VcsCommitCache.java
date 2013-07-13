@@ -15,53 +15,40 @@
  */
 package org.hanuna.gitalk.data;
 
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.awt.*;
 
 /**
+ * <p>The cache of commit details.</p>
+ * <p>It is not actually a cache, but rather a limited map, because there is intentionally no way to get the non-cached value if it was not
+ *    found in the cache: such functionality is implemented by the {@link DataGetter} which is able to receive
+ *    non-cached details more efficiently, in a batch.</p>
+ * <p>Any access to the Cache MUST be performed from the EDT thread.</p>
+ *
  * @author Kirill Likhodedov
  */
-public class VcsCommitCache<T extends CommitParents> {
+class VcsCommitCache<T extends CommitParents> {
 
-  private final SLRUCache<Hash, T> myCache = new SLRUCache<Hash, T>(5000, 5000) {
-    @NotNull
-    @Override
-    public T createValue(Hash key) {
-      try {
-        // TODO load in background OR prove that this is a not normal situation when something is not in the cache and queried from the UI
-        //assert !EventQueue.isDispatchThread();
-        return (T)myLogProvider.readDetails(myRoot, Collections.singletonList(key.toStrHash())).get(0);
-      }
-      catch (VcsException e) {
-        // TODO
-        throw new RuntimeException(e);
-      }
-    }
-  };
-  private final VcsLogProvider myLogProvider;
-  private final VirtualFile myRoot;
+  private final SLRUMap<Hash, T> myCache = new SLRUMap<Hash, T>(5000, 5000);
 
-  public VcsCommitCache(VcsLogProvider logProvider, VirtualFile root) {
-    myLogProvider = logProvider;
-    myRoot = root;
-  }
-
-  public void put(Hash hash, T commit) {
+  public void put(@NotNull Hash hash, @NotNull T commit) {
+    assert EventQueue.isDispatchThread();
     myCache.put(hash, commit);
   }
 
-  public boolean isKeyCached(Hash hash) {
-    return myCache.getIfCached(hash) != null;
+  public boolean isKeyCached(@NotNull Hash hash) {
+    assert EventQueue.isDispatchThread();
+    return myCache.get(hash) != null;
   }
 
-  public T get(Hash hash) {
+  @Nullable
+  public T get(@NotNull Hash hash) {
+    assert EventQueue.isDispatchThread();
     return myCache.get(hash);
   }
 }

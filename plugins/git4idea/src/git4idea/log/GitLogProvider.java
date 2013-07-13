@@ -69,6 +69,12 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
+  public List<? extends VcsCommit> readMiniDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+    return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
+  }
+
+  @NotNull
+  @Override
   public List<? extends VcsCommitDetails> readDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
     return GitHistoryUtils.commitsDetails(myProject, root, hashes);
   }

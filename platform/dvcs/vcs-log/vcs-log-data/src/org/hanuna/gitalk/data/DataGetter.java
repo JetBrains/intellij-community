@@ -1,10 +1,15 @@
 package org.hanuna.gitalk.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -15,7 +20,9 @@ import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -24,11 +31,12 @@ import java.util.List;
  *   <li>it tries to get it from the cache;</li>
  *   <li>if it fails, it tries to get it from the VCS, and additionally loads several commits around the requested one,
  *       to avoid querying the VCS if user investigates details of nearby commits.</li>
+ *   <li>The loading happens asynchronously: a fake {@link LoadingDetails} object is returned </li>
  * </ul>
  *
  * @author Kirill Likhodedov
  */
-public abstract class DataGetter<T extends CommitParents> {
+public abstract class DataGetter<T extends CommitParents> implements Disposable {
 
   private static final Logger LOG = VcsLogLogger.LOG;
   private static final int UP_PRELOAD_COUNT = 20;
@@ -39,32 +47,36 @@ public abstract class DataGetter<T extends CommitParents> {
   @NotNull protected final VirtualFile myRoot;
   @NotNull private final VcsCommitCache<T> myCache;
 
+  @NotNull private final QueueProcessor<TaskDescriptor> myLoader = new QueueProcessor<TaskDescriptor>(new DetailsLoadingTask());
+  @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
+
   DataGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
              @NotNull VcsCommitCache<T> cache) {
     myDataHolder = dataHolder;
     myLogProvider = logProvider;
     myRoot = root;
     myCache = cache;
+    Disposer.register(dataHolder, this);
+  }
+
+  @Override
+  public void dispose() {
+    myLoadingFinishedListeners.clear();
+    myLoader.clear();
   }
 
   @NotNull
-  public T getCommitData(@NotNull Hash commitHash) throws VcsException {
-    Node node = myDataHolder.getDataPack().getNodeByHash(commitHash);
-    if (node != null) {
-      return getCommitData(node);
-    }
-    // TODO this can happen if an old hash was requested before the whole log was loaded
-    LOG.error("Node for hash " + commitHash + " was not found");
-    return myCache.get(commitHash);
-  }
-
-  @NotNull
-  public T getCommitData(@NotNull Node node) throws VcsException {
+  public T getCommitData(final Node node) throws VcsException {
+    assert EventQueue.isDispatchThread();
     Hash hash = node.getCommitHash();
-    if (!myCache.isKeyCached(hash)) {
-      runLoadAroundCommitData(node);
+    T details = myCache.get(hash);
+    if (details != null) {
+      return details;
     }
-    return myCache.get(hash);
+
+    T loadingDetails = (T)new LoadingDetails(hash);
+    runLoadAroundCommitData(node);
+    return loadingDetails;
   }
 
   @Nullable
@@ -89,9 +101,16 @@ public abstract class DataGetter<T extends CommitParents> {
       Node commitNode = getCommitNodeInRow(i);
       if (commitNode != null) {
         nodes.add(commitNode);
+        Hash hash = commitNode.getCommitHash();
+
+        // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
+        // even if it will be loaded within a previous query
+        if (!myCache.isKeyCached(hash)) {
+          myCache.put(hash, (T)new LoadingDetails(hash));
+        }
       }
     }
-    preLoadCommitData(nodes);
+    myLoader.addFirst(new TaskDescriptor(nodes));
   }
 
   private void preLoadCommitData(@NotNull List<Node> nodes) throws VcsException {
@@ -106,12 +125,55 @@ public abstract class DataGetter<T extends CommitParents> {
     saveInCache(details);
   }
 
-  public void saveInCache(List<? extends T> details) {
-    for (T data : details) {
-      myCache.put(data.getHash(), data);
-    }
+  public void saveInCache(final List<? extends T> details) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        for (T data : details) {
+          myCache.put(data.getHash(), data);
+        }
+      }
+    });
   }
 
   protected abstract List<? extends T> readDetails(List<String> hashes) throws VcsException;
 
+  /**
+   * This listener will be notified when any details loading process finishes.
+   * The notification will happen in the EDT.
+   */
+  public void addDetailsLoadedListener(@NotNull Runnable runnable) {
+    myLoadingFinishedListeners.add(runnable);
+  }
+
+  private static class TaskDescriptor {
+    private final List<Node> nodes;
+
+    private TaskDescriptor(List<Node> nodes) {
+      this.nodes = nodes;
+    }
+  }
+
+  private class DetailsLoadingTask implements Consumer<TaskDescriptor> {
+    private static final int MAX_LOADINGS = 10;
+
+    @Override
+    public void consume(final TaskDescriptor task) {
+      try {
+        myLoader.dismissLastTasks(MAX_LOADINGS);
+        preLoadCommitData(task.nodes);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
+              loadingFinishedListener.run();
+            }
+          }
+        });
+      }
+      catch (VcsException e) {
+        throw new RuntimeException(e); // todo
+      }
+    }
+  }
 }

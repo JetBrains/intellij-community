@@ -13,12 +13,15 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.VcsCommitDetails;
+import org.hanuna.gitalk.data.LoadingDetails;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -42,6 +45,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
+  @NotNull private final JBLoadingPanel myChangesLoadingPane;
 
   ActiveSurface(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project) {
     myLogDataHolder = logDataHolder;
@@ -54,15 +58,31 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     changesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myGraphTable);
     setDefaultEmptyText(changesBrowser);
 
-    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener(changesBrowser));
+    final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(changesBrowser);
+    myGraphTable.getSelectionModel().addListSelectionListener(selectionChangeListener);
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
+    myLogDataHolder.getMiniDetailsGetter().addDetailsLoadedListener(new Runnable() {
+      @Override
+      public void run() {
+        myGraphTable.repaint();
+      }
+    });
+    myLogDataHolder.getCommitDetailsGetter().addDetailsLoadedListener(new Runnable() {
+      @Override
+      public void run() {
+        selectionChangeListener.valueChanged(null);
+      }
+    });
+
+    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project);
+    myChangesLoadingPane.add(changesBrowser);
 
     myDetailsSplitter = new Splitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
 
     Splitter splitter = new Splitter(false, 0.7f);
     splitter.setFirstComponent(myDetailsSplitter);
-    splitter.setSecondComponent(changesBrowser);
+    splitter.setSecondComponent(myChangesLoadingPane);
 
     setLayout(new BorderLayout());
     add(myBranchesPanel, BorderLayout.NORTH);
@@ -70,7 +90,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   }
 
   private static void setDefaultEmptyText(ChangesBrowser changesBrowser) {
-    changesBrowser.getViewer().setEmptyText("No commits selected");
+    changesBrowser.getViewer().setEmptyText("");
   }
 
   @NotNull
@@ -88,7 +108,10 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   public void calcData(DataKey key, DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
       if (myGraphTable.getSelectedRowCount() == 1) {
-        sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(getSelectedChanges(), Change.class));
+        List<Change> selectedChanges = getSelectedChanges();
+        if (selectedChanges != null) {
+          sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(selectedChanges, Change.class));
+        }
       }
     }
   }
@@ -97,12 +120,15 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
-  @NotNull
+  @Nullable
   public List<Change> getSelectedChanges() {
     List<Change> changes = new ArrayList<Change>();
     for (Node node : myGraphTable.getSelectedNodes()) {
       try {
         VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
+        if (commitData instanceof LoadingDetails) {
+          return null;
+        }
         changes.addAll(commitData.getChanges());
       }
       catch (VcsException ex) {
@@ -120,14 +146,23 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     }
 
     @Override
-    public void valueChanged(ListSelectionEvent e) {
+    public void valueChanged(@Nullable ListSelectionEvent notUsed) {
       int rows = myGraphTable.getSelectedRowCount();
       if (rows < 1) {
+        myChangesLoadingPane.stopLoading();
         setDefaultEmptyText(myChangesBrowser);
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
       else {
-        myChangesBrowser.setChangesToDisplay(getSelectedChanges());
+        List<Change> selectedChanges = getSelectedChanges();
+        if (selectedChanges != null) {
+          myChangesLoadingPane.stopLoading();
+          myChangesBrowser.setChangesToDisplay(selectedChanges);
+        }
+        else {
+          myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+          myChangesLoadingPane.startLoading();
+        }
       }
     }
   }

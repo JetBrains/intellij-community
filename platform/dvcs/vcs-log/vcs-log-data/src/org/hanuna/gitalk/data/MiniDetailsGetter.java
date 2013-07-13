@@ -13,13 +13,13 @@ import java.util.List;
 public class MiniDetailsGetter extends DataGetter<VcsCommit> {
 
   MiniDetailsGetter(VcsLogDataHolder dataHolder, VcsLogProvider logProvider, VirtualFile root) {
-    super(dataHolder, logProvider, root, new VcsCommitCache<VcsCommit>(logProvider, root));
+    super(dataHolder, logProvider, root, new VcsCommitCache<VcsCommit>());
   }
 
   @Override
   protected List<? extends VcsCommit> readDetails(List<String> hashes) throws VcsException {
     // TODO use the intermediate file storage
-    return myLogProvider.readDetails(myRoot, hashes);
+    return myLogProvider.readMiniDetails(myRoot, hashes);
   }
 
 }
