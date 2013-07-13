@@ -83,25 +83,33 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     return myBranchesPanel;
   }
 
+  // Provide data for show diff
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
-      if (myGraphTable.getSelectedRowCount() != 1) {
-        return;
-      }
-      Node node = myGraphTable.getSelectedNodes().get(0);
-      try {
-        VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
-        sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(commitData.getChanges(), Change.class));
-      }
-      catch (VcsException e) {
-        LOG.error(e);
+      if (myGraphTable.getSelectedRowCount() == 1) {
+        sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(getSelectedChanges(), Change.class));
       }
     }
   }
 
   public void setupDetailsSplitter(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
+  }
+
+  @NotNull
+  public List<Change> getSelectedChanges() {
+    List<Change> changes = new ArrayList<Change>();
+    for (Node node : myGraphTable.getSelectedNodes()) {
+      try {
+        VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
+        changes.addAll(commitData.getChanges());
+      }
+      catch (VcsException ex) {
+        LOG.error(ex); // TODO
+      }
+    }
+    return CommittedChangesTreeBrowser.zipChanges(changes);
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
@@ -119,17 +127,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
       else {
-        List<Change> changes = new ArrayList<Change>();
-        for (Node node : myGraphTable.getSelectedNodes()) {
-          try {
-            VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
-            changes.addAll(commitData.getChanges());
-          }
-          catch (VcsException ex) {
-            LOG.error(ex);
-          }
-        }
-        myChangesBrowser.setChangesToDisplay(CommittedChangesTreeBrowser.zipChanges(changes));
+        myChangesBrowser.setChangesToDisplay(getSelectedChanges());
       }
     }
   }
