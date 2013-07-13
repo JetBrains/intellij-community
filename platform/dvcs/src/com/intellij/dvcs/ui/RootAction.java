@@ -25,6 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * The element of the branch popup which allows to show branches of the selected repository.
+ * It is available only in projects with multiple roots.
+ *
+ * @author Kirill Likhodedov
  * @author Nadya Zabrodina
  */
 public class RootAction<T extends Repository> extends ActionGroup {
@@ -32,45 +36,30 @@ public class RootAction<T extends Repository> extends ActionGroup {
   @NotNull protected final T myRepository;
   @NotNull private final ActionGroup myGroup;
   @NotNull private final String myBranchText;
-  @NotNull private final String myBranchOrRev;
-
 
   /**
    * @param currentRepository Pass null in the case of common repositories - none repository will be highlighted then.
    * @param actionsGroup
    * @param branchText
-   * @param branchName
    */
-  public RootAction(@NotNull T repository,
-                    @Nullable T currentRepository,
-                    @NotNull ActionGroup actionsGroup,
-                    @NotNull String branchText,
-                    @NotNull String branchName) {
+  public RootAction(@NotNull T repository, @Nullable T currentRepository, @NotNull ActionGroup actionsGroup, @NotNull String branchText) {
     super(DvcsUtil.getShortRepositoryName(repository), true);
     myRepository = repository;
     myGroup = actionsGroup;
     myBranchText = branchText;
-    myBranchOrRev = branchName;
     if (repository.equals(currentRepository)) {
       getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
     }
   }
 
-
   @NotNull
   public String getCaption() {
-    return "Current branch in " + DvcsUtil.getShortRepositoryName(myRepository) + ": " +
-           getDisplayableBranchText();
+    return "Current branch in " + DvcsUtil.getShortRepositoryName(myRepository) + ": " + getDisplayableBranchText();
   }
 
   @NotNull
-  private String getDisplayableBranchText() {
+  public String getDisplayableBranchText() {
     return myBranchText;
-  }
-
-  @NotNull
-  public String getBranch() {
-    return myBranchOrRev;
   }
 
   @NotNull
