@@ -15,6 +15,7 @@
  */
 package org.hanuna.gitalk.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,7 +46,7 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-public class VcsLogDataHolder implements VcsLogRefresher {
+public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
 
   public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
 
@@ -196,5 +197,11 @@ public class VcsLogDataHolder implements VcsLogRefresher {
   @NotNull
   public MiniDetailsGetter getMiniDetailsGetter() {
     return myMiniDetailsGetter;
+  }
+
+  @Override
+  public void dispose() {
+    myAllLog = null;
+    myDataLoaderQueue.clear();
   }
 }
