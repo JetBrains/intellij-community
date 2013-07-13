@@ -15,12 +15,10 @@
  */
 package com.intellij.unscramble;
 
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -410,11 +408,7 @@ public class UnscrambleDialog extends DialogWrapper {
       message = IdeBundle.message("unscramble.unscrambled.deadlock.tab");
       icon = AllIcons.Debugger.KillProcess;
     }
-    return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new AnalyzeStacktraceUtil.ConsoleFactory() {
-      public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
-        return new ThreadDumpPanel(project, consoleView, toolbarActions, threadDump);
-      }
-    } : null, message, unscrambledTrace, icon);
+    return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new ThreadDumpConsoleFactory(project, threadDump) : null, message, unscrambledTrace, icon);
   }
 
   protected String getDimensionServiceKey(){
