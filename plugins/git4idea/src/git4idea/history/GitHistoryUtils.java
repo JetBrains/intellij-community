@@ -488,6 +488,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
     h.addParameters("--full-history", "--sparse");
     h.endOptions();
 
