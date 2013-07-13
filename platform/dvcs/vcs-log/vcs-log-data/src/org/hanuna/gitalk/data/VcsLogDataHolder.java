@@ -184,7 +184,9 @@ public class VcsLogDataHolder implements VcsLogRefresher {
   }
 
   private void notifyAboutDataRefresh() {
-    myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
+    if (!myProject.isDisposed()) {
+      myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
+    }
   }
 
   public CommitDetailsGetter getCommitDetailsGetter() {
