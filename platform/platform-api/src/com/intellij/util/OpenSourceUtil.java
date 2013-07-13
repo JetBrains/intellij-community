@@ -18,8 +18,8 @@ package com.intellij.util;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.pom.AutoScrollFriendlyNavigatable;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.StatePreservingNavigatable;
 
 public class OpenSourceUtil {
 
@@ -58,8 +58,8 @@ public class OpenSourceUtil {
     if (navigatables == null) return;
     for (Navigatable navigatable : navigatables) {
       if (navigatable.canNavigate()) {
-        if (tryNotToScroll && navigatable instanceof AutoScrollFriendlyNavigatable) {
-          ((AutoScrollFriendlyNavigatable)navigatable).navigate(requestFocus, true);
+        if (tryNotToScroll && navigatable instanceof StatePreservingNavigatable) {
+          ((StatePreservingNavigatable)navigatable).navigate(requestFocus, true);
         } else {
           navigatable.navigate(requestFocus);
         }
