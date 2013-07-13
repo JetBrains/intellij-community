@@ -27,6 +27,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class VcsLogDataHolder implements VcsLogRefresher {
 
   public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
 
-  private static final Logger LOG = Logger.getInstance("Git.Log");
+  private static final Logger LOG = VcsLogLogger.LOG;
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogProvider myLogProvider;
