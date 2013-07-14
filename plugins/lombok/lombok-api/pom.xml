@@ -22,7 +22,6 @@
 
     <lombok.version>0.11.8</lombok.version>
     <lombok-pg.version>0.11.3</lombok-pg.version>
-    <lombok-maven-plugin.version>0.11.6.0</lombok-maven-plugin.version>
 
     <lombok-annotations.includes>lombok/extern/**,
       lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,

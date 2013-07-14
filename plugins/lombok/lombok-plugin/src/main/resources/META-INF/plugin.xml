@@ -34,7 +34,7 @@
 				<ol>
 				    <li>Issue #41 Added support for XSlf4j and Log4j2 logger</li>
 				    <li>Issue #44 Fixed Getter- and Setter- method generation, when method is already there with a parameter(s)</li>
-				    <li>Issue #56:	Removed obsolete plugin dependencies (they have been merged into intellij core)</li>
+				    <li>Issue #56	Removed obsolete plugin dependencies (they have been merged into intellij core)</li>
 				<ol>
 			</li>
 		<li>0.6.2
