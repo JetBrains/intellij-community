@@ -20,7 +20,7 @@ public class MarkdownUtil {
    * <a href="https://code.google.com/p/markdownj">markdownj</a>
    * doesn't support that.
    */
-  public static void replaceHeaders(List<String> lines) {
+  public static void replaceHeaders(@NotNull List<String> lines) {
     for (int i = 0; i < lines.size(); i++) {
       String line = lines.get(i);
       int ind = 0;
@@ -41,6 +41,10 @@ public class MarkdownUtil {
     }
   }
 
+  /**
+   * Removes images in the markdown text.
+   * @param lines List of String in markdown format
+   */
   public static void removeImages(@NotNull List<String> lines) {
     for (int i = 0; i < lines.size(); i++) {
       String newText = removeAllImages(lines.get(i));
@@ -113,7 +117,7 @@ public class MarkdownUtil {
     if (linkStartIndInc >= 0 && text.charAt(linkStartIndInc) == '[') {
       int n = text.length();
       int i = imageEndIndInc + 1;
-      if (i + 1 <= n && text.charAt(i) == ']' && text.charAt(i + 1) == '(') {
+      if (text.charAt(i) == ']' && i + 1 < n && text.charAt(i + 1) == '(') {
         i += 2;
         while (i < n && text.charAt(i) != ')') {
           i++;
@@ -124,6 +128,58 @@ public class MarkdownUtil {
       }
     }
     return null;
+  }
+
+  public static void replaceCodeBlock(@NotNull List<String> lines) {
+    boolean insideQuotedBlock = false;
+    boolean started = false;
+    for (int i = 0; i < lines.size(); i++) {
+      String line = lines.get(i);
+      boolean codeBlock = false;
+      if (line.startsWith("```")) {
+        insideQuotedBlock = !insideQuotedBlock;
+        if (insideQuotedBlock) {
+          if (started) {
+            String lastCodeBlockLine = lines.get(lines.size() - 1);
+            lastCodeBlockLine += "</code></pre>";
+            lines.set(lines.size() - 1, lastCodeBlockLine);
+            started = false;
+          }
+          line = "<pre><code>";
+        }
+        else {
+          line = "</code></pre>";
+        }
+      }
+      if (!insideQuotedBlock) {
+        if (line.startsWith("    ")) {
+          line = line.substring(4);
+          codeBlock = true;
+        }
+        else if (line.startsWith("\t")) {
+          line = line.substring(1);
+          codeBlock = true;
+        }
+        if (!started && codeBlock) {
+          started = true;
+          line = "<pre><code>" + line;
+        }
+      }
+      lines.set(i, line);
+      if (!insideQuotedBlock) {
+        if (started && !codeBlock) {
+          String lastCodeBlockLine = lines.get(i - 1);
+          lastCodeBlockLine += "</code></pre>";
+          lines.set(i - 1, lastCodeBlockLine);
+          started = false;
+        }
+      }
+    }
+    if (started) {
+      String lastCodeBlockLine = lines.get(lines.size() - 1);
+      lastCodeBlockLine += "</code></pre>";
+      lines.set(lines.size() - 1, lastCodeBlockLine);
+    }
   }
 
 }
