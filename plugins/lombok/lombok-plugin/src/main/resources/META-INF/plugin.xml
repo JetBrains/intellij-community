@@ -12,9 +12,6 @@
   </description>
   <category>Tools Integration</category>
 
-  <depends>InspectionGadgets</depends>
-  <depends>IntentionPowerPack</depends>
-
   <application-components>
     <component>
       <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
@@ -33,10 +30,11 @@
 
   <change-notes><![CDATA[
 		<ul>
-		<li>0.7
+		<li>0.6.3
 				<ol>
 				    <li>Issue #41 Added support for XSlf4j and Log4j2 logger</li>
 				    <li>Issue #44 Fixed Getter- and Setter- method generation, when method is already there with a parameter(s)</li>
+				    <li>Issue #56:	Removed obsolete plugin dependencies (they have been merged into intellij core)</li>
 				<ol>
 			</li>
 		<li>0.6.2
