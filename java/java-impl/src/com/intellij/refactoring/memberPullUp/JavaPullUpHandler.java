@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,16 +153,17 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
 
   public boolean checkConflicts(final PullUpDialog dialog) {
-    final MemberInfo[] infos = dialog.getSelectedMemberInfos();
+    final List<MemberInfo> infos = dialog.getSelectedMemberInfos();
+    final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[infos.size()]);
     final PsiClass superClass = dialog.getSuperClass();
-    if (!checkWritable(superClass, infos)) return false;
+    if (!checkWritable(superClass, memberInfos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
         final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
         conflicts
-          .putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
+          .putAllValues(PullUpConflictsUtil.checkConflicts(memberInfos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
       }
     }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
