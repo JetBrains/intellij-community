@@ -48,13 +48,17 @@ public class JBLoadingPanel extends JPanel {
       @Override
       protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
         final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
-        final Font font = text.getFont();
-        text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
-        text.setForeground(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 150));
+        customizeStatusText(text);
         return panel;
       }
     };
     super.add(myDecorator.getComponent(), BorderLayout.CENTER);
+  }
+
+  public static void customizeStatusText(JLabel text) {
+    Font font = text.getFont();
+    text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
+    text.setForeground(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 150));
   }
 
   public void setLoadingText(String text) {
