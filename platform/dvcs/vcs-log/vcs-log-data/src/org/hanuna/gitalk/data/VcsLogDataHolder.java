@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -58,9 +59,10 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
+  @NotNull private final VcsLogJoiner myLogJoiner;
 
   @NotNull private volatile DataPack myDataPack;
-  @Nullable private volatile List<CommitParents> myAllLog; // null means the whole log was not yet read
+  @Nullable private volatile List<CommitParents> myAllLog; // null means the whole log was not yet read from the VCS
 
   public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
@@ -69,6 +71,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
     myMiniDetailsGetter = new MiniDetailsGetter(this, logProvider, root);
     myDetailsGetter = new CommitDetailsGetter(this, logProvider, root);
+    myLogJoiner = new VcsLogJoiner();
   }
 
   /**
@@ -113,13 +116,29 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        List<? extends VcsCommitDetails> commits = myLogProvider.readFirstBlock(myRoot);
+        List<? extends VcsCommitDetails> firstBlock = myLogProvider.readFirstBlock(myRoot);
         Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
 
-        myDetailsGetter.saveInCache(commits);
-        myMiniDetailsGetter.saveInCache(commits);
+        myDetailsGetter.saveInCache(firstBlock);
+        myMiniDetailsGetter.saveInCache(firstBlock);
 
-        myDataPack = DataPack.build(commits, refs, indicator);
+        List<? extends CommitParents> refreshedLog;
+        if (myAllLog == null) {
+          // the whole log is not loaded before the first refresh
+          refreshedLog = firstBlock;
+        }
+        else {
+          assert myAllLog != null : "The whole log can't become null once loaded";
+          refreshedLog = myLogJoiner.addCommits(myAllLog, firstBlock, refs, new Computable<List<CommitParents>>() {
+            @Override
+            public List<CommitParents> compute() {
+              // TODO save the whole log in a file; keep only a part of it in memory; read from the file here
+              return readLogFromStorage();
+            }
+          });
+        }
+
+        myDataPack = DataPack.build(refreshedLog, refs, indicator);
 
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
@@ -129,6 +148,12 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
         });
       }
     });
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  private List<CommitParents> readLogFromStorage() {
+    return myAllLog;
   }
 
   private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task) {
