@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github.api;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
@@ -30,10 +28,18 @@ import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.GithubSslSupport;
+import org.jetbrains.plugins.github.GithubUrlUtil;
+import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.api.*;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -44,6 +50,14 @@ public class GithubApiUtil {
 
   private static final int CONNECTION_TIMEOUT = 5000;
   private static final Logger LOG = GithubUtil.LOG;
+
+  @NotNull public static final Gson gson = initGson();
+
+  private static Gson initGson() {
+    GsonBuilder builder = new GsonBuilder();
+    builder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
+    return builder.create();
+  }
 
   private enum HttpVerb {
     GET, POST, DELETE, HEAD
@@ -196,6 +210,10 @@ public class GithubApiUtil {
     }
   }
 
+  /*
+   * Github API
+   */
+
   @Nullable
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
     HttpMethod method = null;
@@ -220,5 +238,127 @@ public class GithubApiUtil {
         method.releaseConnection();
       }
     }
+  }
+
+  @Nullable
+  public static String getScopedToken(@NotNull GithubAuthData auth, @NotNull Collection<String> scopes, @Nullable String note)
+    throws IOException {
+    String path = "/authorizations";
+
+    JsonObject request = new JsonObject();
+    JsonArray json = new JsonArray();
+    for (String scope : scopes) {
+      json.add(new JsonPrimitive(scope));
+    }
+    request.add("scopes", json);
+    request.addProperty("note", note != null ? note : "Intellij GitHub plugin");
+
+    JsonElement result = postRequest(auth, path, request.toString());
+
+    if (result == null || !result.isJsonObject()) {
+      return null;
+    }
+    JsonElement token = result.getAsJsonObject().get("token");
+    if (token == null) {
+      return null;
+    }
+
+    return token.getAsString();
+  }
+
+  @Nullable
+  public static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
+    return fromJson(json, (Type)classT);
+  }
+
+  @Nullable
+  public static <T> T fromJson(@Nullable JsonElement json, @NotNull Type type) throws IOException {
+    if (json == null) {
+      return null;
+    }
+
+    T res;
+    try {
+      res = gson.fromJson(json, type);
+    }
+    catch (JsonParseException jpe) {
+      IOException ioe = new IOException("Parse exception converting JSON to object " + type.toString());
+      ioe.initCause(jpe);
+      throw ioe;
+    }
+    return res;
+  }
+
+  @Nullable
+  public static GithubUserDetailed getCurrentUserInfo(@NotNull GithubAuthData auth) throws IOException {
+    JsonElement result = getRequest(auth, "/user");
+    return GithubUserDetailed.createDetailed(fromJson(result, GithubUserRaw.class));
+  }
+
+  @NotNull
+  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
+    return doGetAvailableRepos(auth, null);
+  }
+
+  @NotNull
+  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
+    return doGetAvailableRepos(auth, user);
+  }
+
+  @NotNull
+  private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
+    String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
+    JsonElement result = getRequest(auth, request);
+    List<GithubRepoRaw> rawRepos = fromJson(result, new TypeToken<List<GithubRepoRaw>>() {
+    }.getType());
+    if (rawRepos == null) {
+      return Collections.emptyList();
+    }
+    List<GithubRepo> repos = new ArrayList<GithubRepo>();
+    for (GithubRepoRaw raw : rawRepos) {
+      GithubRepo repo = GithubRepo.create(raw);
+      if (repo != null) {
+        repos.add(repo);
+      }
+    }
+    return repos;
+  }
+
+  @Nullable
+  public static GithubRepoDetailed getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name)
+    throws IOException {
+    final String request = "/repos/" + owner + "/" + name;
+
+    JsonElement jsonObject = getRequest(auth, request);
+
+    return GithubRepoDetailed.createDetailed(fromJson(jsonObject, GithubRepoRaw.class));
+  }
+
+  public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String username, @NotNull String repo)
+    throws IOException {
+    String path = "/repos/" + username + "/" + repo;
+    deleteRequest(auth, path);
+  }
+
+  public static void deleteGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
+    String path = "/gists/" + id;
+    deleteRequest(auth, path);
+  }
+
+  @Nullable
+  public static GithubGistRaw getGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
+    String path = "/gists/" + id;
+    JsonElement result = getRequest(auth, path);
+
+    return fromJson(result, GithubGistRaw.class);
+  }
+
+  @Nullable
+  public static GithubGist createGist(@NotNull GithubAuthData auth,
+                                      @NotNull Map<String, String> contents,
+                                      @NotNull String description,
+                                      boolean isPrivate) throws IOException {
+    String request = gson.toJson(new GithubGistRequest(contents, description, !isPrivate));
+    return GithubGist.create(fromJson(postRequest(auth, "/gists", request), GithubGistRaw.class));
   }
 }

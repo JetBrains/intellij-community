@@ -42,6 +42,7 @@ import git4idea.util.GitPreservingProcess;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -131,10 +132,10 @@ public class GithubRebaseAction extends DumbAwareAction {
           return;
         }
         else {
-          final GithubUserAndRepository userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
+          final GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
           final String login = GithubSettings.getInstance().getLogin();
           if (userAndRepo != null) {
-            if (userAndRepo.getUserName().equals(login)) {
+            if (userAndRepo.getUser().equals(login)) {
               GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE,
                                             "Configured upstream seems to be your own repository: " + upstreamRemoteUrl);
               return;
@@ -160,18 +161,18 @@ public class GithubRebaseAction extends DumbAwareAction {
                                         @NotNull VirtualFile root,
                                         @NotNull GitRepository gitRepository,
                                         @NotNull ProgressIndicator indicator) {
-    RepositoryInfo repositoryInfo = loadRepositoryInfo(project, gitRepository, indicator);
+    GithubRepoDetailed repositoryInfo = loadRepositoryInfo(project, gitRepository, indicator);
     if (repositoryInfo == null) {
       return null;
     }
 
     if (!repositoryInfo.isFork()) {
       GithubNotifications.showWarningURL(project, CANNOT_PERFORM_GITHUB_REBASE, "GitHub repository ", "'" + repositoryInfo.getName() + "'",
-                                         " is not a forked one", repositoryInfo.getBrowserUrl());
+                                         " is not a forked one", repositoryInfo.getHtmlUrl());
       return null;
     }
 
-    final String parentRepoUrl = GithubUrlUtil.getGitHost() + '/' + repositoryInfo.getParentName() + ".git";
+    final String parentRepoUrl = GithubUrlUtil.getGitHost() + '/' + repositoryInfo.getParent().getFullName() + ".git";
 
     LOG.info("Adding GitHub parent as a remote host");
     indicator.setText("Adding GitHub parent as a remote host...");
@@ -179,28 +180,28 @@ public class GithubRebaseAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static RepositoryInfo loadRepositoryInfo(@NotNull Project project,
-                                                   @NotNull GitRepository gitRepository,
-                                                   @NotNull ProgressIndicator indicator) {
+  private static GithubRepoDetailed loadRepositoryInfo(@NotNull Project project,
+                                                             @NotNull GitRepository gitRepository,
+                                                             @NotNull ProgressIndicator indicator) {
     final String remoteUrl = GithubUtil.findGithubRemoteUrl(gitRepository);
     if (remoteUrl == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find github remote");
       return null;
     }
-    final GithubUserAndRepository userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    final GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (userAndRepo == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't process remote: " + remoteUrl);
       return null;
     }
 
-    RepositoryInfo repositoryInfo;
+    GithubRepoDetailed repositoryInfo;
     try {
       repositoryInfo =
-        GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, RepositoryInfo, IOException>() {
+        GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
           @Override
           @Nullable
-          public RepositoryInfo convert(GithubAuthData authData) throws IOException {
-            return GithubUtil.getDetailedRepoInfo(authData, userAndRepo.getUserName(), userAndRepo.getRepositoryName());
+          public GithubRepoDetailed convert(GithubAuthData authData) throws IOException {
+            return GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository());
           }
         });
     }

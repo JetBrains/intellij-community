@@ -18,6 +18,8 @@ package org.jetbrains.plugins.github;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubFullPath;
 
 /**
  * @author Aleksey Pivovarov
@@ -45,7 +47,7 @@ public class GithubUrlUtil {
   }
 
   @NotNull
-  static String getApiUrl(@NotNull String urlFromSettings) {
+  public static String getApiUrl(@NotNull String urlFromSettings) {
     return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
   }
 
@@ -84,7 +86,7 @@ public class GithubUrlUtil {
      http://developer.github.com/api/v3/
     */
   @NotNull
-  static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
+  public static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
     String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings.toLowerCase()));
     final String API_PREFIX = "api.";
     final String ENTERPRISE_API_SUFFIX = "/api/v3";
@@ -124,7 +126,7 @@ public class GithubUrlUtil {
    * git@github.com:user/repo.git -> user/repo
    */
   @Nullable
-  public static GithubUserAndRepository getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
+  public static GithubFullPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
     remoteUrl = removeProtocolPrefix(removeEndingDotGit(remoteUrl));
     int index1 = remoteUrl.lastIndexOf('/');
     if (index1 == -1) {
@@ -140,7 +142,7 @@ public class GithubUrlUtil {
     if (username.isEmpty() || reponame.isEmpty()) {
       return null;
     }
-    return new GithubUserAndRepository(username, reponame);
+    return new GithubFullPath(username, reponame);
   }
 
   /**
@@ -155,11 +157,11 @@ public class GithubUrlUtil {
 
   @Nullable
   public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
-    GithubUserAndRepository repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    GithubFullPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (repo == null) {
       return null;
     }
-    return host + '/' + repo.getUserName() + '/' + repo.getRepositoryName();
+    return host + '/' + repo.getUser() + '/' + repo.getRepository();
   }
 
   @NotNull

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 /**
  * Container for authentication data:

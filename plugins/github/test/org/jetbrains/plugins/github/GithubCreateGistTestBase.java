@@ -15,24 +15,23 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.google.gson.JsonObject;
 import com.intellij.openapi.util.Clock;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.test.GithubTest;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.jetbrains.plugins.github.GithubCreateGistAction.NamedContent;
+import java.util.Map;
 
 /**
  * @author Aleksey Pivovarov
  */
 public abstract class GithubCreateGistTestBase extends GithubTest {
   protected String GIST_ID = null;
-  protected JsonObject GIST = null;
+  protected GithubGist GIST = null;
   protected String GIST_DESCRIPTION;
 
   @Override
@@ -54,30 +53,30 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
-      GithubUtil.deleteGist(myGitHubSettings.getAuthData(), GIST_ID);
+      GithubApiUtil.deleteGist(myGitHubSettings.getAuthData(), GIST_ID);
       GIST = null;
       GIST_ID = null;
     }
   }
 
   @NotNull
-  protected static List<NamedContent> createContent() {
-    List<NamedContent> content = new ArrayList<NamedContent>();
+  protected static Map<String, String> createContent() {
+    Map<String, String> content = new HashMap<String, String>();
 
-    content.add(new NamedContent("file1", "file1 content"));
-    content.add(new NamedContent("file2", "file2 content"));
-    content.add(new NamedContent("dir_file3", "file3 content"));
+    content.put("file1", "file1 content");
+    content.put("file2", "file2 content");
+    content.put("dir_file3", "file3 content");
 
     return content;
   }
 
   @NotNull
-  protected JsonObject getGist() {
+  protected GithubGist getGist() {
     assertNotNull(GIST_ID);
 
     if (GIST == null) {
       try {
-        GIST = GithubUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID);
+        GIST = GithubGist.create(GithubApiUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID));
       }
       catch (IOException e) {
         System.err.println(e.getMessage());
@@ -93,51 +92,45 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   }
 
   protected void checkGistPublic() {
-    JsonObject result = getGist();
+    GithubGist result = getGist();
 
-    assertTrue("Gist does not public", result.get("public").getAsBoolean());
+    assertTrue("Gist does not public", result.isPublic());
   }
 
   protected void checkGistPrivate() {
-    JsonObject result = getGist();
+    GithubGist result = getGist();
 
-    assertFalse("Gist does not private", result.get("public").getAsBoolean());
+    assertFalse("Gist does not private", result.isPublic());
   }
 
   protected void checkGistAnonymous() {
-    JsonObject result = getGist();
+    GithubGist result = getGist();
 
-    assertTrue("Gist does not anonymous", result.get("user").isJsonNull());
+    assertTrue("Gist does not anonymous", result.getUser() == null);
   }
 
   protected void checkGistNotAnonymous() {
-    JsonObject result = getGist();
+    GithubGist result = getGist();
 
-    assertFalse("Gist does not anonymous", result.get("user").isJsonNull());
+    assertFalse("Gist does not anonymous", result.getUser() == null);
   }
 
   protected void checkGistDescription(@NotNull String expected) {
-    JsonObject result = getGist();
+    GithubGist result = getGist();
 
-    assertEquals("Gist content differs from sample", expected, result.get("description").getAsString());
+    assertEquals("Gist content differs from sample", expected, result.getDescription());
   }
 
-  protected void checkGistContent(@NotNull List<NamedContent> expected) {
-    JsonObject result = getGist();
+  protected void checkGistContent(@NotNull Map<String, String> expected) {
+    GithubGist result = getGist();
 
-    JsonObject files = result.get("files").getAsJsonObject();
+    Map<String, String> files = result.getContent();
 
-    for (NamedContent file : expected) {
-      String content = files.get(file.getName()).getAsJsonObject().get("content").getAsString();
-      assertEquals("Gist content differs from sample", file.getText(), content);
-    }
+
+    assertEquals("Gist content differs from sample", expected, files);
   }
 
-  protected void checkEquals(@NotNull List<NamedContent> expected, @NotNull List<NamedContent> actual) {
-    for (NamedContent file : expected) {
-      assertTrue("Not found: <" + file.getName() + "> " + file.getText(), actual.contains(file));
-    }
-
-    assertEquals("Expected less elements", expected.size(), actual.size());
+  protected void checkEquals(@NotNull Map<String, String> expected, @NotNull Map<String, String> actual) {
+    assertEquals("Gist content differs from sample", expected, actual);
   }
 }

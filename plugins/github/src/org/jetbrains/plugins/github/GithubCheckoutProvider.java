@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -32,6 +31,8 @@ import git4idea.checkout.GitCloneDialog;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubRepo;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,14 +52,14 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     }
     BasicAction.saveAll();
 
-    final Ref<List<RepositoryInfo>> repositoryInfoRef = new Ref<List<RepositoryInfo>>();
+    final Ref<List<GithubRepo>> repositoryInfoRef = new Ref<List<GithubRepo>>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
             @Override
             public void consume(GithubAuthData authData) throws IOException {
-              repositoryInfoRef.set(GithubUtil.getAvailableRepos(authData));
+              repositoryInfoRef.set(GithubApiUtil.getAvailableRepos(authData));
             }
             });
         }
@@ -67,14 +68,14 @@ public class GithubCheckoutProvider implements CheckoutProvider {
         }
       }
     });
-    final List<RepositoryInfo> availableRepos = repositoryInfoRef.get();
+    final List<GithubRepo> availableRepos = repositoryInfoRef.get();
     if (availableRepos == null){
       return;
     }
-    Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
+    Collections.sort(availableRepos, new Comparator<GithubRepo>() {
       @Override
-      public int compare(final RepositoryInfo r1, final RepositoryInfo r2) {
-        final int comparedOwners = r1.getOwnerName().compareTo(r2.getOwnerName());
+      public int compare(final GithubRepo r1, final GithubRepo r2) {
+        final int comparedOwners = r1.getOwner().getLogin().compareTo(r2.getOwner().getLogin());
         return comparedOwners != 0 ? comparedOwners : r1.getName().compareTo(r2.getName());
       }
     });

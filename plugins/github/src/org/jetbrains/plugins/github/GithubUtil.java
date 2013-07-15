@@ -15,10 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,12 +34,10 @@ import git4idea.repo.GitRepositoryManager;
 import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -189,7 +183,7 @@ public class GithubUtil {
   }
 
   private static boolean testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
-    GithubUser user = getCurrentUserInfo(auth);
+    GithubUserDetailed user = GithubApiUtil.getCurrentUserInfo(auth);
     if (user == null) {
       return false;
     }
@@ -199,133 +193,9 @@ public class GithubUtil {
     return true;
   }
 
-  @Nullable
-  public static GithubUser getCurrentUserInfo(@NotNull GithubAuthData auth) throws IOException {
-    JsonElement result = GithubApiUtil.getRequest(auth, "/user");
-    return parseUserInfo(result);
-  }
-
-  @Nullable
-  private static GithubUser parseUserInfo(@Nullable JsonElement result) {
-    if (result == null) {
-      return null;
-    }
-    if (!result.isJsonObject()) {
-      LOG.error(String.format("Unexpected JSON result format: %s", result));
-      return null;
-    }
-
-    JsonObject obj = (JsonObject)result;
-    String login = obj.get("login").getAsString();
-    int privateRepos = obj.get("owned_private_repos").getAsInt();
-    int maxPrivateRepos = obj.get("plan").getAsJsonObject().get("private_repos").getAsInt();
-    return new GithubUser(login, privateRepos, maxPrivateRepos);
-  }
-
-  @NotNull
-  public static List<RepositoryInfo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
-    return doGetAvailableRepos(auth, null);
-  }
-
-  @NotNull
-  public static List<RepositoryInfo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
-    return doGetAvailableRepos(auth, user);
-  }
-
-  @NotNull
-  private static List<RepositoryInfo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
-    String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
-    JsonElement result = GithubApiUtil.getRequest(auth, request);
-    if (result == null) {
-      return Collections.emptyList();
-    }
-    return parseRepositoryInfos(result);
-  }
-
-  @NotNull
-  private static List<RepositoryInfo> parseRepositoryInfos(@NotNull JsonElement result) {
-    if (!result.isJsonArray()) {
-      LOG.assertTrue(result.isJsonObject(), String.format("Unexpected JSON result format: %s", result));
-      return Collections.singletonList(parseSingleRepositoryInfo(result.getAsJsonObject()));
-    }
-
-    List<RepositoryInfo> repositories = new ArrayList<RepositoryInfo>();
-    for (JsonElement element : result.getAsJsonArray()) {
-      LOG.assertTrue(element.isJsonObject(),
-                     String.format("This element should be a JsonObject: %s%nTotal JSON response: %n%s", element, result));
-      repositories.add(parseSingleRepositoryInfo(element.getAsJsonObject()));
-    }
-    return repositories;
-  }
-
-  @NotNull
-  private static RepositoryInfo parseSingleRepositoryInfo(@NotNull JsonObject result) {
-    String name = result.get("name").getAsString();
-    String browserUrl = result.get("html_url").getAsString();
-    String cloneUrl = result.get("clone_url").getAsString();
-    String ownerName = result.get("owner").getAsJsonObject().get("login").getAsString();
-    String parentName = result.has("parent") ? result.get("parent").getAsJsonObject().get("full_name").getAsString() : null;
-    boolean fork = result.get("fork").getAsBoolean();
-    return new RepositoryInfo(name, browserUrl, cloneUrl, ownerName, parentName, fork);
-  }
-
-  @Nullable
-  public static RepositoryInfo getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name)
-    throws IOException {
-    final String request = "/repos/" + owner + "/" + name;
-    JsonElement jsonObject = GithubApiUtil.getRequest(auth, request);
-    if (jsonObject == null) {
-      LOG.info(String.format("Information about repository is unavailable. Owner: %s, Name: %s", owner, name));
-      return null;
-    }
-    return parseSingleRepositoryInfo(jsonObject.getAsJsonObject());
-  }
-
-  public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String username, @NotNull String repo) throws IOException {
-    String path = "/repos/" + username + "/" + repo;
-    GithubApiUtil.deleteRequest(auth, path);
-  }
-
-  public static void deleteGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
-    String path = "/gists/" + id;
-    GithubApiUtil.deleteRequest(auth, path);
-  }
-
-  @Nullable
-  public static JsonObject getGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
-    String path = "/gists/" + id;
-    JsonElement result = GithubApiUtil.getRequest(auth, path);
-    if (result == null) {
-      return null;
-    }
-    return result.getAsJsonObject();
-  }
-
-  @Nullable
-  public static String getScopedToken(@NotNull GithubAuthData auth, @NotNull Collection<String> scopes, @Nullable String note)
-    throws IOException {
-    String path = "/authorizations";
-
-    JsonObject request = new JsonObject();
-    JsonArray json = new JsonArray();
-    for (String scope : scopes) {
-      json.add(new JsonPrimitive(scope));
-    }
-    request.add("scopes", json);
-    request.addProperty("note", note != null ? note : "Intellij GitHub plugin");
-
-    JsonElement result = GithubApiUtil.postRequest(auth, path, request.toString());
-
-    if (result == null || !result.isJsonObject()) {
-      return null;
-    }
-    JsonElement token = result.getAsJsonObject().get("token");
-    if (token == null) {
-      return null;
-    }
-
-    return token.getAsString();
-  }
+  /*
+  * Git utils
+  */
 
   @Nullable
   public static String findGithubRemoteUrl(@NotNull GitRepository repository) {

@@ -50,6 +50,7 @@ import git4idea.util.GitUIUtil;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import javax.swing.*;
@@ -199,24 +200,24 @@ public class GithubShareAction extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           // get existing github repos (network) and validate auth data
-          final Ref<List<RepositoryInfo>> availableReposRef = new Ref<List<RepositoryInfo>>();
+          final Ref<List<GithubRepo>> availableReposRef = new Ref<List<GithubRepo>>();
           final GithubAuthData auth =
             GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
               @Override
               public void consume(GithubAuthData authData) throws IOException {
-                availableReposRef.set(GithubUtil.getAvailableRepos(authData));
+                availableReposRef.set(GithubApiUtil.getAvailableRepos(authData));
               }
             });
           if (auth == null || availableReposRef.isNull()) {
             return;
           }
           final HashSet<String> names = new HashSet<String>();
-          for (RepositoryInfo info : availableReposRef.get()) {
+          for (GithubRepo info : availableReposRef.get()) {
             names.add(info.getName());
           }
 
           // check access to private repos (network)
-          final GithubUser userInfo = GithubUtil.getCurrentUserInfo(auth);
+          final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserInfo(auth);
           if (userInfo == null) {
             return;
           }
@@ -436,18 +437,18 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   private static class GithubInfo {
-    @NotNull private final GithubUser myUser;
+    @NotNull private final GithubUserDetailed myUser;
     @NotNull private final GithubAuthData myAuthData;
     @NotNull private final HashSet<String> myRepositoryNames;
 
-    GithubInfo(@NotNull GithubAuthData auth, @NotNull GithubUser user, @NotNull HashSet<String> repositoryNames) {
+    GithubInfo(@NotNull GithubAuthData auth, @NotNull GithubUserDetailed user, @NotNull HashSet<String> repositoryNames) {
       myUser = user;
       myAuthData = auth;
       myRepositoryNames = repositoryNames;
     }
 
     @NotNull
-    public GithubUser getUser() {
+    public GithubUserDetailed getUser() {
       return myUser;
     }
 

@@ -33,7 +33,6 @@ import git4idea.commands.GitHttpAuthenticator;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
-import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestDialogManager;
