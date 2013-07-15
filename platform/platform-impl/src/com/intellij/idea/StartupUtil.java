@@ -23,24 +23,19 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.SnappyInitializer;
 import com.intellij.util.text.DateFormatUtilRt;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
-import org.xerial.snappy.Snappy;
-import org.xerial.snappy.SnappyLoader;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,8 +44,6 @@ import java.util.List;
  */
 public class StartupUtil {
   @NonNls public static final String NO_SPLASH = "nosplash";
-
-  public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false);
 
   private static SocketLock ourLock;
   private static String myDefaultLAF;
@@ -210,19 +203,7 @@ public class StartupUtil {
       System.setProperty(JAVA_IO_TEMP_DIR, javaTempDir);
     }
 
-    if (!NO_SNAPPY) {
-      if (System.getProperty(SnappyLoader.KEY_SNAPPY_TEMPDIR) == null) {
-        System.setProperty(SnappyLoader.KEY_SNAPPY_TEMPDIR, ideaTempDir.getPath());
-      }
-      try {
-        final long t = System.currentTimeMillis();
-        loadSnappyForJRockit();
-        log.info("Snappy library loaded (" + Snappy.getNativeLibraryVersion() + ") in " + (System.currentTimeMillis() - t) + " ms");
-      }
-      catch (Throwable t) {
-        logError(log, "Unable to load Snappy library", t);
-      }
-    }
+    SnappyInitializer.initializeSnappy(log, ideaTempDir);
 
     if (SystemInfo.isWin2kOrNewer) {
       IdeaWin32.isAvailable();  // logging is done there
@@ -242,39 +223,6 @@ public class StartupUtil {
   private static void logError(Logger log, String message, Throwable t) {
     message = message + " (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")";
     log.error(message, t);
-  }
-
-  // todo[r.sh] drop after migration on Java 7
-  private static void loadSnappyForJRockit() throws Exception {
-    String vmName = System.getProperty("java.vm.name");
-    if (vmName == null || !vmName.toLowerCase().contains("jrockit")) {
-      return;
-    }
-
-    byte[] bytes;
-    InputStream in = StartupUtil.class.getResourceAsStream("/org/xerial/snappy/SnappyNativeLoader.bytecode");
-    try {
-      bytes = FileUtil.loadBytes(in);
-    }
-    finally {
-      in.close();
-    }
-
-    ClassLoader classLoader = StartupUtil.class.getClassLoader();
-
-    Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
-    defineClass.setAccessible(true);
-    Class<?> loaderClass = (Class<?>)defineClass.invoke(classLoader, "org.xerial.snappy.SnappyNativeLoader", bytes, 0, bytes.length);
-    loaderClass = classLoader.loadClass(loaderClass.getName());
-
-    String[] classes = {"org.xerial.snappy.SnappyNativeAPI", "org.xerial.snappy.SnappyNative", "org.xerial.snappy.SnappyErrorCode"};
-    for (String aClass : classes) {
-      classLoader.loadClass(aClass);
-    }
-
-    Method loadNativeLibrary = SnappyLoader.class.getDeclaredMethod("loadNativeLibrary", Class.class);
-    loadNativeLibrary.setAccessible(true);
-    loadNativeLibrary.invoke(null, loaderClass);
   }
 
   private static void startLogging(final Logger log) {

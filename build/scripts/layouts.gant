@@ -727,6 +727,7 @@ def layout_core(String home, String target) {
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
       include(name: "cli-parser-1.1.jar")
+      include(name: "snappy-java-1.0.5.jar")
     }
   }
 }
@@ -782,6 +783,7 @@ def layout_core_upsource(String home, String target) {
       include(name: "xpp3-1.1.4-min.jar")
       include(name: "jdom.jar")
       include(name: "nanoxml*.jar")
+      include(name: "snappy-java-1.0.5.jar")
     }
   }
 }
