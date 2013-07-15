@@ -51,12 +51,14 @@ public class UnindexedFilesUpdater implements CacheUpdater {
 
   @Override
   public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
-    CollectingContentIterator finder = myIndex.createContentIterator(indicator, myProject);
+    myIndex.filesUpdateStarted(myProject);
+    CollectingContentIterator finder = myIndex.createContentIterator(indicator);
     long l = System.currentTimeMillis();
     myIndex.iterateIndexableFiles(finder, myProject, indicator);
+    myIndex.filesUpdateEnumerationFinished();
+
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
-
     LOG.info("Unindexed files update started: " + files.size() + " files to update");
     myFinishedUpdate.set(false);
     myStarted = System.currentTimeMillis();
