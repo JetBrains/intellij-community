@@ -87,13 +87,11 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
       Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                                                    "Failed to execute goal",
                                                    RunnerBundle.message("external.maven.home.no.default.with.fix"), NotificationType.ERROR,
-                                                   new NotificationListener() {
+                                                   new NotificationListener.Adapter() {
                                                      @Override
-                                                     public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                 @NotNull HyperlinkEvent event) {
-                                                       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                         ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
-                                                       }
+                                                     protected void hyperlinkActivated(@NotNull Notification notification,
+                                                                                       @NotNull HyperlinkEvent e) {
+                                                       ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
                                                      }
                                                    });
 

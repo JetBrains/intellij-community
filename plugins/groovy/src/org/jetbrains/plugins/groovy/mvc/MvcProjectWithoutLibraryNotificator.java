@@ -48,10 +48,9 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
                          "' has no " +
                          framework.getFrameworkName() +
                          " SDK. <a href='create'>Configure SDK</a></body></html>", NotificationType.INFORMATION,
-                         new NotificationListener() {
+                         new NotificationListener.Adapter() {
                            @Override
-                           public void hyperlinkUpdate(@NotNull Notification notification,
-                                                       @NotNull HyperlinkEvent event) {
+                           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
                              MvcConfigureNotification.configure(framework, module);
                            }
                          }).notify(project);
