@@ -400,6 +400,10 @@ public class PyTypeParser {
         final PyType type = builtinCache.getStringType(LanguageLevel.forElement(myAnchor));
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
       }
+      else if ("bytestring".equals(name)) {
+        final PyType type = builtinCache.getByteStringType(LanguageLevel.forElement(myAnchor));
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
       else if ("bytes".equals(name)) {
         final PyClassType type = builtinCache.getBytesType(LanguageLevel.forElement(myAnchor));
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;

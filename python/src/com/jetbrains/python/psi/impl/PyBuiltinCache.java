@@ -286,11 +286,25 @@ public class PyBuiltinCache {
       return getObjectType("str");
     }
     else {
-      if (STRING_TYPE_PY2 == null) {
-        STRING_TYPE_PY2 = PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
-      }
-      return STRING_TYPE_PY2;
+      return getStrOrUnicodeType();
     }
+  }
+
+  @Nullable
+  public PyType getByteStringType(@NotNull LanguageLevel level) {
+    if (level.isPy3K()) {
+      return getObjectType("bytes");
+    }
+    else {
+      return getStrOrUnicodeType();
+    }
+  }
+
+  private PyType getStrOrUnicodeType() {
+    if (STRING_TYPE_PY2 == null) {
+      STRING_TYPE_PY2 = PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
+    }
+    return STRING_TYPE_PY2;
   }
 
   @Nullable

@@ -30,8 +30,7 @@ import java.util.Set;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  @NotNull private Properties myStdlibTypes2 = new Properties();
-  @NotNull private Properties myStdlibTypes3 = new Properties();
+  @NotNull private Properties myStdlibTypes = new Properties();
 
   private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen");
 
@@ -115,7 +114,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (cached != null) {
       return cached.get();
     }
-    final StructuredDocString docString = getStructuredDocString(qname, level);
+    final StructuredDocString docString = getStructuredDocString(qname);
     if (docString == null) {
       return null;
     }
@@ -261,7 +260,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (cached != null) {
       return cached.get();
     }
-    final StructuredDocString docString = getStructuredDocString(functionQName, level);
+    final StructuredDocString docString = getStructuredDocString(functionQName);
     if (docString == null) {
       return null;
     }
@@ -275,12 +274,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private StructuredDocString getStructuredDocString(@NotNull String qualifiedName, @NotNull LanguageLevel level) {
-    final Properties db = getStdlibTypes(level);
+  private StructuredDocString getStructuredDocString(@NotNull String qualifiedName) {
+    final Properties db = getStdlibTypes();
     final String docString = db.getProperty(qualifiedName);
-    if (docString == null && level.isPy3K()) { //if we couldn't find for Py3K will search in Python2 db
-      return getStructuredDocString(qualifiedName, LanguageLevel.PYTHON27);
-    }
     return DocStringUtil.parse(docString);
   }
 
@@ -310,14 +306,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private Properties getStdlibTypes(@NotNull LanguageLevel level) {
-    final Properties result = level.isPy3K() ? myStdlibTypes3 : myStdlibTypes2;
-    final String name = level.isPy3K() ? "StdlibTypes3" : "StdlibTypes2";
-    if (result.isEmpty()) {
+  private Properties getStdlibTypes() {
+    if (myStdlibTypes.isEmpty()) {
       try {
-        final InputStream s = new FileInputStream(PythonHelpersLocator.getHelperFile(String.format("%s.properties", name)));
+        final InputStream s = new FileInputStream(PythonHelpersLocator.getHelperFile("StdlibTypes.properties"));
         try {
-          result.load(s);
+          myStdlibTypes.load(s);
         }
         finally {
           s.close();
@@ -325,6 +319,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
       catch (IOException ignored) {}
     }
-    return result;
+    return myStdlibTypes;
   }
 }
