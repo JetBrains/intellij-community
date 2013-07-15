@@ -32,6 +32,7 @@ import org.zmlx.hg4idea.util.HgEncodingUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +47,7 @@ public class HgCommitCommand {
   private final Project myProject;
   private final VirtualFile myRoot;
   private final String myMessage;
+  @NotNull private final Charset myCharset;
 
   private Set<HgFile> myFiles = Collections.emptySet();
 
@@ -53,6 +55,7 @@ public class HgCommitCommand {
     myProject = project;
     myRoot = root;
     myMessage = message;
+    myCharset = HgEncodingUtil.getDefaultCharset(myProject);
   }
 
   public void setFiles(@NotNull Set<HgFile> files) {
@@ -88,17 +91,23 @@ public class HgCommitCommand {
     List<String> parameters = new LinkedList<String>();
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
+    if (System.getenv("HGENCODING") == null) {
+      parameters.add("--encoding");
+      parameters.add(myCharset.name());
+    }
     parameters.addAll(chunk);
-    ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+    HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setCharset(myCharset);
+    ensureSuccess(executor.executeInCurrentThread(myRoot, "commit", parameters));
   }
 
   private File saveCommitMessage() throws VcsException {
     File systemDir = new File(PathManager.getSystemPath());
     File tempFile = new File(systemDir, TEMP_FILE_NAME);
-    
     try {
-      FileUtil.writeToFile(tempFile, myMessage.getBytes(HgEncodingUtil.getDefaultCharset()));
-    } catch (IOException e) {
+      FileUtil.writeToFile(tempFile, myMessage.getBytes(myCharset));
+    }
+    catch (IOException e) {
       throw new VcsException("Couldn't prepare commit message", e);
     }
     return tempFile;

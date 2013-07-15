@@ -62,7 +62,7 @@ public final class HgCommandExecutor {
   private final HgVcs myVcs;
   private final String myDestination;
 
-  private Charset myCharset = HgEncodingUtil.getDefaultCharset();
+  private Charset myCharset;
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
   private List<String> myOptions = DEFAULT_OPTIONS;
@@ -81,6 +81,7 @@ public final class HgCommandExecutor {
     myVcs = HgVcs.getInstance(project);
     myDestination = destination;
     myState = state;
+    myCharset = HgEncodingUtil.getDefaultCharset(myProject);
   }
 
   public void setCharset(Charset charset) {
