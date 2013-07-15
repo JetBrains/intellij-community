@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
@@ -124,16 +123,11 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   public List<Change> getSelectedChanges() {
     List<Change> changes = new ArrayList<Change>();
     for (Node node : myGraphTable.getSelectedNodes()) {
-      try {
-        VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
-        if (commitData instanceof LoadingDetails) {
-          return null;
-        }
-        changes.addAll(commitData.getChanges());
+      VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
+      if (commitData instanceof LoadingDetails) {
+        return null;
       }
-      catch (VcsException ex) {
-        LOG.error(ex); // TODO
-      }
+      changes.addAll(commitData.getChanges());
     }
     return CommittedChangesTreeBrowser.zipChanges(changes);
   }

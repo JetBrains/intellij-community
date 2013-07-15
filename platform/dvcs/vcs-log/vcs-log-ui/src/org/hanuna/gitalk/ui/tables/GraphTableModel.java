@@ -1,14 +1,13 @@
 package org.hanuna.gitalk.ui.tables;
 
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsCommit;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
-import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.data.rebase.FakeCommitParents;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.ui.render.PositionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,12 +53,7 @@ public class GraphTableModel extends AbstractTableModel {
       data = null;
     }
     else {
-      try {
-        data = myDataHolder.getMiniDetailsGetter().getCommitData(commitNode);
-      }
-      catch (VcsException e) {
-        throw new RuntimeException(e);
-      }
+      data = myDataHolder.getMiniDetailsGetter().getCommitData(commitNode);
     }
     switch (columnIndex) {
       case COMMIT_COLUMN:

@@ -66,7 +66,7 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
   }
 
   @NotNull
-  public T getCommitData(final Node node) throws VcsException {
+  public T getCommitData(final Node node) {
     assert EventQueue.isDispatchThread();
     Hash hash = node.getCommitHash();
     T details = myCache.get(hash);
@@ -94,7 +94,7 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
     return null;
   }
 
-  private void runLoadAroundCommitData(@NotNull Node node) throws VcsException {
+  private void runLoadAroundCommitData(@NotNull Node node) {
     int rowIndex = node.getRowIndex();
     List<Node> nodes = new ArrayList<Node>();
     for (int i = rowIndex - UP_PRELOAD_COUNT; i < rowIndex + DOWN_PRELOAD_COUNT; i++) {

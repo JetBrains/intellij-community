@@ -2,7 +2,6 @@ package org.hanuna.gitalk.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -83,12 +82,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return;
       }
       Hash hash = node.getCommitHash();
-      try {
-        myDataPanel.setData(myLogDataHolder.getCommitDetailsGetter().getCommitData(node));
-      }
-      catch (VcsException e1) {
-        throw new RuntimeException(e1); // TODO
-      }
+      myDataPanel.setData(myLogDataHolder.getCommitDetailsGetter().getCommitData(node));
       myRefsPanel.setRefs(myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash));
     }
   }
