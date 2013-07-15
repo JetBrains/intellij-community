@@ -53,7 +53,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   public static class State {
     public String LOGIN = "";
     public String HOST = GithubApiUtil.DEFAULT_GITHUB_HOST;
-    public AuthType AUTH_TYPE = AuthType.BASIC;
+    public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
     public boolean ANONYMOUS_GIST = false;
     public boolean OPEN_IN_BROWSER_GIST = true;
     public boolean PRIVATE_GIST = true;
@@ -166,6 +166,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
       case TOKEN:
         return GithubAuthData.createTokenAuth(getHost(), getPassword());
       case ANONYMOUS:
+        return GithubAuthData.createAnonymous();
       default:
         throw new IllegalStateException("GithubSettings: getAuthData - wrong AuthType: " + getAuthType());
     }
@@ -184,6 +185,8 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
         setPassword(auth.getTokenAuth().getToken(), rememberPassword);
         break;
       case ANONYMOUS:
+        setPassword("", rememberPassword);
+        break;
       default:
         throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + getAuthType());
     }

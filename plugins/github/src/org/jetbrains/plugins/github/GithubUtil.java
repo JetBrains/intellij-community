@@ -63,6 +63,9 @@ public class GithubUtil {
                                                   @NotNull ThrowableConsumer<GithubAuthData, IOException> task) throws IOException {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
+      if (auth.getAuthType() == GithubAuthData.AuthType.ANONYMOUS) {
+        throw new AuthenticationException("Settings authentication not set");
+      }
       task.consume(auth);
       return auth;
     }
@@ -94,6 +97,9 @@ public class GithubUtil {
                                        @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
+      if (auth.getAuthType() == GithubAuthData.AuthType.ANONYMOUS) {
+        throw new AuthenticationException("Settings authentication not set");
+      }
       return task.convert(auth);
     }
     catch (AuthenticationException e) {
