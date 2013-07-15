@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.context;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -65,8 +66,12 @@ public class XDebuggerBreakpointsContextProvider extends WorkingContextProvider 
   @Override
   public void clearContext() {
     XBreakpointBase<?,?,?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
-    for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
-      myBreakpointManager.removeBreakpoint(breakpoint);
+    for (final XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myBreakpointManager.removeBreakpoint(breakpoint);
+        }
+      });
     }
   }
 }
