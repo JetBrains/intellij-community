@@ -61,7 +61,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
   private volatile String myCachedQName = null;
-  private volatile String myCachedTextSkipWhiteSpaceAndComments = null;
+  private volatile String myCachedNormalizedText = null;
 
   public PsiReferenceExpressionImpl() {
     super(JavaElementType.REFERENCE_EXPRESSION);
@@ -177,7 +177,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   public void clearCaches() {
     myCachedQName = null;
-    myCachedTextSkipWhiteSpaceAndComments = null;
+    myCachedNormalizedText = null;
     super.clearCaches();
   }
 
@@ -303,7 +303,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
   @NotNull
   private JavaResolveResult[] resolveToPackage(PsiFile containingFile) {
-    final String packageName = getCachedTextSkipWhiteSpaceAndComments();
+    final String packageName = getCachedNormalizedText();
     Project project = containingFile.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiPackage aPackage = psiFacade.findPackage(packageName);
@@ -371,7 +371,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
                 " resolves to:" + LogUtil.objectAndClass(element) +
                 " parent:" + LogUtil.objectAndClass(element.getParent()));
     }
-    return getCachedTextSkipWhiteSpaceAndComments();
+    return getCachedNormalizedText();
   }
 
   private static final Function<PsiReferenceExpressionImpl, PsiType> TYPE_EVALUATOR = new TypeEvaluator();
@@ -727,7 +727,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   public String getClassNameText() {
     String cachedQName = myCachedQName;
     if (cachedQName == null) {
-      myCachedQName = cachedQName = PsiNameHelper.getQualifiedClassName(getCachedTextSkipWhiteSpaceAndComments(), false);
+      myCachedQName = cachedQName = PsiNameHelper.getQualifiedClassName(getCachedNormalizedText(), false);
     }
     return cachedQName;
   }
@@ -761,10 +761,10 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
   }
 
-  private String getCachedTextSkipWhiteSpaceAndComments() {
-    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
+  private String getCachedNormalizedText() {
+    String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {
-      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = SourceUtil.getReferenceText(this);
+      myCachedNormalizedText = whiteSpaceAndComments = SourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
   }
