@@ -20,7 +20,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.StdLanguages;
@@ -125,7 +124,7 @@ public class JavaCompletionUtil {
   }
 
   public static boolean isInExcludedPackage(@NotNull final PsiMember member, boolean allowInstanceInnerClasses) {
-    final String name = StaticImportMethodFix.getMemberQualifiedName(member);
+    final String name = PsiUtil.getMemberQualifiedName(member);
     if (name == null) return false;
 
     if (!member.hasModifierProperty(PsiModifier.STATIC)) {
