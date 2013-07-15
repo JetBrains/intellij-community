@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -48,6 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.*;
@@ -104,6 +107,15 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
         super.processMouseEvent(e);
       }
     };
+    final String actionIdToUseForDoubleClick = DefaultRunExecutor.getRunExecutorInstance().getContextActionId();
+    myAllTasksTree.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() >= 2 && !e.isPopupTrigger()) {
+          ExternalSystemUiUtil.executeAction(actionIdToUseForDoubleClick, e);
+        }
+      }
+    });
     ExternalSystemUiUtil.apply(settings, myAllTasksModel);
     CustomizationUtil.installPopupHandler(myAllTasksTree, TREE_ACTIONS_GROUP_ID, TREE_CONTEXT_MENU_PLACE);
 

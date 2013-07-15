@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
@@ -42,6 +44,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
@@ -188,5 +191,20 @@ public class ExternalSystemUiUtil {
   public static ExternalSystemUiAware getUiAware(@NotNull ProjectSystemId externalSystemId) {
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     return manager instanceof ExternalSystemUiAware ? (ExternalSystemUiAware)manager : DefaultExternalSystemUiAware.INSTANCE;
+  }
+
+  public static void executeAction(@NotNull final String actionId, @NotNull final InputEvent e) {
+    final ActionManager actionManager = ActionManager.getInstance();
+    final AnAction action = actionManager.getAction(actionId);
+    if (action == null) {
+      return;
+    }
+    final Presentation presentation = new Presentation();
+    DataContext context = DataManager.getInstance().getDataContext(e.getComponent());
+    final AnActionEvent event = new AnActionEvent(e, context, "", presentation, actionManager, 0);
+    action.update(event);
+    if (presentation.isEnabled()) {
+      action.actionPerformed(event);
+    }
   }
 }
