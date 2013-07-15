@@ -162,7 +162,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     return null;
   }
 
-  protected void afterTestConnection(final boolean b) {
+  protected void afterTestConnection(final boolean connectionSuccessful) {
   }
 
   protected void enableButtons() {

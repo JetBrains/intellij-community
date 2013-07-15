@@ -62,9 +62,9 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   }
 
   @Override
-  protected void afterTestConnection(final boolean b) {
-    super.afterTestConnection(b);
-    if (b) {
+  protected void afterTestConnection(final boolean connectionSuccessful) {
+    super.afterTestConnection(connectionSuccessful);
+    if (connectionSuccessful) {
       updateProjects();
     }
   }
