@@ -20,7 +20,6 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.Splash;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -323,16 +321,6 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(AWTEvent e) {
-    if (!IdeaApplication.isLoaded() && e instanceof InputEvent) {
-      Object source = e.getSource();
-      //keep in mind the IntelliJ Server login dialog
-      if (source instanceof Splash || !(source instanceof Window)) {
-        // input event processing requires application components to be instantiated
-        ((InputEvent)e).consume();
-        return;
-      }
-    }
-
     e = mapEvent(e);
 
     boolean wasInputEvent = myIsInInputEvent;

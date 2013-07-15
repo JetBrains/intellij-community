@@ -85,9 +85,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     bootstrapPicoContainer(name);
   }
 
-  //todo[mike] there are several init* methods. Make it just 1
   public void init() {
-    initComponents();
+    createComponents();
+    getComponents();
   }
 
   @NotNull
@@ -149,10 +149,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected <T> T getComponentFromContainer(Class<T> interfaceClass) {
     final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
     if (initializedComponent != null) return initializedComponent;
-
-    //if (!myComponentsCreated) {
-    //  LOG.error("Component requests are not allowed before they are created");
-    //}
 
     synchronized (this) {
       if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(interfaceClass)) {
@@ -234,12 +230,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public synchronized <T> T registerComponentInstance(Class<T> componentKey, T componentImplementation) {
     getPicoContainer().unregisterComponent(componentKey.getName());
     getPicoContainer().registerComponentInstance(componentKey.getName(), componentImplementation);
-    return (T)myInitializedComponents.remove(componentKey);
+    @SuppressWarnings("unchecked") T t = (T)myInitializedComponents.remove(componentKey);
+    return t;
   }
 
   @Override
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
-    return myComponentsRegistry.containsInterface(interfaceClass);
+    return myComponentsRegistry != null && myComponentsRegistry.containsInterface(interfaceClass);
   }
 
   protected synchronized Object[] getComponents() {
@@ -317,11 +314,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @TestOnly
   public void setTemporarilyDisposed(boolean disposed) {
     temporarilyDisposed = disposed;
-  }
-
-  public void initComponents() {
-    createComponents();
-    getComponents();
   }
 
   protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable PluginDescriptor descriptor, boolean defaultProject) {
@@ -445,7 +437,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     private boolean containsInterface(final Class interfaceClass) {
-      if (!myClassesLoaded) loadClasses();
       return myInterfaceToClassMap.containsKey(interfaceClass);
     }
 

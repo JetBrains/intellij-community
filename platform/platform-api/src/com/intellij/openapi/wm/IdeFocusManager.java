@@ -240,11 +240,15 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   @NotNull
   public static IdeFocusManager getGlobalInstance() {
-    Application app = ApplicationManager.getApplication();
-    IdeFocusManager fm = app != null ? app.getComponent(IdeFocusManager.class) : PassThroughIdeFocusManager.getInstance();
+    IdeFocusManager fm = null;
 
-    // It happens when IDEA server dialog is shown, app != null but it's semi-initialized
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.hasComponent(IdeFocusManager.class)) {
+      fm = app.getComponent(IdeFocusManager.class);
+    }
+
     if (fm == null) {
+      // happens when app is semi-initialized (e.g. when IDEA server dialog is shown)
       fm = PassThroughIdeFocusManager.getInstance();
     }
 
