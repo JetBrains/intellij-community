@@ -1,6 +1,9 @@
 package org.zmlx.hg4idea.util;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -9,32 +12,27 @@ import java.nio.charset.Charset;
  * @author Kirill Likhodedov
  */
 public class HgEncodingUtil {
-  
-  private static final String WINDOWS_DEFAULT_CHARSET = "cp1251";
-  private static final String UNIX_DEFAULT_CHARSET = "UTF-8";
 
-  private HgEncodingUtil() {
-  }
-
-  /**
-   * Returns the default charset for Mercurial.
-   * It is cp1251 for Windows, and UTF-8 for Unix-like systems.
-   * The {@code HGENCODING} environment variable is not considered, because being set for IDEA it is inherited by the hg process
-   * spawned by IDEA.
-   * @return cp1251 for windows / UTF-8 for Unix-like systems.
-   */
-  @NotNull
-  public static Charset getDefaultCharset() {
-    return SystemInfo.isWindows ? getCharsetForNameOrDefault(WINDOWS_DEFAULT_CHARSET) : getCharsetForNameOrDefault(UNIX_DEFAULT_CHARSET);
-  }
+  private static final Logger LOG = Logger.getInstance(HgEncodingUtil.class);
 
   @NotNull
-  private static Charset getCharsetForNameOrDefault(@NotNull String name) {
+  public static Charset getDefaultCharset(@NotNull Project project) {
+    String name = "";
     try {
-      return Charset.forName(name);
+      String enc = System.getenv("HGENCODING");
+      if (enc != null && enc.length() > 0 && Charset.isSupported(enc)) {
+        name = enc;
+      }
+      else {
+        name = EncodingProjectManager.getInstance(project).getDefaultCharsetName();
+      }
+      if (!StringUtil.isEmptyOrSpaces(name)) {
+        return Charset.forName(name);
+      }
     }
     catch (Exception e) {
-      return Charset.defaultCharset();
+      LOG.info("Couldn't find encoding " + name, e);
     }
+    return Charset.defaultCharset();
   }
 }
