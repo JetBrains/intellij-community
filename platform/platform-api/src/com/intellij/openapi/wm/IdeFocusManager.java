@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,11 +241,11 @@ public abstract class IdeFocusManager implements FocusRequestor {
   @NotNull
   public static IdeFocusManager getGlobalInstance() {
     Application app = ApplicationManager.getApplication();
-    IdeFocusManager fm = app != null ? app.getComponent(IdeFocusManager.class) : PassThroughtIdeFocusManager.getInstance();
+    IdeFocusManager fm = app != null ? app.getComponent(IdeFocusManager.class) : PassThroughIdeFocusManager.getInstance();
 
     // It happens when IDEA server dialog is shown, app != null but it's semi-initialized
     if (fm == null) {
-      fm = PassThroughtIdeFocusManager.getInstance();
+      fm = PassThroughIdeFocusManager.getInstance();
     }
 
     return fm;
