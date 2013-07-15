@@ -181,7 +181,7 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
 
 
   public void testLoop() {
-    JSRootConfiguration.storeLanguageLevel(JSLanguageLevel.JS_1_7, getProject());
+    JSRootConfiguration.getInstance(getProject()).storeLanguageLevel(JSLanguageLevel.JS_1_7);
     try {
       final JSLanguageDialect dialect = JSLanguageLevel.JS_1_7.getDialect();
       String s = "for (var i = 0; i < n ; i++) {\n" +
@@ -224,7 +224,7 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                 "}", 0, 0, dialect);
     }
     finally {
-      JSRootConfiguration.unsetLanguageLevel(getProject());
+      JSRootConfiguration.getInstance(getProject()).unsetLanguageLevel();
     }
   }
 
