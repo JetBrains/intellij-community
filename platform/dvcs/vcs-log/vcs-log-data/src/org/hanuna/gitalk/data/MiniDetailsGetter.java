@@ -18,7 +18,6 @@ public class MiniDetailsGetter extends DataGetter<VcsCommit> {
 
   @Override
   protected List<? extends VcsCommit> readDetails(List<String> hashes) throws VcsException {
-    // TODO use the intermediate file storage
     return myLogProvider.readMiniDetails(myRoot, hashes);
   }
 
