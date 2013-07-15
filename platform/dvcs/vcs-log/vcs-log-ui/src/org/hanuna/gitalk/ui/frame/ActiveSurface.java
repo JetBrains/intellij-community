@@ -70,6 +70,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
       @Override
       public void run() {
         selectionChangeListener.valueChanged(null);
+        myDetailsPanel.valueChanged(null);
       }
     });
 

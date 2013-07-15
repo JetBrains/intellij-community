@@ -3,6 +3,7 @@ package org.hanuna.gitalk.ui.frame;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -11,11 +12,13 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsCommitDetails;
+import org.hanuna.gitalk.data.LoadingDetails;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.ui.render.PrintParameters;
 import org.hanuna.gitalk.ui.render.painters.RefPainter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,14 +38,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static final String STANDARD_LAYER = "Standard";
   private static final String MESSAGE_LAYER = "Message";
 
-  private final VcsLogDataHolder myLogDataHolder;
-  private final VcsLogGraphTable myGraphTable;
+  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final VcsLogGraphTable myGraphTable;
 
-  private final RefsPanel myRefsPanel;
-  private final DataPanel myDataPanel;
-  private final MessagePanel myMessagePanel;
+  @NotNull private final RefsPanel myRefsPanel;
+  @NotNull private final DataPanel myDataPanel;
+  @NotNull private final MessagePanel myMessagePanel;
+  @NotNull private final JBLoadingPanel myLoadingPanel;
 
-  DetailsPanel(VcsLogDataHolder logDataHolder, VcsLogGraphTable graphTable) {
+  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable) {
     super(new CardLayout());
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
@@ -55,20 +59,25 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     box.add(myRefsPanel);
     box.add(myDataPanel);
 
-    add(ScrollPaneFactory.createScrollPane(box), STANDARD_LAYER);
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder);
+    myLoadingPanel.add(ScrollPaneFactory.createScrollPane(box));
+
+    add(myLoadingPanel, STANDARD_LAYER);
     add(myMessagePanel, MESSAGE_LAYER);
 
     setBackground(UIUtil.getTableBackground());
   }
 
   @Override
-  public void valueChanged(ListSelectionEvent e) {
+  public void valueChanged(@Nullable ListSelectionEvent notUsed) {
     int[] rows = myGraphTable.getSelectedRows();
     if (rows.length < 1) {
+      myLoadingPanel.stopLoading();
       ((CardLayout)getLayout()).show(this, MESSAGE_LAYER);
       myMessagePanel.setText("Nothing selected");
     }
     else if (rows.length > 1) {
+      myLoadingPanel.stopLoading();
       ((CardLayout)getLayout()).show(this, MESSAGE_LAYER);
       myMessagePanel.setText("Several commits selected");
     }
@@ -81,8 +90,17 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return;
       }
       Hash hash = node.getCommitHash();
-      myDataPanel.setData(myLogDataHolder.getCommitDetailsGetter().getCommitData(node));
-      myRefsPanel.setRefs(myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash));
+      VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
+      if (commitData instanceof LoadingDetails) {
+        myLoadingPanel.startLoading();
+        myDataPanel.setData(null);
+        myRefsPanel.setRefs(Collections.<Ref>emptyList());
+      }
+      else {
+        myLoadingPanel.stopLoading();
+        myDataPanel.setData(commitData);
+        myRefsPanel.setRefs(myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash));
+      }
     }
   }
 
@@ -122,15 +140,22 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setOpaque(false);
     }
 
-    void setData(VcsCommitDetails commit) {
-      myHashLabel.setText(commit.getHash().toShortString());
-      myCommitMessage.setText(commit.getFullMessage());
-
-      String authorText = commit.getAuthorName();
-      if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
-        authorText += " (committed by " + commit.getCommitterName() + ")";
+    void setData(@Nullable VcsCommitDetails commit) {
+      if (commit == null) {
+        myHashLabel.setText("");
+        myCommitMessage.setText("");
+        myAuthor.setText("");
       }
-      myAuthor.setText(authorText);
+      else {
+        myHashLabel.setText(commit.getHash().toShortString());
+        myCommitMessage.setText(commit.getFullMessage());
+
+        String authorText = commit.getAuthorName();
+        if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
+          authorText += " (committed by " + commit.getCommitterName() + ")";
+        }
+        myAuthor.setText(authorText);
+      }
       repaint();
     }
   }
