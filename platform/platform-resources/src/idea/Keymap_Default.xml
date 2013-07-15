@@ -295,10 +295,13 @@
     <keyboard-shortcut first-keystroke="shift F11"/>
   </action>
   <action id="HighlightUsagesInFile">
-    <keyboard-shortcut first-keystroke="control shift F7"/>
+    <keyboard-shortcut first-keystroke="control shift F7"/> 
   </action>
   <action id="GotoFile">
     <keyboard-shortcut first-keystroke="control shift N"/>
+  </action>
+  <action id="ActivateTerminalToolWindow">
+    <keyboard-shortcut first-keystroke="alt MINUS"/>
   </action>
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="alt 0"/>
