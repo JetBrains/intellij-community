@@ -232,7 +232,7 @@ public class ScopeImpl implements Scope {
       @Override
       public int compare(NameDefiner d1, NameDefiner d2) {
         return getPriority(d2) - getPriority(d1);
-      };
+      }
 
       private int getPriority(NameDefiner nameDefiner) {
         if (nameDefiner instanceof PyStarImportElement) {
