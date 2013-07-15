@@ -60,7 +60,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   @NotNull private final CommitDetailsGetter myDetailsGetter;
 
   @NotNull private volatile DataPack myDataPack;
-  @Nullable private volatile List<? extends CommitParents> myAllLog; // null means the whole log was not yet read
+  @Nullable private volatile List<CommitParents> myAllLog; // null means the whole log was not yet read
 
   public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
@@ -99,7 +99,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        List<? extends CommitParents> all = myLogProvider.readAllHashes(myRoot);
+        List<CommitParents> all = myLogProvider.readAllHashes(myRoot);
         Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
 
         myAllLog = all;

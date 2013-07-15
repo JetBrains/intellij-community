@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -39,9 +40,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommit;
-import com.intellij.vcs.log.VcsCommitImpl;
+import com.intellij.vcs.log.*;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
@@ -519,7 +518,7 @@ public class GitHistoryUtils {
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsCommitImpl>() {
+    return ContainerUtil.map(records, new Function<GitLogRecord, VcsCommitImpl>() {
       @Override
       public VcsCommitImpl fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
@@ -528,6 +527,33 @@ public class GitHistoryUtils {
         }
         return new VcsCommitImpl(Hash.build(record.getHash()), parents,
                                  record.getSubject(), record.getAuthorName(), record.getAuthorTimeStamp());
+      }
+    });
+  }
+
+  @NotNull
+  public static List<CommitParents> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
+    h.addParameters("--full-history", "--sparse");
+    h.addParameters("--date-order");
+    h.endOptions();
+
+    String output = h.run();
+
+    List<GitLogRecord> records = parser.parse(output);
+
+    return ContainerUtil.map(records, new Function<GitLogRecord, CommitParents>() {
+      @Override
+      public CommitParents fun(GitLogRecord record) {
+        List<Hash> parents = new SmartList<Hash>();
+        for (String parent : record.getParentsHashes()) {
+          parents.add(Hash.build(parent));
+        }
+        return new SimpleCommitParents(Hash.build(record.getHash()), parents);
       }
     });
   }
