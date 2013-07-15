@@ -81,6 +81,12 @@ public abstract class FileTypeRegistry {
   public abstract FileType detectFileTypeFromContent(@NotNull VirtualFile file);
 
   /**
+   * Finds a file type with the specified name.
+   */
+  @Nullable
+  public abstract FileType findFileTypeByName(String fileTypeName);
+
+  /**
    * Pluggable file type detector by content
    */
   public interface FileTypeDetector {

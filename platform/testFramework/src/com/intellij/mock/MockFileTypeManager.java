@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -178,5 +179,11 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   @Override
   public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
     return UnknownFileType.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public FileType findFileTypeByName(String fileTypeName) {
+    return null;
   }
 }
