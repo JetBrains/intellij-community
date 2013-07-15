@@ -575,7 +575,7 @@ public class AnnotationsHighlightUtil {
   public static HighlightInfo checkFunctionalInterface(PsiAnnotation annotation) {
     final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation);
     if (errorMessage != null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(annotation).descriptionAndTooltip(errorMessage).create();
     }
     return null;
   }
