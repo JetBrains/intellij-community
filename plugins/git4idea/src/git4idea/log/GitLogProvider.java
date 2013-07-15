@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -49,10 +50,13 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommitDetails> readFirstBlock(@NotNull VirtualFile root) throws VcsException {
-    return GitHistoryUtils.history(myProject, root, "HEAD", "--branches", "--remotes", "--tags", "--date-order",
-                                                      "--encoding=UTF-8", "--full-history", "--sparse",
-                                                      "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE);
+  public List<? extends VcsCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException {
+    String[] params = { "HEAD", "--branches", "--remotes", "--tags", "--encoding=UTF-8", "--full-history", "--sparse",
+                        "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE};
+    if (ordered) {
+      params = ArrayUtil.append(params, "--date-order");
+    }
+    return GitHistoryUtils.history(myProject, root, params);
   }
 
   @NotNull

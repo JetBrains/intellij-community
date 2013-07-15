@@ -20,7 +20,7 @@ public interface VcsLogProvider {
    * Reads {@link #COMMIT_BLOCK_SIZE the first part} of the log.
    */
   @NotNull
-  List<? extends VcsCommitDetails> readFirstBlock(@NotNull VirtualFile root) throws VcsException;
+  List<? extends VcsCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException;
 
   /**
    * Reads the whole history, but only hashes & parents.

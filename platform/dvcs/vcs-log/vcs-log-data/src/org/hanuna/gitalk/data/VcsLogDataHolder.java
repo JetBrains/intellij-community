@@ -95,7 +95,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
         onInitialized.consume(dataHolder);
         dataHolder.loadAllLog();
       }
-    });
+    }, true);
   }
 
   private void loadAllLog() {
@@ -112,11 +112,11 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     });
   }
 
-  private void loadFirstPart(final Consumer<DataPack> onSuccess) {
+  private void loadFirstPart(final Consumer<DataPack> onSuccess, final boolean ordered) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        List<? extends VcsCommitDetails> firstBlock = myLogProvider.readFirstBlock(myRoot);
+        List<? extends VcsCommitDetails> firstBlock = myLogProvider.readFirstBlock(myRoot, ordered);
         Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
 
         myDetailsGetter.saveInCache(firstBlock);
@@ -176,7 +176,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
       public void consume(DataPack dataPack) {
         onSuccess.run();
       }
-    });
+    }, false);
   }
 
   @Override
