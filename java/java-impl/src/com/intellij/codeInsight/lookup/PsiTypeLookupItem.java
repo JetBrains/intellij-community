@@ -17,7 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -300,7 +300,7 @@ public class PsiTypeLookupItem extends LookupItem {
                                          "file.length=" + file.getTextLength() + "\n" +
                                          "document=" + context.getDocument() + "\n" +
                                          DebugUtil.currentStackTrace(),
-                                         new Attachment(context.getDocument())));
+                                         AttachmentFactory.createAttachment(context.getDocument())));
       return;
 
     }

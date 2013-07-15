@@ -15,8 +15,8 @@
  */
 package com.intellij.internal.psiView;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
@@ -742,7 +742,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     if (blockNode == null) {
       LOG.error(LogMessageEx
                   .createEvent("PsiViewer: rootNode not found", "Current language: " + rootElement.getContainingFile().getLanguage(),
-                               new Attachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile())));
+                               AttachmentFactory.createAttachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile())));
       blockNode = findBlockNode(rootPsi);
     }
 

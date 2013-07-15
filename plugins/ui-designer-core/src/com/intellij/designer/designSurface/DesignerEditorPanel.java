@@ -28,8 +28,8 @@ import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyTableTab;
 import com.intellij.designer.propertyTable.TablePanelActionPolicy;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -344,7 +344,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     if (info.myShowLog) {
       LOG.error(LogMessageEx.createEvent(info.myDisplayMessage,
                                          info.myMessage + "\n" + ExceptionUtil.getThrowableText(info.myThrowable),
-                                         new Attachment(myFile)));
+                                         AttachmentFactory.createAttachment(myFile)));
     }
   }
 
