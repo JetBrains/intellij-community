@@ -400,6 +400,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
+  public boolean isEAP() {
+    return ApplicationInfoImpl.getShadowInstance().isEAP();
+  }
+
+  @Override
   public boolean isUnitTestMode() {
     return myTestModeFlag;
   }
