@@ -188,4 +188,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testNotImportedClassInDocString() {
     doMultiFileTest();
   }
+
+  // PY-6728
+  public void testForLoopIteration() {
+    doTest();
+  }
 }

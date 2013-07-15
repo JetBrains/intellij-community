@@ -8,12 +8,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyGenericType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +56,18 @@ public class PyTypeCheckerInspection extends PyInspection {
     public void visitPySubscriptionExpression(PySubscriptionExpression node) {
       // TODO: Support slice PySliceExpressions
       checkCallSite(node);
+    }
+
+    @Override
+    public void visitPyForStatement(PyForStatement node) {
+      final PyExpression source = node.getForPart().getSource();
+      if (source != null) {
+        final PyType type = myTypeEvalContext.getType(source);
+        if (type != null && !PyABCUtil.isSubtype(type, PyNames.ITERABLE)) {
+          registerProblem(source, String.format("Expected 'collections.Iterable', got '%s' instead",
+                                                PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)));
+        }
+      }
     }
 
     private void checkCallSite(@Nullable PyQualifiedExpression callSite) {
