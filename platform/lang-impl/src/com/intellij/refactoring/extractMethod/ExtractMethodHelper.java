@@ -30,10 +30,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -43,13 +43,13 @@ import java.util.List;
  */
 public class ExtractMethodHelper {
   public static void processDuplicates(@NotNull final PsiElement callElement,
-                                        @NotNull final PsiElement generatedMethod,
-                                        @NotNull final List<PsiElement> scope,
-                                        @NotNull final SimpleDuplicatesFinder finder,
-                                        @NotNull final Editor editor,
-                                        @NotNull final Function<Pair<PsiElement, PsiElement>, List<PsiElement>> collector,
-                                        @NotNull final Consumer<Pair<List<PsiElement>, PsiElement>> replacer) {
-    final List<Pair<PsiElement, PsiElement>> duplicates = finder.findDuplicates(scope, generatedMethod);
+                                       @NotNull final PsiElement generatedMethod,
+                                       @NotNull final List<PsiElement> scope,
+                                       @NotNull final SimpleDuplicatesFinder finder,
+                                       @NotNull final Editor editor,
+                                       @NotNull final Consumer<Pair<Match, PsiElement>> replacer,
+                                       @NotNull final IElementType identifierElementType) {
+    final List<Match> duplicates = finder.findDuplicates(scope, generatedMethod, identifierElementType);
 
     if (duplicates.size() > 0) {
       final String message = RefactoringBundle
@@ -62,9 +62,8 @@ public class ExtractMethodHelper {
                            DialogWrapper.OK_EXIT_CODE;
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         boolean replaceAll = false;
-        for (Pair<PsiElement, PsiElement> match : duplicates) {
-          final List<PsiElement> elementsRange = collector.fun(match);
-          final Pair<List<PsiElement>, PsiElement> replacement = Pair.create(elementsRange, callElement);
+        for (Match match : duplicates) {
+          final Pair<Match, PsiElement> replacement = Pair.create(match, callElement);
           if (!replaceAll) {
             highlightInEditor(callElement.getProject(), match, editor);
 
@@ -94,13 +93,13 @@ public class ExtractMethodHelper {
     }
   }
 
-  private static void highlightInEditor(@NotNull final Project project, @NotNull final Pair<PsiElement, PsiElement> pair,
+  private static void highlightInEditor(@NotNull final Project project, @NotNull final Match match,
                                         @NotNull final Editor editor) {
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    final int startOffset = pair.getFirst().getTextRange().getStartOffset();
-    final int endOffset = pair.getSecond().getTextRange().getEndOffset();
+    final int startOffset = match.getStartElement().getTextRange().getStartOffset();
+    final int endOffset = match.getEndElement().getTextRange().getEndOffset();
     highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, null);
     final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(startOffset);
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
