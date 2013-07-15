@@ -66,4 +66,8 @@ public abstract class FileReferenceHelper {
   public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
 
   public abstract boolean isMine(final Project project, @NotNull final VirtualFile file);
+
+  public boolean isFallback() {
+    return false;
+  }
 }

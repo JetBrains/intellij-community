@@ -407,6 +407,9 @@ public class FileReferenceSet {
     final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
     for (FileReferenceHelper helper : helpers) {
       if (helper.isMine(project, virtualFile)) {
+        if (helper.isFallback() && list.size() > 0) {
+          continue;
+        }
         final Collection<PsiFileSystemItem> roots = helper.getRoots(module);
         for (PsiFileSystemItem root : roots) {
           LOG.assertTrue(root != null, "Helper " + helper + " produced a null root for " + file);
@@ -415,9 +418,6 @@ public class FileReferenceSet {
       }
     }
 
-    if (list.size() == 0) {
-      list.addAll(FileReferenceHelperRegistrar.getNotNullHelper(file).getRoots(module));
-    }
     return list;
   }
 

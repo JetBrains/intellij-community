@@ -37,7 +37,12 @@ public class FileReferenceHelperRegistrar {
 
   @NotNull
   public static <T extends PsiFileSystemItem> FileReferenceHelper getNotNullHelper(@NotNull T psiFileSystemItem) {
-    return getHelper(psiFileSystemItem);
+    FileReferenceHelper helper = getHelper(psiFileSystemItem);
+    if (helper != null) {
+      return helper;
+    }
+    FileReferenceHelper[] helpers = getHelpers();
+    return helpers[helpers.length-1];
   }
 
   public static <T extends PsiFileSystemItem> FileReferenceHelper getHelper(@NotNull final T psiFileSystemItem) {
