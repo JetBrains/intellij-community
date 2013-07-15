@@ -183,8 +183,9 @@ public class MinusculeMatcher implements Matcher {
     boolean afterSeparator = StringUtil.indexOfAny(name, HARD_SEPARATORS, 0, startIndex) >= 0;
     boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
     boolean finalMatch = iterable.get(iterable.size() - 1).getEndOffset() == name.length();
+    boolean startMatch = iterable.get(0).getStartOffset() == 0;
 
-    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 2) + (finalMatch ? 1 : 0);
+    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 2) + (startMatch ? 1 : 0) + (finalMatch ? 1 : 0);
   }
 
   public boolean isStartMatch(@NotNull String name) {
