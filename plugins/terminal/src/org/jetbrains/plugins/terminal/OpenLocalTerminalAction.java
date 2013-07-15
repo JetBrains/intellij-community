@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import icons.TerminalIcons;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -37,7 +38,7 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
   public static void runLocalTerminal(final Project project) {
     ToolWindow terminal = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
     if (terminal.isActive()) {
-      TerminalView.getInstance().openSession(project, terminal);
+      TerminalView.getInstance().openLocalSession(project, terminal);
     }
     terminal.activate(new Runnable() {
       @Override
@@ -47,7 +48,11 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
     }, true);
   }
 
+  @Nullable
   public static LocalTerminalDirectRunner createTerminalRunner(Project project) {
+    if (SystemInfo.isWindows) {
+      return null;
+    }
     //String[] terminalCommand = SystemInfo.isMac ? new String[]{"/bin/bash", "--login"} : new String[]{"/bin/bash"};
     String[] terminalCommand = new String[]{"/bin/bash", "--login"};
 
