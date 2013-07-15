@@ -57,6 +57,9 @@ public abstract class FileBasedIndex implements BaseComponent {
     throw new IllegalArgumentException("Virtual file doesn't support id: " + file + ", implementation class: " + file.getClass().getName());
   }
 
+  // note: upsource implementation requires access to Project here, please don't remove
+  public abstract VirtualFile findFileById(Project project, int id);
+
   public void requestRebuild(ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
