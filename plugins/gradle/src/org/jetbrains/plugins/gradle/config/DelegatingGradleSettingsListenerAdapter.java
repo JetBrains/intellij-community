@@ -45,4 +45,8 @@ public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalS
   @Override
   public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
   }
+
+  @Override
+  public void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions) {
+  }
 }
