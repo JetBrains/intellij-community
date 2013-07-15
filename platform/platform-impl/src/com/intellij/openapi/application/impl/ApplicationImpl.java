@@ -782,32 +782,51 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     exit(force, true, true);
   }
 
+  /*
+   * There are two ways we can get an exit notification.
+   *  1. From user input i.e. ExitAction
+   *  2. From the native system.
+   *  We should not process any quit notifications if we are handling another one
+   *
+   *  Note: there are possible scenarios when we get a quit notification at a moment when another
+   *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
+   */
+  private volatile static boolean exiting = false;
+
   public void exit(final boolean force, final boolean allowListenersToCancel, final boolean restart) {
-    if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
-      return;
-    }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!confirmExitIfNeeded(force)) {
-          saveAll();
-          return;
-        }
+    if (exiting) return;
 
-        getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
-        myDisposeInProgress = true;
-        if (!doExit(allowListenersToCancel, restart)) {
-          myDisposeInProgress = false;
-        }
+    exiting = true;
+    try {
+      if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
+        return;
       }
-    };
 
-    if (!isDispatchThread()) {
-      invokeLater(runnable, ModalityState.NON_MODAL);
-    }
-    else {
-      runnable.run();
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          if (!confirmExitIfNeeded(force)) {
+            saveAll();
+            return;
+          }
+
+          getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
+          myDisposeInProgress = true;
+          if (!doExit(allowListenersToCancel, restart)) {
+            myDisposeInProgress = false;
+          }
+        }
+      };
+
+      if (!isDispatchThread()) {
+        invokeLater(runnable, ModalityState.NON_MODAL);
+      }
+      else {
+        runnable.run();
+      }
+    } finally {
+      exiting = false;
     }
   }
 
