@@ -105,6 +105,10 @@ public final class DarculaLaf extends BasicLookAndFeel {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", new Dimension(16, 5));
       MetalLookAndFeel.setCurrentTheme(new DarculaMetalTheme());
+      if (SystemInfo.isWindows) {
+        //JFrame.setDefaultLookAndFeelDecorated(true);
+      }
+
       return defaults;
     }
     catch (Exception e) {
