@@ -80,10 +80,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "platform-main",
     "testFramework",
     "tests_bootstrap",
-    "InspectionGadgetsAnalysis",
-    "InspectionGadgetsPlugin",
-    "IntentionPowerPackPlugin",
-    "generate-tostring",
           ].flatten()
 
   ant.patternset(id: "resources.included") {
@@ -762,7 +758,6 @@ def layout_core_upsource(String home, String target) {
       module("analysis-impl")
       module("java-analysis-api")
       module("java-analysis-impl")
-      module("InspectionGadgetsAnalysis")
       module("xml-psi-api")
       module("xml-psi-impl")
       module("resources")
