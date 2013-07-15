@@ -107,7 +107,7 @@ public class ColorSelectionComponent extends JPanel {
   @Nullable
   public String getSelectedColorName() {
     ColorButton button = getSelectedButtonInner();
-    return button == null? null : button instanceof CustomColorButton ? ColorUtil.toHex(button.getColor()) : button.getName();
+    return button == null? null : button instanceof CustomColorButton ? ColorUtil.toHex(button.getColor()) : button.getText();
   }
 
   @Nullable
