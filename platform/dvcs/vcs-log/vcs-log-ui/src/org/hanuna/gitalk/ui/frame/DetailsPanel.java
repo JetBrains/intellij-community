@@ -57,7 +57,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     add(ScrollPaneFactory.createScrollPane(box), STANDARD_LAYER);
     add(myMessagePanel, MESSAGE_LAYER);
-    add(new JLabel("Test"), "Test");
 
     setBackground(UIUtil.getTableBackground());
   }
