@@ -119,7 +119,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
   public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
     final TreePath path = event.getPath();
     if (path == null) return;
-    final DefaultMutableTreeNode node = (PackageDependenciesNode)path.getLastPathComponent();
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     if (node instanceof DirectoryNode) {
       Set<FileNode> fileNodes = null;
       for (int i = node.getChildCount() - 1; i >= 0; i--) {
