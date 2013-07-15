@@ -1575,4 +1575,18 @@ print new DslDelegate().<warning descr="Cannot resolve symbol 'foo'">foo</warnin
     GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightIfGroovyObjectOverridden = false
     myFixture.testHighlighting(true, false, true)
   }
+
+  void testImplementInaccessibleAbstractMethod() {
+    myFixture.addClass('''\
+package p;
+
+public abstract class Base {
+  abstract void foo();
+}
+''')
+    testHighlighting('''\
+<error>class Foo extends p.Base</error> {
+}
+''')
+  }
 }
