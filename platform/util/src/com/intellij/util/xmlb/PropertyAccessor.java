@@ -39,7 +39,7 @@ class PropertyAccessor implements Accessor {
     this(descriptor.getName(), descriptor.getPropertyType(), descriptor.getReadMethod(), descriptor.getWriteMethod());
   }
 
-  public PropertyAccessor(String name, Class<?> type, Method readMethod, Method writeMethod) {
+  public PropertyAccessor(String name, Class<?> type, @NotNull Method readMethod, @NotNull Method writeMethod) {
     myName = name;
     myType = type;
     myReadMethod = readMethod;

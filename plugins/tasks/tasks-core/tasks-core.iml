@@ -38,6 +38,8 @@
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="xdebugger-api" />
+    <orderEntry type="module" module-name="xdebugger-impl" />
   </component>
 </module>
 

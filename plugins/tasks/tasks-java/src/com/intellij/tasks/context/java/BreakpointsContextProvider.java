@@ -20,6 +20,7 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.tasks.context.WorkingContextProvider;
@@ -48,7 +49,7 @@ public class BreakpointsContextProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "Debugger breakpoints";
+    return "Java Debugger breakpoints";
   }
 
   public void saveContext(Element toElement) throws WriteExternalException {
@@ -60,10 +61,14 @@ public class BreakpointsContextProvider extends WorkingContextProvider {
   }
 
   public void clearContext() {
-    BreakpointManager breakpointManager = ((DebuggerManagerImpl)myDebuggerManager).getBreakpointManager();
+    final BreakpointManager breakpointManager = ((DebuggerManagerImpl)myDebuggerManager).getBreakpointManager();
     List<Breakpoint> breakpoints = breakpointManager.getBreakpoints();
-    for (Breakpoint breakpoint : breakpoints) {
-      breakpointManager.removeBreakpoint(breakpoint);
+    for (final Breakpoint breakpoint : breakpoints) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          breakpointManager.removeBreakpoint(breakpoint);
+        }
+      });
     }
   }
 }

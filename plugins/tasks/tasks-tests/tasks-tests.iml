@@ -16,6 +16,8 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="xslt-debugger" />
+    <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
   </component>
 </module>
 
