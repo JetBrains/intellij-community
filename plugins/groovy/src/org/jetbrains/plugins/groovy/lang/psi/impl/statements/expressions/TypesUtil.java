@@ -115,8 +115,18 @@ public class TypesUtil {
                                                                       IElementType tokenType,
                                                                       @NotNull GroovyPsiElement place,
                                                                       PsiType[] argumentTypes) {
-    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
+    return getOverloadedOperatorCandidates(thisType, tokenType, place, argumentTypes, false);
   }
+
+  @NotNull
+  public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
+                                                                      IElementType tokenType,
+                                                                      @NotNull GroovyPsiElement place,
+                                                                      PsiType[] argumentTypes,
+                                                                      boolean incompleteCode) {
+    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, true, incompleteCode, false, argumentTypes);
+  }
+
 
   public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
                                                                            IElementType tokenType,

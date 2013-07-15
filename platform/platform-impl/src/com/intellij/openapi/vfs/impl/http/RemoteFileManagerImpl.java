@@ -61,7 +61,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
 
     if (file == null) {
       if (!directory) {
-        RemoteFileInfo fileInfo = new RemoteFileInfo(url, this);
+        RemoteFileInfoImpl fileInfo = new RemoteFileInfoImpl(url, this);
         file = new VirtualFileImpl(getHttpFileSystem(url), path, fileInfo);
         fileInfo.addDownloadingListener(new MyDownloadingListener(file));
       }

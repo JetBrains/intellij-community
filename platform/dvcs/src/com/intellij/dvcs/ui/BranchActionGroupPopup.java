@@ -78,7 +78,7 @@ public class BranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
         RootAction rootAction = getRootAction(value);
         if (rootAction != null) {
           myBranchLabel.setVisible(true);
-          myBranchLabel.setText(String.format("[%s]", rootAction.getBranch()));
+          myBranchLabel.setText(String.format("[%s]", rootAction.getDisplayableBranchText()));
 
           if (isSelected) {
             setSelected(myBranchLabel);

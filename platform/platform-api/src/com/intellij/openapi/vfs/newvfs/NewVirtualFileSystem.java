@@ -35,8 +35,6 @@ import java.util.Map;
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new HashMap<VirtualFileListener, VirtualFileListener>();
 
-  public abstract boolean isCaseSensitive();
-
   @Nullable
   public abstract VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path);
 

@@ -91,8 +91,8 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
   }
 
   @Override
-  protected void afterTestConnection(final boolean b) {
-    if (b) {
+  protected void afterTestConnection(final boolean connectionSuccessful) {
+    if (connectionSuccessful) {
       final Ref<Collection<String>> scopesRef = new Ref<Collection<String>>();
       final Ref<IOException> exceptionRef = new Ref<IOException>();
       ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {

@@ -137,7 +137,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
-    reparsePsiFile();
+    myFile = ObjectUtils.assertNotNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
     assert myEditorDocument != null;
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
@@ -677,7 +677,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setLanguage(Language language) {
     myVirtualFile.setLanguage(language);
-    reparsePsiFile();
+    myVirtualFile.setContent(myEditorDocument, myEditorDocument.getText(), false);
+    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(myVirtualFile), false);
+    myFile = ObjectUtils.assertNotNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
   }
 
   public void setInputText(final String query) {
@@ -753,12 +755,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }, ModalityState.stateForComponent(console.getComponent()));
     }
-  }
-
-  private void reparsePsiFile() {
-    myVirtualFile.setContent(myEditorDocument, myEditorDocument.getText(), false);
-    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(myVirtualFile), false);
-    myFile = ObjectUtils.assertNotNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
   }
 
   private class MyLayout extends AbstractLayoutManager {

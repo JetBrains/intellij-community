@@ -544,7 +544,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public VcsType getType() {
-    return VcsType.distibuted;
+    return VcsType.distributed;
   }
 
   private final VcsOutgoingChangesProvider<CommittedChangeList> myOutgoingChangesProvider;

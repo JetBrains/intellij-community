@@ -35,7 +35,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.AutoScrollFriendlyNavigatable;
+import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -53,7 +53,7 @@ import java.util.Collections;
  * method that extract PsiElement from Value.
  * @param <Value> Value of node descriptor
  */
-public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode, AutoScrollFriendlyNavigatable {
+public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode, StatePreservingNavigatable {
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
 
   protected AbstractPsiBasedNode(final Project project,
@@ -201,9 +201,9 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Override
-  public void navigate(boolean requestFocus, boolean tryToKeepState) {
+  public void navigate(boolean requestFocus, boolean preserveState) {
     if (canNavigate()) {
-      if (requestFocus || tryToKeepState) {
+      if (requestFocus || preserveState) {
         NavigationUtil.openFileWithPsiElement(extractPsiFromValue(), requestFocus, requestFocus);
       }
       else {

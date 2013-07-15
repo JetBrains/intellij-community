@@ -16,8 +16,6 @@
 
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -53,7 +51,7 @@ public class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
   @NotNull
-  public static List<? extends LocalQuickFix> registerQuickFix(final HighlightInfo info, final FileReference reference) {
+  public static List<? extends LocalQuickFix> registerQuickFix(final FileReference reference) {
     final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
     int index = reference.getIndex();
 
@@ -116,10 +114,7 @@ public class FileReferenceQuickFixProvider {
         final String existingElementName = ((PsiNamedElement)psiElement).getName();
 
         final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
-        QuickFixAction.registerQuickFixAction(info, renameRefAction);
-
         final RenameFileFix renameFileFix = new RenameFileFix(newFileName);
-        QuickFixAction.registerQuickFixAction(info, renameFileFix);
         return Arrays.asList(renameRefAction, renameFileFix);
       }
     }
@@ -148,7 +143,6 @@ public class FileReferenceQuickFixProvider {
     }
 
     final CreateFileFix action = new MyCreateFileFix(isdirectory, newFileName, directory, reference);
-    QuickFixAction.registerQuickFixAction(info, action);
     return Arrays.asList(action);
   }
 

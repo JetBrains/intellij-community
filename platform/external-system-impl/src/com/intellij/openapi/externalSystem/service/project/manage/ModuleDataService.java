@@ -147,8 +147,14 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
   {
     Collection<DataNode<ModuleData>> result = ContainerUtilRt.newArrayList();
     for (DataNode<ModuleData> node : modules) {
-      if (myProjectStructureHelper.findIdeModule(node.getData(), project) == null) {
+      ModuleData moduleData = node.getData();
+      Module module = myProjectStructureHelper.findIdeModule(moduleData, project);
+      if (module == null) {
         result.add(node);
+      }
+      else {
+        module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
+        module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
       }
     }
     return result;

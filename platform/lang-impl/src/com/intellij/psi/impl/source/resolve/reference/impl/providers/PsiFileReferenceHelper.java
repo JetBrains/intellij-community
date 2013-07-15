@@ -15,24 +15,28 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -41,8 +45,8 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
 
   @NotNull
   @Override
-  public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
-    return FileReferenceQuickFixProvider.registerQuickFix(info, reference);
+  public List<? extends LocalQuickFix> registerFixes(FileReference reference) {
+    return FileReferenceQuickFixProvider.registerQuickFix(reference);
   }
 
   @Override
@@ -78,7 +82,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
           String path = VfsUtilCore.getRelativePath(parentFile, root, '.');
 
           if (path != null) {
-            final Module module = ModuleUtil.findModuleForFile(file, project);
+            final Module module = ModuleUtilCore.findModuleForFile(file, project);
 
             if (module != null) {
               OrderEntry orderEntry = ModuleRootManager.getInstance(module).getFileIndex().getOrderEntryForFile(file);

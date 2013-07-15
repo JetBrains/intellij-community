@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,9 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
       AllClassesGetter.INSERT_FQN.handleInsert(context, item);
       return;
     }
+
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
+
     PsiElement position = file.findElementAt(endOffset - 1);
 
     boolean parens = shouldInsertParentheses(position);

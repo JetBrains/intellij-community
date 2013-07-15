@@ -190,6 +190,10 @@
 
     <applicationService serviceImplementation="com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine"/>
     <applicationService serviceImplementation="com.intellij.psi.codeStyle.arrangement.MemberOrderService"/>
+
+    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
+                        serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
+
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
@@ -723,6 +727,8 @@
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
+    <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
+
     <projectConfigurable instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
     <projectConfigurable instance="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors" displayName="File Colors"/>
 

@@ -397,12 +397,14 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES;
+      return !myProject.isDisposed() && VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES = state;
-      updateTreeModel();
+      if (!myProject.isDisposed()) {
+        VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES = state;
+        updateTreeModel();
+      }
     }
 
     public void update(final AnActionEvent e) {

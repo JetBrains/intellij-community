@@ -217,6 +217,7 @@ public class FileContentQueue {
                 } else {
                   LOG.error(t);
                 }
+                content.setEmptyContent();
               }
             } else {
               content.setEmptyContent();

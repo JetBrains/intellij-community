@@ -659,6 +659,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (identifier != null) {
       context.setDummyIdentifier(identifier);
     }
+
+    //don't eat $ from gstrings when completing previous injection ref. see IDEA-110369
+    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
+    if (position!= null && position.getNode().getElementType() == mDOLLAR) {
+      context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getStartOffset());
+    }
   }
 
   private String getIdentifier(CompletionInitializationContext context) {

@@ -142,11 +142,27 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testReportConstantReferences() {
+    doTestReplaceConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  private void doTestReplaceConstantReferences() {
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+  }
+
+  public void testReportConstantReferences_ReplaceWithString() {
+    doTestReplaceConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'foo bar'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+  public void testReportConstantReferences_ReplaceWithEnum() {
+    myFixture.addClass("package foo; public enum MyEnum { FOO }");
+    doTestReplaceConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'FOO'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 

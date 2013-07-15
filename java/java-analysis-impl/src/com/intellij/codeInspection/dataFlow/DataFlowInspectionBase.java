@@ -37,8 +37,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -208,11 +210,17 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
 
       final Object value = pair.second.getValue();
-      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + value + "'", new LocalQuickFix() {
+      final String presentableName = value instanceof PsiNamedElement ? ((PsiNamedElement)value).getName() : String.valueOf(value);
+      final String exprText = getConstantValueText(value);
+      if (exprText == null) {
+        continue;
+      }
+
+      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'", new LocalQuickFix() {
         @NotNull
         @Override
         public String getName() {
-          return "Replace with '" + value + "'";
+          return "Replace with '" + presentableName + "'";
         }
 
         @NotNull
@@ -223,10 +231,26 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          descriptor.getPsiElement().replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(String.valueOf(value), null));
+          PsiElement newElement =
+            descriptor.getPsiElement().replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(exprText, null));
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
         }
       });
     }
+  }
+
+  private static String getConstantValueText(Object value) {
+    String exprText;
+    if (value instanceof String) {
+      exprText = "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
+    } else if (value instanceof PsiMember) {
+      exprText = PsiUtil.getMemberQualifiedName((PsiMember)value);
+    } else if (value instanceof PsiNamedElement) {
+      exprText = ((PsiNamedElement)value).getName();
+    } else {
+      exprText = String.valueOf(value);
+    }
+    return exprText;
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(StandardDataFlowRunner runner, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {

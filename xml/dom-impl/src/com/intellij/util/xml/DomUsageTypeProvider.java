@@ -31,7 +31,7 @@ public class DomUsageTypeProvider implements UsageTypeProvider {
   @Nullable
   public UsageType getUsageType(PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
-    if (XMLLanguage.INSTANCE.equals(psiFile.getLanguage()) &&
+    if (psiFile != null && XMLLanguage.INSTANCE.equals(psiFile.getLanguage()) &&
         DomManager.getDomManager(element.getProject()).getFileElement((XmlFile)psiFile, DomElement.class) != null) {
       return DOM_USAGE_TYPE;
     }

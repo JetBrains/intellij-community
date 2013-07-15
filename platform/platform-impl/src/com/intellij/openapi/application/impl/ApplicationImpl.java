@@ -57,13 +57,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
-import com.intellij.util.Consumer;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.Restarter;
+import com.intellij.util.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
@@ -648,6 +644,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     try {
       myExceptionalThreadWithReadAccessRunnable = process;
       final boolean[] threadStarted = {false};
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -696,15 +693,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     return !progress.isCanceled();
-  }
-
-  @Override
-  public boolean isInModalProgressThread() {
-    if (myExceptionalThreadWithReadAccessRunnable == null || !isExceptionalThreadWithReadAccess()) {
-      return false;
-    }
-    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    return progressIndicator.isModal() && ((ProgressIndicatorEx)progressIndicator).isModalityEntered();
   }
 
   @Override
@@ -1247,13 +1235,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               @Override
               public void run() {
                 while (!stopped.get()) {
-                  try {
-                    Thread.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                    if (!stopped.get()) {
-                      PerformanceWatcher.getInstance().dumpThreads(true);
-                    }
-                  }
-                  catch (InterruptedException ignored) {
+                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                  if (!stopped.get()) {
+                    PerformanceWatcher.getInstance().dumpThreads(true);
                   }
                 }
               }
@@ -1488,17 +1472,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public boolean isRestartCapable() {
     return Restarter.isSupported();
-  }
-
-  public boolean isSaving() {
-    if (getStateStore().isSaving()) return true;
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openProject : openProjects) {
-      ProjectEx project = (ProjectEx)openProject;
-      if (project.getStateStore().isSaving()) return true;
-    }
-
-    return false;
   }
 
   @Override

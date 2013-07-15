@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs;
 
+/**
+ * @see com.intellij.openapi.vcs.AbstractVcs#getType()
+ */
 public enum VcsType {
   centralized,
-  distibuted
+  distributed
 }

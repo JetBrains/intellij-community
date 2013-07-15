@@ -21,6 +21,6 @@ package com.intellij.pom;
  *
  * @author Konstantin Bulenkov
  */
-public interface AutoScrollFriendlyNavigatable extends Navigatable {
-  void navigate(boolean requestFocus, boolean tryToKeepState);
+public interface StatePreservingNavigatable extends Navigatable {
+  void navigate(boolean requestFocus, boolean preserveState);
 }

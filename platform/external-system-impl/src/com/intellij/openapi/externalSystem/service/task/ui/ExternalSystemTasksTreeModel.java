@@ -198,6 +198,8 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
           myIndexHolder[0] = i;
           myNodeHolder[0] = childNode;
           nodesWereRemoved(moduleNode, myIndexHolder, myNodeHolder);
+          //noinspection AssignmentToForLoopParameter
+          i--;
         }
       }
     }

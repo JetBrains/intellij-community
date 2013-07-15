@@ -259,10 +259,13 @@ public class StatisticsPanel implements DataProvider {
   protected void selectRowOf(final SMTestProxy proxy) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
-        final int rowIndex = myStatisticsTableView.convertRowIndexToView(myTableModel.getIndexOf(proxy));
-        myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex >= 0 ? rowIndex : 0);
-        // Scroll to visible
-        TableUtil.scrollSelectionToVisible(myStatisticsTableView);
+        final int indexOf = myTableModel.getIndexOf(proxy);
+        if (indexOf > -1) {
+          final int rowIndex = myStatisticsTableView.convertRowIndexToView(indexOf);
+          myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex >= 0 ? rowIndex : 0);
+          // Scroll to visible
+          TableUtil.scrollSelectionToVisible(myStatisticsTableView);
+        }
       }
     });
   }

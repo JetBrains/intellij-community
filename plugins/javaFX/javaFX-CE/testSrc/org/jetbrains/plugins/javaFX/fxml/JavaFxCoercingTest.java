@@ -44,6 +44,10 @@ public class JavaFxCoercingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testFactoryCoercing() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }

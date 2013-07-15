@@ -44,7 +44,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -233,7 +232,7 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   public static boolean isExcluded(PsiMember method) {
-    String name = getMemberQualifiedName(method);
+    String name = PsiUtil.getMemberQualifiedName(method);
     if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     for (String excluded : cis.EXCLUDED_PACKAGES) {
@@ -301,7 +300,7 @@ public class StaticImportMethodFix implements IntentionAction {
             return FINAL_CHOICE;
           }
 
-          String qname = getMemberQualifiedName(selectedValue);
+          String qname = PsiUtil.getMemberQualifiedName(selectedValue);
           if (qname == null) return FINAL_CHOICE;
           List<String> excludableStrings = AddImportAction.getAllExcludableStrings(qname);
           return new BaseListPopupStep<String>(null, excludableStrings) {
@@ -369,19 +368,6 @@ public class StaticImportMethodFix implements IntentionAction {
       }
     };
     popup.showInBestPositionFor(editor);
-  }
-
-  @Nullable
-  public static String getMemberQualifiedName(PsiMember member) {
-    if (member instanceof PsiClass) {
-      return ((PsiClass)member).getQualifiedName();
-    }
-
-    PsiClass containingClass = member.getContainingClass();
-    if (containingClass == null) return null;
-    String className = containingClass.getQualifiedName();
-    if (className == null) return null;
-    return className + "." + member.getName();
   }
 
   @Override

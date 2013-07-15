@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -28,23 +29,30 @@ import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.unscramble.AnalyzeStacktraceUtil;
+import com.intellij.unscramble.ThreadDumpConsoleFactory;
+import com.intellij.unscramble.ThreadDumpParser;
+import com.intellij.unscramble.ThreadState;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 /**
  * @author spleaner
  */
 public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
+  private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
+
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) &&
@@ -166,8 +174,75 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     public void actionPerformed(final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
+        final WiseDumpThreadsListener wiseListener = Boolean.TRUE.equals(Boolean.getBoolean(ourWiseThreadDumpProperty)) ?
+                                                     new WiseDumpThreadsListener(PlatformDataKeys.PROJECT.getData(e.getDataContext()), myProcessHandler) : null;
+
         proxy.sendBreak();
+
+        if (wiseListener != null) {
+          wiseListener.after();
+        }
       }
+    }
+  }
+
+  private static class WiseDumpThreadsListener {
+    private final Project myProject;
+    private final ProcessHandler myProcessHandler;
+    private final CapturingProcessAdapter myListener;
+
+    public WiseDumpThreadsListener(final Project project, final ProcessHandler processHandler) {
+      myProject = project;
+      myProcessHandler = processHandler;
+
+      myListener = new CapturingProcessAdapter();
+      myProcessHandler.addProcessListener(myListener);
+    }
+
+    public void after() {
+      if (myProject == null) {
+        myProcessHandler.removeProcessListener(myListener);
+        return;
+      }
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          if (myProcessHandler.isProcessTerminated() || myProcessHandler.isProcessTerminating()) return;
+          List<ThreadState> threadStates = null;
+          final long start = System.currentTimeMillis();
+          while ((System.currentTimeMillis() - start) < 1000) {
+            final String stdout = myListener.getOutput().getStdout();
+            threadStates = ThreadDumpParser.parse(stdout);
+            if (threadStates == null || threadStates.isEmpty()) {
+              try {
+                Thread.sleep(50);
+              }
+              catch (InterruptedException e1) {
+                //
+              }
+              threadStates = null;
+              continue;
+            }
+            break;
+          }
+          myProcessHandler.removeProcessListener(myListener);
+          if (threadStates != null && ! threadStates.isEmpty()) {
+            showThreadDump(myListener.getOutput().getStdout(), threadStates);
+          }
+        }
+
+      });
+    }
+
+    private void showThreadDump(final String out, final List<ThreadState> threadStates) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
+                                                    new ThreadDumpConsoleFactory(myProject, threadStates) : null,
+                                           "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out);
+        }
+      }, ModalityState.NON_MODAL);
     }
   }
 

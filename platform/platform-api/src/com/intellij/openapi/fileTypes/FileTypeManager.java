@@ -85,16 +85,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   /**
-   * Returns the file type for the specified extension.
-   * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
-   *
-   * @param extension The extension for which the file type is requested, not including the leading '.'.
-   * @return The file type instance, or {@link UnknownFileType#INSTANCE} if corresponding file type not found
-   */
-  @NotNull
-  public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
-
-  /**
    * Checks if the specified file is ignored by IDEA. Ignored files are not visible in
    * different project views and cannot be opened in the editor. They will neither be parsed nor compiled.
    *

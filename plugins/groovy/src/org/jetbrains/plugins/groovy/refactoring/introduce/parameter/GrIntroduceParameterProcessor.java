@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
@@ -148,7 +149,15 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
           result.add(implicitUsageInfo);
         }
         else if (ref instanceof PsiClass) {
-          result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
+          if (ref instanceof GrAnonymousClassDefinition) {
+            result.add(new ExternalUsageInfo(((GrAnonymousClassDefinition)ref).getBaseClassReferenceGroovy()));
+          }
+          else if (ref instanceof PsiAnonymousClass) {
+            result.add(new ExternalUsageInfo(((PsiAnonymousClass)ref).getBaseClassReference()));
+          }
+          else {
+            result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
+          }
         }
         else if (!PsiTreeUtil.isAncestor(mySettings.getToReplaceIn(), ref, false)) {
           result.add(new ExternalUsageInfo(ref));

@@ -193,7 +193,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         if (big.contains(change)) continue;
         FilePath filePath = ChangesUtil.getFilePath(change);
         final AbstractVcs vcs = vcsManager.getVcsFor(filePath);
-        if (vcs != null && VcsType.distibuted.equals(vcs.getType())) {
+        if (vcs != null && VcsType.distributed.equals(vcs.getType())) {
           toKeep.add(filePath);
         }
       }

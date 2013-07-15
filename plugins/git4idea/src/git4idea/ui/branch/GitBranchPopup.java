@@ -232,8 +232,7 @@ class GitBranchPopup {
     for (GitRepository repository : myRepositoryManager.getRepositories()) {
       popupGroup.add(new RootAction<GitRepository>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
                                                    new GitBranchPopupActions(repository.getProject(), repository).createActions(null),
-                                                   GitBranchUtil.getDisplayableBranchText(repository),
-                                                   GitBranchUtil.getBranchNameOrRev(repository)));
+                                                   GitBranchUtil.getDisplayableBranchText(repository)));
     }
     return popupGroup;
   }

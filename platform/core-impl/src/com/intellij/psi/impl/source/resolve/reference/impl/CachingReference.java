@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
-import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public abstract class CachingReference implements PsiReference, EmptyResolveMessageProvider {
+public abstract class CachingReference implements PsiReference {
   @Override
   public PsiElement resolve(){
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
