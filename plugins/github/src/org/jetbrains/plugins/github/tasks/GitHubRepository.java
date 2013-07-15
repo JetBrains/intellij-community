@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Comment;
@@ -16,6 +17,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,11 +40,15 @@ import java.util.regex.Pattern;
 public class GitHubRepository extends BaseRepositoryImpl {
   private static final Logger LOG = GithubUtil.LOG;
 
-  private Pattern myPattern;
-  private String myRepoAuthor;
-  private String myRepoName;
-  private String myToken;
+  private Pattern myPattern = Pattern.compile("");
+  private String myRepoAuthor = "";
+  private String myRepoName = "";
+  private String myToken = "";
   private GithubAuthData myAuthData;
+
+  {
+    setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
+  }
 
   @SuppressWarnings({"UnusedDeclaration"})
   public GitHubRepository() {}
@@ -352,6 +358,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
     myRepoAuthor = repoAuthor;
   }
 
+  @Transient
   public String getToken() {
     return myToken;
   }
@@ -360,10 +367,27 @@ public class GitHubRepository extends BaseRepositoryImpl {
     myToken = token;
   }
 
+  @Tag("token")
+  public String getEncodedToken() {
+    return PasswordUtil.encodePassword(getToken());
+  }
+
+  public void setEncodedToken(String password) {
+    try {
+      setToken(PasswordUtil.decodePassword(password));
+    }
+    catch (NumberFormatException e) {
+    }
+  }
+
   private void initAuthData() {
     if (myAuthData == null) {
       myAuthData = GithubAuthData.createTokenAuth(getUrl(), getToken());
     }
+  }
+
+  public void clearAuthData() {
+    myAuthData = null;
   }
 
   @Override
