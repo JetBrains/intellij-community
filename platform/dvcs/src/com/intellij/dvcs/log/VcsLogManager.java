@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
@@ -66,6 +67,7 @@ public class VcsLogManager extends AbstractProjectComponent {
         VcsLogDataHolder.init(myProject, logProvider, root, new Consumer<VcsLogDataHolder>() {
           @Override
           public void consume(VcsLogDataHolder vcsLogDataHolder) {
+            Disposer.register(myProject, vcsLogDataHolder);
             myProject.getMessageBus().connect(myProject).subscribe(VcsLogRefresher.TOPIC, vcsLogDataHolder);
             VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject);
             mainPanel.init(logUI.getMainFrame().getMainComponent());
