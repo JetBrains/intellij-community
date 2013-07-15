@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,13 @@ public class RepositoryHelper {
 
     File pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     if (pluginListFile.length() > 0) {
-      url = url + "&crc32=" + Files.hash(pluginListFile, Hashing.crc32()).toString();
+      try {
+        url = url + "&crc32=" + Files.hash(pluginListFile, Hashing.crc32()).toString();
+      }
+      catch (NoSuchMethodError e) {
+        String guavaPath = PathUtil.getJarPathForClass(Hashing.class);
+        throw new RuntimeException(guavaPath, e);
+      }
     }
 
     HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(url);
