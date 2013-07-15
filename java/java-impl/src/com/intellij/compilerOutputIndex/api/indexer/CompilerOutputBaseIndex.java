@@ -117,12 +117,8 @@ public abstract class CompilerOutputBaseIndex<K, V> {
   }
 
   public void update(final int id, final ClassReader classReader) {
-    try {
-      myIndex.update(id, classReader);
-    }
-    catch (StorageException e) {
-      throw new RuntimeException(e);
-    }
+    Boolean result = myIndex.update(id, classReader).compute();
+    if (result == Boolean.FALSE) throw new RuntimeException();
   }
 
   public void clear() {

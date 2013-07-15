@@ -153,19 +153,14 @@ public class IndexingStamp {
     if (file instanceof NewVirtualFile && file.isValid()) {
       Timestamps timestamps = myTimestampsCache.get(file);
       if (timestamps == null) {
-        synchronized (myTimestampsCache) { // avoid synchronous reads TODO:
-          timestamps = myTimestampsCache.get(file);
-          if (timestamps == null) {
-            final DataInputStream stream = Timestamps.PERSISTENCE.readAttribute(file);
-            try {
-              timestamps = new Timestamps(stream);
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-            myTimestampsCache.put(file, timestamps);
-          }
+        final DataInputStream stream = Timestamps.PERSISTENCE.readAttribute(file);
+        try {
+          timestamps = new Timestamps(stream);
         }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        myTimestampsCache.put(file, timestamps);
       }
       return timestamps;
     }
