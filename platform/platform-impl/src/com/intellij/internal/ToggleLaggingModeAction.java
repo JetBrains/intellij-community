@@ -15,22 +15,20 @@
  */
 package com.intellij.internal;
 
-import com.intellij.ide.caches.CacheUpdater;
-import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.TimeoutUtil;
-
-import java.util.Arrays;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -50,6 +48,13 @@ public class ToggleLaggingModeAction extends AnAction implements DumbAware {
         new Runnable() {
           @Override
           public void run() {
+            DebugUtil.sleep(5);
+            ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(null, "lagging") {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                DebugUtil.sleep(1);
+              }
+            }, new EmptyProgressIndicator());
             myAlarm.addRequest(this, 1);
           }
         }.run();
