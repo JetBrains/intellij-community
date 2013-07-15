@@ -44,7 +44,8 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   implements PersistentStateComponent<GradleSettings.MyState>
 {
 
-  private String  myServiceDirectoryPath;
+  @Nullable private String myServiceDirectoryPath;
+  @Nullable private String myGradleVmOptions;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
@@ -59,7 +60,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   public void subscribe(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> listener) {
     getProject().getMessageBus().connect(getProject()).subscribe(GradleSettingsListener.TOPIC,
                                                                  new DelegatingGradleSettingsListenerAdapter(listener));
-    
   }
 
   @Override
@@ -84,10 +84,10 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   }
 
   /**
-   * @return    service directory path (if defined). 'Service directory' is a directory which is used internally by gradle during
-   *            calls to the tooling api. E.g. it holds downloaded binaries (dependency jars). We allow to define it because there
-   *            is a possible situation when a user wants to configure particular directory to be excluded from anti-virus protection
-   *            in order to increase performance
+   * @return service directory path (if defined). 'Service directory' is a directory which is used internally by gradle during
+   *         calls to the tooling api. E.g. it holds downloaded binaries (dependency jars). We allow to define it because there
+   *         is a possible situation when a user wants to configure particular directory to be excluded from anti-virus protection
+   *         in order to increase performance
    */
   @Nullable
   public String getServiceDirectoryPath() {
@@ -100,6 +100,19 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
       myServiceDirectoryPath = newPath;
       getPublisher().onServiceDirectoryPathChange(oldPath, newPath);
     } 
+  }
+
+  @Nullable
+  public String getGradleVmOptions() {
+    return myGradleVmOptions;
+  }
+  
+  public void setGradleVmOptions(@Nullable String gradleVmOptions) {
+    if (!Comparing.equal(myGradleVmOptions, gradleVmOptions)) {
+      String old = myGradleVmOptions;
+      myGradleVmOptions = gradleVmOptions;
+      getPublisher().onGradleVmOptionsChange(old, gradleVmOptions);
+    }
   }
 
   @Override

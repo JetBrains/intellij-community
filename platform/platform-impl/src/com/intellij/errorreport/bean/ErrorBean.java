@@ -15,7 +15,7 @@
  */
 package com.intellij.errorreport.bean;
 
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.openapi.diagnostic.Attachment;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayOutputStream;

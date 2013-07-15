@@ -267,6 +267,7 @@ libraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "0.2", li
 libraryLicense(name: "bouncy-castle", version: "1.48", license: "MIT License", url: "http://bouncycastle.org", licenseUrl: "http://bouncycastle.org/licence.html")
 libraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/")
 libraryLicense(name: "Lombok AST", libraryName: "lombok-ast", version: "0.2.1", license: "MIT", url: "http://projectlombok.org/", licenseUrl: "http://opensource.org/licenses/mit-license.php")
+libraryLicense(name: "fxg-utils", libraryName: "fxg-utils", version: "4.9.1", license: "Apache 2.0", url: "http://flex.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")

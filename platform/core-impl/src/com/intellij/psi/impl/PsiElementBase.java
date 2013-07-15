@@ -111,6 +111,46 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
+  public PsiElement copy() {
+    return (PsiElement)clone();
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    throw new UnsupportedOperationException(getClass().getName());
+  }
+
+  @Override
   public boolean textContains(char c) {
     return getText().indexOf(c) >= 0;
   }
@@ -265,5 +305,10 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   @NotNull
   protected <T> T findNotNullChildByClass(Class<T> aClass) {
     return notNullChild(findChildByClass(aClass));
+  }
+
+  @Override
+  public PsiManager getManager() {
+    return PsiManager.getInstance(getProject());
   }
 }

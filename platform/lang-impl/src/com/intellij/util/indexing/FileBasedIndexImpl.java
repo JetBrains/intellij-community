@@ -2593,6 +2593,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myIndexableSetToProjectMap.remove(set);
   }
 
+  @Override
+  public VirtualFile findFileById(Project project, int id) {
+    return IndexInfrastructure.findFileById((PersistentFS) ManagingFS.getInstance(), id);
+  }
+
   @Nullable
   private static PsiFile findLatestKnownPsiForUncomittedDocument(@NotNull Document doc, @NotNull Project project) {
     return PsiDocumentManager.getInstance(project).getCachedPsiFile(doc);

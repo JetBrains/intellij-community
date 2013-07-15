@@ -16,7 +16,7 @@
 package com.intellij.execution.testframework.export;
 
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;

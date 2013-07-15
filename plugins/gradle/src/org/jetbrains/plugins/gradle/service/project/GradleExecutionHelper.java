@@ -48,6 +48,7 @@ public class GradleExecutionHelper {
     return getModelBuilder(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class, id, settings, connection, listener);
   }
   
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
                                              @NotNull final ExternalSystemTaskId id,
@@ -60,6 +61,7 @@ public class GradleExecutionHelper {
     return result;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
@@ -81,9 +83,9 @@ public class GradleExecutionHelper {
       return;
     }
 
-    int xmx = settings.getDaemonXmx();
-    if (xmx > 0) {
-      operation.setJvmArguments(String.format("-Xmx%dm", xmx));
+    String vmOptions = settings.getDaemonVmOptions();
+    if (vmOptions != null) {
+      operation.setJvmArguments(vmOptions.trim());
     }
 
     listener.onStart(id);

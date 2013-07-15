@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.idea.StartupUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.xerial.snappy.Snappy;
 
@@ -36,7 +35,7 @@ public class CompressionUtil {
   static {
     boolean canUseSnappy = false;
     try {
-      if (!StartupUtil.NO_SNAPPY) {
+      if (!SnappyInitializer.NO_SNAPPY) {
         Field impl = Snappy.class.getDeclaredField("impl");
         impl.setAccessible(true);
         canUseSnappy = impl.get(null) != null;

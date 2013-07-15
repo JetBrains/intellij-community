@@ -589,29 +589,6 @@ public class VfsUtil extends VfsUtilCore {
     }
   }
 
-  public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
-    if (!processor.process(root)) return false;
-
-    if (root.isDirectory()) {
-      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
-
-      queue.add(root.getChildren());
-
-      do {
-        final VirtualFile[] files = queue.removeFirst();
-
-        for (VirtualFile file : files) {
-          if (!processor.process(file)) return false;
-          if (file.isDirectory()) {
-            queue.add(file.getChildren());
-          }
-        }
-      } while (!queue.isEmpty());
-    }
-
-    return true;
-  }
-
   @Nullable
   public static <T> T processInputStream(@NotNull final VirtualFile file, @NotNull Function<InputStream, T> function) {
     InputStream stream = null;

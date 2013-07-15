@@ -65,6 +65,7 @@ import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -97,10 +98,10 @@ public abstract class ChooseByNameBase {
 
   protected Component myPreviouslyFocusedComponent;
 
-  protected JPanelProvider myTextFieldPanel;// Located in the layered pane
-  protected MyTextField myTextField;
-  private JPanel myCardContainer;
-  private CardLayout myCard;
+  protected final JPanelProvider myTextFieldPanel = new JPanelProvider();// Located in the layered pane
+  protected final MyTextField myTextField = new MyTextField();
+  private final CardLayout myCard = new CardLayout();
+  private final JPanel myCardContainer = new JPanel(myCard);
   protected JCheckBox myCheckBox;
   /**
    * the tool area of the popup, it is just after card box
@@ -108,10 +109,10 @@ public abstract class ChooseByNameBase {
   private JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
-  protected JList myList;
-  private MyListModel<Object> myListModel;
-  private List<Pair<String, Integer>> myHistory;
-  private List<Pair<String, Integer>> myFuture;
+  private final MyListModel<Object> myListModel = new MyListModel<Object>();
+  protected final JList myList = new JBList(myListModel);
+  private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
+  private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
 
   protected ChooseByNamePopupComponent.Callback myActionListener;
 
@@ -186,6 +187,8 @@ public abstract class ChooseByNameBase {
     myInitialIndex = initialIndex;
     mySearchInAnyPlace = Registry.is("ide.goto.middle.matching") && model.useMiddleMatching();
     myRebuildDelay = Registry.intValue("ide.goto.rebuild.delay");
+
+    myTextField.setText(myInitialText);
   }
 
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
@@ -214,7 +217,7 @@ public abstract class ChooseByNameBase {
    * @param toolArea a tool area component
    */
   public void setToolArea(JComponent toolArea) {
-    if (myCard != null) {
+    if (myToolArea != null) {
       throw new IllegalStateException("Tool area is modifiable only before invoke()");
     }
     myToolArea = toolArea;
@@ -337,7 +340,6 @@ public abstract class ChooseByNameBase {
     myPreviouslyFocusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
     myActionListener = callback;
-    myTextFieldPanel = new JPanelProvider();
     myTextFieldPanel.setLayout(new BoxLayout(myTextFieldPanel, BoxLayout.Y_AXIS));
 
     final JPanel hBox = new JPanel();
@@ -356,8 +358,6 @@ public abstract class ChooseByNameBase {
 
     caption2Tools.add(hBox, BorderLayout.EAST);
 
-    myCard = new CardLayout();
-    myCardContainer = new JPanel(myCard);
     myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
@@ -397,7 +397,6 @@ public abstract class ChooseByNameBase {
     group.add(new ShowFindUsagesAction() {
       @Override
       public PsiElement[][] getElements() {
-        if (myListModel == null) return new PsiElement[][]{PsiElement.EMPTY_ARRAY, PsiElement.EMPTY_ARRAY};
         final Object[] objects = myListModel.toArray();
         final List<PsiElement> prefixMatchElements = new ArrayList<PsiElement>(objects.length);
         final List<PsiElement> nonPrefixMatchElements = new ArrayList<PsiElement>(objects.length);
@@ -432,11 +431,6 @@ public abstract class ChooseByNameBase {
     }
     hBox.add(myToolArea);
     myTextFieldPanel.add(caption2Tools);
-
-    myHistory = new ArrayList<Pair<String, Integer>>();
-    myFuture = new ArrayList<Pair<String, Integer>>();
-    myTextField = new MyTextField();
-    myTextField.setText(myInitialText);
 
     final ActionMap actionMap = new ActionMap();
     actionMap.setParent(myTextField.getActionMap());
@@ -607,8 +601,6 @@ public abstract class ChooseByNameBase {
       }
     });
 
-    myListModel = new MyListModel<Object>();
-    myList = new JBList(myListModel);
     myList.setFocusable(false);
     myList.setSelectionMode(allowMultipleSelection ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION :
                             ListSelectionModel.SINGLE_SELECTION);
@@ -710,18 +702,6 @@ public abstract class ChooseByNameBase {
   public void rebuildList(boolean initial) {
     // TODO this method is public, because the chooser does not listed for the model.
     rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, ModalityState.current(), null);
-  }
-
-  private void updateDocPosition() {
-    final JBPopup hint = myTextFieldPanel.getHint();
-    if (hint != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myTextFieldPanel != null) myTextFieldPanel.repositionHint();
-        }
-      });
-    }
   }
 
   private void updateDocumentation() {
@@ -908,70 +888,63 @@ public abstract class ChooseByNameBase {
     myListUpdater.cancelAll();
 
     cancelCalcElementsThread();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+    final String text = myTextField.getText();
+    if (!canShowListForEmptyPattern() &&
+        (text == null || text.trim().isEmpty())) {
+      myListModel.clear();
+      hideList();
+      myTextFieldPanel.hideHint();
+      myCard.show(myCardContainer, CHECK_BOX_CARD);
+      return;
+    }
+
+    ListCellRenderer cellRenderer = myList.getCellRenderer();
+    if (cellRenderer instanceof ExpandedItemListCellRendererWrapper) {
+      cellRenderer = ((ExpandedItemListCellRendererWrapper)cellRenderer).getWrappee();
+    }
+    if (cellRenderer instanceof MatcherHolder) {
+      final String pattern = transformPattern(text);
+      final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
+      ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
+    }
+
+    final Runnable request = new Runnable() {
       @Override
       public void run() {
-        final String text = myTextField.getText();
-        if (!canShowListForEmptyPattern() &&
-            (text == null || text.trim().isEmpty())) {
-          myListModel.clear();
-          hideList();
-          if (myTextFieldPanel != null) myTextFieldPanel.hideHint();
-          myCard.show(myCardContainer, CHECK_BOX_CARD);
-          return;
-        }
-        final Runnable request = new Runnable() {
+        scheduleCalcElements(text, myCheckBox.isSelected(), postRunnable == null, modalityState, new Consumer<Set<?>>() {
           @Override
-          public void run() {
-            final Consumer<Set<?>> callback = new Consumer<Set<?>>() {
-              @Override
-              public void consume(Set<?> elements) {
-                synchronized (myRebuildMutex) {
-                  ApplicationManager.getApplication().assertIsDispatchThread();
-                  if (checkDisposed()) {
-                    return;
-                  }
-
-                  myListIsUpToDate = true;
-                  setElementsToList(pos, elements);
-                  myList.repaint();
-                  chosenElementMightChange();
-
-                  if (elements.isEmpty() && myTextFieldPanel != null) {
-                    myTextFieldPanel.hideHint();
-                  }
-
-                  if (postRunnable != null) {
-                    postRunnable.run();
-                  }
-                }
+          public void consume(Set<?> elements) {
+            synchronized (myRebuildMutex) {
+              ApplicationManager.getApplication().assertIsDispatchThread();
+              if (checkDisposed()) {
+                return;
               }
-            };
 
-            cancelCalcElementsThread();
+              myListIsUpToDate = true;
+              setElementsToList(pos, elements);
+              myList.repaint();
+              chosenElementMightChange();
 
-            ListCellRenderer cellRenderer = myList.getCellRenderer();
-            if (cellRenderer instanceof ExpandedItemListCellRendererWrapper) {
-              cellRenderer = ((ExpandedItemListCellRendererWrapper)cellRenderer).getWrappee();
+              if (elements.isEmpty()) {
+                myTextFieldPanel.hideHint();
+              }
+
+              if (postRunnable != null) {
+                postRunnable.run();
+              }
             }
-            if (cellRenderer instanceof MatcherHolder) {
-              final String pattern = transformPattern(text);
-              final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern + "*" : pattern);
-              ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
-            }
-
-            scheduleCalcElements(text, myCheckBox.isSelected(), postRunnable == null, modalityState, callback);
           }
-        };
-
-        if (delay > 0) {
-          myAlarm.addRequest(request, delay, ModalityState.stateForComponent(myTextField));
-        }
-        else {
-          request.run();
-        }
+        });
       }
-    }, modalityState);
+    };
+
+    if (delay > 0) {
+      myAlarm.addRequest(request, delay, ModalityState.stateForComponent(myTextField));
+    }
+    else {
+      request.run();
+    }
   }
 
   public void scheduleCalcElements(String text,
@@ -1025,7 +998,7 @@ public abstract class ChooseByNameBase {
       ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
-      updateDocPosition();
+      myTextFieldPanel.repositionHint();
     }
     else {
       showList();
@@ -1134,7 +1107,7 @@ public abstract class ChooseByNameBase {
           }
           if (!checkDisposed()) {
             showList();
-            updateDocPosition();
+            myTextFieldPanel.repositionHint();
 
             if (!myListModel.isEmpty()) {
               int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;

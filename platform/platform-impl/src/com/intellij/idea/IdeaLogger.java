@@ -15,16 +15,19 @@
  */
 package com.intellij.idea;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.DebugUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,6 +91,11 @@ public class IdeaLogger extends Logger {
     else {
       super.error(message);
     }
+  }
+
+  @Override
+  public void error(@NonNls String message, Attachment... attachments) {
+    myLogger.error(LogMessageEx.createEvent(message, DebugUtil.currentStackTrace(), attachments));
   }
 
   @Override

@@ -84,6 +84,10 @@ public abstract class Logger {
     error(String.valueOf(message));
   }
 
+  public void error(@NonNls String message, Attachment... attachments) {
+    error(message);
+  }
+
   public void error(@NonNls String message, @NonNls String... details) {
     error(message, new Throwable(), details);
   }
