@@ -3,12 +3,15 @@ package de.plushnikov.intellij.lombok.processor.field;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
+import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Base lombok processor class for field annotations
@@ -51,5 +55,11 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
 
   protected abstract <Psi extends PsiElement> void processIntern(PsiField psiField, PsiAnnotation psiAnnotation, List<Psi> target);
 
+  protected void copyAnnotations(final PsiField fromPsiElement, final PsiModifierList toModifierList, final Pattern... patterns) {
+    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(fromPsiElement, patterns);
+    for (String annotationFQN : annotationsToCopy) {
+      toModifierList.addAnnotation(annotationFQN);
+    }
+  }
 
 }

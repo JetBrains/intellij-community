@@ -21,6 +21,8 @@ Various problems with spring have also been reported. See issue #287, issue #271
   public static final Pattern NON_NULL_PATTERN = Pattern.compile("^(?:nonnull)$", Pattern.CASE_INSENSITIVE);
   public static final Pattern NULLABLE_PATTERN = Pattern.compile("^(?:nullable|checkfornull)$", Pattern.CASE_INSENSITIVE);
 
+  public static final Pattern DEPRECATED_PATTERN = Pattern.compile("^(?:deprecated)$", Pattern.CASE_INSENSITIVE);
+
   /**
    * Generates a getter name from a given field name.
    * <p/>

@@ -1,7 +1,21 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -13,11 +27,6 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Inspect and validate @Getter lombok annotation on a field
@@ -122,12 +131,8 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       method.withModifier(PsiModifier.STATIC);
     }
 
-    PsiModifierList methodParameterModifierList = method.getModifierList();
-    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField,
-        LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN);
-    for (String annotationFQN : annotationsToCopy) {
-      methodParameterModifierList.addAnnotation(annotationFQN);
-    }
+    copyAnnotations(psiField, method.getModifierList(),
+        LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
     return method;
   }
 
