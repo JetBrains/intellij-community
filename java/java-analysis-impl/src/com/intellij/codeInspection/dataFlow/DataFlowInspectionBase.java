@@ -210,9 +210,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
 
       final Object value = pair.second.getValue();
-      final String presentableName = value instanceof PsiNamedElement ? ((PsiNamedElement)value).getName() : String.valueOf(value);
-      final String exprText = getConstantValueText(value);
-      if (exprText == null) {
+      PsiVariable constant = pair.second.getConstant();
+      final String presentableName = constant != null ? constant.getName() : String.valueOf(value);
+      final String exprText = getConstantValueText(value, constant);
+      if (presentableName == null || exprText == null) {
         continue;
       }
 
@@ -231,26 +232,29 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          PsiElement newElement =
-            descriptor.getPsiElement().replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(exprText, null));
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+          JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+          PsiElement newElement = descriptor.getPsiElement().replace(facade.getElementFactory().createExpressionFromText(exprText, null));
+          newElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+          if (newElement instanceof PsiJavaCodeReferenceElement) {
+            PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)newElement;
+            PsiElement target = ref.resolve();
+            String shortName = ref.getReferenceName();
+            if (target != null && shortName != null && ref.isQualified() &&
+                facade.getResolveHelper().resolveReferencedVariable(shortName, newElement) == target) {
+              newElement.replace(facade.getElementFactory().createExpressionFromText(shortName, null));
+            }
+          }
         }
       });
     }
   }
 
-  private static String getConstantValueText(Object value) {
-    String exprText;
-    if (value instanceof String) {
-      exprText = "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
-    } else if (value instanceof PsiMember) {
-      exprText = PsiUtil.getMemberQualifiedName((PsiMember)value);
-    } else if (value instanceof PsiNamedElement) {
-      exprText = ((PsiNamedElement)value).getName();
-    } else {
-      exprText = String.valueOf(value);
+  private static String getConstantValueText(Object value, @Nullable PsiVariable constant) {
+    if (constant != null) {
+      return constant instanceof PsiMember ? PsiUtil.getMemberQualifiedName((PsiMember)constant) : constant.getName();
     }
-    return exprText;
+
+    return value instanceof String ? "\"" + StringUtil.escapeStringCharacters((String)value) + "\"" : String.valueOf(value);
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(StandardDataFlowRunner runner, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {

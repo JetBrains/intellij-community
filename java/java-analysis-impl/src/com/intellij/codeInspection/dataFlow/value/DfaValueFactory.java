@@ -89,7 +89,7 @@ public class DfaValueFactory {
       if (value instanceof String) {
         return getNotNullFactory().create(type); // Non-null string literal.
       }
-      return getConstFactory().createFromValue(value, type);
+      return getConstFactory().createFromValue(value, type, null);
     }
 
     return null;
