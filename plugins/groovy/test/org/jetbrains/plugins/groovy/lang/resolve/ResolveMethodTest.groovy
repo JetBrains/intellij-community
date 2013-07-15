@@ -1663,4 +1663,185 @@ def foo(A b) {
 }
 ''', PsiMethod)
   }
+
+  void 'test IDEA-110562'() {
+    assertNotResolved('''\
+interface GrTypeDefinition {
+    def baz()
+}
+
+class Foo {
+    private static void extractSuperInterfaces(Object subclass) {
+        if (!(subclass instanceof GrTypeDefinition)) {
+            foo()
+            subclass.b<caret>az()
+        }
+    }
+
+    static def foo() {}
+}
+''')
+  }
+
+  private void assertNotResolved(String text) {
+    final ref = configureByText(text)
+    assertNotNull(ref)
+    final resolved = ref.resolve()
+    assertNull(resolved)
+  }
+
+  void 'test IDEA-110562 2'() {
+    resolveByText('''\
+interface GrTypeDefinition {
+    def baz()
+}
+
+class Foo {
+    private static void extractSuperInterfaces(Object subclass) {
+        if (subclass instanceof GrTypeDefinition) {
+            foo()
+            subclass.b<caret>az()
+        }
+    }
+
+    static def foo() {}
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf1() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.fo<caret>o() && o.bar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf2() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.foo() && o.ba<caret>r()) {
+    print o.foo()
+  }
+}
+''')
+  }
+
+  void testInstanceOf3() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar o.fo<caret>o() && o.bar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf4() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar o.foo() && o.b<caret>ar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf5() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.fo<caret>o()
+  }
+}
+''')
+  }
+
+  void testInstanceOf6() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.fo<caret>o()
+  }
+}
+''')
+  }
+
+  void testInstanceOf7() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.ba<caret>r()
+  }
+}
+''')
+  }
+
 }
