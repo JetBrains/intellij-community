@@ -103,11 +103,11 @@ class GitLogRecord {
   }
 
   long getLongTimeStamp() {
-    return Long.parseLong(myOptions.get(COMMIT_TIME).trim());
+    return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
   }
 
   long getAuthorTimeStamp() {
-    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim());
+    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
   }
 
   String getAuthorAndCommitter() {

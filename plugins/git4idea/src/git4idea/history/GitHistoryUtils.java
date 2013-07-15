@@ -359,7 +359,7 @@ public class GitHistoryUtils {
             record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
           consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null,
-                                               new Date(record.getAuthorTimeStamp() * 1000), parents));
+                                               new Date(record.getAuthorTimeStamp()), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
             // can safely be empty, for example, for simple merge commits that don't change anything.
@@ -838,7 +838,7 @@ public class GitHistoryUtils {
                                       new HashSet<String>(Arrays.asList(record.getParentsHashes())), record.getFilePaths(root),
                                       record.getAuthorEmail(),
                                       record.getCommitterEmail(), tags, locals, remotes,
-                                      record.parseChanges(project, root), record.getAuthorTimeStamp() * 1000);
+                                      record.parseChanges(project, root), record.getAuthorTimeStamp());
     gitCommit.setCurrentBranch(s);
     return gitCommit;
   }
@@ -989,7 +989,7 @@ public class GitHistoryUtils {
 
     String output = h.run();
     GitLogRecord logRecord = parser.parseOneRecord(output);
-    return logRecord.getAuthorTimeStamp() * 1000;
+    return logRecord.getAuthorTimeStamp();
   }
 
   public static void hashesWithParents(Project project, FilePath path, final AsynchConsumer<CommitHashPlusParents> consumer,
@@ -1025,7 +1025,7 @@ public class GitHistoryUtils {
             }
             GitLogRecord record = parser.parseOneRecord(line);
             consumer.consume(new CommitHashPlusParents(record.getShortHash(),
-                                                       record.getParentsHashes(), record.getLongTimeStamp() * 1000,
+                                                       record.getParentsHashes(), record.getLongTimeStamp(),
                                                        record.getAuthorName()));
           }
         } catch (ProcessCanceledException e) {
