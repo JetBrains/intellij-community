@@ -10,9 +10,9 @@
             <String fx:value="C"/>
         </FXCollections>
     </fx:define>
-    <<error descr="Unable to coerce javafx.collections.FXCollections to javafx.scene.Node">FXCollections</error> fx:factory="observableArrayList">
+    <<error descr="Unable to coerce javafx.collections.ObservableList to javafx.scene.Node">FXCollections</error> fx:factory="observableArrayList">
         <String fx:value="A"/>
         <String fx:value="B"/>
         <String fx:value="C"/>
-    </<error descr="Unable to coerce javafx.collections.FXCollections to javafx.scene.Node">FXCollections</error>>
+    </<error descr="Unable to coerce javafx.collections.ObservableList to javafx.scene.Node">FXCollections</error>>
 </fx:root>
