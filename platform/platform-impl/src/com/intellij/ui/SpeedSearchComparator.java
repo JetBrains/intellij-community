@@ -44,7 +44,8 @@ public class SpeedSearchComparator {
   }
 
   public int matchingDegree(String pattern, String text) {
-    return obtainMatcher(pattern).matchingDegree(text);
+    MinusculeMatcher matcher = obtainMatcher(pattern);
+    return matcher.matchingDegree(text) + (matcher.isStartMatch(text) ? 10000 : 0);
   }
 
   @Nullable
