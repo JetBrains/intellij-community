@@ -50,7 +50,7 @@ static int inotify_fd = -1;
 static int watch_count = 0;
 static table* watches;
 static bool limit_reached = false;
-static void (* callback)(char*, int) = NULL;
+static void (* callback)(const char*, int) = NULL;
 
 #define EVENT_SIZE (sizeof(struct inotify_event))
 #define EVENT_BUF_LEN (2048 * (EVENT_SIZE + 16))
@@ -112,7 +112,7 @@ static void read_watch_descriptors_count() {
 }
 
 
-inline void set_inotify_callback(void (* _callback)(char*, int)) {
+inline void set_inotify_callback(void (* _callback)(const char*, int)) {
   callback = _callback;
 }
 
@@ -346,13 +346,17 @@ static bool process_inotify_event(struct inotify_event* event) {
   bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
   userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->path);
 
-  memcpy(path_buf, node->path, node->path_len + 1);
   int path_len = node->path_len;
+  memcpy(path_buf, node->path, path_len + 1);
   if (event->len > 0) {
-    path_buf[node->path_len] = '/';
+    path_buf[path_len] = '/';
     int name_len = strlen(event->name);
     memcpy(path_buf + path_len + 1, event->name, name_len + 1);
     path_len += name_len + 1;
+  }
+
+  if (callback != NULL) {
+    (*callback)(path_buf, event->mask);
   }
 
   if (is_dir && event->mask & (IN_CREATE | IN_MOVED_TO)) {
@@ -371,10 +375,6 @@ static bool process_inotify_event(struct inotify_event* event) {
         break;
       }
     }
-  }
-
-  if (callback != NULL) {
-    (*callback)(path_buf, event->mask);
   }
 
   return true;
