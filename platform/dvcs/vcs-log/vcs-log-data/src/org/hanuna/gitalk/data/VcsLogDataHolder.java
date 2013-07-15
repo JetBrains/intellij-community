@@ -156,12 +156,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
 
   @Override
   public void refreshCompletely() {
-    refresh(new Runnable() {
-      @Override
-      public void run() {
-        notifyAboutDataRefresh();
-      }
-    });
+    loadAllLog();
   }
 
   @Override
