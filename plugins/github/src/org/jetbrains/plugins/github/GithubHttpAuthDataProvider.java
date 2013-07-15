@@ -49,8 +49,9 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
           return null;
         }
         return new AuthData(tokenAuth.getToken(), "x-oauth-basic");
+      default:
+        return null;
     }
-    return null;
   }
 
 }

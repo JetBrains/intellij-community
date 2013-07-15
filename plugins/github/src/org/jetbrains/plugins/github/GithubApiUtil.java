@@ -79,9 +79,8 @@ public class GithubApiUtil {
         LOG.info(String.format("Unexpectedly empty response: %s", resp));
         return null;
       }
-      if (method.getStatusCode() >= 400 && method.getStatusCode() <= 404) {
-        throw new AuthenticationException("Request response: " + method.getStatusText());
-      }
+
+      checkStatusCode(method);
 
       JsonElement ret = parseResponse(resp);
 
@@ -176,6 +175,17 @@ public class GithubApiUtil {
     return client;
   }
 
+  private static void checkStatusCode(@NotNull HttpMethod method) throws AuthenticationException {
+    switch (method.getStatusCode()) {
+      case 400: // HTTP_BAD_REQUEST
+      case 401: // HTTP_UNAUTHORIZED
+      case 402: // HTTP_PAYMENT_REQUIRED
+      case 403: // HTTP_FORBIDDEN
+      case 404: // HTTP_NOT_FOUND
+        throw new AuthenticationException("Request response: " + method.getStatusText());
+    }
+  }
+
   @NotNull
   private static JsonElement parseResponse(@NotNull String githubResponse) throws IOException {
     try {
@@ -192,9 +202,7 @@ public class GithubApiUtil {
     try {
       method = doREST(auth, "", null, HttpVerb.GET);
 
-      if (method.getStatusCode() >= 400 && method.getStatusCode() <= 404) {
-        throw new AuthenticationException("Request response: " + method.getStatusText());
-      }
+      checkStatusCode(method);
 
       Header header = method.getResponseHeader("X-OAuth-Scopes");
       if (header == null) {

@@ -199,7 +199,7 @@ public class GithubSettingsPanel {
     Object selected = myAuthTypeComboBox.getSelectedItem();
     if (AUTH_PASSWORD.equals(selected)) return GithubAuthData.AuthType.BASIC;
     if (AUTH_TOKEN.equals(selected)) return GithubAuthData.AuthType.TOKEN;
-    LOG.error("GithubSettingsPanel: illegal selection: basic AuthType returned");
+    LOG.error("GithubSettingsPanel: illegal selection: basic AuthType returned", selected.toString());
     return GithubAuthData.AuthType.BASIC;
   }
 
@@ -225,7 +225,7 @@ public class GithubSettingsPanel {
     Object selected = myAuthTypeComboBox.getSelectedItem();
     if (AUTH_PASSWORD.equals(selected)) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
     if (AUTH_TOKEN.equals(selected)) return GithubAuthData.createTokenAuth(getHost(), getPassword());
-    LOG.error("GithubSettingsPanel: illegal selection: anonymous AuthData created");
+    LOG.error("GithubSettingsPanel: illegal selection: anonymous AuthData created", selected.toString());
     return GithubAuthData.createAnonymous(getHost());
   }
 

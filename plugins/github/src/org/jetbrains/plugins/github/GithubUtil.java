@@ -140,7 +140,7 @@ public class GithubUtil {
       valid = checkAuthData(auth, GithubSettings.getInstance().getLogin());
     }
     catch (IOException e) {
-      LOG.error("Connection error", e);
+      LOG.info("Connection error", e);
     }
     if (!valid) {
       return getValidAuthData(project, indicator);

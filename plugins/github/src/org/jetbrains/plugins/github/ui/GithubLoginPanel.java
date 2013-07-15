@@ -131,7 +131,7 @@ public class GithubLoginPanel {
     Object selected = myAuthTypeComboBox.getSelectedItem();
     if (AUTH_PASSWORD.equals(selected)) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
     if (AUTH_TOKEN.equals(selected)) return GithubAuthData.createTokenAuth(getHost(), getPassword());
-    GithubUtil.LOG.error("GithubLoginPanel illegal selection: anonymous AuthData created");
+    GithubUtil.LOG.error("GithubLoginPanel illegal selection: anonymous AuthData created", selected.toString());
     return GithubAuthData.createAnonymous(getHost());
   }
 }

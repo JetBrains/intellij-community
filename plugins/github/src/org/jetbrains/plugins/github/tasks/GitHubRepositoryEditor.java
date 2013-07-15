@@ -129,7 +129,7 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
   private void generateToken() {
     final Ref<String> tokenRef = new Ref<String>();
     final Ref<IOException> exceptionRef = new Ref<IOException>();
-    final Collection<String> scopes = myPrivateRepo.isSelected() ? Collections.<String>singleton("repo") : Collections.<String>emptyList();
+    final Collection<String> scopes = myPrivateRepo.isSelected() ? Collections.singleton("repo") : Collections.<String>emptyList();
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
