@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -11,6 +12,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.Processor;
 import com.jetbrains.cython.psi.CythonClass;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -157,7 +159,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
     return null; // we're not a tuple
   }
 
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public PyType getType(@NotNull final TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PsiElement parent = getStubOrPsiParent();
     if (parent instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList)parent;
@@ -185,7 +187,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
                 initType = stdlib.getConstructorType(containingClass, context);
               }
             }
-            if (initType != null && !(initType instanceof PyNoneType || initType instanceof PyReturnTypeReference)) {
+            if (initType != null && !(initType instanceof PyNoneType)) {
               return initType;
             }
             return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
@@ -233,30 +235,35 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
         }
         // Guess the type from file-local usages
         if (context.allowLocalUsages(this)) {
-          final PyCallExpression call = findFirstLocalCall(func);
-          if (call != null) {
-            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final CallArgumentsMapping mapping = call.getArgumentList().analyzeCall(resolveContext);
-            for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
-              if (entry.getValue() == this) {
-                final PyExpression argument = entry.getKey();
-                if (argument != null) {
-                  final PyType type = context.getType(argument);
-                  if (type != null) {
-                    return PyUnionType.createWeakType(type);
+          final Ref<PyType> ref = Ref.create(null);
+          processLocalCalls(func, new Processor<PyCallExpression>() {
+            @Override
+            public boolean process(@NotNull PyCallExpression call) {
+              final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+              final CallArgumentsMapping mapping = call.getArgumentList().analyzeCall(resolveContext);
+              for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+                if (entry.getValue() == PyNamedParameterImpl.this) {
+                  final PyExpression argument = entry.getKey();
+                  if (argument != null) {
+                    final PyType type = context.getType(argument);
+                    if (type != null) {
+                      ref.set(type);
+                      return false;
+                    }
                   }
                 }
               }
+              return true;
             }
-          }
+          });
+          return ref.get();
         }
       }
     }
     return null;
   }
 
-  @Nullable
-  private static PyCallExpression findFirstLocalCall(@NotNull PyFunction function) {
+  private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<PyCallExpression> processor) {
     final PsiFile file = function.getContainingFile();
     final String name = function.getName();
     if (file != null && name != null) {
@@ -265,11 +272,13 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       for (int pos = text.indexOf(name); pos != -1; pos = text.indexOf(name, pos + 1)) {
         final PsiReference ref = file.findReferenceAt(pos);
         if (ref != null && ref.isReferenceTo(function)) {
-          return PsiTreeUtil.getParentOfType(file.findElementAt(pos), PyCallExpression.class);
+          final PyCallExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(pos), PyCallExpression.class);
+          if (expr != null && !processor.process(expr)) {
+            return;
+          }
         }
       }
     }
-    return null;
   }
 
   @Override

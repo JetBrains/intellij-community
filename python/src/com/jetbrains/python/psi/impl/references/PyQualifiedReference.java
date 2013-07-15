@@ -67,7 +67,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (isOtherClassQualifying(qualifier, (PyClassType)qualifierType)) return Collections.emptyList();
     }
     //
-    if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
+    if (qualifierType != null) {
       qualifierType.assertValid("qualifier: " + qualifier);
       // resolve within the type proper
       AccessDirection ctx = AccessDirection.of(myElement);
@@ -397,7 +397,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);
-        if (qualifierType == null || qualifierType instanceof PyTypeReference) {
+        if (qualifierType == null) {
           return true;
         }
       }

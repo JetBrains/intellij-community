@@ -142,13 +142,7 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTypeReference) {
-      final PyType resolved = ((PyTypeReference)type).resolve(null, myContext);
-      if (resolved != null) {
-        result = build(resolved, true);
-      }
-    }
-    else if (type instanceof PyCollectionType) {
+    if (type instanceof PyCollectionType) {
       final String name = type.getName();
       final PyType elementType = ((PyCollectionType)type).getElementType(myContext);
       if (elementType != null) {

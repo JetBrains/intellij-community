@@ -11,7 +11,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
         if (qualifier != null) {
           final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
           final PyType type = context.getType(qualifier);
-          if (type == null || type instanceof PyTypeReference) {
+          if (type == null) {
             final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
             if (call != null && element == call.getCallee()) {
               return checkMatchingSignatureGroup(call, targets, context);
