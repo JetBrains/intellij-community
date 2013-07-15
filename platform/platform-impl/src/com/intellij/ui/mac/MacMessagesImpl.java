@@ -46,7 +46,17 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
 public class MacMessagesImpl extends MacMessages {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMessages");
 
-  private static final  HashMap<Window, Integer> resultsFromDocumentRoot = new HashMap<Window, Integer> ();
+
+  private static class MessageResult {
+    MessageResult (int returnCode, boolean suppress) {
+      myReturnCode = returnCode;
+      mySuppress = suppress;
+    }
+    int myReturnCode;
+    boolean mySuppress;
+  }
+
+  private static final  HashMap<Window, MessageResult> resultsFromDocumentRoot = new HashMap<Window, MessageResult> ();
   private static final  HashMap<Window, MacMessagesQueue<Runnable>> queuesFromDocumentRoot =
     new HashMap<Window, MacMessagesQueue<Runnable>>();
 
@@ -55,7 +65,9 @@ public class MacMessagesImpl extends MacMessages {
       synchronized (lock) {
         Window documentRoot = windowFromId.get(contextInfo.longValue());
         processResult(documentRoot);
-        resultsFromDocumentRoot.put(documentRoot, returnCode.intValue());
+        ID suppressState = invoke(invoke(alert, "suppressionButton"), "state");
+        resultsFromDocumentRoot.put(documentRoot, new MessageResult(returnCode.intValue(),
+                                                                    suppressState.intValue() == 1 ? true : false));
         queuesFromDocumentRoot.get(windowFromId.get(contextInfo.longValue())).runFromQueue();
       }
       cfRelease(self);
@@ -450,15 +462,28 @@ public class MacMessagesImpl extends MacMessages {
                                                                           : doNotAskDialogOption.getDoNotShowMessage()));
       params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2, nsString(doNotAskDialogOption != null
                                                                           && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"));
+      MessageResult result = resultsFromDocumentRoot.remove(showDialog(window, "showSheet:",
+                                                                       new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)));
 
+      Integer convertedResult = convertReturnCodeFromNativeAlertDialog(result.myReturnCode, alternateText);
 
-      return convertReturnCodeFromNativeAlertDialog(
-        showDialog(window, "showSheet:", new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)), alternateText);
+      boolean operationCanceled = (alternateText == null && convertedResult == 1)
+                                  || (alternateText != null && convertedResult == 2);
+
+      if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
+        if (!operationCanceled || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
+          doNotAskDialogOption.setToBeShown(!result.mySuppress, convertedResult);
+        }
+      }
+
+      return convertedResult;
     }
     finally {
       invoke(pool, "release");
     }
   }
+
+  private final static int OPERATION_CANCELED = 444;
 
   public int showMessageDialog(final String title,
                                final String message,
@@ -494,9 +519,20 @@ public class MacMessagesImpl extends MacMessages {
       params.put(MESSAGE_DIALOG_PARAM_TYPE.focusedOptionIndex, nsString(Integer.toString(focusedOptionIndex)));
       params.put(MESSAGE_DIALOG_PARAM_TYPE.buttonsArray, buttonsArray);
 
+      MessageResult result = resultsFromDocumentRoot.remove(showDialog(window, "showVariableButtonsSheet:",
+                                                                       new DialogParamsWrapper(DialogParamsWrapper.DialogType.message, params)));
 
-      return convertReturnCodeFromNativeMessageDialog(showDialog(window, "showVariableButtonsSheet:",
-                                                                 new DialogParamsWrapper(DialogParamsWrapper.DialogType.message, params)));
+      final int code = convertReturnCodeFromNativeMessageDialog(result.myReturnCode);
+
+      final int cancelCode = buttons.length - 1;
+
+      if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
+        if (cancelCode != code || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
+          doNotAskDialogOption.setToBeShown(!result.mySuppress, code);
+        }
+      }
+
+      return code;
     }
     finally {
       invoke(pool, "release");
@@ -513,7 +549,7 @@ public class MacMessagesImpl extends MacMessages {
 
     Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    final ID nativeFocusedWindow = invoke(MacUtil.findWindowForTitle(foremostWindowTitle), "autorelease");
+    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
 
     paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
@@ -538,8 +574,8 @@ public class MacMessagesImpl extends MacMessages {
     return documentRoot;
   }
 
-  private static int convertReturnCodeFromNativeMessageDialog(Window documentRoot) {
-    return resultsFromDocumentRoot.remove(documentRoot) - 1000;
+  private static int convertReturnCodeFromNativeMessageDialog(int result) {
+    return result - 1000;
   }
 
   private static String getWindowTitle(Window documentRoot) {
@@ -554,8 +590,7 @@ public class MacMessagesImpl extends MacMessages {
     return windowTitle;
   }
 
-  private static int convertReturnCodeFromNativeAlertDialog(Window documentRoot, String alternateText) {
-    Integer result = resultsFromDocumentRoot.remove(documentRoot);
+  private static int convertReturnCodeFromNativeAlertDialog(Integer returnCode, String alternateText) {
 
     // DEFAULT = 1
     // ALTERNATE = 0
@@ -570,9 +605,9 @@ public class MacMessagesImpl extends MacMessages {
 
       cancelCode = 2;
 
-      if (result == null) result = 2;
+      if (returnCode == null) returnCode = 2;
 
-      switch (result) {
+      switch (returnCode) {
         case 1:
           code = 0;
           break;
@@ -591,9 +626,9 @@ public class MacMessagesImpl extends MacMessages {
 
       cancelCode = 1;
 
-      if (result == null) result = -1;
+      if (returnCode == null) returnCode = -1;
 
-      switch (result) {
+      switch (returnCode) {
         case 1:
           code = 0;
           break;
@@ -603,6 +638,9 @@ public class MacMessagesImpl extends MacMessages {
           break;
       }
     }
+
+    if (cancelCode == code) { code = OPERATION_CANCELED; };
+
     return code;
   }
 
