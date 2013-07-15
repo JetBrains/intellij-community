@@ -136,7 +136,10 @@ public class PyUserSkeletonsUtil {
   private static PyFile getUserSkeletonForFile(@NotNull PyFile file) {
     final VirtualFile moduleVirtualFile = file.getVirtualFile();
     if (moduleVirtualFile != null) {
-      final String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
+      String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
+      if ("builtins".equals(moduleName)) {
+        moduleName = "__builtin__";
+      }
       if (moduleName != null) {
         return getUserSkeletonForModuleQName(moduleName, file);
       }
