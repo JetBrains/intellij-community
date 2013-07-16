@@ -30,6 +30,7 @@ public class StringFactory {
     try {
       Constructor<String> newC = String.class.getDeclaredConstructor(char[].class, boolean.class);
       newC.setAccessible(true);
+      // it is faster to invoke constructor via sun.reflect.ConstructorAccessor; it avoids AccessibleObject.checkAccess()
       Method accessor = Constructor.class.getDeclaredMethod("acquireConstructorAccessor");
       accessor.setAccessible(true);
       constructorAccessor = (ConstructorAccessor)accessor.invoke(newC);
@@ -41,7 +42,7 @@ public class StringFactory {
 
 
   /**
-   * @return new instance of String which backed by chars array.
+   * @return new instance of String which backed by 'chars' array.
    *
    * CAUTION. EXTREMELY DANGEROUS.
    * DO NOT USE THIS METHOD UNLESS YOU ARE TOO DESPERATE
