@@ -1137,7 +1137,7 @@ public class RefactoringUtil {
       paramTag.delete();
     }
     for (PsiDocTag psiDocTag : newTags) {
-      anchor = docComment.addAfter(psiDocTag, anchor);
+      anchor = anchor != null && anchor.isValid() ? docComment.addAfter(psiDocTag, anchor) : docComment.add(psiDocTag);
     }
   }
 

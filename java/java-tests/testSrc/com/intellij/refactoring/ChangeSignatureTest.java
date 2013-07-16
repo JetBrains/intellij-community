@@ -155,6 +155,13 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     }, false);
   }
 
+  public void testParamJavadoc0() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(1, "z", PsiType.INT),
+      new ParameterInfoImpl(0, "y", PsiType.INT)
+    }, false);
+  }
+
   public void testParamJavadoc1() throws Exception {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "z", PsiType.BOOLEAN)
