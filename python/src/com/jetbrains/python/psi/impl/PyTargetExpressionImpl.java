@@ -357,6 +357,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
                 type = getContextSensitiveType(next, context, source);
               }
             }
+            if (type == null) {
+              final PyFunction getItem = pyClass.findMethodByName(PyNames.GETITEM, true);
+              if (getItem != null) {
+                type = getContextSensitiveType(getItem, context, source);
+              }
+            }
           }
         }
       }

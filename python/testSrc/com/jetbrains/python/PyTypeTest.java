@@ -571,6 +571,17 @@ public class PyTypeTest extends PyTestCase {
            "    expr = foo(x)\n");
   }
 
+  public void testIterationTypeFromGetItem() {
+    doTest("int",
+           "class C(object):\n" +
+           "    def __getitem__(self, index):\n" +
+           "        return 0\n" +
+           "    def __len__(self):\n" +
+           "        return 10\n" +
+           "for expr in C():\n" +
+           "    pass\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
