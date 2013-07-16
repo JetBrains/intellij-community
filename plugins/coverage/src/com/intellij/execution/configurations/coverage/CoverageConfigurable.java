@@ -37,6 +37,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
@@ -179,7 +180,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
   @NotNull
   protected JComponent createEditor() {
-    JPanel result = new JPanel(new VerticalFlowLayout());
+    JPanel result = new JPanel(new GridBagLayout());
 
     final DefaultComboBoxModel runnersModel = new DefaultComboBoxModel();
     myCoverageRunnerCb = new JComboBox(runnersModel);
@@ -239,19 +240,29 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     cPanel.add(tracingPanel);
     myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0));
 
-    result.add(myRunnerPanel);
+    final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 
+                                                         1, 1, 1, 0, 
+                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, 
+                                                         new Insets(0, 0, 0, 0), 0, 0);
+    result.add(myRunnerPanel, gc);
 
-    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
+    JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(ExecutionBundle.message("record.coverage.filters.title"), false));
     myClassFilterEditor = new MyClassFilterEditor(myProject);
-    panel.add(myClassFilterEditor);
+    final GridBagConstraints bagConstraints =
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                             new Insets(0, 0, 0, 0), 0, 0);
+    panel.add(myClassFilterEditor, bagConstraints);
+
+    bagConstraints.weighty = 0;
     myTrackTestSourcesCb = new JCheckBox("Enable coverage in test folders");
-    panel.add(myTrackTestSourcesCb);
-    result.add(panel);
+    panel.add(myTrackTestSourcesCb, bagConstraints);
+
+    result.add(panel, gc);
 
     myCoverageNotSupportedLabel = new JLabel(CodeInsightBundle.message("code.coverage.is.not.supported"));
     myCoverageNotSupportedLabel.setIcon(UIUtil.getOptionPanelWarningIcon());
-    result.add(myCoverageNotSupportedLabel);
+    result.add(myCoverageNotSupportedLabel, gc);
     return result;
   }
 
