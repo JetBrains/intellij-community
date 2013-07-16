@@ -841,8 +841,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
     ProgressManager.checkCanceled();
+    myContentlessIndicesUpdateQueue.ensureUpToDate(); // some content full indices depends on contentless ones
     if (!needsFileContentLoading(indexId)) {
-      myContentlessIndicesUpdateQueue.ensureUpToDate();
       return; //indexed eagerly in foreground while building unindexed file list
     }
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
@@ -1610,6 +1610,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private static class TaskQueue {
     private final AtomicInteger myDoWorkRequest = new AtomicInteger();
+    private final AtomicInteger myDoWorkRequestCounter = new AtomicInteger();
     private final AtomicInteger myUpdatesCount = new AtomicInteger();
     private final LinkedBlockingQueue<Runnable> myPendingWriteRequestsQueue = new LinkedBlockingQueue<Runnable>();
     private final LinkedBlockingQueue<Runnable> myTimestampUpdates = new LinkedBlockingQueue<Runnable>();
@@ -1692,6 +1693,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       int before = myDoWorkRequest.getAndIncrement();
 
       if (before == 0) {
+        final int workRequestCounter = myDoWorkRequestCounter.incrementAndGet();
         //int count = Math.min(myNotRequiringContentIndices.size(), Math.min(4, Runtime.getRuntime().availableProcessors()));
         final int count = 1; // we have 3 content independent indices but only one of them is heavy IO bound
         for(int i = 0; i < count; ++i) {
@@ -1700,7 +1702,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             public void run() {
               try {
                 while(myDoWorkRequest.get() > 0) {
-                  Runnable runnable = myPendingWriteRequestsQueue.poll(10, TimeUnit.MILLISECONDS);
+                  if (workRequestCounter != myDoWorkRequestCounter.get()) {
+                    break;
+                  }
+                  Runnable runnable = myPendingWriteRequestsQueue.poll(1, TimeUnit.MILLISECONDS);
                   if (runnable != null) runnable.run();
                 }
               }
