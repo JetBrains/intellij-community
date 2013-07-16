@@ -30,6 +30,8 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -73,9 +75,40 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     };
     int columns = 20;
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderAquaLookAndFeel()) {
-      columns = 25;
+      columns = 7;
     }
-    field.getTextEditor().setColumns(columns);
+    final JTextField editor = field.getTextEditor();
+    editor.setColumns(columns);
+    field.getTextEditor();
+    editor.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        editor.setColumns(25);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            final JComponent parent = (JComponent)editor.getParent();
+            parent.revalidate();
+            parent.repaint();
+          }
+        });
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        editor.setColumns(7);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            final JComponent parent = (JComponent)editor.getParent();
+            parent.revalidate();
+            parent.repaint();
+          }
+        });
+      }
+    });
   }
 
   @Override
