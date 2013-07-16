@@ -15,14 +15,14 @@ import org.jetbrains.annotations.Nullable;
  * Date: 3/20/12
  */
 public abstract class AbstractIndentParser implements PsiParser {
-  private PsiBuilder myBuilder;
+  protected PsiBuilder myBuilder;
 
-  private int myCurrentIndent;
+  protected int myCurrentIndent;
 
-  private HashMap<PsiBuilder.Marker, Integer> myIndents;
-  private HashMap<PsiBuilder.Marker, Boolean> myNewLines;
+  protected HashMap<PsiBuilder.Marker, Integer> myIndents;
+  protected HashMap<PsiBuilder.Marker, Boolean> myNewLines;
 
-  private boolean myNewLine = true;
+  protected boolean myNewLine = true;
 
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
