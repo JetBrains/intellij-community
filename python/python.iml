@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="FirefoxConnector" />
     <orderEntry type="module" module-name="python-openapi" exported="" />
     <orderEntry type="module" module-name="webide-api" />
+    <orderEntry type="module" module-name="duplicates" />
   </component>
   <component name="copyright">
     <Base>
