@@ -1,5 +1,10 @@
 package de.plushnikov.lombok;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,6 +19,7 @@ import com.intellij.util.LocalTimeCounter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -207,10 +213,11 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       assertEquals(modifier + " Modifier is not equal; ", theirs.hasModifierProperty(modifier), intellij.hasModifierProperty(modifier));
     }
 
-    PsiAnnotation[] intellijAnnotations = intellij.getAnnotations();
-    PsiAnnotation[] theirsAnnotations = theirs.getAnnotations();
+    Collection<String> intellijAnnotations = Lists.newArrayList(Collections2.transform(Arrays.asList(intellij.getAnnotations()), new QualifiedNameFunction()));
+    Collection<String> theirsAnnotations = Lists.newArrayList(Collections2.transform(Arrays.asList(theirs.getAnnotations()), new QualifiedNameFunction()));
 
-    //assertEquals("Annotationcounts are different ", theirsAnnotations.length, intellijAnnotations.length);
+    Iterables.removeIf(intellijAnnotations, Predicates.containsPattern("lombok.*"));
+    //TODO assertEquals("Annotationcounts are different ", theirsAnnotations.size(), intellijAnnotations.size());
   }
 
   private void compareMethods(PsiClass intellij, PsiClass theirs) {
@@ -279,4 +286,10 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     return text;
   }
 
+  private static class QualifiedNameFunction implements Function<PsiAnnotation, String> {
+    @Override
+    public String apply(PsiAnnotation psiAnnotation) {
+      return psiAnnotation.getQualifiedName();
+    }
+  }
 }
