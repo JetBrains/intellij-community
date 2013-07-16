@@ -88,6 +88,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
       projectSettings.setCheckIncomingOutgoing(false);
+      project.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
     }
     return result;
   }
