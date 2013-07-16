@@ -1,17 +1,33 @@
 package org.editorconfig.utils;
 
+import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import org.editorconfig.core.EditorConfig.OutPair;
 
 public class ConfigConverter {
-    public static void appplyCodeStyleSettings(List<OutPair> outPairs,
+    private static final Map<String, Charset> encodingMap;
+    static {
+        Map<String, Charset> map = new HashMap<String, Charset>();
+        map.put("latin1", Charset.forName("ISO-8859-1"));
+        map.put("utf-8", Charset.forName("UTF-8"));
+        map.put("utf-16be", Charset.forName("UTF-16BE"));
+        map.put("utf-16le", Charset.forName("UTF-16LE"));
+        encodingMap = Collections.unmodifiableMap(map);
+    }
+
+    public static void applyCodeStyleSettings(List<OutPair> outPairs,
                                                CommonCodeStyleSettings commonCodeStyleSettings) {
-        applyIndentOptions(outPairs, commonCodeStyleSettings.getIndentOptions());    
+        applyIndentOptions(outPairs, commonCodeStyleSettings.getIndentOptions());
     }
     
     private static void applyIndentOptions (List<OutPair> outPairs, IndentOptions indentOptions) {
@@ -61,6 +77,18 @@ public class ConfigConverter {
             }
         } else {
             logError("Value of trim_trailing_whitespace is invalid");
+        }
+    }
+
+    public static void applyEncodingSettings(List<OutPair> outPairs, EncodingProjectManager encodingProjectManager,
+                                             VirtualFile file) {
+        String charset = valueForKey(outPairs, "charset");
+        if (!charset.isEmpty()) {
+            if (encodingMap.containsKey(charset)) {
+                encodingProjectManager.setEncoding(file, encodingMap.get(charset));
+            } else {
+                logError("Value of charset is invalid");
+            }
         }
     }
 

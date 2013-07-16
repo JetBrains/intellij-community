@@ -63,9 +63,9 @@ public class EditorChangeEventHandler implements FileEditorManagerListener {
         Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
         for (Language language: registeredLanguages) {
             CommonCodeStyleSettings commonSettings = newSettings.getCommonSettings(language);
-            ConfigConverter.appplyCodeStyleSettings(outPairs, commonSettings);
+            ConfigConverter.applyCodeStyleSettings(outPairs, commonSettings);
         }
         codeStyleSettingsManager.setTemporarySettings(newSettings);
-        LOG.debug("Applied settings for: " + filePath);
+        LOG.debug("Applied code style settings for: " + filePath);
     }
 }
