@@ -92,6 +92,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (signatures == null) {
       signatures = new MostlySingularMultiMap<MethodSignature, PsiMethod>();
       for (PsiMethod method : aClass.getMethods()) {
+        if (method instanceof ExternallyDefinedPsiElement) continue; // ignore aspectj-weaved methods; they are checked elsewhere
         MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
         signatures.add(signature, method);
       }
