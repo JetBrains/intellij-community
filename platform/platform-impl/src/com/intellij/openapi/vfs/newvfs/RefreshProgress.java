@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,16 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,9 +32,20 @@ import javax.swing.*;
  * @author max
  */
 public class RefreshProgress extends ProgressIndicatorBase {
+  @NotNull
+  public static ProgressIndicator create(@NotNull String message) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode()) {
+      return new EmptyProgressIndicator();
+    }
+    else {
+      return new RefreshProgress(message);
+    }
+  }
+
   private final String myMessage;
 
-  public RefreshProgress(final String message) {
+  private RefreshProgress(@NotNull String message) {
     myMessage = message;
   }
 
@@ -59,7 +74,6 @@ public class RefreshProgress extends ProgressIndicatorBase {
         }
       }
     });
-
   }
 
   @Override
