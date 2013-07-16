@@ -1,55 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin version="2" url="http://code.google.com/p/lombok-intellij-plugin">
-	<id>Lombook Plugin</id>
-	<name>Lombok Plugin</name>
-	<vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-	<version>0.6.4</version>
-	<idea-version since-build="123.72" />
+  <id>Lombook Plugin</id>
+  <name>Lombok Plugin</name>
+  <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
+  <version>0.6.4</version>
+  <idea-version since-build="123.72"/>
 
-	<description><![CDATA[
+  <description><![CDATA[
     A plugin that adds first-class support for Project Lombok
     ]]>
-	</description>
-	<category>Tools Integration</category>
+  </description>
+  <category>Tools Integration</category>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.java</depends>
 
-	<application-components>
-		<component>
-			<implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
-		</component>
-	</application-components>
+  <application-components>
+    <component>
+      <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
+    </component>
+  </application-components>
 
-	<extensions defaultExtensionNs="com.intellij">
-		<lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider" />
-		<implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider" />
-		<inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider" />
-		<projectConfigurable implementation="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage" />
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
+    <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
+    <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
+    <projectConfigurable implementation="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
-		<renameHandler implementation="de.plushnikov.intellij.lombok.extension.LombokElementRenameHandler" order="FIRST" />
-		<treeGenerator implementation="de.plushnikov.intellij.lombok.extension.LombokLightMethodTreeGenerator" />
-	</extensions>
+    <renameHandler implementation="de.plushnikov.intellij.lombok.extension.LombokElementRenameHandler" order="FIRST"/>
+    <treeGenerator implementation="de.plushnikov.intellij.lombok.extension.LombokLightMethodTreeGenerator"/>
+  </extensions>
 
-	<change-notes><![CDATA[
+  <change-notes><![CDATA[
 		<ul>
 		  <li>0.6.4
 				<ol>
 				    <li>Issue #49	Deprecated fields should generate deprecated methods</li>
-				<ol>
+				    <li>Issue #57	Added some general dependencies to be compatible with Android Studio >=0.2.0</li>
+				</ol>
 			</li>
 		<li>0.6.3
 				<ol>
 				    <li>Issue #41 Added support for XSlf4j and Log4j2 logger</li>
 				    <li>Issue #44 Fixed Getter- and Setter- method generation, when method is already there with a parameter(s)</li>
 				    <li>Issue #56	Removed obsolete plugin dependencies (they have been merged into intellij core)</li>
-				<ol>
+				</ol>
 			</li>
 		<li>0.6.2
 				<ol>
 				    <li>Issue #50 Compiled with java 1.7 -> Don't work under java 1.6 vms</li>
-				<ol>
+				</ol>
 			</li>
 		<li>0.6
 				<ol>
@@ -58,7 +59,7 @@
 				    <li>Issue #48 IllegalArgumentException with Intellij 12</li>
 				    <li>Issue #38 Added ability to enable/disable lombok-intellij-plugin per project-configuration
 				    and reduced logging-level of plugin</li>
-				<ol>
+				</ol>
 			</li>
 		 <li>0.5
 				<ol>
@@ -66,12 +67,12 @@
 				    <li>Issue #12 Added support for "Singleton" and "EnumId" annotations from lombok-pg</li>
 				    <li>Fixed Issue #27 "@EqualsAndHashCode on final classes: Should not have a canEquals in that case."</li>
 				    <li>Fixed Issue #28 "Getters and setters should be generated even if the method exists with different parameter count"</li>
-				<ol>
+				</ol>
 			</li>
 		  <li>0.4
 				<ol>
 				    <li>fix reflection access for intellij ultimate</li>
-				<ol>
+				</ol>
 			</li>
 			<li>0.3
 				<ol>
@@ -104,5 +105,5 @@
 			</li>
 		</ul>
 	]]>
-	</change-notes>
+  </change-notes>
 </idea-plugin>
