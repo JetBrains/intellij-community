@@ -117,7 +117,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
         table.setColumnSelectionInterval(0, 0);
         table.editCellAt(index, 0);
 
-        updateScroller(table, true);
+        updateScroller(table, table.getCellEditor() instanceof Animated);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
