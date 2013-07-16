@@ -20,8 +20,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -253,12 +255,8 @@ public class ImportUtils {
         continue;
       }
       final PsiPackage aPackage = (PsiPackage)element;
-      final PsiClass[] classes = aPackage.getClasses();
+      final PsiClass[] classes = aPackage.findClassByShortName(shortName, file.getResolveScope());
       for (final PsiClass aClass : classes) {
-        final String className = aClass.getName();
-        if (!shortName.equals(className)) {
-          continue;
-        }
         if (!strict) {
           return true;
         }
