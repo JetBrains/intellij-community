@@ -119,6 +119,9 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
           return filterAssignableFrom(initializer.getType(), candidates);
         }
       }
+      if (var instanceof PsiParameter) {
+        return filterBySuperMethods((PsiParameter)var, candidates);
+      }
     }
 
     return super.filterByContext(candidates, ref);
