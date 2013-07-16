@@ -18,6 +18,8 @@ package com.intellij.tasks.context;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -52,7 +54,12 @@ public class XDebuggerBreakpointsContextProvider extends WorkingContextProvider 
   @Override
   public void saveContext(Element toElement) throws WriteExternalException {
     XBreakpointManagerImpl.BreakpointManagerState state = myBreakpointManager.getState();
-    Element serialize = XmlSerializer.serialize(state);
+    Element serialize = XmlSerializer.serialize(state, new SerializationFilter() {
+      @Override
+      public boolean accepts(Accessor accessor, Object bean) {
+        return accessor.read(bean) != null;
+      }
+    });
     toElement.addContent(serialize.removeContent());
   }
 

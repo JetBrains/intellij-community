@@ -23,7 +23,6 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointDependencyState;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 
@@ -83,7 +82,6 @@ public class ContextTest extends TaskManagerTestCase {
         XLineBreakpointImpl<XBreakpointProperties> breakpoint =
           (XLineBreakpointImpl<XBreakpointProperties>)breakpointManager.addLineBreakpoint(new XsltBreakpointType(), "foo", 0, null);
 
-        breakpoint.setDependencyState(new XBreakpointDependencyState());
         final String name = "foo";
         manager.saveContext(name, null);
         breakpointManager.removeBreakpoint(breakpoint);
