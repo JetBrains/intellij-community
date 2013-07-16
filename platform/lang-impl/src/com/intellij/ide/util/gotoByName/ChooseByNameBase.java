@@ -737,10 +737,7 @@ public abstract class ChooseByNameBase {
     }
     finally {
       myListModel.clear();
-      CalcElementsThread thread = myCalcElementsThread;
-      if (thread != null) {
-        thread.clear();
-      }
+      cancelCalcElementsThread();
     }
   }
 
@@ -1376,8 +1373,6 @@ public abstract class ChooseByNameBase {
     private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
 
-    private Set<Object> myElements = null;
-
     private final ProgressIndicator myCancelled = new ProgressIndicatorBase();
     private final boolean myCanCancel;
 
@@ -1400,38 +1395,30 @@ public abstract class ChooseByNameBase {
       showCard(SEARCHING_CARD, 200);
 
       final Set<Object> elements = new LinkedHashSet<Object>();
-      final Runnable action = new Runnable() {
-        @Override
+      Runnable calculation = new Runnable() {
         public void run() {
-          try {
-            boolean everywhere = myCheckboxState;
-            ensureNamesLoaded(everywhere);
-
-            addElementsByPattern(myPattern, elements, myCancelled, everywhere);
-
-            for (Object elem : elements) {
-              if (myCancelled.isCanceled()) {
-                break;
-              }
-              if (elem instanceof PsiElement) {
-                final PsiElement psiElement = (PsiElement)elem;
-                psiElement.isWritable(); // That will cache writable flag in VirtualFile. Taking the action here makes it canceleable.
-              }
+          ProgressManager.getInstance().runProcess(new Runnable() {
+            @Override
+            public void run() {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    boolean everywhere = myCheckboxState;
+                    ensureNamesLoaded(everywhere);
+                    addElementsByPattern(myPattern, elements, myCancelled, everywhere);
+                  }
+                  catch (ProcessCanceledException e) {
+                    //OK
+                  }
+                }
+              });
             }
-          }
-          catch (ProcessCanceledException e) {
-            //OK
-          }
+          }, myCancelled);
         }
       };
-      Runnable readAction = new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runReadAction(action);
-        }
-      };
-      ProgressManager.getInstance().runProcess(readAction, myCancelled);
 
+      calculation.run();
 
       if (myCancelled.isCanceled()) {
         myShowCardAlarm.cancelAllRequests();
@@ -1441,7 +1428,7 @@ public abstract class ChooseByNameBase {
       final String cardToShow;
       if (elements.isEmpty() && !myCheckboxState) {
         myCheckboxState = true;
-        ProgressManager.getInstance().runProcess(readAction, myCancelled);
+        calculation.run();
         cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
       }
       else {
@@ -1449,12 +1436,14 @@ public abstract class ChooseByNameBase {
       }
       showCard(cardToShow, 0);
 
-      myElements = filter(elements);
+      final Set<Object> filtered = filter(elements);
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          myCallback.consume(myElements);
+          if (!myCancelled.isCanceled()) {
+            myCallback.consume(filtered);
+          }
         }
       }, myModalityState);
     }
@@ -1493,7 +1482,9 @@ public abstract class ChooseByNameBase {
       myShowCardAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
-          myCard.show(myCardContainer, card);
+          if (!myCancelled.isCanceled()) {
+            myCard.show(myCardContainer, card);
+          }
         }
       }, delay, myModalityState);
     }
@@ -1505,16 +1496,9 @@ public abstract class ChooseByNameBase {
     private void cancel() {
       if (myCanCancel) {
         myCancelled.cancel();
-        clear();
       }
     }
 
-    private void clear() {
-      Set<Object> elements = myElements;
-      if (elements != null) {
-        elements.clear();
-      }
-    }
   }
 
 
@@ -1632,9 +1616,7 @@ public abstract class ChooseByNameBase {
 
           @Override
           public void onCancel() {
-            if (myCalcElementsThread != null) {
-              myCalcElementsThread.cancel();
-            }
+            cancelCalcElementsThread();
           }
         });
       }
