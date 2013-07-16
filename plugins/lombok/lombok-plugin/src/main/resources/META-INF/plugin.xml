@@ -12,6 +12,10 @@
 	</description>
 	<category>Tools Integration</category>
 
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.java</depends>
+
 	<application-components>
 		<component>
 			<implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
@@ -32,7 +36,7 @@
 		<ul>
 		  <li>0.6.4
 				<ol>
-				    <li>Issue 49:	Deprecated fields should generate deprecated methods</li>
+				    <li>Issue #49	Deprecated fields should generate deprecated methods</li>
 				<ol>
 			</li>
 		<li>0.6.3
