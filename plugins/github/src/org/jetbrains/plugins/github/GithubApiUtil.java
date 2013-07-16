@@ -76,7 +76,7 @@ public class GithubApiUtil {
 
       String resp = method.getResponseBodyAsString();
       if (resp == null) {
-        LOG.info(String.format("Unexpectedly empty response: %s", resp));
+        LOG.info("Unexpectedly empty response");
         return null;
       }
 
