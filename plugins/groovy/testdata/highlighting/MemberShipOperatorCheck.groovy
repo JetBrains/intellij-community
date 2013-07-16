@@ -21,9 +21,10 @@ def foo(I1 a, I2 b) {
 }
 
 print (1 in [1])
-print (<warning descr="'ArrayList<String>' cannot contain 'Integer'">1 in ['a']</warning>)
+print (1 in ['a'])
 print (1 in 1)
 print (<warning descr="'ArrayList<Integer>' cannot contain 'ArrayList<Integer>'">[2] in [2]</warning>)
 
 print (1 in new ArrayList())
 print (<warning descr="'Integer' cannot contain 'Date'">new Date() in 2</warning>)
+print (<warning>'a' in [1]</warning>)
