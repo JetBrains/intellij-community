@@ -25,8 +25,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -179,7 +179,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       }
     }
     if (shouldReparseFiles()) {
-      FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
+      PsiDocumentManager.getInstance(myProject).reparseFiles(files, includeOpenFiles);
     }
   }
 

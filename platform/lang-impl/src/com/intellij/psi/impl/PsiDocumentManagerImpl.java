@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -181,5 +182,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public String toString() {
     return super.toString() + " for the project " + myProject + ".";
+  }
+
+  @Override
+  public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
+    FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 }
