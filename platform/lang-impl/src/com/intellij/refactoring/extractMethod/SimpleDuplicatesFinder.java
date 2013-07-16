@@ -29,10 +29,10 @@ public class SimpleDuplicatesFinder {
     } while (sibling != null);
   }
 
-  public List<Match> findDuplicates(@Nullable final List<PsiElement> scope,
+  public List<SimpleMatch> findDuplicates(@Nullable final List<PsiElement> scope,
                                     @NotNull final PsiElement generatedMethod,
                                     @NotNull final IElementType identifierType) {
-    final List<Match> result = new ArrayList<Match>();
+    final List<SimpleMatch> result = new ArrayList<SimpleMatch>();
     if (scope != null) {
       for (PsiElement element : scope) {
         findPatternOccurrences(result, element, generatedMethod, identifierType);
@@ -41,12 +41,12 @@ public class SimpleDuplicatesFinder {
     return result;
   }
 
-  private void findPatternOccurrences(@NotNull final List<Match> array, @NotNull final PsiElement scope,
+  private void findPatternOccurrences(@NotNull final List<SimpleMatch> array, @NotNull final PsiElement scope,
                                       @NotNull final PsiElement generatedMethod, @NotNull final IElementType identifierType) {
     if (scope == generatedMethod) return;
     final PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
-      final Match match = isDuplicateFragment(child, identifierType);
+      final SimpleMatch match = isDuplicateFragment(child, identifierType);
       if (match != null) {
         array.add(match);
         continue;
@@ -56,7 +56,7 @@ public class SimpleDuplicatesFinder {
   }
 
   @Nullable
-  protected Match isDuplicateFragment(@NotNull final PsiElement candidate, @NotNull final IElementType identifierType) {
+  protected SimpleMatch isDuplicateFragment(@NotNull final PsiElement candidate, @NotNull final IElementType identifierType) {
     for (PsiElement pattern : myPattern) {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
     }
@@ -70,7 +70,7 @@ public class SimpleDuplicatesFinder {
     }
     if (myPattern.size() != candidates.size()) return null;
     if (candidates.size() <= 0) return null;
-    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1));
+    final SimpleMatch match = new SimpleMatch(candidates.get(0), candidates.get(candidates.size() - 1));
     for (int i = 0; i < myPattern.size(); i++) {
       if (!matchPattern(myPattern.get(i), candidates.get(i), identifierType, match)) return null;
     }
@@ -80,7 +80,7 @@ public class SimpleDuplicatesFinder {
   private static boolean matchPattern(@Nullable final PsiElement pattern,
                                       @Nullable final PsiElement candidate,
                                       @NotNull final IElementType identifierType,
-                                      @NotNull final Match match) {
+                                      @NotNull final SimpleMatch match) {
     if (pattern == null || candidate == null) return pattern == candidate;
     final PsiElement[] children1 = PsiEquivalenceUtil.getFilteredChildren(pattern, null, true);
     final PsiElement[] children2 = PsiEquivalenceUtil.getFilteredChildren(candidate, null, true);

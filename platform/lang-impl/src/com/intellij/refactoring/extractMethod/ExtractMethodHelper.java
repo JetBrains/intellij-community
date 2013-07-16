@@ -47,9 +47,9 @@ public class ExtractMethodHelper {
                                        @NotNull final List<PsiElement> scope,
                                        @NotNull final SimpleDuplicatesFinder finder,
                                        @NotNull final Editor editor,
-                                       @NotNull final Consumer<Pair<Match, PsiElement>> replacer,
+                                       @NotNull final Consumer<Pair<SimpleMatch, PsiElement>> replacer,
                                        @NotNull final IElementType identifierElementType) {
-    final List<Match> duplicates = finder.findDuplicates(scope, generatedMethod, identifierElementType);
+    final List<SimpleMatch> duplicates = finder.findDuplicates(scope, generatedMethod, identifierElementType);
 
     if (duplicates.size() > 0) {
       final String message = RefactoringBundle
@@ -62,8 +62,8 @@ public class ExtractMethodHelper {
                            DialogWrapper.OK_EXIT_CODE;
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         boolean replaceAll = false;
-        for (Match match : duplicates) {
-          final Pair<Match, PsiElement> replacement = Pair.create(match, callElement);
+        for (SimpleMatch match : duplicates) {
+          final Pair<SimpleMatch, PsiElement> replacement = Pair.create(match, callElement);
           if (!replaceAll) {
             highlightInEditor(callElement.getProject(), match, editor);
 
@@ -93,7 +93,7 @@ public class ExtractMethodHelper {
     }
   }
 
-  private static void highlightInEditor(@NotNull final Project project, @NotNull final Match match,
+  private static void highlightInEditor(@NotNull final Project project, @NotNull final SimpleMatch match,
                                         @NotNull final Editor editor) {
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     final EditorColorsManager colorsManager = EditorColorsManager.getInstance();

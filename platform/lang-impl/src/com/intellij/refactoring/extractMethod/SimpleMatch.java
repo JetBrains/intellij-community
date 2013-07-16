@@ -9,11 +9,11 @@ import java.util.Map;
 /**
 * User: ktisha
 */
-public class Match {
+public class SimpleMatch {
   PsiElement myStartElement;
   PsiElement myEndElement;
   private final Map<String, String> myChangedParameters;
-  public Match(@NotNull final PsiElement start, @NotNull final PsiElement endElement) {
+  public SimpleMatch(@NotNull final PsiElement start, @NotNull final PsiElement endElement) {
     myStartElement = start;
     myEndElement = endElement;
     myChangedParameters = new HashMap<String, String>();
