@@ -44,7 +44,7 @@ public class GradleConfigLocator implements ExternalSystemConfigLocator {
       if (!name.endsWith(GradleConstants.EXTENSION)) {
         continue;
       }
-      if (!GradleConstants.SETTINGS_FILE_NAME.equals(name)) {
+      if (!GradleConstants.SETTINGS_FILE_NAME.equals(name) && !child.isDirectory()) {
         return child;
       }
     }
