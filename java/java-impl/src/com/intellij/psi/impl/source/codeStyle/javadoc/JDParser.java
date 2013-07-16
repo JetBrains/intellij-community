@@ -47,14 +47,24 @@ public class JDParser {
   private static final char lineSeparator = '\n';
 
   @NotNull
-  public JDComment parse(@Nullable String text, @NotNull JDComment c) {
-    if (text == null) return c;
+  public JDComment parse(@Nullable String text, @NotNull JDComment comment) {
+    if (text == null) return comment;
 
     List<Boolean> markers = new ArrayList<Boolean>();
     List<String> l = toArray(text, "\n", markers);
-    if (l == null) return c;
+
+    //if it is - we are dealing with multiline comment:
+    // /**
+    //  * comment
+    //  */
+    //which shouldn't be wrapped into one line comment like /** comment */
+    if (text.indexOf('\n') >= 0) {
+      comment.setMultiLine(true);
+    }
+
+    if (l == null) return comment;
     int size = l.size();
-    if (size == 0) return c;
+    if (size == 0) return comment;
 
     // preprocess strings - removes first '*'
     for (int i = 0; i < size; i++) {
@@ -85,17 +95,17 @@ public class JDParser {
       if (i == size || line.length() > 0) {
         if (i == size || line.charAt(0) == '@') {
           if (tag == null) {
-            c.setDescription(sb.toString());
+            comment.setDescription(sb.toString());
           }
           else {
             int j = 0;
             String myline = sb.toString();
             for (; j < tagParsers.length; j++) {
               TagParser parser = tagParsers[j];
-              if (parser.parse(tag, myline, c)) break;
+              if (parser.parse(tag, myline, comment)) break;
             }
             if (j == tagParsers.length) {
-              c.addUnknownTag("@" + tag + " " + myline);
+              comment.addUnknownTag("@" + tag + " " + myline);
             }
           }
 
@@ -127,7 +137,7 @@ public class JDParser {
       }
     }
 
-    return c;
+    return comment;
   }
 
   /**

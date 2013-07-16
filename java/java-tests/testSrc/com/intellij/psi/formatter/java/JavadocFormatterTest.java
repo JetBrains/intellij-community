@@ -217,6 +217,79 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doTextTest(before, after);
   }
 
+  public void testDoNotWrapMultiLineCommentIntoOneLine() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    String test = "/**\n" +
+                  " * foo\n" +
+                  " */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    doClassTest(test, test);
+  }
+
+  public void testLeaveOneLineComment() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    String test = "/** foo */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    doClassTest(test, test);
+  }
+
+  public void testWrapOneLineComment() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
+    String test = "/** foo */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    String after = "/**\n" +
+                   " * foo\n" +
+                   " */\n" +
+                   "public Object next() {\n" +
+                   "    return new Object();\n" +
+                   "}";
+    doClassTest(test, after);
+  }
+
+  public void testWrapStrangeComment() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
+    String test = "/** foo" +
+                  " */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    String after = "/**\n" +
+                   " * foo\n" +
+                   " */\n" +
+                   "public Object next() {\n" +
+                   "    return new Object();\n" +
+                   "}";
+    doClassTest(test, after);
+  }
+
+  public void testWrapStrangeCommentIfNotWrapOneLines() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    String test = "/** foo\n" +
+                  " */" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    String after = "/**\n" +
+                   " * foo\n" +
+                   " */\n" +
+                   "public Object next() {\n" +
+                   "    return new Object();\n" +
+                   "}";
+    doClassTest(test, after);
+  }
+
+
   public void testReturnTagAlignment() throws Exception {
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 80;

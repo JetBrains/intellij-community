@@ -36,6 +36,7 @@ public class JDComment {
   private List<String> mySeeAlsoList;
   private String mySince;
   private String myDeprecated;
+  private boolean myMultiLineComment;
 
   public JDComment(@NotNull CommentFormatter formatter) {
     myFormatter = formatter;
@@ -47,6 +48,10 @@ public class JDComment {
 
   protected static boolean isNull(@Nullable List<?> l) {
     return l == null || l.size() == 0;
+  }
+
+  public void setMultiLine(boolean value) {
+    myMultiLineComment = value;
   }
 
   @Nullable
@@ -118,12 +123,14 @@ public class JDComment {
       sb.delete(nlen, sb.length());
     }
 
-    if( !myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS ||
-        sb.indexOf("\n") != sb.length()-1 ) {
+    if (myMultiLineComment && myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
+        || !myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
+        || sb.indexOf("\n") != sb.length() - 1) // If comment has become multiline after formatting - it must be shown as multiline.
+                                                // Last symbol is always '\n', so we need to check if there is one more LF symbol before it.
+    {
       sb.insert(0, "/**\n");
       sb.append(indent);
-    }
-    else {
+    } else {
       sb.replace(0, prefix.length(), "/** ");
       sb.deleteCharAt(sb.length()-1);
     }
