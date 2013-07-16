@@ -582,7 +582,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   @NotNull
   public final <T> Set<T> getSelectedElements(@NotNull Class<T> elementClass) {
-    Set<T> result = new HashSet<T>();
+    Set<T> result = new LinkedHashSet<T>();
     for (Object o : getSelectedElements()) {
       Object each = transformElement(o);
       if (elementClass.isInstance(each)) {

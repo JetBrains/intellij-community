@@ -150,7 +150,12 @@ public class XmlUtil {
   public static final Key<PsiAnchor> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
 
   public static final String XHTML4_SCHEMA_LOCATION;
-  public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
 
   private XmlUtil() {
   }
@@ -605,7 +610,7 @@ public class XmlUtil {
   }
 
   public static boolean isStubBuilding(PsiFile file) {
-    return Boolean.TRUE.equals(file.getUserData(BUILDING_DOM_STUBS));
+    return BUILDING_DOM_STUBS.get();
   }
 
   private static class XmlElementProcessor {
