@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.PlatformLangTestCase;
@@ -40,11 +38,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class VfsUtilTest extends PlatformLangTestCase {
   @Override
@@ -165,6 +160,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
     }
   }
 
+  /*
   public void testAsyncRefresh() throws Throwable {
     final Throwable[] ex = {null};
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
@@ -249,6 +245,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
       IoTestUtil.assertTimestampsEqual(timestamp[i], child.getTimeStamp());
     }
   }
+  */
 
   public void testFindChildWithTrailingSpace() throws IOException {
     File tempDir = new WriteAction<File>() {
@@ -382,6 +379,16 @@ public class VfsUtilTest extends PlatformLangTestCase {
         }
       }
     }).assertTiming();
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        for (VirtualFile file : vDir.getChildren()) {
+          file.delete(this);
+        }
+      }
+    }.execute().throwException();
+
   }
 
   public void testFindRootWithDenormalizedPath() {

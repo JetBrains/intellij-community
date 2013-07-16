@@ -283,7 +283,10 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   private <T> T makeRequestAndDeserializeJsonResponse(String url, Type type) throws IOException {
     Reader entityStream = makeRequest(url);
     try {
-      return TrelloUtil.GSON.fromJson(entityStream, type);
+      // javac 1.6.0_23 bug workaround
+      // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
+      //noinspection unchecked
+      return (T)TrelloUtil.GSON.fromJson(entityStream, type);
     }
     finally {
       entityStream.close();
