@@ -165,6 +165,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'FOO'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
+  public void testReportConstantReferences_Switch() { doTestReplaceConstantReferences(); }
 
   public void testCheckFieldInitializers() {
     doTest();
