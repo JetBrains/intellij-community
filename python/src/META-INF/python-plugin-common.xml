@@ -73,6 +73,8 @@
                     serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.duplocator.PyDuplocatorSettings"
+                        serviceImplementation="com.jetbrains.python.duplocator.PyDuplocatorSettings"/>
 
     <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler"
@@ -136,6 +138,7 @@
     <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
 
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
+    <duplicates.profile implementation="com.jetbrains.python.duplocator.PyDuplicatesProfile"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>
