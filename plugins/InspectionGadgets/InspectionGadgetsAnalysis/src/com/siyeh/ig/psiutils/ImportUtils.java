@@ -254,12 +254,8 @@ public class ImportUtils {
         continue;
       }
       final PsiPackage aPackage = (PsiPackage)element;
-      final PsiClass[] classes = aPackage.getClasses();
+      final PsiClass[] classes = aPackage.findClassByShortName(shortName, file.getResolveScope());
       for (final PsiClass aClass : classes) {
-        final String className = aClass.getName();
-        if (!shortName.equals(className)) {
-          continue;
-        }
         if (!strict) {
           return true;
         }

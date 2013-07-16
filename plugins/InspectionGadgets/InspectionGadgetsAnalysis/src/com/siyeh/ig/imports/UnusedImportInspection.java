@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,6 @@ public class UnusedImportInspection extends BaseInspection {
       if (FileTypeUtils.isInJsp(file)) {
         return;
       }
-      final PsiImportList importList = file.getImportList();
-      if (importList == null) {
-        return;
-      }
       final PsiClass[] classes = file.getClasses();
       final PsiPackageStatement packageStatement = file.getPackageStatement();
       final PsiModifierList annotationList;
@@ -74,15 +70,11 @@ public class UnusedImportInspection extends BaseInspection {
       else {
         annotationList = null;
       }
-      final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
-      checkImports(importStatements, classes, annotationList);
+      checkImports(file, classes, annotationList);
     }
 
-    private void checkImports(PsiImportStatementBase[] importStatements, PsiClass[] classes, @Nullable PsiModifierList annotationList) {
-      if (importStatements.length == 0) {
-        return;
-      }
-      final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(importStatements);
+    private void checkImports(PsiJavaFile file, PsiClass[] classes, @Nullable PsiModifierList annotationList) {
+      final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(file);
       for (PsiClass aClass : classes) {
         aClass.accept(visitor);
       }
