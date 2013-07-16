@@ -33,7 +33,7 @@ public class StringIndex {
   }
   
   public void update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
-    myIndex.update(path.hashCode(), toInput(path, content));
+    myIndex.update(path.hashCode(), toInput(path, content)).compute();
   }
   
   @Nullable 
