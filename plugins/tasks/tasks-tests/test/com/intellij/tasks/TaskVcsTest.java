@@ -69,7 +69,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    myTaskManager.activateTask(task, false, false);
+    myTaskManager.activateTask(task, false);
 
     assertEquals(2, myTaskManager.getLocalTasks().size());
 
@@ -81,14 +81,14 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(myChangeListManager.getChangeListsCopy().get(0)));
 
-    myTaskManager.activateTask(defaultTask, false, false);
+    myTaskManager.activateTask(defaultTask, false);
 
     assertEquals(0, localTask.getChangeLists().size());
     assertEquals(1, defaultTask.getChangeLists().size());
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(myChangeListManager.getChangeListsCopy().get(0)));
 
-    myTaskManager.activateTask(localTask, false, true);
+    activateAndCreateChangelist(localTask);
 
     assertEquals(1, localTask.getChangeLists().size());
     assertEquals(1, defaultTask.getChangeLists().size());
@@ -104,7 +104,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(anotherChangeList));
     assertEquals(anotherChangeList.getName(), LocalChangeList.DEFAULT_NAME);
 
-    myTaskManager.activateTask(defaultTask, false, false);
+    myTaskManager.activateTask(defaultTask, false);
 
     assertEquals(1, localTask.getChangeLists().size());
     assertEquals(1, defaultTask.getChangeLists().size());
@@ -124,12 +124,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   public void testAddChangeListViaCreateChangeListAction() throws Exception {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    myTaskManager.activateTask(task, false, true);
+    activateAndCreateChangelist(task);
     myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
-    myTaskManager.activateTask(defaultTask, false, true);
+    activateAndCreateChangelist(defaultTask);
     myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
@@ -163,12 +163,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   public void testRemoveChangelistViaVcsAction() throws Exception {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    myTaskManager.activateTask(task, false, true);
+    activateAndCreateChangelist(task);
     myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
-    myTaskManager.activateTask(defaultTask, false, true);
+    activateAndCreateChangelist(defaultTask);
     myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
@@ -189,15 +189,22 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(defaultChangeList.getName(), LocalChangeList.DEFAULT_NAME);
   }
 
+  private void activateAndCreateChangelist(Task task) {
+    LocalTask localTask = myTaskManager.activateTask(task, false);
+    if (localTask.getChangeLists().isEmpty()) {
+      myTaskManager.performVcsOperation(localTask, TaskManager.VcsOperation.CREATE_CHANGELIST);
+    }
+  }
+
   public void testAddChangeListViaVcsAction() throws Exception {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    myTaskManager.activateTask(task, false, true);
+    activateAndCreateChangelist(task);
     myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
-    myTaskManager.activateTask(defaultTask, false, true);
+    activateAndCreateChangelist(defaultTask);
     myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
@@ -247,7 +254,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myRepository.setCommitMessageFormat("{id} {summary} {number} {project}");
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    myTaskManager.activateTask(task, false, true);
+    activateAndCreateChangelist(task);
     myChangeListManager.waitUntilRefreshed();
     LocalTask localTask = myTaskManager.getActiveTask();
     assertNotNull(localTask);
@@ -265,7 +272,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());  // default change list should be here
-    myTaskManager.activateTask(task, false, true);
+    activateAndCreateChangelist(task);
     myChangeListManager.waitUntilRefreshed();
 
     assertEquals(2, myTaskManager.getLocalTasks().size());
@@ -363,8 +370,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   public void testRestoreChangelist() throws Exception {
     final LocalTaskImpl task = new LocalTaskImpl("foo", "bar");
-    myTaskManager.activateTask(task, true, true);
-    myTaskManager.activateTask(new LocalTaskImpl("next", ""), true, true);
+    activateAndCreateChangelist(task);
+    activateAndCreateChangelist(new LocalTaskImpl("next", ""));
 
     final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
@@ -373,7 +380,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       @Override
       public void run() {
         assertTrue(myTaskManager.isLocallyClosed(task));
-        myTaskManager.activateTask(task, true, true);
+        activateAndCreateChangelist(task);
         assertNotNull(myChangeListManager.findChangeList(changelistName));
       }
     }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "foo", ModalityState.NON_MODAL);

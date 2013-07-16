@@ -45,11 +45,11 @@ public class TaskManagerTest extends TaskManagerTestCase {
     };
     myTaskManager.addTaskListener(listener);
     LocalTask localTask = myTaskManager.createLocalTask("foo");
-    myTaskManager.activateTask(localTask, false, false);
+    myTaskManager.activateTask(localTask, false);
     assertEquals(1, count.get().intValue());
 
     LocalTask other = myTaskManager.createLocalTask("bar");
-    myTaskManager.activateTask(other, false, false);
+    myTaskManager.activateTask(other, false);
     assertEquals(2, count.get().intValue());
 
     myTaskManager.removeTaskListener(listener);

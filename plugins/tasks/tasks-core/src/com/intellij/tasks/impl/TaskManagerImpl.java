@@ -30,7 +30,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
@@ -160,7 +162,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         if (associatedTask != null && !getActiveTask().equals(associatedTask)) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              activateTask(associatedTask, true, false);
+              activateTask(associatedTask, true);
             }
           }, myProject.getDisposed());
         }
@@ -205,7 +207,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public void removeTask(LocalTask task) {
     if (task.isDefault()) return;
     if (myActiveTask.equals(task)) {
-      activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true, false);
+      activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true);
     }
     myTasks.remove(task.getId());
     myDispatcher.getMulticaster().taskRemoved(task);
@@ -341,8 +343,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public void activateTask(@NotNull final Task origin, boolean clearContext, boolean createChangelist) {
-    if (origin.equals(getActiveTask())) return;
+  public LocalTask activateTask(@NotNull final Task origin, boolean clearContext) {
+    LocalTask activeTask = getActiveTask();
+    if (origin.equals(activeTask)) return activeTask;
 
     saveActiveTask();
 
@@ -353,7 +356,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     final LocalTask task = doActivate(origin, true);
 
-    if (!isVcsEnabled()) return;
+    if (!isVcsEnabled()) return task;
     List<ChangeListInfo> changeLists = task.getChangeLists();
     if (!changeLists.isEmpty()) {
       ChangeListInfo info = changeLists.get(0);
@@ -364,9 +367,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       myChangeListManager.setDefaultChangeList(changeList);
     }
-    else if (createChangelist) {
-      String name = getChangelistName(origin);
-      String comment = TaskUtil.getChangeListComment(origin);
+    return task;
+  }
+
+  @Override
+  public void performVcsOperation(LocalTask task, VcsOperation operation) {
+    if (operation == VcsOperation.CREATE_CHANGELIST) {
+      String name = getChangelistName(task);
+      String comment = TaskUtil.getChangeListComment(task);
       createChangeList(task, name, comment);
     }
   }
@@ -763,6 +771,18 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
+  public AbstractVcs getActiveVcs() {
+    AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    if (vcss.length == 0) return null;
+    for (AbstractVcs vcs : vcss) {
+      if (vcs.getType() == VcsType.distributed) {
+        return vcs;
+      }
+    }
+    return vcss[0];
+  }
+
+  @Override
   public boolean isLocallyClosed(final LocalTask localTask) {
     if (isVcsEnabled()) {
       List<ChangeListInfo> lists = localTask.getChangeLists();
@@ -797,7 +817,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     task.addChangelist(changeListInfo);
     addTask(task);
     if (changeList.isDefault()) {
-      activateTask(task, false, false);
+      activateTask(task, false);
     }
   }
 
@@ -824,7 +844,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     createChangeList(task, name, comment);
   }
 
-  public void createChangeList(LocalTask task, String name, @Nullable String comment) {
+  private void createChangeList(LocalTask task, String name, @Nullable String comment) {
     LocalChangeList changeList = myChangeListManager.findChangeList(name);
     if (changeList == null) {
       changeList = myChangeListManager.addChangeList(name, comment);
@@ -867,7 +887,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public int updateIssuesCount = 100;
 
     public boolean clearContext = true;
+
+    public int vcsOperation = 0;
     public boolean createChangelist = true;
+
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
     public boolean markAsInProgress = false;

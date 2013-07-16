@@ -22,9 +22,13 @@ import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ui.RadioButtonEnumModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,9 +47,16 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
   private JCheckBox myCreateChangelist;
   private JCheckBox myMarkAsInProgressBox;
   private JLabel myTaskNameLabel;
+  private JBRadioButton myCreateBranch;
+  private JBRadioButton myCreateNewChangelist;
+  private JBRadioButton myDoNothing;
+  private JPanel myVcsPanel;
+  private JPanel myDistributedVcsPanel;
+  private ButtonGroup myVcsGroup;
 
   private final Project myProject;
   private final Task myTask;
+  private final RadioButtonEnumModel<TaskManager.VcsOperation> myButtonEnumModel;
 
   public SimpleOpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
     super(project, false);
@@ -68,13 +79,24 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
 
     myClearContext.setSelected(taskManager.getState().clearContext);
 
-    if (!manager.isVcsEnabled()) {
+    myButtonEnumModel = RadioButtonEnumModel.bindEnum(TaskManager.VcsOperation.class, myVcsGroup);
+    AbstractVcs vcs = manager.getActiveVcs();
+    if (vcs == null) {
+      myVcsPanel.setVisible(false);
       myCreateChangelist.setEnabled(false);
       myCreateChangelist.setSelected(false);
     }
     else {
-      myCreateChangelist.setSelected(taskManager.getState().createChangelist);
-      myCreateChangelist.setEnabled(true);
+      myVcsPanel.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName() + " operations", false));
+      if (/*vcs.getType() == VcsType.distributed*/ false) {
+        myCreateChangelist.setVisible(false);
+        myButtonEnumModel.setSelected(taskManager.getState().vcsOperation);
+      }
+      else {
+        myDistributedVcsPanel.setVisible(false);
+        myCreateChangelist.setSelected(taskManager.getState().createChangelist);
+        myCreateChangelist.setEnabled(true);
+      }
     }
     init();
     getPreferredFocusedComponent();
@@ -85,6 +107,8 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
+    TaskManager.VcsOperation operation = getVcsOperation();
+    taskManager.getState().vcsOperation = operation.ordinal();
     if (taskManager.isVcsEnabled()) {
       taskManager.getState().createChangelist = myCreateChangelist.isSelected();
     }
@@ -99,7 +123,8 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
         LOG.warn(ex);
       }
     }
-    taskManager.activateTask(myTask, isClearContext(), isCreateChangelist());
+    LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
+    taskManager.performVcsOperation(localTask, operation);
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }
@@ -110,8 +135,16 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
     return myClearContext.isSelected();
   }
 
-  private boolean isCreateChangelist() {
-    return myCreateChangelist.isSelected();
+  private TaskManager.VcsOperation getVcsOperation() {
+    if (myCreateChangelist.isVisible()) {
+      return myCreateChangelist.isSelected() ? TaskManager.VcsOperation.CREATE_CHANGELIST : TaskManager.VcsOperation.DO_NOTHING;
+    }
+    else if (myVcsPanel.isVisible()) {
+      return myButtonEnumModel.getSelected();
+    }
+    else {
+      return TaskManager.VcsOperation.DO_NOTHING;
+    }
   }
 
   private boolean isMarkAsInProgress() {
