@@ -379,6 +379,16 @@ public class VfsUtilTest extends PlatformLangTestCase {
         }
       }
     }).assertTiming();
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        for (VirtualFile file : vDir.getChildren()) {
+          file.delete(this);
+        }
+      }
+    }.execute().throwException();
+
   }
 
   public void testFindRootWithDenormalizedPath() {
