@@ -302,6 +302,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
               final PsiType returnType = eSubstitutor.substitute(existingMethod.getReturnType());
               final PsiType returnType1 = cSubstitutor.substitute(method.getReturnType());
               if (returnType != null && returnType1 != null && !returnType1.equals(returnType) && TypeConversionUtil.isAssignable(returnType, returnType1, false)) {
+                if (class1.isInterface() && !existingClass.isInterface()) continue;
                 conflicts.remove(existing);
               } else {
                 conflicts.remove(i);
