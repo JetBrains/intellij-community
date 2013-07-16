@@ -36,6 +36,8 @@ public class TestOnlyInspectionTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testVisibleForTesting() throws Exception { doTest(); }
+
   public void testUnresolved() throws Exception {
     doTest(); // shouldn't throw
   }
