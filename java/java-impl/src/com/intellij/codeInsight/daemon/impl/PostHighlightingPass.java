@@ -35,8 +35,8 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
@@ -210,7 +210,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           String afterText = file.getText();
           if (Comparing.strEqual(beforeText, afterText)) {
             LOG.error(LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
-                                               new Attachment(file.getViewProvider().getVirtualFile())));
+                                               AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
           }
         }
       }

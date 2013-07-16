@@ -24,10 +24,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.*;
 
 public abstract class JobScheduler {
   private static final ScheduledThreadPoolExecutor ourScheduledExecutorService;
+  private static final int TASK_LIMIT = 50;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobScheduler");
+  private static final ThreadLocal<Long> start = new ThreadLocal<Long>();
 
   static {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
@@ -40,21 +44,41 @@ public abstract class JobScheduler {
         return thread;
       }
     }) {
-      private final boolean doTiming = true;
+      private static final boolean doTiming = true;
+
       @Override
-      protected <V> RunnableScheduledFuture<V> decorateTask(final Runnable runnable, final RunnableScheduledFuture<V> task) {
-        if (!doTiming) {
-          return super.decorateTask(runnable, task);
+      protected void beforeExecute(Thread t, Runnable r) {
+        if (doTiming) {
+          start.set(System.currentTimeMillis());
         }
-        return new ExecutionTimeCheckedTask<V>(task, runnable, ExecutionTimeCheckedTask.TASK_LIMIT);
       }
 
       @Override
-      protected <V> RunnableScheduledFuture<V> decorateTask(Callable<V> callable, RunnableScheduledFuture<V> task) {
-        if (!doTiming) {
-          return super.decorateTask(callable, task);
+      protected void afterExecute(Runnable r, Throwable t) {
+        if (doTiming) {
+          long elapsed = System.currentTimeMillis() - start.get();
+          if (elapsed > TASK_LIMIT) {
+            @NonNls String msg = TASK_LIMIT + " ms execution limit failed for: " + info(r) + "; elapsed time was " + elapsed +"ms";
+            LOG.info(msg);
+          }
         }
-        return new ExecutionTimeCheckedTask<V>(task, callable, ExecutionTimeCheckedTask.TASK_LIMIT);
+      }
+
+      private Object info(Runnable r) {
+        Object object = r;
+        if (r instanceof FutureTask) {
+          try {
+            Field callableField = FutureTask.class.getDeclaredField("callable");
+            callableField.setAccessible(true);
+            object = callableField.get(r);
+            Field task = object.getClass().getDeclaredField("task"); // java.util.concurrent.Executors.RunnableAdapter()
+            task.setAccessible(true);
+            object = task.get(object);
+          }
+          catch (Exception ignored) {
+          }
+        }
+        return object;
       }
     };
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
@@ -69,73 +93,5 @@ public abstract class JobScheduler {
   @NotNull
   public static ScheduledExecutorService getScheduler() {
     return ourScheduledExecutorService;
-  }
-
-  private static class ExecutionTimeCheckedTask<V> implements RunnableScheduledFuture<V> {
-    private static final int TASK_LIMIT = 50;
-    private static final Logger LOG = Logger.getInstance("#" + ExecutionTimeCheckedTask.class.getName());
-    private final RunnableScheduledFuture<V> task;
-    private final int limit;
-    private final Object traceRunnableOrCallable;
-
-    ExecutionTimeCheckedTask(RunnableScheduledFuture<V> _task, Object _traceRunnableOrCallable, int _limit) {
-      task = _task;
-      traceRunnableOrCallable = _traceRunnableOrCallable;
-      limit = _limit;
-    }
-
-    @Override
-    public boolean isPeriodic() {
-      return task.isPeriodic();
-    }
-
-    @Override
-    public long getDelay(@NotNull TimeUnit unit) {
-      return task.getDelay(unit);
-    }
-
-    @Override
-    public int compareTo(@NotNull Delayed o) {
-      return task.compareTo(o);
-    }
-
-    @Override
-    public void run() {
-      long started = System.currentTimeMillis();
-      try {
-        task.run();
-      } finally {
-        long executionTime = System.currentTimeMillis() - started;
-        if (executionTime > limit) {
-          @NonNls String msg = limit + " ms execution limit failed for:" + traceRunnableOrCallable + "," + executionTime;
-          LOG.info(msg);
-        }
-      }
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return task.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return task.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-      return task.isDone();
-    }
-
-    @Override
-    public V get() throws InterruptedException, ExecutionException {
-      return task.get();
-    }
-
-    @Override
-    public V get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-      return task.get(timeout, unit);
-    }
   }
 }

@@ -14,4 +14,6 @@ public class TerminalIcons {
   }
 
   public static final Icon OpenTerminal = load("/icons/OpenTerminal.png"); // 16x16
+
+  public static final Icon OpenTerminal_13x13 = load("/icons/OpenTerminal_13x13.png"); // 13x13
 }

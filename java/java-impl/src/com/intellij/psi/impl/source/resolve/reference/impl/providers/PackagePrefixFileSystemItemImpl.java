@@ -36,20 +36,20 @@ import java.util.ArrayList;
 /**
  * @author Gregory.Shrago
 */
-class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSystemItem {
+class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileSystemItem, PackagePrefixFileSystemItem {
   private final PsiDirectory myDirectory;
   private final int myIndex;
   private final PsiPackage[] myPackages;
 
-  public static PackagePrefixFileSystemItem create(final PsiDirectory directory) {
+  public static PackagePrefixFileSystemItemImpl create(final PsiDirectory directory) {
     final ArrayList<PsiPackage> packages = new ArrayList<PsiPackage>();
     for (PsiPackage cur = JavaDirectoryService.getInstance().getPackage(directory); cur != null; cur = cur.getParentPackage()) {
       packages.add(0, cur);
     }
-    return new PackagePrefixFileSystemItem(directory, 0, packages.toArray(new PsiPackage[packages.size()]));
+    return new PackagePrefixFileSystemItemImpl(directory, 0, packages.toArray(new PsiPackage[packages.size()]));
   }
 
-  private PackagePrefixFileSystemItem(final PsiDirectory directory, int index, final PsiPackage[] packages) {
+  private PackagePrefixFileSystemItemImpl(final PsiDirectory directory, int index, final PsiPackage[] packages) {
     myDirectory = directory;
     myIndex = index;
     myPackages = packages;
@@ -78,7 +78,7 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
 
   @Override
   public PsiFileSystemItem getParent() {
-    return myIndex > 0 ? new PackagePrefixFileSystemItem(myDirectory, myIndex - 1, myPackages) : myDirectory.getParent();
+    return myIndex > 0 ? new PackagePrefixFileSystemItemImpl(myDirectory, myIndex - 1, myPackages) : myDirectory.getParent();
   }
 
   @Override
@@ -207,7 +207,7 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
       return myDirectory.processChildren(processor);
     }
     else {
-      return processor.execute(new PackagePrefixFileSystemItem(myDirectory, myIndex+1, myPackages));
+      return processor.execute(new PackagePrefixFileSystemItemImpl(myDirectory, myIndex+1, myPackages));
     }
   }
 
@@ -225,7 +225,7 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    return myIndex == myPackages.length -1? myDirectory.getChildren() : new PsiElement[] {new PackagePrefixFileSystemItem(myDirectory, myIndex + 1, myPackages)};
+    return myIndex == myPackages.length -1? myDirectory.getChildren() : new PsiElement[] {new PackagePrefixFileSystemItemImpl(myDirectory, myIndex + 1, myPackages)};
   }
 
   @Override
@@ -247,5 +247,10 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
   @Nullable
   public Icon getIcon(final int flags) {
     return myDirectory.getIcon(flags);
+  }
+
+  @Override
+  public PsiDirectory getDirectory() {
+    return myDirectory;
   }
 }

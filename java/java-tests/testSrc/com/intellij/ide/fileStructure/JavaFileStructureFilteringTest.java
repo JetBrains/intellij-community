@@ -38,9 +38,9 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
   public void testSelectLeafFirst3()  throws Exception {checkTree("clear");}
   public void testSelectLeafFirst4()  throws Exception {checkTree("clear");}
 
-  @Bombed(user = "peter", month = Calendar.AUGUST, day = 20)
+  public void testMatcher()           throws Exception {checkTree("dis");}
+
   public void testMatcher1()          throws Exception {checkTree("ico");}
-  @Bombed(user = "peter", month = Calendar.AUGUST, day = 20)
   public void testMatcher2()          throws Exception {checkTree("ico");}
   @Bombed(user = "peter", month = Calendar.AUGUST, day = 20)
   public void testAnonymousMatcher2() throws Exception {checkTree("ico");}

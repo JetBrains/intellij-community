@@ -346,11 +346,6 @@ public class FileWatcher {
     protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
       return true;
     }
-
-    @Override
-    protected boolean processHasSeparateErrorStream() {
-      return false;
-    }
   }
 
   @NotNull
@@ -436,7 +431,7 @@ public class FileWatcher {
     @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
       if (outputType == ProcessOutputTypes.STDERR) {
-        LOG.warn(event.getText());
+        LOG.warn(event.getText().trim());
       }
       if (outputType != ProcessOutputTypes.STDOUT) {
         return;

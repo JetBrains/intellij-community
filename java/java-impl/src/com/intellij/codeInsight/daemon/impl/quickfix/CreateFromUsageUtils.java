@@ -797,8 +797,8 @@ public class CreateFromUsageUtils {
           if (result != 0) return result;
         }
 
-        String name1 = StaticImportMethodFix.getMemberQualifiedName(m1);
-        String name2 = StaticImportMethodFix.getMemberQualifiedName(m2);
+        String name1 = PsiUtil.getMemberQualifiedName(m1);
+        String name2 = PsiUtil.getMemberQualifiedName(m2);
         return name1 == null || name2 == null ? 0 : name1.compareTo(name2);
       }
     });

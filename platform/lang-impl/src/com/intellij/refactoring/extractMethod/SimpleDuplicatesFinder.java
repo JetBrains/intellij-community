@@ -56,7 +56,7 @@ public class SimpleDuplicatesFinder {
   }
 
   @Nullable
-  private Match isDuplicateFragment(@NotNull final PsiElement candidate, @NotNull final IElementType identifierType) {
+  protected Match isDuplicateFragment(@NotNull final PsiElement candidate, @NotNull final IElementType identifierType) {
     for (PsiElement pattern : myPattern) {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
     }

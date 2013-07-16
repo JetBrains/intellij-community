@@ -352,6 +352,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return fileType;
   }
 
+  @Override
+  public FileType findFileTypeByName(String fileTypeName) {
+    FileType type = getStdFileType(fileTypeName);
+    // TODO: Abstract file types are not std one, so need to be restored specially,
+    // currently there are 6 of them and restoration does not happen very often so just iteration is enough
+    if (type == PlainTextFileType.INSTANCE && !fileTypeName.equals(type.getName())) {
+      for (FileType fileType: getRegisteredFileTypes()) {
+        if (fileType.equals(fileType.getName())) {
+          return fileType;
+        }
+      }
+    }
+    return type;
+  }
+
   private static class FileTypeDetectorHolder {
     private static final FileTypeDetector[] FILE_TYPE_DETECTORS = Extensions.getExtensions(FileTypeDetector.EP_NAME);
   }

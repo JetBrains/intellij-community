@@ -31,7 +31,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
@@ -147,10 +147,12 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
           element.toString() + ", class " + element.getClass().getName();
         String name = presentation.getPresentableText();
+        assert name != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
+                                     element.toString() + ", class " + element.getClass().getName();
         Color color = list.getForeground();
         boolean isProblemFile = element instanceof PsiElement
                                 && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject())
-                                   .isProblemFile(PsiUtilBase.getVirtualFile((PsiElement)element));
+                                   .isProblemFile(PsiUtilCore.getVirtualFile((PsiElement)element));
 
         if (element instanceof PsiElement || element instanceof DataProvider) {
           final PsiElement psiElement = element instanceof PsiElement
@@ -159,7 +161,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           if (psiElement != null) {
             final Project project = psiElement.getProject();
 
-            final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(psiElement);
+            final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
             isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
             final FileColorManager fileColorManager = FileColorManager.getInstance(project);

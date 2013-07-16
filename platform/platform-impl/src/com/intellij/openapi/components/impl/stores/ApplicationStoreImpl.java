@@ -83,9 +83,10 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   @Override
   public void load() throws IOException {
-    long start = System.currentTimeMillis();
-    myApplication.initComponents();
-    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + (System.currentTimeMillis() - start) + " ms");
+    long t = System.currentTimeMillis();
+    myApplication.init();
+    t = System.currentTimeMillis() - t;
+    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + t + " ms");
   }
 
   @Override

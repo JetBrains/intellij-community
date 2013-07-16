@@ -22,6 +22,7 @@ package com.intellij.openapi.util;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -142,6 +143,9 @@ public class KeyedExtensionCollector<T, KeyT> {
             final T instance;
             try {
               instance = bean.getInstance();
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
             }
             catch (Exception e) {
               LOG.error(e);

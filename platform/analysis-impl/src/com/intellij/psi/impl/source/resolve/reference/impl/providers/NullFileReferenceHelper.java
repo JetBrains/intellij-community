@@ -70,4 +70,9 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   public boolean isMine(final Project project, final @NotNull VirtualFile file) {
     return ProjectRootManager.getInstance(project).getFileIndex().isInContent(file);
   }
+
+  @Override
+  public boolean isFallback() {
+    return true;
+  }
 }

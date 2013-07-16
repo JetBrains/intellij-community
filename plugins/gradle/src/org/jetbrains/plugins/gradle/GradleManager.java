@@ -169,7 +169,8 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
         boolean useWrapper = projectLevelSettings != null && !projectLevelSettings.isPreferLocalInstallationToWrapper();
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
-                                                                     useWrapper);
+                                                                     useWrapper,
+                                                                     settings.getGradleVmOptions());
 
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(extension.getClass().getName());

@@ -131,7 +131,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   protected void innerResolveInContext(@NotNull final String text,
-                                       @NotNull final PsiFileSystemItem context,
+                                       @NotNull PsiFileSystemItem context,
                                        final Collection<ResolveResult> result,
                                        final boolean caseSensitive) {
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
@@ -164,6 +164,11 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       else {
         final String decoded = decode(text);
         if (decoded != null) {
+
+          if (context instanceof PackagePrefixFileSystemItem) {
+            context = ((PackagePrefixFileSystemItem)context).getDirectory();
+          }
+
           if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
             // optimization: do not load all children into VFS
             PsiDirectory directory = (PsiDirectory)context;

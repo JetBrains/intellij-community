@@ -17,7 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
@@ -120,7 +120,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
                                          "atTail=" + atTail + "\n" +
                                          "offset=" + context.getTailOffset() + "\n" +
                                          DebugUtil.currentStackTrace(),
-                                         new Attachment(context.getDocument())));
+                                         AttachmentFactory.createAttachment(context.getDocument())));
 
     }
     document.replaceString(context.getTailOffset() - 1, context.getTailOffset(), ".");

@@ -143,7 +143,11 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return Pair.create(fileToApply, editorToApply);
   }
 
-  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile, @NotNull final Editor hostEditor, @NotNull final IntentionAction action, final String text) {
+  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+                                              @NotNull final Editor hostEditor,
+                                              @NotNull final IntentionAction action,
+                                              @NotNull String text) {
+    if (!hostFile.isValid()) return false;
     final Project project = hostFile.getProject();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();

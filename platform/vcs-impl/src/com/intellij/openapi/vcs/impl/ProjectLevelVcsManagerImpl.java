@@ -782,7 +782,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public boolean dvcsUsedInProject() {
     AbstractVcs[] allActiveVcss = getAllActiveVcss();
     for (AbstractVcs activeVcs : allActiveVcss) {
-      if (VcsType.distibuted.equals(activeVcs.getType())) {
+      if (VcsType.distributed.equals(activeVcs.getType())) {
         return true;
       }
     }

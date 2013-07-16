@@ -37,8 +37,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -208,11 +210,18 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
 
       final Object value = pair.second.getValue();
-      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + value + "'", new LocalQuickFix() {
+      PsiVariable constant = pair.second.getConstant();
+      final String presentableName = constant != null ? constant.getName() : String.valueOf(value);
+      final String exprText = getConstantValueText(value, constant);
+      if (presentableName == null || exprText == null) {
+        continue;
+      }
+
+      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'", new LocalQuickFix() {
         @NotNull
         @Override
         public String getName() {
-          return "Replace with '" + value + "'";
+          return "Replace with '" + presentableName + "'";
         }
 
         @NotNull
@@ -223,10 +232,29 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          descriptor.getPsiElement().replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(String.valueOf(value), null));
+          JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+          PsiElement newElement = descriptor.getPsiElement().replace(facade.getElementFactory().createExpressionFromText(exprText, null));
+          newElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+          if (newElement instanceof PsiJavaCodeReferenceElement) {
+            PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)newElement;
+            PsiElement target = ref.resolve();
+            String shortName = ref.getReferenceName();
+            if (target != null && shortName != null && ref.isQualified() &&
+                facade.getResolveHelper().resolveReferencedVariable(shortName, newElement) == target) {
+              newElement.replace(facade.getElementFactory().createExpressionFromText(shortName, null));
+            }
+          }
         }
       });
     }
+  }
+
+  private static String getConstantValueText(Object value, @Nullable PsiVariable constant) {
+    if (constant != null) {
+      return constant instanceof PsiMember ? PsiUtil.getMemberQualifiedName((PsiMember)constant) : constant.getName();
+    }
+
+    return value instanceof String ? "\"" + StringUtil.escapeStringCharacters((String)value) + "\"" : String.valueOf(value);
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(StandardDataFlowRunner runner, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {

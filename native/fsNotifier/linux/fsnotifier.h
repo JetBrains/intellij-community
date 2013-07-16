@@ -67,7 +67,7 @@ enum {
 };
 
 bool init_inotify();
-void set_inotify_callback(void (* callback)(char*, int));
+void set_inotify_callback(void (* callback)(const char*, int));
 int get_inotify_fd();
 int watch(const char* root, array* mounts);
 void unwatch(int id);

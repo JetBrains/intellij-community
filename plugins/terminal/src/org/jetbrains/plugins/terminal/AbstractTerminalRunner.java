@@ -9,6 +9,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -19,7 +20,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.ui.SystemSettingsProvider;
+import com.jediterm.terminal.ui.AbstractSystemSettingsProvider;
 import com.jediterm.terminal.ui.TerminalSession;
 import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -156,7 +158,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return myProject;
   }
 
-  private class JBTerminalSystemSettingsProvider implements SystemSettingsProvider {
+  private class JBTerminalSystemSettingsProvider extends AbstractSystemSettingsProvider {
     private TerminalWidget myTerminalWidget;
 
     public void setTerminalWidget(TerminalWidget terminalWidget) {
@@ -171,6 +173,29 @@ public abstract class AbstractTerminalRunner<T extends Process> {
           openSession(myTerminalWidget);
         }
       };
+    }
+
+    @Override
+    public KeyStroke[] getCopyKeyStrokes() {
+      return getKeyStrokesByActionId("$Copy");
+    }
+
+    @Override
+    public KeyStroke[] getPasteKeyStrokes() {
+      return getKeyStrokesByActionId("$Paste");
+    }
+
+    private KeyStroke[] getKeyStrokesByActionId(String actionId) {
+      java.util.List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
+      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+      for (Shortcut sc : shortcuts) {
+        if (sc instanceof KeyboardShortcut) {
+          KeyStroke ks = ((KeyboardShortcut)sc).getFirstKeyStroke();
+          keyStrokes.add(ks);
+        }
+      }
+
+      return keyStrokes.toArray(new KeyStroke[keyStrokes.size()]);
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -376,6 +377,20 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       final PsiField constField = aClass.findFieldByName(constAttr.getValue(), false);
       if (constField != null) {
         aClass = PsiUtil.resolveClassInType(constField.getType());
+      }
+    } else {
+      final XmlAttribute factoryAttr = context.getAttribute(FxmlConstants.FX_FACTORY);
+      if (factoryAttr != null) {
+        final XmlAttributeValue valueElement = factoryAttr.getValueElement();
+        if (valueElement != null) {
+          final PsiReference reference = valueElement.getReference();
+          final PsiElement staticFactoryMethod = reference != null ? reference.resolve() : null;
+          if (staticFactoryMethod instanceof PsiMethod && 
+              ((PsiMethod)staticFactoryMethod).getParameterList().getParametersCount() == 0 && 
+              ((PsiMethod)staticFactoryMethod).hasModifierProperty(PsiModifier.STATIC)) {
+            aClass = PsiUtil.resolveClassInType(((PsiMethod)staticFactoryMethod).getReturnType());
+          }
+        }
       }
     }
     final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(parentTag, aClass);

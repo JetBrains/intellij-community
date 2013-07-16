@@ -578,14 +578,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             try {
               int offset = getStartOffset(statement);
               PsiExpression caseValue = psiLabelStatement.getCaseValue();
-
+              
               if (caseValue != null &&
                   caseExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null &&
                   JavaPsiFacade.getInstance(body.getProject()).getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
-                PsiExpression psiComparison = psiFactory.createExpressionFromText(
-                  caseExpression.getText() + "==" + caseValue.getText(), switchStmt);
-                psiComparison.accept(this);
+                
+                addInstruction(new PushInstruction(getExpressionDfaValue((PsiReferenceExpression)caseExpression), caseExpression));
+                caseValue.accept(this);
+                addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, caseExpression.getProject()));
               }
               else {
                 pushUnknown();

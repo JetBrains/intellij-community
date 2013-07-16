@@ -49,4 +49,12 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @see GradleSettings#getServiceDirectoryPath() 
    */
   void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath);
+
+  /**
+   * Is expected to be called when gradle JVM options are changed by end-user.
+   * 
+   * @param oldOptions  old options (if any)
+   * @param newOptions  new option (if any)
+   */
+  void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions);
 }
