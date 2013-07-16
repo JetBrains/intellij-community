@@ -15,6 +15,8 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="vcs-api" />
   </component>
 </module>
 
