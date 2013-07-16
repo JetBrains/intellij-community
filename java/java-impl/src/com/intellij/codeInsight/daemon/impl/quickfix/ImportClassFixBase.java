@@ -125,6 +125,18 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       }
     }
 
+    classList = filterByRequiredMemberName(classList);
+
+    List<PsiClass> filtered = filterByContext(classList, myElement);
+    if (!filtered.isEmpty()) {
+      classList = filtered;
+    }
+
+    filterAlreadyImportedButUnresolved(classList);
+    return classList;
+  }
+
+  private List<PsiClass> filterByRequiredMemberName(List<PsiClass> classList) {
     final String memberName = getRequiredMemberName(myElement);
     if (memberName != null) {
       List<PsiClass> filtered = ContainerUtil.findAll(classList, new Condition<PsiClass>() {
@@ -146,13 +158,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         classList = filtered;
       }
     }
-
-    List<PsiClass> filtered = filterByContext(classList, myElement);
-    if (!filtered.isEmpty()) {
-      classList = filtered;
-    }
-
-    filterAlreadyImportedButUnresolved(classList);
     return classList;
   }
 
