@@ -289,6 +289,13 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return createExecutionResult(file, result, listener.getRootNode());
   }
 
+  @NotNull
+  @Override
+  public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles)
+    throws RemoteException, MavenServerProcessCanceledException {
+    return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles);
+  }
+
   public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);

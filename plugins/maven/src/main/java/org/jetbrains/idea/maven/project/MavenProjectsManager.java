@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -49,6 +50,7 @@ import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -729,6 +731,39 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           myResolvingProcessor.scheduleTask(
             new MavenProjectsProcessorResolvingTask(each, myProjectsTree, getGeneralSettings(), onCompletion));
         }
+      }
+    });
+  }
+
+  public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final Consumer<String> consumer) {
+    runWhenFullyOpen(new Runnable() {
+      @Override
+      public void run() {
+        myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
+          @Override
+          public void perform(Project project,
+                              MavenEmbeddersManager embeddersManager,
+                              MavenConsole console,
+                              MavenProgressIndicator indicator)
+            throws MavenProcessCanceledException {
+
+            indicator.setText("Evaluating effective POM");
+
+            myProjectsTree.executeWithEmbedder(mavenProject,
+                                               getEmbeddersManager(),
+                                               MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
+                                               console,
+                                               indicator,
+                                               new MavenProjectsTree.EmbedderTask() {
+                                                 @Override
+                                                 public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
+                                                   String res =
+                                                     embedder.evaluateEffectivePom(mavenProject.getFile(), getExplicitProfiles());
+                                                   consumer.consume(res);
+                                                 }
+                                               });
+          }
+        });
       }
     });
   }

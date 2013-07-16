@@ -37,6 +37,10 @@ public interface MavenServerEmbedder extends Remote {
                                                                                                MavenServerProcessCanceledException;
 
   @NotNull
+  String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles) throws RemoteException,
+                                                                                                 MavenServerProcessCanceledException;
+
+  @NotNull
   MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                         @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException,
                                                                                         MavenServerProcessCanceledException;

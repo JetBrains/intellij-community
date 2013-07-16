@@ -28,6 +28,7 @@ import java.io.File;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -96,6 +97,17 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
       @Override
       public MavenServerExecutionResult execute() throws RemoteException, MavenServerProcessCanceledException {
         return getOrCreateWrappee().resolveProject(new File(file.getPath()), activeProfiles);
+      }
+    });
+  }
+
+  @NotNull
+  public String evaluateEffectivePom(@NotNull final VirtualFile file, @NotNull final Collection<String> activeProfiles)
+    throws MavenProcessCanceledException {
+    return perform(new RetriableCancelable<String>() {
+      @Override
+      public String execute() throws RemoteException, MavenServerProcessCanceledException {
+        return getOrCreateWrappee().evaluateEffectivePom(new File(file.getPath()), new ArrayList<String>(activeProfiles));
       }
     });
   }

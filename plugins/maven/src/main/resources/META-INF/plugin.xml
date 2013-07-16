@@ -308,6 +308,10 @@
             icon="AllIcons.Actions.Refresh">
     </action>
 
+    <action id="Maven.ShowEffectivePom" class="org.jetbrains.idea.maven.project.actions.MavenShowEffectivePom"
+            text="Show Effective POM" description="Generate and show effective POM">
+    </action>
+
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
             text="Generate Sources and Update Folders For All Projects"
             icon="MavenIcons.UpdateFolders">
@@ -521,6 +525,7 @@
       <separator/>
       <reference id="Maven.DownloadAllGroup"/>
       <separator/>
+      <reference id="Maven.ShowEffectivePom"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
