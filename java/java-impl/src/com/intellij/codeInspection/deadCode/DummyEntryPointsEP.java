@@ -24,6 +24,7 @@ public class DummyEntryPointsEP extends InspectionEP {
   public DummyEntryPointsEP() {
     presentation = DummyEntryPointsPresentation.class.getName();
     displayName = InspectionsBundle.message("inspection.dead.code.entry.points.display.name");
+    shortName = "";
   }
 
   @NotNull
