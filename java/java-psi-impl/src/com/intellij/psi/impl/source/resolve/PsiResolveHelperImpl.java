@@ -360,10 +360,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiType[] substitutions = new PsiType[typeParameters.length];
     @SuppressWarnings("unchecked")
     Pair<PsiType, ConstraintType>[] constraints = new Pair[typeParameters.length];
-    PsiFile file = parent.getContainingFile();
-    LOG.assertTrue(file != null, parent);
-    final PsiManager manager = file.getManager();
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
+    final PsiManager manager = parent.getManager();
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(parent);
     for (int i = 0; i < typeParameters.length; i++) {
       if (substitutions[i] != null) continue;
       final Pair<PsiType, ConstraintType> constraint =
