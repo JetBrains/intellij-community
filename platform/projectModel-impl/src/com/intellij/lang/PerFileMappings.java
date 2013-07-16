@@ -17,11 +17,10 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
