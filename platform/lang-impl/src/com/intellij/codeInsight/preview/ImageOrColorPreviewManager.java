@@ -135,9 +135,10 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (psiFile == null || psiFile instanceof PsiCompiledElement) {
+    if (psiFile == null || psiFile instanceof PsiCompiledElement || !psiFile.isValid()) {
       return null;
     }
+
     return InjectedLanguageUtil.findElementAtNoCommit(psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
   }
 
