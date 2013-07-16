@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class CoreApplicationEnvironment {
   protected JobLauncher createJobLauncher() {
     return new JobLauncher() {
       @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                          ProgressIndicator progress,
                                                          boolean failFastOnAcquireReadAction,
                                                          @NotNull Processor<T> thingProcessor) throws ProcessCanceledException {
@@ -153,7 +153,7 @@ public class CoreApplicationEnvironment {
       }
 
       @Override
-      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
+      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
                                                                            ProgressIndicator progress,
                                                                            boolean failFastOnAcquireReadAction,
                                                                            @NotNull Processor<T> thingProcessor) {
@@ -193,7 +193,7 @@ public class CoreApplicationEnvironment {
             }
 
             @Override
-            public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            public Object get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
               return null;
             }
           });

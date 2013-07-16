@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -33,11 +31,10 @@ import java.util.concurrent.Future;
 /**
  * @author cdr
  */
-
 public class JobLauncherImpl extends JobLauncher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobLauncher");
 
-  private <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
+  private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<? extends T> things,
                                                       boolean failFastOnAcquireReadAction,
                                                       @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException {
     final Job<String> job = new JobImpl<String>(Job.DEFAULT_PRIORITY, failFastOnAcquireReadAction);
@@ -78,25 +75,11 @@ public class JobLauncherImpl extends JobLauncher {
     return !job.isCanceled();
   }
 
-  /**
-   * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
-   * With checkCanceled in each thread delegated to our current progress
-   *
-   * @param things to process concurrently
-   * @param progress
-   * @param failFastOnAcquireReadAction if true, returns false when failed to acquire read action
-   * @param thingProcessor to be invoked concurrently on each element from the collection
-   * @return false if tasks have been canceled
-   *         or at least one processor returned false
-   *         or threw exception
-   *         or we were unable to start read action in at least one thread
-   * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
-   */
   @Override
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
-                                                            ProgressIndicator progress,
-                                                            boolean failFastOnAcquireReadAction,
-                                                            @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException {
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T>things,
+                                                     ProgressIndicator progress,
+                                                     boolean failFastOnAcquireReadAction,
+                                                     @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException {
     if (things.isEmpty()) {
       return true;
     }
@@ -110,7 +93,7 @@ public class JobLauncherImpl extends JobLauncher {
     return invokeConcurrentlyForAll(things, failFastOnAcquireReadAction, new Processor<T>() {
       public boolean process(final T t) {
         final boolean[] result = new boolean[1];
-        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
           public void run() {
             result[0] = thingProcessor.process(t);
           }
@@ -122,7 +105,7 @@ public class JobLauncherImpl extends JobLauncher {
 
   // This implementation is not really async
   @Override
-  public <T> AsyncFutureResult<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
+  public <T> AsyncFutureResult<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
                                                                              ProgressIndicator progress,
                                                                              boolean failFastOnAcquireReadAction,
                                                                              @NotNull Processor<T> thingProcessor) {
