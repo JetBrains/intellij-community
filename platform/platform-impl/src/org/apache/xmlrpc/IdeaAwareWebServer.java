@@ -15,13 +15,14 @@
  */
 package org.apache.xmlrpc;
 
+import com.intellij.util.ConcurrencyUtil;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * A minimal web server that uses IDEA built-in pool
@@ -29,11 +30,7 @@ import java.util.concurrent.ThreadFactory;
  * @author Maxim.Mossienko
  */
 public class IdeaAwareWebServer extends WebServer {
-  private static final ExecutorService threadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
-    public Thread newThread(final Runnable r) {
-      return new Thread(r, "WebServer thread pool");
-    }
-  });
+  private static final ExecutorService threadPool = Executors.newFixedThreadPool(2, ConcurrencyUtil.newNamedThreadFactory("WebServer thread pool"));
 
   /**
    * Creates a web server at the specified port number and IP
