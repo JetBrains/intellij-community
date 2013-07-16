@@ -16,6 +16,7 @@ public class GradleConstants {
 
   @NonNls public static final String EXTENSION           = "gradle";
   @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
+  @NonNls public static final String SETTINGS_FILE_NAME  = "setting.gradle";
 
   public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
 

@@ -60,13 +60,7 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     MyInfo info = getProcessingInfo(e.getDataContext());
-    String place = e.getPlace();
-    if (ExternalSystemConstants.TOOL_WINDOW_PLACE.equals(place)) {
-      e.getPresentation().setEnabled(info.externalProject != null);
-    }
-    else if (ExternalSystemConstants.TREE_CONTEXT_MENU_PLACE.equals(place)) {
-      e.getPresentation().setVisible(info.externalProject != null);
-    }
+    e.getPresentation().setEnabled(info.externalProject != null);
   }
 
   @Override

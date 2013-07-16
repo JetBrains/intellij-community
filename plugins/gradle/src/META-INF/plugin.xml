@@ -41,6 +41,7 @@
     <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectOpenProcessor"/>
     <configurationType implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType"/>
 
+    <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
