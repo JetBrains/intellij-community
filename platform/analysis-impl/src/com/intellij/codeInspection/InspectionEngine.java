@@ -194,7 +194,7 @@ public class InspectionEngine {
     }
     finally {
       refManager.inspectionReadActionFinished();
-      toolWrapper.cleanup();
+      toolWrapper.cleanup(file.getProject());
       inspectionContext.cleanup();
     }
     return Collections.emptyList();

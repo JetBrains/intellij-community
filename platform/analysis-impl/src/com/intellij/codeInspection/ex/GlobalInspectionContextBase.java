@@ -158,7 +158,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper toolWrapper = state.getTool();
-        toolWrapper.cleanup();
+        toolWrapper.cleanup(myProject);
       }
     }
     myTools.clear();
