@@ -401,9 +401,12 @@ public final class HgCommandExecutor {
 
       String command = new String(readDataBlock(dataInputStream));
       String uri = new String(readDataBlock(dataInputStream));
-      assert "getpass".equals(command) : "Invalid command: " + command + ", with uri data " + uri;
       String path = new String(readDataBlock(dataInputStream));
       String proposedLogin = new String(readDataBlock(dataInputStream));
+      assert "getpass".equals(command) : "Invalid command: " + command +
+                                         ", with appropriate data, uri: " + uri +
+                                         ", path: " + path +
+                                         ", proposed login: " + proposedLogin;
 
       HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization);
       boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path, myState);
