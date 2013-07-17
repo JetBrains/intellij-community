@@ -185,6 +185,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     return null;
   }
 
+  @Override
   public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                    RepositoryLocation repositoryLocation,
                                    int maxCount,
@@ -215,7 +216,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     if (changeBrowserSettings != null) {
       HgLogArgsBuilder argsBuilder = new HgLogArgsBuilder(changeBrowserSettings);
       args = argsBuilder.getLogArgs();
-      if (null == args) {
+      if (args.isEmpty()) {
         maxCount = maxCount == 0 ? VcsConfiguration.getInstance(project).MAXIMUM_HISTORY_ROWS  : maxCount;
       }
     }
@@ -389,7 +390,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       myBrowserSettings = browserSettings;
     }
 
-    @Nullable
+    @NotNull
     List<String> getLogArgs() {
 
       StringBuilder args = new StringBuilder();
@@ -433,7 +434,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
         return logArgs;
       }
 
-      return null;
+      return Collections.emptyList();
     }
   }
 }
