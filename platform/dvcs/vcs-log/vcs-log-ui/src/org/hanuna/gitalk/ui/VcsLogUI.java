@@ -1,9 +1,12 @@
 package org.hanuna.gitalk.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
+import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.GraphElement;
@@ -22,6 +25,8 @@ import javax.swing.table.TableModel;
  * @author erokhins
  */
 public class VcsLogUI {
+
+  private static final Logger LOG = VcsLogLogger.LOG;
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
@@ -65,7 +70,7 @@ public class VcsLogUI {
   }
 
   public void updateUI() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myMainFrame.getGraphTable().setModel(myGraphModel);
@@ -154,10 +159,21 @@ public class VcsLogUI {
     updateUI();
   }
 
-  public void jumpToCommit(Hash commitHash) {
+  public void jumpToCommit(final Hash commitHash) {
     int row = myLogDataHolder.getDataPack().getRowByHash(commitHash);
     if (row != -1) {
       jumpToRow(row);
+    }
+    else if (myLogDataHolder.isAllLogReady()) {
+      myLogDataHolder.rebuildLog(new Runnable() {
+        @Override
+        public void run() {
+          jumpToCommit(commitHash);
+        }
+      });
+    }
+    else {
+      LOG.info("No row for hash " + commitHash);
     }
   }
 

@@ -102,16 +102,35 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        List<CommitParents> all = myLogProvider.readAllHashes(myRoot);
-        Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
-
-        myAllLog = all;
-        myDataPack = DataPack.build(all, refs, indicator);
-        notifyAboutDataRefresh();
+        myAllLog = myLogProvider.readAllHashes(myRoot);
       }
     });
   }
 
+  public void rebuildLog(@NotNull final Runnable onSuccess) {
+    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
+      @Override
+      public void consume(ProgressIndicator indicator) throws VcsException {
+        if (myAllLog != null) {
+          Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
+          myDataPack = DataPack.build(myAllLog, refs, indicator);
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              notifyAboutDataRefresh();
+              onSuccess.run();
+            }
+          });
+
+        }
+      }
+    });
+  }
+
+  /**
+   * @param onSuccess this task is called on the EDT after loading and graph building completes.
+   * @param ordered   passed to the {@link VcsLogProvider} to tell it is it is necessary to get commits from the VCS topologically ordered.
+   */
   private void loadFirstPart(final Consumer<DataPack> onSuccess, final boolean ordered) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
@@ -223,5 +242,9 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   public void dispose() {
     myAllLog = null;
     myDataLoaderQueue.clear();
+  }
+
+  public boolean isAllLogReady() {
+    return myAllLog != null;
   }
 }
