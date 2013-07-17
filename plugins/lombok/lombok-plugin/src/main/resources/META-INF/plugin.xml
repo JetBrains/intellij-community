@@ -32,7 +32,7 @@
 		<ul>
 			<li>0.6.5
 				<ol>
-				    <li></li>
+				    <li>Issue 37:	Fixed @EqualsAndHashCode inspection for callSuper parameter</li>
 				</ol>
 			</li>
 		  <li>0.6.4
