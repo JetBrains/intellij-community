@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
@@ -57,6 +58,7 @@ import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 
@@ -270,10 +272,20 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myStatusWidget.activate();
 
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
-    myIncomingWidget.activate();
-
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
-    myOutgoingWidget.activate();
+    try {
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          myIncomingWidget.activate();
+          myOutgoingWidget.activate();
+        }
+      });
+    }
+    catch (Exception ex) {
+      throw new RuntimeException("Unable to activate incoming/outgoing widgets on AWT thread", ex);
+    }
+
 
     // updaters and listeners
     myHgRemoteStatusUpdater =
