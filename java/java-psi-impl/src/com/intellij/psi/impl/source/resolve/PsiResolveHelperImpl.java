@@ -929,6 +929,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         return inferBySubtypingConstraint(patternType, constraintType, depth, paramClass, argClass);
       }
 
+      PsiType lowerBound = PsiType.NULL;
+      PsiType upperBound = PsiType.NULL;
       Pair<PsiType,ConstraintType> wildcardCaptured = null;
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(paramClass)) {
         PsiType paramType = paramResult.getSubstitutor().substitute(typeParameter);
@@ -950,12 +952,34 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramType, argType, patternType, ConstraintType.EQUALS, depth + 1);
 
         if (res != null) {
-          PsiType type = res.getFirst();
-          if (!(type instanceof PsiWildcardType)) return res;
-          if (wildcardCaptured != null) return FAILED_INFERENCE;
-          wildcardCaptured = res;
+          final PsiType type = res.getFirst();
+          switch (res.getSecond()) {
+            case EQUALS:
+              if (!(type instanceof PsiWildcardType)) return res;
+              if (wildcardCaptured != null) return FAILED_INFERENCE;
+              wildcardCaptured = res;
+              break;
+            case SUPERTYPE:
+              wildcardCaptured = res;
+              if (PsiType.NULL.equals(lowerBound)) {
+                lowerBound = type;
+              }
+              else if (!lowerBound.equals(type)) {
+                lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, type, typeParameter.getManager());
+                if (lowerBound == null) return FAILED_INFERENCE;
+              }
+              break;
+            case SUBTYPE:
+              wildcardCaptured = res;
+              if (PsiType.NULL.equals(upperBound) || TypeConversionUtil.isAssignable(upperBound, type)) {
+                upperBound = type;
+              }
+          }
         }
       }
+
+      if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.SUPERTYPE);
+      if (upperBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
 
       return wildcardCaptured;
     }
