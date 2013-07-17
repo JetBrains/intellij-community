@@ -196,17 +196,39 @@ public class GithubApiUtil {
       case 402: // HTTP_PAYMENT_REQUIRED
       case 403: // HTTP_FORBIDDEN
       case 404: // HTTP_NOT_FOUND
-        throw new AuthenticationException("Request response: " + method.getStatusText());
+        throw new AuthenticationException("Request response - \"" + getErrorMessage(method) + '"');
     }
   }
 
   @NotNull
-  private static JsonElement parseResponse(@NotNull String githubResponse) throws IOException {
+  private static JsonElement parseResponse(@NotNull String githubResponse) throws JsonException {
     try {
       return new JsonParser().parse(githubResponse);
     }
     catch (JsonSyntaxException jse) {
-      throw new IOException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+    }
+  }
+
+  @NotNull
+  private static String getErrorMessage(@NotNull HttpMethod method) {
+    String message = null;
+    try {
+      String resp = method.getResponseBodyAsString();
+      if (resp != null) {
+        GithubErrorMessage error = fromJson(parseResponse(resp), GithubErrorMessage.class);
+        message = error.getMessage();
+      }
+    }
+    catch (IOException e) {
+      message = null;
+    }
+
+    if (message != null) {
+      return message;
+    }
+    else {
+      return method.getStatusText();
     }
   }
 

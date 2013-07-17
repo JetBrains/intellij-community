@@ -22,6 +22,12 @@ import java.io.Serializable;
 /**
  * @author Aleksey Pivovarov
  */
+@SuppressWarnings("UnusedDeclaration")
 public class GithubErrorMessage implements Serializable {
-  @Nullable private String message;
+  private String message;
+
+  @Nullable
+  public String getMessage() {
+    return message;
+  }
 }
