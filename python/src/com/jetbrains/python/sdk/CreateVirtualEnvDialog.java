@@ -298,7 +298,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              packageManager.showInstallationError(myMainPanel, "Failed to Create Virtual Environment", e.toString());
+              packageManager.showInstallationError(getOwner(), "Failed to Create Virtual Environment", e.toString());
             }
           }, ModalityState.any());
         }
