@@ -83,7 +83,7 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
-    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2);
+    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2, variableData);
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -173,7 +173,7 @@ public class PyExtractMethodUtil {
                                             public void consume(Pair<SimpleMatch, PsiElement> pair) {
                                               replaceElements(pair.first, pair.second.copy());
                                             }
-                                          }, PyTokenTypes.IDENTIFIER
+                                          }
     );
   }
 
