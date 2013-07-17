@@ -152,14 +152,15 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       }
       final PsiStatement firstStatement = logStatements.get(0);
       final PsiElement parent = firstStatement.getParent();
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() != null) {
         final PsiBlockStatement newBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statement);
         newBlockStatement.getCodeBlock().add(ifStatement);
-        firstStatement.replace(newBlockStatement);
+        final PsiElement result = firstStatement.replace(newBlockStatement);
+        codeStyleManager.shortenClassReferences(result);
         return;
       }
       final PsiElement result = parent.addBefore(ifStatement, firstStatement);
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       codeStyleManager.shortenClassReferences(result);
       for (PsiStatement logStatement : logStatements) {
         logStatement.delete();
