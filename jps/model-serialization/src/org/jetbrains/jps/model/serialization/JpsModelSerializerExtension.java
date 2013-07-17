@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,18 +107,22 @@ public abstract class JpsModelSerializerExtension {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Collections.emptyList();
   }

@@ -31,6 +31,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsAppEngineModelSerializerExtension extends JpsModelSerializerExtension {
+  @NotNull
   @Override
   public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return Collections.singletonList(new JpsAppEngineModuleExtensionSerializer());
