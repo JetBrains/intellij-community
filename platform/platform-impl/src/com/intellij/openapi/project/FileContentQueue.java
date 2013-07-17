@@ -226,14 +226,14 @@ public class FileContentQueue {
           }
 
           // take last content which is loaded by another thread
-          while(!myContentLoadingThreadTerminated) {
+          do {
             try {
-              result = myLoadedContentsQueue.poll(300, TimeUnit.MILLISECONDS);
+              result = myLoadedContentsQueue.poll(10, TimeUnit.MILLISECONDS);
               if (result != null) break;
             } catch (InterruptedException ex) {
               throw new RuntimeException(ex);
             }
-          }
+          } while (!myContentLoadingThreadTerminated);
         }
       } else {
         try {
