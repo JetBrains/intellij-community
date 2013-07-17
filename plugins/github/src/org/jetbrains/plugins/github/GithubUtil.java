@@ -129,24 +129,22 @@ public class GithubUtil {
   @Nullable
   public static GithubAuthData getValidAuthDataFromConfig(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
-    boolean valid = false;
     try {
-      valid = checkAuthData(auth, GithubSettings.getInstance().getLogin());
+      checkAuthData(auth, GithubSettings.getInstance().getLogin());
+      return auth;
+    }
+    catch (AuthenticationException e) {
+      return getValidAuthData(project, indicator);
     }
     catch (IOException e) {
       LOG.info("Connection error", e);
-    }
-    if (!valid) {
-      return getValidAuthData(project, indicator);
-    }
-    else {
-      return auth;
+      return null;
     }
   }
 
-  public static boolean checkAuthData(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
+  public static void checkAuthData(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
-      return false;
+      throw new AuthenticationException("Target host not defined");
     }
 
     switch (auth.getAuthType()) {
@@ -154,34 +152,28 @@ public class GithubUtil {
         GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
         assert basicAuth != null;
         if (StringUtil.isEmptyOrSpaces(basicAuth.getLogin()) || StringUtil.isEmptyOrSpaces(basicAuth.getPassword())) {
-          return false;
+          throw new AuthenticationException("Empty login or password");
         }
         break;
       case TOKEN:
         GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
         assert tokenAuth != null;
         if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
-          return false;
+          throw new AuthenticationException("Empty token");
         }
         break;
       case ANONYMOUS:
-        return false;
+        throw new AuthenticationException("Anonymous connection not allowed");
     }
 
-    try {
-      return testConnection(auth, login);
-    }
-    catch (AuthenticationException e) {
-      return false;
-    }
+    testConnection(auth, login);
   }
 
-  private static boolean testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
+  private static void testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     GithubUserDetailed user = GithubApiUtil.getCurrentUserInfo(auth);
     if (login != null && !login.equalsIgnoreCase(user.getLogin())) {
-      return false;
+      throw new AuthenticationException("Wrong login");
     }
-    return true;
   }
 
   /*

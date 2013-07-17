@@ -60,14 +60,10 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
-      if (GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin())) {
-        final GithubSettings settings = GithubSettings.getInstance();
-        settings.setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.shouldSavePassword());
-        super.doOKAction();
-      }
-      else {
-        setErrorText("Can't login with given credentials");
-      }
+      GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin());
+      final GithubSettings settings = GithubSettings.getInstance();
+      settings.setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.shouldSavePassword());
+      super.doOKAction();
     }
     catch (IOException e) {
       LOG.info(e);

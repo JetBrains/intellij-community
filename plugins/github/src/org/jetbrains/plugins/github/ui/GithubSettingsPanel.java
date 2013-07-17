@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
+import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
@@ -78,17 +79,15 @@ public class GithubSettingsPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          if (GithubUtil.checkAuthData(getAuthData(), getLogin())) {
-            Messages.showInfoMessage(myPane, "Connection successful", "Success");
-          }
-          else {
-            Messages.showErrorDialog(myPane, "Can't login to " + getHost() + " using given credentials", "Login Failure");
-          }
+          GithubUtil.checkAuthData(getAuthData(), getLogin());
+          Messages.showInfoMessage(myPane, "Connection successful", "Success");
+        }
+        catch (AuthenticationException ex) {
+          Messages.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
         }
         catch (IOException ex) {
           LOG.info(ex);
-          Messages.showErrorDialog(myPane, String.format("Can't login to %s: %s", getHost(), GithubUtil.getErrorTextFromException(ex)),
-                                   "Login Failure");
+          Messages.showErrorDialog(myPane, String.format("Can't login: %s", GithubUtil.getErrorTextFromException(ex)), "Login Failure");
         }
       }
     });
