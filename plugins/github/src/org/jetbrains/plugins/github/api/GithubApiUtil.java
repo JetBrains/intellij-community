@@ -358,4 +358,14 @@ public class GithubApiUtil {
     String request = gson.toJson(new GithubGistRequest(contents, description, !isPrivate));
     return GithubGist.create(fromJson(postRequest(auth, "/gists", request), GithubGistRaw.class));
   }
+
+  @NotNull
+  public static GithubRepo createRepo(@NotNull GithubAuthData auth, @NotNull String name, @NotNull String description, boolean isPublic)
+    throws IOException {
+    String path = "/user/repos";
+
+    GithubRepoRequest request = new GithubRepoRequest(name, description, isPublic);
+
+    return GithubRepo.create(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class));
+  }
 }

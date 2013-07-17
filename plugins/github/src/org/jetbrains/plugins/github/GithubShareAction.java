@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -242,37 +240,15 @@ public class GithubShareAction extends DumbAwareAction {
                                                @NotNull String name,
                                                @NotNull String description,
                                                boolean isPrivate) {
-    String path = "/user/repos";
-    String requestBody = prepareRequest(name, description, isPrivate);
-    JsonElement result;
+
     try {
-      result = GithubApiUtil.postRequest(auth, path, requestBody);
+      GithubRepo response = GithubApiUtil.createRepo(auth, name, description, !isPrivate);
+      return response.getHtmlUrl();
     }
     catch (IOException e) {
       GithubNotifications.showError(project, "Creating GitHub Repository", e);
       return null;
     }
-    if (result == null) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", "result is null");
-      return null;
-    }
-    if (!result.isJsonObject()) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
-      return null;
-    }
-    if (!result.getAsJsonObject().has("html_url")) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
-      return null;
-    }
-    return result.getAsJsonObject().get("html_url").getAsString();
-  }
-
-  private static String prepareRequest(String name, String description, boolean isPrivate) {
-    JsonObject json = new JsonObject();
-    json.addProperty("name", name);
-    json.addProperty("description", description);
-    json.addProperty("public", Boolean.toString(!isPrivate));
-    return json.toString();
   }
 
   private static boolean createEmptyGitRepository(@NotNull Project project,
