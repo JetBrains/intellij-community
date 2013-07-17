@@ -287,6 +287,9 @@ public class PyTypeParser {
               final PsiElement resolved = results.get(0).getElement();
               if (resolved instanceof PyTypedElement) {
                 type = context.getType((PyTypedElement)resolved);
+                if (type instanceof PyClassLikeType) {
+                  type = ((PyClassLikeType)type).toInstance();
+                }
               }
             }
             if (type == null) {
