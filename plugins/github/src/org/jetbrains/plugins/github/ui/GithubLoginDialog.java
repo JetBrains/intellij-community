@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
@@ -21,7 +22,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   private final GithubLoginPanel myGithubLoginPanel;
 
-  public GithubLoginDialog(final Project project) {
+  public GithubLoginDialog(@Nullable final Project project) {
     super(project, true);
     myGithubLoginPanel = new GithubLoginPanel(this);
 
