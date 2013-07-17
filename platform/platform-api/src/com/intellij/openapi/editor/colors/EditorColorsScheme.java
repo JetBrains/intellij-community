@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Scheme {
+public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, TextAttributesScheme, Scheme {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
   void setName(String name);

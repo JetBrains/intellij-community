@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.analysis.CustomHighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -172,7 +173,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
           @Override
           protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
-            return new HighlightInfoHolder(file, getColorsScheme(), filters) {
+            return new CustomHighlightInfoHolder(file, getColorsScheme(), filters) {
               @Override
               public boolean add(@Nullable HighlightInfo info) {
                 if (info == null) return true;

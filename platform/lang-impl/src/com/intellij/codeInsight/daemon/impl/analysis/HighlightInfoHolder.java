@@ -20,8 +20,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,31 +32,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Alexey
- */
 public class HighlightInfoHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder");
 
   private final PsiFile myContextFile;
   private final HighlightInfoFilter[] myFilters;
+  private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
   private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
-  private final AnnotationSession myAnnotationSession;
-  private final EditorColorsScheme myCustomColorsScheme;
 
-  public HighlightInfoHolder(@NotNull final PsiFile contextFile,
-                             @NotNull final HighlightInfoFilter... filters) {
-    this(contextFile, null, filters);
-  }
-
-  public HighlightInfoHolder(@NotNull final PsiFile contextFile,
-                             @Nullable final EditorColorsScheme customColorsScheme,
-                             @NotNull final HighlightInfoFilter... filters) {
+  public HighlightInfoHolder(@NotNull final PsiFile contextFile, @NotNull final HighlightInfoFilter... filters) {
     myContextFile = contextFile;
-    myCustomColorsScheme = customColorsScheme;
-    myFilters = filters;
     myAnnotationSession = new AnnotationSession(contextFile);
+    myFilters = filters;
   }
 
   @NotNull
@@ -72,13 +61,6 @@ public class HighlightInfoHolder {
     }
 
     return myInfos.add(info);
-  }
-
-  private boolean accepted(HighlightInfo info) {
-    for (HighlightInfoFilter filter : myFilters) {
-      if (!filter.accept(info, myContextFile)) return false;
-    }
-    return true;
   }
 
   public void clear() {
@@ -109,15 +91,28 @@ public class HighlightInfoHolder {
   }
 
   @NotNull
-  public EditorColorsScheme getColorsScheme() {
-    if (myCustomColorsScheme != null) {
-      return myCustomColorsScheme;
+  public Project getProject() {
+    return myContextFile.getProject();
+  }
+
+  public PsiFile getContextFile() {
+    return myContextFile;
+  }
+
+  private boolean accepted(HighlightInfo info) {
+    for (HighlightInfoFilter filter : myFilters) {
+      if (!filter.accept(info, getContextFile())) return false;
     }
-    return EditorColorsManager.getInstance().getGlobalScheme();
+    return true;
   }
 
   @NotNull
-  public Project getProject() {
-    return myContextFile.getProject();
+  public TextAttributesScheme getColorsScheme() {
+    return new TextAttributesScheme() {
+      @Override
+      public TextAttributes getAttributes(TextAttributesKey key) {
+        return key.getDefaultAttributes();
+      }
+    };
   }
 }

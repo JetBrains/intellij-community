@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -420,7 +421,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiReference reference = value.getReference();
     if (reference != null) {
       PsiElement element = reference.resolve();
-      final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
+      final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
       if (element instanceof PsiMethod) {
         myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)element, ((PsiDocMethodOrFieldRef)value).getNameElement(), false,
                                                             colorsScheme));
@@ -504,7 +505,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitIdentifier(final PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
-    final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
+    final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
     if (parent instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)parent;
       myHolder.add(HighlightUtil.checkVariableAlreadyDefined(variable));
@@ -695,7 +696,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     // method params are highlighted in visitMethod since we should make sure the method body was visited before
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
+    final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
 
     for (PsiParameter parameter : parameters) {
       int info = myReassignedParameters.get(parameter);
@@ -714,7 +715,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement) {
       return;
     }
-    final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
+    final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
     if (parent instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
       PsiElement methodNameElement = element.getReferenceNameElement();
@@ -975,7 +976,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myReassignedParameters.put((PsiParameter)variable, 2);
       }
 
-      final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
+      final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
       if (!variable.hasModifierProperty(PsiModifier.FINAL) && isReassigned(variable)) {
         myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
       }
