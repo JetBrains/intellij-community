@@ -420,8 +420,12 @@ public abstract class MvcFramework {
     return CommandLineBuilder.createFromJavaParameters(params);
   }
 
-  private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
+  private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, boolean refreshPluginRoot, Map<String, VirtualFile> res) {
     if (pluginRoot != null) {
+      if (refreshPluginRoot) {
+        pluginRoot.refresh(false, false);
+      }
+
       VirtualFile[] children = pluginRoot.getChildren();
       if (children != null) {
         for (VirtualFile child : children) {
@@ -451,9 +455,9 @@ public abstract class MvcFramework {
       VirtualFile root = findAppRoot(module);
       if (root == null) return;
 
-      extractPlugins(module.getProject(), root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), result);
-      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getCommonPluginsDir(module), refresh), result);
-      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getGlobalPluginsDir(module), refresh), result);
+      extractPlugins(module.getProject(), root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), false, result);
+      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getCommonPluginsDir(module), refresh), refresh, result);
+      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getGlobalPluginsDir(module), refresh), refresh, result);
     }
   }
 
