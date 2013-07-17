@@ -656,17 +656,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
     if (check != sum) { // Resort to locking all segments
       sum = 0;
-      for (int i = 0; i < segments.length; ++i)
-        segments[i].lock();
-      for (int i = 0; i < segments.length; ++i)
-        sum += segments[i].count;
-      for (int i = 0; i < segments.length; ++i)
-        segments[i].unlock();
+      for (Segment segment : segments) segment.lock();
+      for (Segment segment : segments) sum += segment.count;
+      for (Segment segment : segments) segment.unlock();
     }
-    if (sum > Integer.MAX_VALUE)
-      return Integer.MAX_VALUE;
-    else
-      return (int)sum;
+    return sum > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)sum;
   }
 
 
@@ -878,9 +872,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   @Override
   public boolean remove(@NotNull Object key, Object value) {
     int hash = myHashingStrategy.computeHashCode((K)key);
-    return segmentFor(hash).remove((K)key, hash, value) != null;
+    return remove((K)key, hash, value);
   }
 
+  public boolean remove(@NotNull K key, int hash, Object value) {
+    return segmentFor(hash).remove(key, hash, value) != null;
+  }
 
   /**
    * Replace entry for key only if currently mapped to given value.
