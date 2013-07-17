@@ -1,12 +1,5 @@
 package de.plushnikov.lombok;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
@@ -18,21 +11,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomNamedTarget;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
@@ -43,106 +30,28 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC,
       PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
-  public static final String PACKAGE_LOMBOK  = "package lombok;\n";
+  public static final String PACKAGE_LOMBOK = "package lombok;\n";
   public static final String ANNOTATION_TYPE = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE)\n" +
       "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)\n";
+
+  private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources";
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     addLombokClassesToFixture();
-
-    //myFixture.copyDirectoryToProject("", "")
   }
 
   private void addLombokClassesToFixture() {
-    try {
-      //added java.lang.Object to 'classpath'
-      myFixture.addClass("package java.lang; public class Object {}");
+    //added java.lang.Object to 'classpath'
+    myFixture.addClass("package java.lang; public class Object {}");
 
-      // added some classes used by tests to 'classpath'
-      myFixture.addClass("package java.util; public class Timer {}");
+    // added some classes used by tests to 'classpath'
+    myFixture.addClass("package java.util; public class Timer {}");
 
-      // added lombok classes used by tests to 'classpath'
-      myFixture.addClass(PACKAGE_LOMBOK +
-          "public enum AccessLevel {\n" +
-          "  PUBLIC, MODULE, PROTECTED, PACKAGE, PRIVATE, NONE;\n" +
-          "}");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface AllArgsConstructor {\n" +
-          "  String staticName() default \"\";\n" +
-          "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
-          "  @Deprecated boolean suppressConstructorProperties() default false;\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface NoArgsConstructor {  \n" +
-          "  String staticName() default \"\";\n" +
-          "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface RequiredArgsConstructor {\n" +
-          "  String staticName() default \"\";\n" +
-          "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
-          "  @Deprecated boolean suppressConstructorProperties() default false;\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface Cleanup {\n" +
-          "  String value() default \"close\";\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface Data {  \n" +
-          "  String staticConstructor() default \"\";\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface EqualsAndHashCode {\n" +
-          "  String[] exclude() default {};\n" +
-          "  String[] of() default {};\n" +
-          "  boolean callSuper() default false;\n" +
-          "  boolean doNotUseGetters() default false;\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface Getter {\n" +
-          "  AccessLevel value() default AccessLevel.PUBLIC;\n" +
-          "  boolean lazy() default false;\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface Setter {\n" +
-          "  AccessLevel value() default AccessLevel.PUBLIC;\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface Synchronized {  \n" +
-          "  String value() default \"\";\n" +
-          "}\n");
-      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-          "public @interface ToString {  \n" +
-          "  boolean includeFieldNames() default true;\n" +
-          "  String[] exclude() default {};\n" +
-          "  String[] of() default {};\n" +
-          "  boolean callSuper() default false;\n" +
-          "  boolean doNotUseGetters() default false;\n" +
-          "}");
-
-      myFixture.addClass("package lombok.extern.apachecommons;\n" + ANNOTATION_TYPE +
-          "public @interface CommonsLog {\n" +
-          "}");
-      myFixture.addClass("package lombok.extern.java;\n" + ANNOTATION_TYPE +
-          "public @interface Log {\n" +
-          "}");
-      myFixture.addClass("package lombok.extern.log4j;\n" + ANNOTATION_TYPE +
-          "public @interface Log4j {\n" +
-          "}");
-      myFixture.addClass("package lombok.extern.log4j;\n" + ANNOTATION_TYPE +
-          "public @interface Log4j2 {\n" +
-          "}");
-      myFixture.addClass("package lombok.extern.slf4j;\n" + ANNOTATION_TYPE +
-          "public @interface Slf4j {\n" +
-          "}");
-      myFixture.addClass("package lombok.extern.slf4j;\n" + ANNOTATION_TYPE +
-          "public @interface XSlf4j {\n" +
-          "}");
-    } catch (Exception ex) {
-      System.err.println("Error occured ");
-      ex.printStackTrace(System.err);
+    List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(LOMBOK_SRC_PATH));
+    for (File javaFile : filesByMask) {
+      myFixture.configureByFile(javaFile.getPath().replace("\\", "/"));
     }
   }
 
@@ -290,6 +199,11 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
 
   protected String getLombokTestDataDirectory() {
     return "./lombok-plugin/src/test/data";
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return "";
   }
 
   private String loadFileContent(String subDir, String fileName) throws IOException {
