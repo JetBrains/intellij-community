@@ -199,5 +199,12 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public HgChangesetStatus getChangesetStatus() {
     return myChangesStatus;
   }
+
+  @Override
+  public void dispose() {
+    if (!isDisposed()) {
+      super.dispose();
+    }
+  }
 }
 
