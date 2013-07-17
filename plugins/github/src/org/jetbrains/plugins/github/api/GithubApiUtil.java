@@ -240,30 +240,16 @@ public class GithubApiUtil {
     }
   }
 
-  @Nullable
+  @NotNull
   public static String getScopedToken(@NotNull GithubAuthData auth, @NotNull Collection<String> scopes, @Nullable String note)
     throws IOException {
     String path = "/authorizations";
 
-    JsonObject request = new JsonObject();
-    JsonArray json = new JsonArray();
-    for (String scope : scopes) {
-      json.add(new JsonPrimitive(scope));
-    }
-    request.add("scopes", json);
-    request.addProperty("note", note != null ? note : "Intellij GitHub plugin");
+    GithubAuthorizationRequest request = new GithubAuthorizationRequest(new ArrayList<String>(scopes), note, null);
+    GithubAuthorization response =
+      GithubAuthorization.create(fromJson(postRequest(auth, path, gson.toJson(request)), GithubAuthorizationRaw.class));
 
-    JsonElement result = postRequest(auth, path, request.toString());
-
-    if (result == null || !result.isJsonObject()) {
-      return null;
-    }
-    JsonElement token = result.getAsJsonObject().get("token");
-    if (token == null) {
-      return null;
-    }
-
-    return token.getAsString();
+    return response.getToken();
   }
 
   @NotNull

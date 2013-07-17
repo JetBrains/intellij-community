@@ -158,9 +158,7 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
       GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get().getMessage());
       return;
     }
-    if (!tokenRef.isNull()) {
-      myToken.setText(tokenRef.get());
-    }
+    myToken.setText(tokenRef.get());
   }
 
   @Override
