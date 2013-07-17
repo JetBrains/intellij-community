@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
@@ -86,6 +87,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
         target.add((Psi) generateDelegateMethod(psiClass, psiAnnotation, pair.getFirst(), pair.getSecond()));
       }
       UserMapKeys.addGeneralUsageFor(psiField);
+      UserMapKeys.addReadUsageFor(psiField);
     }
   }
 
@@ -108,29 +110,37 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     }
   }
 
+  private PsiSubstitutor getSubstitutor(PsiType type) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
+    PsiSubstitutor psiSubstitutor = resolveResult.getSubstitutor();
+    if (type instanceof PsiClassType) {
+      final PsiClass psiClass = resolveResult.getElement();
+      if (psiClass instanceof PsiTypeParameter) {
+        for (PsiClass aClass : psiClass.getSupers()) {
+          psiSubstitutor = psiSubstitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(aClass, (PsiClassType) type));
+        }
+      }
+    }
+    return psiSubstitutor;
+  }
+
   private void addMethodsOfType(PsiType psiType, Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods) {
-    PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(psiType);
-    if (null != classResolveResult) {
-      PsiClass psiClass = classResolveResult.getElement();
-      PsiSubstitutor classSubstitutor = classResolveResult.getSubstitutor();
-      if (null != psiClass) {
-        List<Pair<PsiMethod, PsiSubstitutor>> acceptedMethods = psiClass.getAllMethodsAndTheirSubstitutors();
-        for (Pair<PsiMethod, PsiSubstitutor> pair : acceptedMethods) {
-          PsiMethod psiMethod = pair.getFirst();
-          if (!psiMethod.isConstructor() && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-            // replace Substitutor, one from pair seems to be wrong?
-            allMethods.add(new Pair<PsiMethod, PsiSubstitutor>(psiMethod, classSubstitutor));
-          }
+    final PsiSubstitutor classSubstitutor = getSubstitutor(psiType);
+
+    PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+    if (null != psiClass) {
+      List<Pair<PsiMethod, PsiSubstitutor>> acceptedMethods = psiClass.getAllMethodsAndTheirSubstitutors();
+      for (Pair<PsiMethod, PsiSubstitutor> pair : acceptedMethods) {
+        PsiMethod psiMethod = pair.getFirst();
+        if (!psiMethod.isConstructor() && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiSubstitutor combinedSubstitutor = pair.getSecond().putAll(classSubstitutor);
+          allMethods.add(new Pair<PsiMethod, PsiSubstitutor>(psiMethod, combinedSubstitutor));
         }
       }
     }
   }
 
   private void removeDuplicateMethods(Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods) {
-    if (allMethods.isEmpty()) {
-      return;
-    }
-
     Collection<Pair<PsiMethod, PsiSubstitutor>> processedMethods = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
     Iterator<Pair<PsiMethod, PsiSubstitutor>> iterator = allMethods.iterator();
     while (iterator.hasNext()) {
