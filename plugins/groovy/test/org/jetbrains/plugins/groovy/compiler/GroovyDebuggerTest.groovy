@@ -54,7 +54,7 @@ import com.intellij.util.concurrency.Semaphore
 /**
  * @author peter
  */
-class GroovyDebuggerTest extends GroovyCompilerTestCase {
+abstract class GroovyDebuggerTest extends GroovyCompilerTestCase {
   @Override
   protected boolean useJps() { false }
 
@@ -156,7 +156,7 @@ package com
 class Foo {
   static bar = 2
   int field = 3
-  
+
   String toString() { field as String }
 }""")
 
@@ -344,7 +344,9 @@ foo()
     def module2 = addModule("module2", true)
     addGroovyLibrary(module1)
     addGroovyLibrary(module2)
-    ModuleRootModificationUtil.addDependency(myModule, module1);
+    edt {
+      ModuleRootModificationUtil.addDependency(myModule, module1)
+    }
 
     def scr = myFixture.addFileToProject('module1/Scr.groovy', 'println "hello"')
     myFixture.addFileToProject('module2/Scr.groovy', 'println "hello"')
