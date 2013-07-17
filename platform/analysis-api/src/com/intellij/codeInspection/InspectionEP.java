@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,9 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
 
   @NotNull
   public String getShortName() {
+    if (implementationClass == null) {
+      throw new IllegalArgumentException(toString());
+    }
     return shortName == null ? InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
   }
 
@@ -166,4 +170,24 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
 
   @Attribute("presentation")
   public String presentation;
+
+  @NonNls
+  @Override
+  public String toString() {
+    return "InspectionEP{" +
+           "shortName='" + shortName + '\'' +
+           ", key='" + key + '\'' +
+           ", bundle='" + bundle + '\'' +
+           ", displayName='" + displayName + '\'' +
+           ", groupKey='" + groupKey + '\'' +
+           ", groupBundle='" + groupBundle + '\'' +
+           ", groupDisplayName='" + groupDisplayName + '\'' +
+           ", groupPath='" + groupPath + '\'' +
+           ", enabledByDefault=" + enabledByDefault +
+           ", applyToDialects=" + applyToDialects +
+           ", level='" + level + '\'' +
+           ", hasStaticDescription=" + hasStaticDescription +
+           ", presentation='" + presentation + '\'' +
+           '}';
+  }
 }
