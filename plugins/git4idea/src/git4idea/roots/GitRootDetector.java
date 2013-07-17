@@ -50,25 +50,21 @@ public class GitRootDetector {
     myPlatformFacade = platformFacade;
   }
 
-  @NotNull
   public GitRootDetectInfo detect() {
-    return detect(myProject.getBaseDir());
-  }
-  
-  @NotNull
-  public GitRootDetectInfo detect(@Nullable VirtualFile startDir) {
-    if (startDir == null) {
+    VirtualFile projectDir = myProject.getBaseDir();
+
+    if (projectDir == null) {
       return new GitRootDetectInfo(Collections.<VirtualFile>emptyList(), false, false);
     }
 
-    final Set<VirtualFile> roots = scanForRootsInsideDir(startDir);
+    final Set<VirtualFile> roots = scanForRootsInsideDir(projectDir);
     roots.addAll(scanForRootsInContentRoots());
 
-    if (roots.contains(startDir)) {
+    if (roots.contains(projectDir)) {
       return new GitRootDetectInfo(roots, true, false);
     }
 
-    VirtualFile rootAbove = scanForSingleRootAboveDir(startDir);
+    VirtualFile rootAbove = scanForSingleRootAboveDir(projectDir);
     if (rootAbove != null) {
       roots.add(rootAbove);
       return new GitRootDetectInfo(roots, true, true);

@@ -24,7 +24,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 6/13/13 7:37 PM
  */
-public abstract class ExternalSystemSettingsListenerAdapter<S extends ExternalProjectSettings> implements ExternalSystemSettingsListener<S> {
+public class ExternalSystemSettingsListenerAdapter<S extends ExternalProjectSettings> implements ExternalSystemSettingsListener<S> {
 
   @Override
   public void onProjectsLinked(@NotNull Collection<S> settings) {

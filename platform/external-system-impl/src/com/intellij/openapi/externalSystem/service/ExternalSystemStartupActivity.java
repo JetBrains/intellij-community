@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemAutoImporter;
 import com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager;
-import com.intellij.openapi.externalSystem.service.vcs.ExternalSystemVcsRegistrar;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -50,7 +49,6 @@ public class ExternalSystemStartupActivity implements StartupActivity {
         }
         ExternalSystemAutoImporter.letTheMagicBegin(project);
         ExternalToolWindowManager.handle(project);
-        ExternalSystemVcsRegistrar.handle(project);
       }
     };
 
