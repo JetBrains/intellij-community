@@ -14,6 +14,7 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public class AndroidBuilderService extends BuilderService {
+  @NotNull
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
     return Arrays.<BuildTargetType<?>>asList(

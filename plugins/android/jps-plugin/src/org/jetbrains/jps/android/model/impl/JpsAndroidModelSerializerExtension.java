@@ -88,16 +88,19 @@ public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtens
       }
     };
 
+  @NotNull
   @Override
   public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return FACET_PROPERTIES_LOADERS;
   }
 
+  @NotNull
   @Override
   public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Collections.singletonList(new JpsAndroidFinalPackageElementSerializer());
   }
 
+  @NotNull
   @Override
   public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.singletonList(new JpsAndroidApplicationArtifactPropertiesSerializer());
