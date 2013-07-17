@@ -88,12 +88,16 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   public static void init(@NotNull final Project project, @NotNull final VcsLogProvider logProvider, @NotNull final VirtualFile root,
                           @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
     final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProvider, root);
-    dataHolder.loadFirstPart(new Consumer<DataPack>() {
+    dataHolder.initialize(onInitialized);
+  }
+
+  private void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+    loadFirstPart(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
-        dataHolder.myDataPack = dataPack;
-        onInitialized.consume(dataHolder);
-        dataHolder.loadAllLog();
+        myDataPack = dataPack;
+        onInitialized.consume(VcsLogDataHolder.this);
+        loadAllLog();
       }
     }, true);
   }
@@ -200,7 +204,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
 
   @Override
   public void refreshCompletely() {
-    loadAllLog();
+    initialize(Consumer.EMPTY_CONSUMER);
   }
 
   @Override
