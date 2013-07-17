@@ -1700,6 +1700,7 @@ public abstract class DialogWrapper {
         if (info.component != null && info.component.isVisible()) {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
+        DialogEarthquakeShaker.shake((JDialog)getPeer().getWindow());
         startTrackingValidation();
         return;
       }
