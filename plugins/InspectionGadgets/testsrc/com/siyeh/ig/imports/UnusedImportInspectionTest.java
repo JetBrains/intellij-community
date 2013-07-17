@@ -64,6 +64,14 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testRedundantImport() {
+    doTest("/*Unused import 'import java.util.ArrayList;'*/import java.util.ArrayList;/**/" +
+           "import java.util.ArrayList;" +
+           "class X { " +
+           "    void foo(ArrayList l) {}" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new UnusedImportInspection();
