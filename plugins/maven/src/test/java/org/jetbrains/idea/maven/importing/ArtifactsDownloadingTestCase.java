@@ -32,7 +32,8 @@ public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCas
   }
 
   protected void createDummyArtifact(String remoteRepo, String name) throws IOException {
-    FileUtil.writeToFile(new File(remoteRepo, name), "111".getBytes());
+    FileUtil.writeToFile(new File(remoteRepo, name), new byte[]{0x50, 0x4b, 0x05, 0x06, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,});
+
     FileUtil.writeToFile(new File(remoteRepo, name + ".sha1"), ("6216f8a75fd5bb3d5f22b6f9958cdede3fc086c2  " + name).getBytes());
   }
 }
