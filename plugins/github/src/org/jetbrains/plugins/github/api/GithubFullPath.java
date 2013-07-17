@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Aleksey Pivovarov
 */
-public class GithubUserAndRepository {
+public class GithubFullPath {
   @NotNull final private String myUserName;
   @NotNull final private String myRepositoryName;
 
-  public GithubUserAndRepository(@NotNull String userName, @NotNull String repositoryName) {
+  public GithubFullPath(@NotNull String userName, @NotNull String repositoryName) {
     myUserName = userName;
     myRepositoryName = repositoryName;
   }
 
   @NotNull
-  public String getUserName() {
+  public String getUser() {
     return myUserName;
   }
 
   @NotNull
-  public String getRepositoryName() {
+  public String getRepository() {
     return myRepositoryName;
   }
 
@@ -49,7 +49,7 @@ public class GithubUserAndRepository {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    GithubUserAndRepository that = (GithubUserAndRepository)o;
+    GithubFullPath that = (GithubFullPath)o;
 
     if (!myRepositoryName.equals(that.myRepositoryName)) return false;
     if (!myUserName.equals(that.myUserName)) return false;

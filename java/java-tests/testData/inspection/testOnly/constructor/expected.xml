@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+<problem>
+  <file>B.java</file>
+  <line>5</line>
+  <method>
+    <name>A()</name>
+    <display_name>A()</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>A</name>
+      <display_name>A</display_name>
+    </class>
+  </method>
+  <description>Test-only method is called in production code</description>
+</problem>
+</problems>

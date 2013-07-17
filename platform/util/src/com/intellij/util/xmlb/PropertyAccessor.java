@@ -47,7 +47,7 @@ class PropertyAccessor implements Accessor {
     myGenericType = myReadMethod.getGenericReturnType();
   }
 
-  public Object read(Object o) {
+  public Object read(@NotNull Object o) {
     try {
       return myReadMethod.invoke(o);
     }

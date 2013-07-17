@@ -57,6 +57,8 @@ import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
@@ -269,27 +271,35 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return this;
   }
 
-  private void createUIComponents() {
-    String[] possibleNames;
+  @NotNull
+  @Override
+  public LinkedHashSet<String> suggestNames() {
     final GroovyFieldValidator validator = new GroovyFieldValidator(myContext);
     final GrExpression expression = myContext.getExpression();
     final GrVariable var = myContext.getVar();
     final StringPartInfo stringPart = myContext.getStringPart();
     if (expression != null) {
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expression, validator, false);
+      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, validator, false)));
     }
     else if (stringPart != null) {
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), validator, false);
+      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), validator, false)));
     }
     else {
       assert var != null;
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator);
+      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator)));
     }
+  }
+
+  private void createUIComponents() {
+    final GrExpression expression = myContext.getExpression();
+    final GrVariable var = myContext.getVar();
+    final StringPartInfo stringPart = myContext.getStringPart();
+
     List<String> list = new ArrayList<String>();
     if (var != null) {
       list.add(var.getName());
     }
-    ContainerUtil.addAll(list, possibleNames);
+    ContainerUtil.addAll(list, suggestNames());
     myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(list), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     if (expression != null) {

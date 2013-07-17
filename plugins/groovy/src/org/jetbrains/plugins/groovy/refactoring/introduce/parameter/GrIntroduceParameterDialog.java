@@ -42,6 +42,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -59,7 +60,10 @@ import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFr
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromMethodProcessor;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureHelperImpl;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureProcessorBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.*;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
@@ -70,11 +74,13 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.intellij.refactoring.IntroduceParameterRefactoring.*;
 
-public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntroduceDialog<GrIntroduceParameterSettings> {
+public class GrIntroduceParameterDialog extends DialogWrapper {
   private GrTypeComboBox myTypeComboBox;
   private NameSuggestionsField myNameSuggestionsField;
   private JCheckBox myDeclareFinalCheckBox;
@@ -281,7 +287,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     c.nextLine().next().weightx(0).fillCellNone();
     namePanel.add(nameLabel, c);
 
-    myNameSuggestionsField = createNameField(findVar(), findExpr(), null);
+    myNameSuggestionsField = createNameField(findVar());
     c.next().weightx(1).fillCellHorizontally();
     namePanel.add(myNameSuggestionsField, c);
     nameLabel.setLabelFor(myNameSuggestionsField);
@@ -345,29 +351,12 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     return returnType;
   }
 
-  private NameSuggestionsField createNameField(GrVariable var, GrExpression expr, StringPartInfo stringPart) {
-    String[] possibleNames;
-    if (expr != null) {
-      final GrIntroduceContext
-        introduceContext = new GrIntroduceContextImpl(myProject, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, myInfo.getToReplaceIn());
-      final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true);
-    }
-    else if (var != null) {
-      final GrIntroduceContext introduceContext =
-        new GrIntroduceContextImpl(myProject, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, myInfo.getToReplaceIn());
-      final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
-      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator);
-    }
-    else {
-      possibleNames = new String[]{"closure"};
-    }
-
+  private NameSuggestionsField createNameField(GrVariable var) {
     List<String> names = new ArrayList<String>();
     if (var != null) {
       names.add(var.getName());
     }
-    ContainerUtil.addAll(names, possibleNames);
+    ContainerUtil.addAll(names, suggestNames());
 
     return new NameSuggestionsField(ArrayUtil.toStringArray(names), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
@@ -534,9 +523,33 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     processor.run();
   }
 
-  @Override
-  public GrIntroduceParameterSettings getSettings() {
-    return null;
+  @NotNull
+  public LinkedHashSet<String> suggestNames() {
+    GrVariable var = findVar();
+    GrExpression expr = findExpr();
+    StringPartInfo stringPart = findStringPart();
+
+    if (expr != null) {
+      final GrIntroduceContext
+        introduceContext =
+        new GrIntroduceContextImpl(myProject, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, myInfo.getToReplaceIn());
+      final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
+      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true)));
+    }
+    else if (var != null) {
+      final GrIntroduceContext introduceContext =
+        new GrIntroduceContextImpl(myProject, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, myInfo.getToReplaceIn());
+      final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
+      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      names.add(var.getName());
+      ContainerUtil.addAll(names, GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator));
+      return names;
+    }
+    else {
+      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      names.add("closure");
+      return names;
+    }
   }
 
   private int getReplaceFieldsWithGetter() {

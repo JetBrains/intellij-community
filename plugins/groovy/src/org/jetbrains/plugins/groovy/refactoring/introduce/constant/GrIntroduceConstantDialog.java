@@ -235,6 +235,25 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return this;
   }
 
+  @NotNull
+  @Override
+  public LinkedHashSet<String> suggestNames() {
+    GrExpression expression = myContext.getExpression();
+    if (expression == null) {
+      StringPartInfo part = myContext.getStringPart();
+      if (part != null) {
+        expression = part.getLiteral();
+      }
+    }
+    if (expression != null) {
+      return new LinkedHashSet<String>(Arrays.asList(
+        GroovyNameSuggestionUtil.suggestVariableNames(expression, new GroovyVariableValidator(myContext), true)));
+    }
+    else {
+      return new LinkedHashSet<String>();
+    }
+  }
+
   @Nullable
   @Override
   public String getName() {
@@ -275,8 +294,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       names.add(var.getName());
     }
     if (expression != null) {
-      String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expression, new GroovyVariableValidator(myContext), true);
-      ContainerUtil.addAll(names, possibleNames);
+      ContainerUtil.addAll(names, suggestNames());
     }
 
     myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);

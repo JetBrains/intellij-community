@@ -13,34 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
- * Information about a user on GitHub.
- *
- * @author Kirill Likhodedov
+ * @author Aleksey Pivovarov
  */
-public class GithubUser {
+@SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+class GithubAuthorizationRequest {
+  @NotNull List<String> scopes;
 
-  @NotNull private final String myLogin;
-  private final int myPrivateRepos;
-  private final int myMaxPrivateRepos;
+  @Nullable String note;
+  @Nullable String noteUrl;
 
-  GithubUser(@NotNull String login, int privateRepos, int maxPrivateRepos) {
-    myLogin = login;
-    myPrivateRepos = privateRepos;
-    myMaxPrivateRepos = maxPrivateRepos;
+  public GithubAuthorizationRequest(@NotNull List<String> scopes, @Nullable String note, @Nullable String noteUrl) {
+    this.scopes = scopes;
+    this.note = note;
+    this.noteUrl = noteUrl;
   }
-
-  @NotNull
-  public String getLogin() {
-    return myLogin;
-  }
-
-  public boolean canCreatePrivateRepo() {
-    return myMaxPrivateRepos > myPrivateRepos;
-  }
-
 }

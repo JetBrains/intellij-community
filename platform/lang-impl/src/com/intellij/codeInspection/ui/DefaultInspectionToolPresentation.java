@@ -426,13 +426,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
   }
 
-  private void exportResults(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refEntity, @NotNull Element parentNode) {
-    for (CommonProblemDescriptor description : descriptions) {
-      @NonNls final String template = description.getDescriptionTemplate();
-      int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
-      final PsiElement psiElement = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
+  private void exportResults(@NotNull final CommonProblemDescriptor[] descriptors, @NotNull RefEntity refEntity, @NotNull Element parentNode) {
+    for (CommonProblemDescriptor descriptor : descriptors) {
+      @NonNls final String template = descriptor.getDescriptionTemplate();
+      int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
+      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
       @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptorUtil
-        .extractHighlightedText(description, psiElement) : ""), " #loc ", " ");
+        .extractHighlightedText(descriptor, psiElement) : ""), " #loc ", " ");
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
       if (element == null) return;
@@ -441,8 +441,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       if (refEntity instanceof RefElement){
         final RefElement refElement = (RefElement)refEntity;
         final HighlightSeverity severity = getSeverity(refElement, getContext(), getToolWrapper());
-        ProblemHighlightType problemHighlightType = description instanceof ProblemDescriptor
-                                                    ? ((ProblemDescriptor)description).getHighlightType()
+        ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
+                                                    ? ((ProblemDescriptor)descriptor).getHighlightType()
                                                     : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         final String attributeKey = getTextAttributeKey(refElement.getRefManager().getProject(), severity, problemHighlightType);
         problemClassElement.setAttribute("severity", severity.myName);
@@ -451,7 +451,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       element.addContent(problemClassElement);
       if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
-        final QuickFix[] fixes = description.getFixes();
+        final QuickFix[] fixes = descriptor.getFixes();
         if (fixes != null) {
           @NonNls Element hintsElement = new Element("hints");
           for (QuickFix fix : fixes) {

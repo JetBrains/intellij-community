@@ -41,7 +41,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
   public static final String JAVA_GROUP = "Java";
-  private static final String JAVA_MODULE = "JAVA_MODULE";
+  private static final String JAVA_MODULE = ModuleTypeId.JAVA_MODULE;
 
   public JavaModuleType() {
     this(JAVA_MODULE);

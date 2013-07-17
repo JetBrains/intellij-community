@@ -43,7 +43,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,6 +127,18 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       }
     }
 
+    classList = filterByRequiredMemberName(classList);
+
+    List<PsiClass> filtered = filterByContext(classList, myElement);
+    if (!filtered.isEmpty()) {
+      classList = filtered;
+    }
+
+    filterAlreadyImportedButUnresolved(classList);
+    return classList;
+  }
+
+  private List<PsiClass> filterByRequiredMemberName(List<PsiClass> classList) {
     final String memberName = getRequiredMemberName(myElement);
     if (memberName != null) {
       List<PsiClass> filtered = ContainerUtil.findAll(classList, new Condition<PsiClass>() {
@@ -146,13 +160,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         classList = filtered;
       }
     }
-
-    List<PsiClass> filtered = filterByContext(classList, myElement);
-    if (!filtered.isEmpty()) {
-      classList = filtered;
-    }
-
-    filterAlreadyImportedButUnresolved(classList);
     return classList;
   }
 
@@ -202,6 +209,41 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
           return InheritanceUtil.isInheritorOrSelf(psiClass, actualClass, true);
         }
       });
+    }
+    return candidates;
+  }
+
+  protected static List<PsiClass> filterBySuperMethods(PsiParameter parameter, List<PsiClass> candidates) {
+    PsiElement parent = parameter.getParent();
+    if (parent instanceof PsiParameterList) {
+      PsiElement granny = parent.getParent();
+      if (granny instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)granny;
+        if (method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) != null) {
+          PsiClass aClass = method.getContainingClass();
+          final Set<PsiClass> probableTypes = new HashSet<PsiClass>();
+          InheritanceUtil.processSupers(aClass, false, new Processor<PsiClass>() {
+            @Override
+            public boolean process(PsiClass psiClass) {
+              for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
+                for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
+                  ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
+                }
+              }
+              return true;
+            }
+          });
+          List<PsiClass> filtered = ContainerUtil.filter(candidates, new Condition<PsiClass>() {
+            @Override
+            public boolean value(PsiClass psiClass) {
+              return probableTypes.contains(psiClass);
+            }
+          });
+          if (!filtered.isEmpty()) {
+            return filtered;
+          }
+        }
+      }
     }
     return candidates;
   }

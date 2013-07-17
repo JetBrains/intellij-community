@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
@@ -75,6 +76,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
   private static final String ORIG_FILE_PATTERN = "*.orig";
+  @Nullable public static final String HGENCODING = System.getenv("HGENCODING");
 
   private final HgChangeProvider changeProvider;
   private final HgRollbackEnvironment rollbackEnvironment;
@@ -270,10 +272,20 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myStatusWidget.activate();
 
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
-    myIncomingWidget.activate();
-
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
-    myOutgoingWidget.activate();
+    try {
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          myIncomingWidget.activate();
+          myOutgoingWidget.activate();
+        }
+      });
+    }
+    catch (Exception ex) {
+      throw new RuntimeException("Unable to activate incoming/outgoing widgets on AWT thread", ex);
+    }
+
 
     // updaters and listeners
     myHgRemoteStatusUpdater =

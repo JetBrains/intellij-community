@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github.api;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
@@ -30,10 +28,17 @@ import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.GithubSslSupport;
+import org.jetbrains.plugins.github.GithubUrlUtil;
+import org.jetbrains.plugins.github.GithubUtil;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Kirill Likhodedov
@@ -44,6 +49,14 @@ public class GithubApiUtil {
 
   private static final int CONNECTION_TIMEOUT = 5000;
   private static final Logger LOG = GithubUtil.LOG;
+
+  @NotNull public static final Gson gson = initGson();
+
+  private static Gson initGson() {
+    GsonBuilder builder = new GsonBuilder();
+    builder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
+    return builder.create();
+  }
 
   private enum HttpVerb {
     GET, POST, DELETE, HEAD
@@ -74,13 +87,12 @@ public class GithubApiUtil {
     try {
       method = doREST(auth, path, requestBody, verb);
 
+      checkStatusCode(method);
+
       String resp = method.getResponseBodyAsString();
       if (resp == null) {
-        LOG.info(String.format("Unexpectedly empty response: %s", resp));
         return null;
       }
-
-      checkStatusCode(method);
 
       JsonElement ret = parseResponse(resp);
 
@@ -92,12 +104,14 @@ public class GithubApiUtil {
         if (begin >= 0 && end >= 0) {
           String newPath = GithubUrlUtil.removeProtocolPrefix(value.substring(begin + 1, end));
           int index = newPath.indexOf('/');
+
           JsonElement next = request(auth, newPath.substring(index), requestBody, verb);
-          if (next != null) {
-            JsonArray merged = ret.getAsJsonArray();
-            merged.addAll(next.getAsJsonArray());
-            return merged;
+          if (next == null) {
+            throw new NoHttpResponseException("Unexpected empty response");
           }
+          JsonArray merged = ret.getAsJsonArray();
+          merged.addAll(next.getAsJsonArray());
+          return merged;
         }
       }
 
@@ -182,21 +196,47 @@ public class GithubApiUtil {
       case 402: // HTTP_PAYMENT_REQUIRED
       case 403: // HTTP_FORBIDDEN
       case 404: // HTTP_NOT_FOUND
-        throw new AuthenticationException("Request response: " + method.getStatusText());
+        throw new AuthenticationException("Request response - \"" + getErrorMessage(method) + '"');
     }
   }
 
   @NotNull
-  private static JsonElement parseResponse(@NotNull String githubResponse) throws IOException {
+  private static JsonElement parseResponse(@NotNull String githubResponse) throws JsonException {
     try {
       return new JsonParser().parse(githubResponse);
     }
     catch (JsonSyntaxException jse) {
-      throw new IOException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
     }
   }
 
-  @Nullable
+  @NotNull
+  private static String getErrorMessage(@NotNull HttpMethod method) {
+    String message = null;
+    try {
+      String resp = method.getResponseBodyAsString();
+      if (resp != null) {
+        GithubErrorMessage error = fromJson(parseResponse(resp), GithubErrorMessage.class);
+        message = error.getMessage();
+      }
+    }
+    catch (IOException e) {
+      message = null;
+    }
+
+    if (message != null) {
+      return message;
+    }
+    else {
+      return method.getStatusText();
+    }
+  }
+
+  /*
+   * Github API
+   */
+
+  @NotNull
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
     HttpMethod method = null;
     try {
@@ -206,7 +246,7 @@ public class GithubApiUtil {
 
       Header header = method.getResponseHeader("X-OAuth-Scopes");
       if (header == null) {
-        return null;
+        throw new HttpException("No scopes header");
       }
 
       Collection<String> scopes = new ArrayList<String>();
@@ -220,5 +260,120 @@ public class GithubApiUtil {
         method.releaseConnection();
       }
     }
+  }
+
+  @NotNull
+  public static String getScopedToken(@NotNull GithubAuthData auth, @NotNull Collection<String> scopes, @Nullable String note)
+    throws IOException {
+    String path = "/authorizations";
+
+    GithubAuthorizationRequest request = new GithubAuthorizationRequest(new ArrayList<String>(scopes), note, null);
+    GithubAuthorization response =
+      GithubAuthorization.create(fromJson(postRequest(auth, path, gson.toJson(request)), GithubAuthorizationRaw.class));
+
+    return response.getToken();
+  }
+
+  @NotNull
+  public static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
+    return fromJson(json, (Type)classT);
+  }
+
+  @NotNull
+  public static <T> T fromJson(@Nullable JsonElement json, @NotNull Type type) throws IOException {
+    if (json == null) {
+      throw new JsonException("Unexpected empty response");
+    }
+
+    T res;
+    try {
+      res = gson.fromJson(json, type);
+    }
+    catch (JsonParseException jpe) {
+      throw new JsonException("Parse exception converting JSON to object " + type.toString(), jpe);
+    }
+    if (res == null) {
+      throw new JsonException("Empty Json response");
+    }
+    return res;
+  }
+
+  @NotNull
+  public static GithubUserDetailed getCurrentUserInfo(@NotNull GithubAuthData auth) throws IOException {
+    JsonElement result = getRequest(auth, "/user");
+    return GithubUserDetailed.createDetailed(fromJson(result, GithubUserRaw.class));
+  }
+
+  @NotNull
+  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
+    return doGetAvailableRepos(auth, null);
+  }
+
+  @NotNull
+  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
+    return doGetAvailableRepos(auth, user);
+  }
+
+  @NotNull
+  private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
+    String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
+    JsonElement result = getRequest(auth, request);
+
+    List<GithubRepoRaw> rawRepos = fromJson(result, new TypeToken<List<GithubRepoRaw>>() {
+    }.getType());
+
+    List<GithubRepo> repos = new ArrayList<GithubRepo>();
+    for (GithubRepoRaw raw : rawRepos) {
+      repos.add(GithubRepo.create(raw));
+    }
+    return repos;
+  }
+
+  @NotNull
+  public static GithubRepoDetailed getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name)
+    throws IOException {
+    final String request = "/repos/" + owner + "/" + name;
+
+    JsonElement jsonObject = getRequest(auth, request);
+
+    return GithubRepoDetailed.createDetailed(fromJson(jsonObject, GithubRepoRaw.class));
+  }
+
+  public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String username, @NotNull String repo)
+    throws IOException {
+    String path = "/repos/" + username + "/" + repo;
+    deleteRequest(auth, path);
+  }
+
+  public static void deleteGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
+    String path = "/gists/" + id;
+    deleteRequest(auth, path);
+  }
+
+  @NotNull
+  public static GithubGistRaw getGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
+    String path = "/gists/" + id;
+    JsonElement result = getRequest(auth, path);
+
+    return fromJson(result, GithubGistRaw.class);
+  }
+
+  @NotNull
+  public static GithubGist createGist(@NotNull GithubAuthData auth,
+                                      @NotNull Map<String, String> contents,
+                                      @NotNull String description,
+                                      boolean isPrivate) throws IOException {
+    String request = gson.toJson(new GithubGistRequest(contents, description, !isPrivate));
+    return GithubGist.create(fromJson(postRequest(auth, "/gists", request), GithubGistRaw.class));
+  }
+
+  @NotNull
+  public static GithubRepo createRepo(@NotNull GithubAuthData auth, @NotNull String name, @NotNull String description, boolean isPublic)
+    throws IOException {
+    String path = "/user/repos";
+
+    GithubRepoRequest request = new GithubRepoRequest(name, description, isPublic);
+
+    return GithubRepo.create(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class));
   }
 }

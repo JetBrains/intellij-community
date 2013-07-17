@@ -19,33 +19,28 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.Patches;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
-import java.util.concurrent.*;
+import java.lang.reflect.Method;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public abstract class JobScheduler {
   private static final ScheduledThreadPoolExecutor ourScheduledExecutorService;
   private static final int TASK_LIMIT = 50;
   private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobScheduler");
   private static final ThreadLocal<Long> start = new ThreadLocal<Long>();
+  private static final boolean doTiming = true;
 
   static {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-      @NotNull
-      @Override
-      public Thread newThread(@NotNull final Runnable r) {
-        final Thread thread = new Thread(r, "Periodic tasks thread");
-        thread.setDaemon(true);
-        thread.setPriority(Thread.NORM_PRIORITY);
-        return thread;
-      }
-    }) {
-      private static final boolean doTiming = true;
-
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, ConcurrencyUtil.newNamedThreadFactory("Periodic tasks thread", true, Thread.NORM_PRIORITY)) {
       @Override
       protected void beforeExecute(Thread t, Runnable r) {
         if (doTiming) {
@@ -83,7 +78,20 @@ public abstract class JobScheduler {
     };
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
     executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+    enableRemoveOnCancelPolicy(executor);
     ourScheduledExecutorService = executor;
+  }
+
+  private static void enableRemoveOnCancelPolicy(ScheduledThreadPoolExecutor executor) {
+    if (Patches.USE_REFLECTION_TO_ACCESS_JDK7) {
+      try {
+        Method setRemoveOnCancelPolicy = ScheduledThreadPoolExecutor.class.getDeclaredMethod("setRemoveOnCancelPolicy", boolean.class);
+        setRemoveOnCancelPolicy.setAccessible(true);
+        setRemoveOnCancelPolicy.invoke(executor, true);
+      }
+      catch (Exception ignored) {
+      }
+    }
   }
 
   public static JobScheduler getInstance() {

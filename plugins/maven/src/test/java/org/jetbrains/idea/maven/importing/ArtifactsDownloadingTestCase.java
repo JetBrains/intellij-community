@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -32,7 +33,8 @@ public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCas
   }
 
   protected void createDummyArtifact(String remoteRepo, String name) throws IOException {
-    FileUtil.writeToFile(new File(remoteRepo, name), "111".getBytes());
+    FileUtil.writeToFile(new File(remoteRepo, name), PlatformTestUtil.EMPTY_JAR_BYTES);
+
     FileUtil.writeToFile(new File(remoteRepo, name + ".sha1"), ("6216f8a75fd5bb3d5f22b6f9958cdede3fc086c2  " + name).getBytes());
   }
 }

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.github;
 
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.test.GithubTest;
 
 import java.util.ArrayList;
@@ -34,9 +36,9 @@ public class GithubRequestPagingTest extends GithubTest {
 
   public void testAvailableRepos() throws Throwable {
 
-    List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(myGitHubSettings.getAuthData(), myLogin2);
+    List<GithubRepo> availableRepos = GithubApiUtil.getAvailableRepos(myGitHubSettings.getAuthData(), myLogin2);
     List<String> realData = new ArrayList<String>();
-    for (RepositoryInfo info : availableRepos) {
+    for (GithubRepo info : availableRepos) {
       realData.add(info.getName());
     }
 

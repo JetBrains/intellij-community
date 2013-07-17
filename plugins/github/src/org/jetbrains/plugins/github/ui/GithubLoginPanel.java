@@ -103,6 +103,11 @@ public class GithubLoginPanel {
     }
   }
 
+  public void lockAuthType(@NotNull GithubAuthData.AuthType type) {
+    setAuthType(type);
+    myAuthTypeComboBox.setEnabled(false);
+  }
+
   @NotNull
   public String getHost() {
     return myHostTextField.getText().trim();

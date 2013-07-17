@@ -21,10 +21,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
 
@@ -75,7 +72,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     }
     final PsiImportStatementBase foundImport = findImport(element, importStatements);
     if (foundImport != null) {
-      removeAll(foundImport);
+      importStatements.remove(foundImport);
       usedImportStatements.add(foundImport);
     }
   }
@@ -147,17 +144,6 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
       }
     }
     return null;
-  }
-
-  private void removeAll(@NotNull PsiImportStatementBase importStatement) {
-    for (int i = importStatements.size() - 1; i >= 0; i--) {
-      final PsiImportStatementBase statement = importStatements.get(i);
-      final String statementText = statement.getText();
-      final String importText = importStatement.getText();
-      if (importText.equals(statementText)) {
-        importStatements.remove(i);
-      }
-    }
   }
 
   public PsiImportStatementBase[] getUnusedImportStatements() {

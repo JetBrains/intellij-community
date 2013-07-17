@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
+public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> {
 
   public NewScriptAction() {
     super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"),

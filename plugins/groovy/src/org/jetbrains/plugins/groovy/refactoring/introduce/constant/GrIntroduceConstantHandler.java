@@ -15,10 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -35,6 +38,9 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -110,6 +116,26 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   @Override
   public GrField runRefactoring(@NotNull GrIntroduceContext context, @NotNull GrIntroduceConstantSettings settings) {
     return new GrIntroduceConstantProcessor(context, settings).run();
+  }
+
+  @Override
+  protected InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences) {
+    return null;
+  }
+
+  @Override
+  protected GrIntroduceConstantSettings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
+    return null;
+  }
+
+  @Override
+  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
+    return null;
+  }
+
+  @Override
+  protected boolean isInplace(GrIntroduceContext context) {
+    return false;
   }
 
   private static class ConstantChecker extends GroovyRecursiveElementVisitor {

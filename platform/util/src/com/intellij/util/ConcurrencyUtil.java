@@ -96,14 +96,7 @@ public class ConcurrencyUtil {
   public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls @NotNull final String threadFactoryName, final int threadPriority) {
     return new ThreadPoolExecutor(1, 1,
                                     0L, TimeUnit.MILLISECONDS,
-                                    new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-      public Thread newThread(final Runnable r) {
-        final Thread thread = new Thread(r, threadFactoryName);
-        thread.setDaemon(true);
-        thread.setPriority(threadPriority);
-        return thread;
-      }
-    });
+                                    new LinkedBlockingQueue<Runnable>(), newNamedThreadFactory(threadFactoryName, true, threadPriority));
   }
 
   @NotNull
@@ -113,16 +106,33 @@ public class ConcurrencyUtil {
 
   @NotNull
   public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls @NotNull final String threadFactoryName, final int threadPriority) {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-      public Thread newThread(final Runnable r) {
-        final Thread thread = new Thread(r, threadFactoryName);
-        thread.setDaemon(true);
-        thread.setPriority(threadPriority);
-        return thread;
-      }
-    });
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, newNamedThreadFactory(threadFactoryName, true, threadPriority));
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
     executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
     return executor;
+  }
+
+  @NotNull
+  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String threadName, final boolean isDaemon, final int threadPriority) {
+    return new ThreadFactory() {
+          @NotNull
+          @Override
+          public Thread newThread(@NotNull final Runnable r) {
+            final Thread thread = new Thread(r, threadName);
+            thread.setDaemon(isDaemon);
+            thread.setPriority(threadPriority);
+            return thread;
+          }
+        };
+  }
+  @NotNull
+  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String threadName) {
+    return new ThreadFactory() {
+          @NotNull
+          @Override
+          public Thread newThread(@NotNull final Runnable r) {
+            return new Thread(r, threadName);
+          }
+        };
   }
 }

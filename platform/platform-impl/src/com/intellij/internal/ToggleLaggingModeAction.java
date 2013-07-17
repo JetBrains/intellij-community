@@ -55,7 +55,9 @@ public class ToggleLaggingModeAction extends AnAction implements DumbAware {
                 DebugUtil.sleep(1);
               }
             }, new EmptyProgressIndicator());
-            myAlarm.addRequest(this, 1);
+            if (myLagging) {
+              myAlarm.addRequest(this, 1);
+            }
           }
         }.run();
       }

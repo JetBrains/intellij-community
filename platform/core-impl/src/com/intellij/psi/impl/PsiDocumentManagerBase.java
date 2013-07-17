@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -375,6 +376,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     });
     return ref.get();
+  }
+
+  @Override
+  public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
+    FileContentUtilCore.reparseFiles(files);
   }
 
   @Override

@@ -15,10 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,6 +58,11 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_FIELD;
+  }
+
+  @Override
+  protected boolean isInplace(GrIntroduceContext context) {
+    return false;
   }
 
   @NotNull
@@ -103,6 +112,64 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   @Override
   public GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings) {
     return new GrIntroduceFieldProcessor(context, settings).run();
+  }
+
+  @Override
+  protected InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences) {
+    return new GrInplaceFieldIntroducer(var, context, occurrences);
+  }
+
+  @Override
+  protected GrIntroduceFieldSettings getSettingsForInplace(final GrIntroduceContext context, final OccurrencesChooser.ReplaceChoice choice) {
+    return new GrIntroduceFieldSettings() {
+      @Override
+      public boolean declareFinal() {
+        return false;
+      }
+
+      @Override
+      public Init initializeIn() {
+        return Init.CUR_METHOD;
+      }
+
+      @Override
+      public String getVisibilityModifier() {
+        return PsiModifier.PRIVATE;
+      }
+
+      @Override
+      public boolean isStatic() {
+        return false;
+      }
+
+      @Override
+      public boolean removeLocalVar() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public String getName() {
+        return getDialog(context).suggestNames().iterator().next();
+      }
+
+      @Override
+      public boolean replaceAllOccurrences() {
+        return choice == OccurrencesChooser.ReplaceChoice.ALL;
+      }
+
+      @Nullable
+      @Override
+      public PsiType getSelectedType() {
+        GrExpression expression = context.getExpression();
+        GrVariable var = context.getVar();
+        StringPartInfo stringPart = context.getStringPart();
+        return expression != null ? expression.getType() :
+               var != null ? var.getType() :
+               stringPart != null ? stringPart.getLiteral().getType() :
+               null;
+      }
+    };
   }
 
   @NotNull

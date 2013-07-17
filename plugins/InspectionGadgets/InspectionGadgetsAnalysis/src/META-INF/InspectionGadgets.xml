@@ -946,9 +946,6 @@
     <localInspection language="JAVA" shortName="OnDemandImport" bundle="com.siyeh.InspectionGadgetsBundle" key="import.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.imports.OnDemandImportInspection"/>
-    <localInspection language="JAVA" shortName="RedundantImport" bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.import.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.imports.RedundantImportInspection"/>
     <localInspection language="JAVA" shortName="SamePackageImport" bundle="com.siyeh.InspectionGadgetsBundle" key="import.from.same.package.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.imports.SamePackageImportInspection"/>

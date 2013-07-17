@@ -357,7 +357,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean shouldShowLookup() {
-    if (isAutopopupCompletion() && myLookup.isCalculating()) {
+    if (isAutopopupCompletion() && myLookup.isCalculating() && Registry.is("ide.completion.delay.autopopup.until.completed")) {
       return false;
     }
     return true;

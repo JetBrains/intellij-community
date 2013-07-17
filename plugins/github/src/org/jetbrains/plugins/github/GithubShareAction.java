@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -50,6 +48,7 @@ import git4idea.util.GitUIUtil;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import javax.swing.*;
@@ -199,27 +198,21 @@ public class GithubShareAction extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           // get existing github repos (network) and validate auth data
-          final Ref<List<RepositoryInfo>> availableReposRef = new Ref<List<RepositoryInfo>>();
+          final Ref<List<GithubRepo>> availableReposRef = new Ref<List<GithubRepo>>();
           final GithubAuthData auth =
             GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
               @Override
               public void consume(GithubAuthData authData) throws IOException {
-                availableReposRef.set(GithubUtil.getAvailableRepos(authData));
+                availableReposRef.set(GithubApiUtil.getAvailableRepos(authData));
               }
             });
-          if (auth == null || availableReposRef.isNull()) {
-            return;
-          }
           final HashSet<String> names = new HashSet<String>();
-          for (RepositoryInfo info : availableReposRef.get()) {
+          for (GithubRepo info : availableReposRef.get()) {
             names.add(info.getName());
           }
 
           // check access to private repos (network)
-          final GithubUser userInfo = GithubUtil.getCurrentUserInfo(auth);
-          if (userInfo == null) {
-            return;
-          }
+          final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserInfo(auth);
           githubInfoRef.set(new GithubInfo(auth, userInfo, names));
         }
         catch (IOException e) {
@@ -231,10 +224,6 @@ public class GithubShareAction extends DumbAwareAction {
       GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get().getMessage());
       return null;
     }
-    if (githubInfoRef.isNull()) {
-      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", "Failed to gather user information");
-      return null;
-    }
     return githubInfoRef.get();
   }
 
@@ -244,37 +233,15 @@ public class GithubShareAction extends DumbAwareAction {
                                                @NotNull String name,
                                                @NotNull String description,
                                                boolean isPrivate) {
-    String path = "/user/repos";
-    String requestBody = prepareRequest(name, description, isPrivate);
-    JsonElement result;
+
     try {
-      result = GithubApiUtil.postRequest(auth, path, requestBody);
+      GithubRepo response = GithubApiUtil.createRepo(auth, name, description, !isPrivate);
+      return response.getHtmlUrl();
     }
     catch (IOException e) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", e);
+      GithubNotifications.showError(project, "Failed to create GitHub Repository", e);
       return null;
     }
-    if (result == null) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", "result is null");
-      return null;
-    }
-    if (!result.isJsonObject()) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
-      return null;
-    }
-    if (!result.getAsJsonObject().has("html_url")) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", "Failed to create new GitHub repository", result.toString());
-      return null;
-    }
-    return result.getAsJsonObject().get("html_url").getAsString();
-  }
-
-  private static String prepareRequest(String name, String description, boolean isPrivate) {
-    JsonObject json = new JsonObject();
-    json.addProperty("name", name);
-    json.addProperty("description", description);
-    json.addProperty("public", Boolean.toString(!isPrivate));
-    return json.toString();
   }
 
   private static boolean createEmptyGitRepository(@NotNull Project project,
@@ -314,7 +281,8 @@ public class GithubShareAction extends DumbAwareAction {
     return true;
   }
 
-  private static boolean performFirstCommitIfRequired(@NotNull final Project project, @NotNull VirtualFile root,
+  private static boolean performFirstCommitIfRequired(@NotNull final Project project,
+                                                      @NotNull VirtualFile root,
                                                       @NotNull GitRepository repository,
                                                       @NotNull ProgressIndicator indicator,
                                                       @NotNull String name,
@@ -372,7 +340,9 @@ public class GithubShareAction extends DumbAwareAction {
   private static boolean pushCurrentBranch(@NotNull Project project,
                                            @NotNull GitRepository repository,
                                            @NotNull String remoteName,
-                                           @NotNull String remoteUrl, @NotNull String name, @NotNull String url) {
+                                           @NotNull String remoteUrl,
+                                           @NotNull String name,
+                                           @NotNull String url) {
     Git git = ServiceManager.getService(Git.class);
 
     GitLocalBranch currentBranch = repository.getCurrentBranch();
@@ -436,18 +406,18 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   private static class GithubInfo {
-    @NotNull private final GithubUser myUser;
+    @NotNull private final GithubUserDetailed myUser;
     @NotNull private final GithubAuthData myAuthData;
     @NotNull private final HashSet<String> myRepositoryNames;
 
-    GithubInfo(@NotNull GithubAuthData auth, @NotNull GithubUser user, @NotNull HashSet<String> repositoryNames) {
+    GithubInfo(@NotNull GithubAuthData auth, @NotNull GithubUserDetailed user, @NotNull HashSet<String> repositoryNames) {
       myUser = user;
       myAuthData = auth;
       myRepositoryNames = repositoryNames;
     }
 
     @NotNull
-    public GithubUser getUser() {
+    public GithubUserDetailed getUser() {
       return myUser;
     }
 

@@ -33,7 +33,7 @@ public class AttributeBinding implements Binding {
   }
 
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, Object context, SerializationFilter filter) {
     final Object v = myAccessor.read(o);
     final Object node = myBinding.serialize(v, context, filter);
 

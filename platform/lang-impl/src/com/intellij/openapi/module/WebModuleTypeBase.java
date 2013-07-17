@@ -26,7 +26,7 @@ import javax.swing.*;
  * @author yole
  */
 public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
-  @NonNls public static final String WEB_MODULE = "WEB_MODULE";
+  @NonNls public static final String WEB_MODULE = ModuleTypeId.WEB_MODULE;
 
   public WebModuleTypeBase() {
     super(WEB_MODULE);

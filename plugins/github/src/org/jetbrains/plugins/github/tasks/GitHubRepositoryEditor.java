@@ -15,6 +15,8 @@ import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.*;
+import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -134,11 +136,11 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          tokenRef.set(GithubUtil.runWithValidAuth(myProject, indicator, new ThrowableConvertor<GithubAuthData, String, IOException>() {
+          tokenRef.set(GithubUtil.runWithValidBasicAuth(myProject, indicator, new ThrowableConvertor<GithubAuthData, String, IOException>() {
             @Nullable
             @Override
             public String convert(GithubAuthData auth) throws IOException {
-              return GithubUtil.getScopedToken(auth, scopes, "Intellij tasks plugin");
+              return GithubApiUtil.getScopedToken(auth, scopes, "Intellij tasks plugin");
 
             }
           }));
@@ -149,16 +151,10 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
       }
     });
     if (!exceptionRef.isNull()) {
-      if (exceptionRef.get() instanceof AuthenticationException) {
-        GithubNotifications.showWarningDialog(myProject, "Can't get access token", "You need to provide basic authentication");
-        return;
-      }
       GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get().getMessage());
       return;
     }
-    if (!tokenRef.isNull()) {
-      myToken.setText(tokenRef.get());
-    }
+    myToken.setText(tokenRef.get());
   }
 
   @Override

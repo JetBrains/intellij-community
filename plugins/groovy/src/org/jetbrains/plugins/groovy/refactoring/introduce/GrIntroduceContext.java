@@ -48,4 +48,7 @@ public interface GrIntroduceContext {
 
   @NotNull
   PsiElement getPlace();
+
+  @NotNull
+  PsiElement getElementToIntroduce();
 }

@@ -56,7 +56,7 @@ public abstract class InspectionProfileEntry {
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer = null;
 
-  public void cleanup() {
+  public void cleanup(Project project) {
 
   }
 

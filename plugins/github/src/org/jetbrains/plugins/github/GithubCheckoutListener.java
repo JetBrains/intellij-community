@@ -2,13 +2,13 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.checkout.CheckoutListener;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.tasks.GitHubRepository;
 import org.jetbrains.plugins.github.tasks.GitHubRepositoryType;
 
@@ -30,14 +30,14 @@ public class GithubCheckoutListener implements CheckoutListener {
 
   @Override
   public void processOpenedProject(final Project lastOpenedProject) {
-    //final GithubUserAndRepository info = getGithubProjectInfo(lastOpenedProject);
+    //final GithubFullPath info = getGithubProjectInfo(lastOpenedProject);
     //if (info != null) {
-    //  processProject(lastOpenedProject, info.getUserName(), info.getRepositoryName());
+    //  processProject(lastOpenedProject, info.getUser(), info.getRepository());
     //}
   }
 
   @Nullable
-  private static GithubUserAndRepository getGithubProjectInfo(final Project project) {
+  private static GithubFullPath getGithubProjectInfo(final Project project) {
     final GitRepository gitRepository = GithubUtil.getGitRepository(project, null);
     if (gitRepository == null) {
       return null;

@@ -30,7 +30,9 @@ class AccessorBindingWrapper implements Binding {
   }
 
   public Object serialize(Object o, Object context, SerializationFilter filter) {
-    return myBinding.serialize(myAccessor.read(o), context, filter);
+    Object value = myAccessor.read(o);
+    assert value != null : "Property " + myAccessor + " of object " + o + " must not be null";
+    return myBinding.serialize(value, context, filter);
   }
 
   @Nullable

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
@@ -21,7 +22,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   private final GithubLoginPanel myGithubLoginPanel;
 
-  public GithubLoginDialog(final Project project) {
+  public GithubLoginDialog(@Nullable final Project project) {
     super(project, true);
     myGithubLoginPanel = new GithubLoginPanel(this);
 
@@ -59,14 +60,10 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
-      if (GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin())) {
-        final GithubSettings settings = GithubSettings.getInstance();
-        settings.setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.shouldSavePassword());
-        super.doOKAction();
-      }
-      else {
-        setErrorText("Can't login with given credentials");
-      }
+      GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin());
+      final GithubSettings settings = GithubSettings.getInstance();
+      settings.setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.shouldSavePassword());
+      super.doOKAction();
     }
     catch (IOException e) {
       LOG.info(e);
@@ -81,5 +78,9 @@ public class GithubLoginDialog extends DialogWrapper {
   @NotNull
   public GithubAuthData getAuthData() {
     return myGithubLoginPanel.getAuthData();
+  }
+
+  public void setBasicOnly() {
+    myGithubLoginPanel.lockAuthType(GithubAuthData.AuthType.BASIC);
   }
 }

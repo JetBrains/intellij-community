@@ -16,18 +16,21 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
@@ -39,10 +42,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -64,9 +70,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -101,6 +105,27 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public abstract GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
+
+  protected abstract InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences);
+
+  protected abstract Settings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice);
+
+  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
+    HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = ContainerUtil.newLinkedHashMap();
+
+    if (context.getExpression() != null) {
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getExpression()));
+    }
+    else if (context.getStringPart() != null) {
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getStringPart()));
+    }
+
+    PsiElement[] occurrences = context.getOccurrences();
+    if (occurrences.length > 1) {
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.<Object>asList(occurrences));
+    }
+    return map;
+  }
 
   @NotNull
   public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, boolean acceptVoidCalls) {
@@ -284,20 +309,62 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         return false;
       }
       checkOccurrences(context.getOccurrences());
-      final Settings settings = showDialog(context);
-      if (settings == null) return false;
 
-      CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
-      public void run() {
-        AccessToken accessToken = WriteAction.start();
-        try {
-          runRefactoring(context, settings);
+
+      final boolean isInplace = isInplace(context);
+      Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
+        @Override
+        public void pass(OccurrencesChooser.ReplaceChoice choice) {
+
+          final Settings settings = isInplace ? getSettingsForInplace(context, choice) : showDialog(context);
+          if (settings == null) return;
+
+          CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
+            public void run() {
+              List<RangeMarker> occurrences = ContainerUtil.newArrayList();
+              Document document = editor.getDocument();
+              for (PsiElement element : context.getOccurrences()) {
+                occurrences.add(document.createRangeMarker(element.getTextRange()));
+              }
+              GrVariable var = ApplicationManager.getApplication().runWriteAction(new Computable<GrVariable>() {
+                @Override
+                public GrVariable compute() {
+                  return runRefactoring(context, settings);
+                }
+              });
+
+              if (isInplace && var != null) {
+                editor.getCaretModel().moveToOffset(var.getTextOffset());
+
+                InplaceVariableIntroducer<PsiElement> introducer = getIntroducer(var, context, occurrences);
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
+                introducer.performInplaceRefactoring(getDialog(context).suggestNames());
+              }
+            }
+          }, getRefactoringName(), null);
         }
-        finally {
-          accessToken.finish();
-        }
+      };
+
+      if (isInplace(context)) {
+        Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = fillChoice(context);
+        new OccurrencesChooser<Object>(editor) {
+          @Override
+          protected TextRange getOccurrenceRange(Object occurrence) {
+            if (occurrence instanceof PsiElement) {
+              return ((PsiElement)occurrence).getTextRange();
+            }
+            else if (occurrence instanceof StringPartInfo) {
+              return ((StringPartInfo)occurrence).getRange();
+            }
+            else {
+              return null;
+            }
+          }
+        }.showChooser(callback, occurrencesMap);
       }
-    }, getRefactoringName(), null);
+      else {
+        callback.pass(null);
+      }
 
       return true;
     }
@@ -305,6 +372,15 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
+  }
+
+
+  protected boolean isInplace(GrIntroduceContext context) {
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(context.getPlace().getLanguage());
+    return supportProvider != null &&
+           context.getEditor().getSettings().isVariableInplaceRenameEnabled() &&
+           supportProvider.isInplaceIntroduceAvailable(context.getElementToIntroduce(), context.getPlace()) &&
+           !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @Nullable
@@ -368,7 +444,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   private Settings showDialog(@NotNull GrIntroduceContext context) {
 
-    // Add occurences highlighting
+    // Add occurrences highlighting
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = null;
     if (context.getEditor() != null) {

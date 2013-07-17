@@ -9343,7 +9343,6 @@ inspectionDescriptions/FinalizeNotProtected.html:/plugins/InspectionGadgets/lib/
 inspectionDescriptions/NoExplicitFinalizeCalls.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/JavaLangImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/OnDemandImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
-inspectionDescriptions/RedundantImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/SamePackageImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/SingleClassImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/StaticImport.html:/plugins/InspectionGadgets/lib/resources_en.jar

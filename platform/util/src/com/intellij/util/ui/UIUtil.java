@@ -2647,11 +2647,10 @@ public class UIUtil {
     }
   }
 
-  private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
-  private static final Color DECORATED_ROW_BG_COLOR_DARK = Gray._75;
+  private static final Color DECORATED_ROW_BG_COLOR = new JBColor(new Color(242, 245, 249), new Color(79, 83, 84));
 
   public static Color getDecoratedRowColor() {
-    return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
+    return DECORATED_ROW_BG_COLOR;
   }
 
   @NotNull

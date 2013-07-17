@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -93,6 +94,9 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
             return filterAssignableFrom(initializer.getType(), candidates);
           }
         }
+      }
+      if (decl instanceof GrParameter) {
+        return filterBySuperMethods((PsiParameter)decl, candidates);
       }
     }
 

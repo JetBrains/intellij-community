@@ -381,7 +381,7 @@ public class PsiUtilCore {
     return 0;
   }
 
-  public static boolean hasErrorElementChild(PsiElement element) {
+  public static boolean hasErrorElementChild(@NotNull PsiElement element) {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiErrorElement) return true;
     }

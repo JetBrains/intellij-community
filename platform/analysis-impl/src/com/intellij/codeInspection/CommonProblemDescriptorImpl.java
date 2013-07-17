@@ -1,6 +1,10 @@
 package com.intellij.codeInspection;
 
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -18,7 +22,8 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
       myFixes = QuickFix.EMPTY_ARRAY;
     }
     else {
-      myFixes = fixes;
+      // no copy in most cases
+      myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.<QuickFix>id(), QuickFix.EMPTY_ARRAY) : fixes;
     }
     myDescriptionTemplate = descriptionTemplate;
   }
@@ -30,6 +35,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   }
 
   @Override
+  @Nullable
   public QuickFix[] getFixes() {
     return myFixes;
   }

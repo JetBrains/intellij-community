@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -205,14 +206,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
 
     private static ThreadPoolExecutor createServiceImpl() {
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
-        @NotNull
-        @Override
-        @SuppressWarnings({"HardCodedStringLiteral"})
-        public Thread newThread(@NotNull Runnable r) {
-          return new Thread(r, "OSProcessHandler pooled thread");
-        }
-      });
+      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread"));
     }
 
     public static Future<?> submit(Runnable task) {

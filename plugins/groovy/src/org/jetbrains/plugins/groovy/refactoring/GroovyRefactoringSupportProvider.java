@@ -93,6 +93,12 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   }
 
   @Override
+  public boolean isInplaceIntroduceAvailable(PsiElement element, PsiElement context) {
+    if (context == null || context.getContainingFile() != element.getContainingFile()) return false;
+    return true;
+  }
+
+  @Override
   public boolean isMemberInplaceRenameAvailable(PsiElement element, PsiElement context) {
     PsiElement parent = context.getParent();
 

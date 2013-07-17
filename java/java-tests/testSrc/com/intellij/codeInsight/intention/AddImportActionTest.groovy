@@ -100,6 +100,27 @@ public class Foo {
 '''
   }
 
+  public void testUseOverrideContext() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package bar; public class Log {}'
+    myFixture.addClass 'package goo; public class Super { public void foo(foo.Log log) {} }'
+    myFixture.configureByText 'a.java', '''\
+public class Foo extends goo.Super {
+    @Override
+    public void foo(Log<caret> log) {}
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.Log;
+
+public class Foo extends goo.Super {
+    @Override
+    public void foo(Log<caret> log) {}
+}
+'''
+
+  }
+
   public void testAnnotatedImport() {
     myFixture.configureByText 'a.java', '''
 import java.lang.annotation.*;

@@ -21,7 +21,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -377,6 +377,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
       setToken(PasswordUtil.decodePassword(password));
     }
     catch (NumberFormatException e) {
+    // nothing to do
     }
   }
 
