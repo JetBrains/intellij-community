@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.Consumer;
@@ -47,9 +46,8 @@ public class ExtractMethodHelper {
                                        @NotNull final List<PsiElement> scope,
                                        @NotNull final SimpleDuplicatesFinder finder,
                                        @NotNull final Editor editor,
-                                       @NotNull final Consumer<Pair<SimpleMatch, PsiElement>> replacer,
-                                       @NotNull final IElementType identifierElementType) {
-    final List<SimpleMatch> duplicates = finder.findDuplicates(scope, generatedMethod, identifierElementType);
+                                       @NotNull final Consumer<Pair<SimpleMatch, PsiElement>> replacer) {
+    final List<SimpleMatch> duplicates = finder.findDuplicates(scope, generatedMethod);
 
     if (duplicates.size() > 0) {
       final String message = RefactoringBundle
