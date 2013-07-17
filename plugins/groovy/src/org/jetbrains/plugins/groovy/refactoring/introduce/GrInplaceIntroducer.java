@@ -16,39 +16,39 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+
+import java.util.List;
 
 /**
  * @author Max Medvedev
  */
-public interface GrIntroduceContext {
-  @NotNull
-  Project getProject();
-
-  Editor getEditor();
+public abstract class GrInplaceIntroducer extends InplaceVariableIntroducer<PsiElement> {
+  public GrInplaceIntroducer(@NotNull GrVariable elementToRename,
+                             @NotNull Editor editor,
+                             @NotNull Project project,
+                             @NotNull String title,
+                             @NotNull List<RangeMarker> occurrences,
+                             @Nullable PsiElement elementToIntroduce) {
+    super(elementToRename, editor, project, title, PsiElement.EMPTY_ARRAY, elementToIntroduce);
+    setOccurrenceMarkers(occurrences);
+  }
 
   @Nullable
-  GrExpression getExpression();
+  @Override
+  protected PsiElement getNameIdentifier() {
+    return getVariable().getNameIdentifierGroovy();
+  }
 
   @Nullable
-  GrVariable getVar();
-
-  @Nullable
-  StringPartInfo getStringPart();
-
-  @NotNull
-  PsiElement[] getOccurrences();
-
-  PsiElement getScope();
-
-  @NotNull
-  PsiElement getPlace();
-
-  @NotNull
-  PsiElement getElementToIntroduce();
+  @Override
+  protected GrVariable getVariable() {
+    return (GrVariable)super.getVariable();
+  }
 }
