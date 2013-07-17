@@ -16,6 +16,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
@@ -58,11 +59,15 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     if (myInputValidator != null) {
       final String text = myNameField.getText();
       final boolean canClose = myInputValidator.canClose(text);
-      if (!canClose && myInputValidator instanceof InputValidatorEx) {
-        final String errorText = ((InputValidatorEx)myInputValidator).getErrorText(text);
-        if (errorText != null) {
-          return new ValidationInfo(errorText, myNameField);
+      if (!canClose) {
+        String errorText = LangBundle.message("incorrect.name");
+        if (myInputValidator instanceof InputValidatorEx) {
+          String message = ((InputValidatorEx)myInputValidator).getErrorText(text);
+          if (message != null) {
+            errorText = message;
+          }
         }
+        return new ValidationInfo(errorText, myNameField);
       }
     }
     return super.doValidate();
