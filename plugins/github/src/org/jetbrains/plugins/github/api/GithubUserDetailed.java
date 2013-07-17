@@ -15,10 +15,8 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubUtil;
 
 import java.io.Serializable;
 
@@ -48,20 +46,19 @@ public class GithubUserDetailed extends GithubUser {
     private long collaborators;
     private long privateRepos;
 
-    @Nullable
-    public static GithubUserPlan create(@Nullable GithubUserRaw.GithubUserPlanRaw raw) {
+    @NotNull
+    public static GithubUserPlan create(@Nullable GithubUserRaw.GithubUserPlanRaw raw) throws JsonException {
       try {
-        if (raw == null) throw new JsonParseException("raw is null");
-        if (raw.name == null) throw new JsonParseException("name is null");
-        if (raw.space == null) throw new JsonParseException("space is null");
-        if (raw.collaborators == null) throw new JsonParseException("collaborators is null");
-        if (raw.privateRepos == null) throw new JsonParseException("privateRepos is null");
+        if (raw == null) throw new JsonException("raw is null");
+        if (raw.name == null) throw new JsonException("name is null");
+        if (raw.space == null) throw new JsonException("space is null");
+        if (raw.collaborators == null) throw new JsonException("collaborators is null");
+        if (raw.privateRepos == null) throw new JsonException("privateRepos is null");
 
         return new GithubUserPlan(raw.name, raw.space, raw.collaborators, raw.privateRepos);
       }
-      catch (JsonParseException e) {
-        GithubUtil.LOG.info("GithubUserPlan parse error: " + e.getMessage());
-        return null;
+      catch (JsonException e) {
+        throw new JsonException("GithubUserPlan parse error", e);
       }
     }
 
@@ -94,30 +91,26 @@ public class GithubUserDetailed extends GithubUser {
     return getPlan().getPrivateRepos() > getOwnedPrivateRepos();
   }
 
-  @Nullable
-  public static GithubUserDetailed createDetailed(@Nullable GithubUserRaw raw) {
+  @NotNull
+  public static GithubUserDetailed createDetailed(@Nullable GithubUserRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonParseException("raw is null");
-      if (raw.type == null) throw new JsonParseException("type is null");
-      if (raw.publicRepos == null) throw new JsonParseException("publicRepos is null");
-      if (raw.publicGists == null) throw new JsonParseException("publicGists is null");
-      if (raw.totalPrivateRepos == null) throw new JsonParseException("totalPrivateRepos is null");
-      if (raw.ownedPrivateRepos == null) throw new JsonParseException("ownedPrivateRepos is null");
-      if (raw.privateGists == null) throw new JsonParseException("privateGists is null");
-      if (raw.diskUsage == null) throw new JsonParseException("diskUsage is null");
+      if (raw == null) throw new JsonException("raw is null");
+      if (raw.type == null) throw new JsonException("type is null");
+      if (raw.publicRepos == null) throw new JsonException("publicRepos is null");
+      if (raw.publicGists == null) throw new JsonException("publicGists is null");
+      if (raw.totalPrivateRepos == null) throw new JsonException("totalPrivateRepos is null");
+      if (raw.ownedPrivateRepos == null) throw new JsonException("ownedPrivateRepos is null");
+      if (raw.privateGists == null) throw new JsonException("privateGists is null");
+      if (raw.diskUsage == null) throw new JsonException("diskUsage is null");
 
       GithubUser user = GithubUser.create(raw);
-      if (user == null) throw new JsonParseException("user is null");
-
       GithubUserPlan plan = GithubUserPlan.create(raw.plan);
-      if (plan == null) throw new JsonParseException("plan is null");
 
       return new GithubUserDetailed(user, raw.name, raw.email, raw.company, raw.location, raw.type, raw.publicRepos, raw.publicGists,
                                     raw.totalPrivateRepos, raw.ownedPrivateRepos, raw.privateGists, raw.diskUsage, plan);
     }
-    catch (JsonParseException e) {
-      GithubUtil.LOG.info("GithubUserDetailed parse error: " + e.getMessage());
-      return null;
+    catch (JsonException e) {
+      throw new JsonException("GithubUserDetailed parse error", e);
     }
   }
 

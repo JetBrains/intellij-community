@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import com.google.gson.JsonParseException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubUtil;
 
 import java.util.Map;
 
@@ -51,21 +49,20 @@ public class GithubGist {
 
     @NotNull private String type;
 
-    @Nullable
-    public static GistFile create(@Nullable GistFileRaw raw) {
+    @NotNull
+    public static GistFile create(@Nullable GistFileRaw raw) throws JsonException {
       try {
-        if (raw == null) throw new JsonParseException("raw is null");
-        if (raw.size == null) throw new JsonParseException("size is null");
-        if (raw.filename == null) throw new JsonParseException("filename is null");
-        if (raw.content == null) throw new JsonParseException("content is null");
-        if (raw.raw_url == null) throw new JsonParseException("raw_url is null");
-        if (raw.type == null) throw new JsonParseException("type is null");
+        if (raw == null) throw new JsonException("raw is null");
+        if (raw.size == null) throw new JsonException("size is null");
+        if (raw.filename == null) throw new JsonException("filename is null");
+        if (raw.content == null) throw new JsonException("content is null");
+        if (raw.raw_url == null) throw new JsonException("raw_url is null");
+        if (raw.type == null) throw new JsonException("type is null");
 
         return new GistFile(raw.size, raw.filename, raw.content, raw.raw_url, raw.type);
       }
-      catch (JsonParseException e) {
-        GithubUtil.LOG.info("GistFile parse error: " + e.getMessage());
-        return null;
+      catch (JsonException e) {
+        throw new JsonException("GistFile parse error", e);
       }
     }
 
@@ -115,31 +112,27 @@ public class GithubGist {
     return ret;
   }
 
-  @Nullable
-  public static GithubGist create(@Nullable GithubGistRaw raw) {
+  @NotNull
+  public static GithubGist create(@Nullable GithubGistRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonParseException("raw is null");
-      if (raw.id == null) throw new JsonParseException("id is null");
-      if (raw.description == null) throw new JsonParseException("description is null");
-      if (raw.isPublic == null) throw new JsonParseException("isPublic is null");
-      if (raw.url == null) throw new JsonParseException("url is null");
-      if (raw.htmlUrl == null) throw new JsonParseException("htmlUrl is null");
-      if (raw.files == null) throw new JsonParseException("files is null");
+      if (raw == null) throw new JsonException("raw is null");
+      if (raw.id == null) throw new JsonException("id is null");
+      if (raw.description == null) throw new JsonException("description is null");
+      if (raw.isPublic == null) throw new JsonException("isPublic is null");
+      if (raw.url == null) throw new JsonException("url is null");
+      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
+      if (raw.files == null) throw new JsonException("files is null");
 
       Map<String, GistFile> files = new HashMap<String, GistFile>();
       for (Map.Entry<String, GistFileRaw> entry : raw.files.entrySet()) {
-        GistFile file = GistFile.create(entry.getValue());
-        if (file != null) {
-          files.put(entry.getKey(), file);
-        }
+        files.put(entry.getKey(), GistFile.create(entry.getValue()));
       }
-      GithubUser user = GithubUser.create(raw.user);
+      GithubUser user = raw.user == null ? null : GithubUser.create(raw.user);
 
       return new GithubGist(raw.id, raw.description, raw.isPublic, raw.url, raw.htmlUrl, files, user);
     }
-    catch (JsonParseException e) {
-      GithubUtil.LOG.info("GithubGist parse error: " + e.getMessage());
-      return null;
+    catch (JsonException e) {
+      throw new JsonException("GithubGist parse error", e);
     }
   }
 

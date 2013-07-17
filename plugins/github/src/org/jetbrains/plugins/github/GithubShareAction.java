@@ -218,9 +218,6 @@ public class GithubShareAction extends DumbAwareAction {
 
           // check access to private repos (network)
           final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserInfo(auth);
-          if (userInfo == null) {
-            return;
-          }
           githubInfoRef.set(new GithubInfo(auth, userInfo, names));
         }
         catch (IOException e) {
@@ -315,7 +312,8 @@ public class GithubShareAction extends DumbAwareAction {
     return true;
   }
 
-  private static boolean performFirstCommitIfRequired(@NotNull final Project project, @NotNull VirtualFile root,
+  private static boolean performFirstCommitIfRequired(@NotNull final Project project,
+                                                      @NotNull VirtualFile root,
                                                       @NotNull GitRepository repository,
                                                       @NotNull ProgressIndicator indicator,
                                                       @NotNull String name,
@@ -373,7 +371,9 @@ public class GithubShareAction extends DumbAwareAction {
   private static boolean pushCurrentBranch(@NotNull Project project,
                                            @NotNull GitRepository repository,
                                            @NotNull String remoteName,
-                                           @NotNull String remoteUrl, @NotNull String name, @NotNull String url) {
+                                           @NotNull String remoteUrl,
+                                           @NotNull String name,
+                                           @NotNull String url) {
     Git git = ServiceManager.getService(Git.class);
 
     GitLocalBranch currentBranch = repository.getCurrentBranch();

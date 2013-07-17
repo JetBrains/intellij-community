@@ -15,10 +15,8 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubUtil;
 
 /**
  * @author Aleksey Pivovarov
@@ -45,33 +43,31 @@ public class GithubRepo {
 
   @NotNull private GithubUser owner;
 
-  @Nullable
-  public static GithubRepo create(@Nullable GithubRepoRaw raw) {
+  @NotNull
+  public static GithubRepo create(@Nullable GithubRepoRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonParseException("raw is null");
-      if (raw.id == null) throw new JsonParseException("id is null");
-      if (raw.name == null) throw new JsonParseException("name is null");
-      if (raw.fullName == null) throw new JsonParseException("fullName is null");
-      if (raw.description == null) throw new JsonParseException("description is null");
-      if (raw.isPrivate == null) throw new JsonParseException("isPrivate is null");
-      if (raw.isFork == null) throw new JsonParseException("isFork is null");
-      if (raw.url == null) throw new JsonParseException("url is null");
-      if (raw.htmlUrl == null) throw new JsonParseException("htmlUrl is null");
-      if (raw.cloneUrl == null) throw new JsonParseException("cloneUrl is null");
-      if (raw.gitUrl == null) throw new JsonParseException("gitUrl is null");
-      if (raw.sshUrl == null) throw new JsonParseException("sshUrl is null");
-      if (raw.size == null) throw new JsonParseException("size is null");
-      if (raw.owner == null) throw new JsonParseException("owner is null");
+      if (raw == null) throw new JsonException("raw is null");
+      if (raw.id == null) throw new JsonException("id is null");
+      if (raw.name == null) throw new JsonException("name is null");
+      if (raw.fullName == null) throw new JsonException("fullName is null");
+      if (raw.description == null) throw new JsonException("description is null");
+      if (raw.isPrivate == null) throw new JsonException("isPrivate is null");
+      if (raw.isFork == null) throw new JsonException("isFork is null");
+      if (raw.url == null) throw new JsonException("url is null");
+      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
+      if (raw.cloneUrl == null) throw new JsonException("cloneUrl is null");
+      if (raw.gitUrl == null) throw new JsonException("gitUrl is null");
+      if (raw.sshUrl == null) throw new JsonException("sshUrl is null");
+      if (raw.size == null) throw new JsonException("size is null");
+      if (raw.owner == null) throw new JsonException("owner is null");
 
       GithubUser user = GithubUser.create(raw.owner);
-      if (user == null) throw new JsonParseException("user is null");
 
       return new GithubRepo(raw.id, raw.name, raw.fullName, raw.description, raw.isPrivate, raw.isFork, raw.url, raw.htmlUrl, raw.cloneUrl,
                             raw.gitUrl, raw.sshUrl, raw.mirrorUrl, raw.size, raw.masterBranch, user);
     }
-    catch (JsonParseException e) {
-      GithubUtil.LOG.info("GithubRepo parse error: " + e.getMessage());
-      return null;
+    catch (JsonException e) {
+      throw new JsonException("GithubRepo parse error", e);
     }
   }
 

@@ -15,10 +15,8 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubUtil;
 
 /**
  * @author Aleksey Pivovarov
@@ -32,23 +30,23 @@ public class GithubRepoDetailed extends GithubRepo {
   private boolean hasWiki;
   private boolean hasDownloads;
 
-  @Nullable
-  public static GithubRepoDetailed createDetailed(@Nullable GithubRepoRaw raw) {
+  @NotNull
+  public static GithubRepoDetailed createDetailed(@Nullable GithubRepoRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonParseException("raw is null");
-      if (raw.hasIssues == null) throw new JsonParseException("hasIssues is null");
-      if (raw.hasWiki == null) throw new JsonParseException("hasWiki is null");
-      if (raw.hasDownloads == null) throw new JsonParseException("hasDownloads is null");
+      if (raw == null) throw new JsonException("raw is null");
+      if (raw.hasIssues == null) throw new JsonException("hasIssues is null");
+      if (raw.hasWiki == null) throw new JsonException("hasWiki is null");
+      if (raw.hasDownloads == null) throw new JsonException("hasDownloads is null");
 
       GithubRepo repo = GithubRepo.create(raw);
-      if (repo == null) throw new JsonParseException("repo is null");
+      GithubRepo parent = raw.parent == null ? null : GithubRepo.create(raw.parent);
+      GithubRepo source = raw.source == null ? null : GithubRepo.create(raw.source);
 
-      return new GithubRepoDetailed(repo, GithubRepo.create(raw.parent), GithubRepo.create(raw.source), raw.hasIssues, raw.hasWiki,
+      return new GithubRepoDetailed(repo, parent, source, raw.hasIssues, raw.hasWiki,
                                     raw.hasDownloads);
     }
-    catch (JsonParseException e) {
-      GithubUtil.LOG.info("GithubRepoDetailed parse error: " + e.getMessage());
-      return null;
+    catch (JsonException e) {
+      throw new JsonException("GithubRepoDetailed parse error", e);
     }
   }
 

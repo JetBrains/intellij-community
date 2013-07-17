@@ -15,10 +15,8 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubUtil;
 
 /**
  * @author Aleksey Pivovarov
@@ -31,20 +29,19 @@ public class GithubUser {
   @NotNull private String url;
   @NotNull private String htmlUrl;
 
-  @Nullable
-  public static GithubUser create(@Nullable GithubUserRaw raw) {
+  @NotNull
+  public static GithubUser create(@Nullable GithubUserRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonParseException("raw is null");
-      if (raw.login == null) throw new JsonParseException("login is null");
-      if (raw.id == null) throw new JsonParseException("id is null");
-      if (raw.url == null) throw new JsonParseException("url is null");
-      if (raw.htmlUrl == null) throw new JsonParseException("htmlUrl is null");
+      if (raw == null) throw new JsonException("raw is null");
+      if (raw.login == null) throw new JsonException("login is null");
+      if (raw.id == null) throw new JsonException("id is null");
+      if (raw.url == null) throw new JsonException("url is null");
+      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
 
       return new GithubUser(raw.login, raw.id, raw.url, raw.htmlUrl);
     }
-    catch (JsonParseException e) {
-      GithubUtil.LOG.info("GithubUser parse error: " + e.getMessage());
-      return null;
+    catch (JsonException e) {
+      throw new JsonException("GithubUser parse error", e);
     }
   }
 
