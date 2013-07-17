@@ -211,7 +211,12 @@ public class GithubUtil {
         throw new AuthenticationException("Anonymous connection not allowed");
     }
 
-    testConnection(auth, login);
+    try {
+      testConnection(auth, login);
+    }
+    catch (JsonException e) {
+      throw new AuthenticationException("Can't get user info", e);
+    }
   }
 
   private static void testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
