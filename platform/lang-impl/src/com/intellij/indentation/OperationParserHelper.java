@@ -61,12 +61,19 @@ public class OperationParserHelper {
   }
 
   private static boolean isBinaryOperator(@NotNull final BinaryOperationParser parser, int level) {
-    IElementType tokenType = parser.getTokenType();
+    if (parser instanceof CustomBinaryOperationParser) {
+      return ((CustomBinaryOperationParser)parser).isBinaryOperator(level);
+    }
+    final IElementType tokenType = parser.getTokenType();
     return parser.getOperatorsByPriority()[level].contains(tokenType);
   }
 
-  private static void parseBinaryOperator(@NotNull final BinaryOperationParser parser, int level) {
-    parser.advance();
+  private static void parseBinaryOperator(@NotNull final BinaryOperationParser parser) {
+    if (parser instanceof CustomBinaryOperationParser) {
+      ((CustomBinaryOperationParser)parser).parseBinaryOperator();
+    } else {
+      parser.advance();
+    }
   }
 
   /**
@@ -85,7 +92,7 @@ public class OperationParserHelper {
         tempMarkerDeleted = true;
       }
       lastMarker = operationMarker;
-      parseBinaryOperator(parser, level);
+      parseBinaryOperator(parser);
       callParsingBinaryOperation(parser, level - 1);
       parser.done(operationMarker, parser.getOperationElementTypes()[level]);
       result = true;
@@ -190,5 +197,11 @@ public class OperationParserHelper {
      * @return array of Element Types
      */
     IElementType[] getOperationElementTypes();
+  }
+
+  public interface CustomBinaryOperationParser {
+    boolean isBinaryOperator(int level);
+
+    void parseBinaryOperator();
   }
 }
