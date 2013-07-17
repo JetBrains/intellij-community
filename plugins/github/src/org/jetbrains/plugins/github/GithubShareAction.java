@@ -206,9 +206,6 @@ public class GithubShareAction extends DumbAwareAction {
                 availableReposRef.set(GithubApiUtil.getAvailableRepos(authData));
               }
             });
-          if (auth == null || availableReposRef.isNull()) {
-            return;
-          }
           final HashSet<String> names = new HashSet<String>();
           for (GithubRepo info : availableReposRef.get()) {
             names.add(info.getName());
@@ -227,10 +224,6 @@ public class GithubShareAction extends DumbAwareAction {
       GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get().getMessage());
       return null;
     }
-    if (githubInfoRef.isNull()) {
-      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", "Failed to gather user information");
-      return null;
-    }
     return githubInfoRef.get();
   }
 
@@ -246,7 +239,7 @@ public class GithubShareAction extends DumbAwareAction {
       return response.getHtmlUrl();
     }
     catch (IOException e) {
-      GithubNotifications.showError(project, "Creating GitHub Repository", e);
+      GithubNotifications.showError(project, "Failed to create GitHub Repository", e);
       return null;
     }
   }

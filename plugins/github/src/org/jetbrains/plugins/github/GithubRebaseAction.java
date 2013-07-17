@@ -166,7 +166,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       return null;
     }
 
-    if (!repositoryInfo.isFork()) {
+    if (!repositoryInfo.isFork() || repositoryInfo.getParent() == null) {
       GithubNotifications.showWarningURL(project, CANNOT_PERFORM_GITHUB_REBASE, "GitHub repository ", "'" + repositoryInfo.getName() + "'",
                                          " is not a forked one", repositoryInfo.getHtmlUrl());
       return null;
@@ -194,12 +194,10 @@ public class GithubRebaseAction extends DumbAwareAction {
       return null;
     }
 
-    GithubRepoDetailed repositoryInfo;
     try {
-      repositoryInfo =
-        GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
+      return GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
           @Override
-          @Nullable
+          @NotNull
           public GithubRepoDetailed convert(GithubAuthData authData) throws IOException {
             return GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository());
           }
@@ -209,12 +207,6 @@ public class GithubRebaseAction extends DumbAwareAction {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't load repository info: " + e.getMessage());
       return null;
     }
-    if (repositoryInfo == null) {
-      GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't load repository info");
-      return null;
-    }
-
-    return repositoryInfo;
   }
 
   @Nullable

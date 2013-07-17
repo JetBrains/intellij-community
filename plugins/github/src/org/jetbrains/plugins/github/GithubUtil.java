@@ -51,7 +51,7 @@ public class GithubUtil {
 
   public static final Logger LOG = Logger.getInstance("github");
 
-  @Nullable
+  @NotNull
   public static GithubAuthData runAndGetValidAuth(@Nullable Project project,
                                                   @NotNull ProgressIndicator indicator,
                                                   @NotNull ThrowableConsumer<GithubAuthData, IOException> task) throws IOException {
@@ -66,7 +66,7 @@ public class GithubUtil {
     catch (AuthenticationException e) {
       auth = getValidAuthData(project, indicator);
       if (auth == null) {
-        return null;
+        throw new AuthenticationException("Can't get valid credentials");
       }
       task.consume(auth);
       return auth;
@@ -77,15 +77,12 @@ public class GithubUtil {
         if (sslSupport.askIfShouldProceed(auth.getHost())) {
           return runAndGetValidAuth(project, indicator, task);
         }
-        else {
-          return null;
-        }
       }
       throw e;
     }
   }
 
-  @Nullable
+  @NotNull
   public static <T> T runWithValidAuth(@Nullable Project project,
                                        @NotNull ProgressIndicator indicator,
                                        @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
@@ -99,7 +96,7 @@ public class GithubUtil {
     catch (AuthenticationException e) {
       auth = getValidAuthData(project, indicator);
       if (auth == null) {
-        return null;
+        throw new AuthenticationException("Can't get valid credentials");
       }
       return task.convert(auth);
     }
@@ -108,9 +105,6 @@ public class GithubUtil {
       if (GithubSslSupport.isCertificateException(e)) {
         if (sslSupport.askIfShouldProceed(auth.getHost())) {
           return runWithValidAuth(project, indicator, task);
-        }
-        else {
-          return null;
         }
       }
       throw e;
@@ -184,9 +178,6 @@ public class GithubUtil {
 
   private static boolean testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     GithubUserDetailed user = GithubApiUtil.getCurrentUserInfo(auth);
-    if (user == null) {
-      return false;
-    }
     if (login != null && !login.equalsIgnoreCase(user.getLogin())) {
       return false;
     }
