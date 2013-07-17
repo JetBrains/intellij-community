@@ -847,7 +847,10 @@ public abstract class ChooseByNameBase {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
-        cancelCalcElementsThread();
+        CalcElementsThread prevThread = cancelCalcElementsThread();
+        if (prevThread != null) {
+          prevThread.scheduleRestart();
+        }
       }
     }, myTextPopup);
     myTextPopup.show(layeredPane);
@@ -945,25 +948,29 @@ public abstract class ChooseByNameBase {
   }
 
   public void scheduleCalcElements(String text,
-                                    boolean checkboxState,
-                                    boolean canCancel,
-                                    ModalityState modalityState,
-                                    Consumer<Set<?>> callback) {
-    CalcElementsThread calcElementsThread = new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel);
-    myCalcElementsThread = calcElementsThread;
-    ApplicationManager.getApplication().executeOnPooledThread(calcElementsThread);
+                                   boolean checkboxState,
+                                   boolean canCancel,
+                                   ModalityState modalityState,
+                                   Consumer<Set<?>> callback) {
+    scheduleCalcElements(new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel, false));
+  }
+
+  private void scheduleCalcElements(final CalcElementsThread thread) {
+    myCalcElementsThread = thread;
+    ApplicationManager.getApplication().executeOnPooledThread(thread);
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
     return myShowListAfterCompletionKeyStroke;
   }
 
-  private void cancelCalcElementsThread() {
+  private CalcElementsThread cancelCalcElementsThread() {
     CalcElementsThread calcElementsThread = myCalcElementsThread;
     if (calcElementsThread != null) {
       calcElementsThread.cancel();
       myCalcElementsThread = null;
     }
+    return calcElementsThread;
   }
 
   private void setElementsToList(int pos, @NotNull Set<?> elements) {
@@ -1369,7 +1376,8 @@ public abstract class ChooseByNameBase {
 
   private class CalcElementsThread implements Runnable {
     private final String myPattern;
-    private boolean myCheckboxState;
+    private volatile boolean myCheckboxState;
+    private volatile boolean myScopeExpanded;
     private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
 
@@ -1380,15 +1388,20 @@ public abstract class ChooseByNameBase {
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
                        @NotNull ModalityState modalityState,
-                       boolean canCancel) {
+                       boolean canCancel, boolean scopeExpanded) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
       myCanCancel = canCancel;
+      myScopeExpanded = scopeExpanded;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
+
+    void scheduleRestart() {
+      scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myCanCancel, myScopeExpanded));
+    }
 
     @Override
     public void run() {
@@ -1427,13 +1440,11 @@ public abstract class ChooseByNameBase {
 
       final String cardToShow;
       if (elements.isEmpty() && !myCheckboxState) {
+        myScopeExpanded = true;
         myCheckboxState = true;
         calculation.run();
-        cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
       }
-      else {
-        cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : CHECK_BOX_CARD;
-      }
+      cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
       showCard(cardToShow, 0);
 
       final Set<Object> filtered = filter(elements);
@@ -1559,7 +1570,7 @@ public abstract class ChooseByNameBase {
       fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final String text = myTextField.getText();
-        final boolean checkboxState = myCheckBox.isSelected();
+        final boolean everywhere = myCheckBox.isSelected();
         final LinkedHashSet<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
         final LinkedHashSet<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
         hideHint();
@@ -1568,14 +1579,14 @@ public abstract class ChooseByNameBase {
 
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
-            ensureNamesLoaded(checkboxState);
+            ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             ApplicationManager.getApplication().runReadAction(new Runnable() {
 
               @Override
               public void run() {
                 final boolean[] overFlow = {false};
-                myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
+                myCalcElementsThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, true, false) {
                   private final AtomicBoolean userAskedToAbort = new AtomicBoolean();
                   @Override
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
@@ -1593,7 +1604,6 @@ public abstract class ChooseByNameBase {
 
                 boolean anyPlace = isSearchInAnyPlace();
                 setSearchInAnyPlace(false);
-                boolean everywhere = myCalcElementsThread.myCheckboxState;
                 myCalcElementsThread.addElementsByPattern(text, prefixMatchElementsArray, indicator, everywhere);
                 setSearchInAnyPlace(anyPlace);
 
