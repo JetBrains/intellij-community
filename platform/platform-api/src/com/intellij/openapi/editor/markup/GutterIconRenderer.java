@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ import javax.swing.*;
  * @author max
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */
-public abstract class GutterIconRenderer {
+public abstract class GutterIconRenderer implements GutterMark {
   /**
    * Returns the icon drawn in the gutter.
    *
@@ -115,22 +116,6 @@ public abstract class GutterIconRenderer {
   @Nullable
   public GutterDraggableObject getDraggableObject() {
     return null;
-  }
-
-  public enum Alignment {
-    LEFT(1),
-    RIGHT(3),
-    CENTER(2);
-
-    private final int myWeight;
-
-    private Alignment(int weight) {
-      myWeight = weight;
-    }
-
-    public int getWeight() {
-      return myWeight;
-    }
   }
 
   @Override

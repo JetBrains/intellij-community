@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -37,7 +38,7 @@ abstract class RangeHighlighterData {
   private Color myErrorStripeColor;
   private Color myLineSeparatorColor;
   private SeparatorPlacement mySeparatorPlacement;
-  private GutterIconRenderer myGutterIconRenderer;
+  private GutterMark myGutterIconRenderer;
   private Object myErrorStripeTooltip;
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
   private CustomHighlighterRenderer myCustomRenderer;
@@ -114,12 +115,12 @@ abstract class RangeHighlighterData {
     myCustomRenderer = renderer;
   }
 
-  public GutterIconRenderer getGutterIconRenderer() {
+  public GutterMark getGutterIconRenderer() {
     return myGutterIconRenderer;
   }
 
-  public void setGutterIconRenderer(GutterIconRenderer renderer) {
-    GutterIconRenderer old = myGutterIconRenderer;
+  public void setGutterIconRenderer(GutterMark renderer) {
+    GutterMark old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
     if (!Comparing.equal(old, renderer)) {
       fireChanged();

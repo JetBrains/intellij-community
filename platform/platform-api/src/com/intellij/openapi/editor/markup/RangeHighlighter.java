@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.RangeMarker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public interface RangeHighlighter extends RangeMarker {
    * @return the renderer instance, or null if the highlighter does not add any gutter icons.
    */
   @Nullable
-  GutterIconRenderer getGutterIconRenderer();
+  GutterMark getGutterIconRenderer();
 
   /**
    * Sets the renderer used for drawing gutter icons in the area covered by the
@@ -101,7 +102,7 @@ public interface RangeHighlighter extends RangeMarker {
    *
    * @param renderer the renderer instance, or null if the highlighter does not add any gutter icons.
    */
-  void setGutterIconRenderer(@Nullable GutterIconRenderer renderer);
+  void setGutterIconRenderer(@Nullable GutterMark renderer);
 
   /**
    * Returns the color of the marker drawn in the error stripe in the area covered by the highlighter.

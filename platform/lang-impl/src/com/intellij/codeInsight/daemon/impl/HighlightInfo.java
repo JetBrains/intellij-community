@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -91,7 +92,7 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  private GutterIconRenderer gutterIconRenderer;
+  private GutterMark gutterIconRenderer;
   private ProblemGroup myProblemGroup;
 
   private volatile byte myFlags; // bit packed flags below:
@@ -611,11 +612,11 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public GutterIconRenderer getGutterIconRenderer() {
+  public GutterMark getGutterIconRenderer() {
     return gutterIconRenderer;
   }
 
-  public void setGutterIconRenderer(final GutterIconRenderer gutterIconRenderer) {
+  public void setGutterIconRenderer(final GutterMark gutterIconRenderer) {
     this.gutterIconRenderer = gutterIconRenderer;
   }
 

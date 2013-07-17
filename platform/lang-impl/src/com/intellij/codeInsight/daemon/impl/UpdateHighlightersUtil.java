@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -434,7 +435,7 @@ public class UpdateHighlightersUtil {
         if (info != finalHighlighter.getErrorStripeTooltip()) {
           finalHighlighter.setErrorStripeTooltip(info);
         }
-        GutterIconRenderer renderer = info.getGutterIconRenderer();
+        GutterMark renderer = info.getGutterIconRenderer();
         finalHighlighter.setGutterIconRenderer(renderer);
 
         ranges2markersCache.put(finalInfoRange, info.highlighter);

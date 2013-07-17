@@ -104,7 +104,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     if (breakpoint instanceof XLineBreakpointImpl) {
       RangeHighlighter highlighter = ((XLineBreakpointImpl)breakpoint).getHighlighter();
       if (highlighter != null) {
-        return highlighter.getGutterIconRenderer();
+        return (GutterIconRenderer)highlighter.getGutterIconRenderer();
       }
     }
     return null;

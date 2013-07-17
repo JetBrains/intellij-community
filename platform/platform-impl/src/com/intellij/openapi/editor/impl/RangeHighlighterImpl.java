@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
@@ -121,12 +122,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public GutterIconRenderer getGutterIconRenderer() {
+  public GutterMark getGutterIconRenderer() {
     return getData().getGutterIconRenderer();
   }
 
   @Override
-  public void setGutterIconRenderer(GutterIconRenderer renderer) {
+  public void setGutterIconRenderer(GutterMark renderer) {
     getData().setGutterIconRenderer(renderer);
   }
 

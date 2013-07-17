@@ -239,7 +239,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                              hostDocument.getLineEndOffset(line), new Processor<HighlightInfo>() {
         @Override
         public boolean process(HighlightInfo info) {
-          final GutterIconRenderer renderer = info.getGutterIconRenderer();
+          final GutterIconRenderer renderer = (GutterIconRenderer)info.getGutterIconRenderer();
           if (renderer == null) {
             return true;
           }
