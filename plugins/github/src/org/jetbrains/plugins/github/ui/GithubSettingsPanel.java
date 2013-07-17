@@ -141,7 +141,7 @@ public class GithubSettingsPanel {
     myPasswordField.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
-        if (!myCredentialsModified) {
+        if (!myCredentialsModified && !getPassword().isEmpty()) {
           setPassword("");
           myCredentialsModified = true;
         }
@@ -240,7 +240,6 @@ public class GithubSettingsPanel {
   public boolean isModified() {
     return !Comparing.equal(mySettings.getHost(), getHost()) ||
            !Comparing.equal(mySettings.getLogin(), getLogin()) ||
-           !Comparing.equal(mySettings.getAuthType(), getAuthType()) ||
            myCredentialsModified;
   }
 
