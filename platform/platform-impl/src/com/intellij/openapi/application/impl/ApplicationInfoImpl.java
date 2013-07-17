@@ -252,7 +252,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Nullable
   public Icon getProgressTailIcon() {
-    if (myProgressTailIcon == null) {
+    if (myProgressTailIcon == null && myProgressTailIconName != null) {
       myProgressTailIcon = IconLoader.getIcon(myProgressTailIconName);
     }
     return myProgressTailIcon;
