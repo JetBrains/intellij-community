@@ -118,8 +118,8 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
     myMap = new ConcurrentHashMap<Key<K, V>, V>();
   }
 
-  public ConcurrentRefHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, TObjectHashingStrategy<Key<K, V>> hashingStrategy) {
-    myMap = new ConcurrentHashMap<Key<K, V>, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  public ConcurrentRefHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    myMap = new ConcurrentHashMap<Key<K, V>, V>(initialCapacity, loadFactor, concurrencyLevel, ConcurrentRefHashMap.<K,V>convertKToKeyK(hashingStrategy));
   }
 
   public ConcurrentRefHashMap(Map<? extends K, ? extends V> t) {
@@ -128,7 +128,12 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
   }
 
   public ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
-    myMap = new ConcurrentHashMap<Key<K, V>, V>(new TObjectHashingStrategy<Key<K, V>>() {
+    myMap = new ConcurrentHashMap<Key<K, V>, V>(ConcurrentRefHashMap.<K,V>convertKToKeyK(hashingStrategy));
+  }
+
+  @NotNull
+  private static <K,V> TObjectHashingStrategy<Key<K, V>> convertKToKeyK(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    return new TObjectHashingStrategy<Key<K, V>>() {
       @Override
       public int computeHashCode(final Key<K, V> object) {
         return hashingStrategy.computeHashCode(object.get());
@@ -138,7 +143,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
       public boolean equals(final Key<K, V> o1, final Key<K, V> o2) {
         return hashingStrategy.equals(o1.get(), o2.get());
       }
-    } );
+    };
   }
 
 

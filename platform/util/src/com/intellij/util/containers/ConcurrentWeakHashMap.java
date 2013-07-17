@@ -82,7 +82,7 @@ public final class ConcurrentWeakHashMap<K,V> extends ConcurrentRefHashMap<K,V> 
   public ConcurrentWeakHashMap(int initialCapacity,
                                float loadFactor,
                                int concurrencyLevel,
-                               TObjectHashingStrategy<Key<K, V>> hashingStrategy) {
+                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
