@@ -1,16 +1,17 @@
 package de.plushnikov.intellij.plugin.settings;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
 public class ProjectSettings {
-  private static final String LOMBOK_PLUGIN_ENABLED_IN_PROJECT_PROPERTY = "LombokPluginEnabledInProject";
-  private static final Key<Boolean> LOMBOK_ENABLED_KEY = Key.create(LOMBOK_PLUGIN_ENABLED_IN_PROJECT_PROPERTY);
+  private static final String       LOMBOK_PLUGIN_ENABLED_IN_PROJECT_PROPERTY = "LombokPluginEnabledInProject";
+  private static final Key<Boolean> LOMBOK_ENABLED_KEY                        = Key.create(LOMBOK_PLUGIN_ENABLED_IN_PROJECT_PROPERTY);
 
   public static boolean isEnabledInProject(@NotNull final Project project) {
     PropertiesComponent properties = PropertiesComponent.getInstance(project);
@@ -22,6 +23,7 @@ public class ProjectSettings {
     properties.setValue(LOMBOK_PLUGIN_ENABLED_IN_PROJECT_PROPERTY, String.valueOf(value));
 
     project.putUserData(LOMBOK_ENABLED_KEY, value);
+    //DaemonCodeAnalyser.getInstance(project).restart();
   }
 
   public static boolean loadAndGetEnabledInProject(@NotNull final Project project) {

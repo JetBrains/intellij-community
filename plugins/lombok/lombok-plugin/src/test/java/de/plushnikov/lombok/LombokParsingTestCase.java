@@ -1,5 +1,12 @@
 package de.plushnikov.lombok;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
@@ -11,17 +18,21 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomNamedTarget;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
@@ -32,7 +43,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC,
       PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
-  public static final String PACKAGE_LOMBOK = "package lombok;\n";
+  public static final String PACKAGE_LOMBOK  = "package lombok;\n";
   public static final String ANNOTATION_TYPE = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE)\n" +
       "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)\n";
 
@@ -140,8 +151,10 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   protected void doTest(String fileName) throws IOException {
-    final PsiFile psiLombokFile = createPseudoPhysicalFile(getProject(), fileName, loadLombokFile(fileName));
+//    final PsiFile psiDelombokFile = myFixture.configureByText(StdFileTypes.JAVA, loadDeLombokFile(fileName));//createPseudoPhysicalFile(getProject(), fileName, loadDeLombokFile(fileName));
+//    final PsiFile psiLombokFile = myFixture.configureByText(StdFileTypes.JAVA, loadLombokFile(fileName));//createPseudoPhysicalFile(getProject(), fileName, loadLombokFile(fileName));
     final PsiFile psiDelombokFile = createPseudoPhysicalFile(getProject(), fileName, loadDeLombokFile(fileName));
+    final PsiFile psiLombokFile = createPseudoPhysicalFile(getProject(), fileName, loadLombokFile(fileName));
 
     if (!(psiLombokFile instanceof PsiJavaFile) || !(psiDelombokFile instanceof PsiJavaFile)) {
       fail("The test file type is not supported");
