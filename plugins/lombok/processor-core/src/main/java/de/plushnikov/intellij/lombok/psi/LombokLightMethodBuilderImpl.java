@@ -2,18 +2,7 @@ package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -77,6 +66,12 @@ public class LombokLightMethodBuilderImpl extends LightMethodBuilder implements 
   @Override
   public LombokLightMethodBuilder withContainingClass(@NotNull PsiClass containingClass) {
     setContainingClass(containingClass);
+    return this;
+  }
+
+  @Override
+  public LombokLightMethodBuilder withTypeParameter(@NotNull PsiTypeParameter typeParameter) {
+    addTypeParameter(typeParameter);
     return this;
   }
 

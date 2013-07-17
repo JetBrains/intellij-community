@@ -2,18 +2,8 @@ package de.plushnikov.intellij.lombok.processor.field;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.lombok.UserMapKeys;
@@ -23,15 +13,11 @@ import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import lombok.Delegate;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Inspect and validate @Delegate lombok annotation on a field
@@ -97,7 +83,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     final Collection<Pair<PsiMethod, PsiSubstitutor>> methodsToDelegate = findMethodsToDelegate(includesMethods, excludeMethods);
     if (!methodsToDelegate.isEmpty()) {
       for (Pair<PsiMethod, PsiSubstitutor> pair : methodsToDelegate) {
-        target.add((Psi) generateDelegateMethod(psiClass, pair.getFirst(), pair.getSecond()));
+        target.add((Psi) generateDelegateMethod(psiClass, psiAnnotation, pair.getFirst(), pair.getSecond()));
       }
       UserMapKeys.addGeneralUsageFor(psiField);
     }
@@ -189,55 +175,30 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   @NotNull
-  private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
+  private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
     final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
 
-    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().
+    LombokLightMethodBuilder methodBuilder = LombokPsiElementFactory.getInstance().
         createLightMethod(psiClass.getManager(), psiMethod.getName())
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(returnType)
         .withContainingClass(psiClass)
-        .withNavigationElement(psiMethod);
+        .withNavigationElement(psiAnnotation);
 
-    PsiParameterList parameterList = psiMethod.getParameterList();
-    if (parameterList.getParametersCount() > 0) {
-      for (PsiParameter psiParameter : parameterList.getParameters()) {
-        final PsiType psiParameterType = null == psiSubstitutor ? psiParameter.getType() : psiSubstitutor.substitute(psiParameter.getType());
-        method.withParameter(psiParameter.getName(), psiParameterType);
-      }
+    for (PsiTypeParameter typeParameter : psiMethod.getTypeParameters()) {
+      methodBuilder.withTypeParameter(new LightTypeParameter(typeParameter));
     }
 
-    return method;
-//    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-//    try {
-//      builder.append(PsiKeyword.PUBLIC);
-//      builder.append(' ');
-//      final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
-//      final String returnTypeText = null == returnType ? "" : returnType.getCanonicalText();
-//      //Workaround for: "public <T> T someMethod(SomeType<T> someParam)" Methods
-//      final String psiMethodText = psiMethod.getText();
-//      if (null != psiMethodText && psiMethodText.contains("<" + returnTypeText + "> " + returnTypeText)) {
-//        builder.append('<').append(returnTypeText).append("> ");
-//      }
-//      builder.append(returnTypeText);
-//      builder.append(' ');
-//      builder.append(psiMethod.getName());
-//      builder.append('(');
-//
-//      PsiParameterList parameterList = psiMethod.getParameterList();
-//      if (parameterList.getParametersCount() > 0) {
-//        for (PsiParameter psiParameter : parameterList.getParameters()) {
-//          final PsiType psiParameterType = null == psiSubstitutor ? psiParameter.getType() : psiSubstitutor.substitute(psiParameter.getType());
-//          builder.append(psiParameterType.getCanonicalText()).append(' ').append(psiParameter.getName()).append(',');
-//        }
-//        builder.deleteCharAt(builder.length() - 1);
-//      }
-//      builder.append(')');
-//      builder.append("{ }");
-//
-//      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiMethod);
-//    } finally {
-//      StringBuilderSpinAllocator.dispose(builder);
-//    }
+    final PsiParameterList parameterList = psiMethod.getParameterList();
+
+    int parameterIndex = 0;
+    for (PsiParameter psiParameter : parameterList.getParameters()) {
+      final PsiType psiParameterType = null == psiSubstitutor ? psiParameter.getType() : psiSubstitutor.substitute(psiParameter.getType());
+      String psiParameterName = psiParameter.getName();
+      methodBuilder.withParameter(StringUtils.defaultIfEmpty(psiParameterName, "p" + parameterIndex), psiParameterType);
+      parameterIndex++;
+    }
+
+    return methodBuilder;
   }
 }
