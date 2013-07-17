@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
@@ -805,11 +804,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     switch (getKind()) {
       case CLASS_OR_PACKAGE_NAME_KIND:
-        addClassFilter(filter);
+        filter.addFilter(ElementClassFilter.CLASS);
         filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
         break;
       case CLASS_NAME_KIND:
-        addClassFilter(filter);
+        filter.addFilter(ElementClassFilter.CLASS);
         if (isQualified()) {
           filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
         }
@@ -865,15 +864,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       superParent = superParent.getParent();
     }
     return false;
-  }
-
-  private void addClassFilter(final OrFilter filter) {
-    if (getParent() instanceof PsiAnnotation) {
-      filter.addFilter(new AnnotationTypeFilter());
-    }
-    else {
-      filter.addFilter(ElementClassFilter.CLASS);
-    }
   }
 
   @Override
