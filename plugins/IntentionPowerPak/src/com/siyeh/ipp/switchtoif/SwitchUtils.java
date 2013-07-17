@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ipp.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
