@@ -32,6 +32,10 @@ public class PyPackageRequirementsInspectionTest extends PyEnvTestCase {
     doTest("test1.py");
   }
 
+  public void testDuplicateInstallAndTests() {
+    doTest("test1.py");
+  }
+
   private void doTest(@NotNull final String filename) {
     final String dir = getTestName(false);
     runPythonTest(new PyExecutionFixtureTestTask() {
