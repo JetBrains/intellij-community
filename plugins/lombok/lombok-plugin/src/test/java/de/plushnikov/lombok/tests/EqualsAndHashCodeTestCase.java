@@ -1,21 +1,18 @@
 package de.plushnikov.lombok.tests;
 
 import de.plushnikov.lombok.LombokParsingTestCase;
-import org.junit.Test;
-
-import java.io.IOException;
 
 public class EqualsAndHashCodeTestCase extends LombokParsingTestCase {
-  public EqualsAndHashCodeTestCase() {
-  }
 
-  @Test
-  public void testEqualsAndHashCode() throws IOException {
+  public void testEqualsAndHashCode() throws Exception {
     doTest();
   }
 
-  @Test
-  public void testEqualsAndHashCodeWithExistingMethods() throws IOException {
+  public void testEqualsAndHashCodeWithExistingMethods() throws Exception {
+    doTest();
+  }
+
+  public void testEqualsAndHashCodeWithSomeExistingMethods() throws Exception {
     doTest();
   }
 }
