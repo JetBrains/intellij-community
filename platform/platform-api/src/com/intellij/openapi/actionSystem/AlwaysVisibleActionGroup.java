@@ -16,10 +16,10 @@
 package com.intellij.openapi.actionSystem;
 
 /**
- * Markup interface to tell Action Manager that disabled actions shouldn't be shown
+ * Markup interface to ignore "compact" option in action groups
  *
  * @author Konstantin Bulenkov
- * @see AlwaysVisibleActionGroup
+ * @see CompactActionGroup
  */
-public interface CompactActionGroup {
+public interface AlwaysVisibleActionGroup {
 }
