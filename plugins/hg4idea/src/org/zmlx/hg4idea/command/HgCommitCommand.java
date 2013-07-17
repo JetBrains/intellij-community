@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
+import static org.zmlx.hg4idea.HgVcs.HGENCODING;
 
 public class HgCommitCommand {
 
@@ -91,7 +92,7 @@ public class HgCommitCommand {
     List<String> parameters = new LinkedList<String>();
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
-    if (System.getenv("HGENCODING") == null) {
+    if (HGENCODING == null) {
       parameters.add("--encoding");
       parameters.add(myCharset.name());
     }

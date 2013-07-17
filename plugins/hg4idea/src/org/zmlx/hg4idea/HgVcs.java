@@ -75,6 +75,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
   private static final String ORIG_FILE_PATTERN = "*.orig";
+  @Nullable public static final String HGENCODING = System.getenv("HGENCODING");
 
   private final HgChangeProvider changeProvider;
   private final HgRollbackEnvironment rollbackEnvironment;
