@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -44,13 +45,23 @@ public class ModuleRootModificationUtil {
       libraryModel.addRoot(root, OrderRootType.SOURCES);
     }
     model.findLibraryOrderEntry(library).setScope(scope);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    doWriteAction(new Runnable() {
       @Override
       public void run() {
         libraryModel.commit();
         model.commit();
       }
     });
+  }
+
+  private static void doWriteAction(final Runnable action) {
+    final Application application = ApplicationManager.getApplication();
+    application.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        application.runWriteAction(action);
+      }
+    }, application.getDefaultModalityState());
   }
 
   public static void addModuleLibrary(Module module, String classesRootUrl) {
@@ -94,7 +105,7 @@ public class ModuleRootModificationUtil {
   }
 
   private static void doCommit(final ModifiableRootModel model) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    doWriteAction(new Runnable() {
       @Override
       public void run() {
         model.commit();

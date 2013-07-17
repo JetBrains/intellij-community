@@ -54,7 +54,7 @@ import com.intellij.util.concurrency.Semaphore
 /**
  * @author peter
  */
-abstract class GroovyDebuggerTest extends GroovyCompilerTestCase {
+class GroovyDebuggerTest extends GroovyCompilerTestCase {
   @Override
   protected boolean useJps() { false }
 
