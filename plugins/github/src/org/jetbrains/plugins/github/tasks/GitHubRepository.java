@@ -377,6 +377,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
       setToken(PasswordUtil.decodePassword(password));
     }
     catch (NumberFormatException e) {
+    // nothing to do
     }
   }
 
