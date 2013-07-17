@@ -58,7 +58,7 @@ public class GithubUtil {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
       if (auth.getAuthType() == GithubAuthData.AuthType.ANONYMOUS) {
-        throw new AuthenticationException("Settings authentication not set");
+        throw new AuthenticationException("Bad authentication type");
       }
       task.consume(auth);
       return auth;
@@ -89,7 +89,7 @@ public class GithubUtil {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
       if (auth.getAuthType() == GithubAuthData.AuthType.ANONYMOUS) {
-        throw new AuthenticationException("Settings authentication not set");
+        throw new AuthenticationException("Bad authentication type");
       }
       return task.convert(auth);
     }
@@ -111,9 +111,54 @@ public class GithubUtil {
     }
   }
 
+  @NotNull
+  public static <T> T runWithValidBasicAuth(@Nullable Project project,
+                                            @NotNull ProgressIndicator indicator,
+                                            @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
+    GithubAuthData auth = GithubSettings.getInstance().getAuthData();
+    try {
+      if (auth.getAuthType() != GithubAuthData.AuthType.BASIC) {
+        throw new AuthenticationException("Bad authentication type");
+      }
+      return task.convert(auth);
+    }
+    catch (AuthenticationException e) {
+      auth = getValidBasicAuthData(project, indicator);
+      if (auth == null) {
+        throw new AuthenticationException("Can't get valid credentials");
+      }
+      return task.convert(auth);
+    }
+    catch (IOException e) {
+      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
+      if (GithubSslSupport.isCertificateException(e)) {
+        if (sslSupport.askIfShouldProceed(auth.getHost())) {
+          return runWithValidAuth(project, indicator, task);
+        }
+      }
+      throw e;
+    }
+  }
+
   @Nullable
   public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        dialog.show();
+      }
+    }, indicator.getModalityState());
+    if (!dialog.isOK()) {
+      return null;
+    }
+    return dialog.getAuthData();
+  }
+
+  @Nullable
+  public static GithubAuthData getValidBasicAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
+    final GithubLoginDialog dialog = new GithubLoginDialog(project);
+    dialog.setBasicOnly();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {

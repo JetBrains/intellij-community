@@ -79,4 +79,8 @@ public class GithubLoginDialog extends DialogWrapper {
   public GithubAuthData getAuthData() {
     return myGithubLoginPanel.getAuthData();
   }
+
+  public void setBasicOnly() {
+    myGithubLoginPanel.lockAuthType(GithubAuthData.AuthType.BASIC);
+  }
 }

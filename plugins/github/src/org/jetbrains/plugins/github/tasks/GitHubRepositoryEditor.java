@@ -136,7 +136,7 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          tokenRef.set(GithubUtil.runWithValidAuth(myProject, indicator, new ThrowableConvertor<GithubAuthData, String, IOException>() {
+          tokenRef.set(GithubUtil.runWithValidBasicAuth(myProject, indicator, new ThrowableConvertor<GithubAuthData, String, IOException>() {
             @Nullable
             @Override
             public String convert(GithubAuthData auth) throws IOException {
@@ -151,10 +151,6 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
       }
     });
     if (!exceptionRef.isNull()) {
-      if (exceptionRef.get() instanceof AuthenticationException) {
-        GithubNotifications.showWarningDialog(myProject, "Can't get access token", "You need to provide basic authentication");
-        return;
-      }
       GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get().getMessage());
       return;
     }
