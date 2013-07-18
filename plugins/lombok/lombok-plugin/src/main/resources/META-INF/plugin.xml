@@ -12,6 +12,10 @@
   </description>
   <category>Tools Integration</category>
 
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.java</depends>
+
   <application-components>
     <component>
       <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
@@ -34,7 +38,8 @@
 				<ol>
 				    <li>Issue #20	Fixed Using @Delegate together with generic methods produced red underlining in the editor window</li>
 				    <li>Issue #29	Fixed @Delegate leads to exception in LombokLightParameter</li>
-				    <li>Issue #37, 59	Fixed @EqualsAndHashCode inspection for callSuper parameter</li>
+				    <li>Issue #37 and #59	Fixed @EqualsAndHashCode inspection for callSuper parameter</li>
+				    <li>Issue #54	Valid code produces inspections errors - anonymous instance, partial implementation</li>
 				</ol>
 			</li>
 		  <li>0.6.4
