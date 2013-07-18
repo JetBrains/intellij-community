@@ -133,6 +133,7 @@ filesystem
 filesystems
 finalizer
 finalizers
+firefox
 foreach
 formatter
 freelist
@@ -201,6 +202,7 @@ jpdl
 jquery
 jsessionid
 json
+junit
 keepduplicates
 keychain
 keychains
@@ -353,6 +355,7 @@ prepend
 prepended
 prepends
 preprocessor
+preprocessors
 processlist
 profiler
 progressbar
@@ -456,6 +459,7 @@ sysdate
 systimestamp
 tablespace
 taglib
+teamcity
 temptable
 throwable
 timestamp
