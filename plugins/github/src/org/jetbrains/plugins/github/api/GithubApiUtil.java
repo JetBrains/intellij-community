@@ -373,4 +373,11 @@ public class GithubApiUtil {
 
     return GithubRepo.create(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class));
   }
+
+  @NotNull
+  public static GithubPullRequest getPullRequest(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, int id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
+    return GithubPullRequest.create(fromJson(getRequest(auth, path), GithubPullRequestRaw.class));
+  }
 }
