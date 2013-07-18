@@ -178,7 +178,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @Override
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
                                            @NotNull GlobalSearchScope scope,
-                                           @NotNull Processor<PsiDirectory> consumer) {
+                                           @NotNull Processor<PsiDirectory> consumer,
+                                           boolean includeLibrarySources) {
     final List<VirtualFile> classRoots = getClassRoots();
     if (classRoots.isEmpty()) {
       return true;

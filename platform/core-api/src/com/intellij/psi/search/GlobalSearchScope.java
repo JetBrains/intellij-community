@@ -79,6 +79,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public abstract boolean isSearchInLibraries();
 
+  public boolean isForceSearchingInLibrarySources() {
+    return false;
+  }
+
   public boolean isSearchOutsideRootModel() {
     return false;
   }

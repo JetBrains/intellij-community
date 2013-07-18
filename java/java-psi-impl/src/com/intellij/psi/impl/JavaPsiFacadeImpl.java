@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
@@ -249,9 +250,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
-  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiDirectory> consumer) {
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Processor<PsiDirectory> consumer,
+                                           boolean includeLibrarySources) {
     for (PsiElementFinder finder : filteredFinders()) {
-      if (!finder.processPackageDirectories(psiPackage, scope, consumer)) {
+      if (!finder.processPackageDirectories(psiPackage, scope, consumer, includeLibrarySources)) {
         return false;
       }
     }
@@ -371,7 +375,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         for (PsiFile file : dir.getFiles()) {
           if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
             VirtualFile vFile = file.getVirtualFile();
-            if (vFile != null && !facade.isInSourceContent(vFile) && !(file instanceof PsiCompiledElement)) {
+            if (vFile != null &&
+                !(file instanceof PsiCompiledElement) &&
+                !facade.isInSourceContent(vFile) &&
+                (!scope.isForceSearchingInLibrarySources() ||
+                 !StubTreeLoader.getInstance().canHaveStub(vFile))) {
               continue;
             }
 
@@ -388,16 +396,20 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     @Override
-    public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope, @NotNull final Processor<PsiDirectory> consumer) {
+    public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                             @NotNull final GlobalSearchScope scope,
+                                             @NotNull final Processor<PsiDirectory> consumer,
+                                             boolean includeLibrarySources) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
-      return PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), false).forEach(new ReadActionProcessor<VirtualFile>() {
-        @Override
-        public boolean processInReadAction(final VirtualFile dir) {
-          if (!scope.contains(dir)) return true;
-          PsiDirectory psiDir = psiManager.findDirectory(dir);
-          return psiDir == null || consumer.process(psiDir);
-        }
-      });
+      return PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), includeLibrarySources)
+        .forEach(new ReadActionProcessor<VirtualFile>() {
+          @Override
+          public boolean processInReadAction(final VirtualFile dir) {
+            if (!scope.contains(dir)) return true;
+            PsiDirectory psiDir = psiManager.findDirectory(dir);
+            return psiDir == null || consumer.process(psiDir);
+          }
+        });
     }
   }
 
