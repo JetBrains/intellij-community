@@ -139,7 +139,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     controls.put(Setting.RESOURCE_PATTERNS,
                  ContainerUtilRt.<JComponent>newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.<JComponent>singleton(myCbClearOutputDirectory));
-    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.<JComponent>singleton(myCbAutoShowFirstError));
+    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.<JComponent>singleton(myCbAssertNotNull));
     controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.<JComponent>singleton(myCbAutoShowFirstError));
     controls.put(Setting.EXTERNAL_BUILD, ContainerUtilRt.<JComponent>newArrayList(myCbUseExternalBuild));
     controls.put(Setting.AUTO_MAKE, ContainerUtilRt.<JComponent>newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
