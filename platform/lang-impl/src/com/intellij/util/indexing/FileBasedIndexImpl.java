@@ -1059,7 +1059,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   public void filesUpdateEnumerationFinished() {
     myContentlessIndicesUpdateQueue.ensureUpToDate();
-    myContentlessIndicesUpdateQueue.stopWorkers();
+    myContentlessIndicesUpdateQueue.signalUpdateEnd();
   }
 
   public static final class ProjectIndexableFilesFilter {
@@ -1106,7 +1106,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   void filesUpdateStarted(Project project) {
-    myContentlessIndicesUpdateQueue.ensureUpToDateAndStartWorkers();
+    myContentlessIndicesUpdateQueue.signalUpdateStart();
+    myContentlessIndicesUpdateQueue.ensureUpToDate();
     myProjectsBeingUpdated.add(project);
   }
 
@@ -1606,117 +1607,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
     return true;
-  }
-
-  private static class TaskQueue {
-    private final AtomicInteger myDoWorkRequest = new AtomicInteger();
-    private final AtomicInteger myDoWorkRequestCounter = new AtomicInteger();
-    private final AtomicInteger myUpdatesCount = new AtomicInteger();
-    private final LinkedBlockingQueue<Runnable> myPendingWriteRequestsQueue = new LinkedBlockingQueue<Runnable>();
-    private final LinkedBlockingQueue<Runnable> myTimestampUpdates = new LinkedBlockingQueue<Runnable>();
-    private final int myLimit;
-    private final int myStealLimit;
-    private final int myTimeStampUpdateSizeLimit;
-
-    public TaskQueue(int limit) {
-      myLimit = limit;
-      myStealLimit = Math.max(1, (int)(limit * 0.01));
-      myTimeStampUpdateSizeLimit = 32;
-    }
-
-    void submit(final Computable<Boolean> update, final Runnable successRunnable) {
-      int currentTasks = myUpdatesCount.incrementAndGet();
-      myPendingWriteRequestsQueue.add(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            Boolean result = update.compute();
-            if (result == Boolean.TRUE) {
-              myTimestampUpdates.add(successRunnable);
-            }
-          }
-          finally {
-            myUpdatesCount.decrementAndGet();
-          }
-        }
-      });
-
-      if (currentTasks > myLimit) {
-        Runnable runnable = myPendingWriteRequestsQueue.poll();
-        int processed = 0;
-        while (runnable != null) {
-          runnable.run();
-          if (++processed == myStealLimit) break;
-          runnable = myPendingWriteRequestsQueue.poll();
-        }
-      }
-
-      int size = myTimestampUpdates.size();
-      if (size > myTimeStampUpdateSizeLimit) {
-        applyTimeStamps(size);
-      }
-    }
-
-    private void applyTimeStamps(int max) {
-      Runnable runnable = myTimestampUpdates.poll();
-      if (runnable == null) return;
-      int updates = 0;
-      AccessToken accessToken = ReadAction.start();
-      try {
-        while(runnable != null) {
-          runnable.run();
-          if (++updates == max) break;
-          runnable = myTimestampUpdates.poll();
-        }
-      } finally {
-        accessToken.finish();
-      }
-    }
-
-    public void ensureUpToDate() {
-      try {
-        while(myUpdatesCount.get() > 0) {
-          Runnable runnable = myPendingWriteRequestsQueue.poll(100, TimeUnit.MILLISECONDS);
-          if (runnable != null) runnable.run();
-        }
-        applyTimeStamps(Integer.MAX_VALUE);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public void stopWorkers() {
-      myDoWorkRequest.decrementAndGet();
-    }
-
-    public void ensureUpToDateAndStartWorkers() {
-      int before = myDoWorkRequest.getAndIncrement();
-
-      if (before == 0) {
-        final int workRequestCounter = myDoWorkRequestCounter.incrementAndGet();
-        //int count = Math.min(myNotRequiringContentIndices.size(), Math.min(4, Runtime.getRuntime().availableProcessors()));
-        final int count = 1; // we have 3 content independent indices but only one of them is heavy IO bound
-        for(int i = 0; i < count; ++i) {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                while(myDoWorkRequest.get() > 0) {
-                  if (workRequestCounter != myDoWorkRequestCounter.get()) {
-                    break;
-                  }
-                  Runnable runnable = myPendingWriteRequestsQueue.poll(1, TimeUnit.MILLISECONDS);
-                  if (runnable != null) runnable.run();
-                }
-              }
-              catch (InterruptedException ignore) {}
-            }
-          });
-        }
-      }
-
-      ensureUpToDate();
-    }
   }
 
   private final TaskQueue myContentlessIndicesUpdateQueue = new TaskQueue(10000);
@@ -2415,7 +2305,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     @Override
     public void before(@NotNull List<? extends VFileEvent> events) {
-      myContentlessIndicesUpdateQueue.ensureUpToDateAndStartWorkers();
+      myContentlessIndicesUpdateQueue.signalUpdateStart();
+      myContentlessIndicesUpdateQueue.ensureUpToDate();
 
       for (VFileEvent event : events) {
         Object requestor = event.getRequestor();
@@ -2438,7 +2329,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       for (VFileEvent event : events) {
         BulkVirtualFileListenerAdapter.fireAfter(this, event);
       }
-      myContentlessIndicesUpdateQueue.stopWorkers();
+      myContentlessIndicesUpdateQueue.signalUpdateEnd();
     }
   }
 
