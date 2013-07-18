@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
@@ -72,11 +73,8 @@ public class GithubUtil {
       return auth;
     }
     catch (IOException e) {
-      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (sslSupport.askIfShouldProceed(auth.getHost())) {
-          return runAndGetValidAuth(project, indicator, task);
-        }
+      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
+        return runAndGetValidAuth(project, indicator, task);
       }
       throw e;
     }
@@ -101,11 +99,8 @@ public class GithubUtil {
       return task.convert(auth);
     }
     catch (IOException e) {
-      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (sslSupport.askIfShouldProceed(auth.getHost())) {
-          return runWithValidAuth(project, indicator, task);
-        }
+      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
+        return runWithValidAuth(project, indicator, task);
       }
       throw e;
     }
@@ -130,14 +125,26 @@ public class GithubUtil {
       return task.convert(auth);
     }
     catch (IOException e) {
-      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (sslSupport.askIfShouldProceed(auth.getHost())) {
-          return runWithValidAuth(project, indicator, task);
-        }
+      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
+        return runWithValidBasicAuth(project, indicator, task);
       }
       throw e;
     }
+  }
+
+  private static boolean checkSSLCertificate(IOException e, final String host, ProgressIndicator indicator) {
+    final GithubSslSupport sslSupport = GithubSslSupport.getInstance();
+    if (GithubSslSupport.isCertificateException(e)) {
+      final Ref<Boolean> result = new Ref<Boolean>();
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          result.set(sslSupport.askIfShouldProceed(host));
+        }
+      }, indicator.getModalityState());
+      return result.get();
+    }
+    return false;
   }
 
   @Nullable
