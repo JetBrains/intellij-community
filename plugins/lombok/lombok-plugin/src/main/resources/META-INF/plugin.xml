@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.6.5</version>
+  <version>0.6.6</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -34,6 +34,11 @@
 
   <change-notes><![CDATA[
 		<ul>
+		  <li>0.6.6
+				<ol>
+				    <li></li>
+				</ol>
+			</li>
 			<li>0.6.5
 				<ol>
 				    <li>Issue #20	Fixed Using @Delegate together with generic methods produced red underlining in the editor window</li>
