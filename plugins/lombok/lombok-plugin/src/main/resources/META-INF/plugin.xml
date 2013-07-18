@@ -34,7 +34,7 @@
 				<ol>
 				    <li>Issue #20	Fixed Using @Delegate together with generic methods produced red underlining in the editor window</li>
 				    <li>Issue #29	Fixed @Delegate leads to exception in LombokLightParameter</li>
-				    <li>Issue #37	Fixed @EqualsAndHashCode inspection for callSuper parameter</li>
+				    <li>Issue #37, 59	Fixed @EqualsAndHashCode inspection for callSuper parameter</li>
 				</ol>
 			</li>
 		  <li>0.6.4

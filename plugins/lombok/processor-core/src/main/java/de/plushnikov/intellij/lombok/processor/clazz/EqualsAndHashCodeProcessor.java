@@ -1,12 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -22,16 +15,22 @@ import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiFieldUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.EqualsAndHashCode;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Inspect and validate @ToString lombok annotation on a class
+ * Inspect and validate @EqualsAndHashCode lombok annotation on a class
  * Creates equals/hashcode method for fields of this class
  *
  * @author Plushnikov Michail
  */
 public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
 
-  public static final String EQUALS_METHOD_NAME    = "equals";
+  public static final String EQUALS_METHOD_NAME = "equals";
   public static final String HASH_CODE_METHOD_NAME = "hashCode";
   public static final String CAN_EQUAL_METHOD_NAME = "canEqual";
 

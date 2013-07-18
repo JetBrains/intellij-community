@@ -105,7 +105,7 @@ public class PsiAnnotationUtil {
 
   @Nullable
   public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, Class<T> asClass) {
-    return getAnnotationValue(psiAnnotation, "value", asClass);
+    return getAnnotationValue(psiAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, asClass);
   }
 
   @NotNull
