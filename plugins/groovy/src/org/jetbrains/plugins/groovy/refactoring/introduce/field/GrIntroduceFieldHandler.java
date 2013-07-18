@@ -122,7 +122,10 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
                                                                 @NotNull List<RangeMarker> occurrenceMarkers,
                                                                 RangeMarker varRangeMarker, @Nullable RangeMarker expressionRangeMarker,
                                                                 @Nullable RangeMarker stringPartRangeMarker) {
-    if (expressionRangeMarker != null) {
+    if (varRangeMarker != null) {
+      context.getEditor().getCaretModel().moveToOffset(var.getNameIdentifierGroovy().getTextRange().getStartOffset());
+    }
+    else if (expressionRangeMarker != null) {
       context.getEditor().getCaretModel().moveToOffset(expressionRangeMarker.getStartOffset());
     }
     else if (stringPartRangeMarker != null) {
@@ -178,12 +181,29 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
       @Override
       public boolean isStatic() {
-        return false;
+        boolean hasInstanceInScope = true;
+        PsiClass clazz = (PsiClass)context.getScope();
+        if (replaceAllOccurrences()) {
+          for (PsiElement occurrence : context.getOccurrences()) {
+            if (!PsiUtil.hasEnclosingInstanceInScope(clazz, occurrence, false)) {
+              hasInstanceInScope = false;
+              break;
+            }
+          }
+        }
+        else if (context.getExpression() != null) {
+          hasInstanceInScope = PsiUtil.hasEnclosingInstanceInScope(clazz, context.getExpression(), false);
+        }
+        else if (context.getStringPart() != null) {
+          hasInstanceInScope = PsiUtil.hasEnclosingInstanceInScope(clazz, context.getStringPart().getLiteral(), false);
+        }
+
+        return !hasInstanceInScope;
       }
 
       @Override
       public boolean removeLocalVar() {
-        return false;
+        return context.getVar() != null;
       }
 
       @Nullable
@@ -194,7 +214,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
       @Override
       public boolean replaceAllOccurrences() {
-        return choice == OccurrencesChooser.ReplaceChoice.ALL;
+        return context.getVar() != null || choice == OccurrencesChooser.ReplaceChoice.ALL;
       }
 
       @Nullable
@@ -203,8 +223,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
         GrExpression expression = context.getExpression();
         GrVariable var = context.getVar();
         StringPartInfo stringPart = context.getStringPart();
-        return expression != null ? expression.getType() :
-               var != null ? var.getType() :
+        return var != null ? var.getDeclaredType() :
+               expression != null ? expression.getType() :
                stringPart != null ? stringPart.getLiteral().getType() :
                null;
       }

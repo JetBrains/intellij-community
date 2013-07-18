@@ -178,7 +178,7 @@ public class GrIntroduceFieldProcessor {
     final PsiElement _scope = context.getScope();
     final PsiElement scope = _scope instanceof GroovyScriptClass ? ((GroovyScriptClass)_scope).getContainingFile() : _scope;
 
-    final PsiElement place = context.getElementToIntroduce();
+    final PsiElement place = context.getPlace();
 
     final GrMember member = GrIntroduceFieldHandler.getContainer(place, scope);
     LOG.assertTrue(member != null);

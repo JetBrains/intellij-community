@@ -69,7 +69,7 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
                                   @Nullable RangeMarker expressionRangeMarker,
                                   @Nullable RangeMarker stringPartRangeMarker,
                                   GrExpression initializer) {
-    super(var, context.getEditor(), context.getProject(), IntroduceFieldHandler.REFACTORING_NAME, occurrences, context.getElementToIntroduce());
+    super(var, context.getEditor(), context.getProject(), IntroduceFieldHandler.REFACTORING_NAME, occurrences, context.getPlace());
 
     myContext = context;
     myReplaceAll = replaceAll;
@@ -167,7 +167,7 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
 
       @Override
       public boolean isStatic() {
-        return false;
+        return getVariable().hasModifierProperty(PsiModifier.STATIC);
       }
 
       @Override

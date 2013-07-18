@@ -325,7 +325,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
           final Settings settings = isInplace ? getSettingsForInplace(context, choice) : showDialog(context);
           if (settings == null) return;
 
-          CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
             public void run() {
               List<RangeMarker> occurrences = ContainerUtil.newArrayList();
               Document document = editor.getDocument();
@@ -345,7 +345,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
               if (isInplace && var != null) {
                 InplaceVariableIntroducer<PsiElement> introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
                 introducer.performInplaceRefactoring(getDialog(context).suggestNames());
               }
             }
@@ -405,7 +405,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(context.getPlace().getLanguage());
     return supportProvider != null &&
            context.getEditor().getSettings().isVariableInplaceRenameEnabled() &&
-           supportProvider.isInplaceIntroduceAvailable(context.getElementToIntroduce(), context.getPlace()) &&
+           supportProvider.isInplaceIntroduceAvailable(context.getPlace(), context.getPlace()) &&
            !ApplicationManager.getApplication().isUnitTestMode();
   }
 
@@ -525,7 +525,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
 
     if (candidate == null) return null;
-    
+
     if ((container instanceof GrWhileStatement) &&
         candidate.equals(((GrWhileStatement)container).getCondition())) {
       return container;
