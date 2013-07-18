@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="chronon-embedder" />
     <orderEntry type="module" module-name="python-remote-interpreter" scope="TEST" />
     <orderEntry type="module" module-name="duplicates" scope="TEST" />
+    <orderEntry type="module" module-name="duplicates-xml" scope="TEST" />
   </component>
 </module>
 
