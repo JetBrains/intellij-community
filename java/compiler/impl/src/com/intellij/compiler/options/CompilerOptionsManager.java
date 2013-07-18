@@ -16,6 +16,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,5 +38,5 @@ public interface CompilerOptionsManager {
     EXTERNAL_BUILD, AUTO_MAKE, PARALLEL_COMPILATION, REBUILD_MODULE_ON_DEPENDENCY_CHANGE, HEAP_SIZE, COMPILER_VM_OPTIONS
   }
 
-  boolean isAvailable(@NotNull Setting setting);
+  boolean isAvailable(@NotNull Setting setting, @NotNull Project project);
 }

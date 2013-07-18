@@ -89,7 +89,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JLabel               myEnableAutomakeLegendLabel;
   private JLabel               myParallelCompilationLegendLabel;
 
-  public CompilerUIConfigurable(final Project project) {
+  public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
 
     myPatternLegendLabel.setText("<html><body>" +
@@ -106,14 +106,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
     });
 
-    tweakControls();
+    tweakControls(project);
   }
 
-  private void tweakControls() {
+  private void tweakControls(@NotNull Project project) {
     CompilerOptionsManager[] managers = CompilerOptionsManager.EP_NAME.getExtensions();
     boolean showExternalBuildSetting = true;
     for (CompilerOptionsManager manager : managers) {
-      showExternalBuildSetting = manager.isAvailable(Setting.EXTERNAL_BUILD);
+      showExternalBuildSetting = manager.isAvailable(Setting.EXTERNAL_BUILD, project);
       if (!showExternalBuildSetting) {
         myDisabledSettings.add(Setting.EXTERNAL_BUILD);
         break;
@@ -127,7 +127,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
       else {
         for (CompilerOptionsManager manager : managers) {
-          if (!manager.isAvailable(setting)) {
+          if (!manager.isAvailable(setting, project)) {
             myDisabledSettings.add(setting);
             break;
           }
