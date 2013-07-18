@@ -100,7 +100,28 @@ public class EquivalenceChecker {
       return false;
     }
     if (statement1.getClass() != statement2.getClass()) {
-      return false;
+      if (statement1 instanceof PsiBlockStatement && !(statement2 instanceof PsiBlockStatement)) {
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)statement1;
+        final PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
+        if (statements.length != 1) {
+          return false;
+        }
+        statement1 = statements[0];
+      }
+      else if (!(statement1 instanceof PsiBlockStatement) && statement2 instanceof PsiBlockStatement) {
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)statement2;
+        final PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
+        if (statements.length != 1) {
+          return false;
+        }
+        statement2 = statements[0];
+      }
+      else {
+        return false;
+      }
+      if (statement1.getClass() != statement2.getClass()) {
+        return false;
+      }
     }
     if (statement1 instanceof PsiAssertStatement) {
       return assertStatementsAreEquivalent((PsiAssertStatement)statement1, (PsiAssertStatement)statement2);
