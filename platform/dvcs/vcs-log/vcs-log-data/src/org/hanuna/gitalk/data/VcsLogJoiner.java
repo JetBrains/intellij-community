@@ -41,7 +41,7 @@ public class VcsLogJoiner {
    */
   @NotNull
   public List<? extends CommitParents> addCommits(@NotNull List<CommitParents> savedLog,
-                                                  @NotNull List<? extends VcsCommitDetails> firstBlock, @NotNull Collection<Ref> refs,
+                                                  @NotNull List<? extends CommitParents> firstBlock, @NotNull Collection<Ref> refs,
                                                   @NotNull Computable<List<CommitParents>> wholeLogGetter) {
     // TODO
     return firstBlock;
