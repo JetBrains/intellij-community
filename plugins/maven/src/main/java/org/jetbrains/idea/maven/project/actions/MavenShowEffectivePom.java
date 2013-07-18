@@ -73,6 +73,8 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (project.isDisposed()) return;
+
             String fileName = mavenProject.getMavenId().getArtifactId() + "-effective-pom.xml";
             PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, XMLLanguage.INSTANCE, s);
             file.navigate(true);
