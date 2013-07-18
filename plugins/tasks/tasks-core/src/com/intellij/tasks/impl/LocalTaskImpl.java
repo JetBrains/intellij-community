@@ -84,6 +84,7 @@ public class LocalTaskImpl extends LocalTask {
 
     if (origin instanceof LocalTaskImpl) {
       myChangeLists = ((LocalTaskImpl)origin).getChangeLists();
+      myBranches = ((LocalTaskImpl)origin).getBranches();
       myActive = ((LocalTaskImpl)origin).isActive();
       myWorkItems = ((LocalTaskImpl)origin).getWorkItems();
       myRunning = ((LocalTaskImpl)origin).isRunning();
@@ -218,8 +219,14 @@ public class LocalTaskImpl extends LocalTask {
 
   @NotNull
   @Override
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false, elementTag="branch")
   public List<BranchInfo> getBranches() {
     return myBranches;
+  }
+
+  public void setBranches(List<BranchInfo> branches) {
+    myBranches = branches;
   }
 
   @Override
