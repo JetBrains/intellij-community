@@ -1325,6 +1325,29 @@ class XInternalError {}
     checkResult()
   }
 
+  public void testAccessorViaCompletion() {
+    configure()
+
+    def getter = myFixture.lookupElements.find { it.lookupString == 'public int getField' }
+    def setter = myFixture.lookupElements.find { it.lookupString == 'public void setField' }
+    assert getter : myFixture.lookupElementStrings
+    assert setter : myFixture.lookupElementStrings
+
+    def p = LookupElementPresentation.renderElement(getter)
+    assert p.itemText == getter.lookupString
+    assert p.tailText == '() {...}'
+    assert !p.typeText
+
+    p = LookupElementPresentation.renderElement(setter)
+    assert p.itemText == setter.lookupString
+    assert p.tailText == '(field) {...}'
+    assert !p.typeText
+
+    lookup.currentItem = getter
+    myFixture.type('\n')
+    checkResult()
+  }
+
   public void testBraceOnNextLine() {
     codeStyleSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     doTest()
