@@ -78,7 +78,7 @@ public abstract class TaskManager {
 
   public abstract LocalTask activateTask(@NotNull Task task, boolean clearContext);
 
-  public abstract void performVcsOperation(LocalTask task, VcsOperation operation);
+  public abstract void activateInVcs(LocalTask task, @Nullable LocalTask previousActive, VcsOperation operation);
 
   @NotNull
   public abstract LocalTask getActiveTask();

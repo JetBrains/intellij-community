@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.MultiMap;
 
 /**
  * @author Dmitry Avdeev
@@ -28,11 +29,22 @@ public abstract class VcsTaskHandler {
     return EXTENSION_POINT_NAME.getExtensions(project);
   }
 
+  public static class TaskInfo {
+    // branch name/repository names
+    public final MultiMap<String, String> branches;
+
+    public TaskInfo(MultiMap<String, String> branches) {
+      this.branches = branches;
+    }
+  }
+
   private static final ExtensionPointName<VcsTaskHandler> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.vcs.taskHandler");
 
-  public abstract void startNewTask(String name);
+  public abstract TaskInfo startNewTask(String taskName);
 
-  public abstract void switchTask(String to);
+  public abstract void switchToTask(TaskInfo taskInfo);
 
-  public abstract void closeTask(String name);
+  public abstract void closeTask(TaskInfo taskInfo);
+
+  public abstract TaskInfo getActiveTask();
 }

@@ -358,6 +358,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     final LocalTask task = doActivate(origin, true);
 
     if (!isVcsEnabled()) return task;
+
     List<ChangeListInfo> changeLists = task.getChangeLists();
     if (!changeLists.isEmpty()) {
       ChangeListInfo info = changeLists.get(0);
@@ -368,11 +369,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       myChangeListManager.setDefaultChangeList(changeList);
     }
+    List<BranchInfo> branches = task.getBranches();
+    if (!branches.isEmpty()) {
+      BranchInfo info = branches.get(0);
+      VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+      for (VcsTaskHandler handler : handlers) {
+//        handler.switchToTask(info.name);
+      }
+    }
     return task;
   }
 
   @Override
-  public void performVcsOperation(LocalTask task, VcsOperation operation) {
+  public void activateInVcs(LocalTask task, LocalTask previousActive, VcsOperation operation) {
     String name = getChangelistName(task);
     if (operation == VcsOperation.CREATE_CHANGELIST) {
       String comment = TaskUtil.getChangeListComment(task);
@@ -380,9 +389,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
     else if (operation == VcsOperation.CREATE_BRANCH) {
       VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+      if (previousActive != null) {
+
+      }
       for (VcsTaskHandler handler : handlers) {
         handler.startNewTask(name);
       }
+      final BranchInfo info = new BranchInfo();
+      info.name = name;
+      task.addBranch(info);
     }
   }
 

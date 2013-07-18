@@ -119,8 +119,9 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
         LOG.warn(ex);
       }
     }
+    LocalTask activeTask = taskManager.getActiveTask();
     LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
-    taskManager.performVcsOperation(localTask, operation);
+    taskManager.activateInVcs(localTask, activeTask, operation);
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }

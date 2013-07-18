@@ -38,25 +38,30 @@ public class TaskBranchesTest extends TaskManagerTestCase {
 
     List<GitRepository> repositories = initRepositories("community", "idea");
     GitRepository repository = repositories.get(0);
+    assertEquals("master", repository.getCurrentBranch().getName());
 
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(getProject());
     assertEquals(1, handlers.length);
     VcsTaskHandler handler = handlers[0];
 
+    VcsTaskHandler.TaskInfo defaultInfo = handler.getActiveTask();
     final String first = "first";
-    handler.startNewTask(first);
+    VcsTaskHandler.TaskInfo firstInfo = handler.startNewTask(first);
     assertEquals(2, repository.getBranches().getLocalBranches().size());
     assertEquals(first, repository.getCurrentBranch().getName());
 
+    handler.switchToTask(defaultInfo);
+    assertEquals("master", repository.getCurrentBranch().getName());
+
     final String second = "second";
-    handler.startNewTask(second);
+    VcsTaskHandler.TaskInfo secondInfo = handler.startNewTask(second);
     assertEquals(3, repository.getBranches().getLocalBranches().size());
     assertEquals(second, repository.getCurrentBranch().getName());
 
-    handler.switchTask(first);
+    handler.switchToTask(firstInfo);
     assertEquals(first, repository.getCurrentBranch().getName());
 
-    handler.closeTask(second);
+    handler.closeTask(secondInfo);
     assertEquals(2, repository.getBranches().getLocalBranches().size());
   }
 
