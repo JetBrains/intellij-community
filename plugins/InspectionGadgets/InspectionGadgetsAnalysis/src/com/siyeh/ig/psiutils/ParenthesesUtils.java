@@ -89,7 +89,7 @@ public class ParenthesesUtils {
     return expression;
   }
 
-  private static boolean isCommutativeOperator(@NotNull IElementType token) {
+  public static boolean isCommutativeOperator(@NotNull IElementType token) {
     return !(token.equals(JavaTokenType.MINUS) ||
              token.equals(JavaTokenType.DIV) ||
              token.equals(JavaTokenType.PERC) ||
@@ -173,7 +173,7 @@ public class ParenthesesUtils {
     return -1;
   }
 
-  private static int getPrecedenceForOperator(@NotNull IElementType operator) {
+  public static int getPrecedenceForOperator(@NotNull IElementType operator) {
     final Integer precedence = s_binaryOperatorPrecedence.get(operator);
     if (precedence == null) {
       throw new IllegalArgumentException("unknown operator: " + operator);
@@ -454,8 +454,8 @@ public class ParenthesesUtils {
     return areParenthesesNeeded(child, (PsiExpression)parent, ignoreClarifyingParentheses);
   }
 
-  private static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression,
-                                              boolean ignoreClarifyingParentheses) {
+  public static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression,
+                                             boolean ignoreClarifyingParentheses) {
     if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayInitializerExpression) {
       return false;
     }
