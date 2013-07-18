@@ -5,20 +5,29 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -30,11 +39,18 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC,
       PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
-  public static final String PACKAGE_LOMBOK = "package lombok;\n";
-  public static final String ANNOTATION_TYPE = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE)\n" +
-      "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)\n";
+  private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
+  private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
 
-  private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources";
+  @Override
+  protected String getTestDataPath() {
+    return ".";
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "lombok-plugin/src/test/data";
+  }
 
   @Override
   public void setUp() throws Exception {
@@ -43,15 +59,15 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   private void addLombokClassesToFixture() {
-    //added java.lang.Object to 'classpath'
-    myFixture.addClass("package java.lang; public class Object {}");
+    loadFilesFrom(LOMBOK_SRC_PATH);
+    loadFilesFrom(LOMBOKPG_SRC_PATH);
+  }
 
-    // added some classes used by tests to 'classpath'
-    myFixture.addClass("package java.util; public class Timer {}");
-
-    List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(LOMBOK_SRC_PATH));
+  private void loadFilesFrom(final String srcPath) {
+    List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(srcPath));
     for (File javaFile : filesByMask) {
-      myFixture.configureByFile(javaFile.getPath().replace("\\", "/"));
+      String filePath = javaFile.getPath().replace("\\", "/");
+      myFixture.copyFileToProject(filePath, filePath.substring(srcPath.length() + 1));
     }
   }
 
@@ -60,10 +76,8 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   protected void doTest(String fileName) throws IOException {
-//    final PsiFile psiDelombokFile = myFixture.configureByText(StdFileTypes.JAVA, loadDeLombokFile(fileName));//createPseudoPhysicalFile(getProject(), fileName, loadDeLombokFile(fileName));
-//    final PsiFile psiLombokFile = myFixture.configureByText(StdFileTypes.JAVA, loadLombokFile(fileName));//createPseudoPhysicalFile(getProject(), fileName, loadLombokFile(fileName));
-    final PsiFile psiDelombokFile = createPseudoPhysicalFile(getProject(), fileName, loadDeLombokFile(fileName));
-    final PsiFile psiLombokFile = createPseudoPhysicalFile(getProject(), fileName, loadLombokFile(fileName));
+    final PsiFile psiDelombokFile = loadToPsiFile("after/" + fileName);
+    final PsiFile psiLombokFile = loadToPsiFile("before/" + fileName);
 
     if (!(psiLombokFile instanceof PsiJavaFile) || !(psiDelombokFile instanceof PsiJavaFile)) {
       fail("The test file type is not supported");
@@ -87,6 +101,12 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       }
       assertTrue("Classnames are not equal, class (" + theirsClass.getName() + ") not found", compared);
     }
+  }
+
+  private PsiFile loadToPsiFile(String fileName) {
+    VirtualFile virtualFile = myFixture.copyFileToProject(getBasePath() + "/" + fileName, fileName);
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    return myFixture.getFile();
   }
 
   private void compareFields(PsiClass intellij, PsiClass theirs) {
@@ -178,39 +198,6 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
 
       compareType(intellijParameter.getType(), theirsParameter.getType(), theirsParameter);
     }
-  }
-
-  protected PsiFile createPseudoPhysicalFile(final Project project, final String fileName, final String text) throws IncorrectOperationException {
-    return PsiFileFactory.getInstance(project).createFileFromText(
-        fileName,
-        FileTypeManager.getInstance().getFileTypeByFileName(fileName),
-        text,
-        LocalTimeCounter.currentTime(),
-        true);
-  }
-
-  protected String loadLombokFile(String fileName) throws IOException {
-    return loadFileContent("/before/", fileName);
-  }
-
-  protected String loadDeLombokFile(String fileName) throws IOException {
-    return loadFileContent("/after/", fileName);
-  }
-
-  protected String getLombokTestDataDirectory() {
-    return "./lombok-plugin/src/test/data";
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return "";
-  }
-
-  private String loadFileContent(String subDir, String fileName) throws IOException {
-    final File fromFile = new File(getLombokTestDataDirectory(), subDir);
-    String text = FileUtil.loadFile(new File(fromFile, fileName), CharsetToolkit.UTF8).trim();
-    text = StringUtil.convertLineSeparators(text);
-    return text;
   }
 
   private static class QualifiedNameFunction implements Function<PsiAnnotation, String> {

@@ -1,10 +1,8 @@
 package de.plushnikov.lombok.tests;
 
 import de.plushnikov.lombok.LombokParsingTestCase;
-import org.junit.Test;
 
 import java.io.IOException;
-
 
 /**
  * Unit tests for IntelliJPlugin for Lombok
@@ -12,35 +10,27 @@ import java.io.IOException;
  */
 public class IntelliJLombokPluginTestCase extends LombokParsingTestCase {
 
-  @Test
   public void testNonNullPlain() throws IOException {
     doTest();
   }
 
-  @Test
   public void testSynchronizedName() throws IOException {
     doTest();
   }
 
-  @Test
   public void testSynchronizedPlain() throws IOException {
     doTest();
   }
 
-  @Test
-  public void testClassNamedAfterGetter()throws IOException  {
+  public void testClassNamedAfterGetter() throws IOException {
     doTest();
   }
 
-  @Test
-  public void testCommentsInterspersed()throws IOException  {
+  public void testCommentsInterspersed() throws IOException {
     doTest();
   }
 
-  @Test
-  public void testConstructors()throws IOException  {
+  public void testConstructors() throws IOException {
     doTest();
   }
-
-
 }

@@ -152,7 +152,7 @@ final class Data3 {
 		return "Data3(x=" + this.getX() + ", name=" + this.getName() + ")";
 	}
 }
-final class Data4 extends java.util.Timer {
+final class Data4 extends java.util.Calendar {
 	int x;
 	Data4() {
 	}

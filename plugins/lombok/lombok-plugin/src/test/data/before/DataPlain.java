@@ -13,7 +13,7 @@ final @Data class Data3 {
 }
 @Data 
 @lombok.EqualsAndHashCode(callSuper=true)
-final class Data4 extends java.util.Timer {
+final class Data4 extends java.util.Calendar {
 	int x;
 	Data4() {
 		super();
