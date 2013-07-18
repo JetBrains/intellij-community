@@ -242,7 +242,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
 
-    JavaOverrideCompletionContributor.fillCompletionVariants(parameters, result);
+    JavaGenerateMemberCompletionContributor.fillCompletionVariants(parameters, result);
 
     addAllClasses(parameters, result, inheritors);
 
