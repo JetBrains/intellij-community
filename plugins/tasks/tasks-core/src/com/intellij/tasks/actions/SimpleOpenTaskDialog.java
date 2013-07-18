@@ -27,7 +27,6 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.RadioButtonEnumModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +46,6 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
   private JCheckBox myCreateChangelist;
   private JCheckBox myMarkAsInProgressBox;
   private JLabel myTaskNameLabel;
-  private JBRadioButton myCreateBranch;
-  private JBRadioButton myCreateNewChangelist;
-  private JBRadioButton myDoNothing;
   private JPanel myVcsPanel;
   private JPanel myDistributedVcsPanel;
   private ButtonGroup myVcsGroup;

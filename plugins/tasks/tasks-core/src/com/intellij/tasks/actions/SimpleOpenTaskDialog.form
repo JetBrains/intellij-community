@@ -99,7 +99,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="55d4e" class="com.intellij.ui.components.JBRadioButton" binding="myCreateBranch">
+              <component id="55d4e" class="com.intellij.ui.components.JBRadioButton">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -107,7 +107,7 @@
                   <text value="Create dedicated &amp;branch"/>
                 </properties>
               </component>
-              <component id="b1f13" class="com.intellij.ui.components.JBRadioButton" binding="myCreateNewChangelist">
+              <component id="b1f13" class="com.intellij.ui.components.JBRadioButton">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -115,7 +115,7 @@
                   <text value="Create new change&amp;list"/>
                 </properties>
               </component>
-              <component id="c4150" class="com.intellij.ui.components.JBRadioButton" binding="myDoNothing">
+              <component id="c4150" class="com.intellij.ui.components.JBRadioButton">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>

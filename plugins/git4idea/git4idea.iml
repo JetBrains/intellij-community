@@ -61,7 +61,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="dvcs" />
+    <orderEntry type="module" module-name="dvcs" exported="" />
     <orderEntry type="library" scope="TEST" name="cucumber-jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
     <orderEntry type="library" name="JSch" level="project" />

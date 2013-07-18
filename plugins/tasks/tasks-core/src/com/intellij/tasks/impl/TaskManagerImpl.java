@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
@@ -372,10 +373,16 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public void performVcsOperation(LocalTask task, VcsOperation operation) {
+    String name = getChangelistName(task);
     if (operation == VcsOperation.CREATE_CHANGELIST) {
-      String name = getChangelistName(task);
       String comment = TaskUtil.getChangeListComment(task);
       createChangeList(task, name, comment);
+    }
+    else if (operation == VcsOperation.CREATE_BRANCH) {
+      VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+      for (VcsTaskHandler handler : handlers) {
+        handler.startNewTask(name);
+      }
     }
   }
 

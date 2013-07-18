@@ -62,6 +62,7 @@ public class LocalTaskImpl extends LocalTask {
   private boolean myRunning = false;
   private List<WorkItem> myWorkItems = new ArrayList<WorkItem>();
   private Date myLastPost;
+  private List<BranchInfo> myBranches = new ArrayList<BranchInfo>();
 
 
   /** for serialization */
@@ -213,6 +214,22 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public void removeChangelist(final ChangeListInfo info) {
     myChangeLists.remove(info);
+  }
+
+  @NotNull
+  @Override
+  public List<BranchInfo> getBranches() {
+    return myBranches;
+  }
+
+  @Override
+  public void addBranch(BranchInfo info) {
+    myBranches.add(info);
+  }
+
+  @Override
+  public void removeBranch(BranchInfo info) {
+    myBranches.add(info);
   }
 
   public boolean isClosed() {
