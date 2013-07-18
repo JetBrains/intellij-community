@@ -18,9 +18,9 @@ import java.io.IOException;
  */
 public class GithubLoginDialog extends DialogWrapper {
 
-  private static final Logger LOG = GithubUtil.LOG;
+  protected static final Logger LOG = GithubUtil.LOG;
 
-  private final GithubLoginPanel myGithubLoginPanel;
+  protected final GithubLoginPanel myGithubLoginPanel;
 
   public GithubLoginDialog(@Nullable final Project project) {
     super(project, true);
@@ -61,14 +61,18 @@ public class GithubLoginDialog extends DialogWrapper {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
       GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin());
-      final GithubSettings settings = GithubSettings.getInstance();
-      settings.setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.shouldSavePassword());
+      saveCredentials(auth);
       super.doOKAction();
     }
     catch (IOException e) {
       LOG.info(e);
       setErrorText("Can't login: " + GithubUtil.getErrorTextFromException(e));
     }
+  }
+
+  protected void saveCredentials(GithubAuthData auth) {
+    final GithubSettings settings = GithubSettings.getInstance();
+    settings.setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.isSavePasswordSelected());
   }
 
   public void clearErrors() {
@@ -78,9 +82,5 @@ public class GithubLoginDialog extends DialogWrapper {
   @NotNull
   public GithubAuthData getAuthData() {
     return myGithubLoginPanel.getAuthData();
-  }
-
-  public void setBasicOnly() {
-    myGithubLoginPanel.lockAuthType(GithubAuthData.AuthType.BASIC);
   }
 }

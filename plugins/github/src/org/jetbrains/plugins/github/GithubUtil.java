@@ -35,6 +35,7 @@ import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import java.io.IOException;
@@ -157,8 +158,7 @@ public class GithubUtil {
 
   @Nullable
   public static GithubAuthData getValidBasicAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
-    final GithubLoginDialog dialog = new GithubLoginDialog(project);
-    dialog.setBasicOnly();
+    final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
