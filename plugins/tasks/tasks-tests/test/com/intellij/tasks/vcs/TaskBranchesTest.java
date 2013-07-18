@@ -56,9 +56,8 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     handler.switchTask(first);
     assertEquals(first, repository.getCurrentBranch().getName());
 
-    handler.closeTask(first);
-
-//  todo  assertEquals(2, repository.getBranches().getLocalBranches().size());
+    handler.closeTask(second);
+    assertEquals(2, repository.getBranches().getLocalBranches().size());
   }
 
   private List<GitRepository> initRepositories(String... names) {
