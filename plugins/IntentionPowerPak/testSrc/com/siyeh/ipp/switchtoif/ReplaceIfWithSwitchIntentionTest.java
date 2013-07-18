@@ -21,7 +21,7 @@ import com.siyeh.ipp.IPPTestCase;
 /**
  * @see ReplaceIfWithSwitchIntention
  */
-public class ReplaceIfWithSwitchlIntentionTest extends IPPTestCase {
+public class ReplaceIfWithSwitchIntentionTest extends IPPTestCase {
 
   public void testComments() { doTest(); }
   public void testLong() { assertIntentionNotAvailable(); }

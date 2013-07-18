@@ -19,6 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
@@ -64,7 +66,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
       }
     }
     final PsiIfStatement statementToReplace = ifStatement;
-    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement);
+    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement, 0);
     if (switchExpression == null) {
       return;
     }
