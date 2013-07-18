@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -34,7 +35,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
   private static void showUnsupportedNotification(@NotNull final Project project) {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                      "Unsupported action",
-                     "<html>You have to <a href='#'>enable</a> <b>Settings -> Maven -> Importing -> \"Use Maven3 to import project\"</b> option to use Show Effective POM action</html>",
+                     "<html>You have to <a href='#'>enable</a> <b>" + CommonBundle.settingsActionPath() + " | Maven | Importing | \"Use Maven3 to import project\"</b> option to use Show Effective POM action</html>",
                      NotificationType.ERROR,
                      new NotificationListener.Adapter() {
                        @Override
