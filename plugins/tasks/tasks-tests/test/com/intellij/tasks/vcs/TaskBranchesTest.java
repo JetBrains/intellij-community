@@ -20,19 +20,18 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitTestUtil;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 18.07.13
  */
+@SuppressWarnings("ConstantConditions")
 public class TaskBranchesTest extends TaskManagerTestCase {
 
   public void testGitTaskHandler() throws Exception {
@@ -43,12 +42,23 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(getProject());
     assertEquals(1, handlers.length);
     VcsTaskHandler handler = handlers[0];
-    handler.startNewTask("first");
-    Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
-    assertEquals(2, localBranches.size());
-    GitLocalBranch currentBranch = repository.getCurrentBranch();
-    assertNotNull(currentBranch);
-    assertEquals("first", currentBranch.getName());
+
+    final String first = "first";
+    handler.startNewTask(first);
+    assertEquals(2, repository.getBranches().getLocalBranches().size());
+    assertEquals(first, repository.getCurrentBranch().getName());
+
+    final String second = "second";
+    handler.startNewTask(second);
+    assertEquals(3, repository.getBranches().getLocalBranches().size());
+    assertEquals(second, repository.getCurrentBranch().getName());
+
+    handler.switchTask(first);
+    assertEquals(first, repository.getCurrentBranch().getName());
+
+    handler.closeTask(first);
+
+//  todo  assertEquals(2, repository.getBranches().getLocalBranches().size());
   }
 
   private List<GitRepository> initRepositories(String... names) {
