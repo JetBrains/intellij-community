@@ -26,19 +26,18 @@ import java.awt.*;
  * @author gregsh
  */
 public class EditorHeaderComponent extends JPanel {
-  private final Color GRADIENT_C1;
-  private final Color GRADIENT_C2;
 
   public EditorHeaderComponent() {
     super(new BorderLayout(0, 0));
-    GRADIENT_C1 = new JBColor(getBackground(), JBColor.background());
-    GRADIENT_C2 = new JBColor(new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18),
-                                        Math.max(0, GRADIENT_C1.getBlue() - 0x18)), Gray._75);
   }
 
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+    Color GRADIENT_C1 = new JBColor(getBackground(), JBColor.background());
+    Color GRADIENT_C2 = new JBColor(new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18),
+                                              Math.max(0, GRADIENT_C1.getBlue() - 0x18)), Gray._75);
+
     final Graphics2D g2d = (Graphics2D)g;
 
     if (!UIUtil.isUnderGTKLookAndFeel()) {
