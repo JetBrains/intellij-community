@@ -68,7 +68,7 @@ public class JavaCompletionSorting {
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
-    } else {
+    } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
     if (smart) {
