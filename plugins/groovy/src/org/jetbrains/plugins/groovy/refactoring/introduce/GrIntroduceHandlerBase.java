@@ -106,7 +106,13 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   public abstract GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
 
-  protected abstract InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences);
+  protected abstract InplaceVariableIntroducer<PsiElement> getIntroducer(@NotNull GrVariable var,
+                                                                         @NotNull GrIntroduceContext context,
+                                                                         @NotNull Settings settings,
+                                                                         @NotNull List<RangeMarker> occurrenceMarkers,
+                                                                         RangeMarker varRangeMarker,
+                                                                         @Nullable RangeMarker expressionRangeMarker,
+                                                                         @Nullable RangeMarker stringPartRangeMarker);
 
   protected abstract Settings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice);
 
@@ -314,7 +320,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       final boolean isInplace = isInplace(context);
       Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
         @Override
-        public void pass(OccurrencesChooser.ReplaceChoice choice) {
+        public void pass(final OccurrencesChooser.ReplaceChoice choice) {
 
           final Settings settings = isInplace ? getSettingsForInplace(context, choice) : showDialog(context);
           if (settings == null) return;
@@ -324,8 +330,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
               List<RangeMarker> occurrences = ContainerUtil.newArrayList();
               Document document = editor.getDocument();
               for (PsiElement element : context.getOccurrences()) {
-                occurrences.add(document.createRangeMarker(element.getTextRange()));
+                occurrences.add(createRange(document, element));
               }
+              RangeMarker expressionRangeMarker = createRange(document, context.getExpression());
+              RangeMarker stringPartRangeMarker = createRange(document, context.getStringPart());
+              RangeMarker varRangeMarker = createRange(document, context.getVar());
+
               GrVariable var = ApplicationManager.getApplication().runWriteAction(new Computable<GrVariable>() {
                 @Override
                 public GrVariable compute() {
@@ -334,14 +344,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
               });
 
               if (isInplace && var != null) {
-                editor.getCaretModel().moveToOffset(var.getTextOffset());
-
-                InplaceVariableIntroducer<PsiElement> introducer = getIntroducer(var, context, occurrences);
+                InplaceVariableIntroducer<PsiElement> introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
                 introducer.performInplaceRefactoring(getDialog(context).suggestNames());
               }
             }
-          }, getRefactoringName(), null);
+          }, getRefactoringName(), getRefactoringName());
         }
       };
 
@@ -372,6 +380,24 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
+  }
+
+  private static RangeMarker createRange(Document document, StringPartInfo part) {
+    if (part == null) {
+      return null;
+    }
+    TextRange range = part.getRange().shiftRight(part.getLiteral().getTextRange().getStartOffset());
+    return document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+
+  }
+
+  @Nullable
+  private static RangeMarker createRange(@NotNull Document document, @Nullable PsiElement expression) {
+    if (expression == null) {
+      return null;
+    }
+    TextRange range = expression.getTextRange();
+    return document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), false);
   }
 
 

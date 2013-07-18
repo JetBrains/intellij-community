@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
@@ -28,7 +31,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -41,6 +46,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -58,11 +64,6 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_FIELD;
-  }
-
-  @Override
-  protected boolean isInplace(GrIntroduceContext context) {
-    return false;
   }
 
   @NotNull
@@ -106,7 +107,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   @NotNull
   @Override
   protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
-    return new GrIntroduceFieldDialog(context);
+    return new GrIntroduceFieldDialog(context, getApplicableInitPlaces(context));
   }
 
   @Override
@@ -115,8 +116,46 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   @Override
-  protected InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences) {
-    return new GrInplaceFieldIntroducer(var, context, occurrences);
+  protected InplaceVariableIntroducer<PsiElement> getIntroducer(@NotNull final GrVariable var,
+                                                                @NotNull GrIntroduceContext context,
+                                                                @NotNull GrIntroduceFieldSettings settings,
+                                                                @NotNull List<RangeMarker> occurrenceMarkers,
+                                                                RangeMarker varRangeMarker, @Nullable RangeMarker expressionRangeMarker,
+                                                                @Nullable RangeMarker stringPartRangeMarker) {
+    if (expressionRangeMarker != null) {
+      context.getEditor().getCaretModel().moveToOffset(expressionRangeMarker.getStartOffset());
+    }
+    else if (stringPartRangeMarker != null) {
+      int offset = stringPartRangeMarker.getStartOffset();
+      PsiElement at = var.getContainingFile().findElementAt(offset);
+      GrExpression ref = PsiTreeUtil.getParentOfType(at, GrBinaryExpression.class).getRightOperand();
+      context.getEditor().getCaretModel().moveToOffset(ref.getTextRange().getStartOffset());
+    }
+    GrExpression initializer = GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText(var.getInitializerGroovy().getText());
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        var.setInitializerGroovy(null);
+      }
+    });
+
+    return new GrInplaceFieldIntroducer(var, context, occurrenceMarkers, settings.replaceAllOccurrences(), expressionRangeMarker, stringPartRangeMarker, initializer);
+  }
+
+  static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context) {
+
+    if (TestFrameworks.getInstance().isTestClass((PsiClass)context.getScope())) {
+      return EnumSet.of(GrIntroduceFieldSettings.Init.CUR_METHOD,
+                        GrIntroduceFieldSettings.Init.FIELD_DECLARATION,
+                        GrIntroduceFieldSettings.Init.CONSTRUCTOR,
+                        GrIntroduceFieldSettings.Init.SETUP_METHOD);
+    }
+    else {
+      return EnumSet.of(GrIntroduceFieldSettings.Init.CUR_METHOD,
+                        GrIntroduceFieldSettings.Init.FIELD_DECLARATION,
+                        GrIntroduceFieldSettings.Init.CONSTRUCTOR);
+    }
+
   }
 
   @Override
@@ -129,7 +168,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
       @Override
       public Init initializeIn() {
-        return Init.CUR_METHOD;
+        return Init.FIELD_DECLARATION;
       }
 
       @Override
@@ -188,6 +227,11 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       }
     }
     return ContainerUtil.toArray(filtered, new PsiElement[filtered.size()]);
+  }
+
+  @Override
+  protected boolean isInplace(GrIntroduceContext context) {
+    return super.isInplace(context);
   }
 
   @Nullable

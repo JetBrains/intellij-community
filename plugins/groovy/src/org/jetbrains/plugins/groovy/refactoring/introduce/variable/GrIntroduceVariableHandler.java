@@ -132,8 +132,14 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences) {
-    return new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrences, var);
+  protected InplaceVariableIntroducer<PsiElement> getIntroducer(@NotNull GrVariable var,
+                                                                @NotNull GrIntroduceContext context,
+                                                                @NotNull GroovyIntroduceVariableSettings settings,
+                                                                @NotNull List<RangeMarker> occurrenceMarkers,
+                                                                RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
+                                                                RangeMarker stringPartRangeMarker) {
+    context.getEditor().getCaretModel().moveToOffset(var.getTextOffset());
+    return new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrenceMarkers, var);
   }
 
   @Override

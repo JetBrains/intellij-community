@@ -119,7 +119,12 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   @Override
-  protected InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences) {
+  protected InplaceVariableIntroducer<PsiElement> getIntroducer(@NotNull GrVariable var,
+                                                                @NotNull GrIntroduceContext context,
+                                                                @NotNull GrIntroduceConstantSettings settings,
+                                                                @NotNull List<RangeMarker> occurrenceMarkers,
+                                                                RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
+                                                                RangeMarker stringPartRangeMarker) {
     return null;
   }
 

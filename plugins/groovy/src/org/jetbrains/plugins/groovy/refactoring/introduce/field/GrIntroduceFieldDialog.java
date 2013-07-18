@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
-import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -56,10 +55,7 @@ import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
@@ -94,7 +90,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   private final GrIntroduceContext myContext;
 
-  public GrIntroduceFieldDialog(GrIntroduceContext context) {
+  public GrIntroduceFieldDialog(GrIntroduceContext context, EnumSet<Init> initPlaces) {
     super(context.getProject(), true);
     myContext = context;
 
@@ -105,17 +101,16 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     initVisibility();
 
     ButtonGroup initialization = new ButtonGroup();
-    initialization.add(myCurrentMethodRadioButton);
-    initialization.add(myFieldDeclarationRadioButton);
-    initialization.add(myClassConstructorSRadioButton);
-    if (TestFrameworks.getInstance().isTestClass(clazz)) {
-      initialization.add(mySetUpMethodRadioButton);
-      new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton, mySetUpMethodRadioButton);
+    ArrayList<JRadioButton> inits = ContainerUtil.newArrayList();
+    if (initPlaces.contains(Init.CUR_METHOD))        inits.add(myCurrentMethodRadioButton);     else myCurrentMethodRadioButton.setVisible(false);
+    if (initPlaces.contains(Init.FIELD_DECLARATION)) inits.add(myFieldDeclarationRadioButton);  else myFieldDeclarationRadioButton.setVisible(false);
+    if (initPlaces.contains(Init.CONSTRUCTOR))       inits.add(myClassConstructorSRadioButton); else myClassConstructorSRadioButton.setVisible(false);
+    if (initPlaces.contains(Init.SETUP_METHOD))      inits.add(mySetUpMethodRadioButton);       else mySetUpMethodRadioButton.setVisible(false);
+
+    for (JRadioButton init : inits) {
+      initialization.add(init);
     }
-    else {
-      mySetUpMethodRadioButton.setVisible(false);
-      new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton);
-    }
+    new RadioUpDownListener(inits.toArray(new JRadioButton[inits.size()]));
 
     if (clazz instanceof GroovyScriptClass) {
       myClassConstructorSRadioButton.setEnabled(false);

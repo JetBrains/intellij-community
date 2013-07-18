@@ -83,6 +83,10 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     if (!(myContext.getScope() instanceof GroovyFileBase)) {
       validateVariableOccurrencesUp(myContext.getScope(), conflicts, varName, offset);
     }
+
+    for (PsiElement element : myContext.getOccurrences()) {
+      validateVariableOccurrencesUp(element, conflicts, varName, element.getTextRange().getStartOffset());
+    }
     return conflicts;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.refactoring.introduce.ConflictReporter;
@@ -37,7 +37,7 @@ public class GroovyFieldValidator extends GrIntroduceValidatorEngine {
     super(context, new ConflictReporter() {
       @Override
       public void check(PsiElement toCheck, MultiMap<PsiElement, String> conflicts, String varName) {
-        if (toCheck instanceof GrField && varName.equals(((GrField)toCheck).getName())) {
+        if (toCheck instanceof GrVariable && varName.equals(((GrVariable)toCheck).getName())) {
           conflicts.putValue(toCheck, message("field.0.is.already.defined", htmlEmphasize(varName)));
         }
         if (toCheck instanceof GrMethod) {
