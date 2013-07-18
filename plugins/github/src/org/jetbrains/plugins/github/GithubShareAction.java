@@ -221,6 +221,9 @@ public class GithubShareAction extends DumbAwareAction {
       }
     });
     if (!exceptionRef.isNull()) {
+      if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
+        return null;
+      }
       GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get().getMessage());
       return null;
     }

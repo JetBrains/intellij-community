@@ -23,15 +23,11 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubSslSupport;
-import org.jetbrains.plugins.github.GithubUrlUtil;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.*;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -189,14 +185,14 @@ public class GithubApiUtil {
     return client;
   }
 
-  private static void checkStatusCode(@NotNull HttpMethod method) throws AuthenticationException {
+  private static void checkStatusCode(@NotNull HttpMethod method) throws GithubAuthenticationException {
     switch (method.getStatusCode()) {
       case 400: // HTTP_BAD_REQUEST
       case 401: // HTTP_UNAUTHORIZED
       case 402: // HTTP_PAYMENT_REQUIRED
       case 403: // HTTP_FORBIDDEN
       case 404: // HTTP_NOT_FOUND
-        throw new AuthenticationException("Request response - \"" + getErrorMessage(method) + '"');
+        throw new GithubAuthenticationException("Request response - \"" + getErrorMessage(method) + '"');
     }
   }
 

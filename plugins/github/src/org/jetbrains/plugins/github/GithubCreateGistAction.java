@@ -107,7 +107,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
     final GithubAuthData auth = dialog.isAnonymous() ? GithubAuthData.createAnonymous() : getValidAuthData(project);
     if (auth == null) {
-      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
       return;
     }
 

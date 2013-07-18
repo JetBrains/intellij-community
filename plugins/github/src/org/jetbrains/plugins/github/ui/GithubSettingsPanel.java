@@ -21,9 +21,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
-import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.GithubAuthenticationException;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -82,12 +82,12 @@ public class GithubSettingsPanel {
           GithubUtil.checkAuthData(getAuthData(), getLogin());
           Messages.showInfoMessage(myPane, "Connection successful", "Success");
         }
-        catch (AuthenticationException ex) {
+        catch (GithubAuthenticationException ex) {
           Messages.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
         }
         catch (IOException ex) {
           LOG.info(ex);
-          Messages.showErrorDialog(myPane, String.format("Can't login: %s", GithubUtil.getErrorTextFromException(ex)), "Login Failure");
+          Messages.showErrorDialog(myPane, "Can't login: " + GithubUtil.getErrorTextFromException(ex), "Login Failure");
         }
       }
     });
