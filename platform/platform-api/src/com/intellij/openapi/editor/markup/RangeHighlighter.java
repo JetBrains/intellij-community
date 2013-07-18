@@ -93,7 +93,7 @@ public interface RangeHighlighter extends RangeMarker {
    * @return the renderer instance, or null if the highlighter does not add any gutter icons.
    */
   @Nullable
-  GutterMark getGutterIconRenderer();
+  GutterIconRenderer getGutterIconRenderer();
 
   /**
    * Sets the renderer used for drawing gutter icons in the area covered by the
@@ -102,7 +102,7 @@ public interface RangeHighlighter extends RangeMarker {
    *
    * @param renderer the renderer instance, or null if the highlighter does not add any gutter icons.
    */
-  void setGutterIconRenderer(@Nullable GutterMark renderer);
+  void setGutterIconRenderer(@Nullable GutterIconRenderer renderer);
 
   /**
    * Returns the color of the marker drawn in the error stripe in the area covered by the highlighter.
