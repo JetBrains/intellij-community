@@ -19,6 +19,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author Aleksey Pivovarov
@@ -66,4 +67,8 @@ class GithubRepoRaw implements Serializable {
 
   @Nullable public GithubUserRaw owner;
   @Nullable public GithubUserRaw organization;
+
+  @Nullable public Date pushedAt;
+  @Nullable public Date createdAt;
+  @Nullable public Date updatedAt;
 }

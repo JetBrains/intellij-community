@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.api;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -39,6 +40,8 @@ class GithubGistRaw implements Serializable {
   public Map<String, GistFileRaw> files;
 
   public GithubUserRaw user;
+
+  public Date createdAt;
 
   public static class GistFileRaw {
     public Long size;

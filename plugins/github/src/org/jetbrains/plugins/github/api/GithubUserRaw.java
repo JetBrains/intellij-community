@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.api;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Information about a user on GitHub.
@@ -54,6 +55,8 @@ class GithubUserRaw implements Serializable {
   @Nullable public String blog;
 
   @Nullable public GithubUserPlanRaw plan;
+
+  @Nullable public Date createdAt;
 
   public static class GithubUserPlanRaw implements Serializable {
     @Nullable public String name;

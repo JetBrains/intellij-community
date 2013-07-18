@@ -50,6 +50,7 @@ public class GithubApiUtil {
 
   private static Gson initGson() {
     GsonBuilder builder = new GsonBuilder();
+    builder.setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     builder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
     return builder.create();
   }
