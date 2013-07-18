@@ -21,15 +21,24 @@ public class GithubLoginDialog extends DialogWrapper {
   protected static final Logger LOG = GithubUtil.LOG;
 
   protected final GithubLoginPanel myGithubLoginPanel;
+  protected final GithubSettings mySettings;
 
   public GithubLoginDialog(@Nullable final Project project) {
     super(project, true);
     myGithubLoginPanel = new GithubLoginPanel(this);
 
-    final GithubSettings settings = GithubSettings.getInstance();
-    myGithubLoginPanel.setHost(settings.getHost());
-    myGithubLoginPanel.setLogin(settings.getLogin());
-    myGithubLoginPanel.setAuthType(settings.getAuthType());
+    mySettings = GithubSettings.getInstance();
+    myGithubLoginPanel.setHost(mySettings.getHost());
+    myGithubLoginPanel.setLogin(mySettings.getLogin());
+    myGithubLoginPanel.setAuthType(mySettings.getAuthType());
+
+    if (mySettings.isSavePasswordMakesSense()) {
+      myGithubLoginPanel.setSavePasswordSelected(mySettings.getSavePasswordDefault());
+    }
+    else {
+      myGithubLoginPanel.setSavePasswordVisibleEnabled(false);
+      myGithubLoginPanel.setSavePasswordSelected(true);
+    }
 
     setTitle("Login to GitHub");
     setOKButtonText("Login");
@@ -62,6 +71,9 @@ public class GithubLoginDialog extends DialogWrapper {
     try {
       GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin());
       saveCredentials(auth);
+      if (mySettings.isSavePasswordMakesSense()) {
+        mySettings.setSavePasswordDefault(myGithubLoginPanel.isSavePasswordSelected());
+      }
       super.doOKAction();
     }
     catch (IOException e) {

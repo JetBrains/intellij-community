@@ -58,6 +58,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean ANONYMOUS_GIST = false;
     public boolean OPEN_IN_BROWSER_GIST = true;
     public boolean PRIVATE_GIST = true;
+    public boolean SAVE_PASSWORD = true;
     public Collection<String> TRUSTED_HOSTS = new ArrayList<String>();
   }
 
@@ -105,12 +106,25 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.PRIVATE_GIST;
   }
 
+  public boolean getSavePasswordDefault() {
+    return myState.SAVE_PASSWORD;
+  }
+
+  public boolean isSavePasswordMakesSense() {
+    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+  }
+
   public void setAnonymousGist(final boolean anonymousGist) {
     myState.ANONYMOUS_GIST = anonymousGist;
   }
 
   public void setPrivateGist(final boolean privateGist) {
     myState.PRIVATE_GIST = privateGist;
+  }
+
+  public void setSavePasswordDefault(final boolean savePassword) {
+    myState.SAVE_PASSWORD = savePassword;
   }
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {

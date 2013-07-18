@@ -16,9 +16,6 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -70,12 +67,6 @@ public class GithubLoginPanel {
 
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
-
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
-      mySavePasswordCheckBox.setVisible(false);
-      mySavePasswordCheckBox.setSelected(true);
-    }
   }
 
   public JComponent getPanel() {
@@ -108,6 +99,15 @@ public class GithubLoginPanel {
     myAuthTypeComboBox.setEnabled(false);
   }
 
+  public void setSavePasswordSelected(boolean savePassword) {
+    mySavePasswordCheckBox.setSelected(savePassword);
+  }
+
+  public void setSavePasswordVisibleEnabled(boolean visible) {
+    mySavePasswordCheckBox.setVisible(visible);
+    mySavePasswordCheckBox.setEnabled(visible);
+  }
+
   @NotNull
   public String getHost() {
     return myHostTextField.getText().trim();
@@ -123,7 +123,7 @@ public class GithubLoginPanel {
     return String.valueOf(myPasswordField.getPassword());
   }
 
-  public boolean shouldSavePassword() {
+  public boolean isSavePasswordSelected() {
     return mySavePasswordCheckBox.isSelected();
   }
 
