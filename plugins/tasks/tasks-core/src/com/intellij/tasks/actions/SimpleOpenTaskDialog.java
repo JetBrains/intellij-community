@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.ControlBinder;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -84,7 +86,7 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
     }
     else {
       myVcsPanel.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName() + " operations", false));
-      if (/*vcs.getType() == VcsType.distributed*/ false) {
+      if (vcs.getType() == VcsType.distributed && ApplicationManager.getApplication().isInternal()) {
         myCreateChangelist.setVisible(false);
         myButtonEnumModel.setSelected(taskManager.getState().vcsOperation);
       }

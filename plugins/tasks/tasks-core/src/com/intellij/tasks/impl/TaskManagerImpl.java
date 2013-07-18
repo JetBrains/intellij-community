@@ -45,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -357,6 +358,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     final LocalTask task = doActivate(origin, true);
 
+    return restoreVcsContext(task);
+  }
+
+  private LocalTask restoreVcsContext(LocalTask task) {
     if (!isVcsEnabled()) return task;
 
     List<ChangeListInfo> changeLists = task.getChangeLists();
@@ -369,13 +374,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       myChangeListManager.setDefaultChangeList(changeList);
     }
+
     List<BranchInfo> branches = task.getBranches();
-    if (!branches.isEmpty()) {
-      BranchInfo info = branches.get(0);
-      VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
-      for (VcsTaskHandler handler : handlers) {
-//        handler.switchToTask(info.name);
-      }
+    MultiMap<String, String> map = new MultiMap<String, String>();
+    for (BranchInfo branch : branches) {
+      map.putValue(branch.name, branch.repository);
+    }
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      handler.switchToTask(new VcsTaskHandler.TaskInfo(map));
     }
     return task;
   }
@@ -389,15 +396,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
     else if (operation == VcsOperation.CREATE_BRANCH) {
       VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
-      if (previousActive != null) {
-
-      }
       for (VcsTaskHandler handler : handlers) {
-        handler.startNewTask(name);
+        if (previousActive != null) {
+          addBranches(previousActive, handler.getActiveTask());
+        }
+        addBranches(task, handler.startNewTask(name));
       }
-      final BranchInfo info = new BranchInfo();
-      info.name = name;
-      task.addBranch(info);
+    }
+  }
+
+  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo info) {
+    List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(info);
+    for (BranchInfo branchInfo : branchInfos) {
+      task.addBranch(branchInfo);
     }
   }
 

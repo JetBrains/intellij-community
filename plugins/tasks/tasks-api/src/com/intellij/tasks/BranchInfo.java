@@ -15,8 +15,14 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -30,4 +36,17 @@ public class BranchInfo {
 
   @Attribute("repository")
   public String repository;
+
+  public static List<BranchInfo> fromTaskInfo(VcsTaskHandler.TaskInfo taskInfo) {
+    ArrayList<BranchInfo> list = new ArrayList<BranchInfo>();
+    for (Map.Entry<String, Collection<String>> entry : taskInfo.branches.entrySet()) {
+      for (String repository : entry.getValue()) {
+        BranchInfo branchInfo = new BranchInfo();
+        branchInfo.name = entry.getKey();
+        branchInfo.repository = repository;
+        list.add(branchInfo);
+      }
+    }
+    return list;
+  }
 }
