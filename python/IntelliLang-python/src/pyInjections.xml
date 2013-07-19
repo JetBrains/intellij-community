@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="LanguageInjectionConfiguration">
+  <injection language="SQLite" injector-id="python">
+    <display-name>sqlite3</display-name>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("execute", 0, "_sqlite3.Connection"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("executemany", 0, "_sqlite3.Connection"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("execute", 0, "_sqlite3.Cursor"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("executemany", 0, "_sqlite3.Cursor"))]]></place>
+  </injection>
+</component>

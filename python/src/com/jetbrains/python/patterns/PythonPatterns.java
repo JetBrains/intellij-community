@@ -9,6 +9,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -69,7 +70,12 @@ public class PythonPatterns extends PlatformPatterns {
     }
     PyExpression expression = (PyExpression) o;
     PyCallExpression call = (PyCallExpression) expression.getParent().getParent();
-    PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
+
+    // TODO is it better or worse to allow implicits here?
+    PyResolveContext context = PyResolveContext.noImplicits()
+      .withTypeEvalContext(TypeEvalContext.codeAnalysis(expression.getContainingFile()));
+
+    PyCallExpression.PyMarkedCallee callee = call.resolveCallee(context);
     return callee != null ? callee.getCallable() : null;
   }
 
