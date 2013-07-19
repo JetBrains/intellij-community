@@ -32,6 +32,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
@@ -83,9 +84,15 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
     addIndentOptionsTab(settings);
     if (provider != null && !provider.usesSharedPreview()) {
-      addSpacesTab(settings);
-      addWrappingAndBracesTab(settings);
-      addBlankLinesTab(settings);
+      if (!StringUtil.isEmpty(provider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS))) {
+        addSpacesTab(settings);
+      }
+      if (!StringUtil.isEmpty(provider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS))) {
+        addWrappingAndBracesTab(settings);
+      }
+      if (!StringUtil.isEmpty(provider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS))) {
+        addBlankLinesTab(settings);
+      }
     }
   }
 
