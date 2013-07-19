@@ -71,7 +71,7 @@ public class GithubRepo {
     }
   }
 
-  private GithubRepo(long id,
+  protected GithubRepo(long id,
                        @NotNull String name,
                        @NotNull String fullName,
                        @NotNull String description,

@@ -38,16 +38,16 @@ public class GithubUserDetailed extends GithubUser {
   private long diskUsage;
 
   @NotNull private String type;
-  @NotNull private GithubUserPlan plan;
+  @NotNull private UserPlan plan;
 
-  public static class GithubUserPlan implements Serializable {
+  public static class UserPlan implements Serializable {
     @NotNull private String name;
     private long space;
     private long collaborators;
     private long privateRepos;
 
     @NotNull
-    public static GithubUserPlan create(@Nullable GithubUserRaw.GithubUserPlanRaw raw) throws JsonException {
+    public static UserPlan create(@Nullable GithubUserRaw.GithubUserPlanRaw raw) throws JsonException {
       try {
         if (raw == null) throw new JsonException("raw is null");
         if (raw.name == null) throw new JsonException("name is null");
@@ -55,14 +55,14 @@ public class GithubUserDetailed extends GithubUser {
         if (raw.collaborators == null) throw new JsonException("collaborators is null");
         if (raw.privateRepos == null) throw new JsonException("privateRepos is null");
 
-        return new GithubUserPlan(raw.name, raw.space, raw.collaborators, raw.privateRepos);
+        return new UserPlan(raw.name, raw.space, raw.collaborators, raw.privateRepos);
       }
       catch (JsonException e) {
-        throw new JsonException("GithubUserPlan parse error", e);
+        throw new JsonException("UserPlan parse error", e);
       }
     }
 
-    private GithubUserPlan(@NotNull String name, long space, long collaborators, long privateRepos) {
+    private UserPlan(@NotNull String name, long space, long collaborators, long privateRepos) {
       this.name = name;
       this.space = space;
       this.collaborators = collaborators;
@@ -104,7 +104,7 @@ public class GithubUserDetailed extends GithubUser {
       if (raw.diskUsage == null) throw new JsonException("diskUsage is null");
 
       GithubUser user = GithubUser.create(raw);
-      GithubUserPlan plan = GithubUserPlan.create(raw.plan);
+      UserPlan plan = UserPlan.create(raw.plan);
 
       return new GithubUserDetailed(user, raw.name, raw.email, raw.company, raw.location, raw.type, raw.publicRepos, raw.publicGists,
                                     raw.totalPrivateRepos, raw.ownedPrivateRepos, raw.privateGists, raw.diskUsage, plan);
@@ -125,7 +125,7 @@ public class GithubUserDetailed extends GithubUser {
                                @NotNull Integer ownedPrivateRepos,
                                @NotNull Integer privateGists,
                                long diskUsage,
-                               @NotNull GithubUserPlan plan) {
+                               @NotNull UserPlan plan) {
     super(user);
     this.name = name;
     this.email = email;
@@ -196,7 +196,7 @@ public class GithubUserDetailed extends GithubUser {
   }
 
   @NotNull
-  public GithubUserPlan getPlan() {
+  public UserPlan getPlan() {
     return plan;
   }
 }

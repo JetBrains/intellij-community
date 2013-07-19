@@ -47,7 +47,7 @@ public class GithubUser {
     }
   }
 
-  private GithubUser(@NotNull String login, long id, @NotNull String url, @NotNull String htmlUrl, @Nullable String gravatarId) {
+  protected GithubUser(@NotNull String login, long id, @NotNull String url, @NotNull String htmlUrl, @Nullable String gravatarId) {
     this.login = login;
     this.id = id;
     this.url = url;
