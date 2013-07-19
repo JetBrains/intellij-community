@@ -258,7 +258,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (((VirtualFileSystemEntry)parent).compareNameTo(ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR, !SystemInfoRt.isFileSystemCaseSensitive) == 0) return true;
       parent = parent.getParent();
     }
-    assert parent == null;
     return false;
   }
 
