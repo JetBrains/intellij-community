@@ -23,11 +23,13 @@ import com.intellij.Patches;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
+
 import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -36,50 +38,44 @@ public abstract class JobScheduler {
   private static final ScheduledThreadPoolExecutor ourScheduledExecutorService;
   private static final int TASK_LIMIT = 50;
   private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobScheduler");
-  private static final ThreadLocal<Long> start = new ThreadLocal<Long>();
-  private static final boolean doTiming = true;
+  private static final ThreadLocal<Long> START = new ThreadLocal<Long>();
+  private static final boolean DO_TIMING = true;
 
   static {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, ConcurrencyUtil.newNamedThreadFactory("Periodic tasks thread", true, Thread.NORM_PRIORITY)) {
       @Override
       protected void beforeExecute(Thread t, Runnable r) {
-        if (doTiming) {
-          start.set(System.currentTimeMillis());
+        if (DO_TIMING) {
+          START.set(System.currentTimeMillis());
         }
       }
 
       @Override
       protected void afterExecute(Runnable r, Throwable t) {
-        if (doTiming) {
-          long elapsed = System.currentTimeMillis() - start.get();
-          if (elapsed > TASK_LIMIT) {
-            @NonNls String msg = TASK_LIMIT + " ms execution limit failed for: " + info(r) + "; elapsed time was " + elapsed +"ms";
-            LOG.info(msg);
+        if (DO_TIMING) {
+          long elapsed = System.currentTimeMillis() - START.get();
+          Object unwrapped;
+          if (elapsed > TASK_LIMIT && (unwrapped = info(r)) != null) {
+            @NonNls String msg = TASK_LIMIT + " ms execution limit failed for: " + unwrapped + "; elapsed time was " + elapsed +"ms";
+            LOG.warn(msg);
           }
         }
-      }
-
-      private Object info(Runnable r) {
-        Object object = r;
-        if (r instanceof FutureTask) {
-          try {
-            Field callableField = FutureTask.class.getDeclaredField("callable");
-            callableField.setAccessible(true);
-            object = callableField.get(r);
-            Field task = object.getClass().getDeclaredField("task"); // java.util.concurrent.Executors.RunnableAdapter()
-            task.setAccessible(true);
-            object = task.get(object);
-          }
-          catch (Exception ignored) {
-          }
-        }
-        return object;
       }
     };
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
     executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
     enableRemoveOnCancelPolicy(executor);
     ourScheduledExecutorService = executor;
+  }
+
+  private static Object info(Runnable r) {
+    if (!(r instanceof FutureTask)) return r;
+    Object sync = ReflectionUtil.getField(FutureTask.class, r, Object.class, "sync"); // FutureTask.sync in <=JDK7
+    Object o = sync == null ? r : sync;
+    Object callable = ReflectionUtil.getField(o.getClass(), o, Callable.class, "callable"); // FutureTask.callable or Sync.callable
+    if (callable == null) return null;
+    Object task = ReflectionUtil.getField(callable.getClass(), callable, Object.class, "task"); // java.util.concurrent.Executors.RunnableAdapter.task
+    return task == null ? callable : task;
   }
 
   private static void enableRemoveOnCancelPolicy(ScheduledThreadPoolExecutor executor) {
