@@ -83,7 +83,7 @@ public final class JavadocGenerationManager implements PersistentStateComponent<
     try {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, myConfiguration);
       assert runner != null;
-      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(myConfiguration, myProject, null, null, null));
+      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(myConfiguration, myProject, null));
     }
     catch (ExecutionException e) {
       ExecutionErrorDialog.show(e, CommonBundle.getErrorTitle(), myProject);

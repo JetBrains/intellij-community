@@ -300,8 +300,7 @@ public final class PreviewFormAction extends AnAction{
                                                   UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
       ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
       LOG.assertTrue(defaultRunner != null);
-      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, module.getProject(), null, null,
-                                                                                                  null));
+      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, module.getProject(), null));
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(

@@ -175,7 +175,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
                                                         myEnvironment.getRunnerSettings(),
                                                         myEnvironment.getConfigurationSettings(),
                                                         myEnvironment.getContentToReuse(),
-                                                        null));
+                                                        null,
+                                                        myEnvironment.getRunnerId()));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

@@ -154,7 +154,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                                                               env.getRunnerSettings(),
                                                                               env.getConfigurationSettings(),
                                                                               null,
-                                                                              env.getRunnerAndConfigurationSettings());
+                                                                              env.getRunnerAndConfigurationSettings(),
+                                                                              env.getRunnerId());
               taskEnvironment.setExecutionId(finalId);
               if (!provider.executeTask(dataContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
@@ -369,7 +370,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                                               runnerSettings,
                                                               configurationPerRunnerSettings,
                                                               descriptor,
-                                                              configuration));
+                                                              configuration,
+                                                              runner.getRunnerId()));
       }
       catch (RunCanceledByUserException ignore) {
       }

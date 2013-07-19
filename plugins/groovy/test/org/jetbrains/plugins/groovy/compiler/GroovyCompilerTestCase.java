@@ -222,7 +222,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                                           RunProfile configuration) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
     final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(),
-                                                                      new RunnerSettings<JDOMExternalizable>(null, null), null, null);
+                                                                      new RunnerSettings<JDOMExternalizable>(null, null));
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
