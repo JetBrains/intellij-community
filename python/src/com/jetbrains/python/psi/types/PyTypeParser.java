@@ -161,24 +161,50 @@ public class PyTypeParser {
         .named("simple-expr");
 
     final FunctionalParser<ParseResult, PyElementType> paramExpr =
-      simpleExpr.thenSkip(op("of")).then(simpleExpr)
-        .map(new Function<Pair<ParseResult, ParseResult>, ParseResult>() {
+      simpleExpr.thenSkip(op("[")).then(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op("]"))
+        .map(new Function<Pair<Pair<ParseResult, ParseResult>, List<ParseResult>>, ParseResult>() {
           @Override
-          public ParseResult fun(Pair<ParseResult, ParseResult> value) {
-            final ParseResult firstResult = value.getFirst();
-            final ParseResult secondResult = value.getSecond();
-            final ParseResult result = firstResult.merge(secondResult);
-            final PyType firstType = firstResult.getType();
-            final PyType secondType = secondResult.getType();
-            if (firstType != null) {
-              if (firstType instanceof PyClassType && secondType != null) {
-                return result.withType(new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, secondType));
+          public ParseResult fun(Pair<Pair<ParseResult, ParseResult>, List<ParseResult>> value) {
+            final Pair<ParseResult, ParseResult> firstPair = value.getFirst();
+            final ParseResult first = firstPair.getFirst();
+            final ParseResult second = firstPair.getSecond();
+            final List<ParseResult> third = value.getSecond();
+            final PyType firstType = first.getType();
+            if (firstType instanceof PyClassType) {
+              final List<PyType> tupleTypes = new ArrayList<PyType>();
+              tupleTypes.add(second.getType());
+              ParseResult result = first;
+              result = result.merge(second);
+              for (ParseResult r : third) {
+                tupleTypes.add(r.getType());
+                result = result.merge(r);
               }
-              return result.withType(firstType);
+              final PyType elementType = third.isEmpty() ? second.getType() :
+                                         PyTupleType.create(anchor, tupleTypes.toArray(new PyType[tupleTypes.size()]));
+              final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, elementType);
+              return result.withType(type);
             }
             return EMPTY_RESULT;
           }
         })
+        .or(simpleExpr.thenSkip(op("of")).then(simpleExpr)
+              .map(new Function<Pair<ParseResult, ParseResult>, ParseResult>() {
+                @Override
+                public ParseResult fun(Pair<ParseResult, ParseResult> value) {
+                  final ParseResult firstResult = value.getFirst();
+                  final ParseResult secondResult = value.getSecond();
+                  final ParseResult result = firstResult.merge(secondResult);
+                  final PyType firstType = firstResult.getType();
+                  final PyType secondType = secondResult.getType();
+                  if (firstType != null) {
+                    if (firstType instanceof PyClassType && secondType != null) {
+                      return result.withType(new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, secondType));
+                    }
+                    return result.withType(firstType);
+                  }
+                  return EMPTY_RESULT;
+                }
+              }))
         .or(simpleExpr.thenSkip(op("from")).then(simpleExpr).thenSkip(op("to")).then(simpleExpr)
               .map(new Function<Pair<Pair<ParseResult, ParseResult>, ParseResult>, ParseResult>() {
                 @Override

@@ -184,4 +184,35 @@ public class PyTypeParserTest extends PyTestCase {
     final PyType bound = genericType.getBound();
     assertInstanceOf(bound, PyUnionType.class);
   }
+
+  public void testBracketSingleParam() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "list[int]");
+    assertInstanceOf(type, PyCollectionType.class);
+    final PyCollectionType collectionType = (PyCollectionType)type;
+    assertNotNull(collectionType);
+    assertEquals("list", collectionType.getName());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    assertNotNull(elementType);
+    assertEquals("int", elementType.getName());
+  }
+
+  public void testBracketMultipleParams() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "dict[str, int]");
+    assertInstanceOf(type, PyCollectionType.class);
+    final PyCollectionType collectionType = (PyCollectionType)type;
+    assertNotNull(collectionType);
+    assertEquals("dict", collectionType.getName());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    assertNotNull(elementType);
+    assertInstanceOf(elementType, PyTupleType.class);
+    final PyTupleType tupleType = (PyTupleType)elementType;
+    final PyType first = tupleType.getElementType(0);
+    assertNotNull(first);
+    assertEquals("str", first.getName());
+    final PyType second = tupleType.getElementType(1);
+    assertNotNull(second);
+    assertEquals("int", second.getName());
+  }
 }
