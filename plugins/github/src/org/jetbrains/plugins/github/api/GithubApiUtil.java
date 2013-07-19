@@ -410,6 +410,16 @@ public class GithubApiUtil {
   }
 
   @NotNull
+  public static GithubIssue getIssue(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, @NotNull String id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/issues/" + id;
+
+    JsonElement result = getRequest(auth, path);
+
+    return GithubIssue.create(fromJson(result, GithubIssueRaw.class));
+  }
+
+  @NotNull
   public static List<GithubIssueComment> getIssueComments(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments";

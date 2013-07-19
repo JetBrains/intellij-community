@@ -29,6 +29,8 @@ public class GithubUser {
   @NotNull private String url;
   @NotNull private String htmlUrl;
 
+  @Nullable private String gravatarId;
+
   @NotNull
   public static GithubUser create(@Nullable GithubUserRaw raw) throws JsonException {
     try {
@@ -38,18 +40,19 @@ public class GithubUser {
       if (raw.url == null) throw new JsonException("url is null");
       if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
 
-      return new GithubUser(raw.login, raw.id, raw.url, raw.htmlUrl);
+      return new GithubUser(raw.login, raw.id, raw.url, raw.htmlUrl, raw.gravatarId);
     }
     catch (JsonException e) {
       throw new JsonException("GithubUser parse error", e);
     }
   }
 
-  private GithubUser(@NotNull String login, long id, @NotNull String url, @NotNull String htmlUrl) {
+  private GithubUser(@NotNull String login, long id, @NotNull String url, @NotNull String htmlUrl, @Nullable String gravatarId) {
     this.login = login;
     this.id = id;
     this.url = url;
     this.htmlUrl = htmlUrl;
+    this.gravatarId = gravatarId;
   }
 
   protected GithubUser(@NotNull GithubUser user) {
@@ -76,5 +79,10 @@ public class GithubUser {
   @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
+  }
+
+  @Nullable
+  public String getGravatarId() {
+    return gravatarId;
   }
 }

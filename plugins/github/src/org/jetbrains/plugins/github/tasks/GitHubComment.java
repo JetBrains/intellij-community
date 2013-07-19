@@ -28,12 +28,16 @@ import java.util.Date;
  */
 public class GitHubComment extends SimpleComment {
   @Nullable private final String myGravatarId;
-  @NotNull private final String myHost;
+  @NotNull private final String myUserHtmlUrl;
 
-  public GitHubComment(@Nullable Date date, @Nullable String author, @NotNull String text, @Nullable String gravatarId, @NotNull String host) {
+  public GitHubComment(@Nullable Date date,
+                       @Nullable String author,
+                       @NotNull String text,
+                       @Nullable String gravatarId,
+                       @NotNull String userHtmlUrl) {
     super(date, author, text);
     myGravatarId = gravatarId;
-    myHost = host;
+    myUserHtmlUrl = userHtmlUrl;
   }
 
   public void appendTo(StringBuilder builder) {
@@ -45,8 +49,7 @@ public class GitHubComment extends SimpleComment {
       }
     builder.append("</td><td>");
     if (getAuthor() != null) {
-      builder.append("<b>Author:</b> <a href=\"").append(myHost).append('/')
-             .append(getAuthor()).append("\">").append(getAuthor()).append("</a><br>");
+      builder.append("<b>Author:</b> <a href=\"").append(myUserHtmlUrl).append("\">").append(getAuthor()).append("</a><br>");
     }
     if (getDate() != null) {
       builder.append("<b>Date:</b> ").append(DateFormatUtil.formatDateTime(getDate())).append("<br>");
