@@ -54,3 +54,7 @@ restClient
 puppet
 fileWatcher
 terminal
+IntelliLang
+IntelliLang-xml
+IntelliLang-js
+IntelliLang-python
