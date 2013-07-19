@@ -63,7 +63,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (child != null) {
       if (document == null) {
-        final Element detachedStateCopy = (Element)child.clone();
+        final Element detachedStateCopy = child.clone();
         state.setDelayedFoldState(new Producer<CodeFoldingState>() {
           @Override
           public CodeFoldingState produce() {
@@ -107,7 +107,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     // type (caused by undo).
     if(FileEditorStateLevel.FULL == level){
       // Folding
-      if (project != null && !editor.isDisposed()) {
+      if (project != null && !project.isDisposed() && !editor.isDisposed()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         state.setFoldingState(CodeFoldingManager.getInstance(project).saveFoldingState(editor));
       }
