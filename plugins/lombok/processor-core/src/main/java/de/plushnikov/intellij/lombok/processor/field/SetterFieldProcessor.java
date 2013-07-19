@@ -1,11 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -16,6 +10,9 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.impl.light.LightTypeParameter;
+import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -27,6 +24,11 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Inspect and validate @Setter lombok annotation on a field
@@ -59,6 +61,9 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       result = validateVisibility(psiAnnotation);
       if (result) {
         result = validateExistingMethods(psiField, builder);
+        if (result) {
+          result = validateAccessorPrefix(psiField, builder);
+        }
       }
     }
     return result;
@@ -100,12 +105,27 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     return result;
   }
 
+  protected boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+    boolean result = true;
+    if (!AccessorsInfo.build(psiField).prefixDefinedAndStartsWith(psiField.getName())) {
+      builder.addWarning("Not generating setter for this field: It does not fit your @Accessors prefix list.");
+      result = false;
+    }
+    return result;
+  }
+
   public List<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
     return LombokUtils.toAllSetterNames(psiField.getName(), isBoolean);
   }
 
   protected String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
-    return LombokUtils.toSetterName(psiField.getName(), isBoolean);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+
+    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
+    if (accessorsInfo.isFluent()) {
+      return fieldNameWithoutPrefix;
+    }
+    return LombokUtils.toSetterName(fieldNameWithoutPrefix, isBoolean);
   }
 
   @NotNull
@@ -120,8 +140,9 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
     UserMapKeys.addWriteUsageFor(psiField);
 
+    PsiType returnType = getReturnType(psiField);
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
-        .withMethodReturnType(getReturnType(psiField))
+        .withMethodReturnType(returnType)
         .withContainingClass(psiClass)
         .withParameter(fieldName, psiFieldType)
         .withNavigationElement(psiField);
@@ -130,6 +151,12 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     }
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
       method.withModifier(PsiModifier.STATIC);
+    }
+
+    if (!PsiType.VOID.equals(returnType)) {
+      for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
+        method.withTypeParameter(new LightTypeParameter(typeParameter));
+      }
     }
 
     PsiParameter methodParameter = method.getParameterList().getParameters()[0];
@@ -148,6 +175,10 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {
+    if (AccessorsInfo.build(psiField).isChain()) {
+      PsiClass containingClass = psiField.getContainingClass();
+      return null == containingClass ? PsiType.NULL : PsiTypesUtil.getClassType(containingClass);
+    }
     return PsiType.VOID;
   }
 

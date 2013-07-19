@@ -166,7 +166,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     PsiMethod[] intellijMethods = intellij.getMethods();
     PsiMethod[] theirsMethods = theirs.getMethods();
 
-    assertEquals("Methodscounts are different for Class " + intellij.getName(), theirsMethods.length, intellijMethods.length);
+    assertEquals("Methodscounts are different for Class: " + intellij.getName(), theirsMethods.length, intellijMethods.length);
 
     for (PsiMethod theirsMethod : theirsMethods) {
       boolean compared = false;
@@ -183,7 +183,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
           compared = true;
         }
       }
-      assertTrue("Methodnames are not equal, Method (" + theirsMethod.getName() + ") not found : " + intellij.getName(), compared);
+      assertTrue("Methodnames are not equal, Method: (" + theirsMethod.getName() + ") not found in class : " + intellij.getName(), compared);
     }
   }
 

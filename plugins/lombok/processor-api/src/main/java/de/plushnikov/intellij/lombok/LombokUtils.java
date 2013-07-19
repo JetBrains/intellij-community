@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
+ * @author ProjectLombok Team
  * @author Plushnikov Michail
  */
 public class LombokUtils {

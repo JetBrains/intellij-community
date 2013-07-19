@@ -1,12 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -14,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
@@ -27,6 +19,11 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Inspect and validate @Getter lombok annotation on a field
@@ -80,6 +77,10 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       result = validateExistingMethods(psiField, builder);
     }
 
+    if (result) {
+      result = validateAccessorPrefix(psiField, builder);
+    }
+
     return result;
   }
 
@@ -108,12 +109,18 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     return result;
   }
 
+  protected boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+    boolean result = true;
+    if (!AccessorsInfo.build(psiField).prefixDefinedAndStartsWith(psiField.getName())) {
+      builder.addWarning("Not generating getter for this field: It does not fit your @Accessors prefix list.");
+      result = false;
+    }
+    return result;
+  }
+
   @NotNull
   public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull String methodModifier) {
-    final String fieldName = psiField.getName();
-    final PsiType psiReturnType = psiField.getType();
-
-    String methodName = LombokUtils.toGetterName(fieldName, PsiType.BOOLEAN.equals(psiReturnType));
+    final String methodName = getGetterName(psiField);
 
     PsiClass psiClass = psiField.getContainingClass();
     assert psiClass != null;
@@ -121,7 +128,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     UserMapKeys.addReadUsageFor(psiField);
 
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
-        .withMethodReturnType(psiReturnType)
+        .withMethodReturnType(psiField.getType())
         .withContainingClass(psiClass)
         .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
@@ -134,6 +141,16 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     copyAnnotations(psiField, method.getModifierList(),
         LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
     return method;
+  }
+
+  private String getGetterName(@NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+
+    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
+    if (accessorsInfo.isFluent()) {
+      return fieldNameWithoutPrefix;
+    }
+    return LombokUtils.toGetterName(fieldNameWithoutPrefix, PsiType.BOOLEAN.equals(psiField.getType()));
   }
 
 }
