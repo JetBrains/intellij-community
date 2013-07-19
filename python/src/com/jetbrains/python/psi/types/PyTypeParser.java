@@ -226,7 +226,7 @@ public class PyTypeParser {
         .named("param-expr");
 
     final FunctionalParser<ParseResult, PyElementType> unionExpr =
-      paramExpr.then(many(op("or").skipThen(paramExpr)))
+      paramExpr.then(many(op("or").or(op("|")).skipThen(paramExpr)))
         .map(new Function<Pair<ParseResult, List<ParseResult>>, ParseResult>() {
           @Override
           public ParseResult fun(Pair<ParseResult, List<ParseResult>> value) {

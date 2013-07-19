@@ -215,4 +215,16 @@ public class PyTypeParserTest extends PyTestCase {
     assertNotNull(second);
     assertEquals("int", second.getName());
   }
+
+  public void testUnionOrOperator() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | unicode");
+    assertNotNull(type);
+    final Collection<PyType> members = type.getMembers();
+    assertEquals(3, members.size());
+    final List<PyType> list = new ArrayList<PyType>(members);
+    assertClassType(list.get(0), "MyObject");
+    assertClassType(list.get(1), "str");
+    assertClassType(list.get(2), "unicode");
+  }
 }
