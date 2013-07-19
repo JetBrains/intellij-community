@@ -959,6 +959,10 @@
     <dialectsTokenSetContributor implementation="com.jetbrains.web2py.templates.ref.Web2PyTokenSetContributor"/>
     <visitorFilter language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyTemplateVisitorFilter"/>
     <visitorFilter language="Python" implementationClass="com.jetbrains.web2py.annotator.Web2PyVisitorFilter"/>
+
+    <!-- Chameleon -->
+    <dialectsTokenSetContributor implementation="com.jetbrains.pyramid.templates.ref.ChameleonTokenSetContributor"/>
+    <visitorFilter language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonTemplateVisitorFilter"/>
   </extensions>
 
   <project-components>
