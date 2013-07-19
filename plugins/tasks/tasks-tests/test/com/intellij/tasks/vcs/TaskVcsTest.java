@@ -330,11 +330,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myTaskManager.getChangeListListener().changeListRemoved(changeList);
   }
 
-  private void setDefaultChangeList(LocalChangeList changeList) {
-    myChangeListManager.setDefaultChangeList(changeList);
-    myTaskManager.getChangeListListener().defaultListChanged(null, changeList);
-  }
-
   public void testProjectWithDash() throws Exception {
     LocalTaskImpl task = new LocalTaskImpl("foo-bar-001", "summary") {
       @Override
@@ -387,7 +382,19 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
         assertNotNull(myChangeListManager.findChangeList(changelistName));
       }
     }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "foo", ModalityState.NON_MODAL);
+  }
 
+  public void testSuggestBranchName() throws Exception {
+    Task task = myRepository.findTask("TEST-001");
+    assertNotNull(task);
+    assertTrue(task.isIssue());
+    assertEquals("TEST-001", myTaskManager.suggestBranchName(task));
+
+    LocalTaskImpl simple = new LocalTaskImpl("1", "simple");
+    assertEquals("simple", myTaskManager.suggestBranchName(simple));
+
+    LocalTaskImpl strange = new LocalTaskImpl("1", "very long and strange summary");
+    assertEquals("very-long", myTaskManager.suggestBranchName(strange));
   }
 
   private TestRepository myRepository;

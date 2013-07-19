@@ -389,12 +389,13 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public void activateInVcs(LocalTask task, LocalTask previousActive, VcsOperation operation) {
-    String name = getChangelistName(task);
     if (operation == VcsOperation.CREATE_CHANGELIST) {
+      String name = getChangelistName(task);
       String comment = TaskUtil.getChangeListComment(task);
       createChangeList(task, name, comment);
     }
     else if (operation == VcsOperation.CREATE_BRANCH) {
+      String name = suggestBranchName(task);
       VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
       for (VcsTaskHandler handler : handlers) {
         if (previousActive != null) {
@@ -899,6 +900,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
     return task.getSummary();
   }
+
+  public String suggestBranchName(Task task) {
+    if (task.isIssue() && StringUtil.isNotEmpty(task.getNumber())) {
+      return task.getId().replace(' ', '-');
+    }
+    else {
+      String summary = task.getSummary();
+      List<String> words = StringUtil.getWordsIn(summary);
+      String[] strings = ArrayUtil.toStringArray(words);
+      return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
+    }
+  }
+
 
   @TestOnly
   public ChangeListAdapter getChangeListListener() {
