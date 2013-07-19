@@ -43,6 +43,10 @@
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="duplicates-xml" />
+    <orderEntry type="module" module-name="IntelliLang" />
+    <orderEntry type="module" module-name="IntelliLang-js" />
+    <orderEntry type="module" module-name="IntelliLang-python" />
+    <orderEntry type="module" module-name="IntelliLang-xml" />
   </component>
 </module>
 
