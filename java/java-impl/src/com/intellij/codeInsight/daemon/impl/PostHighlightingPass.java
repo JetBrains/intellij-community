@@ -82,6 +82,8 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 
+import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.*;
+
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private RefCountHolder myRefCountHolder;
@@ -623,15 +625,27 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
       }
 
-      PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(project).isCheapEnoughToSearch(name, (GlobalSearchScope)useScope,
-                                                                                                                        helper.isCurrentFileAlreadyChecked() ? member.getContainingFile() : null,
-                                                                                                                        progress);
-      if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
+      PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);
+      PsiFile file = member.getContainingFile();
+      PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? file : null;
+      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
+      if (cheapEnough == TOO_MANY_OCCURRENCES) return false;
 
       //search usages if it cheap
       //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-      if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
+      if (cheapEnough == ZERO_OCCURRENCES) {
         if (!canBeReferencedViaWeirdNames(member)) return true;
+      }
+
+      if (member instanceof PsiMethod) {
+        String propertyName = PropertyUtil.getPropertyName(member);
+        if (propertyName != null && file != null) {
+          SearchScope fileScope = file.getUseScope();
+          if (fileScope instanceof GlobalSearchScope &&
+              searchHelper.isCheapEnoughToSearch(propertyName, (GlobalSearchScope)fileScope, ignoreFile, progress) == TOO_MANY_OCCURRENCES) {
+            return false;
+          }
+        }
       }
     }
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
