@@ -28,6 +28,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author oleg
@@ -41,6 +43,7 @@ public class GithubLoginPanel {
   private JTextPane mySignupTextField;
   private JCheckBox mySavePasswordCheckBox;
   private JComboBox myAuthTypeComboBox;
+  private JLabel myPasswordLabel;
 
   private final static String AUTH_PASSWORD = "Password";
   private final static String AUTH_TOKEN = "Token";
@@ -67,6 +70,17 @@ public class GithubLoginPanel {
 
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
+
+    myAuthTypeComboBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          String item = e.getItem().toString();
+          myPasswordLabel.setText(item + ":");
+          mySavePasswordCheckBox.setText("Save " + item.toLowerCase());
+        }
+      }
+    });
   }
 
   public JComponent getPanel() {
