@@ -166,7 +166,7 @@ public class ExternalSystemFacadeManager {
         params.getClassPath().addAll(classPath);
 
         params.setMainClass(MAIN_CLASS_NAME);
-        params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
+        params.getVMParametersList().addParametersString("-Djava.awt.headless=true");
 
         // It may take a while for gradle api to resolve external dependencies. Default RMI timeout
         // is 15 seconds (http://download.oracle.com/javase/6/docs/technotes/guides/rmi/sunrmiproperties.html#connectionTimeout),
