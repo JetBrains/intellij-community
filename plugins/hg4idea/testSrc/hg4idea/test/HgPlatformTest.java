@@ -131,6 +131,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   public void prepareSecondRepository() throws IOException {
     cd(myRepository);
     hg("clone " + myRepository.getCanonicalPath() + " childRepo");
+    myRepository.refresh(false, true);
     myChildRepo = myRepository.findChild("childRepo");
     cd(myChildRepo);
     hg("pull");
