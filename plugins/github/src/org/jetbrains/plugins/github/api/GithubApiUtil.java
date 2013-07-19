@@ -61,18 +61,18 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
     return request(auth, path, null, HttpVerb.GET);
   }
 
   @Nullable
-  public static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
+  private static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
     throws IOException {
     return request(auth, path, requestBody, HttpVerb.POST);
   }
 
   @Nullable
-  public static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+  private static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
     return request(auth, path, null, HttpVerb.DELETE);
   }
 
