@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -343,7 +344,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final IElementType elementType = nameElement.getNode().getElementType();
     if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
-      checkStringLiteral(nameElement, nameElement.getText());
+      checkStringLiteral(nameElement);
     }
     else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       checkRegexLiteral(nameElement);
@@ -508,7 +509,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiElement nameIdentifier = method.getNameIdentifierGroovy();
     if (nameIdentifier.getNode().getElementType() == GroovyTokenTypes.mSTRING_LITERAL) {
-      checkStringLiteral(nameIdentifier, nameIdentifier.getText());
+      checkStringLiteral(nameIdentifier);
     }
 
     GrOpenBlock block = method.getBlock();
@@ -1210,7 +1211,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitLiteralExpression(GrLiteral literal) {
     final IElementType elementType = literal.getFirstChild().getNode().getElementType();
     if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
-      checkStringLiteral(literal, literal.getText());
+      checkStringLiteral(literal);
     }
     else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       checkRegexLiteral(literal.getFirstChild());
@@ -1284,7 +1285,16 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private void checkStringLiteral(PsiElement literal, String text) {
+  private void checkStringLiteral(PsiElement literal) {
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(literal.getProject());
+    String text;
+    if (injectedLanguageManager.isInjectedFragment(literal.getContainingFile())) {
+      text = injectedLanguageManager.getUnescapedText(literal);
+    }
+    else {
+      text = literal.getText();
+    }
+    assert text != null;
 
     StringBuilder builder = new StringBuilder(text.length());
     String quote = GrStringUtil.getStartQuote(text);
