@@ -43,6 +43,7 @@ import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentT
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -509,6 +510,56 @@ public class ExternalSystemUtil {
   @Nullable
   public static String getRunnerId(@NotNull String executorId) {
     return RUNNER_IDS.get(executorId);
+  }
+
+  /**
+   * Allows to answer if given ide project has 1-1 mapping with the given external project, i.e. the ide project has been
+   * imported from external system and no other external projects have been added.
+   * <p/>
+   * This might be necessary in a situation when project-level setting is changed (e.g. project name). We don't want to rename
+   * ide project if it doesn't completely corresponds to the given ide project then.
+   *
+   * @param ideProject       target ide project
+   * @param externalProject  target external project
+   * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
+   *                         <code>false</code> otherwise
+   */
+  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
+    ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
+    String linkedExternalProjectPath = null;
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+      ProjectSystemId externalSystemId = manager.getSystemId();
+      AbstractExternalSystemSettings systemSettings = settingsManager.getSettings(ideProject, externalSystemId);
+      Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
+      int linkedProjectsNumber = projectsSettings.size();
+      if (linkedProjectsNumber > 1) {
+        // More than one external project of the same external system type is linked to the given ide project.
+        return false;
+      }
+      else if (linkedProjectsNumber == 1) {
+        if (linkedExternalProjectPath == null) {
+          // More than one external project of different external system types is linked to the current ide project.
+          linkedExternalProjectPath = ((ExternalProjectSettings)projectsSettings.iterator().next()).getExternalProjectPath();
+        }
+        else {
+          return false;
+        }
+      }
+    }
+    
+    ProjectData projectData = externalProject.getData();
+    if (linkedExternalProjectPath != null && !linkedExternalProjectPath.equals(projectData.getLinkedExternalProjectPath())) {
+      // New external project is being linked.
+      return false;
+    }
+
+    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    for (Module module : platformFacade.getModules(ideProject)) {
+      if (!projectData.getLinkedExternalProjectPath().equals(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY))) {
+        return false;
+      }
+    }
+    return true;
   }
   
   private interface TaskUnderProgress {

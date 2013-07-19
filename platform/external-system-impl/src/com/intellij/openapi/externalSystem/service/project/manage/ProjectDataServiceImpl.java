@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -43,13 +44,16 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
 
   @Override
   public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
-    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
-      return;
-    }
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
-    ProjectData projectData = toImport.iterator().next().getData();
+    DataNode<ProjectData> node = toImport.iterator().next();
+    ProjectData projectData = node.getData();
+    
+    if (!ExternalSystemApiUtil.isNewProjectConstruction() && !ExternalSystemUtil.isOneToOneMapping(project, node)) {
+      return;
+    }
+    
     if (!project.getName().equals(projectData.getName())) {
       renameProject(projectData.getName(), project, synchronous);
     }
