@@ -193,6 +193,10 @@ public final class HgCommandExecutor {
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
     }
+    if (HgVcs.HGENCODING == null) {
+      cmdLine.add("--encoding");
+      cmdLine.add(myCharset.name());
+    }
     ShellCommand shellCommand = new ShellCommand(myVcs.getGlobalSettings().isRunViaBash());
     HgCommandResult result;
     try {
