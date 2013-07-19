@@ -34,7 +34,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);
 
-  private static void showUnsupportedNotification(@NotNull final Project project) {
+  private static void showUnsupportedNotification(@NotNull final Project project, @NotNull final VirtualFile file) {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                      "Unsupported action",
                      "<html>You have to <a href='#'>enable</a> <b>" + CommonBundle.settingsActionPath() + " | Maven | Importing | \"Use Maven3 to import project\"</b> option to use Show Effective POM action</html>",
@@ -47,24 +47,14 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
                          new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Option enabled", "Option \"Use Maven3 to import project\" has been enabled", NotificationType.INFORMATION)
                            .notify(project);
+
+                         actionPerformed(project, file);
                        }
                      }).notify(project);
   }
 
-  @Override
-  public void actionPerformed(AnActionEvent event) {
-    final Project project = MavenActionUtil.getProject(event.getDataContext());
-
-    if (MavenServerManager.getInstance().isUseMaven2()) {
-      showUnsupportedNotification(project);
-      return;
-    }
-
-
+  public static void actionPerformed(@NotNull final Project project, @NotNull VirtualFile file) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(event.getDataContext());
-    assert file != null;
 
     final MavenProject mavenProject = manager.findProject(file);
     assert mavenProject != null;
@@ -92,6 +82,20 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
         });
       }
     });
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent event) {
+    final Project project = MavenActionUtil.getProject(event.getDataContext());
+    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(event.getDataContext());
+    assert file != null;
+
+    if (MavenServerManager.getInstance().isUseMaven2()) {
+      showUnsupportedNotification(project, file);
+    }
+    else {
+      actionPerformed(project, file);
+    }
   }
 
   @Override
