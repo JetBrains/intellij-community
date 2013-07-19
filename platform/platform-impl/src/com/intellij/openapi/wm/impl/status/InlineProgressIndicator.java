@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -43,6 +42,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private final TextPanel myText = new TextPanel();
   private final TextPanel myText2 = new TextPanel();
+  private final TextPanel myPercentage = new TextPanel();
 
   private MyProgressBar myProgress;
 
@@ -86,17 +86,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       final JPanel textAndProgress = new JPanel(new BorderLayout());
       textAndProgress.setOpaque(false);
       textAndProgress.add(myText, BorderLayout.CENTER);
-
-      final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
-      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-      final GridBagConstraints c = new GridBagConstraints();
-      c.weightx = 1;
-      c.weighty = 1;
-      c.insets = new Insets(SystemInfo.isMacOSLion ? 1 : 0, 0, 1, myInfo.isCancellable() ? 0 : 4);
-      c.fill = GridBagConstraints.HORIZONTAL;
-      progressWrapper.add(myProgress, c);
-
-      textAndProgress.add(progressWrapper, BorderLayout.EAST);
+      textAndProgress.add(myPercentage, BorderLayout.EAST);
+      myPercentage.setRightPadding(0);
       myComponent.add(textAndProgress, BorderLayout.CENTER);
       myComponent.add(myCancelButton, BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
@@ -105,8 +96,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.setLayout(new BorderLayout());
       myProcessName.setText(processInfo.getTitle());
       myComponent.add(myProcessName, BorderLayout.NORTH);
-      final Font font = myProcessName.getFont();
-
       myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
       myProcessName.setDecorate(false);
@@ -196,6 +185,13 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
     if (myCompact && myText.getText().length() == 0) {
       myText.setText(myInfo.getTitle());
+    }
+
+    if (myCompact && !isIndeterminate()) {
+      int percentage = (int) (getFraction() * 100);
+      myPercentage.setText("[" + percentage + "%]");
+    } else {
+      myPercentage.setText("");
     }
 
     myCancelButton.setPainting(isCancelable());
