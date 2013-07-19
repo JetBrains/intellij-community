@@ -17,12 +17,14 @@ public abstract class TemplatesService {
   public static final String MAKO = "Mako";
   public static final String JINJA2 = "Jinja2";
   public static final String WEB2PY = "Web2Py";
+  public static final String CHAMELEON = "Chameleon";
 
   private static List<String> ALL_TEMPLATE_LANGUAGES = ContainerUtil.immutableList(NONE,
                                                                                    DJANGO,
                                                                                    MAKO,
                                                                                   JINJA2,
-                                                                                  WEB2PY);
+                                                                                  WEB2PY,
+                                                                                  CHAMELEON);
 
   public abstract Language getSelectedTemplateLanguage();
 

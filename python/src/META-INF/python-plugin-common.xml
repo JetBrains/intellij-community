@@ -835,6 +835,16 @@
 
     <lang.elementManipulator forClass="com.jetbrains.web2py.templates.psi.Web2PyExtendIncludeTag"
                              implementationClass="com.jetbrains.web2py.templates.ref.Web2PyStringLiteralManipulator"/>
+
+    <!-- Chameleon -->
+    <fileTypeFactory implementation="com.jetbrains.pyramid.templates.file.ChameleonFileTypeFactory"/>
+    <lang.fileViewProviderFactory language="Chameleon"
+                                  implementationClass="com.jetbrains.pyramid.templates.file.ChameleonFileProviderFactory"/>
+    <lang.parserDefinition language="Chameleon"
+                           implementationClass="com.jetbrains.pyramid.templates.parser.ChameleonParserDefinition"/>
+    <editorHighlighterProvider filetype="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonEditorHighlighterProvider"/>
+    <lang.syntaxHighlighterFactory key="Chameleon"
+                                   implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonHighlighterFactory"/>
   </extensions>
 
   <extensionPoints>
