@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -35,10 +34,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -136,7 +131,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         systemSettings.setLinkedProjectsSettings(projects);
 
         if (externalProjectNode != null) {
-          ensureToolWindowInitialized(project);
+          ExternalSystemUtil.ensureToolWindowInitialized(project, myExternalSystemId);
           ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
             @Override
             public void run() {
@@ -176,25 +171,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       }
     });
     return Collections.emptyList();
-  }
-
-  private void ensureToolWindowInitialized(@NotNull Project project) {
-    ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    if (!(manager instanceof ToolWindowManagerEx)) {
-      return;
-    }
-    ToolWindowManagerEx managerEx = (ToolWindowManagerEx)manager;
-    String id = myExternalSystemId.getReadableName();
-    ToolWindow window = manager.getToolWindow(id);
-    if (window != null) {
-      return;
-    }
-    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-    for (final ToolWindowEP bean : beans) {
-      if (id.equals(bean.id)) {
-        managerEx.initToolWindow(bean);
-      }
-    }
   }
 
   @NotNull
