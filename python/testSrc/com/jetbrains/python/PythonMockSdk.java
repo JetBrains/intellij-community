@@ -7,6 +7,8 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
@@ -59,8 +61,9 @@ public class PythonMockSdk {
     String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
     sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), PythonSdkType.BUILTIN_ROOT_TYPE);
 
-    //PythonSdkType.setupSdkPaths(sdkModificator, null);
     sdkModificator.commitChanges();
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
+
     return sdk;
   }
 }

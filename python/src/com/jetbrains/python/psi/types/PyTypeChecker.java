@@ -253,6 +253,9 @@ public class PyTypeChecker {
     final Map<PyGenericType, PyType> substitutions = collectCallGenerics(function, receiver, context);
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter p = entry.getValue();
+      if (p.isPositionalContainer() || p.isKeywordContainer()) {
+        continue;
+      }
       final PyType argType = context.getType(entry.getKey());
       final PyType paramType = context.getType(p);
       if (!match(paramType, argType, context, substitutions)) {
