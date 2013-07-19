@@ -30,6 +30,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author oleg
@@ -81,6 +83,15 @@ public class GithubLoginPanel {
         }
       }
     });
+
+    java.util.List<Component> order = new ArrayList<Component>();
+    order.add(myHostTextField);
+    order.add(myLoginTextField);
+    order.add(myAuthTypeComboBox);
+    order.add(myPasswordField);
+    order.add(mySavePasswordCheckBox);
+    myPane.setFocusTraversalPolicyProvider(true);
+    myPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(order));
   }
 
   public JComponent getPanel() {
@@ -152,6 +163,55 @@ public class GithubLoginPanel {
     if (AUTH_TOKEN.equals(selected)) return GithubAuthData.createTokenAuth(getHost(), getPassword());
     GithubUtil.LOG.error("GithubLoginPanel illegal selection: anonymous AuthData created", selected.toString());
     return GithubAuthData.createAnonymous(getHost());
+  }
+
+  private static class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+    private List<Component> myOrder;
+
+    private MyFocusTraversalPolicy(List<Component> order) {
+      myOrder = order;
+    }
+
+    @Override
+    public Component getComponentAfter(Container aContainer, Component aComponent) {
+      int index = myOrder.indexOf(aComponent);
+      if (index == -1) {
+        return null;
+      }
+      index++;
+      if (index >= myOrder.size()) {
+        index -= myOrder.size();
+      }
+      return myOrder.get(index);
+    }
+
+    @Override
+    public Component getComponentBefore(Container aContainer, Component aComponent) {
+      int index = myOrder.indexOf(aComponent);
+      if (index == -1) {
+        return null;
+      }
+      index--;
+      if (index < 0) {
+        index += myOrder.size();
+      }
+      return myOrder.get(index);
+    }
+
+    @Override
+    public Component getFirstComponent(Container aContainer) {
+      return myOrder.get(0);
+    }
+
+    @Override
+    public Component getLastComponent(Container aContainer) {
+      return myOrder.get(myOrder.size() - 1);
+    }
+
+    @Override
+    public Component getDefaultComponent(Container aContainer) {
+      return myOrder.get(0);
+    }
   }
 }
 
