@@ -43,7 +43,7 @@ public class JavaProjectData extends AbstractExternalEntityData {
 
   private static final LanguageLevel  DEFAULT_LANGUAGE_LEVEL = LanguageLevel.JDK_1_6;
   private static final JavaSdkVersion DEFAULT_JDK_VERSION    = JavaSdkVersion.JDK_1_6;
-  private static final Pattern        JDK_VERSION_PATTERN    = Pattern.compile(".*1\\.(\\d+).*");
+  private static final Pattern        JDK_VERSION_PATTERN    = Pattern.compile(".*1.(\\d+).*");
 
   @NotNull private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
   @NotNull private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
@@ -128,6 +128,13 @@ public class JavaProjectData extends AbstractExternalEntityData {
 
   public void setLanguageLevel(@Nullable String languageLevel) {
     LanguageLevel level = LanguageLevel.parse(languageLevel);
+    if (level == null) {
+      Matcher matcher = JDK_VERSION_PATTERN.matcher(languageLevel);
+      if (matcher.matches()) {
+        String versionAsString = matcher.group(1);
+        level = LanguageLevel.parse("1." + versionAsString);
+      }
+    }
     if (level != null) {
       myLanguageLevel = level;
     }

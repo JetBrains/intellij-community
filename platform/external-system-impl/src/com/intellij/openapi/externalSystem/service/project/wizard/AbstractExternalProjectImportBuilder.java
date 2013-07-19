@@ -62,7 +62,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   @NotNull private final C                             myControl;
   @NotNull private final ProjectSystemId               myExternalSystemId;
 
-  private DataNode<ProjectData>               myExternalProjectNode;
+  private DataNode<ProjectData> myExternalProjectNode;
 
   public AbstractExternalProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager,
                                               @NotNull ProjectDataManager projectDataManager,
