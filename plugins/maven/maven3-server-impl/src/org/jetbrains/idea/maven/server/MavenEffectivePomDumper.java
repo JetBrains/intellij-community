@@ -11,10 +11,7 @@ import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlWriterUtil;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
+import org.jdom.*;
 import org.jdom.filter.ElementFilter;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
@@ -146,6 +143,43 @@ public class MavenEffectivePomDumper {
     XmlWriterUtil.writeLineBreak(writer);
   }
 
+  private static boolean hasLineBreak(Element e) {
+    return !e.getChildren().isEmpty() || e.getText().contains("\n");
+  }
+
+  private static boolean isOneEOFText(String text) {
+    int eof = text.indexOf('\n');
+    return eof != -1 && eof == text.lastIndexOf('\n') && text.trim().isEmpty();
+  }
+
+  private static void addLineBreaks(Element element) {
+    List<Content> children = element.getContent();
+
+    for (int i = 0; i < children.size() - 2; i++) {
+      Content c1 = children.get(i);
+      Content c2 = children.get(i + 1);
+      Content c3 = children.get(i + 2);
+
+      if (c1 instanceof Element && c2 instanceof Text && c3 instanceof Element
+          && (hasLineBreak((Element)c1) || hasLineBreak((Element)c3))
+          && isOneEOFText(((Text)c2).getText())) {
+        element.setContent(i + 1, new Text(((Text)c2).getText().replace("\n", "\n\n")));
+      }
+    }
+
+  }
+
+  private static void addLineBreaks(Document pomXml, Namespace pomNamespace) {
+    Element rootElement = pomXml.getRootElement();
+
+    addLineBreaks(rootElement);
+
+    Element buildElement = rootElement.getChild("build", pomNamespace);
+    if (buildElement != null) {
+      addLineBreaks(buildElement);
+    }
+  }
+
   /**
    * Copy/pasted from org.apache.maven.plugins.help.AbstractEffectiveMojo
    */
@@ -173,8 +207,10 @@ public class MavenEffectivePomDumper {
         e.setNamespace(pomNamespace);
       }
 
+      addLineBreaks(document, pomNamespace);
+
       StringWriter w = new StringWriter();
-      Format format = Format.getPrettyFormat();
+      Format format = Format.getRawFormat();
       XMLOutputter out = new XMLOutputter(format);
       out.output(document.getRootElement(), w);
 
