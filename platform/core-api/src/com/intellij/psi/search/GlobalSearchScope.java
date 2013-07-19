@@ -518,6 +518,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof FileTypeRestrictionScope)) return false;
+      if (!super.equals(o)) return false;
 
       FileTypeRestrictionScope that = (FileTypeRestrictionScope)o;
 
