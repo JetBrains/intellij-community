@@ -31,6 +31,7 @@ import org.jetbrains.plugins.github.*;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -379,5 +380,49 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
     return GithubPullRequest.create(fromJson(getRequest(auth, path), GithubPullRequestRaw.class));
+  }
+
+  @NotNull
+  public static List<GithubIssue> getIssues(@NotNull GithubAuthData auth,
+                                            @NotNull String user,
+                                            @NotNull String repo,
+                                            @Nullable String query) throws IOException {
+    String path;
+    boolean noQuery = StringUtil.isEmpty(query);
+    if (!noQuery) {
+      query = URLEncoder.encode(query, "UTF-8");
+      path = "/legacy/issues/search/" + user + "/" + repo + "/open/" + query;
+    }
+    else {
+      path = "/repos/" + user + "/" + repo + "/issues";
+    }
+
+    JsonElement result = getRequest(auth, path);
+
+    List<GithubIssueRaw> rawIssues = fromJson(result, new TypeToken<List<GithubIssueRaw>>() {
+    }.getType());
+
+    List<GithubIssue> issues = new ArrayList<GithubIssue>();
+    for (GithubIssueRaw raw : rawIssues) {
+      issues.add(GithubIssue.create(raw));
+    }
+    return issues;
+  }
+
+  @NotNull
+  public static List<GithubIssueComment> getIssueComments(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments";
+
+    JsonElement result = getRequest(auth, path);
+
+    List<GithubIssueCommentRaw> rawComments = fromJson(result, new TypeToken<List<GithubIssueCommentRaw>>() {
+    }.getType());
+
+    List<GithubIssueComment> comments = new ArrayList<GithubIssueComment>();
+    for (GithubIssueCommentRaw raw : rawComments) {
+      comments.add(GithubIssueComment.create(raw));
+    }
+    return comments;
   }
 }
