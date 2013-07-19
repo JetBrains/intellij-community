@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,13 +25,14 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.IOException;
 
 /**
  * @author Sergey Evdokimov
  */
 public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
-  //private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);
+  private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);
 
   private static void showUnsupportedNotification(@NotNull final Project project) {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
@@ -77,6 +79,14 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
             String fileName = mavenProject.getMavenId().getArtifactId() + "-effective-pom.xml";
             PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, XMLLanguage.INSTANCE, s);
+            try {
+              //noinspection ConstantConditions
+              file.getVirtualFile().setWritable(false);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+
             file.navigate(true);
           }
         });
