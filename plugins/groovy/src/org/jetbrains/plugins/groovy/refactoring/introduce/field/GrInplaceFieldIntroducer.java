@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -198,6 +199,11 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
   @Override
   protected JComponent getComponent() {
     return myPanel.getRootPane();
+  }
+
+  @Override
+  public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
+    return new GrFieldNameSuggester(context , new GroovyInplaceFieldValidator(context)).suggestNames();
   }
 
   public class GrInplaceIntroduceFieldPanel {

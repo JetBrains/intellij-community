@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,10 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 
 import java.util.List;
 import java.util.Map;
@@ -119,12 +115,12 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   @Override
-  protected InplaceVariableIntroducer<PsiElement> getIntroducer(@NotNull GrVariable var,
-                                                                @NotNull GrIntroduceContext context,
-                                                                @NotNull GrIntroduceConstantSettings settings,
-                                                                @NotNull List<RangeMarker> occurrenceMarkers,
-                                                                RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
-                                                                RangeMarker stringPartRangeMarker) {
+  protected GrInplaceIntroducer getIntroducer(@NotNull GrVariable var,
+                                              @NotNull GrIntroduceContext context,
+                                              @NotNull GrIntroduceConstantSettings settings,
+                                              @NotNull List<RangeMarker> occurrenceMarkers,
+                                              RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
+                                              RangeMarker stringPartRangeMarker) {
     return null;
   }
 

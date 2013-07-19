@@ -27,11 +27,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -47,6 +49,11 @@ public class GrInplaceVariableIntroducer extends GrInplaceIntroducer {
                                      List<RangeMarker> occurrences,
                                      @Nullable PsiElement elementToIntroduce) {
     super(elementToRename, editor, project, title, occurrences, elementToIntroduce);
+  }
+
+  @Override
+  public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
+    return new GrVariableNameSuggester(context, new GroovyVariableValidator(context));
   }
 
   @Nullable

@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -55,7 +54,10 @@ import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
@@ -269,20 +271,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   @NotNull
   @Override
   public LinkedHashSet<String> suggestNames() {
-    final GroovyFieldValidator validator = new GroovyFieldValidator(myContext);
-    final GrExpression expression = myContext.getExpression();
-    final GrVariable var = myContext.getVar();
-    final StringPartInfo stringPart = myContext.getStringPart();
-    if (expression != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, validator, false)));
-    }
-    else if (stringPart != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), validator, false)));
-    }
-    else {
-      assert var != null;
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator)));
-    }
+    return new GrFieldNameSuggester(myContext, new GroovyFieldValidator(myContext)).suggestNames();
   }
 
   private void createUIComponents() {

@@ -42,7 +42,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
@@ -106,13 +105,13 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   public abstract GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
 
-  protected abstract InplaceVariableIntroducer<PsiElement> getIntroducer(@NotNull GrVariable var,
-                                                                         @NotNull GrIntroduceContext context,
-                                                                         @NotNull Settings settings,
-                                                                         @NotNull List<RangeMarker> occurrenceMarkers,
-                                                                         RangeMarker varRangeMarker,
-                                                                         @Nullable RangeMarker expressionRangeMarker,
-                                                                         @Nullable RangeMarker stringPartRangeMarker);
+  protected abstract GrInplaceIntroducer getIntroducer(@NotNull GrVariable var,
+                                                       @NotNull GrIntroduceContext context,
+                                                       @NotNull Settings settings,
+                                                       @NotNull List<RangeMarker> occurrenceMarkers,
+                                                       RangeMarker varRangeMarker,
+                                                       @Nullable RangeMarker expressionRangeMarker,
+                                                       @Nullable RangeMarker stringPartRangeMarker);
 
   protected abstract Settings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice);
 
@@ -344,9 +343,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
               });
 
               if (isInplace && var != null) {
-                InplaceVariableIntroducer<PsiElement> introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
+                GrInplaceIntroducer introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-                introducer.performInplaceRefactoring(getDialog(context).suggestNames());
+                introducer.performInplaceRefactoring(introducer.suggestNames(context));
               }
             }
           }, getRefactoringName(), getRefactoringName());

@@ -24,7 +24,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.util.ObjectUtils;
@@ -116,12 +115,13 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   @Override
-  protected InplaceVariableIntroducer<PsiElement> getIntroducer(@NotNull final GrVariable var,
-                                                                @NotNull GrIntroduceContext context,
-                                                                @NotNull GrIntroduceFieldSettings settings,
-                                                                @NotNull List<RangeMarker> occurrenceMarkers,
-                                                                RangeMarker varRangeMarker, @Nullable RangeMarker expressionRangeMarker,
-                                                                @Nullable RangeMarker stringPartRangeMarker) {
+  protected GrInplaceFieldIntroducer getIntroducer(@NotNull final GrVariable var,
+                                                   @NotNull GrIntroduceContext context,
+                                                   @NotNull GrIntroduceFieldSettings settings,
+                                                   @NotNull List<RangeMarker> occurrenceMarkers,
+                                                   @Nullable RangeMarker varRangeMarker,
+                                                   @Nullable RangeMarker expressionRangeMarker,
+                                                   @Nullable RangeMarker stringPartRangeMarker) {
     if (varRangeMarker != null) {
       context.getEditor().getCaretModel().moveToOffset(var.getNameIdentifierGroovy().getTextRange().getStartOffset());
     }
@@ -134,7 +134,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       GrExpression ref = PsiTreeUtil.getParentOfType(at, GrBinaryExpression.class).getRightOperand();
       context.getEditor().getCaretModel().moveToOffset(ref.getTextRange().getStartOffset());
     }
-    GrExpression initializer = GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText(var.getInitializerGroovy().getText());
+    GrExpression initializer =
+      GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText(var.getInitializerGroovy().getText());
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -142,7 +143,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       }
     });
 
-    return new GrInplaceFieldIntroducer(var, context, occurrenceMarkers, settings.replaceAllOccurrences(), expressionRangeMarker, stringPartRangeMarker, initializer);
+    return new GrInplaceFieldIntroducer(var, context, occurrenceMarkers, settings.replaceAllOccurrences(), expressionRangeMarker,
+                                        stringPartRangeMarker, initializer);
   }
 
   static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context) {
@@ -209,7 +211,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       @Nullable
       @Override
       public String getName() {
-        return getDialog(context).suggestNames().iterator().next();
+        return new GrFieldNameSuggester(context, new GroovyInplaceFieldValidator(context)).suggestNames().iterator().next();
       }
 
       @Override
