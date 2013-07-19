@@ -29,7 +29,7 @@ public interface ElementPreviewProvider {
 
   boolean isSupportedFile(@NotNull PsiFile psiFile);
 
-  void show(@NotNull PsiElement element, @NotNull Editor editor, @NotNull Point point);
+  void show(@NotNull PsiElement element, @NotNull Editor editor, @NotNull Point point, boolean keyTriggered);
 
   void hide(@Nullable("if disposed") PsiElement element, @NotNull Editor editor);
 }
