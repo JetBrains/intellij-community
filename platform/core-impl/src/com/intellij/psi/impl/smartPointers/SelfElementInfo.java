@@ -115,29 +115,29 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       Document document = myVirtualFile == null ? null : FileDocumentManager.getInstance().getDocument(myVirtualFile);
       if (document == null) {
         mySyncMarkerIsValid = false;
-        return;
-      }
-      int start = Math.min(getSyncStartOffset(), document.getTextLength());
-      int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
-      // use supplied cached markers if available
-      if (cachedRangeMarkers != null) {
-        for (RangeMarker cachedRangeMarker : cachedRangeMarkers) {
-          if (cachedRangeMarker.isValid() &&
-              cachedRangeMarker.getStartOffset() == start &&
-              cachedRangeMarker.getEndOffset() == end) {
-            marker = cachedRangeMarker;
-            break;
-          }
-        }
       }
       else {
-        marker = document.createRangeMarker(start, end, true);
+        int start = Math.min(getSyncStartOffset(), document.getTextLength());
+        int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
+        // use supplied cached markers if available
+        if (cachedRangeMarkers != null) {
+          for (RangeMarker cachedRangeMarker : cachedRangeMarkers) {
+            if (cachedRangeMarker.isValid() &&
+                cachedRangeMarker.getStartOffset() == start &&
+                cachedRangeMarker.getEndOffset() == end) {
+              marker = cachedRangeMarker;
+              break;
+            }
+          }
+        }
+        else {
+          marker = document.createRangeMarker(start, end, true);
+        }
       }
       setMarker(marker);
     }
     else if (!marker.isValid()) {
       mySyncMarkerIsValid = false;
-      marker.dispose();
       setMarker(null);
       marker = null;
     }
@@ -200,7 +200,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return null;
   }
 
-  RangeMarker getMarker() {
+  private RangeMarker getMarker() {
     Reference<RangeMarker> ref = myMarkerRef;
     return ref == null ? null : ref.get();
   }
@@ -235,7 +235,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         if (file != null && language != null) {
           return file.getViewProvider().getPsi(language);
         }
-        
+
         return file;
       }
     });
