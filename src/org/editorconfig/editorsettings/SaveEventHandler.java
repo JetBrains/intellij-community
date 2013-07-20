@@ -53,9 +53,10 @@ public class SaveEventHandler implements DoneSavingListener, FileDocumentManager
         // This is fired when any document is saved, regardless of whether it is part of a save-all or
         // a save-one operation
         LOG.debug("Saving one documents");
-        if (!originalSettingsSaved) {
-            saveOriginalEditorSettings();
+        if (originalSettingsSaved) {
+            revertToOriginalEditorSettings();
         }
+        saveOriginalEditorSettings();
         VirtualFile file = FileDocumentManager.getInstance().getFile(document);
         applySettings(file);
     }
