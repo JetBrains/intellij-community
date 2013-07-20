@@ -46,7 +46,9 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -144,7 +146,7 @@ public class Messages {
   }
 
   public static boolean isMacSheetEmulation() {
-    return SystemInfo.isMac && !Registry.is("ide.mac.message.dialogs.as.sheets");
+    return SystemInfo.isMac && Registry.is("ide.mac.message.dialogs.as.sheets") && Registry.is("ide.mac.message.sheets.java.emulation");
   }
 
   public static int showDialog(Project project, String message, String title, String moreInfo, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
