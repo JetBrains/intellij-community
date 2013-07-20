@@ -130,7 +130,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
                                           new Convertor<RunnerAndConfigurationSettings, JDOMExternalizable>() {
                                             @Override
                                             public JDOMExternalizable convert(RunnerAndConfigurationSettings configurationSettings) {
-                                              return configurationSettings.getConfigurationSettings(runner).getSettings();
+                                              return configurationSettings.getConfigurationSettings(runner);
                                             }
                                           });
       myRunnerEditors.add(wrappedConfigEditor);
