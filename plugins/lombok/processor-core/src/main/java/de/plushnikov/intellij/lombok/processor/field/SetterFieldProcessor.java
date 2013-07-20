@@ -10,9 +10,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.impl.light.LightTypeParameter;
-import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -123,7 +120,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
     final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
     if (accessorsInfo.isFluent()) {
-      return fieldNameWithoutPrefix;
+      return LombokUtils.decapitalize(fieldNameWithoutPrefix);
     }
     return LombokUtils.toSetterName(fieldNameWithoutPrefix, isBoolean);
   }
@@ -153,12 +150,6 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       method.withModifier(PsiModifier.STATIC);
     }
 
-    if (!PsiType.VOID.equals(returnType)) {
-      for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
-        method.withTypeParameter(new LightTypeParameter(typeParameter));
-      }
-    }
-
     PsiParameter methodParameter = method.getParameterList().getParameters()[0];
     PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
     if (null != methodParameterModifierList) {
@@ -175,11 +166,13 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {
-    if (AccessorsInfo.build(psiField).isChain()) {
-      PsiClass containingClass = psiField.getContainingClass();
-      return null == containingClass ? PsiType.NULL : PsiTypesUtil.getClassType(containingClass);
+    PsiType result = PsiType.VOID;
+    if (!psiField.hasModifierProperty(PsiModifier.STATIC) && AccessorsInfo.build(psiField).isChain()) {
+      final PsiClass fieldClass = psiField.getContainingClass();
+      if (null != fieldClass) {
+        result = PsiClassUtil.getTypeWithGenerics(fieldClass);
+      }
     }
-    return PsiType.VOID;
+    return result;
   }
-
 }

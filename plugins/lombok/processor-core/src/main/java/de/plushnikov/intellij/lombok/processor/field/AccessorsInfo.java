@@ -37,23 +37,29 @@ public class AccessorsInfo {
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation);
     } else {
-      PsiClass psiClass = psiField.getContainingClass();
-      final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(psiClass, ACCESSORS_ANNOTATION_NAME);
-      if (null != accessorsClassAnnotation) {
-        return buildFromAnnotation(accessorsClassAnnotation);
+      PsiClass containingClass = psiField.getContainingClass();
+      while (null != containingClass) {
+        final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
+        if (null != accessorsClassAnnotation) {
+          return buildFromAnnotation(accessorsClassAnnotation);
+        }
+        containingClass = containingClass.getContainingClass();
       }
     }
     return new AccessorsInfo();
   }
 
   private static AccessorsInfo buildFromAnnotation(PsiAnnotation accessorsAnnotation) {
-    boolean fluentValue = PsiAnnotationUtil.getAnnotationValue(accessorsAnnotation, "fluent", Boolean.class);
-    boolean chainValue = PsiAnnotationUtil.getAnnotationValue(accessorsAnnotation, "chain", Boolean.class);
+    Boolean fluentValue = PsiAnnotationUtil.getAnnotationValue(accessorsAnnotation, "fluent", Boolean.class);
+    Boolean chainValue = PsiAnnotationUtil.getAnnotationValue(accessorsAnnotation, "chain", Boolean.class);
     Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredAnnotationValue(accessorsAnnotation, "chain", Boolean.class);
     Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, "prefix", String.class);
 
-    boolean isChainDeclaredOrImplizit = fluentValue && null == chainDeclaredValue || chainValue;
-    return new AccessorsInfo(fluentValue, isChainDeclaredOrImplizit, prefixes.toArray(new String[prefixes.size()]));
+    boolean isFluent = null == fluentValue ? false : fluentValue;
+    boolean isChained = null == chainValue ? false : chainValue;
+
+    boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
+    return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, prefixes.toArray(new String[prefixes.size()]));
   }
 
   public boolean isFluent() {

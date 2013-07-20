@@ -160,4 +160,17 @@ Various problems with spring have also been reported. See issue #287, issue #271
 
     return new ArrayList<String>(names);
   }
+
+  public static String decapitalize(String name) {
+    if (name == null || name.isEmpty()) {
+      return name;
+    }
+    if (Character.isUpperCase(name.charAt(0))) {
+      char chars[] = name.toCharArray();
+      chars[0] = Character.toLowerCase(chars[0]);
+      return new String(chars);
+    } else {
+      return name;
+    }
+  }
 }

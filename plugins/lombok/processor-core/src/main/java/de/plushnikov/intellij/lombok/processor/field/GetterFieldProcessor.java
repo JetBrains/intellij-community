@@ -148,7 +148,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
 
     final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
     if (accessorsInfo.isFluent()) {
-      return fieldNameWithoutPrefix;
+      return LombokUtils.decapitalize(fieldNameWithoutPrefix);
     }
     return LombokUtils.toGetterName(fieldNameWithoutPrefix, PsiType.BOOLEAN.equals(psiField.getType()));
   }

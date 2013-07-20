@@ -5,13 +5,18 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Plushnikov Michail
@@ -81,6 +86,10 @@ public class PsiClassUtil {
     //return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
   }
 
+  /**
+   * @deprecated use PsiTypesUtil.getClassType(...)
+   */
+  @Deprecated
   public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
     return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
   }
@@ -94,10 +103,30 @@ public class PsiClassUtil {
     boolean result = false;
     final PsiMethod[] definedConstructors = collectClassConstructorIntern(psiClass);
     for (PsiMethod psiMethod : definedConstructors) {
-      if(psiMethod.getParameterList().getParametersCount() > 0) {
+      if (psiMethod.getParameterList().getParametersCount() > 0) {
         result = true;
         break;
       }
+    }
+    return result;
+  }
+
+  /**
+   * Creates a PsiType for a PsiClass enriched with generic substitution information if available
+   */
+  @NotNull
+  public static PsiType getTypeWithGenerics(@NotNull PsiClass psiClass) {
+    PsiType result;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+    final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
+    if (classTypeParameters.length > 0) {
+      Map<PsiTypeParameter, PsiType> substitutionMap = new THashMap<PsiTypeParameter, PsiType>();
+      for (PsiTypeParameter typeParameter : classTypeParameters) {
+        substitutionMap.put(typeParameter, factory.createType(typeParameter));
+      }
+      result = factory.createType(psiClass, factory.createSubstitutor(substitutionMap));
+    } else {
+      result = factory.createType(psiClass);
     }
     return result;
   }

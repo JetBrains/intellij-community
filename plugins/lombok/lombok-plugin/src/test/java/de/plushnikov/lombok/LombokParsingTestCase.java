@@ -135,7 +135,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     if (null != intellij && null != theirs) {
       final String theirsCanonicalText = stripJavaLang(theirs.getCanonicalText());
       final String intellijCanonicalText = stripJavaLang(intellij.getCanonicalText());
-      assertEquals("Types are not equal for: " + whereTarget.getName(), theirsCanonicalText, intellijCanonicalText);
+      assertEquals(String.format("Types are not equal for element: %s", whereTarget.getName()), theirsCanonicalText, intellijCanonicalText);
     }
   }
 
