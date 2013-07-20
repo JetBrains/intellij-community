@@ -16,7 +16,7 @@
   </change-notes>
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="107.105"/>
+  <idea-version since-build="120.000"/>
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
        on how to target different products -->
@@ -27,23 +27,17 @@
   <application-components>
     <!-- Add your application components here -->
       <component>
-          <implementation-class>org.editorconfig.SettingsProviderComponent</implementation-class>
+          <implementation-class>org.editorconfig.plugincomponents.SettingsProviderComponent</implementation-class>
       </component>
       <component>
-          <implementation-class>org.editorconfig.editorsettings.EditorSettingsComponent</implementation-class>
+          <implementation-class>org.editorconfig.plugincomponents.ConfigAppComponent</implementation-class>
       </component>
   </application-components>
 
   <project-components>
     <!-- Add your project components here -->
       <component>
-          <implementation-class>org.editorconfig.codestylesettings.CodeStyleSettingsComponent</implementation-class>
-      </component>
-      <component>
-          <implementation-class>org.editorconfig.EncodingComponent</implementation-class>
-      </component>
-      <component>
-          <implementation-class>org.editorconfig.EndOfLineComponent</implementation-class>
+          <implementation-class>org.editorconfig.plugincomponents.ConfigProjectComponent</implementation-class>
       </component>
   </project-components>
 

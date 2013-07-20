@@ -1,36 +1,41 @@
-package org.editorconfig;
+package org.editorconfig.configmanagement;
 
-import com.intellij.AppTopics;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
+import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig;
-import org.editorconfig.editorsettings.ReplacementFileDocumentManager;
+import org.editorconfig.plugincomponents.ReplacementFileDocumentManager;
 import org.editorconfig.utils.ConfigConverter;
-import org.editorconfig.editorsettings.DoneSavingListener;
-import org.editorconfig.editorsettings.DoneSavingTopic;
+import org.editorconfig.plugincomponents.DoneSavingListener;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
-public class EndOfLineComponent implements ProjectComponent, FileDocumentManagerListener, DoneSavingListener {
-    private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.EndOfLineComponent");
+public class EndOfLineManager implements FileDocumentManagerListener, DoneSavingListener {
+    private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.EndOfLineManager");
     private final Project project;
     private final List<Document> documentsToChange = new ArrayList<Document>();
 
+    private static final String CR = Character.toString((char) 13);
+    private static final String LF = Character.toString((char) 10);
+    private static final Map<String, String> endOfLineMap;
+    static {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("lf", LF);
+        map.put("cr", CR);
+        map.put("crlf", CR + LF);
+        endOfLineMap = Collections.unmodifiableMap(map);
+    }
 
-    public EndOfLineComponent(Project project) {
+
+    public EndOfLineManager(Project project) {
         this.project = project;
-        MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, this);
-        bus.connect().subscribe(DoneSavingTopic.DONE_SAVING, this);
     }
 
     public void initComponent() {
@@ -43,7 +48,7 @@ public class EndOfLineComponent implements ProjectComponent, FileDocumentManager
 
     @NotNull
     public String getComponentName() {
-        return "EndOfLineComponent";
+        return "EndOfLineManager";
     }
 
     public void projectOpened() {
@@ -120,7 +125,19 @@ public class EndOfLineComponent implements ProjectComponent, FileDocumentManager
         }
         String filePath = file.getCanonicalPath();
         final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
-        ConfigConverter.applyEndOfLine(outPairs, project, file, this);
+        String endOfLine = ConfigConverter.valueForKey(outPairs, "end_of_line");
+        if (!endOfLine.isEmpty()) {
+            if (endOfLineMap.containsKey(endOfLine)) {
+                String lineSeparator = endOfLineMap.get(endOfLine);
+                try {
+                    LoadTextUtil.changeLineSeparators(project, file, lineSeparator, this);
+                } catch (IOException error) {
+                    LOG.error("IOException while changing line separator");
+                }
+            } else {
+                LOG.error("Value of charset is invalid");
+            }
+        }
         LOG.debug("Applied end of line settings for: " + filePath);
     }
 }

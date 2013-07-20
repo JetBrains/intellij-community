@@ -1,4 +1,4 @@
-package org.editorconfig.editorsettings;
+package org.editorconfig.plugincomponents;
 
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;

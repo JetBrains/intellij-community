@@ -1,4 +1,4 @@
-package org.editorconfig.editorsettings;
+package org.editorconfig.configmanagement;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -6,21 +6,22 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.editorconfig.SettingsProviderComponent;
+import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig;
+import org.editorconfig.plugincomponents.DoneSavingListener;
 import org.editorconfig.utils.ConfigConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SaveEventHandler implements DoneSavingListener, FileDocumentManagerListener {
-    private static final Logger LOG = Logger.getInstance("#org.editorconfig.editorsettings.SaveEventHandler");
+public class EditorSettingsManager implements DoneSavingListener, FileDocumentManagerListener {
+    private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.EditorSettingsManager");
 
     private String originalStripTrailingSpaces;
     private boolean originalEnsureNewline;
     private boolean originalSettingsSaved;
 
-    public SaveEventHandler() {
+    public EditorSettingsManager() {
     }
     
     @Override
@@ -91,7 +92,7 @@ public class SaveEventHandler implements DoneSavingListener, FileDocumentManager
         String filePath = file.getCanonicalPath();
         SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
         List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
-        ConfigConverter.applyEditorSettings(outPairs);
+        applyEditorSettings(outPairs);
         LOG.debug("Applied editor settings for: " + filePath);
         
     }
@@ -111,5 +112,27 @@ public class SaveEventHandler implements DoneSavingListener, FileDocumentManager
         originalStripTrailingSpaces = null;
         originalSettingsSaved = false;
         LOG.debug("Reverted to original editor settings");
+    }
+
+    private void applyEditorSettings(List<EditorConfig.OutPair> outPairs) {
+        EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+        String trimTrailingWhitespace = ConfigConverter.valueForKey(outPairs, "trim_trailing_whitespace");
+        String insertFinalNewline = ConfigConverter.valueForKey(outPairs, "insert_final_newline");
+        if (!trimTrailingWhitespace.isEmpty()) {
+            if (trimTrailingWhitespace.equals("true")) {
+                editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+            } else if (trimTrailingWhitespace.equals("false")) {
+                editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+            } else {
+                LOG.error("Value of trim_trailing_whitespace is invalid");
+            }
+        }
+        if (!insertFinalNewline.isEmpty()) {
+            if (insertFinalNewline.equals("true") || insertFinalNewline.equals("false")) {
+                editorSettings.setEnsureNewLineAtEOF(insertFinalNewline.equals("true"));
+            }
+        } else {
+            LOG.error("Value of trim_trailing_whitespace is invalid");
+        }
     }
 }

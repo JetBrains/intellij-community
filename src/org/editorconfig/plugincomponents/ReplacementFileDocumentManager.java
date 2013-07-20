@@ -1,4 +1,4 @@
-package org.editorconfig.editorsettings;
+package org.editorconfig.plugincomponents;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -17,7 +17,7 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 
 public class ReplacementFileDocumentManager extends FileDocumentManagerImpl {
-    private static final Logger LOG = Logger.getInstance("#org.editorconfig.editorsettings.ReplacementFileDocumentManager");
+    private static final Logger LOG = Logger.getInstance("#org.editorconfig.plugincomponents.ReplacementFileDocumentManager");
 
     private final MessageBus bus;
 

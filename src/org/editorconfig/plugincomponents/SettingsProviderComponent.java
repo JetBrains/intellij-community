@@ -1,4 +1,4 @@
-package org.editorconfig;
+package org.editorconfig.plugincomponents;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public class SettingsProviderComponent implements ApplicationComponent {
     private static final Logger LOG =
-            Logger.getInstance("#org.editorconfig.codestylesettings.CodeStyleSettingsComponent");
+            Logger.getInstance("#org.editorconfig.plugincomponents.SettingsProviderComponent");
 
     private EditorConfig editorConfig;
     
