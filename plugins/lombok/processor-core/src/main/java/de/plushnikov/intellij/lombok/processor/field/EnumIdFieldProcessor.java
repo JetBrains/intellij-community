@@ -45,14 +45,14 @@ public class EnumIdFieldProcessor extends AbstractLombokFieldProcessor {
 
   private boolean validateEnum(PsiClass psiClass, ProblemBuilder builder) {
     boolean result = true;
-    if(!psiClass.isEnum()) {
+    if (!psiClass.isEnum()) {
       builder.addError(String.format("'@EnumId' can be used on enum fields only"));
       result = false;
     }
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
 
@@ -71,7 +71,7 @@ public class EnumIdFieldProcessor extends AbstractLombokFieldProcessor {
     method.withModifier(PsiModifier.STATIC);
     method.withModifier(PsiModifier.PUBLIC);
 
-    target.add((Psi)method);
+    target.add(method);
   }
 
   protected String getFindByName(PsiField psiField) {

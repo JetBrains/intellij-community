@@ -51,13 +51,13 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder);
 
-  public final <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  public final void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
       processIntern(psiClass, psiAnnotation, target);
     }
   }
 
-  protected abstract <Psi extends PsiElement> void processIntern(PsiClass psiClass, PsiAnnotation psiAnnotation, List<Psi> target);
+  protected abstract void processIntern(PsiClass psiClass, PsiAnnotation psiAnnotation, List<? super PsiElement> target);
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper", Boolean.class);

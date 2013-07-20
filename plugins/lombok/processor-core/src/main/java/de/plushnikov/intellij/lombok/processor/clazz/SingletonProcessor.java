@@ -70,14 +70,14 @@ public class SingletonProcessor extends AbstractLombokClassProcessor {
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), METHOD_NAME)
         .withMethodReturnType(PsiClassUtil.getClassType(psiClass))
         .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation);
-    method.withModifier(PsiModifier.STATIC);
-    method.withModifier(PsiModifier.PUBLIC);
+        .withNavigationElement(psiAnnotation)
+        .withModifier(PsiModifier.STATIC)
+        .withModifier(PsiModifier.PUBLIC);
 
-    target.add((Psi) method);
+    target.add(method);
   }
 }

@@ -11,7 +11,6 @@ import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -47,13 +46,13 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder);
 
-  public final <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  public final void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
       processIntern(psiField, psiAnnotation, target);
     }
   }
 
-  protected abstract <Psi extends PsiElement> void processIntern(PsiField psiField, PsiAnnotation psiAnnotation, List<Psi> target);
+  protected abstract void processIntern(PsiField psiField, PsiAnnotation psiAnnotation, List<? super PsiElement> target);
 
   protected void copyAnnotations(final PsiField fromPsiElement, final PsiModifierList toModifierList, final Pattern... patterns) {
     final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(fromPsiElement, patterns);

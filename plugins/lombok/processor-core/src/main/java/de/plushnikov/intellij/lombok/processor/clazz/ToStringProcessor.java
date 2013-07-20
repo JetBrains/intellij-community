@@ -77,8 +77,8 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    target.addAll((Collection<? extends Psi>) createToStringMethod(psiClass, psiAnnotation));
+  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    target.addAll(createToStringMethod(psiClass, psiAnnotation));
   }
 
   @NotNull

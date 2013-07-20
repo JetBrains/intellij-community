@@ -46,37 +46,39 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   @Override
   public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
-    List<Psi> result = Collections.emptyList();
+    List<Psi> emptyResult = Collections.emptyList();
     // Expecting that we are only augmenting an PsiClass
     // Don't filter !isPhysical elements or code auto completion will not work
     if (!(element instanceof PsiClass) || !element.isValid()) {
-      return result;
+      return emptyResult;
     }
     // skip processing during index rebuild
     final Project project = element.getProject();
     if (DumbService.getInstance(project).isDumb()) {
-      return result;
+      return emptyResult;
     }
     // skip processing if plugin is disabled
-    if(!ProjectSettings.loadAndGetEnabledInProject(project)) {
-      return result;
+    if (!ProjectSettings.loadAndGetEnabledInProject(project)) {
+      return emptyResult;
     }
 
-    result = new ArrayList<Psi>();
+    List<PsiElement> result = new ArrayList<PsiElement>();
     final PsiClass psiClass = (PsiClass) element;
-
     if (type.isAssignableFrom(PsiField.class)) {
       LOG.debug("collect field of class: " + psiClass.getQualifiedName());
-      processPsiClassAnnotations(result, psiClass, type);
 
+      processPsiClassAnnotations(result, psiClass, type);
     } else if (type.isAssignableFrom(PsiMethod.class)) {
       LOG.debug("collect methods of class: " + psiClass.getQualifiedName());
 
       cleanAttributeUsage(psiClass);
       processPsiClassAnnotations(result, psiClass, type);
       processPsiClassFieldAnnotation(result, psiClass, type);
+    } else if (type.isAssignableFrom(PsiClass.class)) {
+      LOG.debug("collect inner classes of class: " + psiClass.getQualifiedName());
+
     }
-    return result;
+    return (List<Psi>) result;
   }
 
   protected void cleanAttributeUsage(PsiClass psiClass) {
@@ -85,7 +87,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-  private <Psi extends PsiElement> void processPsiClassAnnotations(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull Class<Psi> type) {
+  private void processPsiClassAnnotations(@NotNull List<? super PsiElement> result, @NotNull PsiClass psiClass, @NotNull Class<? extends PsiElement> type) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
@@ -94,7 +96,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-  private <Psi extends PsiElement> void processClassAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
+  private void processClassAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull List<? super PsiElement> result, @NotNull Class<? extends PsiElement> type) {
     for (LombokClassProcessor classProcessor : allClassHandlers) {
       if (classProcessor.acceptAnnotation(psiAnnotation, type)) {
         classProcessor.process(psiClass, psiAnnotation, result);
@@ -102,13 +104,13 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-  protected <Psi extends PsiElement> void processPsiClassFieldAnnotation(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull Class<Psi> type) {
+  protected void processPsiClassFieldAnnotation(@NotNull List<? super PsiElement> result, @NotNull PsiClass psiClass, @NotNull Class<? extends PsiElement> type) {
     for (PsiField psiField : psiClass.getFields()) {
       processField(result, psiField, type);
     }
   }
 
-  protected <Psi extends PsiElement> void processField(@NotNull List<Psi> result, @NotNull PsiField psiField, @NotNull Class<Psi> type) {
+  protected void processField(@NotNull List<? super PsiElement> result, @NotNull PsiField psiField, @NotNull Class<? extends PsiElement> type) {
     final PsiModifierList modifierList = psiField.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
@@ -117,7 +119,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-  private <Psi extends PsiElement> void processFieldAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
+  private void processFieldAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull List<? super PsiElement> result, @NotNull Class<? extends PsiElement> type) {
     for (LombokFieldProcessor fieldProcessor : allFieldHandlers) {
       if (fieldProcessor.acceptAnnotation(psiAnnotation, type)) {
         fieldProcessor.process(psiField, psiAnnotation, result);

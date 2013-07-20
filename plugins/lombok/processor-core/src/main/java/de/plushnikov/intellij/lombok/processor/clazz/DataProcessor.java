@@ -61,18 +61,18 @@ public class DataProcessor extends AbstractLombokClassProcessor {
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
-      target.addAll((Collection<? extends Psi>) new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Setter.class)) {
-      target.addAll((Collection<? extends Psi>) new SetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(new SetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      target.addAll((Collection<? extends Psi>) new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
+      target.addAll(new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
-      target.addAll((Collection<? extends Psi>) new ToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
+      target.addAll(new ToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class)) {
@@ -85,7 +85,7 @@ public class DataProcessor extends AbstractLombokClassProcessor {
         final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
 
         if (requiredArgsConstructorProcessor.validateIsConstructorDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
-          target.addAll((Collection<? extends Psi>) requiredArgsConstructorProcessor.createRequiredArgsConstructor(
+          target.addAll(requiredArgsConstructorProcessor.createRequiredArgsConstructor(
               psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
         }
       }

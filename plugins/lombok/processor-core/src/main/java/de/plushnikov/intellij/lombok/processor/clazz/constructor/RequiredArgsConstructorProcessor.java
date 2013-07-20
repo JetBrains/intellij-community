@@ -42,11 +42,11 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {
       final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
-      target.addAll((Collection<? extends Psi>) createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allReqFields));
+      target.addAll(createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allReqFields));
     }
   }
 

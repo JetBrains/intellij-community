@@ -45,7 +45,7 @@ public class AutoGenMethodStubProcessor extends AbstractLombokClassProcessor {
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull final PsiClass psiClass, @NotNull final PsiAnnotation psiAnnotation, @NotNull final List<Psi> target) {
+  protected void processIntern(@NotNull final PsiClass psiClass, @NotNull final PsiAnnotation psiAnnotation, @NotNull final List<? super PsiElement> target) {
     //todo reimplement this to get it working
     final Collection<CandidateInfo> candidateInfos = OverrideImplementUtil.getMethodsToOverrideImplement(psiClass, true);
     for (CandidateInfo candidateInfo : candidateInfos) {
@@ -53,12 +53,12 @@ public class AutoGenMethodStubProcessor extends AbstractLombokClassProcessor {
       PsiMethod implementedMethod = createImplementingMethod(candidateInfo, psiClass, psiAnnotation);
 
       if (null != implementedMethod) {
-        target.add((Psi) implementedMethod);
+        target.add(implementedMethod);
       }
     }
   }
 
-  private <Psi extends PsiElement> PsiMethod createImplementingMethod(CandidateInfo candidateInfo, PsiClass psiClass, PsiAnnotation psiAnnotation) {
+  private PsiMethod createImplementingMethod(CandidateInfo candidateInfo, PsiClass psiClass, PsiAnnotation psiAnnotation) {
     final PsiMethod methodToImplement = (PsiMethod) candidateInfo.getElement();
     final PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     if (null != methodToImplement && null != substitutor) {

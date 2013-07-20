@@ -2,7 +2,19 @@ package de.plushnikov.intellij.lombok.processor.field;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -18,7 +30,12 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Inspect and validate @Delegate lombok annotation on a field
@@ -64,7 +81,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiField.getContainingClass();
     final Project project = psiField.getProject();
     final PsiManager manager = psiField.getContainingFile().getManager();
@@ -84,7 +101,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     final Collection<Pair<PsiMethod, PsiSubstitutor>> methodsToDelegate = findMethodsToDelegate(includesMethods, excludeMethods);
     if (!methodsToDelegate.isEmpty()) {
       for (Pair<PsiMethod, PsiSubstitutor> pair : methodsToDelegate) {
-        target.add((Psi) generateDelegateMethod(psiClass, psiAnnotation, pair.getFirst(), pair.getSecond()));
+        target.add(generateDelegateMethod(psiClass, psiAnnotation, pair.getFirst(), pair.getSecond()));
       }
       UserMapKeys.addGeneralUsageFor(psiField);
       UserMapKeys.addReadUsageFor(psiField);

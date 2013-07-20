@@ -12,5 +12,5 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public interface LombokClassProcessor extends LombokProcessor {
-  <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target);
+  void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 }

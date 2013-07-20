@@ -21,6 +21,7 @@ import java.util.List;
  * Inspect and validate @Builder lombok-pg annotation on a class
  * Creates methods for a builder pattern for initializing a class
  * TODO implement me
+ *
  * @author Plushnikov Michail
  */
 public class BuilderProcessor extends AbstractLombokClassProcessor {
@@ -71,7 +72,7 @@ public class BuilderProcessor extends AbstractLombokClassProcessor {
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), METHOD_NAME)
         .withMethodReturnType(PsiClassUtil.getClassType(psiClass))
         .withContainingClass(psiClass)
@@ -79,6 +80,6 @@ public class BuilderProcessor extends AbstractLombokClassProcessor {
     method.withModifier(PsiModifier.STATIC);
     method.withModifier(PsiModifier.PUBLIC);
 
-    target.add((Psi) method);
+    target.add(method);
   }
 }

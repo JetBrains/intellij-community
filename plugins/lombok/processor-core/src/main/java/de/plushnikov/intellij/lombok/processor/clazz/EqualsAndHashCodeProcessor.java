@@ -97,8 +97,8 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     return PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    target.addAll((Collection<? extends Psi>) createEqualAndHashCode(psiClass, psiAnnotation));
+  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
   }
 
   protected Collection<PsiMethod> createEqualAndHashCode(PsiClass psiClass, PsiElement psiNavTargetElement) {

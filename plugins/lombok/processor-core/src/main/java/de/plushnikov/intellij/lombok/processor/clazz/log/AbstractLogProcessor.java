@@ -1,10 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz.log;
 
-import java.lang.annotation.Annotation;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
@@ -21,6 +16,10 @@ import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcesso
 import de.plushnikov.intellij.lombok.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.List;
 
 /**
  * Base lombok processor class for logger processing
@@ -53,7 +52,7 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
     return result;
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     Project project = psiClass.getProject();
     PsiManager manager = psiClass.getContainingFile().getManager();
 
@@ -69,7 +68,7 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
     PsiExpression initializer = psiElementFactory.createExpressionFromText(String.format(loggerInitializer, className), psiClass);
     loggerField.setInitializer(initializer);
 
-    target.add((Psi) loggerField);
+    target.add(loggerField);
   }
 
   protected boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {

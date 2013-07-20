@@ -41,10 +41,10 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     super(supportedAnnotationClass, supportedClass);
   }
 
-  protected <Psi extends PsiElement> void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  protected void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      target.add((Psi) createGetterMethod(psiField, methodVisibility));
+      target.add(createGetterMethod(psiField, methodVisibility));
     }
   }
 
