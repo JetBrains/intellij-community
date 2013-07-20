@@ -7,12 +7,12 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.lombok.StringUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
-import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import lombok.EnumId;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +64,7 @@ public class EnumIdFieldProcessor extends AbstractLombokFieldProcessor {
     UserMapKeys.addWriteUsageFor(psiField);
 
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
-        .withMethodReturnType(PsiClassUtil.getClassType(psiClass))
+        .withMethodReturnType(PsiTypesUtil.getClassType(psiClass))
         .withContainingClass(psiClass)
         .withParameter(fieldName, psiFieldType)
         .withNavigationElement(psiField);

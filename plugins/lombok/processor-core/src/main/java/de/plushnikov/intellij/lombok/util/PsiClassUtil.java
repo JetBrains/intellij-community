@@ -7,7 +7,6 @@ import com.google.common.collect.Lists;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
@@ -99,14 +98,6 @@ public class PsiClassUtil {
       }
     }
     return staticMethods;
-  }
-
-  /**
-   * @deprecated use PsiTypesUtil.getClassType(...)
-   */
-  @Deprecated
-  public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
-    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
   }
 
   public static boolean hasSuperClass(@NotNull final PsiClass psiClass) {

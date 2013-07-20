@@ -36,6 +36,6 @@ public class FluentSetterFieldProcessor extends SetterFieldProcessor {
   @Override
   protected PsiType getReturnType(@NotNull PsiField psiField) {
     final PsiClass containingClass = psiField.getContainingClass();
-    return null != containingClass ? PsiClassUtil.getClassType(containingClass) : PsiType.NULL;
+    return null != containingClass ? PsiClassUtil.getTypeWithGenerics(containingClass) : PsiType.VOID;
   }
 }

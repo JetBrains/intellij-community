@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.lombok.ErrorMessages;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
@@ -75,7 +76,7 @@ public class BuilderProcessor extends AbstractLombokClassProcessor {
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), METHOD_NAME)
-        .withMethodReturnType(PsiClassUtil.getClassType(psiClass))
+        .withMethodReturnType(PsiTypesUtil.getClassType(psiClass))
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation);
     method.withModifier(PsiModifier.STATIC);
