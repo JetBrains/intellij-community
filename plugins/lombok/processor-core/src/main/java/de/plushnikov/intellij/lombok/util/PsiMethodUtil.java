@@ -1,6 +1,11 @@
 package de.plushnikov.intellij.lombok.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethod;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +28,7 @@ public class PsiMethodUtil {
     return lightMethod;
   }
 
-  public static boolean hasMethodByName(@NotNull PsiMethod[] classMethods, @NotNull String methodName) {
+  public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName) {
     boolean hasMethod = false;
     for (PsiMethod classMethod : classMethods) {
       if (classMethod.getName().equals(methodName)) {
@@ -34,7 +39,7 @@ public class PsiMethodUtil {
     return hasMethod;
   }
 
-  public static boolean hasMethodByName(@NotNull PsiMethod[] classMethods, String... methodNames) {
+  public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, String... methodNames) {
     boolean hasMethod = false;
     for (String methodName : methodNames) {
       if (hasMethodByName(classMethods, methodName)) {
@@ -45,7 +50,7 @@ public class PsiMethodUtil {
     return hasMethod;
   }
 
-  public static boolean hasMethodByName(@NotNull PsiMethod[] classMethods, @NotNull Collection<String> methodNames) {
+  public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, @NotNull Collection<String> methodNames) {
     boolean hasMethod = false;
     for (String methodName : methodNames) {
       if (hasMethodByName(classMethods, methodName)) {
@@ -56,7 +61,7 @@ public class PsiMethodUtil {
     return hasMethod;
   }
 
-  public static boolean hasSimilarMethod(@NotNull PsiMethod[] classMethods, @NotNull String methodName, int methodArgCount) {
+  public static boolean hasSimilarMethod(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName, int methodArgCount) {
     for (PsiMethod classMethod : classMethods) {
       if (isSimilarMethod(classMethod, methodName, methodArgCount)) {
         return true;

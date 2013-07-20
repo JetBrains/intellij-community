@@ -93,7 +93,7 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
   }
 
   private boolean areMethodsAlreadyExists(@NotNull PsiClass psiClass) {
-    final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     return PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
   }
 

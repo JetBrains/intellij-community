@@ -95,7 +95,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     if (null != psiClass) {
       final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
       final Collection<String> methodNames = LombokUtils.toAllGetterNames(psiField.getName(), isBoolean);
-      final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
       for (String methodName : methodNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0)) {

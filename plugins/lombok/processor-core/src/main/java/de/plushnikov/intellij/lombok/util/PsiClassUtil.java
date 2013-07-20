@@ -1,5 +1,9 @@
 package de.plushnikov.intellij.lombok.util;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -11,6 +15,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.impl.source.PsiExtensibleClass;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,28 +27,57 @@ import java.util.Map;
  * @author Plushnikov Michail
  */
 public class PsiClassUtil {
+
+  private static final Function<PsiElement, PsiMethod> PSI_ELEMENT_TO_METHOD_FUNCTION = new Function<PsiElement, PsiMethod>() {
+    @Override
+    public PsiMethod apply(PsiElement psiElement) {
+      return (PsiMethod) psiElement;
+    }
+  };
+  private static final Function<PsiElement, PsiField> PSI_ELEMENT_TO_FIELD_FUNCTION = new Function<PsiElement, PsiField>() {
+    @Override
+    public PsiField apply(PsiElement psiElement) {
+      return (PsiField) psiElement;
+    }
+  };
+
   /**
-   * Workaround to get all of original Methods of the psiClass.
-   * Normal call to psiClass.getMethods() in PsiAugmentProvider is impossible because of incorrect cache implementation of IntelliJ Idea
+   * Workaround to get all of original Methods of the psiClass, without calling PsiAugmentProvider infinitely
    *
    * @param psiClass psiClass to collect all of methods from
    * @return all intern methods of the class
    */
   @NotNull
-  public static PsiMethod[] collectClassMethodsIntern(@NotNull PsiClass psiClass) {
-    Collection<PsiMethod> result = new ArrayList<PsiMethod>();
-    for (PsiElement psiElement : psiClass.getChildren()) {
-      if (psiElement instanceof PsiMethod) {
-        result.add((PsiMethod) psiElement);
-      }
+  public static Collection<PsiMethod> collectClassMethodsIntern(@NotNull PsiClass psiClass) {
+    if (psiClass instanceof PsiExtensibleClass) {
+      return ((PsiExtensibleClass) psiClass).getOwnMethods();
+    } else {
+      return Collections2.transform(
+          Collections2.filter(Lists.newArrayList(psiClass.getChildren()), Predicates.instanceOf(PsiMethod.class)),
+          PSI_ELEMENT_TO_METHOD_FUNCTION);
     }
-    return result.toArray(new PsiMethod[result.size()]);
-    //return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
+  }
+
+  /**
+   * Workaround to get all of original Fields of the psiClass, without calling PsiAugmentProvider infinitely
+   *
+   * @param psiClass psiClass to collect all of fields from
+   * @return all intern fields of the class
+   */
+  @NotNull
+  public static Collection<PsiField> collectClassFieldsIntern(@NotNull PsiClass psiClass) {
+    if (psiClass instanceof PsiExtensibleClass) {
+      return ((PsiExtensibleClass) psiClass).getOwnFields();
+    } else {
+      return Collections2.transform(
+          Collections2.filter(Lists.newArrayList(psiClass.getChildren()), Predicates.instanceOf(PsiField.class)),
+          PSI_ELEMENT_TO_FIELD_FUNCTION);
+    }
   }
 
   @NotNull
   public static PsiMethod[] collectClassConstructorIntern(@NotNull PsiClass psiClass) {
-    final PsiMethod[] psiMethods = collectClassMethodsIntern(psiClass);
+    final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
 
     Collection<PsiMethod> classConstructors = new ArrayList<PsiMethod>(3);
     for (PsiMethod psiMethod : psiMethods) {
@@ -56,7 +90,7 @@ public class PsiClassUtil {
 
   @NotNull
   public static PsiMethod[] collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
-    final PsiMethod[] psiMethods = collectClassMethodsIntern(psiClass);
+    final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
 
     Collection<PsiMethod> staticMethods = new ArrayList<PsiMethod>(5);
     for (PsiMethod psiMethod : psiMethods) {
@@ -65,25 +99,6 @@ public class PsiClassUtil {
       }
     }
     return staticMethods.toArray(new PsiMethod[staticMethods.size()]);
-  }
-
-  /**
-   * Workaround to get all of original Fields of the psiClass.
-   * Normal call to psiClass.getFields() in PsiAugmentProvider is impossible because of incorrect cache implementation of IntelliJ Idea
-   *
-   * @param psiClass psiClass to collect all of methods from
-   * @return all intern fields of the class
-   */
-  @NotNull
-  public static PsiField[] collectClassFieldsIntern(@NotNull PsiClass psiClass) {
-    Collection<PsiField> result = new ArrayList<PsiField>();
-    for (PsiElement psiElement : psiClass.getChildren()) {
-      if (psiElement instanceof PsiField) {
-        result.add((PsiField) psiElement);
-      }
-    }
-    return result.toArray(new PsiField[result.size()]);
-    //return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
   }
 
   /**

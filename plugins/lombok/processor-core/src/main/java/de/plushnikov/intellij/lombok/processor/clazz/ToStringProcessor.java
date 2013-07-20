@@ -68,7 +68,7 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
   protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
 
-    final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
       builder.addWarning(String.format("Not generated '%s'(): A method with same name already exists", METHOD_NAME));
       result = false;
@@ -83,7 +83,7 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
 
   @NotNull
   public Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
-    final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
       return Collections.emptyList();
     }

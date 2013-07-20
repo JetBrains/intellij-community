@@ -15,6 +15,7 @@ import lombok.Builder;
 import lombok.Singleton;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -63,7 +64,7 @@ public class BuilderProcessor extends AbstractLombokClassProcessor {
   protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
 
-    final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
       builder.addWarning(String.format("Not generated '%s'(): A method with same name already exists", METHOD_NAME));
       result = false;

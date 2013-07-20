@@ -72,7 +72,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
 
   public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
-    final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
     for (PsiField psiField : psiClass.getFields()) {
       boolean createSetter = true;

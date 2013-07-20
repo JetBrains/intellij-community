@@ -85,7 +85,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     boolean result = true;
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
-      final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
       final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
       final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);

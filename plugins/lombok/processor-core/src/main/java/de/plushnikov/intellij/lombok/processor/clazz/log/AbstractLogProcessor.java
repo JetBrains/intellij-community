@@ -19,6 +19,7 @@ import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -72,7 +73,7 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
   }
 
   protected boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {
-    final PsiField[] psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
+    final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : psiFields) {
       for (String fieldName : fieldNames) {
         if (psiField.getName().equals(fieldName)) {
