@@ -76,9 +76,9 @@ public class DataProcessor extends AbstractLombokClassProcessor {
     }
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class)) {
-      final PsiMethod[] definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+      final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       // and only if there are no any other constructors!
-      if (0 == definedConstructors.length) {
+      if (definedConstructors.isEmpty()) {
         final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
 
         final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticConstructor", String.class);

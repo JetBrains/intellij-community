@@ -73,7 +73,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
       paramTypes.add(param.getType());
     }
 
-    final PsiMethod[] definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+    final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     final String constructorName = psiClass.getName();
 
     if (containsMethod(definedConstructors, constructorName, paramTypes)) {
@@ -86,7 +86,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     }
 
     if (isStaticConstructor(staticConstructorName)) {
-      final PsiMethod[] definedMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
+      final Collection<PsiMethod> definedMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
 
       if (containsMethod(definedMethods, staticConstructorName, paramTypes)) {
         if (paramTypes.isEmpty()) {
@@ -101,7 +101,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     return result;
   }
 
-  private boolean containsMethod(final PsiMethod[] definedMethods, final String methodName, final List<PsiType> paramTypes) {
+  private boolean containsMethod(final Collection<PsiMethod> definedMethods, final String methodName, final List<PsiType> paramTypes) {
     for (PsiMethod method : definedMethods) {
       if (PsiElementUtil.methodMatches(method, null, null, methodName, paramTypes)) {
         return true;

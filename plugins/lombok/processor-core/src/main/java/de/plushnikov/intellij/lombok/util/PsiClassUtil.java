@@ -76,7 +76,7 @@ public class PsiClassUtil {
   }
 
   @NotNull
-  public static PsiMethod[] collectClassConstructorIntern(@NotNull PsiClass psiClass) {
+  public static Collection<PsiMethod> collectClassConstructorIntern(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
 
     Collection<PsiMethod> classConstructors = new ArrayList<PsiMethod>(3);
@@ -85,11 +85,11 @@ public class PsiClassUtil {
         classConstructors.add(psiMethod);
       }
     }
-    return classConstructors.toArray(new PsiMethod[classConstructors.size()]);
+    return classConstructors;
   }
 
   @NotNull
-  public static PsiMethod[] collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
+  public static Collection<PsiMethod> collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
 
     Collection<PsiMethod> staticMethods = new ArrayList<PsiMethod>(5);
@@ -98,7 +98,7 @@ public class PsiClassUtil {
         staticMethods.add(psiMethod);
       }
     }
-    return staticMethods.toArray(new PsiMethod[staticMethods.size()]);
+    return staticMethods;
   }
 
   /**
@@ -116,7 +116,7 @@ public class PsiClassUtil {
 
   public static boolean hasMultiArgumentConstructor(@NotNull final PsiClass psiClass) {
     boolean result = false;
-    final PsiMethod[] definedConstructors = collectClassConstructorIntern(psiClass);
+    final Collection<PsiMethod> definedConstructors = collectClassConstructorIntern(psiClass);
     for (PsiMethod psiMethod : definedConstructors) {
       if (psiMethod.getParameterList().getParametersCount() > 0) {
         result = true;
