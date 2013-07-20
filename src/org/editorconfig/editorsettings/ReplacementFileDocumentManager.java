@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +20,20 @@ public class ReplacementFileDocumentManager extends FileDocumentManagerImpl {
     private static final Logger LOG = Logger.getInstance("#org.editorconfig.editorsettings.ReplacementFileDocumentManager");
 
     private final MessageBus bus;
+
+    public boolean isAlwaysReload() {
+        return alwaysReload;
+    }
+
+    public void setAlwaysReload(boolean alwaysReload) {
+        this.alwaysReload = alwaysReload;
+    }
+
+    private boolean alwaysReload;
+
     // This is basically copied from FileDocumentManagerImpl
     private final DoneSavingListener multiCaster;
-    
+
     public ReplacementFileDocumentManager(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
         super(virtualFileManager, projectManager);
         bus = ApplicationManager.getApplication().getMessageBus();
@@ -61,6 +73,16 @@ public class ReplacementFileDocumentManager extends FileDocumentManagerImpl {
     public void saveDocument(@NotNull Document document) {
         super.saveDocument(document);    //To change body of overridden methods use File | Settings | File Templates.
         multiCaster.doneSavingDocument(document);
+    }
+
+    @Override
+    public void contentsChanged(VirtualFileEvent event) {
+        Document document = getCachedDocument(event.getFile());
+        if (alwaysReload && document != null) {
+            reloadFromDisk(document);
+        } else {
+            super.contentsChanged(event);
+        }
     }
 
 }

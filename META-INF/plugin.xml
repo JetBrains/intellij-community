@@ -42,6 +42,9 @@
       <component>
           <implementation-class>org.editorconfig.EncodingComponent</implementation-class>
       </component>
+      <component>
+          <implementation-class>org.editorconfig.EndOfLineComponent</implementation-class>
+      </component>
   </project-components>
 
   <actions>

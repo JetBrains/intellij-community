@@ -1,14 +1,11 @@
 package org.editorconfig.editorsettings;
 
-import com.intellij.AppTopics;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
 import org.editorconfig.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.utils.ConfigConverter;
@@ -24,9 +21,6 @@ public class SaveEventHandler implements DoneSavingListener, FileDocumentManager
     private boolean originalSettingsSaved;
 
     public SaveEventHandler() {
-        MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, this);
-        bus.connect().subscribe(DoneSavingTopic.DONE_SAVING, this);
     }
     
     @Override

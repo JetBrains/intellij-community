@@ -1,6 +1,5 @@
 package org.editorconfig.codestylesettings;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -9,13 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.messages.MessageBus;
 import org.editorconfig.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.utils.ConfigConverter;
 
-import java.util.Collection;
 import java.util.List;
 
 public class EditorChangeEventHandler implements FileEditorManagerListener {
@@ -24,8 +20,6 @@ public class EditorChangeEventHandler implements FileEditorManagerListener {
     private final CodeStyleSettingsManager codeStyleSettingsManager;
 
     public EditorChangeEventHandler(Project project) {
-        MessageBus bus = project.getMessageBus();
-        bus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
         codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
     }
 
@@ -59,12 +53,7 @@ public class EditorChangeEventHandler implements FileEditorManagerListener {
         SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
         List<OutPair> outPairs = settingsProvider.getOutPairs(filePath);
         // Apply editorconfig settings for the current editor
-        // TODO: Find a good way to reliably get the language of the current editor
-        Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
-        for (Language language: registeredLanguages) {
-            CommonCodeStyleSettings commonSettings = newSettings.getCommonSettings(language);
-            ConfigConverter.applyCodeStyleSettings(outPairs, commonSettings);
-        }
+        ConfigConverter.applyCodeStyleSettings(outPairs, newSettings);
         codeStyleSettingsManager.setTemporarySettings(newSettings);
         LOG.debug("Applied code style settings for: " + filePath);
     }

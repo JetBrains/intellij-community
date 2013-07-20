@@ -1,15 +1,17 @@
 package org.editorconfig.utils;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import org.editorconfig.core.EditorConfig.OutPair;
@@ -24,10 +26,27 @@ public class ConfigConverter {
         map.put("utf-16le", Charset.forName("UTF-16LE"));
         encodingMap = Collections.unmodifiableMap(map);
     }
+    private static final String CR = Character.toString((char) 13);
+    private static final String LF = Character.toString((char) 10);
+    private static final Map<String, String> endOfLineMap;
+    static {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("lf", LF);
+        map.put("cr", CR);
+        map.put("crlf", CR + LF);
+        endOfLineMap = Collections.unmodifiableMap(map);
+    }
 
     public static void applyCodeStyleSettings(List<OutPair> outPairs,
-                                               CommonCodeStyleSettings commonCodeStyleSettings) {
-        applyIndentOptions(outPairs, commonCodeStyleSettings.getIndentOptions());
+                                               CodeStyleSettings codeStyleSettings) {
+        // Apply indent options
+        // TODO: Find a good way to reliably get the language of the current editor
+        Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
+        for (Language language: registeredLanguages) {
+            CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(language);
+            IndentOptions indentOptions = commonSettings.getIndentOptions();
+            applyIndentOptions(outPairs, indentOptions);
+        }
     }
     
     private static void applyIndentOptions (List<OutPair> outPairs, IndentOptions indentOptions) {
@@ -54,6 +73,22 @@ public class ConfigConverter {
                 indentOptions.USE_TAB_CHARACTER = indentStyle.equals("tab");
             } else {
                 logError("Value of use_tab_character is invalid");
+            }
+        }
+    }
+
+    public static void applyEndOfLine (List<OutPair> outPairs, Project project, VirtualFile file, Object requestor) {
+        String endOfLine = valueForKey(outPairs, "end_of_line");
+        if (!endOfLine.isEmpty()) {
+            if (endOfLineMap.containsKey(endOfLine)) {
+                String lineSeparator = endOfLineMap.get(endOfLine);
+                try {
+                    LoadTextUtil.changeLineSeparators(project, file, lineSeparator, requestor);
+                } catch (IOException error) {
+                    logError("IOException while changing line separator");
+                }
+            } else {
+                logError("Value of charset is invalid");
             }
         }
     }
@@ -87,7 +122,7 @@ public class ConfigConverter {
             if (encodingMap.containsKey(charset)) {
                 encodingProjectManager.setEncoding(file, encodingMap.get(charset));
             } else {
-                logError("Value of charset is invalid");
+                logError("Value of end_of_line is invalid");
             }
         }
     }

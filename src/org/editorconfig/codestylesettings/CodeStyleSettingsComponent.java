@@ -3,17 +3,19 @@ package org.editorconfig.codestylesettings;
 import static java.lang.System.out;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 public class CodeStyleSettingsComponent implements ProjectComponent {
     private static final Logger LOG =
             Logger.getInstance("#org.editorconfig.codestylesettings.CodeStyleSettingsComponent");
 
-    private final EditorChangeEventHandler editorChangeEventHandler;
-    
     public CodeStyleSettingsComponent(Project project) {
-        editorChangeEventHandler = new EditorChangeEventHandler(project);
+        EditorChangeEventHandler editorChangeEventHandler = new EditorChangeEventHandler(project);
+        MessageBus bus = project.getMessageBus();
+        bus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorChangeEventHandler);
     }
 
     public void initComponent() {
