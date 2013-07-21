@@ -8,15 +8,14 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
+import de.plushnikov.intellij.lombok.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.processor.LombokProcessor;
-import de.plushnikov.intellij.plugin.core.GenericServiceLocator;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,15 +27,16 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
   private final Map<String, Collection<LombokProcessor>> allProblemHandlers;
 
   public LombokInspection() {
-    allProblemHandlers = new HashMap<String, Collection<LombokProcessor>>();
-    List<LombokProcessor> lombokInspectors = GenericServiceLocator.locateAll(LombokProcessor.class);
-    for (LombokProcessor inspector : lombokInspectors) {
-      Collection<LombokProcessor> inspectorCollection = allProblemHandlers.get(inspector.getSupportedAnnotation());
+    allProblemHandlers = new THashMap<String, Collection<LombokProcessor>>();
+    for (LombokProcessor lombokInspector : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
+      Collection<LombokProcessor> inspectorCollection = allProblemHandlers.get(lombokInspector.getSupportedAnnotation());
       if (null == inspectorCollection) {
         inspectorCollection = new ArrayList<LombokProcessor>(2);
-        allProblemHandlers.put(inspector.getSupportedAnnotation(), inspectorCollection);
+        allProblemHandlers.put(lombokInspector.getSupportedAnnotation(), inspectorCollection);
       }
-      inspectorCollection.add(inspector);
+      inspectorCollection.add(lombokInspector);
+
+      LOG.debug(String.format("LombokInspection registered %s inspector", lombokInspector));
     }
   }
 

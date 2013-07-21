@@ -1,12 +1,15 @@
 package de.plushnikov.intellij.lombok.processor;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base lombok processor class
@@ -53,26 +56,22 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
 
   public boolean acceptAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull Class<? extends PsiElement> type) {
     final String annotationName = StringUtil.notNullize(psiAnnotation.getQualifiedName()).trim();
-    return supportedAnnotation.equals(annotationName) && (type.isAssignableFrom(supportedClass));
+    return supportedAnnotation.equals(annotationName) && canProduce(type);
   }
 
-  protected boolean hasSimilarMethod(@NotNull PsiMethod[] classMethods, String methodName, int methodArgCount) {
-    for (PsiMethod classMethod : classMethods) {
-      if (isSimilarMethod(classMethod, methodName, 0)) {
-        return true;
-      }
-    }
-    return false;
+  @Override
+  public boolean isEnabled(@NotNull Project project) {
+    return true;//TODO make it configurable
   }
 
-  private boolean isSimilarMethod(@NotNull PsiMethod classMethod, String methodName, int methodArgCount) {
-    boolean equalNames = classMethod.getName().equalsIgnoreCase(methodName);
+  @Override
+  public boolean canProduce(@NotNull Class<? extends PsiElement> type) {
+    return type.isAssignableFrom(supportedClass);
+  }
 
-    int parametersCount = classMethod.getParameterList().getParametersCount();
-    if (classMethod.isVarArgs()) {
-      parametersCount--;
-    }
-
-    return equalNames && methodArgCount == parametersCount;
+  @NotNull
+  @Override
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+    return Collections.emptyList();
   }
 }

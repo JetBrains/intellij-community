@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -34,6 +35,19 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
 
   protected AbstractLombokClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
+  }
+
+  @NotNull
+  @Override
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+    List<? super PsiElement> result = new ArrayList<PsiElement>();
+
+    PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiClass, Collections.singleton(getSupportedAnnotation()), true);
+    if (null != psiAnnotation) {
+      process(psiClass, psiAnnotation, result);
+    }
+
+    return result;
   }
 
   @Override

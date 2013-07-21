@@ -1,6 +1,8 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
@@ -11,6 +13,7 @@ import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -29,6 +32,19 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
 
   protected AbstractLombokFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
+  }
+
+  @NotNull
+  @Override
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+    List<? super PsiElement> result = new ArrayList<PsiElement>();
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiField, Collections.singleton(getSupportedAnnotation()), true);
+      if (null != psiAnnotation) {
+        process(psiField, psiAnnotation, result);
+      }
+    }
+    return result;
   }
 
   @Override

@@ -44,6 +44,8 @@ public class IntelliJVersionRangeUtil {
       result = IntelliJVersion.INTELLIJ_11;
     } else if (baselineVersion >= 120) {
       result = IntelliJVersion.INTELLIJ_12;
+    } else if (baselineVersion >= 130) {
+      result = IntelliJVersion.INTELLIJ_13;
     }
 
     return result;
