@@ -36,7 +36,7 @@
 		<ul>
 		  <li>0.6.6
 				<ol>
-				    <li></li>
+				    <li>Added support for @Accessors lombok experimental annotation</li>
 				</ol>
 			</li>
 			<li>0.6.5
