@@ -67,4 +67,116 @@ public class MarkdownUtilTest {
                                       "$ express /tmp/foo && cd /tmp/foo</code></pre>"), markdown);
   }
 
+  @Test
+  public void testReplaceCodeBlocks2() throws Exception {
+    List<String> markdown = Arrays.asList(
+      "   text",
+      "    code block",
+      "```",
+      " code block too",
+      "```",
+      "simple text",
+      "    $ code",
+      "\t$ code continues",
+      "code done"
+    );
+    MarkdownUtil.replaceCodeBlock(markdown);
+    Assert.assertEquals(
+      Arrays.asList(
+        "   text",
+        "<pre><code>code block</code></pre>",
+        "<pre><code>",
+        " code block too",
+        "</code></pre>",
+        "simple text",
+        "<pre><code>$ code",
+        "$ code continues</code></pre>",
+        "code done"
+      ),
+      markdown
+    );
+  }
+
+  @Test
+  public void testReplaceLists1() throws Exception {
+    List<String> markdown = Arrays.asList(
+      "*   Red",
+      "*   Green",
+      "*   Blue"
+    );
+    MarkdownUtil.generateLists(markdown);
+    Assert.assertEquals(
+      Arrays.asList(
+        "<ul><li>Red</li>",
+        "<li>Green</li>",
+        "<li>Blue</li></ul>"
+      ),
+      markdown
+    );
+  }
+
+  @Test
+  public void testReplaceLists2() throws Exception {
+    List<String> markdown = Arrays.asList(
+      "1.   Red",
+      "",
+      "2.   Blue"
+    );
+    MarkdownUtil.generateLists(markdown);
+    Assert.assertEquals(
+      Arrays.asList(
+        "<ol><li>Red</li>",
+        "",
+        "<li>Blue</li></ol>"
+      ),
+      markdown
+    );
+  }
+
+  @Test
+  public void testReplaceLists3() throws Exception {
+    List<String> markdown = Arrays.asList(
+      "1986\\. What a great season."
+    );
+    MarkdownUtil.generateLists(markdown);
+    Assert.assertEquals(
+      Arrays.asList(
+        "1986\\. What a great season."
+      ),
+      markdown
+    );
+  }
+
+  @Test
+  public void testReplaceLists4() throws Exception {
+    List<String> markdown = Arrays.asList(
+      "+ one two",
+      "three",
+      "",
+      " four",
+      "+ five",
+      "six",
+      "",
+      "seven",
+      "",
+      "+ eight"
+    );
+    MarkdownUtil.generateLists(markdown);
+    Assert.assertEquals(
+      Arrays.asList(
+        "<ul><li>one two",
+        "three",
+        "",
+        "four</li>",
+        "<li>five",
+        "six</li></ul>",
+        "",
+        "seven",
+        "",
+        "<ul><li>eight</li></ul>"
+      ),
+      markdown
+    );
+  }
+
 }
