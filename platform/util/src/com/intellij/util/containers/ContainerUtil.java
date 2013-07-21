@@ -1178,6 +1178,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return items == null || items.isEmpty() ? def : items.iterator().next();
   }
 
+  @NotNull
+  public static <T> List<T> getFirstItems(@NotNull final List<T> items, int maxItems) {
+    final List<T> result = new ArrayList<T>();
+    for (int i = 0; i < maxItems && i < items.size(); i++) {
+      result.add(items.get(i));
+    }
+    return result;
+  }
+
   @Nullable
   public static <T> T iterateAndGetLastItem(@NotNull Iterable<T> items) {
     Iterator<T> itr = items.iterator();
