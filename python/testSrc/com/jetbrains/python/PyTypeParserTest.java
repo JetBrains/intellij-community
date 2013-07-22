@@ -184,4 +184,47 @@ public class PyTypeParserTest extends PyTestCase {
     final PyType bound = genericType.getBound();
     assertInstanceOf(bound, PyUnionType.class);
   }
+
+  public void testBracketSingleParam() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "list[int]");
+    assertInstanceOf(type, PyCollectionType.class);
+    final PyCollectionType collectionType = (PyCollectionType)type;
+    assertNotNull(collectionType);
+    assertEquals("list", collectionType.getName());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    assertNotNull(elementType);
+    assertEquals("int", elementType.getName());
+  }
+
+  public void testBracketMultipleParams() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "dict[str, int]");
+    assertInstanceOf(type, PyCollectionType.class);
+    final PyCollectionType collectionType = (PyCollectionType)type;
+    assertNotNull(collectionType);
+    assertEquals("dict", collectionType.getName());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    assertNotNull(elementType);
+    assertInstanceOf(elementType, PyTupleType.class);
+    final PyTupleType tupleType = (PyTupleType)elementType;
+    final PyType first = tupleType.getElementType(0);
+    assertNotNull(first);
+    assertEquals("str", first.getName());
+    final PyType second = tupleType.getElementType(1);
+    assertNotNull(second);
+    assertEquals("int", second.getName());
+  }
+
+  public void testUnionOrOperator() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | unicode");
+    assertNotNull(type);
+    final Collection<PyType> members = type.getMembers();
+    assertEquals(3, members.size());
+    final List<PyType> list = new ArrayList<PyType>(members);
+    assertClassType(list.get(0), "MyObject");
+    assertClassType(list.get(1), "str");
+    assertClassType(list.get(2), "unicode");
+  }
 }

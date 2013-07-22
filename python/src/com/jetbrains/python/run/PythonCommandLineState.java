@@ -63,7 +63,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private Boolean myMultiprocessDebug = null;
 
   public boolean isDebug() {
-    return isDebug(getConfigurationSettings());
+    return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunnerId());
   }
 
   public static ServerSocket createServerSocket() throws ExecutionException {
@@ -76,10 +76,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
       throw new ExecutionException("Failed to find free socket port", e);
     }
     return serverSocket;
-  }
-
-  protected static boolean isDebug(ConfigurationPerRunnerSettings configurationSettings) {
-    return PyDebugRunner.PY_DEBUG_RUNNER.equals(configurationSettings.getRunnerId());
   }
 
   public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
@@ -153,8 +149,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     // Extend command line
     RunnerSettings runnerSettings = getRunnerSettings();
-    PythonRunConfigurationExtensionsManager.getInstance()
-      .patchCommandLine(myConfig, runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
+    String runnerId = getEnvironment().getRunnerId();
+    if (runnerId != null) {
+      PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig, runnerSettings, commandLine, runnerId);
+    }
 
     Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
 
