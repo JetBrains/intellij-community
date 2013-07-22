@@ -61,8 +61,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   @Override
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
-    runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class));
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
+    runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class), runProfile);
   }
 
   @Override
@@ -74,7 +74,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     boolean shouldAddDefaultActions = true;
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      patch(parameters, env.getRunnerSettings(), true);
+      patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
       final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
       executionResult = state.execute(executor, this);
       if (proxy != null && executionResult != null) {

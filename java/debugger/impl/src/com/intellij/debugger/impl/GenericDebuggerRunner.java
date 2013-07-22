@@ -55,7 +55,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                          ExecutionEnvironment env) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      runCustomPatchers(parameters, env.getRunnerSettings(), executor);
+      runCustomPatchers(parameters, executor, env.getRunProfile());
       RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(parameters, true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
       return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
     }
@@ -97,9 +97,9 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     return new GenericDebuggerRunnerSettings();
   }
 
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, settings);
-    runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class));
+    runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class), runProfile);
   }
 
   private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
