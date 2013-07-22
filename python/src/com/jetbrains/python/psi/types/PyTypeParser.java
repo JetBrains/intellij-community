@@ -135,7 +135,7 @@ public class PyTypeParser {
         .named("tuple-type");
 
     final FunctionalParser<ParseResult, PyElementType> typeParameter =
-      token(PARAMETER).then(maybe(op("(").skipThen(typeExpr).thenSkip(op(")"))))
+      token(PARAMETER).then(maybe(op("<=").skipThen(typeExpr)))
         .map(new Function<Pair<Token<PyElementType>, ParseResult>, ParseResult>() {
           @Override
           public ParseResult fun(Pair<Token<PyElementType>, ParseResult> value) {

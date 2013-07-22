@@ -177,7 +177,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testBoundedGeneric() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T (str or unicode)");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
     assertNotNull(type);
     assertInstanceOf(type, PyGenericType.class);
     final PyGenericType genericType = (PyGenericType)type;

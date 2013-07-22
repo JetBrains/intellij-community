@@ -564,7 +564,7 @@ public class PyTypeTest extends PyTestCase {
     doTest("int or str",
            "def foo(x):\n" +
            "    '''\n" +
-           "    :type x: T (int or str)\n" +
+           "    :type x: T <= int or str\n" +
            "    :rtype: T\n" +
            "    '''\n" +
            "def bar(x):\n" +
