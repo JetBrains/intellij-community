@@ -250,7 +250,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.createRunnerSettings(provider);
     }
 
-    public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
+    public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(final ProgramRunner runner) {
       return myConfiguration.getRunnerSettingsEditor(runner);
     }
 

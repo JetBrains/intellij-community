@@ -26,7 +26,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -105,13 +104,6 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId());
-  }
-
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @Override
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;
   }
 
   @Nullable

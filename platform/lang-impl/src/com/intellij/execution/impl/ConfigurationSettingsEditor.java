@@ -17,6 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.*;
@@ -111,14 +112,14 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
   }
 
   private JComponent createCompositePerRunnerSettings(final Executor executor, final ProgramRunner runner) {
-    final SettingsEditor<JDOMExternalizable> configEditor = myConfiguration.getRunnerSettingsEditor(runner);
+    final SettingsEditor<ConfigurationPerRunnerSettings> configEditor = myConfiguration.getRunnerSettingsEditor(runner);
     SettingsEditor<JDOMExternalizable> runnerEditor;
 
     try {
       runnerEditor = runner.getSettingsEditor(executor, myConfiguration);
     }
     catch (AbstractMethodError error) {
-      // this is stub code for plugin copatibility!
+      // this is stub code for plugin compatibility!
       runnerEditor = null;
     }
 
@@ -126,10 +127,10 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     SettingsEditor<RunnerAndConfigurationSettings> wrappedConfigEditor = null;
     SettingsEditor<RunnerAndConfigurationSettings> wrappedRunEditor = null;
     if (configEditor != null) {
-      wrappedConfigEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, JDOMExternalizable>(configEditor,
-                                          new Convertor<RunnerAndConfigurationSettings, JDOMExternalizable>() {
+      wrappedConfigEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, ConfigurationPerRunnerSettings>(configEditor,
+                                          new Convertor<RunnerAndConfigurationSettings, ConfigurationPerRunnerSettings>() {
                                             @Override
-                                            public JDOMExternalizable convert(RunnerAndConfigurationSettings configurationSettings) {
+                                            public ConfigurationPerRunnerSettings convert(RunnerAndConfigurationSettings configurationSettings) {
                                               return configurationSettings.getConfigurationSettings(runner);
                                             }
                                           });
