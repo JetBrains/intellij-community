@@ -16,13 +16,13 @@
 
 package com.intellij.tasks.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.*;
@@ -32,31 +32,33 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.RadioButtonEnumModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
  */
-public class SimpleOpenTaskDialog extends DialogWrapper {
+public class OpenTaskDialog extends DialogWrapper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
 
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)
   private JCheckBox myClearContext;
-  @BindControl(value = "createChangelist", instant = true)
-  private JCheckBox myCreateChangelist;
   private JCheckBox myMarkAsInProgressBox;
   private JLabel myTaskNameLabel;
   private JPanel myVcsPanel;
-  private JPanel myDistributedVcsPanel;
+  private JTextField myBranchName;
+  private JTextField myChangelistName;
   private ButtonGroup myVcsGroup;
 
   private final Project myProject;
   private final Task myTask;
   private final RadioButtonEnumModel<TaskManager.VcsOperation> myButtonEnumModel;
 
-  public SimpleOpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
+  public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
     super(project, false);
     myProject = project;
     myTask = task;
@@ -75,26 +77,42 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
       myMarkAsInProgressBox.setVisible(false);
     }
 
-    myClearContext.setSelected(taskManager.getState().clearContext);
+    TaskManagerImpl.Config state = taskManager.getState();
+    myClearContext.setSelected(state.clearContext);
 
     myButtonEnumModel = RadioButtonEnumModel.bindEnum(TaskManager.VcsOperation.class, myVcsGroup);
     AbstractVcs vcs = manager.getActiveVcs();
     if (vcs == null) {
       myVcsPanel.setVisible(false);
-      myCreateChangelist.setEnabled(false);
-      myCreateChangelist.setSelected(false);
     }
     else {
+      if (state.vcsOperation == -1) {
+        state.vcsOperation = vcs.getType() == VcsType.distributed
+                             ? TaskManager.VcsOperation.CREATE_BRANCH.ordinal()
+                             : TaskManager.VcsOperation.CREATE_CHANGELIST.ordinal();
+      }
       myVcsPanel.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName() + " operations", false));
-      if (vcs.getType() == VcsType.distributed && ApplicationManager.getApplication().isInternal()) {
-        myCreateChangelist.setVisible(false);
-        myButtonEnumModel.setSelected(taskManager.getState().vcsOperation);
-      }
-      else {
-        myDistributedVcsPanel.setVisible(false);
-        myCreateChangelist.setSelected(taskManager.getState().createChangelist);
-        myCreateChangelist.setEnabled(true);
-      }
+      myBranchName.setText(taskManager.suggestBranchName(task));
+      myChangelistName.setText(taskManager.getChangelistName(task));
+      ActionListener listener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          TaskManager.VcsOperation selected = myButtonEnumModel.getSelected();
+          myChangelistName.setEnabled(false);
+          myBranchName.setEnabled(false);
+          if (selected == TaskManager.VcsOperation.CREATE_BRANCH) {
+            myBranchName.setEnabled(true);
+            myBranchName.requestFocus();
+          }
+          else if (selected == TaskManager.VcsOperation.CREATE_CHANGELIST) {
+            myChangelistName.setEnabled(true);
+            myChangelistName.requestFocus();
+          }
+        }
+      };
+      myButtonEnumModel.addActionListener(listener);
+      myButtonEnumModel.setSelected(state.vcsOperation);
+      listener.actionPerformed(null);
     }
     init();
     getPreferredFocusedComponent();
@@ -107,9 +125,6 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
     TaskManager.VcsOperation operation = getVcsOperation();
     taskManager.getState().vcsOperation = operation.ordinal();
-    if (taskManager.isVcsEnabled()) {
-      taskManager.getState().createChangelist = myCreateChangelist.isSelected();
-    }
 
     TaskRepository repository = myTask.getRepository();
     if (isMarkAsInProgress() && repository != null) {
@@ -121,13 +136,38 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
         LOG.warn(ex);
       }
     }
-    LocalTask activeTask = taskManager.getActiveTask();
     LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
-    taskManager.activateInVcs(localTask, activeTask, operation);
+    LocalTask activeTask = taskManager.getActiveTask();
+    taskManager.activateInVcs(localTask, activeTask, operation, myBranchName.getText());
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }
     super.doOKAction();
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    switch (myButtonEnumModel.getSelected()) {
+      case CREATE_BRANCH:
+        String branchName = myBranchName.getText().trim();
+        if (branchName.isEmpty()) {
+          return new ValidationInfo("Branch name should not be empty", myBranchName);
+        }
+        else if (branchName.contains(" ")) {
+          return new ValidationInfo("Branch name should not contain spaces");
+        }
+        else {
+          return null;
+        }
+      case CREATE_CHANGELIST:
+        if (myChangelistName.getText().trim().isEmpty()) {
+          return new ValidationInfo("Changelist name should not be empty");
+        }
+      case DO_NOTHING:
+        return null;
+    }
+    return null;
   }
 
   private boolean isClearContext() {
@@ -135,10 +175,7 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
   }
 
   private TaskManager.VcsOperation getVcsOperation() {
-    if (myCreateChangelist.isVisible()) {
-      return myCreateChangelist.isSelected() ? TaskManager.VcsOperation.CREATE_CHANGELIST : TaskManager.VcsOperation.DO_NOTHING;
-    }
-    else if (myVcsPanel.isVisible()) {
+    if (myVcsPanel.isVisible()) {
       return myButtonEnumModel.getSelected();
     }
     else {

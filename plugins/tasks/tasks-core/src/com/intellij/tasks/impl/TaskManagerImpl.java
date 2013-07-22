@@ -388,14 +388,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public void activateInVcs(LocalTask task, LocalTask previousActive, VcsOperation operation) {
+  public void activateInVcs(LocalTask task, LocalTask previousActive, VcsOperation operation, String name) {
     if (operation == VcsOperation.CREATE_CHANGELIST) {
-      String name = getChangelistName(task);
       String comment = TaskUtil.getChangeListComment(task);
       createChangeList(task, name, comment);
     }
     else if (operation == VcsOperation.CREATE_BRANCH) {
-      String name = suggestBranchName(task);
       VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
       for (VcsTaskHandler handler : handlers) {
         if (previousActive != null) {
@@ -935,8 +933,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     public boolean clearContext = true;
 
-    public int vcsOperation = 0;
-    public boolean createChangelist = true;
+    public int vcsOperation = -1;
 
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;

@@ -167,7 +167,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        new SimpleOpenTaskDialog(project, task).show();
+        new OpenTaskDialog(project, task).show();
       }
     });
   }

@@ -76,7 +76,7 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     assertNotNull(defaultTask);
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.activateInVcs(localTask, defaultTask, TaskManager.VcsOperation.CREATE_BRANCH);
+    myTaskManager.activateInVcs(localTask, defaultTask, TaskManager.VcsOperation.CREATE_BRANCH, myTaskManager.suggestBranchName(localTask));
     List<BranchInfo> branches = localTask.getBranches();
     assertEquals(2, branches.size());
     assertEquals(2, defaultTask.getBranches().size());
@@ -86,7 +86,7 @@ public class TaskBranchesTest extends TaskManagerTestCase {
 
     foo = myTaskManager.createLocalTask("foo");
     localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.activateInVcs(localTask, defaultTask, TaskManager.VcsOperation.CREATE_BRANCH);
+    myTaskManager.activateInVcs(localTask, defaultTask, TaskManager.VcsOperation.CREATE_BRANCH, myTaskManager.suggestBranchName(localTask));
     assertEquals("foo", repositories.get(0).getCurrentBranch().getName());
   }
 
