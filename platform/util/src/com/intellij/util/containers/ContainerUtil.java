@@ -1198,6 +1198,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
+  @Nullable
+  public static <T, L extends List<? extends T> & RandomAccess> T last(@NotNull L list) {
+    return list.isEmpty() ? null : list.get(list.size() - 1);
+  }
+
   /**
    * @return read-only collection consisting of elements from the 'from' collection which are absent from the 'what' collection
    */
