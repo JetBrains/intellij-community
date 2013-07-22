@@ -35,7 +35,7 @@ import java.nio.charset.Charset;
 public class HtmlFileType extends XmlLikeFileType {
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
 
-  public final static HtmlFileType INSTANCE = new HtmlFileType();
+  public static final HtmlFileType INSTANCE = new HtmlFileType();
 
   private HtmlFileType() {
     super(HTMLLanguage.INSTANCE);
@@ -45,25 +45,30 @@ public class HtmlFileType extends XmlLikeFileType {
     super(language);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "HTML";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.html");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "html";
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Html;
   }
 
+  @Override
   public String getCharset(@NotNull final VirtualFile file, final byte[] content) {
     String charset = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     if (charset != null) return charset;
@@ -78,6 +83,7 @@ public class HtmlFileType extends XmlLikeFileType {
     return c == null ? null : c.name();
   }
 
+  @Override
   public Charset extractCharsetFromFileContent(@Nullable final Project project, @Nullable final VirtualFile file, @NotNull final String content) {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
