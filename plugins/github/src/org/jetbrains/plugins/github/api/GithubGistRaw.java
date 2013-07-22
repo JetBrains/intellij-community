@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -26,31 +27,31 @@ import java.util.Map;
  */
 @SuppressWarnings("UnusedDeclaration")
 class GithubGistRaw implements Serializable {
-  public String id;
-  public String description;
+  @Nullable public String id;
+  @Nullable public String description;
 
   @SerializedName("public")
-  public Boolean isPublic;
+  @Nullable public Boolean isPublic;
 
-  public String url;
-  public String htmlUrl;
-  public String gitPullUrl;
-  public String gitPushUrl;
+  @Nullable public String url;
+  @Nullable public String htmlUrl;
+  @Nullable public String gitPullUrl;
+  @Nullable public String gitPushUrl;
 
-  public Map<String, GistFileRaw> files;
+  @Nullable public Map<String, GistFileRaw> files;
 
-  public GithubUserRaw user;
+  @Nullable public GithubUserRaw user;
 
-  public Date createdAt;
+  @Nullable public Date createdAt;
 
   public static class GistFileRaw {
-    public Long size;
-    public String filename;
-    public String content;
+    @Nullable public Long size;
+    @Nullable public String filename;
+    @Nullable public String content;
 
-    public String raw_url;
+    @Nullable public String raw_url;
 
-    public String type;
-    public String language;
+    @Nullable public String type;
+    @Nullable public String language;
   }
 }

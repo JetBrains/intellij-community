@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -25,10 +24,10 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 class GithubAuthorizationRaw {
-  public Long id;
-  public String url;
-  public String token;
-  public String note;
-  public String noteUrl;
-  public List<String> scopes;
+  @Nullable public Long id;
+  @Nullable public String url;
+  @Nullable public String token;
+  @Nullable public String note;
+  @Nullable public String noteUrl;
+  @Nullable public List<String> scopes;
 }
