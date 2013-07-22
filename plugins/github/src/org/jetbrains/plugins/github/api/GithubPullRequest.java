@@ -30,7 +30,6 @@ public class GithubPullRequest {
   @NotNull private String myTitle;
   @NotNull private String myBody;
 
-  @NotNull private String myUrl;
   @NotNull private String myHtmlUrl;
   @NotNull private String myDiffUrl;
   @NotNull private String myPatchUrl;
@@ -54,30 +53,13 @@ public class GithubPullRequest {
     @NotNull private GithubRepo myRepo;
     @NotNull private GithubUser myUser;
 
-    @NotNull
-    public static Link create(@Nullable GithubPullRequestRaw.LinkRaw raw) throws JsonException {
-      try {
-        if (raw == null) throw new JsonException("raw is null");
-        if (raw.label == null) throw new JsonException("label is null");
-        if (raw.ref == null) throw new JsonException("ref is null");
-        if (raw.sha == null) throw new JsonException("sha is null");
-
-        GithubUser user = GithubUser.create(raw.user);
-        GithubRepo repo = GithubRepo.create(raw.repo);
-
-        return new Link(raw.label, raw.ref, raw.sha, repo, user);
-      }
-      catch (JsonException e) {
-        throw new JsonException("Link parse error", e);
-      }
-    }
-
-    private Link(@NotNull String label, @NotNull String ref, @NotNull String sha, @NotNull GithubRepo repo, @NotNull GithubUser user) {
-      this.myLabel = label;
-      this.myRef = ref;
-      this.mySha = sha;
-      this.myRepo = repo;
-      this.myUser = user;
+    @SuppressWarnings("ConstantConditions")
+    protected Link(@NotNull GithubPullRequestRaw.LinkRaw raw) throws JsonException {
+      myLabel = raw.label;
+      myRef = raw.ref;
+      mySha = raw.sha;
+      myRepo = GithubRepo.create(raw.repo);
+      myUser = GithubUser.create(raw.user);
     }
 
     @NotNull
@@ -106,66 +88,36 @@ public class GithubPullRequest {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   public static GithubPullRequest create(GithubPullRequestRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.number == null) throw new JsonException("number is null");
-      if (raw.state == null) throw new JsonException("state is null");
-      if (raw.title == null) throw new JsonException("title is null");
-      if (raw.body == null) throw new JsonException("body is null");
-
-      if (raw.url == null) throw new JsonException("url is null");
-      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
-      if (raw.diffUrl == null) throw new JsonException("diffUrl is null");
-      if (raw.patchUrl == null) throw new JsonException("patchUrl is null");
-      if (raw.issueUrl == null) throw new JsonException("issueUrl is null");
-      if (raw.createdAt == null) throw new JsonException("createdAt is null");
-      if (raw.updatedAt == null) throw new JsonException("updatedAt is null");
-
-      GithubUser user = GithubUser.create(raw.user);
-      Link head = Link.create(raw.head);
-      Link base = Link.create(raw.base);
-
-      return new GithubPullRequest(raw.number, raw.state, raw.title, raw.body, raw.url, raw.htmlUrl, raw.diffUrl, raw.patchUrl,
-                                   raw.issueUrl, raw.createdAt, raw.updatedAt, raw.closedAt, raw.mergedAt, user, head, base);
+      return new GithubPullRequest(raw);
+    }
+    catch (IllegalArgumentException e) {
+      throw new JsonException("GithubPullRequest parse error", e);
     }
     catch (JsonException e) {
       throw new JsonException("GithubPullRequest parse error", e);
     }
   }
 
-  private GithubPullRequest(long number,
-                            @NotNull String state,
-                            @NotNull String title,
-                            @NotNull String body,
-                            @NotNull String url,
-                            @NotNull String htmlUrl,
-                            @NotNull String diffUrl,
-                            @NotNull String patchUrl,
-                            @NotNull String issueUrl,
-                            @NotNull Date createdAt,
-                            @NotNull Date updatedAt,
-                            @Nullable Date closedAt,
-                            @Nullable Date mergedAt,
-                            @NotNull GithubUser user,
-                            @NotNull Link head,
-                            @NotNull Link base) {
-    this.myNumber = number;
-    this.myState = state;
-    this.myTitle = title;
-    this.myBody = body;
-    this.myUrl = url;
-    this.myHtmlUrl = htmlUrl;
-    this.myDiffUrl = diffUrl;
-    this.myPatchUrl = patchUrl;
-    this.myIssueUrl = issueUrl;
-    this.myCreatedAt = createdAt;
-    this.myUpdatedAt = updatedAt;
-    this.myClosedAt = closedAt;
-    this.myMergedAt = mergedAt;
-    this.myUser = user;
-    this.myHead = head;
-    this.myBase = base;
+  @SuppressWarnings("ConstantConditions")
+  protected GithubPullRequest(@NotNull GithubPullRequestRaw raw) throws JsonException {
+    myNumber = raw.number;
+    myState = raw.state;
+    myTitle = raw.title;
+    myBody = raw.body;
+    myHtmlUrl = raw.htmlUrl;
+    myDiffUrl = raw.diffUrl;
+    myPatchUrl = raw.patchUrl;
+    myIssueUrl = raw.issueUrl;
+    myCreatedAt = raw.createdAt;
+    myUpdatedAt = raw.updatedAt;
+    myClosedAt = raw.closedAt;
+    myMergedAt = raw.mergedAt;
+    myUser = GithubUser.create(raw.user);
+    myHead = new Link(raw.head);
+    myBase = new Link(raw.base);
   }
 
   public long getNumber() {
@@ -185,11 +137,6 @@ public class GithubPullRequest {
   @NotNull
   public String getBody() {
     return myBody;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return myUrl;
   }
 
   @NotNull

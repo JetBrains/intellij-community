@@ -21,59 +21,34 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubUser {
   @NotNull private String myLogin;
-  private long myId;
 
-  @NotNull private String myUrl;
   @NotNull private String myHtmlUrl;
 
   @Nullable private String myGravatarId;
 
   @NotNull
+  @SuppressWarnings("ConstantConditions")
   public static GithubUser create(@Nullable GithubUserRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.login == null) throw new JsonException("login is null");
-      if (raw.id == null) throw new JsonException("id is null");
-      if (raw.url == null) throw new JsonException("url is null");
-      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
-
-      return new GithubUser(raw.login, raw.id, raw.url, raw.htmlUrl, raw.gravatarId);
+      return new GithubUser(raw);
     }
-    catch (JsonException e) {
+    catch (IllegalArgumentException e) {
       throw new JsonException("GithubUser parse error", e);
     }
   }
 
-  protected GithubUser(@NotNull String login, long id, @NotNull String url, @NotNull String htmlUrl, @Nullable String gravatarId) {
-    this.myLogin = login;
-    this.myId = id;
-    this.myUrl = url;
-    this.myHtmlUrl = htmlUrl;
-    this.myGravatarId = gravatarId;
-  }
-
-  protected GithubUser(@NotNull GithubUser user) {
-    this.myLogin = user.myLogin;
-    this.myId = user.myId;
-    this.myUrl = user.myUrl;
-    this.myHtmlUrl = user.myHtmlUrl;
+  @SuppressWarnings("ConstantConditions")
+  protected GithubUser(@NotNull GithubUserRaw raw) {
+    myLogin = raw.login;
+    myHtmlUrl = raw.htmlUrl;
+    myGravatarId = raw.gravatarId;
   }
 
   @NotNull
   public String getLogin() {
     return myLogin;
-  }
-
-  public long getId() {
-    return myId;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return myUrl;
   }
 
   @NotNull

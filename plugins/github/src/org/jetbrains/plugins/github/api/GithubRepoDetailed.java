@@ -21,47 +21,27 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubRepoDetailed extends GithubRepo {
   @Nullable private GithubRepo myParent;
-  @Nullable private GithubRepo mySource;
-
-  private boolean myHasIssues;
-  private boolean myHasWiki;
-  private boolean myHasDownloads;
 
   @NotNull
+  @SuppressWarnings("ConstantConditions")
   public static GithubRepoDetailed createDetailed(@Nullable GithubRepoRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.hasIssues == null) throw new JsonException("hasIssues is null");
-      if (raw.hasWiki == null) throw new JsonException("hasWiki is null");
-      if (raw.hasDownloads == null) throw new JsonException("hasDownloads is null");
-
-      GithubRepo repo = GithubRepo.create(raw);
-      GithubRepo parent = raw.parent == null ? null : GithubRepo.create(raw.parent);
-      GithubRepo source = raw.source == null ? null : GithubRepo.create(raw.source);
-
-      return new GithubRepoDetailed(repo, parent, source, raw.hasIssues, raw.hasWiki,
-                                    raw.hasDownloads);
+      return new GithubRepoDetailed(raw);
+    }
+    catch (IllegalArgumentException e) {
+      throw new JsonException("GithubRepoDetailed parse error", e);
     }
     catch (JsonException e) {
       throw new JsonException("GithubRepoDetailed parse error", e);
     }
   }
 
-  private GithubRepoDetailed(@NotNull GithubRepo repo,
-                               @Nullable GithubRepo parent,
-                               @Nullable GithubRepo source,
-                               boolean hasIssues,
-                               boolean hasWiki,
-                               boolean hasDownloads) {
-    super(repo);
-    this.myParent = parent;
-    this.mySource = source;
-    this.myHasIssues = hasIssues;
-    this.myHasWiki = hasWiki;
-    this.myHasDownloads = hasDownloads;
+  @SuppressWarnings("ConstantConditions")
+  protected GithubRepoDetailed(@NotNull GithubRepoRaw raw) throws JsonException {
+    super(raw);
+    myParent = raw.parent == null ? null : GithubRepo.create(raw.parent);
   }
 
   @Nullable
@@ -69,20 +49,4 @@ public class GithubRepoDetailed extends GithubRepo {
     return myParent;
   }
 
-  @Nullable
-  public GithubRepo getSource() {
-    return mySource;
-  }
-
-  public boolean hasIssues() {
-    return myHasIssues;
-  }
-
-  public boolean hasWiki() {
-    return myHasWiki;
-  }
-
-  public boolean hasDownloads() {
-    return myHasDownloads;
-  }
 }

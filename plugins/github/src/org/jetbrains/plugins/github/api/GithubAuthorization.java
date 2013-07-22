@@ -23,60 +23,30 @@ import java.util.List;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubAuthorization {
-  private long id;
   @NotNull private String myToken;
-
-  @Nullable private String myNote;
-  @Nullable private String myNoteUrl;
-
   @NotNull private List<String> myScopes;
 
   @NotNull
-  public static GithubAuthorization create(GithubAuthorizationRaw raw) throws JsonException {
+  @SuppressWarnings("ConstantConditions")
+  public static GithubAuthorization create(@Nullable GithubAuthorizationRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.id == null) throw new JsonException("id is null");
-      if (raw.token == null) throw new JsonException("token is null");
-      if (raw.scopes == null) throw new JsonException("scopes is null");
-
-      return new GithubAuthorization(raw.id, raw.token, raw.note, raw.noteUrl, raw.scopes);
+      return new GithubAuthorization(raw);
     }
-    catch (JsonException e) {
+    catch (IllegalArgumentException e) {
       throw new JsonException("GithubAuthorization parse error", e);
     }
   }
 
-  private GithubAuthorization(long id,
-                              @NotNull String token,
-                              @Nullable String note,
-                              @Nullable String noteUrl,
-                              @NotNull List<String> scopes) {
-    this.id = id;
-    this.myToken = token;
-    this.myNote = note;
-    this.myNoteUrl = noteUrl;
-    this.myScopes = scopes;
-  }
-
-  public long getId() {
-    return id;
+  @SuppressWarnings("ConstantConditions")
+  protected GithubAuthorization(@NotNull GithubAuthorizationRaw raw) {
+    myToken = raw.token;
+    myScopes = raw.scopes;
   }
 
   @NotNull
   public String getToken() {
     return myToken;
-  }
-
-  @Nullable
-  public String getNote() {
-    return myNote;
-  }
-
-  @Nullable
-  public String getNoteUrl() {
-    return myNoteUrl;
   }
 
   @NotNull

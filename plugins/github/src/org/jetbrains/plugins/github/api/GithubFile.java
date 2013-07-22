@@ -33,45 +33,28 @@ public class GithubFile implements Serializable {
   @NotNull private String myStatus;
 
   @NotNull private String myRawUrl;
-  @NotNull private String myBlobUrl;
   @NotNull private String myPatch;
 
   @NotNull
+  @SuppressWarnings("ConstantConditions")
   public static GithubFile create(@Nullable GithubFileRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.filename == null) throw new JsonException("filename is null");
-      if (raw.additions == null) throw new JsonException("additions is null");
-      if (raw.deletions == null) throw new JsonException("deletions is null");
-      if (raw.changes == null) throw new JsonException("changes is null");
-      if (raw.status == null) throw new JsonException("status is null");
-      if (raw.rawUrl == null) throw new JsonException("rawUrl is null");
-      if (raw.blobUrl == null) throw new JsonException("blobUrl is null");
-      if (raw.patch == null) throw new JsonException("patch is null");
-
-      return new GithubFile(raw.filename, raw.additions, raw.deletions, raw.changes, raw.status, raw.rawUrl, raw.blobUrl, raw.patch);
+      return new GithubFile(raw);
     }
-    catch (JsonException e) {
+    catch (IllegalArgumentException e) {
       throw new JsonException("CommitFile parse error", e);
     }
   }
 
-  private GithubFile(@NotNull String filename,
-                     int additions,
-                     int deletions,
-                     int changes,
-                     @NotNull String status,
-                     @NotNull String rawUrl,
-                     @NotNull String blobUrl,
-                     @NotNull String patch) {
-    this.myFilename = filename;
-    this.myAdditions = additions;
-    this.myDeletions = deletions;
-    this.myChanges = changes;
-    this.myStatus = status;
-    this.myRawUrl = rawUrl;
-    this.myBlobUrl = blobUrl;
-    this.myPatch = patch;
+  @SuppressWarnings("ConstantConditions")
+  protected GithubFile(@NotNull GithubFileRaw raw) {
+    myFilename = raw.filename;
+    myAdditions = raw.additions;
+    myDeletions = raw.deletions;
+    myChanges = raw.changes;
+    myStatus = raw.status;
+    myRawUrl = raw.rawUrl;
+    myPatch = raw.patch;
   }
 
   @NotNull
@@ -99,11 +82,6 @@ public class GithubFile implements Serializable {
   @NotNull
   public String getRawUrl() {
     return myRawUrl;
-  }
-
-  @NotNull
-  public String getBlobUrl() {
-    return myBlobUrl;
   }
 
   @NotNull

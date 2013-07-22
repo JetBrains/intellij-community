@@ -23,11 +23,9 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubIssueComment {
   @NotNull private Long myId;
 
-  @NotNull private String myUrl;
   @NotNull private String myHtmlUrl;
   @NotNull private String myBody;
 
@@ -37,50 +35,32 @@ public class GithubIssueComment {
   @NotNull private GithubUser myUser;
 
   @NotNull
+  @SuppressWarnings("ConstantConditions")
   public static GithubIssueComment create(@Nullable GithubIssueCommentRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.url == null) throw new JsonException("url is null");
-      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
-      if (raw.id == null) throw new JsonException("id is null");
-      if (raw.body == null) throw new JsonException("body is null");
-
-      if (raw.createdAt == null) throw new JsonException("createdAt is null");
-      if (raw.updatedAt == null) throw new JsonException("updatedAt is null");
-
-      GithubUser user = GithubUser.create(raw.user);
-
-      return new GithubIssueComment(raw.id, raw.url, raw.htmlUrl, raw.body, raw.createdAt, raw.updatedAt, user);
+      return new GithubIssueComment(raw);
+    }
+    catch (IllegalArgumentException e) {
+      throw new JsonException("GithubIssueComment parse error", e);
     }
     catch (JsonException e) {
       throw new JsonException("GithubIssueComment parse error", e);
     }
   }
 
-  private GithubIssueComment(@NotNull Long id,
-                             @NotNull String url,
-                             @NotNull String htmlUrl,
-                             @NotNull String body,
-                             @NotNull Date createdAt,
-                             @NotNull Date updatedAt,
-                             @NotNull GithubUser user) {
-    this.myId = id;
-    this.myUrl = url;
-    this.myHtmlUrl = htmlUrl;
-    this.myBody = body;
-    this.myCreatedAt = createdAt;
-    this.myUpdatedAt = updatedAt;
-    this.myUser = user;
+  @SuppressWarnings("ConstantConditions")
+  protected GithubIssueComment(@NotNull GithubIssueCommentRaw raw) throws JsonException {
+    myId = raw.id;
+    myHtmlUrl = raw.htmlUrl;
+    myBody = raw.body;
+    myCreatedAt = raw.createdAt;
+    myUpdatedAt = raw.updatedAt;
+    myUser = GithubUser.create(raw.user);
   }
 
   @NotNull
   public Long getId() {
     return myId;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return myUrl;
   }
 
   @NotNull

@@ -35,25 +35,11 @@ public class GithubCommitDetailed extends GithubCommit {
     private int myDeletions;
     private int myTotal;
 
-    @NotNull
-    public static CommitStats create(@Nullable GithubCommitRaw.CommitStatsRaw raw) throws JsonException {
-      try {
-        if (raw == null) throw new JsonException("raw is null");
-        if (raw.additions == null) throw new JsonException("additions is null");
-        if (raw.deletions == null) throw new JsonException("deletions is null");
-        if (raw.total == null) throw new JsonException("total is null");
-
-        return new CommitStats(raw.additions, raw.deletions, raw.total);
-      }
-      catch (JsonException e) {
-        throw new JsonException("CommitStats parse error", e);
-      }
-    }
-
-    private CommitStats(int additions, int deletions, int total) {
-      this.myAdditions = additions;
-      this.myDeletions = deletions;
-      this.myTotal = total;
+    @SuppressWarnings("ConstantConditions")
+    protected CommitStats(@NotNull GithubCommitRaw.CommitStatsRaw raw) {
+      myAdditions = raw.additions;
+      myDeletions = raw.deletions;
+      myTotal = raw.total;
     }
 
     public int getAdditions() {
@@ -70,30 +56,29 @@ public class GithubCommitDetailed extends GithubCommit {
   }
 
   @NotNull
+  @SuppressWarnings("ConstantConditions")
   public static GithubCommitDetailed createDetailed(@Nullable GithubCommitRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.stats == null) throw new JsonException("stats is null");
-      if (raw.files == null) throw new JsonException("files is null");
-
-      GithubCommit commit = GithubCommit.create(raw);
-      CommitStats stats = CommitStats.create(raw.stats);
-      List<GithubFile> files = new ArrayList<GithubFile>();
-      for (GithubFileRaw rawFile : raw.files) {
-        files.add(GithubFile.create(rawFile));
-      }
-
-      return new GithubCommitDetailed(commit, stats, files);
+      return new GithubCommitDetailed(raw);
+    }
+    catch (IllegalArgumentException e) {
+      throw new JsonException("GithubCommitDetailed parse error", e);
     }
     catch (JsonException e) {
       throw new JsonException("GithubCommitDetailed parse error", e);
     }
   }
 
-  protected GithubCommitDetailed(@NotNull GithubCommit commit, @NotNull CommitStats stats, @NotNull List<GithubFile> files) {
-    super(commit);
-    this.myStats = stats;
-    this.myFiles = files;
+  @SuppressWarnings("ConstantConditions")
+  protected GithubCommitDetailed(@NotNull GithubCommitRaw raw) throws JsonException {
+    super(raw);
+    myStats = new CommitStats(raw.stats);
+
+    if (raw.files == null) throw new JsonException("files is null");
+    myFiles = new ArrayList<GithubFile>();
+    for (GithubFileRaw rawFile : raw.files) {
+      myFiles.add(GithubFile.create(rawFile));
+    }
   }
 
   @NotNull

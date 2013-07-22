@@ -23,9 +23,7 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubIssue {
-  @NotNull private String myUrl;
   @NotNull private String myHtmlUrl;
   private long myNumber;
   @NotNull private String myState;
@@ -40,57 +38,32 @@ public class GithubIssue {
   @NotNull Date myUpdatedAt;
 
   @NotNull
+  @SuppressWarnings("ConstantConditions")
   public static GithubIssue create(@Nullable GithubIssueRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.url == null) throw new JsonException("url is null");
-      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
-      if (raw.number == null) throw new JsonException("number is null");
-      if (raw.state == null) throw new JsonException("state is null");
-      if (raw.title == null) throw new JsonException("title is null");
-      if (raw.body == null) throw new JsonException("body is null");
-
-      if (raw.createdAt == null) throw new JsonException("createdAt is null");
-      if (raw.updatedAt == null) throw new JsonException("updatedAt is null");
-
-      GithubUser user = GithubUser.create(raw.user);
-      GithubUser assignee = raw.assignee == null ? null : GithubUser.create(raw.assignee);
-
-      return new GithubIssue(raw.url, raw.htmlUrl, raw.number, raw.state, raw.title, raw.body, user, assignee, raw.closedAt, raw.createdAt,
-                             raw.updatedAt);
+      return new GithubIssue(raw);
+    }
+    catch (IllegalArgumentException e) {
+      throw new JsonException("GithubIssue parse error", e);
     }
     catch (JsonException e) {
       throw new JsonException("GithubIssue parse error", e);
     }
   }
 
-  private GithubIssue(@NotNull String url,
-                      @NotNull String htmlUrl,
-                      long number,
-                      @NotNull String state,
-                      @NotNull String title,
-                      @NotNull String body,
-                      @NotNull GithubUser user,
-                      @Nullable GithubUser assignee,
-                      @Nullable Date closedAt,
-                      @NotNull Date createdAt,
-                      @NotNull Date updatedAt) {
-    this.myUrl = url;
-    this.myHtmlUrl = htmlUrl;
-    this.myNumber = number;
-    this.myState = state;
-    this.myTitle = title;
-    this.myBody = body;
-    this.myUser = user;
-    this.myAssignee = assignee;
-    this.myClosedAt = closedAt;
-    this.myCreatedAt = createdAt;
-    this.myUpdatedAt = updatedAt;
-  }
+  @SuppressWarnings("ConstantConditions")
+  protected GithubIssue(@NotNull GithubIssueRaw raw) throws JsonException {
+    myHtmlUrl = raw.htmlUrl;
+    myNumber = raw.number;
+    myState = raw.state;
+    myTitle = raw.title;
+    myBody = raw.body;
+    myClosedAt = raw.closedAt;
+    myCreatedAt = raw.createdAt;
+    myUpdatedAt = raw.updatedAt;
 
-  @NotNull
-  public String getUrl() {
-    return myUrl;
+    myUser = GithubUser.create(raw.user);
+    myAssignee = raw.assignee == null ? null : GithubUser.create(raw.assignee);
   }
 
   @NotNull

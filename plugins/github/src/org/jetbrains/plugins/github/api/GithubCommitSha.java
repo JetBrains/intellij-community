@@ -27,27 +27,20 @@ public class GithubCommitSha {
   @NotNull private String mySha;
 
   @NotNull
+  @SuppressWarnings("ConstantConditions")
   public static GithubCommitSha createSha(@Nullable GithubCommitRaw raw) throws JsonException {
     try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.url == null) throw new JsonException("url is null");
-      if (raw.sha == null) throw new JsonException("sha is null");
-
-      return new GithubCommitSha(raw.url, raw.sha);
+      return new GithubCommitSha(raw);
     }
-    catch (JsonException e) {
+    catch (IllegalArgumentException e) {
       throw new JsonException("GithubCommitSha parse error", e);
     }
   }
 
-  protected GithubCommitSha(@NotNull String url, @NotNull String sha) {
-    this.myUrl = url;
-    this.mySha = sha;
-  }
-
-  protected GithubCommitSha(@NotNull GithubCommitSha sha) {
-    this.myUrl = sha.getUrl();
-    this.mySha = sha.getSha();
+  @SuppressWarnings("ConstantConditions")
+  protected GithubCommitSha(@NotNull GithubCommitRaw raw) {
+    myUrl = raw.url;
+    mySha = raw.sha;
   }
 
   @NotNull
