@@ -101,7 +101,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     assertEquals(localTask, myTaskManager.getAssociatedTask(activeChangeList));
     assertNotNull(activeChangeList);
-    assertEquals(activeChangeList.getName(), "TEST-001 Summary");
+    assertEquals("TEST-001 Summary", activeChangeList.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(anotherChangeList));
     assertEquals(anotherChangeList.getName(), LocalChangeList.DEFAULT_NAME);
@@ -196,7 +196,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     LocalTask localTask = myTaskManager.activateTask(task, false);
     if (localTask.getChangeLists().isEmpty()) {
       myTaskManager.activateInVcs(localTask, activeTask, TaskManager.VcsOperation.CREATE_CHANGELIST,
-                                  myTaskManager.suggestBranchName(localTask));
+                                  myTaskManager.getChangelistName(localTask));
     }
   }
 
