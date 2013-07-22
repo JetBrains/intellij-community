@@ -638,6 +638,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
     CompletionServiceImpl.setCompletionPhase(phase);
+    phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
