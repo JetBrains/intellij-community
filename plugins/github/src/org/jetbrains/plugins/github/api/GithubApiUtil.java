@@ -194,7 +194,7 @@ public class GithubApiUtil {
       case 402: // HTTP_PAYMENT_REQUIRED
       case 403: // HTTP_FORBIDDEN
       case 404: // HTTP_NOT_FOUND
-        throw new GithubAuthenticationException("Request response - \"" + getErrorMessage(method) + '"');
+        throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
     }
   }
 
