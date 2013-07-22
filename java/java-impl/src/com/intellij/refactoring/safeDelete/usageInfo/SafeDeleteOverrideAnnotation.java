@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,29 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
- * @author dsl
+ * User: anna
+ * Date: 7/22/13
  */
-public class SafeDeletePrivatizeMethod extends SafeDeleteOverrideAnnotation {
-  public SafeDeletePrivatizeMethod(PsiMethod method, PsiMethod overridenMethod) {
-    super(method, overridenMethod);
+public class SafeDeleteOverrideAnnotation extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
+  public SafeDeleteOverrideAnnotation(PsiElement element, PsiElement referencedElement) {
+    super(element, referencedElement);
+  }
+
+  public PsiMethod getMethod() {
+    return (PsiMethod)getElement();
   }
 
   public void performRefactoring() throws IncorrectOperationException {
-    PsiUtil.setModifierProperty(getMethod(), PsiModifier.PRIVATE, true);
-    super.performRefactoring();
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(getMethod(), true, Override.class.getName());
+    if (annotation != null) {
+      annotation.delete();
+    }
   }
 }
