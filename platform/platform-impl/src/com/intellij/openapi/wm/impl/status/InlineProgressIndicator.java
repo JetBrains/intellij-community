@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -42,7 +43,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private final TextPanel myText = new TextPanel();
   private final TextPanel myText2 = new TextPanel();
-  private final TextPanel myPercentage = new TextPanel();
 
   private MyProgressBar myProgress;
 
@@ -86,8 +86,17 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       final JPanel textAndProgress = new JPanel(new BorderLayout());
       textAndProgress.setOpaque(false);
       textAndProgress.add(myText, BorderLayout.CENTER);
-      textAndProgress.add(myPercentage, BorderLayout.EAST);
-      myPercentage.setRightPadding(0);
+
+      final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
+      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+      final GridBagConstraints c = new GridBagConstraints();
+      c.weightx = 1;
+      c.weighty = 1;
+      c.insets = new Insets(SystemInfo.isMacOSLion ? 1 : 0, 0, 1, myInfo.isCancellable() ? 0 : 4);
+      c.fill = GridBagConstraints.HORIZONTAL;
+      progressWrapper.add(myProgress, c);
+
+      textAndProgress.add(progressWrapper, BorderLayout.EAST);
       myComponent.add(textAndProgress, BorderLayout.CENTER);
       myComponent.add(myCancelButton, BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
@@ -187,13 +196,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText.setText(myInfo.getTitle());
     }
 
-    if (myCompact && !isIndeterminate()) {
-      int percentage = (int) (getFraction() * 100);
-      myPercentage.setText("[" + percentage + "%]");
-    } else {
-      myPercentage.setText("");
-    }
-
     myCancelButton.setPainting(isCancelable());
 
     if (getFraction() == 0) {
@@ -276,7 +278,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   private static class MyProgressBar extends JProgressBar {
-
+    private static final int MAX_COMPACT_PROGRESS_SIZE = 80;
     private boolean myActive = true;
     private final boolean myCompact;
 
@@ -300,7 +302,11 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
     public Dimension getPreferredSize() {
       if (!myActive && myCompact) return new Dimension(0, 0);
-      return super.getPreferredSize();
+      Dimension preferredSize = super.getPreferredSize();
+      if (myCompact && preferredSize.width > MAX_COMPACT_PROGRESS_SIZE) {
+        return new Dimension(MAX_COMPACT_PROGRESS_SIZE, preferredSize.height);
+      }
+      return preferredSize;
     }
 
     public void setActive(final boolean active) {

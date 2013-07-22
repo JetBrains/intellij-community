@@ -446,6 +446,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   private static class InlineLayout extends AbstractLayoutManager {
+    private int myProgressWidth;
 
     @Override
     public Dimension preferredLayoutSize(final Container parent) {
@@ -460,17 +461,22 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     @Override
     public void layoutContainer(final Container parent) {
+      assert parent.getComponentCount() == 2; // 1. info; 2. progress
+
+      Component infoPanel = parent.getComponent(0);
+      Component progressPanel = parent.getComponent(1);
+      int progressPrefWidth = progressPanel.getPreferredSize().width;
+
       final Dimension size = parent.getSize();
-      int compWidth = size.width / parent.getComponentCount();
-      int eachX = 0;
-      for (int i = 0; i < parent.getComponentCount(); i++) {
-        final Component each = parent.getComponent(i);
-        if (i == parent.getComponentCount() - 1) {
-          compWidth = size.width - eachX;
-        }
-        each.setBounds(eachX, 0, compWidth, size.height);
-        eachX += compWidth;
+      int maxProgressWidth = (int) (size.width * 0.8);
+      if (progressPrefWidth > myProgressWidth) {
+        myProgressWidth = progressPrefWidth;
       }
+      if (myProgressWidth > maxProgressWidth) {
+        myProgressWidth = maxProgressWidth;
+      }
+      infoPanel.setBounds(0, 0, size.width - myProgressWidth, size.height);
+      progressPanel.setBounds(size.width - myProgressWidth, 0, myProgressWidth, size.height);
     }
   }
 
