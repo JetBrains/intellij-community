@@ -22,6 +22,9 @@ import com.intellij.execution.runners.ProgramRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Describes a process which is ready to be started
+ */
 public interface RunProfileState {
   @Nullable
   ExecutionResult execute(final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException;
