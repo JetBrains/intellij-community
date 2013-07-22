@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsType;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -86,6 +87,10 @@ public class OpenTaskDialog extends DialogWrapper {
       myVcsPanel.setVisible(false);
     }
     else {
+      if (vcs.getType() != VcsType.distributed) {
+        myButtonEnumModel.getButton(TaskManager.VcsOperation.CREATE_BRANCH).setVisible(false);
+        myBranchName.setVisible(false);
+      }
       if (state.vcsOperation == -1) {
         state.vcsOperation = vcs.getType() == VcsType.distributed
                              ? TaskManager.VcsOperation.CREATE_BRANCH.ordinal()
@@ -94,7 +99,7 @@ public class OpenTaskDialog extends DialogWrapper {
       myVcsPanel.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName() + " operations", false));
       myBranchName.setText(taskManager.suggestBranchName(task));
       myChangelistName.setText(taskManager.getChangelistName(task));
-      ActionListener listener = new ActionListener() {
+      myButtonEnumModel.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           TaskManager.VcsOperation selected = myButtonEnumModel.getSelected();
@@ -106,17 +111,16 @@ public class OpenTaskDialog extends DialogWrapper {
           }
           else if (selected == TaskManager.VcsOperation.CREATE_CHANGELIST) {
             myChangelistName.setEnabled(true);
+            IdeFocusManager.getInstance(myProject).requestFocus(myChangelistName, true);
             myChangelistName.requestFocus();
           }
         }
-      };
-      myButtonEnumModel.addActionListener(listener);
+      });
       myButtonEnumModel.setSelected(state.vcsOperation);
-      listener.actionPerformed(null);
     }
     init();
-    getPreferredFocusedComponent();
   }
+
 
   @Override
   protected void doOKAction() {
@@ -194,7 +198,16 @@ public class OpenTaskDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return null;
+    TaskManager.VcsOperation operation = getVcsOperation();
+    if (operation == TaskManager.VcsOperation.CREATE_BRANCH) {
+      myBranchName.setEnabled(true);
+      return myBranchName;
+    }
+    else if (operation == TaskManager.VcsOperation.CREATE_CHANGELIST) {
+      myChangelistName.setEnabled(true);
+      return myChangelistName;
+    }
+    else return null;
   }
 
   protected JComponent createCenterPanel() {

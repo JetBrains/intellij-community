@@ -69,4 +69,9 @@ public class RadioButtonEnumModel<E extends Enum<E>> {
   public void setSelected(int index) {
     myGroup.setSelected(myModels.get(index), true);
   }
+
+  public AbstractButton getButton(E e) {
+    int i = myEnums.indexOf(e);
+    return Collections.list(myGroup.getElements()).get(i);
+  }
 }
