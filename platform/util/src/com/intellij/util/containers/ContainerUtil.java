@@ -1189,11 +1189,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   public static <T> List<T> getFirstItems(@NotNull final List<T> items, int maxItems) {
-    final List<T> result = new ArrayList<T>();
-    for (int i = 0; i < maxItems && i < items.size(); i++) {
-      result.add(items.get(i));
-    }
-    return result;
+    return items.subList(0, Math.min(maxItems, items.size()));
   }
 
   @Nullable
