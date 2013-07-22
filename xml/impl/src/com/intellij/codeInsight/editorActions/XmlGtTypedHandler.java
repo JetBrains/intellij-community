@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
@@ -63,6 +64,13 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
           // seems like a template language
           // <xml_code><caret><outer_element>
           elementAtCaret = element = provider.findElementAt(offset - 1, XMLLanguage.class);
+        }
+        if (element == null && offset > 0) {
+          // seems like an injection in a template file
+          final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+          if (injectedElement != null && injectedElement.getContainingFile() instanceof XmlFile) {
+            elementAtCaret = element = injectedElement;
+          }
         }
         if (!(element instanceof PsiWhiteSpace)) {
           boolean nonAcceptableDelimiter = true;
