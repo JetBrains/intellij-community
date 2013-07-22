@@ -50,7 +50,6 @@ public class PyDuplocatorTest extends PyTestCase {
     }
   }
 
-
   public void testIgnoreVariables() throws Exception {
     myDuplocatorSettings.DISTINGUISH_VARIABLES = false;
     try {
@@ -61,12 +60,21 @@ public class PyDuplocatorTest extends PyTestCase {
     }
   }
 
+  public void testIgnoreFields() throws Exception {
+    myDuplocatorSettings.DISTINGUISH_FIELDS = false;
+    try {
+      doTest(1);
+    }
+    finally {
+      myDuplocatorSettings.DISTINGUISH_FIELDS = true;
+    }
+  }
 
   protected void setUp() throws Exception {
     super.setUp();
     myDuplocatorSettings = PyDuplocatorSettings.getInstance();
     myOldLowerBound = myDuplocatorSettings.LOWER_BOUND;
-    myDuplocatorSettings.LOWER_BOUND = 2;
+    myDuplocatorSettings.LOWER_BOUND = 3;
   }
 
   protected void tearDown() throws Exception {
