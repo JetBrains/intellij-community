@@ -1199,7 +1199,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Nullable
-  public static <T, L extends List<? extends T> & RandomAccess> T last(@NotNull L list) {
+  public static <T, L extends List<? extends T> & RandomAccess> T getLastItem(@NotNull L list) {
     return list.isEmpty() ? null : list.get(list.size() - 1);
   }
 
