@@ -70,6 +70,20 @@ public class PyDuplocatorTest extends PyTestCase {
     }
   }
 
+  public void testFunctionCall() throws Exception {
+    myDuplocatorSettings.DISTINGUISH_FUNCTIONS = false;
+    try {
+      doTest(1);
+    }
+    finally {
+      myDuplocatorSettings.DISTINGUISH_FUNCTIONS = true;
+    }
+  }
+
+  public void testFunctionCallNegative() throws Exception {
+    doTest(1);
+  }
+
   protected void setUp() throws Exception {
     super.setUp();
     myDuplocatorSettings = PyDuplocatorSettings.getInstance();
