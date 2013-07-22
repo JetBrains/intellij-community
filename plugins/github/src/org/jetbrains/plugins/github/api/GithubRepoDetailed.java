@@ -74,15 +74,15 @@ public class GithubRepoDetailed extends GithubRepo {
     return source;
   }
 
-  public boolean isHasIssues() {
+  public boolean hasIssues() {
     return hasIssues;
   }
 
-  public boolean isHasWiki() {
+  public boolean hasWiki() {
     return hasWiki;
   }
 
-  public boolean isHasDownloads() {
+  public boolean hasDownloads() {
     return hasDownloads;
   }
 }

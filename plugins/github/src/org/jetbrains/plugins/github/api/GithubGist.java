@@ -92,7 +92,7 @@ public class GithubGist {
     }
 
     @NotNull
-    public String getRaw_url() {
+    public String getRawUrl() {
       return raw_url;
     }
 
