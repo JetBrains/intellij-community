@@ -1204,9 +1204,14 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Nullable
-  public static <T, L extends List<? extends T> & RandomAccess> T getLastItem(@NotNull L list) {
-    return list.isEmpty() ? null : list.get(list.size() - 1);
+  public static <T, L extends List<T>> T getLastItem(@NotNull L list, @Nullable T def) {
+    return list.isEmpty() ? def : list.get(list.size() - 1);
   }
+  
+  @Nullable
+  public static <T, L extends List<T>> T getLastItem(@NotNull L list) {
+    return getLastItem(list, null);
+  }  
 
   /**
    * @return read-only collection consisting of elements from the 'from' collection which are absent from the 'what' collection
