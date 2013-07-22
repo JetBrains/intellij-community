@@ -216,6 +216,24 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'param', 'param param2'
   }
 
+  public void "test suggest same param descriptions"() {
+    myFixture.configureByText "a.java", '''
+class Foo {
+  /**
+  * @param intParam so<caret>
+  */
+  void foo2(int intParam, Object param2) { }
+
+  /**
+  * @param intParam some integer param
+  */
+  void foo(int intParam, Object param2) { }
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'some', 'some integer param'
+  }
+
   public void "test see super class"() {
     myFixture.addClass("package foo; public interface Foo {}")
     myFixture.addClass("package bar; public class Bar {} ")
