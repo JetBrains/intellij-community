@@ -307,7 +307,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     //removeButton.setShortcut(CustomShortcutSet.fromString("alt DELETE"));
     //upButton.setShortcut(CustomShortcutSet.fromString("alt UP"));
     //downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
-    myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
 
     // we need to register our listener before ToolbarDecorator registers its own. Otherwise
     myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
