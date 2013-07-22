@@ -151,6 +151,7 @@ public abstract class ChooseByNameBase {
   protected final int myInitialIndex;
   private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
+  protected boolean myInitIsDone;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -196,6 +197,7 @@ public abstract class ChooseByNameBase {
     myRebuildDelay = Registry.intValue("ide.goto.rebuild.delay");
 
     myTextField.setText(myInitialText);
+    myInitIsDone = true;
   }
 
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
@@ -1377,6 +1379,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected void handlePaste(String str) {
+    if (!myInitIsDone) return;
     if (myModel instanceof GotoClassModel2 && isFileName(str)) {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
@@ -1399,7 +1402,10 @@ public abstract class ChooseByNameBase {
   private static boolean isFileName(String name) {
     final int index = name.lastIndexOf('.');
     if (index > 0) {
-      final String ext = name.substring(index + 1);
+      String ext = name.substring(index + 1);
+      if (ext.contains(":")) {
+        ext = ext.substring(0, ext.indexOf(':'));
+      }
       if (FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(ext) != UnknownFileType.INSTANCE) {
         return true;
       }
