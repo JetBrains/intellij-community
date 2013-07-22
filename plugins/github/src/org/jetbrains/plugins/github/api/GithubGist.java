@@ -47,9 +47,13 @@ public class GithubGist {
 
     @SuppressWarnings("ConstantConditions")
     protected GistFile(@NotNull GistFileRaw raw) {
-      myFilename = raw.filename;
-      myContent = raw.content;
-      myRawUrl = raw.raw_url;
+      this(raw.filename, raw.content, raw.raw_url);
+    }
+
+    private GistFile(@NotNull String filename, @NotNull String content, @NotNull String rawUrl) {
+      myFilename = filename;
+      myContent = content;
+      myRawUrl = rawUrl;
     }
 
     @NotNull
@@ -93,17 +97,25 @@ public class GithubGist {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubGist(@NotNull GithubGistRaw raw) throws JsonException {
-    myId = raw.id;
-    myDescription = raw.description;
-    myIsPublic = raw.isPublic;
-    myHtmlUrl = raw.htmlUrl;
-    myUser = raw.user == null ? null : GithubUser.create(raw.user);
+    this(raw.id, raw.description, raw.isPublic, raw.htmlUrl, raw.files, raw.user);
+  }
 
-    if (raw.files == null) throw new JsonException("files is null");
+  private GithubGist(@NotNull String id,
+                     @NotNull String description,
+                     boolean isPublic,
+                     @NotNull String htmlUrl,
+                     @NotNull Map<String, GistFileRaw> files,
+                     @Nullable GithubUserRaw user) throws JsonException {
+    myId = id;
+    myDescription = description;
+    myIsPublic = isPublic;
+    myHtmlUrl = htmlUrl;
+
     myFiles = new ArrayList<GistFile>();
-    for (Map.Entry<String, GistFileRaw> rawFile : raw.files.entrySet()) {
+    for (Map.Entry<String, GistFileRaw> rawFile : files.entrySet()) {
       myFiles.add(new GistFile(rawFile.getValue()));
     }
+    myUser = user == null ? null : GithubUser.create(user);
   }
 
   @NotNull

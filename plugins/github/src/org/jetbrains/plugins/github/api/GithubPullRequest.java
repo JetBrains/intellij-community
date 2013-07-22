@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
+import static org.jetbrains.plugins.github.api.GithubPullRequestRaw.LinkRaw;
+
 /**
  * @author Aleksey Pivovarov
  */
@@ -54,12 +56,17 @@ public class GithubPullRequest {
     @NotNull private GithubUser myUser;
 
     @SuppressWarnings("ConstantConditions")
-    protected Link(@NotNull GithubPullRequestRaw.LinkRaw raw) throws JsonException {
-      myLabel = raw.label;
-      myRef = raw.ref;
-      mySha = raw.sha;
-      myRepo = GithubRepo.create(raw.repo);
-      myUser = GithubUser.create(raw.user);
+    protected Link(@NotNull LinkRaw raw) throws JsonException {
+      this(raw.label, raw.ref, raw.sha, raw.repo, raw.user);
+    }
+
+    private Link(@NotNull String label, @NotNull String ref, @NotNull String sha, @NotNull GithubRepoRaw repo, @NotNull GithubUserRaw user)
+      throws JsonException {
+      myLabel = label;
+      myRef = ref;
+      mySha = sha;
+      myRepo = GithubRepo.create(repo);
+      myUser = GithubUser.create(user);
     }
 
     @NotNull
@@ -103,21 +110,40 @@ public class GithubPullRequest {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubPullRequest(@NotNull GithubPullRequestRaw raw) throws JsonException {
-    myNumber = raw.number;
-    myState = raw.state;
-    myTitle = raw.title;
-    myBody = raw.body;
-    myHtmlUrl = raw.htmlUrl;
-    myDiffUrl = raw.diffUrl;
-    myPatchUrl = raw.patchUrl;
-    myIssueUrl = raw.issueUrl;
-    myCreatedAt = raw.createdAt;
-    myUpdatedAt = raw.updatedAt;
-    myClosedAt = raw.closedAt;
-    myMergedAt = raw.mergedAt;
-    myUser = GithubUser.create(raw.user);
-    myHead = new Link(raw.head);
-    myBase = new Link(raw.base);
+    this(raw.number, raw.state, raw.title, raw.body, raw.htmlUrl, raw.diffUrl, raw.patchUrl, raw.issueUrl, raw.createdAt, raw.updatedAt,
+         raw.closedAt, raw.mergedAt, raw.user, raw.head, raw.base);
+  }
+
+  private GithubPullRequest(long number,
+                            @NotNull String state,
+                            @NotNull String title,
+                            @NotNull String body,
+                            @NotNull String htmlUrl,
+                            @NotNull String diffUrl,
+                            @NotNull String patchUrl,
+                            @NotNull String issueUrl,
+                            @NotNull Date createdAt,
+                            @NotNull Date updatedAt,
+                            @Nullable Date closedAt,
+                            @Nullable Date mergedAt,
+                            @NotNull GithubUserRaw user,
+                            @NotNull LinkRaw head,
+                            @NotNull LinkRaw base) throws JsonException {
+    myNumber = number;
+    myState = state;
+    myTitle = title;
+    myBody = body;
+    myHtmlUrl = htmlUrl;
+    myDiffUrl = diffUrl;
+    myPatchUrl = patchUrl;
+    myIssueUrl = issueUrl;
+    myCreatedAt = createdAt;
+    myUpdatedAt = updatedAt;
+    myClosedAt = closedAt;
+    myMergedAt = mergedAt;
+    myUser = GithubUser.create(user);
+    myHead = new Link(head);
+    myBase = new Link(base);
   }
 
   public long getNumber() {

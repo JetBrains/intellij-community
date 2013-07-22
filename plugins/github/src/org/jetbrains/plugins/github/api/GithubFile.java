@@ -48,13 +48,23 @@ public class GithubFile implements Serializable {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubFile(@NotNull GithubFileRaw raw) {
-    myFilename = raw.filename;
-    myAdditions = raw.additions;
-    myDeletions = raw.deletions;
-    myChanges = raw.changes;
-    myStatus = raw.status;
-    myRawUrl = raw.rawUrl;
-    myPatch = raw.patch;
+    this(raw.filename, raw.additions, raw.deletions, raw.changes, raw.status, raw.rawUrl, raw.patch);
+  }
+
+  private GithubFile(@NotNull String filename,
+                     int additions,
+                     int deletions,
+                     int changes,
+                     @NotNull String status,
+                     @NotNull String rawUrl,
+                     @NotNull String patch) {
+    myFilename = filename;
+    myAdditions = additions;
+    myDeletions = deletions;
+    myChanges = changes;
+    myStatus = status;
+    myRawUrl = rawUrl;
+    myPatch = patch;
   }
 
   @NotNull

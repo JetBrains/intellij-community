@@ -40,8 +40,12 @@ public class GithubAuthorization {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubAuthorization(@NotNull GithubAuthorizationRaw raw) {
-    myToken = raw.token;
-    myScopes = raw.scopes;
+    this(raw.token, raw.scopes);
+  }
+
+  private GithubAuthorization(@NotNull String token, @NotNull List<String> scopes) {
+    myToken = token;
+    myScopes = scopes;
   }
 
   @NotNull

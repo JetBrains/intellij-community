@@ -39,8 +39,12 @@ public class GithubCommitSha {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubCommitSha(@NotNull GithubCommitRaw raw) {
-    myUrl = raw.url;
-    mySha = raw.sha;
+    this(raw.url, raw.sha);
+  }
+
+  private GithubCommitSha(@NotNull String url, @NotNull String sha) {
+    myUrl = url;
+    mySha = sha;
   }
 
   @NotNull

@@ -22,6 +22,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.plugins.github.api.GithubCommitRaw.CommitStatsRaw;
+
 /**
  * @author Aleksey Pivovarov
  */
@@ -36,10 +38,14 @@ public class GithubCommitDetailed extends GithubCommit {
     private int myTotal;
 
     @SuppressWarnings("ConstantConditions")
-    protected CommitStats(@NotNull GithubCommitRaw.CommitStatsRaw raw) {
-      myAdditions = raw.additions;
-      myDeletions = raw.deletions;
-      myTotal = raw.total;
+    protected CommitStats(@NotNull CommitStatsRaw raw) {
+      this(raw.additions, raw.deletions, raw.total);
+    }
+
+    private CommitStats(int additions, int deletions, int total) {
+      myAdditions = additions;
+      myDeletions = deletions;
+      myTotal = total;
     }
 
     public int getAdditions() {
@@ -71,12 +77,16 @@ public class GithubCommitDetailed extends GithubCommit {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubCommitDetailed(@NotNull GithubCommitRaw raw) throws JsonException {
-    super(raw);
-    myStats = new CommitStats(raw.stats);
+    this(raw, raw.stats, raw.files);
+  }
 
-    if (raw.files == null) throw new JsonException("files is null");
+  private GithubCommitDetailed(@NotNull GithubCommitRaw raw, @NotNull CommitStatsRaw stats, @NotNull List<GithubFileRaw> files)
+    throws JsonException {
+    super(raw);
+    myStats = new CommitStats(stats);
+
     myFiles = new ArrayList<GithubFile>();
-    for (GithubFileRaw rawFile : raw.files) {
+    for (GithubFileRaw rawFile : files) {
       myFiles.add(GithubFile.create(rawFile));
     }
   }

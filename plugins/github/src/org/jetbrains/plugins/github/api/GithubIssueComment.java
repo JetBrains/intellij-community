@@ -24,7 +24,7 @@ import java.util.Date;
  * @author Aleksey Pivovarov
  */
 public class GithubIssueComment {
-  @NotNull private Long myId;
+  private long myId;
 
   @NotNull private String myHtmlUrl;
   @NotNull private String myBody;
@@ -50,16 +50,24 @@ public class GithubIssueComment {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubIssueComment(@NotNull GithubIssueCommentRaw raw) throws JsonException {
-    myId = raw.id;
-    myHtmlUrl = raw.htmlUrl;
-    myBody = raw.body;
-    myCreatedAt = raw.createdAt;
-    myUpdatedAt = raw.updatedAt;
-    myUser = GithubUser.create(raw.user);
+    this(raw.id, raw.htmlUrl, raw.body, raw.createdAt, raw.updatedAt, raw.user);
   }
 
-  @NotNull
-  public Long getId() {
+  private GithubIssueComment(long id,
+                             @NotNull String htmlUrl,
+                             @NotNull String body,
+                             @NotNull Date createdAt,
+                             @NotNull Date updatedAt,
+                             @NotNull GithubUserRaw user) throws JsonException {
+    myId = id;
+    myHtmlUrl = htmlUrl;
+    myBody = body;
+    myCreatedAt = createdAt;
+    myUpdatedAt = updatedAt;
+    myUser = GithubUser.create(user);
+  }
+
+  public long getId() {
     return myId;
   }
 

@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static org.jetbrains.plugins.github.api.GithubCommitRaw.GitCommitRaw;
+import static org.jetbrains.plugins.github.api.GithubCommitRaw.GitUserRaw;
+
 /**
  * @author Aleksey Pivovarov
  */
@@ -56,10 +59,14 @@ public class GithubCommit extends GithubCommitSha {
     @NotNull private GitUser myCommitter;
 
     @SuppressWarnings("ConstantConditions")
-    protected GitCommit(@NotNull GithubCommitRaw.GitCommitRaw raw) {
-      myMessage = raw.message;
-      myAuthor = new GitUser(raw.author);
-      myCommitter = new GitUser(raw.committer);
+    protected GitCommit(@NotNull GitCommitRaw raw) {
+      this(raw.message, raw.author, raw.committer);
+    }
+
+    private GitCommit(@NotNull String message, @NotNull GitUserRaw author, @NotNull GitUserRaw committer) {
+      myMessage = message;
+      myAuthor = new GitUser(author);
+      myCommitter = new GitUser(committer);
     }
 
     @NotNull
@@ -79,43 +86,54 @@ public class GithubCommit extends GithubCommitSha {
   }
 
   public static class GitUser implements Serializable {
-    @NotNull private String name;
-    @NotNull private String email;
-    @NotNull private Date date;
+    @NotNull private String myName;
+    @NotNull private String myEmail;
+    @NotNull private Date myDate;
 
     @SuppressWarnings("ConstantConditions")
-    protected GitUser(@NotNull GithubCommitRaw.GitUserRaw raw) {
-      name = raw.name;
-      email = raw.email;
-      date = raw.date;
+    protected GitUser(@NotNull GitUserRaw raw) {
+      this(raw.name, raw.email, raw.date);
+    }
+
+    private GitUser(@NotNull String name, @NotNull String email, @NotNull Date date) {
+      myName = name;
+      myEmail = email;
+      myDate = date;
     }
 
     @NotNull
     public String getName() {
-      return name;
+      return myName;
     }
 
     @NotNull
     public String getEmail() {
-      return email;
+      return myEmail;
     }
 
     @NotNull
     public Date getDate() {
-      return date;
+      return myDate;
     }
   }
 
   @SuppressWarnings("ConstantConditions")
   protected GithubCommit(@NotNull GithubCommitRaw raw) throws JsonException {
-    super(raw);
-    myAuthor = GithubUser.create(raw.author);
-    myCommitter = GithubUser.create(raw.committer);
-    myCommit = new GitCommit(raw.commit);
+    this(raw, raw.author, raw.committer, raw.parents, raw.commit);
+  }
 
-    if (raw.parents == null) throw new JsonException("parents is null");
+  private GithubCommit(@NotNull GithubCommitRaw raw,
+                       @Nullable GithubUserRaw author,
+                       @Nullable GithubUserRaw committer,
+                       @NotNull List<GithubCommitRaw> parents,
+                       @NotNull GitCommitRaw commit) throws JsonException {
+    super(raw);
+    myAuthor = author == null ? null : GithubUser.create(author);
+    myCommitter = committer == null ? null : GithubUser.create(committer);
+    myCommit = new GitCommit(commit);
+
     myParents = new ArrayList<GithubCommitSha>();
-    for (GithubCommitRaw rawCommit : raw.parents) {
+    for (GithubCommitRaw rawCommit : parents) {
       myParents.add(GithubCommitSha.createSha(rawCommit));
     }
   }

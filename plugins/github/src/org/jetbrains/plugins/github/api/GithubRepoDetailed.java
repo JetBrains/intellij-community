@@ -40,8 +40,12 @@ public class GithubRepoDetailed extends GithubRepo {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubRepoDetailed(@NotNull GithubRepoRaw raw) throws JsonException {
+    this(raw, raw.parent);
+  }
+
+  private GithubRepoDetailed(@NotNull GithubRepoRaw raw, @Nullable GithubRepoRaw parent) throws JsonException {
     super(raw);
-    myParent = raw.parent == null ? null : GithubRepo.create(raw.parent);
+    myParent = parent == null ? null : GithubRepo.create(parent);
   }
 
   @Nullable

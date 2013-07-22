@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
+import static org.jetbrains.plugins.github.api.GithubUserRaw.UserPlanRaw;
+
 /**
  * @author Aleksey Pivovarov
  */
@@ -37,9 +39,13 @@ public class GithubUserDetailed extends GithubUser {
     private long myPrivateRepos;
 
     @SuppressWarnings("ConstantConditions")
-    protected UserPlan(@NotNull GithubUserRaw.UserPlanRaw raw) {
-      myName = raw.name;
-      myPrivateRepos = raw.privateRepos;
+    protected UserPlan(@NotNull UserPlanRaw raw) {
+      this(raw.name, raw.privateRepos);
+    }
+
+    private UserPlan(@NotNull String name, long privateRepos) {
+      myName = name;
+      myPrivateRepos = privateRepos;
     }
 
     @NotNull
@@ -69,12 +75,21 @@ public class GithubUserDetailed extends GithubUser {
 
   @SuppressWarnings("ConstantConditions")
   private GithubUserDetailed(@NotNull GithubUserRaw raw) {
+    this(raw, raw.name, raw.email, raw.ownedPrivateRepos, raw.type, raw.plan);
+  }
+
+  private GithubUserDetailed(@NotNull GithubUserRaw raw,
+                             @Nullable String name,
+                             @Nullable String email,
+                             int ownedPrivateRepos,
+                             @NotNull String type,
+                             @NotNull UserPlanRaw plan) {
     super(raw);
-    myName = raw.name;
-    myEmail = raw.email;
-    myType = raw.type;
-    myOwnedPrivateRepos = raw.ownedPrivateRepos;
-    myPlan = new UserPlan(raw.plan);
+    myName = name;
+    myEmail = email;
+    myOwnedPrivateRepos = ownedPrivateRepos;
+    myType = type;
+    myPlan = new UserPlan(plan);
   }
 
   @Nullable

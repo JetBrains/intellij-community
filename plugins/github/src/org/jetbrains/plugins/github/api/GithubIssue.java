@@ -53,17 +53,30 @@ public class GithubIssue {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubIssue(@NotNull GithubIssueRaw raw) throws JsonException {
-    myHtmlUrl = raw.htmlUrl;
-    myNumber = raw.number;
-    myState = raw.state;
-    myTitle = raw.title;
-    myBody = raw.body;
-    myClosedAt = raw.closedAt;
-    myCreatedAt = raw.createdAt;
-    myUpdatedAt = raw.updatedAt;
+    this(raw.htmlUrl, raw.number, raw.state, raw.title, raw.body, raw.user, raw.assignee, raw.closedAt, raw.createdAt, raw.updatedAt);
+  }
 
-    myUser = GithubUser.create(raw.user);
-    myAssignee = raw.assignee == null ? null : GithubUser.create(raw.assignee);
+  private GithubIssue(@NotNull String htmlUrl,
+                      long number,
+                      @NotNull String state,
+                      @NotNull String title,
+                      @NotNull String body,
+                      @NotNull GithubUserRaw user,
+                      @Nullable GithubUserRaw assignee,
+                      @Nullable Date closedAt,
+                      @NotNull Date createdAt,
+                      @NotNull Date updatedAt) throws JsonException {
+    myHtmlUrl = htmlUrl;
+    myNumber = number;
+    myState = state;
+    myTitle = title;
+    myBody = body;
+    myClosedAt = closedAt;
+    myCreatedAt = createdAt;
+    myUpdatedAt = updatedAt;
+
+    myUser = GithubUser.create(user);
+    myAssignee = assignee == null ? null : GithubUser.create(assignee);
   }
 
   @NotNull

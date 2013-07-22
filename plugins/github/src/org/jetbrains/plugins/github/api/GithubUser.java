@@ -41,9 +41,13 @@ public class GithubUser {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubUser(@NotNull GithubUserRaw raw) {
-    myLogin = raw.login;
-    myHtmlUrl = raw.htmlUrl;
-    myGravatarId = raw.gravatarId;
+    this(raw.login, raw.htmlUrl, raw.gravatarId);
+  }
+
+  private GithubUser(@NotNull String login, @NotNull String htmlUrl, @Nullable String gravatarId) {
+    myLogin = login;
+    myHtmlUrl = htmlUrl;
+    myGravatarId = gravatarId;
   }
 
   @NotNull

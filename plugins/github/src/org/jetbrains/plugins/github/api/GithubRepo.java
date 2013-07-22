@@ -52,15 +52,27 @@ public class GithubRepo {
 
   @SuppressWarnings("ConstantConditions")
   protected GithubRepo(@NotNull GithubRepoRaw raw) throws JsonException {
-    myName = raw.name;
-    myFullName = raw.fullName;
-    myDescription = raw.description;
-    myIsPrivate = raw.isPrivate;
-    myIsFork = raw.isFork;
-    myHtmlUrl = raw.htmlUrl;
-    myCloneUrl = raw.cloneUrl;
-    myDefaultBranch = raw.defaultBranch;
-    myOwner = GithubUser.create(raw.owner);
+    this(raw.name, raw.fullName, raw.description, raw.isPrivate, raw.isFork, raw.htmlUrl, raw.cloneUrl, raw.defaultBranch, raw.owner);
+  }
+
+  private GithubRepo(@NotNull String name,
+                     @NotNull String fullName,
+                     @NotNull String description,
+                     boolean isPrivate,
+                     boolean isFork,
+                     @NotNull String htmlUrl,
+                     @NotNull String cloneUrl,
+                     @Nullable String defaultBranch,
+                     @NotNull GithubUserRaw owner) throws JsonException {
+    myName = name;
+    myFullName = fullName;
+    myDescription = description;
+    myIsPrivate = isPrivate;
+    myIsFork = isFork;
+    myHtmlUrl = htmlUrl;
+    myCloneUrl = cloneUrl;
+    myDefaultBranch = defaultBranch;
+    myOwner = GithubUser.create(owner);
   }
 
   @NotNull
