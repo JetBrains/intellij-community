@@ -104,21 +104,8 @@ public class GithubRepo {
   }
 
   protected GithubRepo(@NotNull GithubRepo repo) {
-    this.id = repo.id;
-    this.name = repo.name;
-    this.fullName = repo.fullName;
-    this.description = repo.description;
-    isPrivate = repo.isPrivate;
-    isFork = repo.isFork;
-    this.url = repo.url;
-    this.htmlUrl = repo.htmlUrl;
-    this.cloneUrl = repo.cloneUrl;
-    this.gitUrl = repo.gitUrl;
-    this.sshUrl = repo.sshUrl;
-    this.mirrorUrl = repo.mirrorUrl;
-    this.size = repo.size;
-    this.masterBranch = repo.masterBranch;
-    this.owner = repo.owner;
+    this(repo.id, repo.name, repo.fullName, repo.description, repo.isPrivate, repo.isFork, repo.url, repo.htmlUrl, repo.cloneUrl,
+         repo.gitUrl, repo.sshUrl, repo.mirrorUrl, repo.size, repo.masterBranch, repo.owner);
   }
 
   public long getId() {
