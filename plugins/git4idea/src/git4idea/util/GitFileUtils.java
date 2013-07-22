@@ -74,9 +74,11 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static void deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
+  public static void deleteFiles(Project project, VirtualFile root, Collection<VirtualFile> files, String... additionalOptions)
+    throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+      handler.addParameters(additionalOptions);
       handler.endOptions();
       handler.addParameters(paths);
       handler.run();
